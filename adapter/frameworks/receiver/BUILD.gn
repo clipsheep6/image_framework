@@ -1,0 +1,85 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+config("imagereceiver_adapter_private_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "//foundation/multimedia/image/adapter/frameworks/receiver/include/private",
+  ]
+}
+
+config("imagereceiver_adapter_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "//foundation/multimedia/image/adapter/frameworks/receiver/include/base",
+    "//foundation/multimedia/image/frameworks/innerkitsimpl/utils/include",
+    "//foundation/multimedia/image/interfaces/innerkits/include",
+    "//foundation/multimedia/utils/include",
+    "//utils/native/base/include",
+    "//utils/jni/jnikit/include",
+  ]
+}
+
+config("build_config") {
+  cflags = [
+    "-Wno-inconsistent-missing-override",
+    "-Wno-thread-safety-attributes",
+  ]
+}
+
+ohos_shared_library("imagereceiver_adapter") {
+  sources = [
+    "//foundation/multimedia/image/adapter/frameworks/receiver/src/image_receiver_adapter.cpp",
+    "//foundation/multimedia/image/adapter/frameworks/receiver/src/image_receiver_utils.cpp",
+  ]
+
+  deps = [
+    "//foundation/multimedia/utils:multimedia_utils",
+    "//utils/jni:utils_jnikit",
+    "//utils/native/base:utils",
+  ]
+
+  external_deps = [
+    "graphic:libagp",
+    "graphic:libagp_adapter",
+    "hilog:libhilog",
+  ]
+
+  configs = [ ":imagereceiver_adapter_private_config" ]
+
+  public_configs = [
+    ":imagereceiver_adapter_config",
+    ":build_config",
+  ]
+
+  aosp_deps = [
+    "shared_library:android.hardware.graphics.bufferqueue@1.0",
+    "shared_library:android.hardware.graphics.bufferqueue@2.0",
+    "shared_library:libbinder",
+    "shared_library:libcutils",
+    "shared_library:libgui",
+    "shared_library:libhidlbase",
+    "shared_library:libhidltransport",
+    "shared_library:liblog",
+    "shared_library:libmedia_jni_utils",
+    "shared_library:libmedia_omx",
+    "shared_library:libnativewindow",
+    "shared_library:libui",
+    "shared_library:libutils",
+  ]
+
+  subsystem_name = "multimedia"
+  part_name = "multimedia_image"
+}

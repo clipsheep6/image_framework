@@ -1,0 +1,40 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/ohos/rules.gni")
+
+java_library("image_exifadapter_java") {
+  java_files = [ "src/ohos/media/image/exifadapter/ExifAdapter.java" ]
+
+  classpath_deps =
+      [ "//foundation/multimedia/utils/java:multimedia_utils_java" ]
+
+  external_deps = [ "utils:utils_java" ]
+  part_name = "multimedia_image"
+}
+
+ohos_maple_java("image_exifadapter_maple_java") {
+  deps = [
+    ":image_exifadapter_java",
+    "//foundation/multimedia/utils/java:multimedia_utils_maple_java",
+  ]
+
+  aosp_deps = [ "maple:framework" ]
+
+  external_deps = [
+    "hilog:hilog_maple_java",
+    "utils:utils_maple_java",
+  ]
+
+  subsystem_name = "multimedia"
+}

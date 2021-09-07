@@ -1,0 +1,89 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/multimedia/image/ide/image_decode_config.gni")
+
+config("image_source_jni_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "//utils/jni/jnikit/include",
+    "//foundation/multimedia/image/frameworks/innerkitsimpl/codec/include",
+    "//foundation/multimedia/image/interfaces/innerkits/include",
+    "//foundation/multimedia/image/plugins/manager/include",
+    "//foundation/multimedia/utils/include",
+    "//foundation/multimedia/image/frameworks/jni/common/include",
+    "//foundation/multimedia/image/frameworks/jni/imagesource/include",
+  ]
+  if (use_mingw_win) {
+    include_dirs += [
+      "//foundation/multimedia/image/mock/native/include",
+      #"//foundation/multimedia/image/mock/native/include/secure",
+    ]
+  } else if (use_clang_mac) {
+    include_dirs += [
+      "//foundation/multimedia/image/mock/native/include",
+      "//utils/native/base/include",
+    ]
+  } else {
+    include_dirs += [ "//utils/native/base/include" ]
+  }
+}
+
+group("g_image_source_jni") {
+  deps = [ ":image_source_jni" ]
+}
+
+ohos_shared_library("image_source_jni") {
+  sources = [
+    "//foundation/multimedia/image/frameworks/jni/common/src/ohos_image_jni_utils.cpp",
+    "src/jni_decode_event_listener.cpp",
+    "src/ohos_image_ImageSource.cpp",
+  ]
+
+  if (use_mingw_win) {
+    defines = image_decode_windows_defines
+    configs = [ ":image_source_jni_config" ]
+    deps = [
+      "//foundation/multimedia/image/interfaces/innerkits:image_static",
+      "//foundation/multimedia/image/mock/native:log_mock_static",
+      "//foundation/multimedia/image/plugins/manager:pluginmanager_static",
+      "//utils/jni:utils_jnikit_win",
+    ]
+  } else if (use_clang_mac) {
+    defines = image_decode_mac_defines
+    configs = [ ":image_source_jni_config" ]
+    deps = [
+      "//foundation/multimedia/image/interfaces/innerkits:image_static",
+      "//foundation/multimedia/image/mock/native:log_mock_static",
+      "//foundation/multimedia/image/plugins/manager:pluginmanager_static",
+      "//utils/jni:utils_jnikit_mac",
+      "//utils/native/base:utilsecurec",
+    ]
+  } else {
+    configs = [ ":image_source_jni_config" ]
+    deps = [
+      "//foundation/multimedia/image/interfaces/innerkits:image",
+      "//foundation/multimedia/image/plugins/manager:pluginmanager",
+      "//utils/jni:utils_jnikit",
+      "//utils/native/base:utils",
+    ]
+    external_deps = [
+      "hicollie:libhicollie",
+      "hilog:libhilog",
+    ]
+  }
+
+  subsystem_name = "multimedia"
+  part_name = "multimedia_image"
+}
