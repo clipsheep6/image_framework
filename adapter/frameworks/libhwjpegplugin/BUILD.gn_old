@@ -1,0 +1,82 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+ohos_shared_library("hwjpegplugin") {
+  ###### For OHOS adapter define begin #####
+  # Use Adapter: define "DUAL_ADAPTER"
+  # Abandon Adapter: delete the define "DUAL_ADAPTER"
+  defines = [ "DUAL_ADAPTER" ]
+
+  # Use Adapter: Set DUAL_ADAPTER true
+  # Abandon Adapter: Set DUAL_ADAPTER false
+  DUAL_ADAPTER = true
+
+  ######  For OHOS adapter define end  #####
+
+  sources = [
+    "//foundation/multimedia/image_standard/adapter/frameworks/libhwjpegplugin/src/hw_jpeg_decompressor.cpp",
+    "//foundation/multimedia/image_standard/adapter/frameworks/libhwjpegplugin/src/hw_jpeg_decompressor_wrapper.cpp",
+    "//foundation/multimedia/image_standard/adapter/frameworks/libhwjpegplugin/src/plugin_export.cpp",
+  ]
+
+  include_dirs = [
+    "//utils/native/base/include",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/include",
+    "//foundation/multimedia/utils/include",
+    "//foundation/multimedia/image_standard/plugins/manager/include",
+    "//foundation/multimedia/image_standard/plugins/manager/include/image",
+    "//foundation/multimedia/image_standard/plugins/manager/include/pluginbase",
+    "//foundation/multimedia/image_standard/adapter/frameworks/libhwjpegplugin/include",
+    "//foundation/multimedia/image_standard/interfaces/innerkits/include",
+    "//foundation/multimedia/image_standard/adapter/frameworks/hwjpegcodec/include",
+    "//third_party/flutter/skia/third_party/externals/libjpeg-turbo",
+    "//third_party/flutter/skia/include/codec",
+    "//third_party/flutter/skia/include/core",
+    "//third_party/flutter/skia/third_party/libjpeg-turbo",
+  ]
+
+  deps = [
+    "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+    "//utils/native/base:utils",
+  ]
+
+  if (DUAL_ADAPTER) {
+    deps += [ "//foundation/multimedia/image_standard/adapter/frameworks/hwjpegcodec:hwjpegadapter" ]
+#    aosp_deps = [
+#      "shared_library:libcutils",
+#      "shared_library:libhidlbase",
+#      "shared_library:libjpeg",
+#      "shared_library:libutils",
+#      "shared_library:vendor.huawei.hardware.jpegdec@1.0",
+#    ]
+  } else {
+    deps += [ "//third_party/libjpeg-turbo:libjpeg-turbo" ]
+    include_dirs += [ "//third_party/libjpeg-turbo" ]
+  }
+
+#  external_deps = [ "hilog:libhilog" ]
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  part_name = "multimedia_image"
+
+  subsystem_name = "multimedia"
+}
+
+ohos_prebuilt_etc("hwjpegpluginmetadata") {
+  source = "hwjpegplugin.pluginmeta"
+  relative_install_dir = "multimediaplugin/image"
+  subsystem_name = "multimedia"
+  part_name = "multimedia_image"
+}

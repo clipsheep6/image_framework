@@ -1,0 +1,159 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/ohos/rules.gni")
+import("//foundation/multimedia/image_standard/ide/image_decode_config.gni")
+
+java_library("image_java") {
+  java_files = [
+    "src/ohos/media/image_standard/PixelMap.java",
+    "src/ohos/media/image_standard/ImageSource.java",
+    "src/ohos/media/image_standard/ImagePacker.java",
+    "src/ohos/media/image_standard/package-info.java",
+    "src/ohos/media/image_standard/common/AllocatorType.java",
+    "src/ohos/media/image_standard/common/AlphaType.java",
+    "src/ohos/media/image_standard/common/ColorSpace.java",
+    "src/ohos/media/image_standard/common/DecodeEvent.java",
+    "src/ohos/media/image_standard/common/ImageInfo.java",
+    "src/ohos/media/image_standard/common/MemoryUsagePreference.java",
+    "src/ohos/media/image_standard/common/PixelFormat.java",
+    "src/ohos/media/image_standard/common/Position.java",
+    "src/ohos/media/image_standard/common/Rect.java",
+    "src/ohos/media/image_standard/common/ScaleMode.java",
+    "src/ohos/media/image_standard/common/Size.java",
+    "src/ohos/media/image_standard/common/PropertyKey.java",
+    "src/ohos/media/image_standard/common/ImageFormat.java",
+    "src/ohos/media/image_standard/common/package-info.java",
+    "src/ohos/media/image_standard/common/Filter.java",
+    "src/ohos/media/image_standard/PropertyFilter.java",
+    "src/ohos/media/image_standard/ImageException.java",
+    "src/ohos/media/image_standard/DataSourceUnavailableException.java",
+    "src/ohos/media/image_standard/SourceDataIncompleteException.java",
+    "src/ohos/media/image_standard/SourceDataMalformedException.java",
+    "src/ohos/media/image_standard/ExifUtils.java",
+  ]
+
+  classpath_deps = [
+    "//foundation/multimedia/image_standard/adapter/frameworks/exif:image_exifadapter_java",
+    "//foundation/multimedia/utils/java:multimedia_utils_java",
+    "//utils/java:utils_java",
+  ]
+  external_deps = [
+    "resmgr:kits_java",
+    "startup:syspara_java",
+    "utils:utils_java",
+  ]
+  part_name = "multimedia_image"
+}
+
+ohos_maple_java("image_maple_java") {
+  deps = [
+    ":image_java",
+    "//foundation/multimedia/utils/java:multimedia_utils_maple_java",
+  ]
+
+  external_deps = [
+    "hilog:hilog_maple_java",
+    "startup:syspara_maple_java",
+    "utils:utils_maple_java",
+  ]
+
+  subsystem_name = "multimedia"
+}
+
+java_library("image_decode_java") {
+  java_files = [
+    "src/ohos/media/image_standard/common/AllocatorType.java",
+    "src/ohos/media/image_standard/common/AlphaType.java",
+    "src/ohos/media/image_standard/common/ColorSpace.java",
+    "src/ohos/media/image_standard/common/DecodeEvent.java",
+    "src/ohos/media/image_standard/common/ImageInfo.java",
+    "src/ohos/media/image_standard/common/MemoryUsagePreference.java",
+    "src/ohos/media/image_standard/common/PixelFormat.java",
+    "src/ohos/media/image_standard/common/Position.java",
+    "src/ohos/media/image_standard/common/Rect.java",
+    "src/ohos/media/image_standard/common/ScaleMode.java",
+    "src/ohos/media/image_standard/common/Size.java",
+    "src/ohos/media/image_standard/common/PropertyKey.java",
+    "src/ohos/media/image_standard/common/ImageFormat.java",
+    "src/ohos/media/image_standard/common/package-info.java",
+    "src/ohos/media/image_standard/common/Filter.java",
+    "src/ohos/media/image_standard/ImageException.java",
+    "src/ohos/media/image_standard/DataSourceUnavailableException.java",
+    "src/ohos/media/image_standard/SourceDataIncompleteException.java",
+    "src/ohos/media/image_standard/SourceDataMalformedException.java",
+    "src/ohos/media/image_standard/ImageSource.java",
+    "src/ohos/media/image_standard/PixelMap.java",
+    "//foundation/multimedia/image_standard/mock/java/src/ohos/media/image/ExifUtils.java",
+    "//foundation/multimedia/image_standard/mock/java/src/ohos/media/image/Image.java",
+    "//foundation/multimedia/image_standard/mock/java/src/ohos/media/image/ImagePacker.java",
+    "//foundation/multimedia/image_standard/mock/java/src/ohos/media/image/ImageReceiver.java",
+    "//foundation/multimedia/image_standard/mock/java/src/ohos/media/image/exifadapter/ExifAdapter.java",
+  ]
+
+  external_deps = [
+    "appexecfwk:eventhandler_java",
+    "graphic:agp_java",
+    "utils:utils_java",
+  ]
+
+  classpath_deps = [
+    "//foundation/multimedia/image_standard/mock/java/src/ohos:mock_java",
+    "//foundation/multimedia/utils/java:multimedia_utils_java",
+    "//utils/java:utils_java",
+  ]
+
+  part_name = "multimedia_image"
+}
+
+ohos_maple_java("image_decode_maple_java") {
+  deps = [ ":image_decode_java" ]
+
+  subsystem_name = "multimedia"
+}
+
+java_library("image_receiver_java") {
+  java_files = [
+    "src/ohos/media/image_standard/common/Rect.java",
+    "src/ohos/media/image_standard/common/Size.java",
+    "src/ohos/media/image_standard/Image.java",
+    "src/ohos/media/image_standard/ImageReceiver.java",
+    "src/ohos/media/image_standard/common/ImageFormat.java",
+  ]
+
+  classpath_deps = [
+    "//foundation/multimedia/utils/java:multimedia_utils_java",
+    "//utils/java:utils_java",
+  ]
+
+  external_deps = [
+    "appexecfwk:eventhandler_java",
+    "graphic:agp_java",
+  ]
+  part_name = "multimedia_image"
+}
+
+ohos_maple_java("image_receiver_maple_java") {
+  deps = [
+    ":image_receiver_java",
+    "//foundation/multimedia/utils/java:multimedia_utils_maple_java",
+  ]
+
+  external_deps = [
+    "appexecfwk:eventhandler_java_maple",
+    "graphic:agp_maple_java",
+    "hilog:hilog_maple_java",
+  ]
+
+  subsystem_name = "multimedia"
+}

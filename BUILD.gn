@@ -1,0 +1,113 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#import("//build/config/ohos/rules.gni")
+import("//build/ohos.gni")
+
+#ohos_combine_jars("image_combine_java") {
+  # image
+#  deps = [
+#    "adapter/frameworks/bitmapconverter/java:imagesystemadapter_java",
+#    "adapter/frameworks/exif:image_exifadapter_java",
+#    "interfaces/kits/java:image_java",
+#    "interfaces/kits/java:image_receiver_java",
+#  ]
+
+#  if (is_double_framework && !mrt) {
+#    dex_path = "${target_out_dir}/image.z.jar"
+#  }
+
+#  subsystem_name = "multimedia"
+#  part_name = "multimedia_image"
+#}
+
+#ohos_maple_java("image_combine_maple_java") {
+#  deps = [ ":image_combine_java" ]
+
+#  if (is_double_framework) {
+#    aosp_deps = [ "maple:framework" ]
+#  }
+
+#  external_deps = [
+#    "ability:abilitykit_java_maple",
+#    "ans:intentagent_base_java_maple",
+#    "appexecfwk:abilityshell_java_maple",
+#    "appexecfwk:appexecfwk_base_java_maple",
+#    "appexecfwk:appexecfwk_java_maple",
+#    "appexecfwk:eventhandler_java_maple",
+#    "bytrace:bytrace_maple_java",
+#    "ces:commonevent_base_java_maple",
+#    "ces:commoneventkit_java_maple",
+#    "dmsadapter:uri_java_maple",
+#    "graphic:agp_maple_java",
+#    "graphic:agpwindowkit_maple_java",
+#    "graphic:surfaceviewadapter_maple_java",
+#    "hilog:hilog_maple_java",
+#    "intent:intent_java_maple",
+#    "ipc:ipc_maple_java",
+#    "ivicommon:drivingsafety_innerkit_maple_java",
+#    "location:locationkits_maple_java",
+#    "multimodalinput:mmi_event_maple_java",
+#    "multimodalinput:mmi_eventimpl_maple_java",
+#    "resmgr:kits_maple_java",
+#    "startup:syspara_maple_java",
+#    "utils:utils_java",
+#    "utils:utils_maple_java",
+#  ]
+
+#  so_name = "multimedia"
+
+#  subsystem_name = "multimedia"
+#}
+
+group("image_framework") {
+  deps = [
+#    "adapter/frameworks/bitmapconverter/native:bitmapconverter",
+    "frameworks/innerkitsimpl/utils:image_utils",
+    "interfaces/innerkits:image",
+    #"interfaces/kits/native:multimedia_target",
+  ]
+}
+
+group("plugins") {
+  deps = [
+    "plugins/common/libs:multimediaplugin",
+    "plugins/manager:pluginmanager",
+  ]
+
+}
+
+#group("image_test_list") {
+#  testonly = true
+
+  # image
+#  deps = [
+#    "adapter/frameworks/bitmapconverter/java/test:unittest",
+#    "frameworks/innerkitsimpl/test:unittest",
+#    "interfaces/kits/java/test:unittest",
+#    "interfaces/kits/native/test:unittest",
+#    "plugins/manager/test/unittest/common:unittest",
+#  ]
+#}
+#group("image_performance_test_list") {
+#  testonly = true
+#  deps = [ "interfaces/kits/java/test/:performance" ]
+#}
+
+config("media_config") {
+  defines = []
+  #if (current_cpu == "arm64" || (current_cpu == "arm" && arm_use_neon)) {
+  if (current_cpu == "arm64" || (current_cpu == "arm")) {
+    defines += [ "USE_NEON" ]
+  }
+}
