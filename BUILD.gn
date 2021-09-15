@@ -16,7 +16,6 @@ import("//build/ohos.gni")
 group("image_framework") {
   deps = [
     "frameworks/innerkitsimpl/utils:image_utils",
-    "interfaces/innerkits:image_native",
     "interfaces/innerkits:image",
     "interfaces/innerkits:image_native",
   ]
