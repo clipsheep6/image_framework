@@ -67,7 +67,7 @@ ohos_shared_library("jpegplugin") {
     include_dirs += [ "//utils/native/base/include" ]
     sources += [ "//foundation/multimedia/image_standard/plugins/common/libs/image/libjpegplugin/src/jpeg_encoder.cpp" ]
     deps = [
-      "//foundation/multimedia/image_standard/interfaces/innerkits:image",
+      "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//third_party/libjpeg:libjpeg_static",
       "//utils/native/base:utils",
