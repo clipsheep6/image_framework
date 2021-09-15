@@ -25,7 +25,7 @@ ohos_unittest("pixlmapndktest") {
   sources = [ "//foundation/multimedia/image_standard/interfaces/kits/native/test/unittest/pixel_map_ndk_test.cpp" ]
 
   deps = [
-    "//foundation/multimedia/image_standard/interfaces/innerkits:image",
+    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//foundation/multimedia/image_standard/interfaces/kits/native:multimedia_target",
     "//foundation/multimedia/image_standard/interfaces/kits/native/ndk_test_example:image_ndk_test_jni",
     "//third_party/googletest:gtest_main",
