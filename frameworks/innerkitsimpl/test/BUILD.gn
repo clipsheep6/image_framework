@@ -30,8 +30,7 @@ ohos_unittest("imagepixelmaptest") {
 
   deps = [
     #    "//foundation/multimedia/image_standard/adapter/frameworks/bitmapconverter/native:bitmapconverter",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-    "//foundation/multimedia/image_standard/interfaces/innerkits:image",
+    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//utils/native/base:utils",
@@ -102,7 +101,7 @@ ohos_unittest("imagesourcetest") {
   deps = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_standard/interfaces/innerkits:image",
+    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//utils/native/base:utils",
@@ -127,8 +126,7 @@ ohos_unittest("colorconvertertest") {
   sources = [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/test/unittest/color_converter_test.cpp" ]
 
   deps = [
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-    "//foundation/multimedia/image_standard/interfaces/innerkits:image",
+    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//utils/native/base:utils",
@@ -153,8 +151,7 @@ ohos_unittest("transformtest") {
   sources = [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/test/unittest/image_transform_test.cpp" ]
 
   deps = [
-    "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-    "//foundation/multimedia/image_standard/interfaces/innerkits:image",
+    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//utils/native/base:utils",
