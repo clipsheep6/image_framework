@@ -65,6 +65,51 @@ ohos_copy("image_declaration") {
 
 ohos_shared_library("image") {
   public_configs = [ ":image_external_config" ]
+  sources = [
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_source.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/matrix.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/scan_line_filter.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/buffer_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+
+    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
+  ]
+  deps = [
+    "//foundation/ace/napi:ace_napi",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
+    "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+    "//utils/native/base:utils",
+  ]
+
+  external_deps = [
+    "bytrace_standard:bytrace_core",
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+  ]
+  relative_install_dir = "module/multimedia"
+  subsystem_name = "multimedia"
+  part_name = "multimedia_image_standard"
+}
+
+ohos_shared_library("image_native") {
+  public_configs = [ ":image_external_config" ]
 
   sources = [
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
@@ -148,7 +193,46 @@ ohos_shared_library("image") {
       "ipc:ipc_core",
     ]
   }
-  relative_install_dir = "module/multimedia"
+
+  #  relative_install_dir = "module/multimedia"
+  subsystem_name = "multimedia"
+  part_name = "multimedia_image_standard"
+}
+ohos_static_library("image_static_napi") {
+  public_configs = [ ":image_external_config" ]
+
+  sources = [
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_source.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/matrix.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/scan_line_filter.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/buffer_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+
+    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
+  ]
+  deps = [
+    "//foundation/ace/napi:ace_napi",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
+    "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+    "//utils/native/base:utils",
+  ]
   subsystem_name = "multimedia"
   part_name = "multimedia_image_standard"
 }
