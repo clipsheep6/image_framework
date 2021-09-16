@@ -146,7 +146,8 @@ ohos_shared_library("pixelconvertadapter") {
 
     external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
   }
-  relative_install_dir = "module/multimedia"
+
+  #relative_install_dir = "module/multimedia"
   subsystem_name = "multimedia"
   part_name = "multimedia_image_standard"
 }
