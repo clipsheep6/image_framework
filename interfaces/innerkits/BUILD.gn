@@ -33,8 +33,7 @@ config("image_external_config") {
   ]
 
   if (use_mingw_win) {
-    include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
+    include_dirs += [ "//foundation/multimedia/image_standard/mock/native/include" ]
   } else if (use_clang_mac) {
     include_dirs += [
       "//foundation/multimedia/image_standard/mock/native/include",
@@ -53,17 +52,21 @@ config("image_external_config") {
 
 js_declaration("image_js") {
   part_name = "multimedia_image_standard"
-  sources = [ "//foundation/multimedia/image_standard/interfaces/kits/js/@ohos.multimedia.image.d.ts" ]
+  sources = [
+    "//foundation/multimedia/image_standard/interfaces/kits/js/@ohos.multimedia.image.d.ts",
+  ]
 }
 
 ohos_copy("image_declaration") {
-  sources = [ "//foundation/multimedia/image_standard/interfaces/kits/js/@ohos.multimedia.image.d.ts" ]
+  sources = [
+    "//foundation/multimedia/image_standard/interfaces/kits/js/@ohos.multimedia.image.d.ts",
+  ]
   outputs = [ target_out_dir + "/$target_name/" ]
   module_source_dir = target_out_dir + "/$target_name"
   module_install_name = ""
 }
 
-ohos_shared_library("image") {
+ohos_shared_library("image"){
   public_configs = [ ":image_external_config" ]
   sources = [
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
@@ -84,11 +87,11 @@ ohos_shared_library("image") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-
-    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
-    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
+    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
+    
   ]
   deps = [
     "//foundation/ace/napi:ace_napi",
@@ -99,14 +102,17 @@ ohos_shared_library("image") {
   ]
 
   external_deps = [
-    "bytrace_standard:bytrace_core",
-    "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
+       "bytrace_standard:bytrace_core",
+       "ipc:ipc_core",
+       "hiviewdfx_hilog_native:libhilog",
+
   ]
   relative_install_dir = "module/multimedia"
   subsystem_name = "multimedia"
   part_name = "multimedia_image_standard"
 }
+
+
 
 ohos_shared_library("image_native") {
   public_configs = [ ":image_external_config" ]
@@ -130,11 +136,10 @@ ohos_shared_library("image_native") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-
-    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
-    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
+    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
   ]
 
   if (use_mingw_win) {
@@ -188,17 +193,17 @@ ohos_shared_library("image_native") {
       ]
     }
     external_deps = [
-      "bytrace_standard:bytrace_core",
-      "hiviewdfx_hilog_native:libhilog",
-      "ipc:ipc_core",
+       "bytrace_standard:bytrace_core",
+       "ipc:ipc_core",
+       "hiviewdfx_hilog_native:libhilog",
+       
     ]
   }
-
-  #  relative_install_dir = "module/multimedia"
+#  relative_install_dir = "module/multimedia"
   subsystem_name = "multimedia"
   part_name = "multimedia_image_standard"
 }
-ohos_static_library("image_static_napi") {
+ohos_static_library("image_static_napi"){
   public_configs = [ ":image_external_config" ]
 
   sources = [
@@ -220,11 +225,10 @@ ohos_static_library("image_static_napi") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-
-    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
-    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
+    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
   ]
   deps = [
     "//foundation/ace/napi:ace_napi",
@@ -258,11 +262,10 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-
-    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
-    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
+    #"//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
   ]
 
   if (use_mingw_win) {

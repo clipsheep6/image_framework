@@ -29,7 +29,7 @@ ohos_unittest("imagepixelmaptest") {
   sources = [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/test/unittest/image_pixel_map_test.cpp" ]
 
   deps = [
-    #    "//foundation/multimedia/image_standard/adapter/frameworks/bitmapconverter/native:bitmapconverter",
+#    "//foundation/multimedia/image_standard/adapter/frameworks/bitmapconverter/native:bitmapconverter",
     "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
