@@ -22,27 +22,34 @@
 
 namespace OHOS {
 #define DECLARE_DELAYED_SINGLETON(MyClass) \
+do \
+{ \
 public: \
     ~MyClass(); \
 private: \
     friend DelayedSingleton<MyClass>; \
-    MyClass();
+    MyClass(); \
+} while (0)
 
 #define DECLARE_DELAYED_REF_SINGLETON(MyClass) \
+do \
+{ \
 private: \
     friend DelayedRefSingleton<MyClass>; \
     ~MyClass(); \
-    MyClass();
-
+    MyClass(); \
+} while (0)
 
 #define DECLARE_SINGLETON(MyClass) \
+do \
+{ \
 private: \
     friend Singleton<MyClass>; \
     MyClass& operator=(const MyClass&) = delete; \
     MyClass(const MyClass&) = delete; \
     MyClass(); \
-    ~MyClass();
-
+    ~MyClass(); \
+} while (0)
 
 template<typename T>
 class DelayedSingleton : public NoCopyable {

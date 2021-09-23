@@ -17,16 +17,25 @@
 #define UTILS_BASE_NOCOPYABLE_H
 namespace OHOS {
 #define DISALLOW_COPY_AND_MOVE(className) \
+do \
+{ \
     DISALLOW_COPY(className); \
-    DISALLOW_MOVE(className)
+    DISALLOW_MOVE(className); \
+} while (0)
 
 #define DISALLOW_COPY(className) \
+do \
+{ \
     className(const className&) = delete; \
-    className& operator= (const className&) = delete
+    className& operator= (const className&) = delete; \
+} while (0)
 
 #define DISALLOW_MOVE(className) \
+do \
+{ \
     className(className&&) = delete; \
-    className& operator= (className&&) = delete
+    className& operator= (className&&) = delete; \
+} while (0)
 class NoCopyable {
 protected:
     NoCopyable() {};

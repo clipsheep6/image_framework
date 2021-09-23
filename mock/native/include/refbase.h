@@ -389,7 +389,7 @@ inline sptr<T>::~sptr()
 }
 
 template<typename T>
-inline sptr<T>::sptr(WeakRefCounter *p, bool /* force */)
+inline sptr<T>::sptr(WeakRefCounter *p, bool/* force */)
 {
     if ((p != nullptr) && p->AttemptIncStrongRef(this)) {
         refs_ = reinterpret_cast<T *>(p->GetRefPtr());

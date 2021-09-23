@@ -59,16 +59,24 @@ public:
     virtual bool Seek(uint32_t position) = 0;
 
     // get inherited class type
-    virtual uint32_t GetStreamType() { return -1; }
+    virtual uint32_t GetStreamType() { 
+	    return -1;
+    }
 
     // get raw pointer for BUFFER TYPE
-    virtual uint8_t *GetDataPtr() { return nullptr; }
+    virtual uint8_t *GetDataPtr() {
+	    return nullptr;
+    }
 
     // whether the stream data is completed or not.
-    virtual bool IsStreamCompleted() { return true; }
+    virtual bool IsStreamCompleted() {
+	    return true;
+    }
 
     // get stream size
-    virtual size_t GetStreamSize() { return 0; }
+    virtual size_t GetStreamSize() {
+	    return 0;
+    }
 
     virtual ~InputDataStream() {}
 };
