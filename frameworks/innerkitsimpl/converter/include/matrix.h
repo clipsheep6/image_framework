@@ -108,7 +108,7 @@ public:
 
     constexpr Matrix(float sx, float kx, float tx, float ky, float sy, float ty, float p0, float p1, float p2,
                      uint32_t operType)
-        : fMat_{ sx, kx, tx, ky, sy, ty, p0, p1, p2 }, operType_(operType){};
+        : fMat_ { sx, kx, tx, ky, sy, ty, p0, p1, p2 }, operType_(operType){};
 
     ~Matrix() = default;
 
