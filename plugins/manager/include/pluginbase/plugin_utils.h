@@ -63,28 +63,4 @@ void PluginExternalStop() \
     PLUGIN_LOG_D("call PluginExternalStop() in package: %{public}s.", PACKAGE_NAME.c_str()); \
     return;                                                    \
 }
-
-#define PLUGIN_EXPORT_DEFAULT_EXTERNAL_CREATE() \
-OHOS::MultimediaPlugin::PluginClassBase *PluginExternalCreate(const std::string &className) \
-{                                               \
-    PLUGIN_LOG_D("PluginExternalCreate: create object for package: %{public}s, class: %{public}s.", \
-                 PACKAGE_NAME.c_str(), className.c_str()); \
-                                                \
-    auto iter = implClassMap.find(className);   \
-    if (iter == implClassMap.end()) {           \
-        PLUGIN_LOG_E("PluginExternalCreate: failed to find class: %{public}s, in package: %{public}s.", \
-                     className.c_str(), PACKAGE_NAME.c_str()); \
-        return nullptr;                         \
-    }                                           \
-                                                \
-    auto creator = iter->second;                \
-    if (creator == nullptr) {                   \
-        PLUGIN_LOG_E("PluginExternalCreate: null creator for class: %{public}s, in package: %{public}s.", \
-                     className.c_str(), PACKAGE_NAME.c_str()); \
-        return nullptr;                         \
-    }                                           \
-                                                \
-    return creator();                           \
-}
-
 #endif // PLUGIN_UTILS_H
