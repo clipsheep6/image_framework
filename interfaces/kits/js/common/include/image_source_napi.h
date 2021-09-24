@@ -35,14 +35,14 @@ private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
     static void Destructor(napi_env env, void *nativeObject, void *finalize);
 
-    //readonly property
+    // readonly property
     static napi_value GetSupportedFormats(napi_env env, napi_callback_info info);
 
-    //static methods
+    // static methods
     static napi_value CreateImageSource(napi_env env, napi_callback_info info);
     static napi_value CreateIncrementalSource(napi_env env, napi_callback_info info);
 
-    //methods
+    // methods
     static napi_value GetImageInfo(napi_env env, napi_callback_info info);
     static napi_value CreatePixelMap(napi_env env, napi_callback_info info);
     static napi_value GetImagePropertyInt(napi_env env, napi_callback_info info);
@@ -58,7 +58,6 @@ private:
     std::shared_ptr<ImageSource> nativeImgSrc = nullptr;
     bool isRelease = false;
 };
-
 } // namespace Media
 } // namespace OHOS
 #endif /* PIXEL_MAP_NAPI_H_ */

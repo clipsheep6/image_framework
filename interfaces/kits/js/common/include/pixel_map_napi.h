@@ -38,14 +38,14 @@ private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
     static void Destructor(napi_env env, void *nativeObject, void *finalize);
 
-    //readonly property
+    // readonly property
     static napi_value GetIsEditable(napi_env env, napi_callback_info info);
 
-    //static mothod
+    // static mothod
     static napi_value CreatePixelMap(napi_env env, napi_callback_info info);
     static void CreatePixelMapComplete(napi_env env, napi_status status, void *data);
 
-    //methods
+    // methods
     static napi_value ReadPixelsToBuffer(napi_env env, napi_callback_info info);
     static napi_value ReadPixels(napi_env env, napi_callback_info info);
     static napi_value WritePixels(napi_env env, napi_callback_info info);
@@ -56,7 +56,6 @@ private:
     static napi_value getPixelBytesCount(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
 
-
     static napi_ref sConstructor_;
     static std::shared_ptr<PixelMap> sPixelMap_;
 
@@ -65,7 +64,6 @@ private:
     std::shared_ptr<PixelMap> nativePixelMap_;
     bool isRelease = false;
 };
-
 } // namespace Media
 } // namespace OHOS
 #endif /* PIXEL_MAP_NAPI_H_ */
