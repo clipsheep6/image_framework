@@ -109,7 +109,6 @@ const int32_t ERR_MEDIA_NUMBER_OVERFLOW = BASE_MEDIA_ERR_OFFSET + 73;           
 const int32_t ERR_MEDIA_DIS_PLAYER_UNSUPPORTED = BASE_MEDIA_ERR_OFFSET + 74;  // media distribute player unsupporteded
 
 const int32_t ERR_MEDIA_UNKNOWN = BASE_MEDIA_ERR_OFFSET + 200;  // media unknown error
-
 }  // namespace Media
 }  // namespace OHOS
 #endif  // MEDIA_ERRORS_H
