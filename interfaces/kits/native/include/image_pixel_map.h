@@ -117,9 +117,6 @@ struct OhosPixelMapInfo {
  * @since 3
  * @version 1.0
  */
-/*
-int32_t GetImageInfo(JNIEnv *env, jobject pixelMapObject, OhosPixelMapInfo &info);
-*/
 /**
  * @brief Obtains the memory address of a given <b>PixelMap</b> object and locks the memory.
  *
@@ -136,9 +133,6 @@ int32_t GetImageInfo(JNIEnv *env, jobject pixelMapObject, OhosPixelMapInfo &info
  * @since 3
  * @version 1.0
  */
-/*
-int32_t AccessPixels(JNIEnv *env, jobject pixelMapObject, void **addrPtr);
-*/
 /**
  * @brief Unlocks the memory storing the pixel data of a given <b>PixelMap</b> to balance a successful call to {@link
  * AccessPixels}.
@@ -151,9 +145,6 @@ int32_t AccessPixels(JNIEnv *env, jobject pixelMapObject, void **addrPtr);
  * @since 3
  * @version 1.0
  */
-/*
-int32_t UnAccessPixels(JNIEnv *env, jobject pixelMapObject);
-*/
 
 #ifdef __cplusplus
 };
