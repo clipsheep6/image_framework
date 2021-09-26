@@ -45,13 +45,8 @@ template<class T> inline uint16_t GetInterfaceId()
 {
     return INVALID_IID;
 }
-
-#define DECLARE_INTERFACE(InterfaceType, interfaceID) \
-    template <>                                       \
-    inline uint16_t OHOS::MultimediaPlugin::GetInterfaceId<InterfaceType>()   \
-    {                                                 \
-        return interfaceID;                           \
-    }
+#define GET_INTERFACE_ID OHOS::MultimediaPlugin::GetInterfaceId
+#define DECLARE_INTERFACE(Type, ID) template<> inline uint16_t GET_INTERFACE_ID<Type>() { return ID; }
 } // namespace MultimediaPlugin
 } // namespace OHOS
 

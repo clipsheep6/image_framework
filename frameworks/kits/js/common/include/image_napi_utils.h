@@ -26,7 +26,7 @@
 #define IMG_NAPI_CHECK_RET_D(x, res, msg) \
 do \
 { \
-    if(!(x)) \
+    if (!(x)) \
     { \
         msg; \
         return (res); \
@@ -36,7 +36,7 @@ do \
 #define IMG_NAPI_CHECK_RET(x, res) \
 do \
 { \
-    if(!(x)) \
+    if (!(x)) \
     { \
         return (res); \
     } \
@@ -69,7 +69,7 @@ do \
     } \
 } while (0)
 
-#define IMG_ARRAY_SIZE(array) (sizeof(array)/sizeof((array)[0]))
+#define IMG_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
 #define GET_BUFFER_BY_NAME(root, name, res, len) ImageNapiUtils::GetBufferByName(env, (root), (name), &(res), &(len))
 #define GET_UINT32_BY_NAME(root, name, res) ImageNapiUtils::GetUint32ByName(env, (root), (name), &(res))
@@ -82,7 +82,6 @@ do \
 
 namespace OHOS {
 namespace Media {
-
 class ImageNapiUtils {
 public:
     static bool GetBufferByName(napi_env env, napi_value root, const char* name, void **res, size_t* len);

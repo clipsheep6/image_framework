@@ -52,7 +52,7 @@ private:
     std::atomic_uint writeWaitCount_;
 };
 
-template <typename RWLockable>
+template<typename RWLockable>
 class UniqueWriteGuard : NoCopyable {
 public:
     explicit UniqueWriteGuard(RWLockable &rwLockable)
@@ -74,7 +74,7 @@ private:
 };
 
 
-template <typename RWLockable>
+template<typename RWLockable>
 class UniqueReadGuard : NoCopyable {
 public:
     explicit UniqueReadGuard(RWLockable &rwLockable)
