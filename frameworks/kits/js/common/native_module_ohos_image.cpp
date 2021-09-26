@@ -43,7 +43,7 @@ static napi_module g_module = {
 /*
  * module register
  */
-extern "C" __attribute__((constructor)) void RegisterModule(void)
+extern "C" __attribute__((constructor)) void ImageRegisterModule(void)
 {
     napi_module_register(&g_module);
 }
