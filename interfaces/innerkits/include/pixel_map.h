@@ -18,7 +18,6 @@
 
 #include <memory>
 #include "image_type.h"
-#include "refbase.h"
 #include "parcel.h"
 
 namespace OHOS {
