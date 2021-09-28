@@ -64,6 +64,7 @@ Note:If the text contains special characters, please escape them according to th
         <filefilterlist>
             <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
                 <filteritem type="filepath" name="test/resource/.*" desc="Self-developed media test resource file."/>
+                <filteritem type="filepath" name="figures/.*" desc="architecture figure binary."/>
             </filefilter>
             <filefilter name="defaultPolicyFilter" desc="Filters for compatibility，license header policies">
             </filefilter>
