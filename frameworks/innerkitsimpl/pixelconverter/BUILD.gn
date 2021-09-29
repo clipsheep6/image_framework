@@ -144,6 +144,10 @@ ohos_shared_library("pixelconvertadapter") {
       "//utils/native/base:utils",
     ]
 
+    if ("${product_name}" == "rk3566" || "${product_name}" == "rk3568") {
+      deps += [ "//third_party/flutter:ace_gpu" ]
+    }
+
     external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
   }
 
