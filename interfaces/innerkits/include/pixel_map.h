@@ -167,11 +167,11 @@ private:
 
     static void ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size);
     static bool WriteImageData(Parcel &parcel, const void *data, size_t size);
-    static uint8_t *ReadImageData(Parcel &parcel, size_t size);
-
+    static uint8_t *ReadImageData(Parcel &parcel, int32_t size);
     static int ReadFileDescriptor(Parcel &parcel);
-
     static bool WriteFileDescriptor(Parcel &parcel, int fd);
+    bool ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo);
+    bool WriteImageInfo(Parcel &parcel) const;
 
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info

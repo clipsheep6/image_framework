@@ -27,6 +27,8 @@ static constexpr int32_t PIXEL_MAP_TEST_HEIGHT = 3;
 static constexpr int32_t PIXEL_MAP_RGB565_BYTE = 2;
 static constexpr int32_t PIXEL_MAP_RGB888_BYTE = 3;
 static constexpr int32_t PIXEL_MAP_ARGB8888_BYTE = 4;
+static constexpr int32_t PIXEL_MAP_BIG_TEST_WIDTH = 4 * 1024;
+static constexpr int32_t PIXEL_MAP_BIG_TEST_HEIGHT = 3 * 100;
 
 class ImagePixelMapTest : public testing::Test {
 public:
@@ -48,7 +50,13 @@ public:
 
         int32_t rowDataSize = pixelMapWidth;
         uint32_t bufferSize = rowDataSize * pixelMapHeight;
+        if (bufferSize <= 0) {
+            return nullptr;
+        }
         void *buffer = malloc(bufferSize);
+        if (buffer == nullptr) {
+            return nullptr;
+        }
         char *ch = (char *)buffer;
         for (unsigned int i = 0; i < bufferSize; i++) {
             *(ch++) = (char)i;
@@ -61,8 +69,8 @@ public:
 
     std::unique_ptr<PixelMap> ConstructBigPixmap()
     {
-        int32_t pixelMapWidth = 4 * 1024;
-        int32_t pixelMapHeight = 3 * 100;
+        int32_t pixelMapWidth = PIXEL_MAP_BIG_TEST_WIDTH;
+        int32_t pixelMapHeight = PIXEL_MAP_BIG_TEST_HEIGHT;
         std::unique_ptr<PixelMap> pixelMap = std::make_unique<PixelMap>();
         ImageInfo info;
         info.size.width = pixelMapWidth;
@@ -545,6 +553,7 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap013, TestSize.Level3)
 
     Parcel data;
     std::unique_ptr<PixelMap> pixelmap1 = ConstructBigPixmap();
+    EXPECT_NE(pixelmap1, nullptr);
     GTEST_LOG_(INFO) << "ImagePixelMap013 ConstructPixmap success";
     bool ret = pixelmap1.get()->Marshalling(data);
     GTEST_LOG_(INFO) << "ImagePixelMap013 Marshalling success";
@@ -561,10 +570,9 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap013, TestSize.Level3)
     EXPECT_EQ(pixelmap1->GetPixelFormat(), pixelmap2->GetPixelFormat());
     GTEST_LOG_(INFO) << "ImagePixelMap013 GetPixelFormat success";
     EXPECT_EQ(pixelmap1->GetColorSpace(), pixelmap2->GetColorSpace());
-    GTEST_LOG_(INFO) << "ImagePixelMap013 GetColorSpace success";  
+    GTEST_LOG_(INFO) << "ImagePixelMap013 GetColorSpace success";
     EXPECT_EQ(true, pixelmap1->IsSameImage(*pixelmap2));
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap013 end";
 }
-
 } // namespace Multimedia
 } // namespace OHOS

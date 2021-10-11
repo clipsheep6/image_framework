@@ -22,12 +22,10 @@
 #include "media_errors.h"
 #include "pixel_convert_adapter.h"
 #include "pixel_map_utils.h"
-#include "pixel_map_parcel.h"
 #include "post_proc.h"
 #include "parcel.h"
 #ifndef _WIN32
 #include "securec.h"
-#include "sys_binder.h"
 #include "ipc_file_descriptor.h"
 #else
 #include "memory.h"
@@ -48,6 +46,9 @@ constexpr uint8_t FOUR_BYTE_SHIFT = 2;
 constexpr uint8_t BGRA_ALPHA_INDEX = 3;
 constexpr uint8_t BGRA_BYTES = 4;
 constexpr uint8_t PER_PIXEL_LEN = 1;
+
+constexpr uint8_t FILL_NUMBER = 3;
+constexpr uint8_t ALIGN_NUMBER = 4;
 
 PixelMap::~PixelMap()
 {
@@ -213,6 +214,10 @@ unique_ptr<PixelMap> PixelMap::Create(const InitializationOptions &opts)
         return nullptr;
     }
     uint32_t bufferSize = dstPixelMap->GetByteCount();
+    if (bufferSize <= 0) {
+        HiLog::Error(LABEL, "calloc parameter bufferSize:[%{public}d] error.", bufferSize);
+        return nullptr;
+    }
     uint8_t *dstPixels = static_cast<uint8_t *>(calloc(bufferSize, 1));
     if (dstPixels == nullptr) {
         HiLog::Error(LABEL, "allocate memory size %{public}u fail", bufferSize);
@@ -311,6 +316,10 @@ bool PixelMap::SourceCropAndConvert(PixelMap &source, const ImageInfo &srcImageI
                                     const Rect &srcRect, PixelMap &dstPixelMap)
 {
     uint32_t bufferSize = dstPixelMap.GetByteCount();
+    if (bufferSize <= 0) {
+        HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
+        return false;
+    }
     void *dstPixels = malloc(bufferSize);
     if (dstPixels == nullptr) {
         HiLog::Error(LABEL, "allocate memory size %{public}u fail", bufferSize);
@@ -371,8 +380,12 @@ void PixelMap::InitDstImageInfo(const InitializationOptions &opts, const ImageIn
 bool PixelMap::CopyPixelMap(PixelMap &source, PixelMap &dstPixelMap)
 {
     uint32_t bufferSize = source.GetByteCount();
-    if (bufferSize == 0 || source.GetPixels() == nullptr) {
+    if (source.GetPixels() == nullptr) {
         HiLog::Error(LABEL, "source pixelMap data invalid");
+        return false;
+    }
+    if (bufferSize <= 0) {
+        HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
         return false;
     }
     uint8_t *dstPixels = static_cast<uint8_t *>(malloc(bufferSize));
@@ -472,7 +485,7 @@ uint32_t PixelMap::SetImageInfo(ImageInfo &info, bool isReused)
         return ERR_IMAGE_TOO_LARGE;
     }
     if (info.pixelFormat == PixelFormat::ALPHA_8) {
-        rowDataSize_ = pixelBytes_ * ((info.size.width + 3) / 4 * 4);
+        rowDataSize_ = pixelBytes_ * ((info.size.width + FILL_NUMBER) / ALIGN_NUMBER * ALIGN_NUMBER);
         HiLog::Info(LABEL, "ALPHA_8 rowDataSize_ %{public}d.", rowDataSize_);
     } else {
         rowDataSize_ = pixelBytes_ * info.size.width;
@@ -1079,13 +1092,6 @@ bool PixelMap::WriteImageData(Parcel &parcel, const void *data, size_t size)
         return false;
     }
 
-    // int dupFd = dup(fd);
-    // HiLog::Info(LABEL, "AshmemCreate dupFd:[%{public}d].", dupFd);
-
-    // if (dupFd < 0) {
-    //     return false;
-    // }
-    // HiLog::Info(LABEL, "AshmemCreate dupFd2:[%{public}d].", dupFd);
     if (!WriteFileDescriptor(parcel, fd)) {
         ::munmap(ptr, size);
         HiLog::Error(LABEL, "WriteImageData WriteFileDescriptor error");
@@ -1097,15 +1103,18 @@ bool PixelMap::WriteImageData(Parcel &parcel, const void *data, size_t size)
     return true;
 }
 
-uint8_t *PixelMap::ReadImageData(Parcel &parcel, size_t bufferSize)
+uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 {
     uint8_t *base = nullptr;
     int fd = -1;
     AllocatorType allocType = AllocatorType::HEAP_ALLOC;
-    HiLog::Info(LABEL, "ReadImageData bufferSize :[%{public}d]", bufferSize);
 
     if (static_cast<unsigned int>(bufferSize) <= MIN_IMAGEDATA_SIZE) {
         const uint8_t *ptr = parcel.ReadUnpadBuffer(bufferSize);
+        if (bufferSize <= 0) {
+            HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
+            return nullptr;
+        }
         base = static_cast<uint8_t *>(malloc(bufferSize));
         if (base == nullptr) {
             HiLog::Error(LABEL, "alloc output pixel memory size:[%{public}d] error.", bufferSize);
@@ -1121,22 +1130,18 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, size_t bufferSize)
 #if !defined(_WIN32) && !defined(_APPLE)
         allocType = AllocatorType::SHARE_MEM_ALLOC;
         fd = ReadFileDescriptor(parcel);
-        HiLog::Info(LABEL, "ReadImageData fd32 :[%{public}d]", fd);
         if (fd < 0) {
             HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
             return nullptr;
         }
-
-        // int ashmemSize = AshmemGetSize(fd);
-        // if (ashmemSize < 0 || size_t(ashmemSize) < bufferSize) {
-        //     // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
-        //     HiLog::Error(LABEL, "read ashmemSize :[%{public}d] error", ashmemSize);
-        //     return nullptr;
-        // }
         void *ptr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
         if (ptr == MAP_FAILED) {
             // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
             HiLog::Error(LABEL, "mmap error");
+            return nullptr;
+        }
+        if (bufferSize <= 0) {
+            HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
             return nullptr;
         }
         base = static_cast<uint8_t *>(malloc(bufferSize));
@@ -1184,6 +1189,35 @@ int PixelMap::ReadFileDescriptor(Parcel &parcel)
     return dup(fd);
 }
 
+bool PixelMap::WriteImageInfo(Parcel &parcel) const
+{
+    if (!parcel.WriteInt32(imageInfo_.size.width)) {
+        HiLog::Error(LABEL, "write image info width:[%{public}d] to parcel failed.", imageInfo_.size.width);
+        return false;
+    }
+    if (!parcel.WriteInt32(imageInfo_.size.height)) {
+        HiLog::Error(LABEL, "write image info height:[%{public}d] to parcel failed.", imageInfo_.size.height);
+        return false;
+    }
+    if (!parcel.WriteInt32(static_cast<int32_t>(imageInfo_.pixelFormat))) {
+        HiLog::Error(LABEL, "write image info pixel format:[%{public}d] to parcel failed.", imageInfo_.pixelFormat);
+        return false;
+    }
+    if (!parcel.WriteInt32(static_cast<int32_t>(imageInfo_.colorSpace))) {
+        HiLog::Error(LABEL, "write image info color space:[%{public}d] to parcel failed.", imageInfo_.colorSpace);
+        return false;
+    }
+    if (!parcel.WriteInt32(static_cast<int32_t>(imageInfo_.alphaType))) {
+        HiLog::Error(LABEL, "write image info alpha type:[%{public}d] to parcel failed.", imageInfo_.alphaType);
+        return false;
+    }
+    if (!parcel.WriteInt32(imageInfo_.baseDensity)) {
+        HiLog::Error(LABEL, "write image info base density:[%{public}d] to parcel failed.", imageInfo_.baseDensity);
+        return false;
+    }
+    return true;
+}
+
 bool PixelMap::Marshalling(Parcel &parcel) const
 {
     int32_t PIXEL_MAP_INFO_MAX_LENGTH = 128;
@@ -1194,30 +1228,12 @@ bool PixelMap::Marshalling(Parcel &parcel) const
         HiLog::Error(LABEL, "set parcel max capacity:[%{public}d] failed.", bufferSize + PIXEL_MAP_INFO_MAX_LENGTH);
         return false;
     }
-    if (!parcel.WriteInt32(imageInfo_.size.width)) {
-        HiLog::Error(LABEL, "write pixel map width:[%{public}d] to parcel failed.", imageInfo_.size.width);
+
+    if (!WriteImageInfo(parcel)) {
+        HiLog::Error(LABEL, "write image info to parcel failed.");
         return false;
     }
-    if (!parcel.WriteInt32(imageInfo_.size.height)) {
-        HiLog::Error(LABEL, "write pixel map height:[%{public}d] to parcel failed.", imageInfo_.size.height);
-        return false;
-    }
-    if (!parcel.WriteInt32(static_cast<int32_t>(imageInfo_.pixelFormat))) {
-        HiLog::Error(LABEL, "write pixel map pixel format:[%{public}d] to parcel failed.", imageInfo_.pixelFormat);
-        return false;
-    }
-    if (!parcel.WriteInt32(static_cast<int32_t>(imageInfo_.colorSpace))) {
-        HiLog::Error(LABEL, "write pixel map color space:[%{public}d] to parcel failed.", imageInfo_.colorSpace);
-        return false;
-    }
-    if (!parcel.WriteInt32(static_cast<int32_t>(imageInfo_.alphaType))) {
-        HiLog::Error(LABEL, "write pixel map alpha type:[%{public}d] to parcel failed.", imageInfo_.alphaType);
-        return false;
-    }
-    if (!parcel.WriteInt32(imageInfo_.baseDensity)) {
-        HiLog::Error(LABEL, "write pixel map base density:[%{public}d] to parcel failed.", imageInfo_.baseDensity);
-        return false;
-    }
+    
     if (!parcel.WriteInt32(static_cast<int32_t>(allocatorType_))) {
         HiLog::Error(LABEL, "write pixel map allocator type:[%{public}d] to parcel failed.",
                      allocatorType_);
@@ -1250,15 +1266,8 @@ bool PixelMap::Marshalling(Parcel &parcel) const
     return true;
 }
 
-PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
+bool PixelMap::ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo)
 {
-    PixelMap *pixelMap = new PixelMap();
-    if (pixelMap == nullptr) {
-        HiLog::Error(LABEL, "create pixelmap pointer fail");
-        return nullptr;
-    }
-
-    ImageInfo imgInfo;
     imgInfo.size.width = parcel.ReadInt32();
     HiLog::Debug(LABEL, "read pixel map width:[%{public}d] to parcel.", imgInfo.size.width);
     imgInfo.size.height = parcel.ReadInt32();
@@ -1270,6 +1279,23 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
     imgInfo.alphaType = static_cast<AlphaType>(parcel.ReadInt32());
     HiLog::Debug(LABEL, "read pixel map alphaType:[%{public}d] to parcel.", imgInfo.alphaType);
     imgInfo.baseDensity = parcel.ReadInt32();
+    return true;
+}
+
+PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
+{
+    PixelMap *pixelMap = new PixelMap();
+    if (pixelMap == nullptr) {
+        HiLog::Error(LABEL, "create pixelmap pointer fail");
+        return nullptr;
+    }
+
+    ImageInfo imgInfo;
+    if (!pixelMap->ReadImageInfo(parcel,imgInfo)) {
+        HiLog::Error(LABEL, "read imageInfo fail");
+        return nullptr;
+    }
+    
     AllocatorType allocType = static_cast<AllocatorType>(parcel.ReadInt32());
     int32_t bufferSize = parcel.ReadInt32();
     uint8_t *base = nullptr;
