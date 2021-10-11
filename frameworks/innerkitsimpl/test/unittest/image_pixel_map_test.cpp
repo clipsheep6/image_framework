@@ -58,6 +58,30 @@ public:
 
         return pixelMap;
     }
+
+    std::unique_ptr<PixelMap> ConstructBigPixmap()
+    {
+        int32_t pixelMapWidth = 4 * 1024;
+        int32_t pixelMapHeight = 3 * 100;
+        std::unique_ptr<PixelMap> pixelMap = std::make_unique<PixelMap>();
+        ImageInfo info;
+        info.size.width = pixelMapWidth;
+        info.size.height = pixelMapHeight;
+        info.pixelFormat = PixelFormat::RGB_888;
+        info.colorSpace = ColorSpace::SRGB;
+        pixelMap->SetImageInfo(info);
+
+        int32_t bufferSize = pixelMap->GetByteCount();
+        void *buffer = malloc(bufferSize);
+        char *ch = (char *)buffer;
+        for (int32_t i = 0; i < bufferSize; i++) {
+            *(ch++) = 'a';
+        }
+
+        pixelMap->SetPixelsAddr(buffer, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
+
+        return pixelMap;
+    }
 /**
  * @tc.name: ImagePixelMap001
  * @tc.desc: ALPHA_8 pixel format pixel map operation
@@ -469,22 +493,16 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap011, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap011 start";
 
     Parcel data;
-
     std::unique_ptr<PixelMap> pixelmap1 = ConstructPixmap();
-
     bool ret = pixelmap1.get()->Marshalling(data);
-
     EXPECT_EQ(true, ret);
 
     PixelMap *pixelmap2 = PixelMap::Unmarshalling(data);
-
     EXPECT_EQ(pixelmap1->GetHeight(), pixelmap2->GetHeight());
     EXPECT_EQ(pixelmap1->GetWidth(), pixelmap2->GetWidth());
     EXPECT_EQ(pixelmap1->GetPixelFormat(), pixelmap2->GetPixelFormat());
     EXPECT_EQ(pixelmap1->GetColorSpace(), pixelmap2->GetColorSpace());
-
     EXPECT_EQ(true, pixelmap1->IsSameImage(*pixelmap2));
-
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap011 end";
 }
 /**
@@ -513,5 +531,40 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap012, TestSize.Level3)
     EXPECT_EQ(newPixelMap, nullptr);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap012 end";
 }
+
+
+/**
+* @tc.name: ImagePixelMap013
+* @tc.desc: test CreateFromParcel
+* @tc.type: FUNC
+* @tc.require: AR000FTAMO
+*/
+HWTEST_F(ImagePixelMapTest, ImagePixelMap013, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap013 start";
+
+    Parcel data;
+    std::unique_ptr<PixelMap> pixelmap1 = ConstructBigPixmap();
+    GTEST_LOG_(INFO) << "ImagePixelMap013 ConstructPixmap success";
+    bool ret = pixelmap1.get()->Marshalling(data);
+    GTEST_LOG_(INFO) << "ImagePixelMap013 Marshalling success";
+    EXPECT_EQ(true, ret);
+
+    PixelMap *pixelmap2 = PixelMap::Unmarshalling(data);
+    GTEST_LOG_(INFO) << "ImagePixelMap013 Unmarshalling success";
+    GTEST_LOG_(INFO) << "ImagePixelMap013 pixelmap1 GetHeight :" << pixelmap1->GetHeight();
+    GTEST_LOG_(INFO) << "ImagePixelMap013 pixelmap2 GetHeight :" << pixelmap2->GetHeight();
+    EXPECT_EQ(pixelmap1->GetHeight(), pixelmap2->GetHeight());
+    GTEST_LOG_(INFO) << "ImagePixelMap013 GetHeight success";
+    EXPECT_EQ(pixelmap1->GetWidth(), pixelmap2->GetWidth());
+    GTEST_LOG_(INFO) << "ImagePixelMap013 GetWidth success";
+    EXPECT_EQ(pixelmap1->GetPixelFormat(), pixelmap2->GetPixelFormat());
+    GTEST_LOG_(INFO) << "ImagePixelMap013 GetPixelFormat success";
+    EXPECT_EQ(pixelmap1->GetColorSpace(), pixelmap2->GetColorSpace());
+    GTEST_LOG_(INFO) << "ImagePixelMap013 GetColorSpace success";  
+    EXPECT_EQ(true, pixelmap1->IsSameImage(*pixelmap2));
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap013 end";
+}
+
 } // namespace Multimedia
 } // namespace OHOS
