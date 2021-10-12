@@ -26,7 +26,6 @@
 #include "parcel.h"
 #ifndef _WIN32
 #include "securec.h"
-#include "ipc_file_descriptor.h"
 #else
 #include "memory.h"
 #endif
@@ -34,6 +33,7 @@
 #if !defined(_WIN32) && !defined(_APPLE)
 #include <sys/mman.h>
 #include "ashmem.h"
+#include "ipc_file_descriptor.h"
 #endif
 
 namespace OHOS {
@@ -1055,8 +1055,13 @@ void PixelMap::ReleaseMemory(AllocatorType allocType, void *addr, void *context,
     }
 }
 
-bool PixelMap::WriteImageData(Parcel &parcel, const void *data, size_t size)
+bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
 {
+    const uint8_t *data = data_;
+    if (data == nullptr) {
+        HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
+        return false;
+    }
     if (data == nullptr || size > MAX_IMAGEDATA_SIZE) {
         return false;
     }
@@ -1107,7 +1112,6 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 {
     uint8_t *base = nullptr;
     int fd = -1;
-    AllocatorType allocType = AllocatorType::HEAP_ALLOC;
 
     if (static_cast<unsigned int>(bufferSize) <= MIN_IMAGEDATA_SIZE) {
         const uint8_t *ptr = parcel.ReadUnpadBuffer(bufferSize);
@@ -1128,7 +1132,6 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
         }
     } else {
 #if !defined(_WIN32) && !defined(_APPLE)
-        allocType = AllocatorType::SHARE_MEM_ALLOC;
         fd = ReadFileDescriptor(parcel);
         if (fd < 0) {
             HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
@@ -1156,7 +1159,7 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
             return nullptr;
         }
 
-        ReleaseMemory(allocType, ptr, &fd, bufferSize);
+        ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, ptr, &fd, bufferSize);
 #endif
     }
     
@@ -1222,7 +1225,8 @@ bool PixelMap::Marshalling(Parcel &parcel) const
 {
     int32_t PIXEL_MAP_INFO_MAX_LENGTH = 128;
     int32_t bufferSize = rowDataSize_ * imageInfo_.size.height;
-
+    HiLog::Error(LABEL, "+++++++++++++++++bufferSize:[%{public}d]", bufferSize); 
+    HiLog::Error(LABEL, "+++++++++++++++++parcel.GetDataCapacity:[%{public}d]", parcel.GetDataCapacity()); 
     if (static_cast<size_t>(bufferSize + PIXEL_MAP_INFO_MAX_LENGTH) > parcel.GetDataCapacity() &&
         !parcel.SetDataCapacity(bufferSize + PIXEL_MAP_INFO_MAX_LENGTH)) {
         HiLog::Error(LABEL, "set parcel max capacity:[%{public}d] failed.", bufferSize + PIXEL_MAP_INFO_MAX_LENGTH);
@@ -1253,12 +1257,8 @@ bool PixelMap::Marshalling(Parcel &parcel) const
         }
 #endif
     } else {
-        const uint8_t *addr = data_;
-        if (addr == nullptr) {
-            HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
-            return false;
-        }
-        if (!WriteImageData(parcel, addr, bufferSize)) {
+        
+        if (!WriteImageData(parcel, bufferSize)) {
             HiLog::Error(LABEL, "write pixel map buffer to parcel failed.");
             return false;
         }
@@ -1286,12 +1286,11 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 {
     PixelMap *pixelMap = new PixelMap();
     if (pixelMap == nullptr) {
-        HiLog::Error(LABEL, "create pixelmap pointer fail");
         return nullptr;
     }
 
     ImageInfo imgInfo;
-    if (!pixelMap->ReadImageInfo(parcel,imgInfo)) {
+    if (!pixelMap->ReadImageInfo(parcel, imgInfo)) {
         HiLog::Error(LABEL, "read imageInfo fail");
         return nullptr;
     }
@@ -1307,7 +1306,6 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
             HiLog::Error(LABEL, "fd < 0");
             return nullptr;
         }
-        HiLog::Debug(LABEL, "ReadFileDescriptor fd %{public}d.", fd);
         void* ptr = ::mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (ptr == MAP_FAILED) {
             ::close(fd);
@@ -1316,7 +1314,6 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         }
         context = new int32_t();
         if (context == nullptr) {
-            HiLog::Error(LABEL, "alloc context error.");
             ::munmap(ptr, bufferSize);
             ::close(fd);
             return nullptr;

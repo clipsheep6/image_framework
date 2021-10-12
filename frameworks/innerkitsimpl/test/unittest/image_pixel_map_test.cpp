@@ -27,8 +27,8 @@ static constexpr int32_t PIXEL_MAP_TEST_HEIGHT = 3;
 static constexpr int32_t PIXEL_MAP_RGB565_BYTE = 2;
 static constexpr int32_t PIXEL_MAP_RGB888_BYTE = 3;
 static constexpr int32_t PIXEL_MAP_ARGB8888_BYTE = 4;
-static constexpr int32_t PIXEL_MAP_BIG_TEST_WIDTH = 4 * 1024;
-static constexpr int32_t PIXEL_MAP_BIG_TEST_HEIGHT = 3 * 100;
+constexpr int32_t PIXEL_MAP_BIG_TEST_WIDTH = 4 * 1024;
+constexpr int32_t PIXEL_MAP_BIG_TEST_HEIGHT = 3 * 100;
 
 class ImagePixelMapTest : public testing::Test {
 public:
@@ -80,7 +80,13 @@ public:
         pixelMap->SetImageInfo(info);
 
         int32_t bufferSize = pixelMap->GetByteCount();
+        if (bufferSize <= 0) {
+            return nullptr;
+        }
         void *buffer = malloc(bufferSize);
+        if (buffer == nullptr) {
+            return nullptr;
+        }
         char *ch = (char *)buffer;
         for (int32_t i = 0; i < bufferSize; i++) {
             *(ch++) = 'a';
