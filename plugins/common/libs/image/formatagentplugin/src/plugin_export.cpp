@@ -27,7 +27,9 @@
 #include "wbmp_format_agent.h"
 
 // plugin package name same as metadata.
-PLUGIN_EXPORT_REGISTER_PACKAGE("LibImageFormatAgent")
+namespace {
+    const std::string PACKAGE_NAME = ("LibImageFormatAgent");
+}
 
 // register implement classes of this plugin.
 PLUGIN_EXPORT_REGISTER_CLASS_BEGIN
