@@ -27,6 +27,7 @@ PLUGIN_EXPORT_REGISTER_CLASS_BEGIN
 PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::PngDecoder)
 PLUGIN_EXPORT_REGISTER_CLASS_END
 
+using std::string;
 using namespace OHOS::HiviewDFX;
 
 static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "LibPngPlugin" };
