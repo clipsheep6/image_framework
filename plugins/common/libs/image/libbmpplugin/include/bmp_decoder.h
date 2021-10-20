@@ -53,6 +53,7 @@ private:
     PlAlphaType ConvertToAlphaType(SkAlphaType alphaType);
     SkColorType ConvertToColorType(PlPixelFormat format, PlPixelFormat &outputFormat);
     uint32_t SetContextPixelsBuffer(uint64_t byteCount, DecodeContext &context);
+    uint32_t SetShareMemBuffer(uint64_t byteCount, DecodeContext &context);
     InputDataStream *stream_ = nullptr;
     std::unique_ptr<SkCodec> codec_ = nullptr;
     SkImageInfo info_;
