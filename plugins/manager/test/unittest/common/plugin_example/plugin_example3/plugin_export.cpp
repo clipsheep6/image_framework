@@ -22,7 +22,9 @@
 
 // this file shows how to easily write the plugin_export.cpp file using the code elements provided by plugin_utils.h.
 // but sometimes you may need to write this file directly, see plugin_example1.
-PLUGIN_EXPORT_REGISTER_PACKAGE("plugin_example3")
+namespace {
+    const std::string PACKAGE_NAME = ("plugin_example3");
+}
 
 // register implement classes of this plugin.
 PLUGIN_EXPORT_REGISTER_CLASS_BEGIN

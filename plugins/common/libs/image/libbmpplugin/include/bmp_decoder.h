@@ -18,7 +18,7 @@
 
 #include <cstdint>
 #include <string>
-#include "third_party/flutter/skia/include/codec/SkCodec.h"
+#include "SkCodec.h"
 #include "abs_image_decoder.h"
 #include "bmp_stream.h"
 #include "hilog/log.h"
@@ -39,7 +39,7 @@ enum class BmpDecodingState : int32_t {
 class BmpDecoder : public AbsImageDecoder, public OHOS::MultimediaPlugin::PluginClassBase {
 public:
     BmpDecoder() = default;
-    virtual ~BmpDecoder() override{};
+    virtual ~BmpDecoder() override {};
     void SetSource(InputDataStream &sourceStream) override;
     void Reset() override;
     uint32_t SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info) override;
@@ -52,6 +52,7 @@ private:
     bool DecodeHeader();
     PlAlphaType ConvertToAlphaType(SkAlphaType alphaType);
     SkColorType ConvertToColorType(PlPixelFormat format, PlPixelFormat &outputFormat);
+    uint32_t SetContextPixelsBuffer(uint64_t byteCount, DecodeContext &context);
     InputDataStream *stream_ = nullptr;
     std::unique_ptr<SkCodec> codec_ = nullptr;
     SkImageInfo info_;

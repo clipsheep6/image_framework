@@ -18,7 +18,7 @@
 
 #include <cstdint>
 #include <string>
-#include "third_party/flutter/skia/include/core/SkStream.h"
+#include "SkStream.h"
 #include "hilog/log.h"
 #include "input_data_stream.h"
 #include "log_tags.h"
@@ -30,7 +30,7 @@ class BmpStream : public SkStream {
 public:
     BmpStream() = default;
     explicit BmpStream(InputDataStream *stream);
-    virtual ~BmpStream() override{};
+    virtual ~BmpStream() override {};
     /**
      * Reads or skips size number of bytes.
      * if buffer is null, skip size bytes, return how many bytes skipped.

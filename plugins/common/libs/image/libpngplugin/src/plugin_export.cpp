@@ -20,7 +20,9 @@
 #include "png_decoder.h"
 
 // plugin package name same as metadata.
-PLUGIN_EXPORT_REGISTER_PACKAGE("LibPngPlugin")
+namespace {
+    const std::string PACKAGE_NAME = ("LibPngPlugin");
+}
 
 // register implement classes of this plugin.
 PLUGIN_EXPORT_REGISTER_CLASS_BEGIN

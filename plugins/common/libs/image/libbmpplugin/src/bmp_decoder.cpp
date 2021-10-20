@@ -100,6 +100,64 @@ uint32_t BmpDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     return SUCCESS;
 }
 
+uint32_t BmpDecoder::SetContextPixelsBuffer(uint64_t byteCount, DecodeContext &context)
+{
+    if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
+#if !defined(_WIN32) && !defined(_APPLE)
+        int fd = AshmemCreate("BMP RawData", byteCount);
+        if (fd < 0) {
+            return ERR_SHAMEM_DATA_ABNORMAL;
+        }
+        int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
+        if (result < 0) {
+            ::close(fd);
+            return ERR_SHAMEM_DATA_ABNORMAL;
+        }
+        void* ptr = ::mmap(nullptr, byteCount, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (ptr == MAP_FAILED) {
+            ::close(fd);
+            return ERR_SHAMEM_DATA_ABNORMAL;
+        }
+        context.pixelsBuffer.buffer = ptr;
+        void *fdBuffer = new int32_t();
+        if (fdBuffer == nullptr) {
+            ::munmap(ptr, byteCount);
+            ::close(fd);
+            context.pixelsBuffer.buffer = nullptr;
+            return ERR_SHAMEM_DATA_ABNORMAL;
+        }
+        *static_cast<int32_t *>(fdBuffer) = fd;
+        context.pixelsBuffer.context = fdBuffer;
+        context.pixelsBuffer.bufferSize = byteCount;
+        context.allocatorType = AllocatorType::SHARE_MEM_ALLOC;
+        context.freeFunc = nullptr;
+#endif
+    } else {
+        void *outputBuffer = malloc(byteCount);
+        if (outputBuffer == nullptr) {
+            HiLog::Error(LABEL, "Decode failed, alloc output buffer size:[%{public}llu] error",
+                         static_cast<unsigned long long>(byteCount));
+            return ERR_IMAGE_MALLOC_ABNORMAL;
+        }
+#ifdef _WIN32
+        memset(outputBuffer, 0, byteCount);
+#else
+        if (memset_s(outputBuffer, byteCount, 0, byteCount) != EOK) {
+            HiLog::Error(LABEL, "Decode failed, memset buffer failed");
+            free(outputBuffer);
+            outputBuffer = nullptr;
+            return ERR_IMAGE_DECODE_FAILED;
+        }
+#endif
+        context.pixelsBuffer.buffer = outputBuffer;
+        context.pixelsBuffer.bufferSize = byteCount;
+        context.pixelsBuffer.context = nullptr;
+        context.allocatorType = AllocatorType::HEAP_ALLOC;
+        context.freeFunc = nullptr;
+    }
+    return SUCCESS;
+}
+
 uint32_t BmpDecoder::Decode(uint32_t index, DecodeContext &context)
 {
     if (index >= BMP_IMAGE_NUM) {
@@ -123,59 +181,9 @@ uint32_t BmpDecoder::Decode(uint32_t index, DecodeContext &context)
     }
     if (context.pixelsBuffer.buffer == nullptr) {
         uint64_t byteCount = static_cast<uint64_t>(dstInfo.height()) * dstInfo.width() * dstInfo.bytesPerPixel();
-        if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
-#if !defined(_WIN32) && !defined(_APPLE)
-            int fd = AshmemCreate("BMP RawData", byteCount);
-            if (fd < 0) {
-                return ERR_SHAMEM_DATA_ABNORMAL;
-            }
-            int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
-            if (result < 0) {
-                ::close(fd);
-                return ERR_SHAMEM_DATA_ABNORMAL;
-            }
-            void* ptr = ::mmap(nullptr, byteCount, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-            if (ptr == MAP_FAILED) {
-                ::close(fd);
-                return ERR_SHAMEM_DATA_ABNORMAL;
-            }
-            context.pixelsBuffer.buffer = ptr;
-            void *fdBuffer = new int32_t();
-            if (fdBuffer == nullptr) {
-                HiLog::Error(LABEL, "new fdBuffer fail");
-                ::munmap(ptr, byteCount);
-                ::close(fd);
-                context.pixelsBuffer.buffer = nullptr;
-                return ERR_SHAMEM_DATA_ABNORMAL;
-            }
-            *static_cast<int32_t *>(fdBuffer) = fd;
-            context.pixelsBuffer.context = fdBuffer;
-            context.pixelsBuffer.bufferSize = byteCount;
-            context.allocatorType = AllocatorType::SHARE_MEM_ALLOC;
-            context.freeFunc = nullptr;
-#endif
-        } else {
-            void *outputBuffer = malloc(byteCount);
-            if (outputBuffer == nullptr) {
-                HiLog::Error(LABEL, "Decode failed, alloc output buffer size:[%{public}llu] error",
-                             static_cast<unsigned long long>(byteCount));
-                return ERR_IMAGE_MALLOC_ABNORMAL;
-            }
-#ifdef _WIN32
-        memset(outputBuffer, 0, byteCount);
-#else
-            if (memset_s(outputBuffer, byteCount, 0, byteCount) != EOK) {
-                HiLog::Error(LABEL, "Decode failed, memset buffer failed");
-                free(outputBuffer);
-                outputBuffer = nullptr;
-                return ERR_IMAGE_DECODE_FAILED;
-            }
-#endif
-            context.pixelsBuffer.buffer = outputBuffer;
-            context.pixelsBuffer.bufferSize = byteCount;
-            context.pixelsBuffer.context = nullptr;
-            context.allocatorType = AllocatorType::HEAP_ALLOC;
-            context.freeFunc = nullptr;
+        uint32_t res = SetContextPixelsBuffer(byteCount, context);
+        if (res != SUCCESS) {
+            return res;
         }
     }
     uint8_t *dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
