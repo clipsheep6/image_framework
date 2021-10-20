@@ -44,11 +44,11 @@ ohos_shared_library("bmpplugin") {
       "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config",
     ]
     deps = [
+      "//foundation/ace/ace_engine/build/third_party/flutter/skia:ace_skia_core",
       "//foundation/graphic/ide/libs/skia:skia",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
-      "//foundation/ace/ace_engine/build/third_party/flutter/skia:ace_skia_core",
     ]
 
     #libs = [ "//foundation/multimedia/image/libskia.lib" ]
@@ -72,13 +72,14 @@ ohos_shared_library("bmpplugin") {
   } else {
     include_dirs += [ "//utils/native/base/include" ]
     deps = [
+      "//foundation/ace/ace_engine/build/third_party/flutter/skia:ace_skia_ohos",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//utils/native/base:utils",
-      "//foundation/ace/ace_engine/build/third_party/flutter/skia:ace_skia_ohos",
     ]
 
     external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
     #aosp_deps = [ "shared_library:libhwui" ]
   }
   subsystem_name = "multimedia"
