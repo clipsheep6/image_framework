@@ -46,6 +46,8 @@ group("multimediaplugin") {
       "image/libpngplugin:pngpluginmetadata",
       "image/libwebpplugin:webpplugin",
       "image/libwebpplugin:webppluginmetadata",
+      "image/libbmpplugin:bmpplugin",
+      "image/libbmpplugin:bmppluginmetadata",
 
       #      "//foundation/multimedia/image_standard/adapter/frameworks/libhwjpegplugin:hwjpegplugin",
       #      "//foundation/multimedia/image_standard/adapter/frameworks/libhwjpegplugin:hwjpegpluginmetadata",
