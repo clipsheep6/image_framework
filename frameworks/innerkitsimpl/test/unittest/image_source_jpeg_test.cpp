@@ -34,9 +34,9 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL_TEST = {
     LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageSourceJpegTest"
 };
 static constexpr uint32_t DEFAULT_DELAY_UTIME = 10000;  // 10 ms.
-static const std::string IMAGE_INPUT_JPEG_PATH = "/sdcard/multimedia/image/test.jpg";
-static const std::string IMAGE_INPUT_HW_JPEG_PATH = "/sdcard/multimedia/image/test_hw.jpg";
-static const std::string IMAGE_INPUT_EXIF_JPEG_PATH = "/sdcard/multimedia/image/test_exif.jpg";
+static const std::string IMAGE_INPUT_JPEG_PATH = "sdcard/multimedia/image/test.jpg";
+static const std::string IMAGE_INPUT_HW_JPEG_PATH = "sdcard/multimedia/image/test_hw.jpg";
+static const std::string IMAGE_INPUT_EXIF_JPEG_PATH = "sdcard/multimedia/image/test_exif.jpg";
 static const std::string IMAGE_OUTPUT_JPEG_FILE_PATH = "/data/test/test_file.jpg";
 static const std::string IMAGE_OUTPUT_JPEG_BUFFER_PATH = "/data/test/test_buffer.jpg";
 static const std::string IMAGE_OUTPUT_JPEG_ISTREAM_PATH = "/data/test/test_istream.jpg";
@@ -48,6 +48,14 @@ static const std::string IMAGE_OUTPUT_JPEG_MULTI_INC1_PATH = "/data/test/test_in
 static const std::string IMAGE_OUTPUT_JPEG_MULTI_ONETIME1_PATH = "/data/test/test_onetime1.jpg";
 static const std::string IMAGE_OUTPUT_JPEG_MULTI_INC2_PATH = "/data/test/test_inc2.jpg";
 static const std::string IMAGE_OUTPUT_JPEG_MULTI_ONETIME2_PATH = "/data/test/test_onetime2.jpg";
+
+const std::string ORIENTATION = "Orientation";
+const std::string IMAGE_HEIGHT = "ImageHeight";
+const std::string IMAGE_WIDTH = "ImageWidth";
+const std::string GPS_LATITUDE = "GPSLatitude";
+const std::string GPS_LONGITUDE = "GPSLongitude";
+const std::string GPS_LATITUDE_REF = "GPSLatitudeRef";
+const std::string GPS_LONGITUDE_REF = "GPSLongitudeRef";
 
 int64_t PackImage(const std::string &filePath, std::unique_ptr<PixelMap> pixelMap);
 bool ReadFileToBuffer(const std::string &filePath, uint8_t *buffer, size_t bufferSize);
@@ -509,7 +517,7 @@ HWTEST_F(ImageSourceJpegTest, JpgImageCrop001, TestSize.Level3)
      * @tc.expected: step1. create jpg image source success.
      */
     std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
-    fs->open("/sdcard/multimedia/image/test.jpg", std::fstream::binary | std::fstream::in);
+    fs->open("sdcard/multimedia/image/test.jpg", std::fstream::binary | std::fstream::in);
     bool isOpen = fs->is_open();
     ASSERT_EQ(isOpen, true);
     uint32_t errorCode = 0;
@@ -570,4 +578,90 @@ HWTEST_F(ImageSourceJpegTest, JpegImageHwDecode001, TestSize.Level3)
      */
     int64_t packSize = PackImage(IMAGE_OUTPUT_HW_JPEG_FILE_PATH, std::move(pixelMap));
     ASSERT_NE(packSize, 0);
+}
+
+/**
+ * @tc.name: JpegImageDecode011
+ * @tc.desc: Obtains the integer value of a specified property key.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceJpegTest, JpegImageDecode011, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg file path.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_EXIF_JPEG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. Obtains the integer value of a specified property key for an image at the given index in the ImageSource.
+     * @tc.expected: step2. Obtains property success.
+     */
+    int32_t value = 0;;
+    errorCode = imageSource->GetImagePropertyInt(0, ORIENTATION, value);
+    HiLog::Debug(LABEL_TEST, "ORIENTATION is %{public}d.", value);
+    ASSERT_EQ(errorCode, SUCCESS);
+
+    errorCode = imageSource->GetImagePropertyInt(0, IMAGE_HEIGHT, value);
+    HiLog::Debug(LABEL_TEST, "IMAGE_HEIGHT is %{public}d.", value);
+    ASSERT_EQ(errorCode, SUCCESS);
+
+    errorCode = imageSource->GetImagePropertyInt(0, IMAGE_WIDTH, value);
+    HiLog::Debug(LABEL_TEST, "IMAGE_WIDTH is %{public}d.", value);
+    ASSERT_EQ(errorCode, SUCCESS);
+    /**
+     * @tc.steps: step3. Obtains the integer value of a specified property key for an image at the given index in the ImageSource.
+     * @tc.expected: step3. Obtains property return ERR_IMAGE_INVALID_PARAMETER error.
+     */
+    errorCode = imageSource->GetImagePropertyInt(0, GPS_LATITUDE, value);
+    ASSERT_EQ(errorCode, ERR_IMAGE_INVALID_PARAMETER);
+}
+
+/**
+ * @tc.name: JpegImageDecode012
+ * @tc.desc: Obtains the string value of a specified image property key.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceJpegTest, JpegImageDecode012, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg file path.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_EXIF_JPEG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. Obtains the string value of a specified image property key.
+     * @tc.expected: step2. Obtains property success.
+     */
+    std::string strValue;
+    errorCode = imageSource->GetImagePropertyString(0, GPS_LATITUDE, strValue);
+    HiLog::Debug(LABEL_TEST, "GPS_LATITUDE is %{public}s.", strValue.c_str());
+    ASSERT_EQ(errorCode, SUCCESS);
+
+    errorCode = imageSource->GetImagePropertyString(0, GPS_LONGITUDE, strValue);
+    HiLog::Debug(LABEL_TEST, "GPS_LONGITUDE is %{public}s.", strValue.c_str());
+    ASSERT_EQ(errorCode, SUCCESS);
+
+    errorCode = imageSource->GetImagePropertyString(0, GPS_LATITUDE_REF, strValue);
+    HiLog::Debug(LABEL_TEST, "GPS_LATITUDE_REF is %{public}s.", strValue.c_str());
+    ASSERT_EQ(errorCode, SUCCESS);
+
+    errorCode = imageSource->GetImagePropertyString(0, GPS_LONGITUDE_REF, strValue);
+    HiLog::Debug(LABEL_TEST, "GPS_LONGITUDE_REF is %{public}s.", strValue.c_str());
+    ASSERT_EQ(errorCode, SUCCESS);
+    /**
+     * @tc.steps: step3. Obtains the string value of a specified image property key.
+     * @tc.expected: step3. Obtains property return ERR_IMAGE_INVALID_PARAMETER error.
+     */
+    errorCode = imageSource->GetImagePropertyString(0, ORIENTATION, strValue);
+    ASSERT_EQ(errorCode, ERR_IMAGE_INVALID_PARAMETER);
 }

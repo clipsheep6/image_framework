@@ -46,6 +46,14 @@ constexpr uint8_t JPG_MARKER_RSTN = 0XD7;
 constexpr uint8_t JPG_MARKER_APP = 0XE0;
 constexpr uint8_t JPG_MARKER_APP0 = 0XE0;
 constexpr uint8_t JPG_MARKER_APPN = 0XEF;
+const std::string BITS_PER_SAMPLE = "BitsPerSample";
+const std::string ORIENTATION = "Orientation";
+const std::string IMAGE_HEIGHT = "ImageHeight";
+const std::string IMAGE_WIDTH = "ImageWidth";
+const std::string GPS_LATITUDE = "GPSLatitude";
+const std::string GPS_LONGITUDE = "GPSLongitude";
+const std::string GPS_LATITUDE_REF = "GPSLatitudeRef";
+const std::string GPS_LONGITUDE_REF = "GPSLongitudeRef";
 } // namespace
 
 PluginServer &JpegDecoder::pluginServer_ = DelayedRefSingleton<PluginServer>::GetInstance();
@@ -95,6 +103,88 @@ void JpegDecoder::SetSource(InputDataStream &sourceStream)
 {
     srcMgr_.inputStream = &sourceStream;
     state_ = JpegDecodingState::SOURCE_INITED;
+    HiLog::Error(LABEL, "SetSource ExifPrintMethod");
+    ExifPrintMethod();
+}
+
+int JpegDecoder::ExifPrintMethod() 
+{
+    HiLog::Debug(LABEL, "ExifPrintMethod enter");
+    // Read the JPEG file into a buffer
+    //FILE *fp = fopen(argv[1], "rb");
+    //if (!fp) { 
+    //  HiLog::Error(LABEL, "Can't open file.\n"); 
+    //  return -1; 
+    //}
+    //fseek(fp, 0, SEEK_END);
+    srcMgr_.inputStream->Seek(0);
+    unsigned long fsize = 0;
+    fsize = static_cast<unsigned long>(srcMgr_.inputStream->GetStreamSize());
+    unsigned char *buf = new unsigned char[fsize];
+    uint32_t readSize = 0;
+    srcMgr_.inputStream->Read(fsize, buf, fsize, readSize);
+    HiLog::Debug(LABEL, "parsing EXIF: fsize %{public}lu", fsize);
+    HiLog::Debug(LABEL, "parsing EXIF: readSize %{public}u", readSize);
+//    if (readSize != MARKER_SIZE) {
+//       return false;
+//    }
+//   unsigned long fsize = ftell(fp);
+//   rewind(fp);
+//   unsigned char *buf = new unsigned char[fsize];
+//   if (fread(buf, 1, fsize, fp) != fsize) {
+//     HiLog::Error(LABEL, "Can't read file.\n");
+//     delete[] buf;
+//     return -2;
+//   }
+//   fclose(fp);
+
+  // Parse EXIF
+  // EXIFInfo result;
+  int code = exifInfo_.ParseFrom(buf, fsize);
+  delete[] buf;
+  if (code) {
+    HiLog::Error(LABEL, "Error parsing EXIF: code %{public}d", code);
+    return -3;
+  }
+
+  // Dump EXIF information
+  HiLog::Error(LABEL, "Camera make       : %{public}s\n", exifInfo_.Make.c_str());
+  HiLog::Error(LABEL, "Camera model      : %{public}s\n", exifInfo_.Model.c_str());
+  HiLog::Error(LABEL, "Software          : %{public}s\n", exifInfo_.Software.c_str());
+  HiLog::Error(LABEL, "Bits per sample   : %{public}d\n", exifInfo_.BitsPerSample);
+  HiLog::Error(LABEL, "Image width       : %{public}d\n", exifInfo_.ImageWidth);
+  HiLog::Error(LABEL, "Image height      : %{public}d\n", exifInfo_.ImageHeight);
+  HiLog::Error(LABEL, "Image description : %{public}s\n", exifInfo_.ImageDescription.c_str());
+  HiLog::Error(LABEL, "Image orientation : %{public}d\n", exifInfo_.Orientation);
+  HiLog::Error(LABEL, "Image copyright   : %{public}s\n", exifInfo_.Copyright.c_str());
+  HiLog::Error(LABEL, "Image date/time   : %{public}s\n", exifInfo_.DateTime.c_str());
+  HiLog::Error(LABEL, "Original date/time: %{public}s\n", exifInfo_.DateTimeOriginal.c_str());
+  HiLog::Error(LABEL, "Digitize date/time: %{public}s\n", exifInfo_.DateTimeDigitized.c_str());
+  HiLog::Error(LABEL, "Subsecond time    : %{public}s\n", exifInfo_.SubSecTimeOriginal.c_str());
+  HiLog::Error(LABEL, "Exposure time     : 1/%{public}d s\n", (unsigned) (1.0/exifInfo_.ExposureTime));
+  HiLog::Error(LABEL, "F-stop            : f/%.1f\n", exifInfo_.FNumber);
+  HiLog::Error(LABEL, "ISO speed         : %{public}d\n", exifInfo_.ISOSpeedRatings);
+  HiLog::Error(LABEL, "Subject distance  : %{public}f m\n", exifInfo_.SubjectDistance);
+  HiLog::Error(LABEL, "Exposure bias     : %{public}f EV\n", exifInfo_.ExposureBiasValue);
+  HiLog::Error(LABEL, "Flash used?       : %{public}d\n", exifInfo_.Flash);
+  HiLog::Error(LABEL, "Metering mode     : %{public}d\n", exifInfo_.MeteringMode);
+  HiLog::Error(LABEL, "Lens focal length : %{public}f mm\n", exifInfo_.FocalLength);
+  HiLog::Error(LABEL, "35mm focal length : %{public}u mm\n", exifInfo_.FocalLengthIn35mm);
+  HiLog::Error(LABEL, "GPS Latitude      : %{public}f deg (%{public}f deg, %{public}f min, %{public}f sec %{public}c)\n", 
+          exifInfo_.GeoLocation.Latitude,
+          exifInfo_.GeoLocation.LatComponents.degrees,
+          exifInfo_.GeoLocation.LatComponents.minutes,
+          exifInfo_.GeoLocation.LatComponents.seconds,
+          exifInfo_.GeoLocation.LatComponents.direction);
+  HiLog::Error(LABEL, "GPS Longitude     : %{public}f deg (%{public}f deg, %{public}f min, %{public}f sec %{public}c)\n", 
+          exifInfo_.GeoLocation.Longitude,
+          exifInfo_.GeoLocation.LonComponents.degrees,
+          exifInfo_.GeoLocation.LonComponents.minutes,
+          exifInfo_.GeoLocation.LonComponents.seconds,
+          exifInfo_.GeoLocation.LonComponents.direction);
+  HiLog::Error(LABEL, "GPS Altitude      : %{public}f m\n", exifInfo_.GeoLocation.Altitude);
+  HiLog::Error(LABEL, "ExifPrintMethod exit");
+  return 0;
 }
 
 uint32_t JpegDecoder::GetImageSize(uint32_t index, PlSize &size)
@@ -529,5 +619,49 @@ uint32_t JpegDecoder::StartDecompress(const PixelDecodeOptions &opts)
     streamPosition_ = srcMgr_.inputStream->Tell();
     return Media::SUCCESS;
 }
+
+uint32_t JpegDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
+{
+    HiLog::Error(LABEL, "[GetImagePropertyInt] enter jped plugin, key:%{public}s", key.c_str());
+
+    if (key == ORIENTATION) {
+        value = exifInfo_.Orientation;
+    } else if (key == IMAGE_HEIGHT) {
+        value = exifInfo_.ImageHeight;
+    } else if (key == IMAGE_WIDTH) {
+        value = exifInfo_.ImageWidth;
+    } else {
+        HiLog::Error(LABEL, "[GetImagePropertyInt]key(%{public}s) not supported", key.c_str());
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    return Media::SUCCESS;
+}
+
+uint32_t JpegDecoder::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
+{
+    HiLog::Error(LABEL, "[GetImagePropertyInt] enter jped plugin, key:%{public}s", key.c_str());
+    // uint32_t errorCode = CheckIndex(0);
+    // if (errorCode != SUCCESS) {
+    //     HiLog::Error(LABEL, "[GetImagePropertyInt]index %{public}u is invalid", index);
+    //     return errorCode;
+    // }
+
+    if (key == GPS_LATITUDE) {
+        value = DoubleToString(exifInfo_.GeoLocation.Latitude);
+    } else if (key == GPS_LONGITUDE) {
+        value = DoubleToString(exifInfo_.GeoLocation.Longitude);
+    } else if (key == GPS_LATITUDE_REF) {
+        value = exifInfo_.GeoLocation.LatComponents.direction;
+    } else if (key == GPS_LONGITUDE_REF) {
+        value = exifInfo_.GeoLocation.LonComponents.direction;
+    } else {
+        HiLog::Error(LABEL, "[GetImagePropertyInt]key(%{public}s) not supported", key.c_str());
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    return Media::SUCCESS;
+}
+
 } // namespace ImagePlugin
 } // namespace OHOS
