@@ -19,6 +19,7 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <cstdint>
+#include <string>
 #include "hilog/log.h"
 #include "input_data_stream.h"
 #include "jerror.h"
@@ -74,6 +75,7 @@ void TermSrcStream(j_decompress_ptr dinfo);
 void InitDstStream(j_compress_ptr cinfo);
 boolean EmptyOutputBuffer(j_compress_ptr cinfo);
 void TermDstStream(j_compress_ptr cinfo);
+std::string DoubleToString(double num);
 } // namespace ImagePlugin
 } // namespace OHOS
 

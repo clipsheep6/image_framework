@@ -527,6 +527,25 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
     return SUCCESS;
 }
 
+uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
+{
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    uint32_t ret;
+    auto iter = GetValidImageStatus(0, ret);
+    if (iter == imageStatusMap_.end()) {
+        IMAGE_LOGE("[ImageSource]get valid image status fail on get image property, ret:%{public}u.", ret);
+        return ret;
+    }
+
+    ret = mainDecoder_->GetImagePropertyString(index, key, value);
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("[ImageSource] GetImagePropertyInt fail, ret:%{public}u", ret);
+        return ret;
+    }
+
+    return SUCCESS;
+}
+
 const SourceInfo &ImageSource::GetSourceInfo(uint32_t &errorCode)
 {
     std::lock_guard<std::mutex> guard(decodingMutex_);
@@ -853,6 +872,7 @@ uint32_t ImageSource::DecodeImageInfo(uint32_t index, ImageStatusMap::iterator &
         IMAGE_LOGE("[ImageSource]get image size, image decode plugin is null.");
         return ERR_IMAGE_PLUGIN_CREATE_FAILED;
     }
+    
     ImagePlugin::PlSize size;
     ret = mainDecoder_->GetImageSize(index, size);
     if (ret == SUCCESS) {

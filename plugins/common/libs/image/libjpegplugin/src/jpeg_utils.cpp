@@ -190,5 +190,14 @@ void TermDstStream(j_compress_ptr cinfo)
     }
     dest->outputStream->Flush();
 }
+
+
+std::string DoubleToString(double num)
+{
+    char str[256];
+    sprintf(str, "%lf", num);
+    std::string result = str;
+    return result;
+}
 } // namespace ImagePlugin
 } // namespace OHOS

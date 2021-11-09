@@ -29,7 +29,7 @@ using namespace testing::ext;
 using namespace OHOS::Media;
 using namespace OHOS::HiviewDFX;
 
-static const std::string IMAGE_INPUT_DNG_PATH = "/sdcard/multimedia/image/test.dng";
+static const std::string IMAGE_INPUT_DNG_PATH = "sdcard/multimedia/image/test.dng";
 static const std::string IMAGE_OUTPUT_DNG_FILE_PATH = "/data/test/test_raw_file.jpg";
 
 class ImageSourceRawTest : public testing::Test {

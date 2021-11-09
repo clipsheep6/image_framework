@@ -28,7 +28,7 @@ using namespace testing::ext;
 using namespace OHOS::Media;
 using namespace OHOS::HiviewDFX;
 
-static const std::string IMAGE_INPUT_BMP_PATH = "/sdcard/multimedia/image/test.bmp";
+static const std::string IMAGE_INPUT_BMP_PATH = "sdcard/multimedia/image/test.bmp";
 static const std::string IMAGE_OUTPUT_BMP_FILE_PATH = "/data/test/test_bmp_file.jpg";
 
 int64_t PackImage(const std::string &filePath, std::unique_ptr<PixelMap> pixelMap);

@@ -26,6 +26,7 @@
 #include "log_tags.h"
 #include "plugin_class_base.h"
 #include "plugin_server.h"
+#include "exif.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -50,9 +51,11 @@ public:
     uint32_t Decode(uint32_t index, DecodeContext &context) override;
     uint32_t GetImageSize(uint32_t index, PlSize &size) override;
     uint32_t PromoteIncrementalDecode(uint32_t index, ProgDecodeContext &context) override;
-
+    uint32_t GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value) override;
+    uint32_t GetImagePropertyString(uint32_t index, const std::string &key, std::string &value) override;
 private:
     DISALLOW_COPY_AND_MOVE(JpegDecoder);
+    int ExifPrintMethod();
     J_COLOR_SPACE GetDecodeFormat(PlPixelFormat format, PlPixelFormat &outputFormat);
     void CreateHwDecompressor();
     uint32_t DoSwDecode(DecodeContext &context);
@@ -73,6 +76,7 @@ private:
     uint32_t streamPosition_ = 0;  // may be changed by other decoders, record it and restore if needed.
     PlPixelFormat outputFormat_ = PlPixelFormat::UNKNOWN;
     PixelDecodeOptions opts_;
+    EXIFInfo exifInfo_;
 };
 } // namespace ImagePlugin
 } // namespace OHOS
