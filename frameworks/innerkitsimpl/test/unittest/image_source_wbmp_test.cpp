@@ -30,7 +30,7 @@ using namespace testing::ext;
 using namespace OHOS::Media;
 using namespace OHOS::HiviewDFX;
 
-static const std::string IMAGE_INPUT_WBMP_PATH = "/sdcard/multimedia/image/test.wbmp";
+static const std::string IMAGE_INPUT_WBMP_PATH = "sdcard/multimedia/image/test.wbmp";
 
 class ImageSourceWbmpTest : public testing::Test {
 public:
