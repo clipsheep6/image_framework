@@ -66,8 +66,7 @@ static PixelFormat ParsePixlForamt(int32_t val)
 
 static AlphaType ParseAlphaType(int32_t val)
 {
-    if(val <= static_cast<int32_t>(AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL))
-    {
+    if (val <= static_cast<int32_t>(AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL)) {
         return AlphaType(val);
     }
 
@@ -77,8 +76,7 @@ static AlphaType ParseAlphaType(int32_t val)
 
 static ScaleMode ParseScaleMode(int32_t val)
 {
-    if(val <= static_cast<int32_t>(ScaleMode::CENTER_CROP))
-    {
+    if (val <= static_cast<int32_t>(ScaleMode::CENTER_CROP)) {
         return ScaleMode(val);
     }
 
@@ -87,13 +85,11 @@ static ScaleMode ParseScaleMode(int32_t val)
 
 static bool parseSize(napi_env env, napi_value root, Size* size)
 {
-    if(!GET_INT32_BY_NAME(root, "height", size->height))
-    {
+    if (!GET_INT32_BY_NAME(root, "height", size->height)) {
         return false;
     }
 
-    if(!GET_INT32_BY_NAME(root, "width", size->width))
-    {
+    if (!GET_INT32_BY_NAME(root, "width", size->width)) {
         return false;
     }
 
@@ -105,39 +101,33 @@ static bool parseInitializationOptions(napi_env env, napi_value root, Initializa
     uint32_t tmpNumber = 0;
     napi_value tmpValue = nullptr;
 
-    if(!GET_BOOL_BY_NAME(root, "editable", opts->editable))
-    {
+    if (!GET_BOOL_BY_NAME(root, "editable", opts->editable)) {
         return false;
     }
 
-    if(!GET_UINT32_BY_NAME(root, "alphaType", tmpNumber))
-    {
+    if (!GET_UINT32_BY_NAME(root, "alphaType", tmpNumber)) {
         return false;
     }
     opts->alphaType = ParseAlphaType(tmpNumber);
 
     tmpNumber = 0;
-    if(!GET_UINT32_BY_NAME(root, "pixelFormat", tmpNumber))
-    {
+    if (!GET_UINT32_BY_NAME(root, "pixelFormat", tmpNumber)) {
         return false;
     }
     opts->pixelFormat = ParsePixlForamt(tmpNumber);
     
 
     tmpNumber = 0;
-    if(!GET_UINT32_BY_NAME(root, "scaleMode", tmpNumber))
-    {
+    if (!GET_UINT32_BY_NAME(root, "scaleMode", tmpNumber)) {
         return false;
     }
     opts->scaleMode = ParseScaleMode(tmpNumber);
     
-    if(!GET_NODE_BY_NAME(root, "size", tmpValue))
-    {
+    if (!GET_NODE_BY_NAME(root, "size", tmpValue)) {
         return false;
     }
     
-    if(!parseSize(env, tmpValue, &(opts->size)))
-    {
+    if (!parseSize(env, tmpValue, &(opts->size))) {
         return false;
     }
     return true;
@@ -147,28 +137,23 @@ static bool parseRegion(napi_env env, napi_value root, Rect* region)
 {
     napi_value tmpValue = nullptr;
 
-    if(!GET_INT32_BY_NAME(root, "x", region->left))
-    {
+    if (!GET_INT32_BY_NAME(root, "x", region->left)) {
         return false;
     }
 
-    if(!GET_INT32_BY_NAME(root, "y", region->top))
-    {
+    if (!GET_INT32_BY_NAME(root, "y", region->top)) {
         return false;
     }
 
-    if(!GET_NODE_BY_NAME(root, "size", tmpValue))
-    {
+    if (!GET_NODE_BY_NAME(root, "size", tmpValue)) {
         return false;
     }
 
-    if(!GET_INT32_BY_NAME(tmpValue, "height", region->height))
-    {
+    if (!GET_INT32_BY_NAME(tmpValue, "height", region->height)) {
         return false;
     }
 
-    if(!GET_INT32_BY_NAME(tmpValue, "width", region->width))
-    {
+    if (!GET_INT32_BY_NAME(tmpValue, "width", region->width)) {
         return false;
     }
 
