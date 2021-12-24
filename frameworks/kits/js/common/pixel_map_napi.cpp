@@ -66,7 +66,7 @@ static PixelFormat ParsePixlForamt(int32_t val)
 
 static AlphaType ParseAlphaType(int32_t val)
 {
-    if(val <= static_cast<int32_t>(AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL))
+    if (val <= static_cast<int32_t>(AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL))
     {
         return AlphaType(val);
     }
