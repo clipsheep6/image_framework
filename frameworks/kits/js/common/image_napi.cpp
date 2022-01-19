@@ -433,7 +433,9 @@ void ImageNapi::JsGetComponentCallBack(napi_env env, napi_status status,
         context->status = SUCCESS;
         napi_set_named_property(env, result, "byteBuffer", array);
     }
-    memcpy_s(data, bufferSize, buffer, bufferSize);
+    if (memcpy_s(data, bufferSize, buffer, bufferSize) != 0) {
+        HiLog::Error(LABEL, "napi_create_arraybuffer failed for copy!");
+    }
 
     BuildIntProperty(env, "componentType", context->componentType, result);
     BuildIntProperty(env, "rowStride", 0, result);
