@@ -423,7 +423,8 @@ void ImageNapi::JsGetComponentCallBack(napi_env env, napi_status status,
     void *buffer = context->constructor_->sSurfaceBuffer_->GetVirAddr();
 
     napi_value array;
-    status = napi_create_arraybuffer(env, bufferSize, &buffer, &array);
+    void *data = nullptr;
+    status = napi_create_arraybuffer(env, bufferSize, &data, &array);
     if (!IMG_IS_OK(status)) {
         context->status = ERROR;
         HiLog::Error(LABEL, "napi_create_arraybuffer failed!");
@@ -431,6 +432,9 @@ void ImageNapi::JsGetComponentCallBack(napi_env env, napi_status status,
     } else {
         context->status = SUCCESS;
         napi_set_named_property(env, result, "byteBuffer", array);
+    }
+    if (memcpy_s(data, bufferSize, buffer, bufferSize) != 0) {
+        HiLog::Error(LABEL, "napi_create_arraybuffer failed for copy!");
     }
 
     BuildIntProperty(env, "componentType", context->componentType, result);
