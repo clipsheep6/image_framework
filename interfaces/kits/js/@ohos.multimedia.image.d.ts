@@ -37,7 +37,9 @@ declare namespace image {
      * from the higher-order to the lower-order bits: red is stored with 5 bits of precision,
      * green is stored with 6 bits of precision, and blue is stored with 5 bits of precision.
      */
-    RGB_565 = 2
+    RGB_565 = 2,
+
+    RGBA_8888 = 3
   }
 
   /**
@@ -177,7 +179,18 @@ declare namespace image {
     YUV_Y = 1,
     YUV_U = 2,
     YUV_V = 3,
-	JPEG = 4, 
+	  JPEG = 4, 
+  }
+
+  enum PropertyKey {
+    BITS_PER_SAMPLE = "BitsPerSample",
+    ORIENTATION = "Orientation",
+    IMAGE_LENGTH = "ImageLength",
+    IMAGE_WIDTH = "ImageWidth",
+    GPS_LATITUDE = "GPSLatitude",
+    GPS_LONGITUDE = "GPSLongitude",
+    GPS_LATITUDE_REF = "GPSLatitudeRef",
+    GPS_LONGITUDE_REF = "GPSLongitudeRef"
   }
   
   /**
@@ -360,26 +373,28 @@ declare namespace image {
   }
 
   interface DecodingOptions {
+    index?: number;
+  
     // Indicates the sampling size based on which an image is scaled down.
-    sampleSize: number;
+    sampleSize?: number;
 
     // Indicates the rotation angle, ranging from 0 to 360
-    rotateDegrees: number;
+    rotate?: number;
 
     // Specifies whether pixel values of the pixel map to be decoded can be edited.
-    editable: boolean;
+    editable?: boolean;
 
     // Indicates the expected output size
-    desiredSize: Size;
+    desiredSize?: Size;
 
     // Indicates an image area to be decoded.
-    desiredRegion: Region;
+    desiredRegion?: Region;
 
     // Indicates the pixel format of a decoded image, which is defined by PixelFormat.
-    desiredPixelFormat: PixelMapFormat;
+    desiredPixelFormat?: PixelMapFormat;
 
     // reused current pixelmap buffer address for a new created pixelmap
-    reusedPixelMap: PixelMap;
+    reusedPixelMap?: PixelMap;
   }
 
   enum ScaleMode {
@@ -434,8 +449,8 @@ declare namespace image {
     readPixelsToBuffer(dst: ArrayBuffer, callback: AsyncCallback<void>): void;
 
     // read pixels from a specified area into an buffer
-    readPixels(area: PositionArea): Promise<Array<number>>;
-    readPixels(area: PositionArea, callback: AsyncCallback<Array<number>>): void;
+    readPixels(area: PositionArea): Promise<void>;
+    readPixels(area: PositionArea, callback: AsyncCallback<void>): void;
 
     // write pixels to a specified area
     writePixels(area: PositionArea): Promise<void>;
@@ -450,17 +465,21 @@ declare namespace image {
     getImageInfo(callback: AsyncCallback<ImageInfo>): void;
 
     // get bytes number per row.
-    getBytesNumberPerRow(): Promise<number>;
-    getBytesNumberPerRow(callback: AsyncCallback<number>): void;
+    getBytesNumberPerRow(): number;
 
     // get bytes buffer for a pixelmap.
-    getPixelBytesNumber(): Promise<number>;
-    getPixelBytesNumber(callback: AsyncCallback<number>): void;
+    getPixelBytesNumber(): number;
 
     // release pixelmap
-    release(): void;
+    release(callback: AsyncCallback<void>): void;
+    release(): Promise<void>;
 
     readonly isEditable: boolean;
+  }
+
+  interface GetImagePropertyOptions {
+    index?: number;
+    defaultValue?: string;
   }
 
   interface ImageSource {
@@ -479,17 +498,15 @@ declare namespace image {
      */
     getImageInfo(index?: number): Promise<ImageInfo>;
 
-    // Obtains the integer value of a specified property key for an image at the given index in the ImageSource.
-    getImagePropertyInt(index:number, key: string, defaultValue: number): Promise<number>;
-    getImagePropertyInt(index:number, key: string, defaultValue: number, callback: AsyncCallback<number>): void;
-
     // Obtains the string value of a specified image property key.
-    getImagePropertyString(key: string): Promise<string>;
-    getImagePropertyString(key: string, callback: AsyncCallback<string>): void;
+    getImageProperty(key: string, callback: AsyncCallback<string>): void;
+    getImageProperty(key: string, options: GetImagePropertyOptions, callback: AsyncCallback<string>): void;
+    getImageProperty(key: string, options?: GetImagePropertyOptions): Promise<string>;
 
     // Decodes source image data based on a specified index location in the ImageSource and creates a pixel map.
-    createPixelMap(index: number, options: DecodingOptions, callback: AsyncCallback<PixelMap>): void;
-    createPixelMap(opts: DecodingOptions, callback: AsyncCallback<PixelMap>): void;
+    createPixelMap(callback: AsyncCallback<PixelMap>): void;
+    createPixelMap(options: DecodingOptions, callback: AsyncCallback<PixelMap>): void;
+    createPixelMap(options?: DecodingOptions): Promise<PixelMap>;
 
     // Updates incremental data to an image data source using a byte array with specified offset and length.
     updateData(data: Array<number>, isFinal: boolean, offset?: number, length?: number): Promise<boolean>; 
