@@ -115,6 +115,11 @@ namespace OHOS {
             return 0;
         }
 
+        int32_t ImageReceiver::ReleaseBuffer(OHOS::sptr<OHOS::SurfaceBuffer> buffer)
+        {
+            return (iraContext_->GetReceiverBufferConsumer())->ReleaseBuffer(buffer, -1);
+        }
+
         void ImageReceiverSurfaceListener ::OnBufferAvailable()
         {
             HiLog::Debug(LABEL, "OnBufferAvailable");
@@ -200,6 +205,10 @@ namespace OHOS {
             sptr<Surface> listenerConsumerSerface = iraContext_->GetReceiverBufferConsumer();
             SurfaceError surfaceError = listenerConsumerSerface->AcquireBuffer(buffer, flushFence, timestamp, damage);
             while (surfaceError == SURFACE_ERROR_OK) {
+                if (bufferBefore != nullptr) {
+                    ReleaseBuffer(bufferBefore);
+                    bufferBefore = nullptr;
+                }
                 bufferBefore = buffer;
                 surfaceError = listenerConsumerSerface->AcquireBuffer(buffer, flushFence, timestamp, damage);
             }

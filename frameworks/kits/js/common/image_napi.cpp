@@ -33,6 +33,7 @@ namespace {
 namespace OHOS {
 namespace Media {
 static const std::string CLASS_NAME = "ImageNapi";
+std::shared_ptr<ImageReceiver> ImageNapi::staticImageReceiverInstance_ = nullptr;
 sptr<SurfaceBuffer> ImageNapi::staticInstance_ = nullptr;
 napi_ref ImageNapi::sConstructor_ = nullptr;
 
@@ -94,6 +95,10 @@ static void CommonCallbackRoutine(napi_env env, ImageAsyncContext* &context,
 void ImageNapi::NativeRelease()
 {
     if (sSurfaceBuffer_ != nullptr) {
+        if (imageReceiver_ != nullptr) {
+            imageReceiver_->ReleaseBuffer(sSurfaceBuffer_);
+            imageReceiver_ = nullptr;
+        }
         sSurfaceBuffer_ = nullptr;
     }
 }
@@ -150,6 +155,7 @@ napi_value ImageNapi::Constructor(napi_env env, napi_callback_info info)
         if (reference != nullptr) {
             reference->env_ = env;
             reference->sSurfaceBuffer_ = staticInstance_;
+            reference->imageReceiver_ = staticImageReceiverInstance_;
             status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
                                ImageNapi::Destructor, nullptr, &(reference->wrapper_));
             if (status == napi_ok) {
@@ -174,7 +180,8 @@ void ImageNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
     }
 }
 
-napi_value ImageNapi::Create(napi_env env, sptr<SurfaceBuffer> surfaceBuffer)
+napi_value ImageNapi::Create(napi_env env, sptr<SurfaceBuffer> surfaceBuffer,
+    std::shared_ptr<ImageReceiver> imageReceiver)
 {
     napi_status status;
     napi_value constructor = nullptr, result = nullptr;
@@ -189,6 +196,7 @@ napi_value ImageNapi::Create(napi_env env, sptr<SurfaceBuffer> surfaceBuffer)
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
         staticInstance_ = surfaceBuffer;
+        staticImageReceiverInstance_ = imageReceiver;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok) {
             IMAGE_FUNCTION_OUT();
