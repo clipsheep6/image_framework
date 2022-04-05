@@ -43,8 +43,6 @@ config("image_external_config") {
   ]
 
   if (use_mingw_win) {
-    include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
   } else if (use_clang_mac) {
     include_dirs += [
       "//foundation/multimedia/image_standard/mock/native/include",
@@ -149,6 +147,19 @@ ohos_shared_library("image_native") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
+    ]
+    deps += [
+      "//foundation/communication/ipc/interfaces/innerkits/ipc_core:ipc_core",
+    ]
+    cflags_cc = [
+      "-Wno-inconsistent-dllimport",
+      "-Wno-unused-variable",
+    ]
+    sources += [
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
     ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
@@ -263,6 +274,19 @@ ohos_static_library("image_static") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
+    ]
+    deps += [
+      "//foundation/communication/ipc/interfaces/innerkits/ipc_core:ipc_core",
+    ]
+    cflags_cc = [
+      "-Wno-inconsistent-dllimport",
+      "-Wno-unused-variable",
+    ]
+    sources += [
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
     ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
