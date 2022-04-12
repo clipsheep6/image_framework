@@ -77,6 +77,8 @@ ohos_shared_library("pluginmanager") {
   }
   deps += [ "//third_party/json:nlohmann_json_static" ]
 
+  ldflags += [ "-Wl,--exclude-libs,libnlohmann_json_static.a" ]
+
   #relative_install_dir = "module/multimedia"
   subsystem_name = "multimedia"
   part_name = "multimedia_image_standard"
@@ -144,6 +146,7 @@ ohos_static_library("pluginmanager_static") {
     external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
   }
   deps += [ "//third_party/json:nlohmann_json_static" ]
+  ldflags += [ "-Wl,--exclude-libs,libnlohmann_json_static.a" ]
   subsystem_name = "multimedia"
   part_name = "multimedia_image_standard"
 }
