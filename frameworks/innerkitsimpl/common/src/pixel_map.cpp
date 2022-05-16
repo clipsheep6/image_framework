@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -200,7 +200,7 @@ unique_ptr<PixelMap> PixelMap::Create(const InitializationOptions &opts)
 {
     HiLog::Info(LABEL, "PixelMap::Create3 enter");
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
-    if (dstPixelMap == nullptr) {
+    if (dstPixelMap == nullptr || dstPixelMap.get() == nullptr) {
         HiLog::Error(LABEL, "create pixelMap pointer fail");
         return nullptr;
     }
@@ -281,7 +281,7 @@ unique_ptr<PixelMap> PixelMap::Create(PixelMap &source, const Rect &srcRect, con
         return unique_ptr<PixelMap>(&source);
     }
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
-    if (dstPixelMap == nullptr) {
+    if (dstPixelMap == nullptr || dstPixelMap.get() == nullptr) {
         HiLog::Error(LABEL, "create pixelmap pointer fail");
         return nullptr;
     }
@@ -757,7 +757,7 @@ uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
     }
     if (bufferSize < static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "read pixels by buffer input dst buffer(%{public}llu) < current pixelmap size(%{public}u).",
-                     static_cast<unsigned long long>(bufferSize), pixelsSize_);
+                     static_cast<uint64_t>(bufferSize), pixelsSize_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     errno_t ret = memcpy_s(dst, bufferSize, data_, pixelsSize_);
@@ -819,8 +819,8 @@ bool PixelMap::CheckPixelsInput(const uint8_t *dst, const uint64_t &bufferSize, 
         HiLog::Error(LABEL,
                      "CheckPixelsInput fail, height(%{public}d), width(%{public}d), lastLine(%{public}llu), "
                      "offset(%{public}u), bufferSize:%{public}llu.",
-                     region.height, region.width, static_cast<unsigned long long>(lastLinePos), offset,
-                     static_cast<unsigned long long>(bufferSize));
+                     region.height, region.width, static_cast<uint64_t>(lastLinePos), offset,
+                     static_cast<uint64_t>(bufferSize));
         return false;
     }
     return true;
@@ -885,7 +885,7 @@ uint32_t PixelMap::ResetConfig(const Size &size, const PixelFormat &format)
     uint64_t dstSize = static_cast<uint64_t>(size.width) * size.height * bytesPerPixel;
     if (dstSize > static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "ResetConfig reset dstSize(%{public}llu) > current(%{public}u).",
-                     static_cast<unsigned long long>(dstSize), pixelsSize_);
+                     static_cast<uint64_t>(dstSize), pixelsSize_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     AlphaType dstAlphaType = ImageUtils::GetValidAlphaTypeByFormat(GetAlphaType(), format);
@@ -991,7 +991,7 @@ uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize
 {
     if (source == nullptr || bufferSize < static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "write pixels by buffer source is nullptr or size(%{public}llu) < pixelSize(%{public}u).",
-                     static_cast<unsigned long long>(bufferSize), pixelsSize_);
+                     static_cast<uint64_t>(bufferSize), pixelsSize_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     if (!IsEditable()) {
@@ -1166,8 +1166,8 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
             return nullptr;
         }
 
-        void *ptr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
-        if (ptr == MAP_FAILED) {
+        void *mapPtr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
+        if (mapPtr == MAP_FAILED) {
             // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
             HiLog::Error(LABEL, "ReadImageData map failed, errno:%{public}d", errno);
             return nullptr;
@@ -1175,19 +1175,19 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 
         base = static_cast<uint8_t *>(malloc(bufferSize));
         if (base == nullptr) {
-            ::munmap(ptr, bufferSize);
+            ::munmap(mapPtr, bufferSize);
             HiLog::Error(LABEL, "alloc output pixel memory size:[%{public}d] error.", bufferSize);
             return nullptr;
         }
-        if (memcpy_s(base, bufferSize, ptr, bufferSize) != 0) {
-            ::munmap(ptr, bufferSize);
+        if (memcpy_s(base, bufferSize, mapPtr, bufferSize) != 0) {
+            ::munmap(mapPtr, bufferSize);
             free(base);
             base = nullptr;
             HiLog::Error(LABEL, "memcpy pixel data size:[%{public}d] error.", bufferSize);
             return nullptr;
         }
 
-        ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, ptr, &fd, bufferSize);
+        ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, mapPtr, &fd, bufferSize);
 #endif
     }
     return base;
