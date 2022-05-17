@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -51,7 +51,6 @@ struct ImagePackerAsyncContext {
     napi_async_work work;
     napi_deferred deferred;
     napi_ref callbackRef = nullptr;
-    napi_value errorMsg = nullptr;
     ImagePackerNapi *constructor_;
     bool status = false;
     std::shared_ptr<ImageSource> rImageSource;
@@ -88,12 +87,13 @@ static void CommonCallbackRoutine(napi_env env, ImagePackerAsyncContext* &connec
     napi_get_undefined(env, &result[NUM_0]);
     napi_get_undefined(env, &result[NUM_1]);
 
+    if (connect == nullptr) {
+        HiLog::Error(LABEL, "connect is nullptr");
+        return;
+    }
+
     if (connect->status == SUCCESS) {
         result[NUM_1] = valueParam;
-    } else if (connect->errorMsg != nullptr) {
-        result[NUM_0] = connect->errorMsg;
-    } else {
-        napi_create_string_utf8(env, "Internal error", NAPI_AUTO_LENGTH, &(result[NUM_0]));
     }
 
     if (connect->deferred) {
@@ -142,7 +142,7 @@ STATIC_EXEC_FUNC(Packing)
             bufferSize, context->packOption);
         context->rImagePacker->AddImage(*(context->rImageSource));
         context->rImagePacker->FinalizePacking(packedSize);
-        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<long long>(packedSize));
+        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<int64_t>(packedSize));
 
         if (packedSize > 0 && (static_cast<uint64_t>(packedSize) < bufferSize)) {
             context->packedSize = packedSize;
@@ -153,17 +153,6 @@ STATIC_EXEC_FUNC(Packing)
         }
     }
     HiLog::Debug(LABEL, "PackingExec exit");
-}
-
-STATIC_COMPLETE_FUNC(PackingError)
-{
-    HiLog::Debug(LABEL, "PackingErrorComplete IN");
-    napi_value result = nullptr;
-    napi_get_undefined(env, &result);
-    auto context = static_cast<ImagePackerAsyncContext*>(data);
-    context->status = ERROR;
-    HiLog::Debug(LABEL, "PackingErrorComplete OUT");
-    CommonCallbackRoutine(env, context, result);
 }
 
 STATIC_COMPLETE_FUNC(Packing)
@@ -207,7 +196,7 @@ STATIC_EXEC_FUNC(PackingFromPixelMap)
             bufferSize, context->packOption);
         context->rImagePacker->AddImage(*(context->rPixelMap));
         context->rImagePacker->FinalizePacking(packedSize);
-        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<long long>(packedSize));
+        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<int64_t>(packedSize));
 
         if (packedSize > 0 && (static_cast<uint64_t>(packedSize) < bufferSize)) {
             context->packedSize = packedSize;
@@ -338,6 +327,11 @@ static bool parsePackOptions(napi_env env, napi_value root, PackOption* opts)
     HiLog::Debug(LABEL, "parsePackOptions format type %{public}d, is array %{public}d",
         formatType, isFormatArray);
 
+    if (opts == nullptr) {
+        HiLog::Error(LABEL, "opts is nullptr");
+        return false;
+    }
+
     char buffer[SIZE] = {0};
     size_t res = 0;
     if (napi_string == formatType) {
@@ -418,35 +412,6 @@ static int32_t ParserPackingArguments(napi_env env, napi_value argv)
     return TYPE_IMAGE_SOURCE;
 }
 
-static std::shared_ptr<ImageSource> GetImageSourceFromNapi(napi_env env, napi_value value)
-{
-    if (env == nullptr || value == nullptr) {
-        HiLog::Error(LABEL, "GetImageSourceFromNapi input is null");
-    }
-    std::unique_ptr<ImageSourceNapi> imageSourceNapi = std::make_unique<ImageSourceNapi>();
-    napi_status status = napi_unwrap(env, value, reinterpret_cast<void**>(&imageSourceNapi));
-    if (!IMG_IS_OK(status)) {
-        HiLog::Error(LABEL, "GetImageSourceFromNapi napi unwrap failed");
-        return nullptr;
-    }
-    if (imageSourceNapi == nullptr) {
-        HiLog::Error(LABEL, "GetImageSourceFromNapi imageSourceNapi is nullptr");
-        return nullptr;
-    }
-    return imageSourceNapi->nativeImgSrc;
-}
-
-static void BuildMsgOnError(napi_env env,
-                            std::unique_ptr<ImagePackerAsyncContext> &context,
-                            bool assertion,
-                            const std::string msg)
-{
-    if (!assertion) {
-        HiLog::Error(LABEL, "%{public}s", msg.c_str());
-        napi_create_string_utf8(env, msg.c_str(), NAPI_AUTO_LENGTH, &(context->errorMsg));
-    }
-}
-
 napi_value ImagePackerNapi::Packing(napi_env env, napi_callback_info info)
 {
     napi_status status;
@@ -460,14 +425,14 @@ napi_value ImagePackerNapi::Packing(napi_env env, napi_callback_info info)
     std::shared_ptr<ImageSource> imagesourceObj = nullptr;
     std::unique_ptr<PixelMap> pixelMap = nullptr;
     HiLog::Debug(LABEL, "Packing IN");
-    napi_get_undefined(env, &result);
 
     IMG_JS_ARGS(env, info, status, argc, argv, thisVar);
-    NAPI_ASSERT(env, IMG_IS_OK(status), "fail to napi_get_cb_info");
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
 
     std::unique_ptr<ImagePackerAsyncContext> asyncContext = std::make_unique<ImagePackerAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->constructor_));
-    NAPI_ASSERT(env, IMG_IS_READY(status, asyncContext->constructor_), "fail to unwrap constructor_");
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->constructor_),
+        nullptr, HiLog::Error(LABEL, "fail to unwrap constructor_"));
 
     asyncContext->rImagePacker = std::move(asyncContext->constructor_->nativeImgPck);
     for (size_t i = PARAM0; i < argc; i++) {
@@ -475,17 +440,21 @@ napi_value ImagePackerNapi::Packing(napi_env env, napi_callback_info info)
         if (i == PARAM0 && argvType == napi_object) {
             packType = ParserPackingArguments(env, argv[0]);
             if (packType == TYPE_IMAGE_SOURCE) {
-                asyncContext->rImageSource = GetImageSourceFromNapi(env, argv[i]);
-                BuildMsgOnError(env, asyncContext,
-                    asyncContext->rImageSource != nullptr, "ImageSource mismatch");
+                std::shared_ptr<ImageSourceNapi> imageSourceNapi = std::make_unique<ImageSourceNapi>();
+                status = napi_unwrap(env, argv[i], reinterpret_cast<void**>(&imageSourceNapi));
+                IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, imageSourceNapi), nullptr,
+                    HiLog::Error(LABEL, "fail to unwrap ImageSourceNapi"));
+                asyncContext->rImageSource = imageSourceNapi->nativeImgSrc;
+                IMG_NAPI_CHECK_RET_D(IMG_IS_OK(asyncContext->rImageSource == nullptr), nullptr,
+                    HiLog::Error(LABEL, "fail to napi_get rImageSource"));
             } else {
                 asyncContext->rPixelMap = PixelMapNapi::GetPixelMap(env, argv[i]);
-                BuildMsgOnError(env, asyncContext,
-                    asyncContext->rPixelMap != nullptr, "PixelMap mismatch");
+                IMG_NAPI_CHECK_RET_D(IMG_IS_OK(asyncContext->rPixelMap == nullptr), nullptr,
+                    HiLog::Error(LABEL, "fail to napi_get rPixelMap"));
             }
         } else if (i == PARAM1 && ImageNapiUtils::getType(env, argv[i]) == napi_object) {
-            BuildMsgOnError(env, asyncContext,
-                parsePackOptions(env, argv[i], &(asyncContext->packOption)), "PackOptions mismatch");
+            IMG_NAPI_CHECK_RET_D(parsePackOptions(env, argv[i], &(asyncContext->packOption)),
+                nullptr, HiLog::Error(LABEL, "PackOptions mismatch"));
         } else if (i == PARAM2 && ImageNapiUtils::getType(env, argv[i]) == napi_function) {
             napi_create_reference(env, argv[i], refCount, &asyncContext->callbackRef);
             break;
@@ -494,14 +463,13 @@ napi_value ImagePackerNapi::Packing(napi_env env, napi_callback_info info)
 
     if (asyncContext->callbackRef == nullptr) {
         napi_create_promise(env, &(asyncContext->deferred), &result);
+    } else {
+        napi_get_undefined(env, &result);
     }
 
     ImageNapiUtils::HicheckerReport();
 
-    if (asyncContext->errorMsg != nullptr) {
-        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackingError",
-            [](napi_env env, void *data) {}, PackingErrorComplete, asyncContext, asyncContext->work);
-    } else if (packType == TYPE_IMAGE_SOURCE) {
+    if (packType == TYPE_IMAGE_SOURCE) {
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Packing",
             PackingExec, PackingComplete, asyncContext, asyncContext->work);
     } else {
