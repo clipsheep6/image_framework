@@ -50,12 +50,16 @@ public:
     std::string gpsLatitudeRef_;
     std::string gpsLongitudeRef_;
     std::string dateTimeOriginal_;  // Original date and time.
+    std::string exposureTime_;
+    std::string fNumber_;
+    std::string isoSpeedRatings_;
+    std::string sceneType_;
 
 private:
     void SetExifTagValues(const ExifTag &tag, const std::string &value);
     ExifEntry* InitExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag);
     ExifEntry* CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len, ExifFormat format);
-    unsigned long GetFileSize(FILE *fp);
+    long GetFileSize(FILE *fp);
     void ReleaseSource(unsigned char **ptrBuf, FILE **ptrFile);
     bool CreateExifData(unsigned char *buf, unsigned long length, ExifData **data, bool &isNewExifData);
     unsigned int GetOrginExifDataLength(const bool &isNewExifData, unsigned char *buf);
