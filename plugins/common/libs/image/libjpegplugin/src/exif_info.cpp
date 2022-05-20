@@ -38,6 +38,7 @@ namespace {
     static const int BUFFER_POSITION_13 = 13;
     static const int LENGTH_OFFSET_2 = 2;
     static const int MOVE_OFFSET_8 = 8;
+    static const int LENGTH_ARRAY_SIZE = 2;
     static const int CONSTANT_2 = 2;
     static const unsigned long MAX_FILE_SIZE = 1000 * 1000 * 1000;
 
@@ -114,6 +115,14 @@ void EXIFInfo::SetExifTagValues(const ExifTag &tag, const std::string &value)
         gpsLongitudeRef_ = value;
     } else if (tag == EXIF_TAG_DATE_TIME_ORIGINAL) {
         dateTimeOriginal_ = value;
+    } else if (tag == EXIF_TAG_EXPOSURE_TIME) {
+        exposureTime_ = value;
+    } else if (tag == EXIF_TAG_FNUMBER) {
+        fNumber_ = value;
+    } else if (tag == EXIF_TAG_ISO_SPEED_RATINGS) {
+        isoSpeedRatings_ = value;
+    } else if (tag == EXIF_TAG_SCENE_TYPE) {
+        sceneType_ = value;
     } else {
         HiLog::Error(LABEL, "No match tag name!");
     }
@@ -476,7 +485,7 @@ ExifEntry* EXIFInfo::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     return entry;
 }
 
-unsigned long EXIFInfo::GetFileSize(FILE *fp)
+long EXIFInfo::GetFileSize(FILE *fp)
 {
     long int position;
     long size;
@@ -493,7 +502,7 @@ unsigned long EXIFInfo::GetFileSize(FILE *fp)
     /* Jump back to the original position. */
     (void)fseek(fp, position, SEEK_SET);
 
-    return static_cast<unsigned long>(size);
+    return size;
 }
 
 bool EXIFInfo::CreateExifData(unsigned char *buf, unsigned long length, ExifData **ptrData, bool &isNewExifData)
@@ -530,8 +539,10 @@ unsigned int EXIFInfo::GetOrginExifDataLength(const bool &isNewExifData, unsigne
 {
     unsigned int orginExifDataLength = 0;
     if (!isNewExifData) {
-        orginExifDataLength = static_cast<unsigned int>(buf[BUFFER_POSITION_5]) |
-            static_cast<unsigned int>(buf[BUFFER_POSITION_4] << MOVE_OFFSET_8);
+        unsigned char lenthArray[LENGTH_ARRAY_SIZE] = {
+            buf[BUFFER_POSITION_5], buf[BUFFER_POSITION_4]
+        };
+        orginExifDataLength = *(unsigned int*)lenthArray;
     }
     return orginExifDataLength;
 }
@@ -555,10 +566,6 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
     switch (tag) {
         case EXIF_TAG_BITS_PER_SAMPLE: {
             *ptrEntry = InitExifTag(data, EXIF_IFD_1, EXIF_TAG_BITS_PER_SAMPLE);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             std::vector<std::string> bitsVec;
             SplitStr(value, ",", bitsVec);
             if (bitsVec.size() > CONSTANT_2) {
@@ -574,28 +581,16 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
         }
         case EXIF_TAG_ORIENTATION: {
             *ptrEntry = InitExifTag(data, EXIF_IFD_0, EXIF_TAG_ORIENTATION);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             exif_set_short((*ptrEntry)->data, order, (ExifShort)atoi(value.c_str()));
             break;
         }
         case EXIF_TAG_IMAGE_LENGTH: {
             *ptrEntry = InitExifTag(data, EXIF_IFD_1, EXIF_TAG_IMAGE_LENGTH);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             exif_set_long((*ptrEntry)->data, order, (ExifLong)atoi(value.c_str()));
             break;
         }
         case EXIF_TAG_IMAGE_WIDTH: {
             *ptrEntry = InitExifTag(data, EXIF_IFD_1, EXIF_TAG_IMAGE_WIDTH);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             exif_set_long((*ptrEntry)->data, order, (ExifLong)atoi(value.c_str()));
             break;
         }
@@ -608,14 +603,10 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
             }
 
             ExifRational latRational;
-            latRational.numerator = static_cast<ExifSLong>(atoi(latVec[0].c_str()));
-            latRational.denominator = static_cast<ExifSLong>(atoi(latVec[1].c_str()));
+            latRational.numerator = atoi(latVec[0].c_str());
+            latRational.denominator = atoi(latVec[1].c_str());
             *ptrEntry = CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_LATITUDE,
                 sizeof(latRational), EXIF_FORMAT_RATIONAL);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             exif_set_rational((*ptrEntry)->data, order, latRational);
             break;
         }
@@ -628,24 +619,16 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
             }
 
             ExifRational longRational;
-            longRational.numerator = static_cast<ExifSLong>(atoi(longVec[0].c_str()));
-            longRational.denominator = static_cast<ExifSLong>(atoi(longVec[1].c_str()));
+            longRational.numerator = atoi(longVec[0].c_str());
+            longRational.denominator = atoi(longVec[1].c_str());
             *ptrEntry = CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_LONGITUDE,
                 sizeof(longRational), EXIF_FORMAT_RATIONAL);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             exif_set_rational((*ptrEntry)->data, order, longRational);
             break;
         }
         case EXIF_TAG_GPS_LATITUDE_REF: {
             *ptrEntry = CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_LATITUDE_REF,
                 value.length(), EXIF_FORMAT_ASCII);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             if (memcpy_s((*ptrEntry)->data, value.length(), value.c_str(), value.length()) != 0) {
                 HiLog::Error(LABEL, "LATITUDE ref memcpy error");
             }
@@ -654,10 +637,6 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
         case EXIF_TAG_GPS_LONGITUDE_REF: {
             *ptrEntry = CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_LONGITUDE_REF,
                 value.length(), EXIF_FORMAT_ASCII);
-            if ((*ptrEntry) == nullptr) {
-                HiLog::Error(LABEL, "Get exif entry failed.");
-                return false;
-            }
             if (memcpy_s((*ptrEntry)->data, value.length(), value.c_str(), value.length()) != 0) {
                 HiLog::Error(LABEL, "LONGITUDE ref memcpy error");
             }
