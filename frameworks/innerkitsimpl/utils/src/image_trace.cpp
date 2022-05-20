@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "image_trace.h"
-#include "hitrace_meter.h"
+#include "bytrace.h"
 #include "securec.h"
 
 namespace OHOS {

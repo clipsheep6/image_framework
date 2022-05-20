@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Copyright (C) 2022 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -34,10 +34,10 @@ config("image_external_config") {
     "//foundation/multimedia/image_standard/interfaces/kits/native/include",
     "//utils/jni/jnikit/include",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//foundation/graphic/graphic/interfaces/innerkits/surface",
-    "//foundation/graphic/graphic/interfaces/innerkits/common",
+    "//foundation/graphic/standard/interfaces/innerkits/surface",
+    "//foundation/graphic/standard/interfaces/innerkits/common",
     "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
-    "//foundation/graphic/graphic/utils/buffer_handle/export",
+    "//foundation/graphic/standard/utils/buffer_handle/export",
     "//drivers/peripheral/display/interfaces/include",
     "//drivers/peripheral/base",
   ]
@@ -89,8 +89,8 @@ ohos_shared_library("image") {
 
   deps = [
     ":image_native",
-    "//foundation/arkui/napi:ace_napi",
-    "//foundation/graphic/graphic:libsurface",
+    "//foundation/ace/napi:ace_napi",
+    "//foundation/graphic/standard:libsurface",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
@@ -98,8 +98,8 @@ ohos_shared_library("image") {
   ]
 
   external_deps = [
+    "bytrace_standard:bytrace_core",
     "hichecker_native:libhichecker",
-    "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
@@ -144,7 +144,7 @@ ohos_shared_library("image_native") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
     ]
     deps = [
-      "//foundation/graphic/graphic:libsurface",
+      "//foundation/graphic/standard:libsurface",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
@@ -160,7 +160,7 @@ ohos_shared_library("image_native") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
     ]
     deps = [
-      "//foundation/graphic/graphic:libsurface",
+      "//foundation/graphic/standard:libsurface",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
@@ -172,8 +172,8 @@ ohos_shared_library("image_native") {
     DUAL_ADAPTER = true
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
-      "//foundation/graphic/graphic:libsurface",
+      "//foundation/ace/napi:ace_napi",
+      "//foundation/graphic/standard:libsurface",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
@@ -185,7 +185,7 @@ ohos_shared_library("image_native") {
       deps += [ "//third_party/libpng:libpng" ]
     }
     external_deps = [
-      "hitrace_native:hitrace_meter",
+      "bytrace_standard:bytrace_core",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
     ]
@@ -212,8 +212,8 @@ ohos_static_library("image_static_napi") {
 
   deps = [
     ":image_native",
-    "//foundation/arkui/napi:ace_napi",
-    "//foundation/graphic/graphic:libsurface",
+    "//foundation/ace/napi:ace_napi",
+    "//foundation/graphic/standard:libsurface",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
@@ -258,7 +258,7 @@ ohos_static_library("image_static") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
     ]
     deps = [
-      "//foundation/graphic/graphic:libsurface",
+      "//foundation/graphic/standard:libsurface",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
@@ -275,7 +275,7 @@ ohos_static_library("image_static") {
     ]
 
     deps = [
-      "//foundation/graphic/graphic:libsurface",
+      "//foundation/graphic/standard:libsurface",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
@@ -287,8 +287,8 @@ ohos_static_library("image_static") {
     DUAL_ADAPTER = true
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
-      "//foundation/graphic/graphic:libsurface",
+      "//foundation/ace/napi:ace_napi",
+      "//foundation/graphic/standard:libsurface",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",

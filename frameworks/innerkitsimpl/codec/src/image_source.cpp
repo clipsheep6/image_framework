@@ -19,7 +19,7 @@
 #include <vector>
 #include "buffer_source_stream.h"
 #if !defined(_WIN32) && !defined(_APPLE)
-#include "hitrace_meter.h"
+#include "bytrace.h"
 #endif
 #include "file_source_stream.h"
 #include "image/abs_image_decoder.h"
@@ -300,7 +300,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         return nullptr;
     }
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
-    if (pixelMap == nullptr) {
+    if (pixelMap == nullptr || pixelMap.get() == nullptr) {
         IMAGE_LOGE("[ImageSource]create the pixel map unique_ptr fail.");
         errorCode = ERR_IMAGE_MALLOC_ABNORMAL;
         return nullptr;
@@ -342,9 +342,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
 
     errorCode = mainDecoder_->Decode(index, context);
     if (context.ifPartialOutput) {
-        for (auto listener : decodeListeners_) {
+        for (auto partialListener : decodeListeners_) {
             guard.unlock();
-            listener->OnEvent((int)DecodeEvent::EVENT_PARTIAL_DECODE);
+            partialListener->OnEvent((int)DecodeEvent::EVENT_PARTIAL_DECODE);
             guard.lock();
         }
     }
@@ -377,8 +377,8 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     }
 
     if (!context.ifPartialOutput) {
-        for (auto listener : decodeListeners_) {
-            listener->OnEvent((int)DecodeEvent::EVENT_COMPLETE_DECODE);
+        for (auto completelistener : decodeListeners_) {
+            completelistener->OnEvent((int)DecodeEvent::EVENT_COMPLETE_DECODE);
         }
     }
 #if !defined(_WIN32) && !defined(_APPLE)
@@ -453,12 +453,12 @@ uint32_t ImageSource::PromoteDecoding(uint32_t index, const DecodeOptions &opts,
             PostProc postProc;
             ret = postProc.DecodePostProc(opts, pixelMap);
             if (state == ImageDecodingState::IMAGE_DECODED) {
-                auto iter = decodeEventMap_.find((int)DecodeEvent::EVENT_COMPLETE_DECODE);
-                if (iter == decodeEventMap_.end()) {
+                auto iterator = decodeEventMap_.find((int)DecodeEvent::EVENT_COMPLETE_DECODE);
+                if (iterator == decodeEventMap_.end()) {
                     decodeEventMap_.insert(std::pair<int32_t, int32_t>((int)DecodeEvent::EVENT_COMPLETE_DECODE, 1));
-                    for (auto listener : decodeListeners_) {
+                    for (auto callback : decodeListeners_) {
                         guard.unlock();
-                        listener->OnEvent((int)DecodeEvent::EVENT_COMPLETE_DECODE);
+                        callback->OnEvent((int)DecodeEvent::EVENT_COMPLETE_DECODE);
                         guard.lock();
                     }
                 }
@@ -799,14 +799,14 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
             continue;  // has been checked before.
         }
         AbsImageFormatAgent *agent = iter->second;
-        auto ret = CheckEncodedFormat(*agent);
-        if (ret == ERR_IMAGE_MISMATCHED_FORMAT) {
+        auto result = CheckEncodedFormat(*agent);
+        if (result == ERR_IMAGE_MISMATCHED_FORMAT) {
             continue;
-        } else if (ret == SUCCESS) {
+        } else if (result == SUCCESS) {
             IMAGE_LOGI("[ImageSource]GetEncodedFormat success format :%{public}s.", iter->first.c_str());
             format = iter->first;
             return SUCCESS;
-        } else if (ret == ERR_IMAGE_SOURCE_DATA_INCOMPLETE) {
+        } else if (result == ERR_IMAGE_SOURCE_DATA_INCOMPLETE) {
             streamIncomplete = true;
         }
     }
@@ -963,10 +963,10 @@ uint32_t ImageSource::DecodeImageInfo(uint32_t index, ImageStatusMap::iterator &
         IMAGE_LOGE("[ImageSource]source data incomplete.");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     } else {
-        ImageDecodingStatus imageStatus;
-        imageStatus.imageState = ImageDecodingState::BASE_INFO_ERROR;
-        auto result = imageStatusMap_.insert(ImageStatusMap::value_type(index, imageStatus));
-        iter = result.first;
+        ImageDecodingStatus status;
+        status.imageState = ImageDecodingState::BASE_INFO_ERROR;
+        auto errorResult = imageStatusMap_.insert(ImageStatusMap::value_type(index, status));
+        iter = errorResult.first;
         IMAGE_LOGE("[ImageSource]decode the image info fail.");
         return ERR_IMAGE_DECODE_FAILED;
     }
