@@ -453,6 +453,9 @@ bool PixelMap::GetPixelFormatDetail(const PixelFormat format)
         case PixelFormat::CMYK:
             pixelBytes_ = ARGB_8888_BYTES;
             break;
+        case PixelFormat::RGBA_F16:
+            pixelBytes_ = BGRA_F16_BYTES;
+            break;
         default: {
             HiLog::Error(LABEL, "pixel format:[%{public}d] not supported.", format);
             return false;
