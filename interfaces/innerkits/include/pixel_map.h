@@ -70,6 +70,11 @@ public:
     NATIVEEXPORT int32_t GetWidth();
     NATIVEEXPORT int32_t GetHeight();
     NATIVEEXPORT int32_t GetBaseDensity();
+    NATIVEEXPORT void scale(float xAxis, float yAxis);
+    NATIVEEXPORT void translate(float xAxis, float yAxis);
+    NATIVEEXPORT void rotate(float degrees);
+    NATIVEEXPORT void flip(bool xAxis, bool yAxis);
+    NATIVEEXPORT uint32_t crop(const Rect &rect);
     NATIVEEXPORT void GetImageInfo(ImageInfo &imageInfo);
     NATIVEEXPORT PixelFormat GetPixelFormat();
     NATIVEEXPORT ColorSpace GetColorSpace();
