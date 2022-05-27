@@ -381,7 +381,7 @@ static bool ParseRegion(napi_env env, napi_value root, Rect* region)
 static bool IsSupportPixelFormat(int32_t val)
 {
     if (val >= static_cast<int32_t>(PixelFormat::UNKNOWN) &&
-        val <= static_cast<int32_t>(PixelFormat::BGRA_8888)) {
+        val <= static_cast<int32_t>(PixelFormat::RGBA_F16)) {
         return true;
     }
 
