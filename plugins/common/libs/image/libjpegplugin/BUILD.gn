@@ -67,11 +67,13 @@ ohos_shared_library("jpegplugin") {
     include_dirs += [
       "//foundation/multimedia/image_standard/mock/native/include",
       "//third_party/flutter/skia/third_party/libjpeg-turbo",
+      "//third_party/flutter/skia/third_party/externals/libjpeg-turbo",
     ]
     deps = [
       "//foundation/multimedia/image_standard/interfaces/innerkits:image_static",
       "//foundation/multimedia/image_standard/mock/native:utils_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
+      "//foundation/graphic/standard/utils/color_manager:color_manager",
       "//third_party/flutter/build/libjpeg:ace_libjpeg",
       "//third_party/libexif:libexif",
     ]
