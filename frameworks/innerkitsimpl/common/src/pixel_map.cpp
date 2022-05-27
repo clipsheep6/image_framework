@@ -453,6 +453,9 @@ bool PixelMap::GetPixelFormatDetail(const PixelFormat format)
         case PixelFormat::CMYK:
             pixelBytes_ = ARGB_8888_BYTES;
             break;
+        case PixelFormat::RGBA_F16:
+            pixelBytes_ = BGRA_F16_BYTES;
+            break;
         default: {
             HiLog::Error(LABEL, "pixel format:[%{public}d] not supported.", format);
             return false;
@@ -1374,6 +1377,60 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
     }
     pixelMap->SetPixelsAddr(base, context, bufferSize, allocType, nullptr);
     return pixelMap;
+}
+
+void PixelMap::scale(float xAxis, float yAxis)
+{
+    PostProc postProc;
+    if (!postProc.ScalePixelMap(xAxis, yAxis, *this)) {
+        HiLog::Error(LABEL, "scale fail");
+    }
+}
+void PixelMap::translate(float xAxis, float yAxis)
+{
+    PostProc postProc;
+    if (!postProc.TranslatePixelMap(xAxis, yAxis, *this)) {
+        HiLog::Error(LABEL, "translate fail");
+    }
+}
+void PixelMap::rotate(float degrees)
+{
+    PostProc postProc;
+    if (!postProc.RotatePixelMap(degrees, *this)) {
+        HiLog::Error(LABEL, "rotate fail");
+    }
+}
+void PixelMap::flip(bool xAxis, bool yAxis)
+{
+    if (xAxis == false && yAxis == false) {
+        return;
+    }
+    scale(xAxis?-1:1, yAxis?-1:1);
+}
+uint32_t PixelMap::crop(const Rect &rect)
+{
+    PostProc postProc;
+    auto cropValue = PostProc::GetCropValue(rect, imageInfo_.size);
+    if (cropValue == CropValue::NOCROP) {
+        return SUCCESS;
+    }
+
+    if (cropValue == CropValue::INVALID) {
+        HiLog::Error(LABEL, "Invalid crop rect");
+        return ERR_IMAGE_CROP;
+    }
+
+    ImageInfo dstImageInfo = {
+        .size = {
+            .width = rect.width,
+            .height = rect.height,
+        },
+        .pixelFormat = imageInfo_.pixelFormat,
+        .colorSpace = imageInfo_.colorSpace,
+        .alphaType = imageInfo_.alphaType,
+        .baseDensity = imageInfo_.baseDensity,
+    };
+    return postProc.ConvertProc(rect, dstImageInfo, *this, imageInfo_);
 }
 } // namespace Media
 } // namespace OHOS
