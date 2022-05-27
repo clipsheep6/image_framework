@@ -17,11 +17,13 @@ import("//foundation/multimedia/image_standard/ide/image_decode_config.gni")
 ohos_shared_library("webpplugin") {
   sources = [
     "//foundation/multimedia/image_standard/plugins/common/libs/image/libwebpplugin/src/plugin_export.cpp",
+    "//foundation/multimedia/image_standard/plugins/common/libs/image/libwebpplugin/src/webp_encoder.cpp",
     "//foundation/multimedia/image_standard/plugins/common/libs/image/libwebpplugin/src/webp_decoder.cpp",
   ]
 
   include_dirs = [
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/include",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter/include",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_standard/plugins/manager/include",
     "//foundation/multimedia/image_standard/plugins/manager/include/image",
@@ -56,6 +58,8 @@ ohos_shared_library("webpplugin") {
     deps = [
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//third_party/flutter/build/skia:ace_skia_ohos",
+      "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+      "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
       "//utils/native/base:utils",
     ]
 
