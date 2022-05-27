@@ -32,7 +32,7 @@ constexpr uint32_t COMPONENT_NUM_4 = 4;
 
 static int StreamWriter(const uint8_t* data, size_t data_size, const WebPPicture* const picture)
 {
-    HiLog::Debug(LABEL, "StreamWriter data_size=%{public}u", data_size);
+    HiLog::Debug(LABEL, "StreamWriter data_size=%{public}zu", data_size);
 
     auto webpEncoder = static_cast<WebpEncoder*>(picture->custom_ptr);
     return webpEncoder->Write(data, data_size) ? 1 : 0;
@@ -125,7 +125,7 @@ uint32_t WebpEncoder::FinalizeEncode()
 
 bool WebpEncoder::Write(const uint8_t* data, size_t data_size)
 {
-    HiLog::Debug(LABEL, "Write data_size=%{public}u, iccValid=%{public}d", data_size, iccValid_);
+    HiLog::Debug(LABEL, "Write data_size=%{public}zu, iccValid=%{public}d", data_size, iccValid_);
 
     if (iccValid_) {
         return memoryStream_.write(data, data_size);
