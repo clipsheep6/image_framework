@@ -1314,7 +1314,7 @@ napi_value PixelMapNapi::Scale(napi_env env, napi_callback_info info)
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
 
     if (nVal.argc != NUM_2 && nVal.argc != NUM_3) {
-        HiLog::Error(LABEL, "Invalid args count %{public}d", nVal.argc);
+        HiLog::Error(LABEL, "Invalid args count %{public}zu", nVal.argc);
         nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
     } else {
         if (napi_ok != napi_get_value_double(env, nVal.argv[NUM_0], &(nVal.context->xArg))) {
