@@ -1379,6 +1379,18 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
     return pixelMap;
 }
 
+#ifdef IMAGE_COLORSPACE_FLAG
+    void PixelMap::InnerSetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
+    {
+        grColorSpace_ = OHOS::ColorManager::ColorSpace(grColorSpace.ToSkColorSpace());
+    }
+
+    OHOS::ColorManager::ColorSpace PixelMap::InnerGetGrColorSpace()
+    {
+        return grColorSpace_;
+    }
+#endif
+
 void PixelMap::scale(float xAxis, float yAxis)
 {
     PostProc postProc;
