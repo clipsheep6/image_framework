@@ -57,9 +57,9 @@ ohos_shared_library("webpplugin") {
 
     deps = [
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
-      "//third_party/flutter/build/skia:ace_skia_ohos",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
+      "//third_party/flutter/build/skia:ace_skia_ohos",
       "//utils/native/base:utils",
     ]
 
