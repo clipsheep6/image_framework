@@ -64,6 +64,7 @@ private:
     static napi_value GetDensity(napi_env env, napi_callback_info info);
     static napi_value SetDensity(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
+    static napi_value SetAlpha(napi_env env, napi_callback_info info);
 
     static napi_value Scale(napi_env env, napi_callback_info info);
     static napi_value Translate(napi_env env, napi_callback_info info);

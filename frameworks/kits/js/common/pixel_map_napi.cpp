@@ -57,6 +57,7 @@ struct PixelMapAsyncContext {
     PositionArea area;
     std::shared_ptr<PixelMap> rPixelMap;
     std::shared_ptr<PixelMap> alphaMap;
+    double alpha = -1;
     uint32_t resultUint32;
     ImageInfo imageInfo;
     double xArg = 0;
@@ -295,6 +296,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getImageInfo", GetImageInfo),
         DECLARE_NAPI_FUNCTION("getBytesNumberPerRow", GetBytesNumberPerRow),
         DECLARE_NAPI_FUNCTION("getPixelBytesNumber", GetPixelBytesNumber),
+        DECLARE_NAPI_FUNCTION("setAlpha", SetAlpha),
         DECLARE_NAPI_FUNCTION("isSupportAlpha", IsSupportAlpha),
         DECLARE_NAPI_FUNCTION("setAlphaAble", SetAlphaAble),
         DECLARE_NAPI_FUNCTION("createAlphaPixelmap", CreateAlphaPixelmap),
@@ -1281,6 +1283,72 @@ static bool prepareNapiEnv(napi_env env, napi_callback_info info, struct NapiVal
     return true;
 }
 
+static void SetAlphaExec(napi_env env, PixelMapAsyncContext* context)
+{
+    if (context == nullptr) {
+        HiLog::Error(LABEL, "Null context");
+        return;
+    }
+    if (context->status == SUCCESS) {
+        if (context->rPixelMap != nullptr) {
+            context->status = context->rPixelMap->SetAlpha(
+                static_cast<float>(context->alpha));
+        } else {
+            HiLog::Error(LABEL, "Null native ref");
+            context->status = ERR_IMAGE_INIT_ABNORMAL;
+        }
+    } else {
+        HiLog::Debug(LABEL, "Scale has failed. do nothing");
+    }
+}
+
+napi_value PixelMapNapi::SetAlpha(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    nVal.argc = NUM_2;
+    napi_value argValue[NUM_2] = {0};
+    nVal.argv = argValue;
+
+    HiLog::Debug(LABEL, "SetAlpha IN");
+    if (!prepareNapiEnv(env, info, &nVal)) {
+        return nVal.result;
+    }
+    nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
+
+    if (nVal.argc != NUM_1 && nVal.argc != NUM_2) {
+        HiLog::Error(LABEL, "Invalid args count %{public}zu", nVal.argc);
+        nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
+    } else {
+        if (napi_ok !=
+            napi_get_value_double(env, nVal.argv[NUM_0], &(nVal.context->alpha))) {
+            HiLog::Error(LABEL, "Arg 0 type mismatch");
+            nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
+        }
+    }
+    if (nVal.argc >= 1 && ImageNapiUtils::getType(env, nVal.argv[nVal.argc - 1]) == napi_function) {
+        napi_create_reference(env, nVal.argv[nVal.argc - 1], nVal.refCount, &(nVal.context->callbackRef));
+    }
+
+    if (nVal.context->callbackRef == nullptr) {
+        napi_create_promise(env, &(nVal.context->deferred), &(nVal.result));
+    }
+    napi_value _resource = nullptr;
+    napi_create_string_utf8(env, "SetAlpha", NAPI_AUTO_LENGTH, &_resource);
+    nVal.status = napi_create_async_work(env, nullptr, _resource,
+        [](napi_env env, void *data)
+        {
+            auto context = static_cast<PixelMapAsyncContext*>(data);
+            SetAlphaExec(env, context);
+        }, EmptyResultComplete, static_cast<void*>(nVal.context.get()), &(nVal.context->work));
+
+    if (nVal.status == napi_ok) {
+        nVal.status = napi_queue_async_work(env, nVal.context->work);
+        if (nVal.status == napi_ok) {
+            nVal.context.release();
+        }
+    }
+    return nVal.result;
+}
 static void ScaleExec(napi_env env, PixelMapAsyncContext* context)
 {
     if (context == nullptr) {

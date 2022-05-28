@@ -79,6 +79,7 @@ public:
     NATIVEEXPORT PixelFormat GetPixelFormat();
     NATIVEEXPORT ColorSpace GetColorSpace();
     NATIVEEXPORT AlphaType GetAlphaType();
+    NATIVEEXPORT uint32_t SetAlpha(const float percent);
     NATIVEEXPORT const uint8_t *GetPixels();
     NATIVEEXPORT uint8_t GetARGB32ColorA(uint32_t color);
     NATIVEEXPORT uint8_t GetARGB32ColorR(uint32_t color);
