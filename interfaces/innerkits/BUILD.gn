@@ -172,12 +172,12 @@ ohos_shared_library("image_native") {
     DUAL_ADAPTER = true
 
     deps = [
-      "//third_party/flutter/build/skia:ace_skia_ohos",
       "//foundation/arkui/napi:ace_napi",
       "//foundation/graphic/graphic_2d:libsurface",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+      "//third_party/flutter/build/skia:ace_skia_ohos",
       "//utils/native/base:utils",
     ]
 
