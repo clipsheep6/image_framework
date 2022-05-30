@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 202 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef SCAN_LINE_FILTER_H
-#define SCAN_LINE_FILTER_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_SCAN_LINE_FILTER_H_
+#define FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_SCAN_LINE_FILTER_H_
 
 #include "image_type.h"
 #include "pixel_convert.h"
@@ -45,4 +45,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif // SCAN_LINE_FILTER_H
+#endif // FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_POST_PROC_H_

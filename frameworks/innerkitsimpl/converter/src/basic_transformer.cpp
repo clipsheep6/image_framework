@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -137,7 +137,7 @@ uint32_t BasicTransformer::TransformPixmap(const PixmapInfo &inPixmap, PixmapInf
     uint64_t bufferSize = static_cast<uint64_t>(dstSize.width) * dstSize.height * pixelBytes;
     if (bufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("[BasicTransformer] buffer size:%{public}llu out of range.",
-                   static_cast<unsigned long long>(bufferSize));
+                   static_cast<uint64_t>(bufferSize));
         return ERR_IMAGE_ALLOC_MEMORY_FAILED;
     }
     int fd = 0;

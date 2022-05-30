@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PIXEL_CONVERT_H
-#define PIXEL_CONVERT_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_PIXEL_CONVERT_H_
+#define FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_PIXEL_CONVERT_H_
 
 #include <cstdint>
 #include <memory>
@@ -92,6 +92,9 @@ static inline uint32_t Premul255(uint32_t colorComponent, uint32_t alpha)
         return 0;
     }
     uint32_t product = colorComponent * alpha + GET_8_BIT;
+    if (colorComponent * alpha / colorComponent != alpha) {
+        return 0;
+    }
     return ((product + (product >> SHIFT_8_BIT)) >> SHIFT_8_BIT);
 }
 
@@ -129,4 +132,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif /* PIXEL_CONVERT_H */
+#endif // FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_PIXEL_CONVERT_H_

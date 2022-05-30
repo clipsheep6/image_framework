@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,8 +33,8 @@ static const std::string IMAGE_INPUT_WBMP_PATH = "/data/local/tmp/image/test.wbm
 
 class ImageSourceWbmpTest : public testing::Test {
 public:
-    ImageSourceWbmpTest() {};
-    ~ImageSourceWbmpTest() {};
+    ImageSourceWbmpTest() {}
+    ~ImageSourceWbmpTest() {}
 };
 
 /**
@@ -213,7 +213,7 @@ HWTEST_F(ImageSourceWbmpTest, WbmpImageDecode007, TestSize.Level3)
     size_t bufferSize = 0;
     bool ret = ImageUtils::GetFileSize(IMAGE_INPUT_WBMP_PATH, bufferSize);
     ASSERT_EQ(ret, true);
-    auto *buffer = (uint8_t *)malloc(bufferSize);
+    auto *buffer = reinterpret_cast<uint8_t *>(malloc(bufferSize));
     ASSERT_NE(buffer, nullptr);
     ret = OHOS::ImageSourceUtil::ReadFileToBuffer(IMAGE_INPUT_WBMP_PATH, buffer, bufferSize);
     ASSERT_EQ(ret, true);
@@ -318,7 +318,7 @@ HWTEST_F(ImageSourceWbmpTest, WbmpImageDecode010, TestSize.Level3)
     size_t bufferSize = 0;
     bool ret = ImageUtils::GetFileSize(IMAGE_INPUT_WBMP_PATH, bufferSize);
     ASSERT_EQ(ret, true);
-    auto *buffer = (uint8_t *)malloc(bufferSize);
+    auto *buffer = reinterpret_cast<uint8_t *>(malloc(bufferSize));
     ASSERT_NE(buffer, nullptr);
     ret = OHOS::ImageSourceUtil::ReadFileToBuffer(IMAGE_INPUT_WBMP_PATH, buffer, bufferSize);
     ASSERT_EQ(ret, true);

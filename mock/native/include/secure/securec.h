@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#ifndef MOCK_NATIVE_INCLUDE_SECURE_SECUREC_H_
+#define MOCK_NATIVE_INCLUDE_SECURE_SECUREC_H_
 
 /* success */
 #ifndef EOK
@@ -20,3 +22,5 @@
 #endif
 
 #define F_DUPFD_CLOEXEC 1030
+
+#endif // MOCK_NATIVE_INCLUDE_SECURE_SECUREC_H_

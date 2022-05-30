@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef LOG_TAGS_H
-#define LOG_TAGS_H
+#ifndef INTERFACES_INNERKITS_INCLUDE_LOG_TAGS_H_
+#define INTERFACES_INNERKITS_INCLUDE_LOG_TAGS_H_
 
 const unsigned int LOG_TAG_DOMAIN_ID_MEDIA = 0xD002B01;
 const unsigned int LOG_TAG_DOMAIN_ID_CAMERA = 0xD002B02;
@@ -24,4 +24,4 @@ const unsigned int LOG_TAG_DOMAIN_ID_IMAGE = 0xD002B05;
 const unsigned int LOG_TAG_DOMAIN_ID_AUDIO = 0xD002B06;
 const unsigned int LOG_TAG_DOMAIN_ID_RADIO = 0xD002B07;
 
-#endif
+#endif // INTERFACES_INNERKITS_INCLUDE_LOG_TAGS_H_

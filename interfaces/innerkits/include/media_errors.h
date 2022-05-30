@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MEDIA_ERRORS_H
-#define MEDIA_ERRORS_H
+#ifndef INTERFACES_INNERKITS_INCLUDE_MEDIA_ERRORS_H_
+#define INTERFACES_INNERKITS_INCLUDE_MEDIA_ERRORS_H_
 
 #include <cstdint>
 #include "errors.h"
@@ -111,4 +111,4 @@ const int32_t ERR_MEDIA_DIS_PLAYER_UNSUPPORTED = BASE_MEDIA_ERR_OFFSET + 74;  //
 const int32_t ERR_MEDIA_UNKNOWN = BASE_MEDIA_ERR_OFFSET + 200;  // media unknown error
 }  // namespace Media
 }  // namespace OHOS
-#endif  // MEDIA_ERRORS_H
+#endif  // INTERFACES_INNERKITS_INCLUDE_MEDIA_ERRORS_H_

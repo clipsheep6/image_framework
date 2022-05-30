@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,8 +25,8 @@ namespace OHOS {
 namespace Multimedia {
     class ImagePixelMapParcelTest : public testing::Test {
     public:
-        ImagePixelMapParcelTest(){};
-        ~ImagePixelMapParcelTest(){};
+        ImagePixelMapParcelTest(){}
+        ~ImagePixelMapParcelTest(){}
     };
 
     std::unique_ptr<PixelMap> ConstructPixmap()
@@ -44,7 +44,7 @@ namespace Multimedia {
         int32_t rowDataSize = pixelMapWidth;
         uint32_t bufferSize = rowDataSize * pixelMapHeight;
         void *buffer = malloc(bufferSize);
-        char *ch = (char *)buffer;
+        char *ch = reinterpret_cast<char *>(buffer);
         for (unsigned int i = 0; i < bufferSize; i++) {
             *(ch++) = (char)i;
         }

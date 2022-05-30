@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef DECODE_LISTENER_H
-#define DECODE_LISTENER_H
+#ifndef INTERFACES_INNERKITS_INCLUDE_DECODE_LISTENER_H_
+#define INTERFACES_INNERKITS_INCLUDE_DECODE_LISTENER_H_
 
 namespace OHOS {
 namespace Media {
@@ -27,4 +27,4 @@ public:
 } // namespace Media
 } // namespace OHOS
 
-#endif // DECODE_LISTENER_H
+#endif // INTERFACES_INNERKITS_INCLUDE_DECODE_LISTENER_H_

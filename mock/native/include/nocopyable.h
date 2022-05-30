@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef UTILS_BASE_NOCOPYABLE_H
-#define UTILS_BASE_NOCOPYABLE_H
+#ifndef MOCK_NATIVE_INCLUDE_NOCOPYABLE_H_
+#define MOCK_NATIVE_INCLUDE_NOCOPYABLE_H_
 namespace OHOS {
 #define DISALLOW_COPY_AND_MOVE(className) \
 do \
@@ -38,11 +38,11 @@ do \
 } while (0)
 class NoCopyable {
 protected:
-    NoCopyable() {};
-    virtual ~NoCopyable() {};
+    NoCopyable() {}
+    virtual ~NoCopyable() {}
 
 private:
     DISALLOW_COPY_AND_MOVE(NoCopyable);
 };
 } // namespace OHOS
-#endif
+#endif // MOCK_NATIVE_INCLUDE_NOCOPYABLE_H_
