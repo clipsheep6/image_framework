@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2021 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,7 +40,7 @@ void OstreamPackerStream::Flush()
 
 int64_t OstreamPackerStream::BytesWritten()
 {
-    return (outputStream_ != nullptr) ? static_cast<uint64_t>(outputStream_->tellp()) : 0;
+    return (outputStream_ != nullptr) ? static_cast<int64_t>(outputStream_->tellp()) : 0;
 }
 } // namespace Media
 } // namespace OHOS

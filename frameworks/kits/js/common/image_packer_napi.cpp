@@ -84,6 +84,7 @@ static void CommonCallbackRoutine(napi_env env, ImagePackerAsyncContext* &connec
     napi_value result[NUM_2] = {0};
     napi_value retVal;
     napi_value callback = nullptr;
+
     napi_get_undefined(env, &result[NUM_0]);
     napi_get_undefined(env, &result[NUM_1]);
 
@@ -146,7 +147,7 @@ STATIC_EXEC_FUNC(Packing)
             bufferSize, context->packOption);
         context->rImagePacker->AddImage(*(context->rImageSource));
         context->rImagePacker->FinalizePacking(packedSize);
-        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<uint64_t>(packedSize));
+        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<int64_t>(packedSize));
 
         if (packedSize > 0 && (static_cast<uint64_t>(packedSize) < bufferSize)) {
             context->packedSize = packedSize;
@@ -211,7 +212,7 @@ STATIC_EXEC_FUNC(PackingFromPixelMap)
             bufferSize, context->packOption);
         context->rImagePacker->AddImage(*(context->rPixelMap));
         context->rImagePacker->FinalizePacking(packedSize);
-        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<uint64_t>(packedSize));
+        HiLog::Debug(LABEL, "packedSize=%{public}lld.", static_cast<int64_t>(packedSize));
 
         if (packedSize > 0 && (static_cast<uint64_t>(packedSize) < bufferSize)) {
             context->packedSize = packedSize;
@@ -341,11 +342,12 @@ static bool parsePackOptions(napi_env env, napi_value root, PackOption* opts)
 
     HiLog::Debug(LABEL, "parsePackOptions format type %{public}d, is array %{public}d",
         formatType, isFormatArray);
-        
+
     if (opts == nullptr) {
         HiLog::Error(LABEL, "opts is nullptr");
         return false;
     }
+    
     char buffer[SIZE] = {0};
     size_t res = 0;
     if (napi_string == formatType) {
