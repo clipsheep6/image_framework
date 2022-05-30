@@ -40,7 +40,7 @@ void OstreamPackerStream::Flush()
 
 int64_t OstreamPackerStream::BytesWritten()
 {
-    return (outputStream_ != nullptr) ? static_cast<int64_t>(outputStream_->tellp()) : 0;
+    return (outputStream_ != nullptr) ? static_cast<uint64_t>(outputStream_->tellp()) : 0;
 }
 } // namespace Media
 } // namespace OHOS

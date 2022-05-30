@@ -187,8 +187,8 @@ bool PixelMap::CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t
         HiLog::Error(LABEL, "stride %{public}d is out of range", stride);
         return false;
     }
-    int64_t lastLine = static_cast<int64_t>(dstHeight - 1) * stride + offset;
-    if (offset < 0 || static_cast<int64_t>(offset) + dstWidth > colorLength || lastLine + dstWidth > colorLength) {
+    int64_t lastLine = static_cast<uint64_t>(dstHeight - 1) * stride + offset;
+    if (offset < 0 || static_cast<uint64_t>(offset) + dstWidth > colorLength || lastLine + dstWidth > colorLength) {
         HiLog::Error(LABEL, "colors length: %{public}u, offset: %{public}d, stride: %{public}d  is invalid",
                      colorLength, offset, stride);
         return false;
