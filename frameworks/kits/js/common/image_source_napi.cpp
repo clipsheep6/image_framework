@@ -73,7 +73,7 @@ struct ImageSourceAsyncContext {
     DecodeOptions decodeOpts;
     std::shared_ptr<ImageSource> rImageSource;
     std::shared_ptr<PixelMap> rPixelMap;
-    napi_value error = nullptr;
+    napi_ref error = nullptr;
     std::string errMsg;
 };
 
@@ -101,6 +101,18 @@ static std::string GetStringArgument(napi_env env, napi_value value)
     return strValue;
 }
 
+static void CreateErrorMsg(napi_env env, const std::string msg, napi_ref* error)
+{
+    napi_value tmpError;
+    int32_t refCount = 1;
+    napi_status status = napi_create_string_utf8(env, msg.c_str(), NAPI_AUTO_LENGTH, &tmpError);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Create error msg error");
+        return;
+    }
+    napi_create_reference(env, tmpError, refCount, error);
+}
+
 static void ImageSourceCallbackRoutine(napi_env env, ImageSourceAsyncContext* &context, const napi_value &valueParam)
 {
     napi_value result[NUM_2] = {0};
@@ -118,7 +130,8 @@ static void ImageSourceCallbackRoutine(napi_env env, ImageSourceAsyncContext* &c
     if (context->status == SUCCESS) {
         result[NUM_1] = valueParam;
     } else if (context->error != nullptr) {
-        result[NUM_0] = context->error;
+        napi_get_reference_value(env, context->error, &result[NUM_0]);
+        napi_delete_reference(env, context->error);
     } else {
         HiLog::Debug(LABEL, "error status, no message");
     }
@@ -396,7 +409,7 @@ static bool ParseRegion(napi_env env, napi_value root, Rect* region)
 static bool IsSupportPixelFormat(int32_t val)
 {
     if (val >= static_cast<int32_t>(PixelFormat::UNKNOWN) &&
-        val <= static_cast<int32_t>(PixelFormat::BGRA_8888)) {
+        val <= static_cast<int32_t>(PixelFormat::RGBA_F16)) {
         return true;
     }
 
@@ -412,9 +425,29 @@ static PixelFormat ParsePixlForamt(int32_t val)
     return PixelFormat::UNKNOWN;
 }
 
-static bool ParseDecodeOptions(napi_env env, napi_value root, DecodeOptions* opts, uint32_t* pIndex, napi_value* error)
+static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* opts, napi_ref* error)
 {
     uint32_t tmpNumber = 0;
+    if (!GET_UINT32_BY_NAME(root, "desiredPixelFormat", tmpNumber)) {
+        HiLog::Debug(LABEL, "no desiredPixelFormat");
+    } else {
+        if (IsSupportPixelFormat(tmpNumber)) {
+            opts->desiredPixelFormat = ParsePixlForamt(tmpNumber);
+        } else {
+            HiLog::Debug(LABEL, "Invalid desiredPixelFormat %{public}d", tmpNumber);
+            CreateErrorMsg(env, "DecodeOptions mismatch", error);
+            return false;
+        }
+    }
+
+    if (!GET_INT32_BY_NAME(root, "fitDensity", opts->fitDensity)) {
+        HiLog::Debug(LABEL, "no fitDensity");
+    }
+    return true;
+}
+
+static bool ParseDecodeOptions(napi_env env, napi_value root, DecodeOptions* opts, uint32_t* pIndex, napi_ref* error)
+{
     napi_value tmpValue = nullptr;
 
     if (!ImageNapiUtils::GetUint32ByName(env, root, "index", pIndex)) {
@@ -438,7 +471,7 @@ static bool ParseDecodeOptions(napi_env env, napi_value root, DecodeOptions* opt
             opts->rotateDegrees = (float)opts->rotateNewDegrees;
         } else {
             HiLog::Debug(LABEL, "Invalid rotate %{public}d", opts->rotateNewDegrees);
-            napi_create_string_utf8(env, "DecodeOptions mismatch", NAPI_AUTO_LENGTH, error);
+            CreateErrorMsg(env, "DecodeOptions mismatch", error);
             return false;
         }
     }
@@ -462,20 +495,7 @@ static bool ParseDecodeOptions(napi_env env, napi_value root, DecodeOptions* opt
             HiLog::Debug(LABEL, "ParseRegion error");
         }
     }
-
-    tmpNumber = 0;
-    if (!GET_UINT32_BY_NAME(root, "desiredPixelFormat", tmpNumber)) {
-        HiLog::Debug(LABEL, "no desiredPixelFormat");
-    } else {
-        if (IsSupportPixelFormat(tmpNumber)) {
-            opts->desiredPixelFormat = ParsePixlForamt(tmpNumber);
-        } else {
-            HiLog::Debug(LABEL, "Invalid desiredPixelFormat %{public}d", tmpNumber);
-            napi_create_string_utf8(env, "DecodeOptions mismatch", NAPI_AUTO_LENGTH, error);
-            return false;
-        }
-    }
-    return true;
+    return ParseDecodeOptions2(env, root, opts, error);
 }
 
 static std::string FileUrlToRawPath(const std::string &path)
@@ -485,6 +505,13 @@ static std::string FileUrlToRawPath(const std::string &path)
         return path.substr(FILE_URL_PREFIX.size());
     }
     return path;
+}
+
+static void parseSourceOptions(napi_env env, napi_value root, SourceOptions* opts)
+{
+    if (!ImageNapiUtils::GetInt32ByName(env, root, "sourceDensity", &(opts->baseDensity))) {
+        HiLog::Debug(LABEL, "no sourceDensity");
+    }
 }
 
 napi_value ImageSourceNapi::CreateImageSource(napi_env env, napi_callback_info info)
@@ -508,46 +535,36 @@ napi_value ImageSourceNapi::CreateImageSource(napi_env env, napi_callback_info i
     uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource = nullptr;
-    if (argCount == NUM_1 && ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_string) {
-        size_t bufferSize = 0;
-        status = napi_get_value_string_utf8(env, argValue[NUM_0], nullptr, NUM_0, &bufferSize);
-        IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status) && bufferSize > (size_t)0, nullptr,
-            HiLog::Error(LABEL, "fail to get bufferSize"));
 
-        char* buffer = new char[bufferSize + NUM_1] { 0 };
-        status = napi_get_value_string_utf8(env, argValue[NUM_0], buffer,
-            bufferSize + NUM_1, &(asyncContext->pathNameLength));
-        if (!IMG_IS_OK(status)) {
-            delete[] buffer;
+    NAPI_ASSERT(env, argCount > 0, "No arg!");
+
+    if (argCount > NUM_1) {
+        parseSourceOptions(env, argValue[NUM_1], &opts);
+    }
+
+    auto inputType = ImageNapiUtils::getType(env, argValue[NUM_0]);
+    if (napi_string == inputType) { // File Path
+        if (!ImageNapiUtils::GetUtf8String(env, argValue[NUM_0], asyncContext->pathName)) {
             HiLog::Error(LABEL, "fail to get pathName");
             napi_get_undefined(env, &result);
             return result;
         }
-
-        asyncContext->pathName = buffer;
         asyncContext->pathName = FileUrlToRawPath(asyncContext->pathName);
-
+        asyncContext->pathNameLength = asyncContext->pathName.size();
         HiLog::Debug(LABEL, "pathName is [%{public}s]", asyncContext->pathName.c_str());
         filePath_ = asyncContext->pathName;
         imageSource = ImageSource::CreateImageSource(asyncContext->pathName, opts, errorCode);
-    } else if (argCount == NUM_1 && ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_number) {
+    } else if (napi_number == inputType) { // Fd
         napi_get_value_int32(env, argValue[NUM_0], &asyncContext->fdIndex);
         HiLog::Debug(LABEL, "CreateImageSource fdIndex is [%{public}d]", asyncContext->fdIndex);
         fileDescriptor_ = asyncContext->fdIndex;
         imageSource = ImageSource::CreateImageSource(asyncContext->fdIndex, opts, errorCode);
-    } else if (argCount == NUM_1) {
-        status = napi_get_arraybuffer_info(env, argValue[NUM_0],
-            &(asyncContext->sourceBuffer), &(asyncContext->sourceBufferSize));
-        if (!IMG_IS_OK(status)) {
-            HiLog::Error(LABEL, "fail to getarraybuffer");
-            napi_get_undefined(env, &result);
-            return result;
-        }
-
-        fileBuffer_ = asyncContext->sourceBuffer;
-        fileBufferSize_ = asyncContext->sourceBufferSize;
-        imageSource = ImageSource::CreateImageSource(static_cast<uint8_t *>(asyncContext->sourceBuffer),
-            asyncContext->sourceBufferSize, opts, errorCode);
+    } else { // Input Buffer
+        status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(fileBuffer_), &(fileBufferSize_));
+        asyncContext->sourceBuffer = fileBuffer_;
+        asyncContext->sourceBufferSize = fileBufferSize_;
+        imageSource = ImageSource::CreateImageSource(static_cast<uint8_t *>(fileBuffer_),
+            fileBufferSize_, opts, errorCode);
     }
 
     if (errorCode != SUCCESS || imageSource == nullptr) {
@@ -602,8 +619,18 @@ napi_value ImageSourceNapi::CreateIncrementalSource(napi_env env, napi_callback_
     napi_status status;
     HiLog::Debug(LABEL, "CreateIncrementalSource IN");
 
+    napi_value thisVar = nullptr;
+    napi_value argValue[NUM_2] = {0};
+    size_t argCount = NUM_2;
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
+
     uint32_t errorCode = 0;
     IncrementalSourceOptions incOpts;
+    if (argCount == NUM_2) {
+        parseSourceOptions(env, argValue[NUM_1], &(incOpts.sourceOptions));
+    }
+
     incOpts.incrementalMode = IncrementalMode::INCREMENTAL_DATA;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateIncrementalImageSource(incOpts, errorCode);
     DecodeOptions decodeOpts;
