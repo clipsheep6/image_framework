@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2021 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -369,7 +369,7 @@ uint8_t *PostProc::AllocSharedMemory(const Size &size, const uint64_t bufferSize
 #else
     fd = AshmemCreate("Parcel RawData", bufferSize);
     if (fd < 0) {
-        IMAGE_LOGE("[PostProc]AllocSharedMemory fd error, bufferSize %{public}lld", (uint64_t)bufferSize);
+        IMAGE_LOGE("[PostProc]AllocSharedMemory fd error, bufferSize %{public}lld", (int64_t)bufferSize);
         return nullptr;
     }
     int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
@@ -381,7 +381,7 @@ uint8_t *PostProc::AllocSharedMemory(const Size &size, const uint64_t bufferSize
     void* ptr = ::mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
         IMAGE_LOGE("[PostProc]mmap error, errno: %{public}s, fd %{public}d, bufferSize %{public}lld",
-            strerror(errno), fd, (uint64_t)bufferSize);
+            strerror(errno), fd, (int64_t)bufferSize);
         ::close(fd);
         return nullptr;
     }
