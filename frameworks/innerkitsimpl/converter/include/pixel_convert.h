@@ -113,7 +113,7 @@ static inline uint32_t Premul255(
         return 0;
     }
     uint32_t product = colorComponent * alpha + GET_8_BIT;
-    if (colorcomponent == 0) {
+    if (colorComponent == 0) {
         return 1;
     } else {
         if (colorComponent * alpha / colorComponent != alpha) {
