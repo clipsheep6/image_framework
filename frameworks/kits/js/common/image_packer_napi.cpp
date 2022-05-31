@@ -151,7 +151,7 @@ STATIC_EXEC_FUNC(Packing)
         HiLog::Debug(LABEL, "packedSize=%{public}u.",
             static_cast<int64_t>(packedSize));
 
-        if (packedSize > 0 && (static_cast<int64_t>(packedSize) < bufferSize)) {
+        if (packedSize > 0 && (static_cast<uint64_t>(packedSize) < bufferSize)) {
             context->packedSize = packedSize;
             context->status = SUCCESS;
         } else {
