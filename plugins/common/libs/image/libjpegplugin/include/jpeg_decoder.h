@@ -24,6 +24,7 @@
 #include "color_space.h"
 #endif
 #include "hilog/log.h"
+#include "icc_profile_info.h"
 #include "jpeg_utils.h"
 #include "jpeglib.h"
 #include "log_tags.h"
