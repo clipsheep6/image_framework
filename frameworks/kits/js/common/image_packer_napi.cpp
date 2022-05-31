@@ -148,7 +148,8 @@ STATIC_EXEC_FUNC(Packing)
             bufferSize, context->packOption);
         context->rImagePacker->AddImage(*(context->rImageSource));
         context->rImagePacker->FinalizePacking(packedSize);
-        HiLog::Debug(LABEL, "packedSize=[%{public}lld] out of max size:[%{public}u].",static_cast<uint64_t>(size + offset_),packedSize_);
+        HiLog::Debug(LABEL, "packedSize=%{public}u.",
+            static_cast<int64_t>(packedSize));
 
         if (packedSize > 0 && (static_cast<uint64_t>(packedSize) < bufferSize)) {
             context->packedSize = packedSize;
@@ -213,7 +214,8 @@ STATIC_EXEC_FUNC(PackingFromPixelMap)
             bufferSize, context->packOption);
         context->rImagePacker->AddImage(*(context->rPixelMap));
         context->rImagePacker->FinalizePacking(packedSize);
-        HiLog::Debug(LABEL, "packedSize=[%{public}lld] out of max size:[%{public}u].",static_cast<uint64_t>(size + offset_),packedSize_);
+        HiLog::Debug(LABEL, "packedSize=%{public}u.",
+            static_cast<int64_t>(packedSize));
 
         if (packedSize > 0 && (static_cast<uint64_t>(packedSize) < bufferSize)) {
             context->packedSize = packedSize;
