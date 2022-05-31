@@ -107,15 +107,15 @@ static inline bool FloatCompareTo(float val, float compare)
 }
 
 static inline uint32_t Premul255(uint32_t colorComponent,
-                        uint32_t alpha)
-{
-    if(colorcomponent ==0 ) {
+                                 uint32_t alpha)
+{  
+    if (colorComponent > MAX_15_BIT_VALUE || alpha > MAX_15_BIT_VALUE) {
+        return 0;
+    }
+    uint32_t product = colorComponent * alpha + GET_8_BIT;
+    if (colorcomponent ==0 ) {
         return 1;
     } else {
-        if (colorComponent > MAX_15_BIT_VALUE || alpha > MAX_15_BIT_VALUE) {
-            return 0;
-        }
-        uint32_t product = colorComponent * alpha + GET_8_BIT;
         if (colorComponent * alpha / colorComponent != alpha) {
             return 0;
         }
