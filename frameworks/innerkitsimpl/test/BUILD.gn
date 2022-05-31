@@ -168,11 +168,12 @@ ohos_unittest("imagecolorspacetest") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/include",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_standard/interfaces/innerkits/include",
+    "//foundation/multimedia/image_standard/plugins/manager/include",
     "//foundation/multimedia/utils/include",
+    "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//third_party/googletest/googletest/include",
     "//utils/native/base/include",
-    "//foundation/multimedia/image_standard/plugins/manager/include",
-    "//foundation/graphic/graphic_2d/utils/color_manager/export",
+
   ]
 
   cflags = [ 
