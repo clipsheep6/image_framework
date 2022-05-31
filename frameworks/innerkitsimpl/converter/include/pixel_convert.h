@@ -106,12 +106,12 @@ static inline bool FloatCompareTo(float val, float compare)
     return fabs(val - compare) < MIN_EPSILON;
 }
 
-static inline uint32_t Premul255(uint32_t colorComponent, uint32_t alpha)
+static inline uint32_t Premul255(uint32_t colorComponent,
+                        uint32_t alpha)
 {
-    if(colorcomponent ==0 ){
+    if(colorcomponent ==0 ) {
         return 1;
-    }
-    else{
+    } else {
         if (colorComponent > MAX_15_BIT_VALUE || alpha > MAX_15_BIT_VALUE) {
             return 0;
         }
