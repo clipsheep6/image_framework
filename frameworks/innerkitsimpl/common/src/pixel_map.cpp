@@ -764,7 +764,7 @@ uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
     }
     if (bufferSize < static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "read pixels by buffer input dst buffer(%{public}llu) < current pixelmap size(%{public}u).",
-                     static_cast<uint64_t>(bufferSize), pixelsSize_);
+                     static_cast<unsigned long long>(bufferSize), pixelsSize_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     errno_t ret = memcpy_s(dst, bufferSize, data_, pixelsSize_);
@@ -826,8 +826,8 @@ bool PixelMap::CheckPixelsInput(const uint8_t *dst, const uint64_t &bufferSize, 
         HiLog::Error(LABEL,
                      "CheckPixelsInput fail, height(%{public}d), width(%{public}d), lastLine(%{public}llu), "
                      "offset(%{public}u), bufferSize:%{public}llu.",
-                     region.height, region.width, static_cast<uint64_t>(lastLinePos), offset,
-                     static_cast<uint64_t>(bufferSize));
+                     region.height, region.width, static_cast<unsigned long long>(lastLinePos), offset,
+                     static_cast<unsigned long long>(bufferSize));
         return false;
     }
     return true;
@@ -892,7 +892,7 @@ uint32_t PixelMap::ResetConfig(const Size &size, const PixelFormat &format)
     uint64_t dstSize = static_cast<uint64_t>(size.width) * size.height * bytesPerPixel;
     if (dstSize > static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "ResetConfig reset dstSize(%{public}llu) > current(%{public}u).",
-                     static_cast<uint64_t>(dstSize), pixelsSize_);
+                     static_cast<unsigned long long>(dstSize), pixelsSize_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     AlphaType dstAlphaType = ImageUtils::GetValidAlphaTypeByFormat(GetAlphaType(), format);
@@ -998,7 +998,7 @@ uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize
 {
     if (source == nullptr || bufferSize < static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "write pixels by buffer source is nullptr or size(%{public}llu) < pixelSize(%{public}u).",
-                     static_cast<uint64_t>(bufferSize), pixelsSize_);
+                     static_cast<unsigned long long>(bufferSize), pixelsSize_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     if (!IsEditable()) {
