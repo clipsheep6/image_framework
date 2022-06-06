@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,8 +14,8 @@
  */
 
 
-#ifndef HIVIEWDFX_HILOG_C_H
-#define HIVIEWDFX_HILOG_C_H
+#ifndef MOCK_NATIVE_INCLUDE_HILOG_LOG_C_H_
+#define MOCK_NATIVE_INCLUDE_HILOG_LOG_C_H_
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -74,4 +74,4 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 }
 #endif
 
-#endif // HIVIEWDFX_HILOG_C_H
+#endif // MOCK_NATIVE_INCLUDE_HILOG_LOG_C_H_

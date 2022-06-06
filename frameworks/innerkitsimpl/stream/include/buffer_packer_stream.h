@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef BUFFER_PACKER_STREAM_H
-#define BUFFER_PACKER_STREAM_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_STREAM_INCLUDE_BUFFER_PACKER_STREAM_H_
+#define FRAMEWORKS_INNERKITSIMPL_STREAM_INCLUDE_BUFFER_PACKER_STREAM_H_
 
 #include <string>
 #include "hilog/log.h"
@@ -43,4 +43,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif // BUFFER_PACKER_STREAM_H
+#endif // FRAMEWORKS_INNERKITSIMPL_STREAM_INCLUDE_BUFFER_PACKER_STREAM_H_

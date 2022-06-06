@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,8 +40,9 @@ string ExtractFileExt(const string& fileName)
 string TransformFileName(const string& fileName)
 {
     string::size_type pos = fileName.find(".");
+    string transformfileName = "";
     if (pos == string::npos) {
-        string transformfileName = fileName;
+        transformfileName = fileName;
 
 #ifdef _WIN32
         transformfileName = transformfileName.append(".dll");
@@ -51,7 +52,7 @@ string TransformFileName(const string& fileName)
 
         return transformfileName;
     } else {
-        string transformfileName = string(fileName).substr(0, pos + 1);
+        transformfileName = string(fileName).substr(0, pos + 1);
 
 #ifdef _WIN32
         transformfileName = transformfileName.append("dll");

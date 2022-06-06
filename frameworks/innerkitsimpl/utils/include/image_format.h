@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_FORMAT_H
-#define IMAGE_FORMAT_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_FORMAT_H_
+#define FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_FORMAT_H_
 
 namespace OHOS {
 namespace Media {
@@ -34,4 +34,4 @@ enum class ComponentType {
 } // namespace Media
 } // namespace OHOS
 
-#endif // IMAGE_FORMAT_H
+#endif // FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_FORMAT_H_

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef POST_PROC_H
-#define POST_PROC_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_POST_PROC_H_
+#define FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_POST_PROC_H_
 
 #include <vector>
 #include "basic_transformer.h"
@@ -62,4 +62,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif // POST_PROC_H
+#endif // FRAMEWORKS_INNERKITSIMPL_CONVERTER_INCLUDE_POST_PROC_H_

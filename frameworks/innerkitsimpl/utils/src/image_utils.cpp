@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -157,7 +157,7 @@ bool ImageUtils::PathToRealPath(const string &path, string &realPath)
     }
 
     if ((path.length() >= PATH_MAX)) {
-        IMAGE_LOGE("path len is error, the len is: [%{public}lu]", static_cast<unsigned long>(path.length()));
+        IMAGE_LOGE("path len is error, the len is: [%{public}llu]", static_cast<uint64_t>(path.length()));
         return false;
     }
 

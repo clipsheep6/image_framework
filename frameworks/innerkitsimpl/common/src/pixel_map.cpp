@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -204,7 +204,7 @@ unique_ptr<PixelMap> PixelMap::Create(const InitializationOptions &opts)
 {
     HiLog::Info(LABEL, "PixelMap::Create3 enter");
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
-    if (dstPixelMap == nullptr) {
+    if (dstPixelMap == nullptr || dstPixelMap.get() == nullptr) {
         HiLog::Error(LABEL, "create pixelMap pointer fail");
         return nullptr;
     }
@@ -285,7 +285,7 @@ unique_ptr<PixelMap> PixelMap::Create(PixelMap &source, const Rect &srcRect, con
         return unique_ptr<PixelMap>(&source);
     }
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
-    if (dstPixelMap == nullptr) {
+    if (dstPixelMap == nullptr || dstPixelMap.get() == nullptr) {
         HiLog::Error(LABEL, "create pixelmap pointer fail");
         return nullptr;
     }
@@ -1173,8 +1173,8 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
             return nullptr;
         }
 
-        void *ptr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
-        if (ptr == MAP_FAILED) {
+        void *mapPtr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
+        if (mapPtr == MAP_FAILED) {
             // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
             HiLog::Error(LABEL, "ReadImageData map failed, errno:%{public}d", errno);
             return nullptr;
@@ -1182,19 +1182,19 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 
         base = static_cast<uint8_t *>(malloc(bufferSize));
         if (base == nullptr) {
-            ::munmap(ptr, bufferSize);
+            ::munmap(mapPtr, bufferSize);
             HiLog::Error(LABEL, "alloc output pixel memory size:[%{public}d] error.", bufferSize);
             return nullptr;
         }
-        if (memcpy_s(base, bufferSize, ptr, bufferSize) != 0) {
-            ::munmap(ptr, bufferSize);
+        if (memcpy_s(base, bufferSize, mapPtr, bufferSize) != 0) {
+            ::munmap(mapPtr, bufferSize);
             free(base);
             base = nullptr;
             HiLog::Error(LABEL, "memcpy pixel data size:[%{public}d] error.", bufferSize);
             return nullptr;
         }
 
-        ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, ptr, &fd, bufferSize);
+        ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, mapPtr, &fd, bufferSize);
 #endif
     }
     return base;

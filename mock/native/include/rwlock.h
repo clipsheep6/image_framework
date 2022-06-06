@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,8 +14,8 @@
  */
 
 
-#ifndef UTILS_RWLOCK_H_
-#define UTILS_RWLOCK_H_
+#ifndef MOCK_NATIVE_INCLUDE_RWLOCK_H_
+#define MOCK_NATIVE_INCLUDE_RWLOCK_H_
 
 #include <atomic>
 #include <thread>
@@ -96,5 +96,5 @@ private:
 };
 } // namespace Utils
 } // namespace OHOS
-#endif /* UTILS_RWLOCK_H_ */
+#endif // MOCK_NATIVE_INCLUDE_RWLOCK_H_
 

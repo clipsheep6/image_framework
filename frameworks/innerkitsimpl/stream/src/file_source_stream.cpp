@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -52,7 +52,7 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &
         IMAGE_LOGE("[FileSourceStream]open file fail.");
         return nullptr;
     }
-    long offset = ftell(filePtr);
+    int64_t offset = ftell(filePtr);
     if (offset < 0) {
         IMAGE_LOGE("[FileSourceStream]get the position fail.");
         fclose(filePtr);
@@ -73,7 +73,7 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)
         IMAGE_LOGE("[FileSourceStream]open file fail.");
         return nullptr;
     }
-    long offset = ftell(filePtr);
+    int64_t offset = ftell(filePtr);
     if (offset < 0) {
         IMAGE_LOGE("[FileSourceStream]get the position fail.");
         fclose(filePtr);

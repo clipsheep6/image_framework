@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,8 +14,8 @@
  */
 
 
-#ifndef IMAGE_SOURCE_UTIL_H
-#define IMAGE_SOURCE_UTIL_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_TEST_UNITTEST_IMAGE_SOURCE_UTIL_H_
+#define FRAMEWORKS_INNERKITSIMPL_TEST_UNITTEST_IMAGE_SOURCE_UTIL_H_
 #include <fstream>
 #include "image_source.h"
 #include "pixel_map.h"
@@ -27,4 +27,4 @@ int64_t PackImage(std::unique_ptr<OHOS::Media::ImageSource> imageSource);
 bool ReadFileToBuffer(const std::string &filePath, uint8_t *buffer, size_t bufferSize);
 }
 }
-#endif // IMAGE_SOURCE_UTIL_H
+#endif // FRAMEWORKS_INNERKITSIMPL_TEST_UNITTEST_IMAGE_SOURCE_UTIL_H_
