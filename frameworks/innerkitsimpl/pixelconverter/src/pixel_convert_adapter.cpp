@@ -190,6 +190,7 @@ bool PixelConvertAdapter::WritePixelsConvert(const void *srcPixels, uint32_t src
         ARGBToRGBA(src, src, srcRowBytes * srcInfo.size.height);
     }
 
+    SkBitmap dstBitmap;
     if (!dstBitmap.installPixels(dstImageInfo, dstPixels, dstRowBytes)) {
         HiLog::Error(LABEL, "WritePixelsConvert dst bitmap install pixels failed.");
         return false;
