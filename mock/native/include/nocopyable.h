@@ -13,36 +13,32 @@
  * limitations under the License.
  */
 
+
+
 #ifndef UTILS_BASE_NOCOPYABLE_H
 #define UTILS_BASE_NOCOPYABLE_H
 namespace OHOS {
 #define DISALLOW_COPY_AND_MOVE(className) \
-do \
-{ \
-    DISALLOW_COPY(className); \
-    DISALLOW_MOVE(className); \
-} while (0)
+    DISALLOW_COPY(className) \
+    DISALLOW_MOVE(className)
 
 #define DISALLOW_COPY(className) \
-do \
-{ \
     className(const className&) = delete; \
-    (className)& operator= (const className&) = delete; \
-} while (0)
+    className& operator= (const className&) = delete;
 
 #define DISALLOW_MOVE(className) \
-do \
-{ \
     className(className&&) = delete; \
-    (className)& operator= ((className)&&) = delete; \
-} while (0)
+    className& operator= (className&& ) = delete;
+
+
 class NoCopyable {
 protected:
     NoCopyable() {};
     virtual ~NoCopyable() {};
 
 private:
-    DISALLOW_COPY_AND_MOVE(NoCopyable);
+    DISALLOW_COPY_AND_MOVE(NoCopyable)
 };
 } // namespace OHOS
 #endif
+
