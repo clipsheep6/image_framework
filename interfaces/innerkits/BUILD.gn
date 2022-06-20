@@ -20,6 +20,7 @@ config("image_external_config") {
     "include",
     "//utils/system/safwk/native/include",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/receiver/include",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/creator/include",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter/include",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/include",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/include",
@@ -81,6 +82,7 @@ ohos_shared_library("image") {
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_napi_utils.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_packer_napi.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_receiver_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_creator_napi.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
@@ -142,6 +144,8 @@ ohos_shared_library("image_native") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
   ]
 
   if (use_mingw_win) {
@@ -220,6 +224,7 @@ ohos_static_library("image_static_napi") {
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_source_napi.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/native_module_ohos_image.cpp",
     "//foundation/multimedia/image_standard/frameworks/kits/js/common/pixel_map_napi.cpp",
+    "//foundation/multimedia/image_standard/frameworks/kits/js/common/image_creator_napi.cpp",
   ]
 
   cflags = [
@@ -264,6 +269,8 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
   ]
 
   if (use_mingw_win) {
