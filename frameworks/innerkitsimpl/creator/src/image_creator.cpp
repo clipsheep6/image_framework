@@ -132,14 +132,14 @@ static void dumpBuffer(uint8_t* tempBuffer, int64_t size)
         ss.push_back(xx[tempBuffer[i]&BIT4_MASK]);
         if (i % PRINT_WIDTH == PRINT_WIDTH_MOD) {
             ss.push_back('\0');
-            HiLog::Info(LABEL, "ss size[%{public}lu]", ss.size());
+            HiLog::Info(LABEL, "ss size[%{public}u]", ss.size());
             HiLog::Info(LABEL, "buffer[%{public}d] = [%{public}s]", i, ss.data());
             ss.clear();
             ss.resize(0);
         }
     }
     ss.push_back('\0');
-    HiLog::Info(LABEL, "ss size[%{public}lu]", ss.size());
+    HiLog::Info(LABEL, "ss size[%{public}u]", ss.size());
     HiLog::Info(LABEL, "buffer[LAST] = [%{public}s]", ss.data());
     ss.clear();
     ss.resize(0);
