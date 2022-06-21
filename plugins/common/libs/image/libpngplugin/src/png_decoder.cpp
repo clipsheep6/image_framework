@@ -213,7 +213,9 @@ uint8_t *PngDecoder::AllocOutputHeapBuffer(DecodeContext &context)
                 ::close(fd);
                 return nullptr;
             }
-            void* ptr = ::mmap(nullptr, byteCount, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+            if(byteCount != 0) {
+                void* ptr = ::mmap(nullptr, byteCount, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+            }
             if (ptr == MAP_FAILED) {
                 ::close(fd);
                 return nullptr;
@@ -636,7 +638,9 @@ void PngDecoder::SaveRows(png_bytep row, png_uint_32 rowNum)
         return;
     }
     outputRowsNum_++;
-    uint8_t *offset = pixelsData_ + rowNum * pngImageInfo_.rowDataSize;
+    if(pixelsData_ + rowNum * pngImageInfo_.rowDataSize <255) {
+        uint8_t *offset = pixelsData_ + rowNum * pngImageInfo_.rowDataSize;
+    }
     uint32_t offsetSize = (pngImageInfo_.height - rowNum) * pngImageInfo_.rowDataSize;
     errno_t ret = memcpy_s(offset, offsetSize, row, pngImageInfo_.rowDataSize);
     if (ret != 0) {

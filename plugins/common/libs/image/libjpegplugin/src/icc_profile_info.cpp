@@ -110,15 +110,16 @@ uint32_t ICCProfileInfo::PackingICCProfile(j_compress_ptr cinfo, const SkImageIn
         sk_sp<SkData> jpegMarkerData =
                 SkData::MakeUninitialized(ICC_MARKER_HEADER_SIZE + icc->size());
         uint8_t* ptrMaker = (uint8_t*) jpegMarkerData->writable_data();
-        (void)memcpy_s(ptrMaker, sizeof(*ptrMaker), ICC_SIGNATURE, sizeof(ICC_SIGNATURE));
-        ptrMaker += sizeof(ICC_SIGNATURE);
-        // first marker
-        *ptrMaker++ = 1;
-         // total markers
-        *ptrMaker++ = 1;
-        (void)memcpy_s(ptrMaker, sizeof(*ptrMaker), icc->data(), icc->size());
-        jpeg_write_marker(cinfo, ICC_MARKER, jpegMarkerData->bytes(), jpegMarkerData->size());
-        packingResult = OHOS::Media::SUCCESS;
+        if((void)memcpy_s(ptrMaker, sizeof(*ptrMaker), ICC_SIGNATURE, sizeof(ICC_SIGNATURE))!= nullptr) {
+            ptrMaker += sizeof(ICC_SIGNATURE);
+            // first marker
+            *ptrMaker++ = 1;
+             // total markers
+            *ptrMaker++ = 1;
+            (void)memcpy_s(ptrMaker, sizeof(*ptrMaker), icc->data(), icc->size());
+            jpeg_write_marker(cinfo, ICC_MARKER, jpegMarkerData->bytes(), jpegMarkerData->size());
+            packingResult = OHOS::Media::SUCCESS;
+        }
     } else {
         HiLog::Error(LABEL, "ERROR: PackingICCProfile icc profile is Null!");
     }
