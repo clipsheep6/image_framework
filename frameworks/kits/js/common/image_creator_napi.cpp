@@ -215,8 +215,9 @@ napi_value ImageCreatorNapi::JSCreateImageCreator(napi_env env, napi_callback_in
 
     status = napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     if (status != napi_ok) {
-        IMAGE_ERR("fail to napi_get_cb_info %{public}d", status);
-        return result;
+        std::string errMsg = "Invailed arg counts ";
+        return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+            errMsg.append(std::to_string(argc)));
     }
 
     if (argc != ARGS4) {
@@ -227,14 +228,16 @@ napi_value ImageCreatorNapi::JSCreateImageCreator(napi_env env, napi_callback_in
     for (size_t i = PARAM0; i < argc; i++) {
         napi_valuetype argvType = ImageNapiUtils::getType(env, argv[i]);
         if (argvType != napi_number) {
-            IMAGE_ERR("Invailed arg %{public}zu type %{public}d", i, argvType);
-            return result;
+            std::string errMsg = "Invailed arg ";
+            return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+                errMsg.append(std::to_string(i)).append(" type ").append(std::to_string(argvType)));
         }
 
         status = napi_get_value_int32(env, argv[i], &(args[i]));
         if (status != napi_ok) {
-            IMAGE_ERR("fail to get arg %{public}zu : %{public}d", i, status);
-            return result;
+            std::string errMsg = "fail to get arg ";
+            return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+                errMsg.append(std::to_string(i)).append(" : ").append(std::to_string(status)));
         }
     }
 
@@ -469,7 +472,6 @@ static void TestAcquireBuffer(OHOS::sptr<OHOS::Surface> &creatorSurface, int32_t
     opts.scaleMode = OHOS::Media::ScaleMode::CENTER_CROP;
     opts.editable = true;
     imageCreator->SaveSenderBufferAsImage(buffer, opts);
-    creatorSurface->ReleaseBuffer(buffer, -1);
 }
 
 static void DoTest(std::shared_ptr<ImageCreator> imageCreator)
@@ -549,26 +551,36 @@ static bool JsQueueArgs(napi_env env, size_t argc, napi_value* argv,
 {
     int32_t refCount = 1;
     if (argc == ARGS1 || argc == ARGS2) {
-        auto argType = ImageNapiUtils::getType(env, argv[PARAM0]);
-        if (argType == napi_object) {
+        auto argType0 = ImageNapiUtils::getType(env, argv[PARAM0]);
+        if (argType0 == napi_object) {
             imageNapi_ = ImageNapi::GetImageSource(env, argv[PARAM0]);
             if (imageNapi_ == nullptr) {
-                IMAGE_ERR("imagenapi is nullptr in jsqueue ");
+                ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+                    "Could not get queue type object");
+                return false;
             }
         } else {
-            IMAGE_ERR("Unsupport arg 0 type: %{public}d", argType);
+            std::string errMsg = "Unsupport args0 type: ";
+            ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+                errMsg.append(std::to_string(argType0)));
+            return false;
+        }
+        if (argc == ARGS2) {
+        auto argType1 = ImageNapiUtils::getType(env, argv[PARAM1]);
+        if (argType1 == napi_function) {
+            napi_create_reference(env, argv[PARAM1], refCount, callbackRef);
+        } else {
+            std::string errMsg = "Unsupport args1 type: ";
+            ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+                errMsg.append(std::to_string(argType1)));
             return false;
         }
     }
-
-    if (argc == ARGS2) {
-        auto argType = ImageNapiUtils::getType(env, argv[PARAM1]);
-        if (argType == napi_function) {
-            napi_create_reference(env, argv[PARAM1], refCount, callbackRef);
-        } else {
-            IMAGE_ERR("Unsupport arg 1 type: %{public}d", argType);
-            return false;
-        }
+    } else {
+        std::string errMsg = "Invailed argc: ";
+        ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+            errMsg.append(std::to_string(argc)));
+        return false;
     }
     return true;
 }
@@ -644,6 +656,38 @@ napi_value ImageCreatorNapi::JsQueueImage(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_OUT();
     return result;
 }
+
+static bool CheckOnParam0(napi_env env, napi_value value, const std::string& refStr)
+{
+    bool ret = true;
+    size_t bufLength = 0;
+    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &bufLength);
+    if (status != napi_ok || bufLength > PATH_MAX || bufLength < 0) {
+        return false;
+    }
+
+    char *buffer = (char *)malloc((bufLength + 1) * sizeof(char));
+    if (buffer == nullptr) {
+        return false;
+    }
+
+    status = napi_get_value_string_utf8(env, value, buffer, bufLength + 1, &bufLength);
+    if (status != napi_ok) {
+        return false;
+    }
+
+    std::string strValue = buffer;
+    if (strValue.compare(refStr) != 0) {
+        IMAGE_ERR("strValue is %{public}s", strValue.c_str());
+        ret = false;
+    }
+
+    strValue = "";
+    free(buffer);
+    buffer = nullptr;
+    return ret;
+}
+
 static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext &ic)
 {
     if (ic.argc == ARGS2) {
@@ -651,16 +695,28 @@ static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext
         auto argType1 = ImageNapiUtils::getType(args.env, ic.argv[PARAM1]);
         if (argType0 == napi_string && argType1 == napi_function) {
             if (!ImageNapiUtils::GetUtf8String(args.env, ic.argv[PARAM0], ic.onType)) {
-                IMAGE_ERR("Could not get On type string");
+                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                    "Could not get On type string");
                 return false;
             }
+
+            if (!CheckOnParam0(args.env, ic.argv[PARAM0], "imageRelease")) {
+                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                    "Unsupport PARAM0");
+                return false;
+            }
+
             napi_create_reference(args.env, ic.argv[PARAM1], ic.refCount, &(ic.context->callbackRef));
         } else {
-            IMAGE_ERR("Unsupport args type: %{public}d %{public}d", argType0, argType1);
+            std::string errMsg = "Unsupport args type: ";
+            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                errMsg.append(std::to_string(argType0)).append(std::to_string(argType1)));
             return false;
         }
     } else {
-        IMAGE_ERR("Invailed argc: %{public}zu", ic.argc);
+        std::string errMsg = "Invailed argc: ";
+        ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+            errMsg.append(std::to_string(ic.argc)));
         return false;
     }
 

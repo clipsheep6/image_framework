@@ -224,15 +224,6 @@ int32_t ImageCreator::SaveSenderBufferAsImage(OHOS::sptr<OHOS::SurfaceBuffer> bu
     return errorcode;
 }
 
-int32_t ImageCreator::SaveSenderBufferAsImage(InitializationOptions initializationOpts)
-{
-    if (iraContext_->currentCreatorBuffer_ != nullptr) {
-        return SaveSenderBufferAsImage(iraContext_->currentCreatorBuffer_, initializationOpts);
-    }
-    HiLog::Debug(LABEL, "CurrentBuffer() == nullptr");
-    return 0;
-}
-
 OHOS::sptr<OHOS::SurfaceBuffer> ImageCreator::DequeueImage()
 {
     int32_t flushFence = 0;
