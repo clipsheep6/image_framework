@@ -72,8 +72,8 @@ bool NinePatchListener::ReadChunk(const std::string &tag, void *data, size_t len
         }
         // copy the data because it is owned by the png reader
         void* patchNew = nullptr;
-        if(patchSize != 0) {
-            PngNinePatchRes *patchNew = static_cast<PngNinePatchRes *>(malloc(patchSize));
+        if (patchSize != 0) {
+            patchNew = static_cast<PngNinePatchRes *>(malloc(patchSize));
         }
         if (patchNew == nullptr) {
             HiLog::Error(LABEL, "malloc failed");
