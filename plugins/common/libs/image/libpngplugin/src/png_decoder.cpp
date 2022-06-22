@@ -205,6 +205,7 @@ uint8_t *PngDecoder::AllocOutputHeapBuffer(DecodeContext &context)
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
 #if !defined(_WIN32) && !defined(_APPLE)
             int fd = AshmemCreate("PNG RawData", byteCount);
+            void* ptr = nullptr;
             if (fd < 0) {
                 return nullptr;
             }
@@ -638,8 +639,9 @@ void PngDecoder::SaveRows(png_bytep row, png_uint_32 rowNum)
         return;
     }
     outputRowsNum_++;
+    uint8_t offset;
     if(pixelsData_ + rowNum * pngImageInfo_.rowDataSize <255) {
-        uint8_t *offset = pixelsData_ + rowNum * pngImageInfo_.rowDataSize;
+        offset = pixelsData_ + rowNum * pngImageInfo_.rowDataSize;
     }
     uint32_t offsetSize = (pngImageInfo_.height - rowNum) * pngImageInfo_.rowDataSize;
     errno_t ret = memcpy_s(offset, offsetSize, row, pngImageInfo_.rowDataSize);
