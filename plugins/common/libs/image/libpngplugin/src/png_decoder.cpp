@@ -639,7 +639,7 @@ void PngDecoder::SaveRows(png_bytep row, png_uint_32 rowNum)
         return;
     }
     outputRowsNum_++;
-    uint8_t offset = pixelsData_ + rowNum * pngImageInfo_.rowDataSize;
+    uint8_t *offset = static_cast<uint8_t *>(pixelsData_ + rowNum * pngImageInfo_.rowDataSize);
     uint32_t offsetSize = (pngImageInfo_.height - rowNum) * pngImageInfo_.rowDataSize;
     errno_t ret = memcpy_s(offset, offsetSize, row, pngImageInfo_.rowDataSize);
     if (ret != 0) {

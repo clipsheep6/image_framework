@@ -88,7 +88,7 @@ bool NinePatchListener::ReadChunk(const std::string &tag, void *data, size_t len
         }
         PngNinePatchRes::Deserialize(patchNew);
         patchNew->FileToDevice();
-        void patch_ = nullptr;
+        void* patch_ = nullptr;
         if (patch_ != nullptr) {
             free(patch_);
         }
