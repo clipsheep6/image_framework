@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_NAPI_H_
-#define IMAGE_NAPI_H_
+#ifndef INTERFACES_KITS_JS_COMMON_INCLUDE_IMAGE_NAPI_H_
+#define INTERFACES_KITS_JS_COMMON_INCLUDE_IMAGE_NAPI_H_
 
 #include <cerrno>
 #include <dirent.h>
@@ -29,6 +29,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "image_receiver.h"
+#include "image_creator.h"
 
 namespace OHOS {
 namespace Media {
@@ -38,9 +39,13 @@ public:
     ImageNapi();
     ~ImageNapi();
     static napi_value Init(napi_env env, napi_value exports);
+    static std::shared_ptr<ImageNapi> GetImageSource(napi_env env, napi_value image);
     static napi_value Create(napi_env env, sptr<SurfaceBuffer> surfaceBuffer,
         std::shared_ptr<ImageReceiver> imageReceiver);
+    static napi_value CreateBufferToImage(napi_env env, sptr<SurfaceBuffer> surfaceBuffer,
+        std::shared_ptr<ImageCreator> imageCreator);
     void NativeRelease();
+    sptr<SurfaceBuffer> sSurfaceBuffer_;
 
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
@@ -59,11 +64,13 @@ private:
     static thread_local napi_ref sConstructor_;
     static sptr<SurfaceBuffer> staticInstance_;
     static std::shared_ptr<ImageReceiver> staticImageReceiverInstance_;
+    static std::shared_ptr<ImageCreator> staticImageCreatorInstance_;
 
     napi_env env_ = nullptr;
     napi_ref wrapper_ = nullptr;
-    sptr<SurfaceBuffer> sSurfaceBuffer_;
     std::shared_ptr<ImageReceiver> imageReceiver_;
+    std::shared_ptr<ImageCreator> imageCreator_;
+    std::shared_ptr<ImageNapi> nativeImage_;
 };
 
 struct ImageAsyncContext {
@@ -77,4 +84,4 @@ struct ImageAsyncContext {
 };
 } // namespace Media
 } // namespace OHOS
-#endif /* IMAGE_NAPI_H_ */
+#endif // INTERFACES_KITS_JS_COMMON_INCLUDE_IMAGE_NAPI_H_

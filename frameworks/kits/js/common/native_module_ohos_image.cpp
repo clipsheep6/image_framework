@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,6 +35,8 @@ static napi_value Export(napi_env env, napi_value exports)
     ImageSourceNapi::Init(env, exports);
     HiLog::Error(LABEL, "ImageReceiverNapi CALL");
     ImageReceiverNapi::Init(env, exports);
+    HiLog::Error(LABEL, "ImageCreatorNapi CALL");
+    ImageCreatorNapi::Init(env, exports);
     HiLog::Error(LABEL, "ImageNapi CALL");
     ImageNapi::Init(env, exports);
     return exports;
@@ -49,7 +51,7 @@ static napi_module g_module = {
     .nm_filename = nullptr,
     .nm_register_func = Export,
     .nm_modname = "multimedia.image",
-    .nm_priv = ((void*)0),
+    .nm_priv = (reinterpret_cast<void *>(0)),
     .reserved = {0}
 };
 

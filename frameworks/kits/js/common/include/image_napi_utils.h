@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_NAPI_UTILS_H
-#define IMAGE_NAPI_UTILS_H
+#ifndef FRAMEWORKS_KITS_JS_COMMON_INCLUDE_IMAGE_NAPI_UTILS_H_
+#define FRAMEWORKS_KITS_JS_COMMON_INCLUDE_IMAGE_NAPI_UTILS_H_
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -115,7 +115,10 @@ public:
     static napi_valuetype getType(napi_env env, napi_value root);
     static bool CreateArrayBuffer(napi_env env, void* src, size_t srcLen, napi_value *res);
     static void HicheckerReport();
+    static void CreateErrorObj(napi_env env, napi_value &errorObj,
+        const int32_t errCode, const std::string errMsg);
+    static napi_value ThrowExceptionError(napi_env env, const int32_t errCode, const std::string errMsg);
 };
 } // namespace Media
 } // namespace OHOS
-#endif // IMAGE_NAPI_UTILS_H
+#endif // FRAMEWORKS_KITS_JS_COMMON_INCLUDE_IMAGE_NAPI_UTILS_H_
