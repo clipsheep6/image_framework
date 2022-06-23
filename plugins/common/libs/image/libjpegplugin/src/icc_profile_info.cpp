@@ -114,7 +114,7 @@ uint32_t ICCProfileInfo::PackingICCProfile(j_compress_ptr cinfo, const SkImageIn
         ptrMaker += sizeof(ICC_SIGNATURE);
         // first marker
         *ptrMaker++ = 1;
-         // total markers
+        // total markers
         *ptrMaker++ = 1;
         (void)memcpy_s(ptrMaker, sizeof(*ptrMaker), icc->data(), icc->size());
         jpeg_write_marker(cinfo, ICC_MARKER, jpegMarkerData->bytes(), jpegMarkerData->size());
