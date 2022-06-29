@@ -169,7 +169,7 @@ int32_t ImageCreator::SaveSTP(uint32_t *buffer,
     return errorCode;
 }
 
-static void ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataSize, uint8_t **buffer)
+static void ReleaseBuffer(AllocatorType allocatorType, uint8_t **buffer)
 {
     if (allocatorType == AllocatorType::HEAP_ALLOC) {
         if (*buffer != nullptr) {

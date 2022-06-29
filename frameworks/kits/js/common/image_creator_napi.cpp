@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -275,7 +275,7 @@ static bool CheckArgs(ImageCreatorCommonArgs &args)
     return true;
 }
 
-static bool PrepareOneArg(ImageCreatorCommonArgs &args, struct ImageCreatorInnerContext &ic)
+static bool PrepareOneArg(const ImageCreatorCommonArgs &args, const struct ImageCreatorInnerContext &ic)
 {
     if (ic.argc == ARGS1) {
         auto argType = ImageNapiUtils::getType(args.env, ic.argv[PARAM0]);
@@ -688,7 +688,7 @@ static bool CheckOnParam0(napi_env env, napi_value value, const std::string& ref
     return ret;
 }
 
-static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext &ic)
+static bool JsOnQueryArgs(const ImageCreatorCommonArgs &args, const ImageCreatorInnerContext &ic)
 {
     if (ic.argc == ARGS2) {
         auto argType0 = ImageNapiUtils::getType(args.env, ic.argv[PARAM0]);
@@ -723,7 +723,7 @@ static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext
     napi_get_undefined(args.env, &ic.result);
     return true;
 }
-static void DoCallBackAfterWork(uv_work_t *work, int status)
+static void DoCallBackAfterWork(uv_work_t *work)
 {
     IMAGE_LINE_IN();
     Contextc context = reinterpret_cast<Contextc>(work->data);
