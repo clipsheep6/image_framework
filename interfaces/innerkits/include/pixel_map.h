@@ -126,7 +126,7 @@ public:
         return static_cast<void *>(data_);
     }
 
-    NATIVEEXPORT bool Marshalling(Parcel &data) const override;
+    NATIVEEXPORT bool Marshalling(Parcel &data) const;
     NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &data);
 
 #ifdef IMAGE_COLORSPACE_FLAG
