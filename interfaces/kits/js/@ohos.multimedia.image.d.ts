@@ -1054,7 +1054,7 @@ declare namespace image {
      * @param buf The data to be updated.
      * @param isFinished If is it finished.
      * @param value The offset of data.
-     * @param length The lenght fo buf.
+     * @param length The length fo buf.
      * @return A Promise instance used to return the property value.
      */
     updateData(buf: ArrayBuffer, isFinished: boolean, value: number, length: number): Promise<void>;

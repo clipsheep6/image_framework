@@ -87,7 +87,7 @@ void GetDirFiles(const string& path, vector<string>& files)
             break;
         }
 
-        // current dir OR parrent dir
+        // current dir OR parent dir
         if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0) {
             continue;
         } else if (S_ISDIR(info.st_mode)) {

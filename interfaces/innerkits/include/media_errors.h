@@ -54,7 +54,7 @@ const uint32_t ERR_IMAGE_ENCODE_FAILED = BASE_MEDIA_ERR_OFFSET + 23;           /
 const uint32_t ERR_IMAGE_ADD_PIXEL_MAP_FAILED = BASE_MEDIA_ERR_OFFSET + 24;    // image add pixel map fail
 const uint32_t ERR_IMAGE_HW_DECODE_UNSUPPORT = BASE_MEDIA_ERR_OFFSET + 25;     // image hardware decode unsupported
 const uint32_t ERR_IMAGE_DECODE_HEAD_ABNORMAL = BASE_MEDIA_ERR_OFFSET + 26;    // image decode head error
-const uint32_t ERR_IMAGE_DECODE_EXIF_UNSUPPORT = BASE_MEDIA_ERR_OFFSET + 27;   // image decode exif unsupport
+const uint32_t ERR_IMAGE_DECODE_EXIF_UNSUPPORT = BASE_MEDIA_ERR_OFFSET + 27;   // image decode exif unsupported
 const uint32_t ERR_IMAGE_PROPERTY_NOT_EXIST = BASE_MEDIA_ERR_OFFSET + 28;     // image property not exist
 // The error code is occupied by media, the image starts from 150
 const uint32_t ERR_IMAGE_READ_PIXELMAP_FAILED = BASE_MEDIA_ERR_OFFSET + 150;       // read pixelmap failed
