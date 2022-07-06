@@ -24,17 +24,14 @@
 #include "pixel_map_utils.h"
 #include "post_proc.h"
 #include "parcel.h"
-#ifndef _WIN32
 #include "securec.h"
-#else
-#include "memory.h"
-#endif
 
 #if !defined(_WIN32) && !defined(_APPLE)
 #include <sys/mman.h>
 #include "ashmem.h"
-#include "ipc_file_descriptor.h"
 #endif
+
+#include "ipc_file_descriptor.h"
 
 namespace OHOS {
 namespace Media {

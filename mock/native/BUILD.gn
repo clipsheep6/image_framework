@@ -22,9 +22,13 @@ config("log_mock_config") {
 }
 
 ohos_static_library("log_mock_static") {
-  configs = [ ":log_mock_config" ]
-  sources =
-      [ "//foundation/multimedia/image_standard/mock/native/src/HiLog.cpp" ]
+  if (current_os != "mingw") {
+    configs = [ ":log_mock_config" ]
+    sources =
+        [ "//foundation/multimedia/image_standard/mock/native/src/HiLog.cpp" ]
+  } else {
+    public_deps = [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog" ]
+  }
   subsystem_name = "multimedia"
 }
 
@@ -35,6 +39,10 @@ config("utils_mock_config") {
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_standard/interfaces/innerkits/include",
   ]
+}
+
+config("utils_mock_static_mingw_public_config") {
+  include_dirs = [ "mingw" ]
 }
 
 ohos_static_library("utils_mock_static") {
@@ -52,5 +60,26 @@ ohos_static_library("utils_mock_static") {
     "//foundation/multimedia/image_standard/mock/native/src/rwlock.cpp",
   ]
   deps = [ ":log_mock_static" ]
+
+  if (current_os == "mingw") {
+    sources += [ "mingw/directory_ex.cpp" ]
+
+    sources -= [
+      "//foundation/multimedia/image_standard/mock/native/src/directory_ex.cpp",
+      "//foundation/multimedia/image_standard/mock/native/src/message_parcel.cpp",
+      "//foundation/multimedia/image_standard/mock/native/src/parcel.cpp",
+      "//foundation/multimedia/image_standard/mock/native/src/refbase.cpp",
+      "//foundation/multimedia/image_standard/mock/native/src/rwlock.cpp",
+    ]
+
+    configs -= [ ":utils_mock_config" ]
+
+    include_dirs = [ "//foundation/multimedia/image_standard/interfaces/innerkits/include" ]
+
+    public_configs = [ ":utils_mock_static_mingw_public_config" ]
+
+    public_deps = [ "//utils/native/base:utils" ]
+  }
+
   subsystem_name = "multimedia"
 }

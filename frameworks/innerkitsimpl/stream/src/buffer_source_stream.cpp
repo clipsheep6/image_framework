@@ -17,11 +17,7 @@
 
 #include <string>
 #include "image_log.h"
-#ifndef _WIN32
 #include "securec.h"
-#else
-#include "memory.h"
-#endif
 
 namespace OHOS {
 namespace Media {

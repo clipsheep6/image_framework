@@ -55,8 +55,6 @@ ohos_shared_library("pluginmanager") {
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
-    include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/mock/native:utils_mock_static",
@@ -123,8 +121,6 @@ ohos_static_library("pluginmanager_static") {
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
-    include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/mock/native:utils_mock_static",

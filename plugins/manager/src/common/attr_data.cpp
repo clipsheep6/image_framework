@@ -17,11 +17,7 @@
 #include <utility>
 #include "hilog/log.h"
 #include "log_tags.h"
-#ifndef _WIN32
 #include "securec.h"
-#else
-#include "memory.h"
-#endif
 
 namespace OHOS {
 namespace MultimediaPlugin {
