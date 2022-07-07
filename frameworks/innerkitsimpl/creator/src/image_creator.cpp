@@ -195,7 +195,7 @@ static bool AllocHeapBuffer(uint64_t bufferSize, uint8_t **buffer)
     errno_t errRet = memset_s(*buffer, bufferSize, 0, bufferSize);
     if (errRet != EOK) {
         HiLog::Error(LABEL, "[PostProc]memset convertData fail, errorCode = %{public}d", errRet);
-        ReleaseBuffer(AllocatorType::HEAP_ALLOC, 0, 0, buffer);
+        ReleaseBuffer(AllocatorType::HEAP_ALLOC, buffer);
         return false;
     }
     return true;
