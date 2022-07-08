@@ -275,7 +275,7 @@ static bool CheckArgs(ImageCreatorCommonArgs &args)
     return true;
 }
 
-static bool PrepareOneArg(ImageCreatorCommonArgs &args, const struct ImageCreatorInnerContext &ic)
+static bool PrepareOneArg(ImageCreatorCommonArgs &args, struct ImageCreatorInnerContext &ic)
 {
     if (ic.argc == ARGS1) {
         auto argType = ImageNapiUtils::getType(args.env, ic.argv[PARAM0]);
@@ -657,7 +657,7 @@ napi_value ImageCreatorNapi::JsQueueImage(napi_env env, napi_callback_info info)
     return result;
 }
 
-static bool CheckOnParam0(napi_env env, napi_value value, const std::string& refStr)
+static bool CheckOnParam0(napi_env env, napi_value value, std::string& refStr)
 {
     bool ret = true;
     size_t bufLength = 0;
