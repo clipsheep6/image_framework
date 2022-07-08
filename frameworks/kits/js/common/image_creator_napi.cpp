@@ -688,7 +688,7 @@ static bool CheckOnParam0(napi_env env, napi_value value, std::string& refStr)
     return ret;
 }
 
-static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, const ImageCreatorInnerContext &ic)
+static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext &ic)
 {
     if (ic.argc == ARGS2) {
         auto argType0 = ImageNapiUtils::getType(args.env, ic.argv[PARAM0]);
@@ -771,10 +771,7 @@ void ImageCreatorNapi::DoCallBack(shared_ptr<ImageCreatorAsyncContext> context,
     }
 
     work->data = reinterpret_cast<void *>(context.get());
-    int ret = uv_queue_work(loop,
-                            work.get(),
-                            [] (uv_work_t *work) {},
-                            DoCallBackAfterWork);
+    int ret = uv_queue_work(loop, work.get(), [] (uv_work_t *work) {}, DoCallBackAfterWork);
     if (ret != 0) {
         IMAGE_ERR("Failed to execute DoCallBack work queue");
     } else {
