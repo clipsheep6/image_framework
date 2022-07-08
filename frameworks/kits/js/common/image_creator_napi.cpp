@@ -771,7 +771,10 @@ void ImageCreatorNapi::DoCallBack(shared_ptr<ImageCreatorAsyncContext> context,
     }
 
     work->data = reinterpret_cast<void *>(context.get());
-    int ret = uv_queue_work(loop, work.get(), [] (uv_work_t *work) {}, DoCallBackAfterWork);
+    int ret = uv_queue_work(loop,
+                            work.get(),
+                            [] (uv_work_t *work) {},
+                            DoCallBackAfterWork);
     if (ret != 0) {
         IMAGE_ERR("Failed to execute DoCallBack work queue");
     } else {
