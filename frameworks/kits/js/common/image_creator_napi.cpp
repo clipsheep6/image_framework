@@ -769,8 +769,27 @@ void ImageCreatorNapi::DoCallBack(shared_ptr<ImageCreatorAsyncContext> context,
         IMAGE_ERR("DoCallBack: No memory");
         return;
     }
-
+    
     work->data = reinterpret_cast<void *>(context.get());
+
+    int uv_queue_work(uv_loop_t* loop,
+                  uv_work_t* req,
+                  uv_work_cb work_cb,
+                  uv_after_work_cb after_work_cb) {
+        if (work_cb == NULL)
+            return UV_EINVAL;
+        uv__req_init(loop, req, UV_WORK);
+        req->loop = loop;
+        req->work_cb = work_cb;
+        req->after_work_cb = after_work_cb;
+        uv__work_submit(loop,
+                        &req->work_req,
+                        UV__WORK_CPU,
+                        uv__queue_work,
+                        uv__queue_done);
+        return 0;
+    }
+
     int ret = uv_queue_work(loop, work.get(), [] (uv_work_t *work) {}, DoCallBackAfterWork);
     if (ret != 0) {
         IMAGE_ERR("Failed to execute DoCallBack work queue");
