@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -657,7 +657,7 @@ napi_value ImageCreatorNapi::JsQueueImage(napi_env env, napi_callback_info info)
     return result;
 }
 
-static bool CheckOnParam0(napi_env env, napi_value value, const std::string& refStr)
+static bool CheckOnParam0(napi_env env, napi_value value, std::string& refStr)
 {
     bool ret = true;
     size_t bufLength = 0;
@@ -723,7 +723,7 @@ static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext
     napi_get_undefined(args.env, &ic.result);
     return true;
 }
-static void DoCallBackAfterWork(uv_work_t *work, int status)
+static void DoCallBackAfterWork(uv_work_t *work)
 {
     IMAGE_LINE_IN();
     Contextc context = reinterpret_cast<Contextc>(work->data);
@@ -748,6 +748,25 @@ static void DoCallBackAfterWork(uv_work_t *work, int status)
     delete work;
     IMAGE_LINE_OUT();
 }
+
+int uv_queue_work(uv_loop_t* loop,
+                  uv_work_t* req,
+                  uv_work_cb work_cb,
+                  uv_after_work_cb after_work_cb) {
+    if (work_cb == NULL)
+        return UV_EINVAL;
+    uv__req_init(loop, req, UV_WORK);
+    req->loop = loop;
+    req->work_cb = work_cb;
+    req->after_work_cb = after_work_cb;
+    uv__work_submit(loop,
+                    &req->work_req,
+                    UV__WORK_CPU,
+                    uv__queue_work,
+                    uv__queue_done);
+    return 0;
+}
+
 void ImageCreatorNapi::DoCallBack(shared_ptr<ImageCreatorAsyncContext> context,
     string name, CompleteCreatorCallback callBack)
 {
@@ -769,8 +788,9 @@ void ImageCreatorNapi::DoCallBack(shared_ptr<ImageCreatorAsyncContext> context,
         IMAGE_ERR("DoCallBack: No memory");
         return;
     }
-
+    
     work->data = reinterpret_cast<void *>(context.get());
+
     int ret = uv_queue_work(loop, work.get(), [] (uv_work_t *work) {}, DoCallBackAfterWork);
     if (ret != 0) {
         IMAGE_ERR("Failed to execute DoCallBack work queue");
