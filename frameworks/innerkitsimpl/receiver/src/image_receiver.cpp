@@ -154,7 +154,7 @@ namespace OHOS {
         sptr<Surface> ImageReceiver::getSurfaceById(std::string id)
         {
             ImageReceiverManager& imageReceiverManager = ImageReceiverManager::getInstance();
-            sptr<Surface> surface = imageReceiverManager.getSurfaceByKeyId(id);
+            sptr<Surface> surface = imageReceiverManager.GetSurfaceByKeyId(id);
             HiLog::Debug(LABEL, "getSurfaceById");
             return surface;
         }
