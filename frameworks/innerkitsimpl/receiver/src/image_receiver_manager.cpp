@@ -29,7 +29,7 @@ string ImageReceiverManager::SaveImageReceiver(shared_ptr<ImageReceiver> imageRe
     mapReceiver_.insert(pair<string, shared_ptr<ImageReceiver>>(id, imageReceiver));
     return id;
 }
-sptr<Surface> ImageReceiverManager::getSurfaceByKeyId(string keyId)
+sptr<Surface> ImageReceiverManager::GetSurfaceByKeyId(string keyId)
 {
     map<string, shared_ptr<ImageReceiver>>::iterator iter;
     shared_ptr<ImageReceiver> imageReceiver = nullptr;

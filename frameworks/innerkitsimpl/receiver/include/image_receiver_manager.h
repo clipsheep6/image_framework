@@ -37,7 +37,7 @@ public:
         return instance;
     }
     string SaveImageReceiver(shared_ptr<ImageReceiver> imageReceiver);
-    sptr<Surface> getSurfaceByKeyId(string keyId);
+    sptr<Surface> GetSurfaceByKeyId(string keyId);
     shared_ptr<ImageReceiver> getImageReceiverByKeyId(string keyId);
 private:
     map<string, shared_ptr<ImageReceiver>> mapReceiver_;
