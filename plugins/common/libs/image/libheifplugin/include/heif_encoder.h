@@ -12,24 +12,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef HEIF_FORMAT_AGENT_H
-#define HEIF_FORMAT_AGENT_H
-
-#include "abs_image_format_agent.h"
-#include "hilog/log.h"
-#include "log_tags.h"
+#ifndef HEIF_ENCODER_H
+#define HEIF_ENCODER_H
+#include <vector>
+#include "abs_image_encoder.h"
 #include "plugin_class_base.h"
-
+#include "SkStream.h"
+#include <heif.h>
 namespace OHOS {
 namespace ImagePlugin {
-class HeifFormatAgent : public AbsImageFormatAgent, public OHOS::MultimediaPlugin::PluginClassBase {
+class HeifEncoder : public AbsImageEncoder, public OHOS::MultimediaPlugin::PluginClassBase {
 public:
-    std::string GetFormatType() override;
-    uint32_t GetHeaderSize() override;
-    bool CheckFormat(const void *headerData, uint32_t dataSize) override;
+    HeifEncoder();
+    ~HeifEncoder() override;
+    uint32_t StartEncode(OutputDataStream &outputStream, PlEncodeOptions &option) override;
+    uint32_t AddImage(Media::PixelMap &pixelMap) override;
+    uint32_t FinalizeEncode() override;
+private:
+    // DISALLOW_COPY_AND_MOVE(HeifEncoder);
+    OutputDataStream *outputStream_ = nullptr;
+    std::vector<Media::PixelMap *> pixelMaps_;
+    PlEncodeOptions encodeOpts_;
+    uint32_t DoEncode();
+
 };
 } // namespace ImagePlugin
 } // namespace OHOS
 
-#endif // HEIF_FORMAT_AGENT_H
+#endif // HEIF_ENCODER_H

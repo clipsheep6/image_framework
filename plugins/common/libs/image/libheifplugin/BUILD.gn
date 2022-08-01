@@ -1,0 +1,65 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/multimedia/image_standard/ide/image_decode_config.gni")
+
+image_root = "//foundation/multimedia/image_standard"
+plugins_root = "$image_root/plugins"
+libheif_root = "//third_party/libheif"
+skia_root = "//third_party/flutter/skia"
+
+ohos_shared_library("heifplugin") {
+    sources = [
+        "src/plugin_export.cpp",
+        "src/heif_decoder.cpp",
+        "src/heif_encoder.cpp",
+    ]
+
+    include_dirs = [
+        "include",
+        "$plugins_root/manager/include/image",
+        "$plugins_root/manager/include/pluginbase",
+        "$libheif_root",
+        "$libheif_root/libheif",
+        "$skia_root",
+        "$skia_root/include/core",
+        "$skia_root/third_party/skcms",
+        "//utils/native/base/include",
+    ]
+    cflags = [
+        "-DIMAGE_COLORSPACE_FLAG",
+    ]
+
+    deps = [
+        "$image_root/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+        "$image_root/interfaces/innerkits:image_native",
+        "$plugins_root/manager:pluginmanager",
+        "//third_party/flutter/build/skia:ace_skia_ohos",
+        "//third_party/flutter/build/skia:ace_skcms",
+        "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
+        "//utils/native/base:utils",
+        "$libheif_root:libheif",
+    ]
+
+    external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+    part_name = "multimedia_image_standard"
+    subsystem_name = "multimedia"
+}
+
+ohos_prebuilt_etc("heifpluginmetadata") {
+    source = "heifplugin.pluginmeta"
+    relative_install_dir = "multimediaplugin/image"
+    subsystem_name = "multimedia"
+    part_name = "multimedia_image_standard"
+}
