@@ -1042,10 +1042,12 @@ void EXIFInfo::GetAreaFromExifEntries(const int &redactionType,
 ByteOrderedBuffer::ByteOrderedBuffer(unsigned char *fileBuf, uint32_t bufferLength)
     : buf_(fileBuf), bufferLength_(bufferLength)
 {
-    if (fileBuf[BUFFER_POSITION_12] == 'M' && fileBuf[BUFFER_POSITION_13] == 'M') {
-        byteOrder_ = EXIF_BYTE_ORDER_MOTOROLA;
-    } else {
-        byteOrder_ = EXIF_BYTE_ORDER_INTEL;
+    if (fileBuf[BUFFER_POSITION_12] != null && fileBuf[BUFFER_POSITION_13] != null) {
+        if (fileBuf[BUFFER_POSITION_12] == 'M' && fileBuf[BUFFER_POSITION_13] == 'M') {
+            byteOrder_ = EXIF_BYTE_ORDER_MOTOROLA;
+        } else {
+            byteOrder_ = EXIF_BYTE_ORDER_INTEL;
+        }
     }
 }
 
