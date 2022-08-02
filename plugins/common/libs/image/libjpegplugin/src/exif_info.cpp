@@ -1042,6 +1042,7 @@ void EXIFInfo::GetAreaFromExifEntries(const int &redactionType,
 ByteOrderedBuffer::ByteOrderedBuffer(unsigned char *fileBuf, uint32_t bufferLength)
     : buf_(fileBuf), bufferLength_(bufferLength)
 {
+    unsigned long fileLength = GetFileSize(file);
     if ((fileLength/char.size()) >= BUFFER_POSITION_12 && (fileLength/char.size()) >= BUFFER_POSITION_13) {
         if (fileBuf[BUFFER_POSITION_12] == 'M' && fileBuf[BUFFER_POSITION_13] == 'M') {
             byteOrder_ = EXIF_BYTE_ORDER_MOTOROLA;
