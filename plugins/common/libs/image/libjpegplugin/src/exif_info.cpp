@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
 #include "exif_info.h"
 #include <algorithm>
 #include <cstdio>
@@ -352,14 +353,14 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     unsigned long fileLength = GetFileSize(file);
     if (fileLength == 0 || fileLength > MAX_FILE_SIZE) {
         HiLog::Error(LABEL, "Get file size failed.");
-        fclose(file);
+        (void)fclose(file);
         return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
     }
 
     unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     if (fileBuf == nullptr) {
         HiLog::Error(LABEL, "Allocate buf for %{public}s failed.", path.c_str());
-        fclose(file);
+        (void)fclose(file);
         return Media::ERR_IMAGE_MALLOC_ABNORMAL;
     }
 
@@ -388,6 +389,7 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     if (!isNewExifData && orginExifDataLength == 0) {
         HiLog::Error(LABEL, "There is no orginExifDataLength node in %{public}s.", path.c_str());
         exif_data_unref(ptrExifData);
+        free(fileBuf);
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
@@ -427,14 +429,14 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     unsigned long fileLength = GetFileSize(file);
     if (fileLength == 0 || fileLength > MAX_FILE_SIZE) {
         HiLog::Error(LABEL, "Get file size failed.");
-        fclose(file);
+        (void)fclose(file);
         return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
     }
 
     unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     if (fileBuf == nullptr) {
         HiLog::Error(LABEL, "Allocate buf for %{public}d failed.", localFd);
-        fclose(file);
+        (void)fclose(file);
         return Media::ERR_IMAGE_MALLOC_ABNORMAL;
     }
 
@@ -462,6 +464,7 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     unsigned int orginExifDataLength = GetOrginExifDataLength(isNewExifData, fileBuf);
     if (!isNewExifData && orginExifDataLength == 0) {
         HiLog::Error(LABEL, "There is no orginExifDataLength node in %{public}d.", localFd);
+        free(fileBuf);
         exif_data_unref(ptrExifData);
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
@@ -653,48 +656,48 @@ ExifEntry* EXIFInfo::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     size_t len, ExifFormat format)
 {
     void *buf;
-    ExifEntry *entry;
+    ExifEntry *exifEntry;
 
-    if ((entry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
-        return entry;
+    if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
+        return exifEntry;
     }
 
     /* Create a memory allocator to manage this ExifEntry */
-    ExifMem *mem = exif_mem_new_default();
-    if (mem == nullptr) {
+    ExifMem *exifMem = exif_mem_new_default();
+    if (exifMem == nullptr) {
         HiLog::Error(LABEL, "Create mem failed!");
         return nullptr;
     }
 
     /* Create a new ExifEntry using our allocator */
-    entry = exif_entry_new_mem (mem);
-    if (entry == nullptr) {
+    exifEntry = exif_entry_new_mem (exifMem);
+    if (exifEntry == nullptr) {
         HiLog::Error(LABEL, "Create entry by mem failed!");
         return nullptr;
     }
 
     /* Allocate memory to use for holding the tag data */
-    buf = exif_mem_alloc(mem, len);
+    buf = exif_mem_alloc(exifMem, len);
     if (buf == nullptr) {
         HiLog::Error(LABEL, "Allocate memory failed!");
         return nullptr;
     }
 
     /* Fill in the entry */
-    entry->data = static_cast<unsigned char*>(buf);
-    entry->size = len;
-    entry->tag = tag;
-    entry->components = len;
-    entry->format = format;
+    exifEntry->data = static_cast<unsigned char*>(buf);
+    exifEntry->size = len;
+    exifEntry->tag = tag;
+    exifEntry->components = len;
+    exifEntry->format = format;
 
     /* Attach the ExifEntry to an IFD */
-    exif_content_add_entry (exif->ifd[ifd], entry);
+    exif_content_add_entry (exif->ifd[ifd], exifEntry);
 
     /* The ExifMem and ExifEntry are now owned elsewhere */
-    exif_mem_unref(mem);
-    exif_entry_unref(entry);
+    exif_mem_unref(exifMem);
+    exif_entry_unref(exifEntry);
 
-    return entry;
+    return exifEntry;
 }
 
 unsigned long EXIFInfo::GetFileSize(FILE *fp)
@@ -727,7 +730,7 @@ bool EXIFInfo::CreateExifData(unsigned char *buf, unsigned long length, ExifData
             return false;
         }
         isNewExifData = false;
-        HiLog::Error(LABEL, "Create exif data from buffer.");
+        HiLog::Debug(LABEL, "Create exif data from buffer.");
     } else {
         *ptrData = exif_data_new();
         if (!(*ptrData)) {
@@ -742,7 +745,7 @@ bool EXIFInfo::CreateExifData(unsigned char *buf, unsigned long length, ExifData
         /* Create the mandatory EXIF fields with default data */
         exif_data_fix(*ptrData);
         isNewExifData = true;
-        HiLog::Error(LABEL, "Create new exif data.");
+        HiLog::Debug(LABEL, "Create new exif data.");
     }
     return true;
 }
@@ -977,7 +980,9 @@ void EXIFInfo::UpdateCacheExifData(FILE *fp)
     fileBuf = nullptr;
 }
 
-uint32_t EXIFInfo::GetRedactionArea(const int &fd, const int &redactionType, std::vector<std::vector<uint32_t>> &ranges)
+uint32_t EXIFInfo::GetRedactionArea(const int &fd,
+                                    const int &redactionType,
+                                    std::vector<std::pair<uint32_t, uint32_t>> &ranges)
 {
     FILE *file = fdopen(fd, "rb");
     if (file == nullptr) {
@@ -989,14 +994,14 @@ uint32_t EXIFInfo::GetRedactionArea(const int &fd, const int &redactionType, std
     unsigned long fileLength = GetFileSize(file);
     if (fileLength == 0 || fileLength > MAX_FILE_SIZE) {
         HiLog::Error(LABEL, "Get file size failed.");
-        fclose(file);
+        (void)fclose(file);
         return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
     }
 
     unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     if (fileBuf == nullptr) {
         HiLog::Error(LABEL, "Allocate buf for %{public}d failed.", fd);
-        fclose(file);
+        (void)fclose(file);
         return Media::ERR_IMAGE_MALLOC_ABNORMAL;
     }
 
@@ -1018,21 +1023,20 @@ uint32_t EXIFInfo::GetRedactionArea(const int &fd, const int &redactionType, std
 
     GetAreaFromExifEntries(redactionType, byteOrderedBuffer->directoryEntryArray_, ranges);
     // close file
-    fclose(file);
+    (void)fclose(file);
     free(fileBuf);
     return Media::SUCCESS;
 }
 
 void EXIFInfo::GetAreaFromExifEntries(const int &redactionType,
                                       const std::vector<DirectoryEntry> &entryArray,
-                                      std::vector<std::vector<uint32_t>> &ranges)
+                                      std::vector<std::pair<uint32_t, uint32_t>> &ranges)
 {
     if (redactionType == PERMISSION_GPS_TYPE) {
         for (size_t i = 0; i < entryArray.size(); i++) {
             if (entryArray[i].ifd == EXIF_IFD_GPS) {
-                std::vector<uint32_t> range;
-                range.push_back(entryArray[i].valueOffset);
-                range.push_back(entryArray[i].valueOffset + entryArray[i].valueLength - 1);
+                std::pair<uint32_t, uint32_t> range =
+                    std::make_pair(entryArray[i].valueOffset, entryArray[i].valueLength);
                 ranges.push_back(range);
             }
         }
@@ -1042,12 +1046,10 @@ void EXIFInfo::GetAreaFromExifEntries(const int &redactionType,
 ByteOrderedBuffer::ByteOrderedBuffer(unsigned char *fileBuf, uint32_t bufferLength)
     : buf_(fileBuf), bufferLength_(bufferLength)
 {
-    if (bufferLength >= BUFFER_POSITION_12 && bufferLength >= BUFFER_POSITION_13) {
-        if (fileBuf[BUFFER_POSITION_12] == 'M' && fileBuf[BUFFER_POSITION_13] == 'M') {
-            byteOrder_ = EXIF_BYTE_ORDER_MOTOROLA;
-        } else {
-            byteOrder_ = EXIF_BYTE_ORDER_INTEL;
-        }
+    if (fileBuf[BUFFER_POSITION_12] == 'M' && fileBuf[BUFFER_POSITION_13] == 'M') {
+        byteOrder_ = EXIF_BYTE_ORDER_MOTOROLA;
+    } else {
+        byteOrder_ = EXIF_BYTE_ORDER_INTEL;
     }
 }
 
