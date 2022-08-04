@@ -1211,7 +1211,7 @@ void ByteOrderedBuffer::ParseIFDPointerTag(const ExifIfd &ifd, const uint16_t &d
             break;
         }
         case EXIF_FORMAT_SLONG: {
-            offset = ReadInt32();
+            offset = static_cast<uint32_t>ReadInt32();
             break;
         }
         default: {
