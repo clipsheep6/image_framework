@@ -14,10 +14,16 @@
  */
 
 #include "plugin_export.h"
-#include "hilog/log.h"
+#include "hilog/log_c.h"
+#include "hilog/log_cpp.h"
+#include "iosfwd"
 #include "log_tags.h"
+#include "map"
+#include "plugin_class_base.h"
 #include "plugin_utils.h"
 #include "png_decoder.h"
+#include "string"
+#include "utility"
 
 // plugin package name same as metadata.
 namespace {

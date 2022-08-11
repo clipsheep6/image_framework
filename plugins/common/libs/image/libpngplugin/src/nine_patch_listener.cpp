@@ -15,13 +15,15 @@
 
 #include "nine_patch_listener.h"
 #include <log_tags.h>
-#include <cmath>
-#include "hilog/log.h"
+#include "hilog/log_c.h"
+#include "hilog/log_cpp.h"
+#include "math.h"
 #ifndef _WIN32
 #include "securec.h"
 #else
 #include "memory.h"
 #endif
+#include "string"
 
 namespace OHOS {
 namespace ImagePlugin {

@@ -14,14 +14,26 @@
  */
 
 #include "png_decoder.h"
+#include <stdlib.h>
+#include "algorithm"
+#include "ashmem.h"
+#include "hilog/log_c.h"
+#include "hilog/log_cpp.h"
+#include "image_type.h"
+#include "log_tags.h"
 #include "media_errors.h"
+#include "new"
+#include "plugin_service.h"
 #include "pngpriv.h"
-#include "pngstruct.h"
+#include "sched.h"
 #ifndef _WIN32
 #include "securec.h"
 #else
 #include "memory.h"
 #endif
+#include "setjmp.h"
+#include "sys/mman.h"
+#include "unistd.h"
 
 namespace OHOS {
 namespace ImagePlugin {

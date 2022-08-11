@@ -16,9 +16,10 @@
 #ifndef NINE_PATCH_LISTENER_H
 #define NINE_PATCH_LISTENER_H
 
+#include <stdlib.h>
 #include <cstdint>
 #include <cstdio>
-#include <string>
+#include "iosfwd"
 #include "nocopyable.h"
 #include "png_ninepatch_res.h"
 
