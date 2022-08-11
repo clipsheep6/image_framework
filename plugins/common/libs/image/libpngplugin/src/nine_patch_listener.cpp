@@ -17,7 +17,7 @@
 #include <log_tags.h>
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
-#include "math.h"
+#include "cmath"
 #ifndef _WIN32
 #include "securec.h"
 #else

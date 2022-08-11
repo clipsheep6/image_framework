@@ -14,14 +14,14 @@
  */
 
 #include "gif_decoder.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include "ashmem.h"
 #include "bits/alltypes.h"
 #include "bits/stdint.h"
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
 #include "image_type.h"
-#include "limits.h"
+#include "climits"
 #include "log_tags.h"
 #include "media_errors.h"
 #include "new"

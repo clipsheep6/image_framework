@@ -14,7 +14,7 @@
  */
 
 #include "png_decoder.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include "algorithm"
 #include "ashmem.h"
 #include "hilog/log_c.h"
@@ -31,7 +31,7 @@
 #else
 #include "memory.h"
 #endif
-#include "setjmp.h"
+#include "csetjmp"
 #include "sys/mman.h"
 #include "unistd.h"
 
