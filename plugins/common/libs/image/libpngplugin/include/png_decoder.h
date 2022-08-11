@@ -16,13 +16,17 @@
 #ifndef PNG_DECODER_H
 #define PNG_DECODER_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include "abs_image_decoder.h"
-#include "hilog/log.h"
+#include "image_plugin_type.h"
 #include "input_data_stream.h"
-#include "log_tags.h"
+#include "iosfwd"
 #include "nine_patch_listener.h"
 #include "plugin_class_base.h"
 #include "png.h"
+#include "pngconf.h"
+#include "string"
 
 namespace OHOS {
 namespace ImagePlugin {

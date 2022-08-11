@@ -15,20 +15,20 @@
 
 #include "image_utils.h"
 #include <sys/stat.h>
-#include <climits>
-#include <cmath>
-#include <cstdint>
-#include <cstdlib>
 #include "__config"
 #include "__string"
 #include "hilog/log_cpp.h"
 #include "image_log.h"
 #include "ios"
 #include "istream"
+#include "climits"
+#include "cmath"
 #include "media_errors.h"
 #include "new"
 #include "plugin_server.h"
 #include "singleton.h"
+#include "cstdint"
+#include "cstdlib"
 #include "string"
 #include "type_traits"
 #include "vector"
