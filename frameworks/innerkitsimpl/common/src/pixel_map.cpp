@@ -1615,7 +1615,13 @@ void PixelMap::flip(bool xAxis, bool yAxis)
 uint32_t PixelMap::crop(const Rect &rect)
 {
     PostProc postProc;
-    auto cropValue = PostProc::GetCropValue(rect, imageInfo_.size);
+    Rect actRect = {
+        .left = rect.left,
+        .top = rect.top,
+        .width = rect.width,
+        .height = rect.height
+    };
+    auto cropValue = PostProc::ValidCropValue(actRect, imageInfo_.size);
     if (cropValue == CropValue::NOCROP) {
         return SUCCESS;
     }
@@ -1627,15 +1633,15 @@ uint32_t PixelMap::crop(const Rect &rect)
 
     ImageInfo dstImageInfo = {
         .size = {
-            .width = rect.width,
-            .height = rect.height,
+            .width = actRect.width,
+            .height = actRect.height,
         },
         .pixelFormat = imageInfo_.pixelFormat,
         .colorSpace = imageInfo_.colorSpace,
         .alphaType = imageInfo_.alphaType,
         .baseDensity = imageInfo_.baseDensity,
     };
-    return postProc.ConvertProc(rect, dstImageInfo, *this, imageInfo_);
+    return postProc.ConvertProc(actRect, dstImageInfo, *this, imageInfo_);
 }
 
 #ifdef IMAGE_COLORSPACE_FLAG
