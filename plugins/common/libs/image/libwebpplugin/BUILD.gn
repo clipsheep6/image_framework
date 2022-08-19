@@ -40,6 +40,7 @@ ohos_shared_library("webpplugin") {
     "//third_party/expat/lib",
     "//third_party/flutter/skia/include/private",
     "//third_party/flutter/skia/third_party/externals/freetype/include/freetype",
+    "//foundation/graphic/graphic_2d/utils/color_manager/export",
   ]
   if (use_mingw_win) {
     defines = image_decode_windows_defines
@@ -59,6 +60,7 @@ ohos_shared_library("webpplugin") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
       "//third_party/flutter/build/skia:ace_skia_ohos",
     ]
 
@@ -70,7 +72,9 @@ ohos_shared_library("webpplugin") {
       "hiviewdfx_hilog_native:libhilog",
     ]
   }
-
+  cflags = [
+    "-DIMAGE_COLORSPACE_FLAG",
+  ]
   part_name = "multimedia_image_standard"
 
   subsystem_name = "multimedia"

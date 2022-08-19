@@ -32,6 +32,12 @@ ohos_shared_library("pngplugin") {
     "//foundation/multimedia/image_standard/interfaces/innerkits/include",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/include",
     "//third_party/flutter/skia/third_party/libjpeg-turbo",
+    "//foundation/graphic/graphic_2d/utils/color_manager/export",
+    "//third_party/flutter/skia/include/codec",
+    "//third_party/flutter/skia",
+    "//third_party/flutter/skia/include/core",
+    "//third_party/flutter/skia/third_party/skcms",
+
   ]
   deps = [ "//third_party/zlib:libz" ]
 
@@ -70,6 +76,7 @@ ohos_shared_library("pngplugin") {
     ]
     deps += [
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
       "//third_party/libpng:png_static",
     ]
     if (DUAL_ADAPTER) {
@@ -82,6 +89,10 @@ ohos_shared_library("pngplugin") {
       "hiviewdfx_hilog_native:libhilog",
     ]
   }
+  cflags = [
+    "-DIMAGE_COLORSPACE_FLAG",
+  ]
+
 
   part_name = "multimedia_image_standard"
 
