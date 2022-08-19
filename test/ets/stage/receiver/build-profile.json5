@@ -1,0 +1,40 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "material": {
+          "certpath": "C:\\Users\\qiyi\\.ohos\\config\\openharmony\\auto_ohos_default.cer",
+          "storePassword": "0000001BDE5DC74F39C41946EA359AE73A655501525263F85501DC4C7121F8B17E3EEF188C0B98BEE1BC86",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B1B4B41B891DB8B56BCD337F3CE102C0BB267EACD6A238D2FF9F19D8A6312581A3004F7DAEB03F7",
+          "profile": "C:\\Users\\qiyi\\.ohos\\config\\openharmony\\auto_ohos_default_ohos.samples.multimedia.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\qiyi\\.ohos\\config\\openharmony\\auto_ohos_default.p12"
+        }
+      }
+    ],
+    "compileSdkVersion": 9,
+    "compatibleSdkVersion": 9,
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
