@@ -40,6 +40,31 @@ ohos_unittest("imagepixelmaptest") {
   # external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
 }
 
+ohos_unittest("imagepurgeablepixelmaptest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "//foundation/multimedia/image_standard/interfaces/innerkits/include",
+    "//foundation/multimedia/utils/include",
+    "//third_party/googletest/googletest/include",
+    "//commonlibrary/c_utils/base/include",
+    "//foundation/multimedia/image_standard/adapter/frameworks/bitmapconverter/native/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  ]
+  sources = [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/test/unittest/image_purgeable_pixel_map_test.cpp" ]
+
+  deps = [
+    #    "//foundation/multimedia/image_standard/adapter/frameworks/bitmapconverter/native:bitmapconverter",
+    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
+    "//third_party/googletest:gmock_main",
+    "//third_party/googletest:gtest_main",
+  ]
+
+  external_deps = [ "c_utils:utils" ]
+
+  # external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+}
+
 ohos_unittest("imagepixelmapparceltest") {
   module_out_path = module_output_path
 
