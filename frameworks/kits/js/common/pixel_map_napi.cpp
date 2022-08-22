@@ -19,7 +19,7 @@
 #include "image_napi_utils.h"
 #include "image_pixel_map_napi.h"
 #include "image_trace.h"
-#include "js_color_space.h"
+#include "color_space_object_convertor.h"
 #include "hitrace_meter.h"
 
 using OHOS::HiviewDFX::HiLog;
