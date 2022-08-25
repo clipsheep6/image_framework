@@ -69,11 +69,13 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)
         return nullptr;
     }
     FILE *filePtr = fdopen(fd, "rb");
+    IMAGE_LOGE("[FileSourceStream]fdopen, errno:%{public}s", strerror(errno));
     if (filePtr == nullptr) {
         IMAGE_LOGE("[FileSourceStream]open file fail.");
         return nullptr;
     }
     int64_t offset = ftell(filePtr);
+    IMAGE_LOGE("[FileSourceStream]ftell, errno:%{public}s", strerror(errno));
     if (offset < 0) {
         IMAGE_LOGE("[FileSourceStream]get the position fail.");
         fclose(filePtr);
@@ -98,6 +100,7 @@ bool FileSourceStream::Read(uint32_t desiredSize, DataStreamBuffer &outData)
 
 bool FileSourceStream::Peek(uint32_t desiredSize, DataStreamBuffer &outData)
 {
+    IMAGE_LOGE("[FileSourceStream]Peek2, errno:%{public}s", strerror(errno));
     if (desiredSize == 0 || filePtr_ == nullptr) {
         IMAGE_LOGE("[FileSourceStream]peek stream input parameter exception.");
         return false;
@@ -107,6 +110,7 @@ bool FileSourceStream::Peek(uint32_t desiredSize, DataStreamBuffer &outData)
         return false;
     }
     int ret = fseek(filePtr_, fileOffset_, SEEK_SET);
+    IMAGE_LOGE("[FileSourceStream]fseek2, errno:%{public}s", strerror(errno));
     if (ret != 0) {
         IMAGE_LOGE("[FileSourceStream]go to original position fail, ret:%{public}d.", ret);
         return false;
@@ -138,11 +142,13 @@ bool FileSourceStream::Peek(uint32_t desiredSize, uint8_t *outBuffer, uint32_t b
                    desiredSize, bufferSize, fileSize_);
         return false;
     }
+    IMAGE_LOGE("[FileSourceStream]Peek1, errno:%{public}s", strerror(errno));
     if (!GetData(desiredSize, outBuffer, bufferSize, readSize)) {
         IMAGE_LOGE("[FileSourceStream]peek fail.");
         return false;
     }
     int ret = fseek(filePtr_, fileOffset_, SEEK_SET);
+    IMAGE_LOGE("[FileSourceStream]fseek, errno:%{public}s", strerror(errno));
     if (ret != 0) {
         IMAGE_LOGE("[FileSourceStream]go to original position fail, ret:%{public}d.", ret);
         return false;
@@ -173,6 +179,7 @@ uint32_t FileSourceStream::Tell()
 
 bool FileSourceStream::GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_t bufferSize, uint32_t &readSize)
 {
+    IMAGE_LOGE("[FileSourceStream]GetData1, errno:%{public}s", strerror(errno));
     if (fileSize_ == fileOffset_) {
         IMAGE_LOGE("[FileSourceStream]read finish, offset:%{public}zu ,dataSize%{public}zu.", fileOffset_, fileSize_);
         return false;
@@ -181,6 +188,8 @@ bool FileSourceStream::GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_
         desiredSize = fileSize_ - fileOffset_;
     }
     size_t bytesRead = fread(outBuffer, sizeof(outBuffer[0]), desiredSize, filePtr_);
+    IMAGE_LOGE("[FileSourceStream]fread1, errno:%{public}s", strerror(errno));
+
     if (bytesRead < desiredSize) {
         IMAGE_LOGE("[FileSourceStream]read fail, bytesRead:%{public}zu", bytesRead);
         return false;
@@ -191,6 +200,7 @@ bool FileSourceStream::GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_
 
 bool FileSourceStream::GetData(uint32_t desiredSize, DataStreamBuffer &outData)
 {
+    IMAGE_LOGE("[FileSourceStream]GetData, errno:%{public}s", strerror(errno));
     if (fileSize_ == fileOffset_) {
         IMAGE_LOGE("[FileSourceStream]read finish, offset:%{public}zu ,dataSize%{public}zu.", fileOffset_, fileSize_);
         return false;
@@ -202,6 +212,7 @@ bool FileSourceStream::GetData(uint32_t desiredSize, DataStreamBuffer &outData)
     }
 
     ResetReadBuffer();
+    IMAGE_LOGE("[FileSourceStream]ResetReadBuffer, errno:%{public}s", strerror(errno));
     readBuffer_ = static_cast<uint8_t *>(malloc(desiredSize));
     if (readBuffer_ == nullptr) {
         IMAGE_LOGE("[FileSourceStream]malloc the desiredSize fail.");
@@ -212,6 +223,7 @@ bool FileSourceStream::GetData(uint32_t desiredSize, DataStreamBuffer &outData)
         desiredSize = fileSize_ - fileOffset_;
     }
     size_t bytesRead = fread(readBuffer_, sizeof(uint8_t), desiredSize, filePtr_);
+    IMAGE_LOGE("[FileSourceStream]fread, errno:%{public}s", strerror(errno));
     if (bytesRead < desiredSize) {
         IMAGE_LOGE("[FileSourceStream]read fail, bytesRead:%{public}zu", bytesRead);
         free(readBuffer_);
