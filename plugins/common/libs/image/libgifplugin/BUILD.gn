@@ -62,8 +62,8 @@ ohos_shared_library("gifplugin") {
   } else {
     include_dirs += [ "//commonlibrary/c_utils/base/include" ]
     deps = [
-      "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
+      "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//third_party/giflib:libgif",
     ]
 
@@ -72,9 +72,7 @@ ohos_shared_library("gifplugin") {
       "hiviewdfx_hilog_native:libhilog",
     ]
   }
-  cflags = [
-    "-DIMAGE_COLORSPACE_FLAG",
-  ]
+  cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
   part_name = "multimedia_image_standard"
   subsystem_name = "multimedia"
 }

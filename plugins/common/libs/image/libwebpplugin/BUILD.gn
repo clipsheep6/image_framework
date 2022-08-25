@@ -57,10 +57,10 @@ ohos_shared_library("webpplugin") {
     include_dirs += [ "//commonlibrary/c_utils/base/include" ]
 
     deps = [
+      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
-      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
       "//third_party/flutter/build/skia:ace_skia_ohos",
     ]
 
@@ -72,9 +72,7 @@ ohos_shared_library("webpplugin") {
       "hiviewdfx_hilog_native:libhilog",
     ]
   }
-  cflags = [
-    "-DIMAGE_COLORSPACE_FLAG",
-  ]
+  cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
   part_name = "multimedia_image_standard"
 
   subsystem_name = "multimedia"

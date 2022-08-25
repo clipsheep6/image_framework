@@ -37,7 +37,6 @@ ohos_shared_library("pngplugin") {
     "//third_party/flutter/skia",
     "//third_party/flutter/skia/include/core",
     "//third_party/flutter/skia/third_party/skcms",
-
   ]
   deps = [ "//third_party/zlib:libz" ]
 
@@ -75,8 +74,8 @@ ohos_shared_library("pngplugin") {
       "//third_party/libpng",
     ]
     deps += [
-      "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
+      "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//third_party/libpng:png_static",
     ]
     if (DUAL_ADAPTER) {
@@ -89,10 +88,7 @@ ohos_shared_library("pngplugin") {
       "hiviewdfx_hilog_native:libhilog",
     ]
   }
-  cflags = [
-    "-DIMAGE_COLORSPACE_FLAG",
-  ]
-
+  cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
 
   part_name = "multimedia_image_standard"
 
