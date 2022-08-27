@@ -70,12 +70,14 @@ bool ImageUtils::GetFileSize(const int fd, size_t &size)
     struct stat statbuf;
 
     if (fd < 0) {
+        IMAGE_LOGE("[ImageUtil]GetFileSize fd:%{public}d",fd);
         return false;
     }
 
     int ret = fstat(fd, &statbuf);
+    IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d., errno:%{public}d, %{public}s", ret,errno, strerror(errno));
     if (ret != 0) {
-        IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d.", ret);
+        IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d., errno:%{public}d,%{public}s", ret,errno, strerror(errno));
         return false;
     }
     size = statbuf.st_size;
