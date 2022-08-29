@@ -47,16 +47,12 @@ const int PARAM1 = 1;
 const int PARAM2 = 2;
 const int NUM0 = 0;
 
-ImageNapi::ImageNapi()
-    :env_(nullptr), wrapper_(nullptr)
+ImageNapi::ImageNapi():env_(nullptr)
 {}
 
 ImageNapi::~ImageNapi()
 {
-    NativeRelease();
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
+    release();
 }
 
 static void CommonCallbackRoutine(napi_env env, ImageAsyncContext* &context,
@@ -191,7 +187,7 @@ napi_value ImageNapi::Constructor(napi_env env, napi_callback_info info)
             reference->imageReceiver_ = staticImageReceiverInstance_;
             staticImageReceiverInstance_ = nullptr;
             status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
-                               ImageNapi::Destructor, nullptr, &(reference->wrapper_));
+                               ImageNapi::Destructor, nullptr, nullptr);
             if (status == napi_ok) {
                 IMAGE_FUNCTION_OUT();
                 reference.release();
@@ -210,7 +206,7 @@ void ImageNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
     ImageNapi *pImageNapi = reinterpret_cast<ImageNapi*>(nativeObject);
 
     if (IMG_NOT_NULL(pImageNapi)) {
-        pImageNapi->~ImageNapi();
+        pImageNapi->release();
     }
 }
 
@@ -635,6 +631,62 @@ napi_value ImageNapi::JsGetComponent(napi_env env, napi_callback_info info)
 
     IMAGE_FUNCTION_OUT();
     return result;
+}
+Component* ImageNapi::CreateComponentData(ComponentType type, size_t size,
+    int32_t rowStride, int32_t pixelStride)
+{
+    Component* result = nullptr;
+    if (size == NUM0) {
+        HiLog::Error(LABEL, "Could't create 0 size component data");
+        return result;
+    }
+    auto iter = componentData_.find(type);
+    if (iter != componentData_.end()) {
+        HiLog::Info(LABEL, "Component %{public}d already exist. No need create", type);
+        return iter->second.get();
+    }
+    std::unique_ptr<Component> component = std::make_unique<Component>();
+    component->pixelStride = pixelStride;
+    component->rowStride = rowStride;
+    component->raw.resize(size);
+    componentData_.insert(std::map<ComponentType, std::unique_ptr<Component>>::value_type(type,
+        std::move(component)));
+    result = GetComponentData(type);
+    return result;
+}
+Component* ImageNapi::GetComponentData(ComponentType type)
+{
+    auto iter = componentData_.find(type);
+    if (iter != componentData_.end()) {
+        return iter->second.get();
+    }
+    return nullptr;
+}
+uint32_t ImageNapi::CombineComponentsIntoSurface()
+{
+    if (!IsYCbCr422SP(sSurfaceBuffer_->GetFormat())) {
+        HiLog::Info(LABEL, "No need to combine components for NO YUV format now");
+        return SUCCESS;
+    }
+    Component* y = GetComponentData(ComponentType::YUV_Y);
+    Component* u = GetComponentData(ComponentType::YUV_U);
+    Component* v = GetComponentData(ComponentType::YUV_V);
+    if ((y != nullptr) || (u != nullptr) || (v != nullptr)) {
+        HiLog::Error(LABEL, "No component need to combine");
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
+    uint32_t bufferSize = sSurfaceBuffer_->GetSize();
+    uint8_t* buffer = static_cast<uint8_t*>(sSurfaceBuffer_->GetVirAddr());
+    YUV422SPDataCopy(buffer, bufferSize, y->raw, y->raw.size(), u->raw, v->raw, u->raw.size(), true);
+    return SUCCESS;
+}
+
+void ImageNapi::release()
+{
+    if (!isRelease) {
+        NativeRelease();
+        isRelease = true;
+    }
 }
 }  // namespace Media
 }  // namespace OHOS
