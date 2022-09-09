@@ -67,10 +67,7 @@ ohos_shared_library("webpplugin") {
     if (DUAL_ADAPTER) {
     }
 
-    external_deps = [
-      "c_utils:utils",
-      "hiviewdfx_hilog_native:libhilog",
-    ]
+    external_deps = [ "c_utils:utils" ]
   }
   cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
   part_name = "multimedia_image_standard"

@@ -270,7 +270,6 @@ static napi_value DoInit(napi_env env, napi_value exports, struct ImageConstruct
     napi_value constructor = nullptr;
     napi_status status = napi_define_class(env, info.className.c_str(), NAPI_AUTO_LENGTH,
         info.constructor, nullptr, info.propertyCount, info.property, &constructor);
-
     if (status != napi_ok) {
         HiLog::Error(LABEL, "define class fail");
         return nullptr;
@@ -962,14 +961,12 @@ napi_value ImageSourceNapi::CreatePixelMap(napi_env env, napi_callback_info info
 
     std::unique_ptr<ImageSourceAsyncContext> asyncContext = std::make_unique<ImageSourceAsyncContext>();
 
-    std::shared_ptr<ImageSourceNapi> imageSourceNapi = std::make_unique<ImageSourceNapi>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&imageSourceNapi));
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, imageSourceNapi),
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->constructor_));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->constructor_),
         nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, imageSourceNapi->nativeImgSrc),
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->constructor_->nativeImgSrc),
         nullptr, HiLog::Error(LABEL, "fail to unwrap nativeImgSrc"));
-    asyncContext->constructor_ = imageSourceNapi.get();
-    asyncContext->rImageSource = imageSourceNapi->nativeImgSrc;
+    asyncContext->rImageSource = asyncContext->constructor_->nativeImgSrc;
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rImageSource),
         nullptr, HiLog::Error(LABEL, "empty native rImageSource"));
 
