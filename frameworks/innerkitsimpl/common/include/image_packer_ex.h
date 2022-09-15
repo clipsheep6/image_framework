@@ -27,6 +27,7 @@ public:
     ~ImagePackerEx() = default;
     using ImagePacker::StartPacking;
     uint32_t StartPacking(PackerStream &outputStream, const PackOption &option);
+    uint32_t StartPacking(PackerStream &outputStream);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImagePackerEx);
