@@ -31,8 +31,10 @@ FileSourceStream::FileSourceStream(std::FILE *file, size_t size, size_t offset, 
 
 FileSourceStream::~FileSourceStream()
 {
+    IMAGE_LOGE("[FileSourceStream] FileSourceStream::~FileSourceStream()");
     fclose(filePtr_);
     ResetReadBuffer();
+    IMAGE_LOGE("[FileSourceStream] FileSourceStream::~FileSourceStream()==========end");
 }
 
 unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &pathName)
@@ -47,7 +49,10 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &
         IMAGE_LOGE("[FileSourceStream]get the file size fail.");
         return nullptr;
     }
+
+    IMAGE_LOGE("[FileSourceStream]open begin errno: %{public}d",errno);
     FILE *filePtr = fopen(realPath.c_str(), "rb");
+    IMAGE_LOGE("[FileSourceStream]open end errno: %{public}d",errno);
     if (filePtr == nullptr) {
         IMAGE_LOGE("[FileSourceStream]open file fail.");
         return nullptr;
