@@ -55,7 +55,7 @@ ohos_unittest("imagepixelmapparceltest") {
   sources = [ "./unittest/image_pixel_map_parcel_test.cpp" ]
 
   deps = [
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+#    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
@@ -102,7 +102,7 @@ ohos_unittest("imagesourcetest") {
   }
 
   deps = [
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+ #   "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
@@ -151,7 +151,7 @@ ohos_unittest("transformtest") {
     "//third_party/googletest/googletest/include",
     "//commonlibrary/c_utils/base/include",
     "//foundation/multimedia/image_standard/plugins/manager/include",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+ #   "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   ]
   sources = [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/test/unittest/image_transform_test.cpp" ]
 
@@ -190,8 +190,8 @@ ohos_unittest("imagecolorspacetest") {
   ]
 
   deps = [
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-    "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
+    #"//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+    #"//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",

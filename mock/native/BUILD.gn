@@ -16,7 +16,7 @@ import("//foundation/multimedia/image_standard/ide/image_decode_config.gni")
 config("log_mock_config") {
   visibility = [ ":*" ]
   include_dirs = [
-    "//foundation/multimedia/image_standard/mock/native/include",
+    #"//foundation/multimedia/image_standard/mock/native/include",
     "//foundation/multimedia/image_standard/mock/native/include/hilog",
   ]
 }
@@ -24,14 +24,15 @@ config("log_mock_config") {
 ohos_static_library("log_mock_static") {
   configs = [ ":log_mock_config" ]
   sources =
-      [ "//foundation/multimedia/image_standard/mock/native/src/HiLog.cpp" ]
+      [ "//foundation/multimedia/image_standard/mock/native/src/HiLog.cpp",
+      "//foundation/multimedia/image_standard/mock/native/include/hilog/hitrace_meter.cpp" ]
   subsystem_name = "multimedia"
 }
 
 config("utils_mock_config") {
   visibility = [ ":*" ]
   include_dirs = [
-    "//foundation/multimedia/image_standard/mock/native/include",
+    #"//foundation/multimedia/image_standard/mock/native/include",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_standard/interfaces/innerkits/include",
   ]

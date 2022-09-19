@@ -16,7 +16,7 @@
 #include "image_napi_utils.h"
 #include <securec.h>
 #include <unistd.h>
-#include "hichecker.h"
+// #include "hichecker.h"
 
 namespace OHOS {
 namespace Media {
@@ -114,13 +114,13 @@ napi_valuetype ImageNapiUtils::getType(napi_env env, napi_value root)
     return res;
 }
 
-void ImageNapiUtils::HicheckerReport()
-{
-    uint32_t pid = getpid();
-    uint32_t tid = gettid();
-    std::string cautionMsg = "Trigger: pid = " + std::to_string(pid) + ", tid = " + std::to_string(tid);
-    HiviewDFX::HiChecker::NotifySlowProcess(cautionMsg);
-}
+// void ImageNapiUtils::HicheckerReport()
+// {
+//     uint32_t pid = getpid();
+//     uint32_t tid = gettid();
+//     std::string cautionMsg = "Trigger: pid = " + std::to_string(pid) + ", tid = " + std::to_string(tid);
+//     HiviewDFX::HiChecker::NotifySlowProcess(cautionMsg);
+// }
 
 void ImageNapiUtils::CreateErrorObj(napi_env env, napi_value &errorObj,
     const int32_t errCode, const std::string errMsg)

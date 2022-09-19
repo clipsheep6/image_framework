@@ -493,7 +493,7 @@ napi_value ImagePackerNapi::Packing(napi_env env, napi_callback_info info)
         napi_create_promise(env, &(asyncContext->deferred), &result);
     }
 
-    ImageNapiUtils::HicheckerReport();
+    // ImageNapiUtils::HicheckerReport();
 
     if (asyncContext->errorMsg != nullptr) {
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackingError",

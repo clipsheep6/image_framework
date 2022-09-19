@@ -14,6 +14,7 @@
 # source code for Windows.
 use_mingw_win = "${current_os}_${current_cpu}" == "mingw_x86_64"
 use_clang_mac = "${current_os}_${current_cpu}" == "mac_x64"
+use_clang_ios = current_os == "ios" || current_os == "tovs"
 
 # Toolchain
 windows_buildtool = "//build/toolchain/mingw:mingw_x86_64"

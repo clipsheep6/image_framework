@@ -34,7 +34,7 @@ ohos_shared_library("pluginmanager") {
 
   cflags = [
     "-DIMAGE_DEBUG_FLAG",
-    "-DIMAGE_COLORSPACE_FLAG",
+    #"-DIMAGE_COLORSPACE_FLAG",
   ]
 
   include_dirs = [
@@ -51,31 +51,36 @@ ohos_shared_library("pluginmanager") {
     "//third_party/json/single_include/nlohmann",
     "//third_party/boost/tools/build/src/engine",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+        "//foundation/multimedia/image_standard/mock/native/include/hilog",
   ]
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
     include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
+        [ "//foundation/multimedia/image_standard/mock/native/include/hilog" ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
-      "//foundation/multimedia/image_standard/mock/native:utils_mock_static",
+      #"//foundation/multimedia/image_standard/mock/native:utils_mock_static",
     ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
     include_dirs += [
-      "//foundation/multimedia/image_standard/mock/native/include",
+      "//foundation/multimedia/image_standard/mock/native/include/hilog",
       "//third_party/bounds_checking_function/include",
     ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
-      "//foundation/multimedia/image_standard/mock/native:utils_mock_static",
+      #"//foundation/multimedia/image_standard/mock/native:utils_mock_static",
       "//third_party/bounds_checking_function:libsec_static",
     ]
   } else {
-    include_dirs += [ "//commonlibrary/c_utils/base/include" ]
+    include_dirs += [ "//commonlibrary/c_utils/base/include", ]
 
     ldflags = [ "-Wl,-Bsymbolic" ]
+    deps = [
+      "//foundation/multimedia/image_standard/mock/native:log_mock_static",
+      "//commonlibrary/c_utils/base:utils",
+    ]
 
     external_deps = [
       "c_utils:utils",
@@ -120,25 +125,26 @@ ohos_static_library("pluginmanager_static") {
     "//third_party/json/single_include/nlohmann",
     "//third_party/boost/tools/build/src/engine",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//foundation/multimedia/image_standard/mock/native/include/hilog",
   ]
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
     include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
+        [ "//foundation/multimedia/image_standard/mock/native/include/hilog" ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
-      "//foundation/multimedia/image_standard/mock/native:utils_mock_static",
+      #"//foundation/multimedia/image_standard/mock/native:utils_mock_static",
     ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
     include_dirs += [
-      "//foundation/multimedia/image_standard/mock/native/include",
+      "//foundation/multimedia/image_standard/mock/native/include/hilog",
       "//third_party/bounds_checking_function/include",
     ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
-      "//foundation/multimedia/image_standard/mock/native:utils_mock_static",
+      #"//foundation/multimedia/image_standard/mock/native:utils_mock_static",
       "//third_party/bounds_checking_function:libsec_static",
     ]
   } else {
@@ -146,6 +152,10 @@ ohos_static_library("pluginmanager_static") {
 
     ldflags = [ "-Wl,-Bsymbolic" ]
 
+    deps = [
+      "//foundation/multimedia/image_standard/mock/native:log_mock_static",
+      "//commonlibrary/c_utils/base:utils"
+    ]
     external_deps = [
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",

@@ -35,7 +35,7 @@
 #if !defined(_WIN32) && !defined(_APPLE)
 #include <sys/mman.h>
 #include "ashmem.h"
-#include "ipc_file_descriptor.h"
+// #include "ipc_file_descriptor.h"
 #endif
 
 namespace OHOS {
@@ -1099,43 +1099,43 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
         return parcel.WriteUnpadBuffer(data, size);
     }
 #if !defined(_WIN32) && !defined(_APPLE)
-    int fd = AshmemCreate("Parcel ImageData", size);
-    HiLog::Info(LABEL, "AshmemCreate:[%{public}d].", fd);
-    if (fd < 0) {
-        return false;
-    }
+    // int fd = AshmemCreate("Parcel ImageData", size);
+    // HiLog::Info(LABEL, "AshmemCreate:[%{public}d].", fd);
+    // if (fd < 0) {
+    //     return false;
+    // }
 
-    int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
-    HiLog::Info(LABEL, "AshmemSetProt:[%{public}d].", result);
-    if (result < 0) {
-        ::close(fd);
-        return false;
-    }
-    void *ptr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (ptr == MAP_FAILED) {
-        ::close(fd);
-        HiLog::Error(LABEL, "WriteImageData map failed, errno:%{public}d", errno);
-        return false;
-    }
-    HiLog::Info(LABEL, "mmap success");
+    // int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
+    // HiLog::Info(LABEL, "AshmemSetProt:[%{public}d].", result);
+    // if (result < 0) {
+    //     ::close(fd);
+    //     return false;
+    // }
+    // void *ptr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    // if (ptr == MAP_FAILED) {
+    //     ::close(fd);
+    //     HiLog::Error(LABEL, "WriteImageData map failed, errno:%{public}d", errno);
+    //     return false;
+    // }
+    // HiLog::Info(LABEL, "mmap success");
 
-    if (memcpy_s(ptr, size, data, size) != EOK) {
-        ::munmap(ptr, size);
-        ::close(fd);
-        HiLog::Error(LABEL, "WriteImageData memcpy_s error");
-        return false;
-    }
+    // if (memcpy_s(ptr, size, data, size) != EOK) {
+    //     ::munmap(ptr, size);
+    //     ::close(fd);
+    //     HiLog::Error(LABEL, "WriteImageData memcpy_s error");
+    //     return false;
+    // }
 
-    if (!WriteFileDescriptor(parcel, fd)) {
-        ::munmap(ptr, size);
-        ::close(fd);
-        HiLog::Error(LABEL, "WriteImageData WriteFileDescriptor error");
-        return false;
-    }
-    HiLog::Debug(LABEL, "WriteImageData WriteFileDescriptor success");
-    ::munmap(ptr, size);
-    ::close(fd);
-    HiLog::Debug(LABEL, "WriteImageData End");
+    // if (!WriteFileDescriptor(parcel, fd)) {
+    //     ::munmap(ptr, size);
+    //     ::close(fd);
+    //     HiLog::Error(LABEL, "WriteImageData WriteFileDescriptor error");
+    //     return false;
+    // }
+    // HiLog::Debug(LABEL, "WriteImageData WriteFileDescriptor success");
+    // ::munmap(ptr, size);
+    // ::close(fd);
+    // HiLog::Debug(LABEL, "WriteImageData End");
 #endif
     return true;
 }
@@ -1143,7 +1143,7 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
 uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 {
     uint8_t *base = nullptr;
-    int fd = -1;
+    // int fd = -1;
 
     if (static_cast<unsigned int>(bufferSize) <= MIN_IMAGEDATA_SIZE) {
         if (bufferSize <= 0) {
@@ -1170,68 +1170,68 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
         }
     } else {
 #if !defined(_WIN32) && !defined(_APPLE)
-        fd = ReadFileDescriptor(parcel);
-        if (fd < 0) {
-            HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
-            return nullptr;
-        }
-        if (bufferSize <= 0 || bufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-            HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
-            return nullptr;
-        }
+        // fd = ReadFileDescriptor(parcel);
+        // if (fd < 0) {
+        //     HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
+        //     return nullptr;
+        // }
+        // if (bufferSize <= 0 || bufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        //     HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
+        //     return nullptr;
+        // }
 
-        void *ptr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
-        if (ptr == MAP_FAILED) {
-            // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
-            HiLog::Error(LABEL, "ReadImageData map failed, errno:%{public}d", errno);
-            return nullptr;
-        }
+        // void *ptr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
+        // if (ptr == MAP_FAILED) {
+        //     // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
+        //     HiLog::Error(LABEL, "ReadImageData map failed, errno:%{public}d", errno);
+        //     return nullptr;
+        // }
 
-        base = static_cast<uint8_t *>(malloc(bufferSize));
-        if (base == nullptr) {
-            ::munmap(ptr, bufferSize);
-            HiLog::Error(LABEL, "alloc output pixel memory size:[%{public}d] error.", bufferSize);
-            return nullptr;
-        }
-        if (memcpy_s(base, bufferSize, ptr, bufferSize) != 0) {
-            ::munmap(ptr, bufferSize);
-            free(base);
-            base = nullptr;
-            HiLog::Error(LABEL, "memcpy pixel data size:[%{public}d] error.", bufferSize);
-            return nullptr;
-        }
+        // base = static_cast<uint8_t *>(malloc(bufferSize));
+        // if (base == nullptr) {
+        //     ::munmap(ptr, bufferSize);
+        //     HiLog::Error(LABEL, "alloc output pixel memory size:[%{public}d] error.", bufferSize);
+        //     return nullptr;
+        // }
+        // if (memcpy_s(base, bufferSize, ptr, bufferSize) != 0) {
+        //     ::munmap(ptr, bufferSize);
+        //     free(base);
+        //     base = nullptr;
+        //     HiLog::Error(LABEL, "memcpy pixel data size:[%{public}d] error.", bufferSize);
+        //     return nullptr;
+        // }
 
-        ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, ptr, &fd, bufferSize);
+        // ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, ptr, &fd, bufferSize);
 #endif
     }
     return base;
 }
 
-bool PixelMap::WriteFileDescriptor(Parcel &parcel, int fd)
-{
-    if (fd < 0) {
-        return false;
-    }
-    int dupFd = dup(fd);
-    if (dupFd < 0) {
-        return false;
-    }
-    sptr<IPCFileDescriptor> descriptor = new IPCFileDescriptor(dupFd);
-    return parcel.WriteObject<IPCFileDescriptor>(descriptor);
-}
+// bool PixelMap::WriteFileDescriptor(Parcel &parcel, int fd)
+// {
+//     if (fd < 0) {
+//         return false;
+//     }
+//     int dupFd = dup(fd);
+//     if (dupFd < 0) {
+//         return false;
+//     }
+//     sptr<IPCFileDescriptor> descriptor = new IPCFileDescriptor(dupFd);
+//     return parcel.WriteObject<IPCFileDescriptor>(descriptor);
+// }
 
-int PixelMap::ReadFileDescriptor(Parcel &parcel)
-{
-    sptr<IPCFileDescriptor> descriptor = parcel.ReadObject<IPCFileDescriptor>();
-    if (descriptor == nullptr) {
-        return -1;
-    }
-    int fd = descriptor->GetFd();
-    if (fd < 0) {
-        return -1;
-    }
-    return dup(fd);
-}
+// int PixelMap::ReadFileDescriptor(Parcel &parcel)
+// {
+//     sptr<IPCFileDescriptor> descriptor = parcel.ReadObject<IPCFileDescriptor>();
+//     if (descriptor == nullptr) {
+//         return -1;
+//     }
+//     int fd = descriptor->GetFd();
+//     if (fd < 0) {
+//         return -1;
+//     }
+//     return dup(fd);
+// }
 
 bool PixelMap::WriteImageInfo(Parcel &parcel) const
 {
@@ -1284,20 +1284,20 @@ bool PixelMap::Marshalling(Parcel &parcel) const
     }
     if (allocatorType_ == AllocatorType::SHARE_MEM_ALLOC) {
 #if !defined(_WIN32) && !defined(_APPLE)
-        if (!parcel.WriteInt32(bufferSize)) {
-            return false;
-        }
+        // if (!parcel.WriteInt32(bufferSize)) {
+        //     return false;
+        // }
 
-        int *fd = static_cast<int *>(context_);
-        if (*fd < 0) {
-            HiLog::Error(LABEL, "write pixel map failed, fd < 0.");
-            return false;
-        }
+        // int *fd = static_cast<int *>(context_);
+        // if (*fd < 0) {
+        //     HiLog::Error(LABEL, "write pixel map failed, fd < 0.");
+        //     return false;
+        // }
 
-        if (!WriteFileDescriptor(parcel, *fd)) {
-            HiLog::Error(LABEL, "write pixel map fd:[%{public}d] to parcel failed.", *fd);
-            return false;
-        }
+        // if (!WriteFileDescriptor(parcel, *fd)) {
+        //     HiLog::Error(LABEL, "write pixel map fd:[%{public}d] to parcel failed.", *fd);
+        //     return false;
+        // }
 #endif
     } else {
         if (!WriteImageData(parcel, bufferSize)) {
@@ -1344,28 +1344,28 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
     void *context = nullptr;
     if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
 #if !defined(_WIN32) && !defined(_APPLE)
-        int fd = ReadFileDescriptor(parcel);
-        if (fd < 0) {
-            HiLog::Error(LABEL, "fd < 0");
-            delete pixelMap;
-            return nullptr;
-        }
-        void* ptr = ::mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (ptr == MAP_FAILED) {
-            ::close(fd);
-            delete pixelMap;
-            HiLog::Error(LABEL, "shared memory map failed, errno:%{public}d", errno);
-            return nullptr;
-        }
-        context = new int32_t();
-        if (context == nullptr) {
-            ::munmap(ptr, bufferSize);
-            ::close(fd);
-            delete pixelMap;
-            return nullptr;
-        }
-        *static_cast<int32_t *>(context) = fd;
-        base = static_cast<uint8_t *>(ptr);
+        // int fd = ReadFileDescriptor(parcel);
+        // if (fd < 0) {
+        //     HiLog::Error(LABEL, "fd < 0");
+        //     delete pixelMap;
+        //     return nullptr;
+        // }
+        // void* ptr = ::mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        // if (ptr == MAP_FAILED) {
+        //     ::close(fd);
+        //     delete pixelMap;
+        //     HiLog::Error(LABEL, "shared memory map failed, errno:%{public}d", errno);
+        //     return nullptr;
+        // }
+        // context = new int32_t();
+        // if (context == nullptr) {
+        //     ::munmap(ptr, bufferSize);
+        //     ::close(fd);
+        //     delete pixelMap;
+        //     return nullptr;
+        // }
+        // *static_cast<int32_t *>(context) = fd;
+        // base = static_cast<uint8_t *>(ptr);
 #endif
     } else {
         base = ReadImageData(parcel, bufferSize);
