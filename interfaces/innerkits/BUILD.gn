@@ -43,6 +43,7 @@ config("image_external_config") {
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//drivers/peripheral/display/interfaces/include",
     "//drivers/peripheral/base",
+    "//utils/memory/libpurgeablemem/cpp/include",
   ]
 
   if (use_mingw_win) {
@@ -124,6 +125,7 @@ ohos_shared_library("image_native") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_source.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/purgeable_pixel_map.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/matrix.cpp",
@@ -159,6 +161,7 @@ ohos_shared_library("image_native") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
+      "//utils/memory/libpurgeablemem:libpurgeablemem",
     ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
@@ -177,6 +180,7 @@ ohos_shared_library("image_native") {
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
       "//third_party/bounds_checking_function:libsec_statics",
+      "//utils/memory/libpurgeablemem:libpurgeablemem",
     ]
   } else {
     defines = [ "DUAL_ADAPTER" ]
@@ -196,6 +200,7 @@ ohos_shared_library("image_native") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
       "//third_party/flutter/build/skia:ace_skia_ohos",
+      "//utils/memory/libpurgeablemem:libpurgeablemem",
     ]
 
     if (DUAL_ADAPTER) {
@@ -255,6 +260,7 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/codec/src/image_source.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
+    "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/common/src/purgeable_pixel_map.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/matrix.cpp",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
@@ -289,6 +295,7 @@ ohos_static_library("image_static") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils_static",
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
+      "//utils/memory/libpurgeablemem:libpurgeablemem",
     ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
@@ -308,6 +315,7 @@ ohos_static_library("image_static") {
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
       "//third_party/bounds_checking_function:libsec_static",
+      "//utils/memory/libpurgeablemem:libpurgeablemem",
     ]
   } else {
     defines = [ "DUAL_ADAPTER" ]
@@ -320,6 +328,7 @@ ohos_static_library("image_static") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+      "//utils/memory/libpurgeablemem:libpurgeablemem",
     ]
 
     if (DUAL_ADAPTER) {

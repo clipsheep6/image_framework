@@ -51,6 +51,7 @@
             "header": {
               "header_files": [
                 "pixel_map.h",
+                "purgeable_pixel_map.h",
                 "image_packer.h",
                 "image_source.h",
                 "image_type.h",
