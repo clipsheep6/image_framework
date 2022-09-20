@@ -59,7 +59,7 @@ ohos_shared_library("webpplugin") {
       "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
-      "//third_party/flutter/build/skia:ace_skia_ohos",
+      "//third_party/flutter/build/skia:ace_skia_android",
     ]
 
     if (DUAL_ADAPTER) {

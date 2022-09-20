@@ -23,11 +23,11 @@ ohos_shared_library("rawplugin") {
 
   cflags = [
     "-DIMAGE_DEBUG_FLAG",
-    "-DIMAGE_COLORSPACE_FLAG",
+    #"-DIMAGE_COLORSPACE_FLAG",
   ]
 
   include_dirs = [
-    "//foundation/graphic/graphic_2d/utils/color_manager/export",
+    #"//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/stream/include",
     "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_standard/interfaces/innerkits/include",
@@ -58,7 +58,7 @@ ohos_shared_library("rawplugin") {
       "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
       "//foundation/multimedia/image_standard/plugins/common/libs/image/libjpegplugin:jpegplugin",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
-      "//third_party/skia/third_party/piex",
+      #"//third_party/skia/third_party/piex",
     ]
 
     if (DUAL_ADAPTER) {

@@ -34,11 +34,11 @@ static napi_value Export(napi_env env, napi_value exports)
     HiLog::Error(LABEL, "ImageSourceNapi CALL");
     ImageSourceNapi::Init(env, exports);
     HiLog::Error(LABEL, "ImageReceiverNapi CALL");
-    ImageReceiverNapi::Init(env, exports);
+    // ImageReceiverNapi::Init(env, exports);
     HiLog::Error(LABEL, "ImageCreatorNapi CALL");
-    ImageCreatorNapi::Init(env, exports);
+    // ImageCreatorNapi::Init(env, exports);
     HiLog::Error(LABEL, "ImageNapi CALL");
-    ImageNapi::Init(env, exports);
+    // ImageNapi::Init(env, exports);
     return exports;
 }
 

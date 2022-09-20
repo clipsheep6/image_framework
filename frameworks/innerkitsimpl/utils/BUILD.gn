@@ -23,6 +23,7 @@ ohos_shared_library("image_utils") {
     "//commonlibrary/c_utils/base/include",
     "//foundation/multimedia/utils/lite/interfaces/kits",
     "//foundation/communication/ipc/utils/include",
+        "//foundation/multimedia/image_standard/mock/native/include/hilog",
   ]
 
   sources = [
@@ -34,7 +35,7 @@ ohos_shared_library("image_utils") {
     defines = image_decode_windows_defines
     sources -= [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
     include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
+        [ "//foundation/multimedia/image_standard/mock/native/include/hilog" ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
@@ -43,7 +44,7 @@ ohos_shared_library("image_utils") {
     defines = image_decode_mac_defines
     sources -= [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
     include_dirs += [
-      "//foundation/multimedia/image_standard/mock/native/include",
+      "//foundation/multimedia/image_standard/mock/native/include/hilog",
       "//third_party/bounds_checking_function/include",
     ]
     deps = [
@@ -56,6 +57,8 @@ ohos_shared_library("image_utils") {
 
     deps = [
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+            "//foundation/multimedia/image_standard/mock/native:log_mock_static",
+            "//commonlibrary/c_utils/base:utils"
     ]
 
     external_deps = [
@@ -77,6 +80,7 @@ ohos_static_library("image_utils_static") {
     "//foundation/multimedia/image_standard/plugins/manager/include",
     "//foundation/multimedia/image_standard/interfaces/innerkits/include",
     "//commonlibrary/c_utils/base/include",
+    "//foundation/multimedia/image_standard/mock/native/include/hilog",
   ]
 
   sources = [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/src/image_utils.cpp" ]
@@ -84,7 +88,7 @@ ohos_static_library("image_utils_static") {
   if (use_mingw_win) {
     defines = image_decode_windows_defines
     include_dirs +=
-        [ "//foundation/multimedia/image_standard/mock/native/include" ]
+        [ "//foundation/multimedia/image_standard/mock/native/include/hilog" ]
     deps = [
       "//foundation/multimedia/image_standard/mock/native:log_mock_static",
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager_static",
@@ -92,7 +96,7 @@ ohos_static_library("image_utils_static") {
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
     include_dirs += [
-      "//foundation/multimedia/image_standard/mock/native/include",
+      "//foundation/multimedia/image_standard/mock/native/include/hilog",
       "//third_party/bounds_checking_function/include",
     ]
     deps = [
@@ -101,9 +105,11 @@ ohos_static_library("image_utils_static") {
       "//third_party/bounds_checking_function:libsec_static",
     ]
   } else {
-    sources += [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
+    #sources += [ "//foundation/multimedia/image_standard/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
     deps = [
       "//foundation/multimedia/image_standard/plugins/manager:pluginmanager",
+      "//foundation/multimedia/image_standard/mock/native:log_mock_static",
+      "//commonlibrary/c_utils/base:utils"
     ]
 
     external_deps = [
