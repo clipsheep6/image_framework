@@ -110,7 +110,7 @@ uint32_t Plugin::Ref()
     if (state_ == PluginState::PLUGIN_STATE_RESOLVED) {
         // maybe asynchronous, or for reduce the locking time
         state_ = PluginState::PLUGIN_STATE_STARTING;
-        if (!CfiStartFunc_()) {
+        if (!CfiStartFunc_(startFunc_)) {
             HiLog::Error(LABEL, "failed to start plugin.");
             FreeLibrary();
             state_ = PluginState::PLUGIN_STATE_REGISTERED;
