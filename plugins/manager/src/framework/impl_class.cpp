@@ -328,7 +328,7 @@ bool ImplClass::AnalysisMaxInstance(const json &classInfo)
     return true;
 }
 
-PluginClassBase *CfiFactory(PluginCreateFunc factory, const string &className) _attribute_((no_sanitize("cfi"))) {
+PluginClassBase *CfiFactory(PluginCreateFunc factory, const string &className) __attribute__((no_sanitize("cfi"))) {
     return factory(className);
 }
 
