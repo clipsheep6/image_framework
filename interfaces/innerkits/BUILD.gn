@@ -79,7 +79,7 @@ ohos_copy("image_declaration") {
 ohos_shared_library("image") {
   sanitize = {
     cfi = true
-    debug = true
+    debug = false
   }
   public_configs = [ ":image_external_config" ]
   sources = [
@@ -117,7 +117,7 @@ ohos_shared_library("image") {
 ohos_shared_library("image_native") {
   sanitize = {
     cfi = true
-    debug = true
+    debug = false
   }
   public_configs = [ ":image_external_config" ]
 
