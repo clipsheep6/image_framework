@@ -18,13 +18,16 @@ config("log_mock_config") {
   include_dirs = [
     "//foundation/multimedia/image_framework/mock/native/include",
     "//foundation/multimedia/image_framework/mock/native/include/hilog",
+    "//foundation/multimedia/image_framework/mock/native/include/include/utils",
   ]
 }
 
 ohos_static_library("log_mock_static") {
   configs = [ ":log_mock_config" ]
-  sources =
-      [ "//foundation/multimedia/image_framework/mock/native/src/HiLog.cpp" ]
+  sources = [
+    "//foundation/multimedia/image_framework/mock/native/include/hilog/hitrace_meter.cpp",
+    "//foundation/multimedia/image_framework/mock/native/src/HiLog.cpp",
+  ]
   subsystem_name = "multimedia"
 }
 
@@ -32,6 +35,7 @@ config("utils_mock_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "//foundation/multimedia/image_framework/mock/native/include",
+    "//foundation/multimedia/image_framework/mock/native/include/hilog",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
   ]
@@ -42,14 +46,20 @@ ohos_static_library("utils_mock_static") {
     defines = image_decode_windows_defines
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
+  } else if (use_clang_ios) {
+    defines = image_decode_ios_defines
+  } else if (use_clang_android) {
+    defines = image_decode_android_defines
   }
   configs = [ ":utils_mock_config" ]
   sources = [
+    "//foundation/multimedia/image_framework/mock/native/src/SkBase64.cpp",
     "//foundation/multimedia/image_framework/mock/native/src/directory_ex.cpp",
     "//foundation/multimedia/image_framework/mock/native/src/message_parcel.cpp",
     "//foundation/multimedia/image_framework/mock/native/src/parcel.cpp",
     "//foundation/multimedia/image_framework/mock/native/src/refbase.cpp",
     "//foundation/multimedia/image_framework/mock/native/src/rwlock.cpp",
+    "//foundation/multimedia/image_framework/mock/native/src/string_ex.cpp",
   ]
   deps = [ ":log_mock_static" ]
   subsystem_name = "multimedia"

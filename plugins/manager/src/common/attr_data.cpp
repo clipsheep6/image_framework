@@ -125,13 +125,15 @@ AttrData::AttrData(const AttrData &data)
 
 AttrData::AttrData(AttrData &&data) noexcept
 {
-    if (memcpy_s(&value_, sizeof(value_), &data.value_, sizeof(data.value_)) == EOK) {
-        type_ = data.type_;
-        data.type_ = AttrDataType::ATTR_DATA_NULL;
-    } else {
-        type_ = AttrDataType::ATTR_DATA_NULL;
-        HiLog::Error(LABEL, "memcpy error in assignment operator!");
-    }
+    #if !defined(_IOS)
+        if (memcpy_s(&value_, sizeof(value_), &data.value_, sizeof(data.value_)) == EOK) {
+            type_ = data.type_;
+            data.type_ = AttrDataType::ATTR_DATA_NULL;
+        } else {
+            type_ = AttrDataType::ATTR_DATA_NULL;
+            HiLog::Error(LABEL, "memcpy error in assignment operator!");
+        }
+    #endif
 }
 
 AttrData::~AttrData()
@@ -141,17 +143,18 @@ AttrData::~AttrData()
 
 AttrData &AttrData::operator=(const AttrData &data)
 {
+    #if !defined(_IOS)
     // make a copy, avoid self-assignment problems.
     AttrData temp(data);
-    ClearData();
-    if (memcpy_s(&value_, sizeof(value_), &temp.value_, sizeof(temp.value_)) == 0) {
-        type_ = temp.type_;
-        temp.type_ = AttrDataType::ATTR_DATA_NULL;
-    } else {
-        type_ = AttrDataType::ATTR_DATA_NULL;
-        HiLog::Error(LABEL, "memcpy error in assignment operator!");
-    }
-
+        ClearData();
+        if (memcpy_s(&value_, sizeof(value_), &temp.value_, sizeof(temp.value_)) == 0) {
+            type_ = temp.type_;
+            temp.type_ = AttrDataType::ATTR_DATA_NULL;
+        } else {
+            type_ = AttrDataType::ATTR_DATA_NULL;
+            HiLog::Error(LABEL, "memcpy error in assignment operator!");
+        }
+    #endif
     return *this;
 }
 
@@ -161,16 +164,16 @@ AttrData &AttrData::operator=(AttrData &&data) noexcept
     if (&data == this) {
         return *this;
     }
-
-    ClearData();
-    if (memcpy_s(&value_, sizeof(value_), &data.value_, sizeof(data.value_)) == EOK) {
-        type_ = data.type_;
-        data.type_ = AttrDataType::ATTR_DATA_NULL;
-    } else {
-        type_ = AttrDataType::ATTR_DATA_NULL;
-        HiLog::Error(LABEL, "memcpy error in assignment operator!");
-    }
-
+    #if !defined(_IOS)
+        ClearData();
+        if (memcpy_s(&value_, sizeof(value_), &data.value_, sizeof(data.value_)) == EOK) {
+            type_ = data.type_;
+            data.type_ = AttrDataType::ATTR_DATA_NULL;
+        } else {
+            type_ = AttrDataType::ATTR_DATA_NULL;
+            HiLog::Error(LABEL, "memcpy error in assignment operator!");
+        }
+    #endif
     return *this;
 }
 

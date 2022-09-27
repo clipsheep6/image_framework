@@ -55,8 +55,10 @@ ohos_shared_library("pluginmanager") {
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
-    include_dirs +=
-        [ "//foundation/multimedia/image_framework/mock/native/include" ]
+    include_dirs += [
+      "//foundation/multimedia/image_framework/mock/native/include",
+      "//foundation/multimedia/image_framework/mock/native/include/hilog",
+    ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
@@ -65,6 +67,7 @@ ohos_shared_library("pluginmanager") {
     defines = image_decode_mac_defines
     include_dirs += [
       "//foundation/multimedia/image_framework/mock/native/include",
+      "//foundation/multimedia/image_framework/mock/native/include/hilog",
       "//third_party/bounds_checking_function/include",
     ]
     deps = [
@@ -124,8 +127,10 @@ ohos_static_library("pluginmanager_static") {
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
-    include_dirs +=
-        [ "//foundation/multimedia/image_framework/mock/native/include" ]
+    include_dirs += [
+      "//foundation/multimedia/image_framework/mock/native/include",
+      "//foundation/multimedia/image_framework/mock/native/include/hilog",
+    ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
@@ -134,6 +139,7 @@ ohos_static_library("pluginmanager_static") {
     defines = image_decode_mac_defines
     include_dirs += [
       "//foundation/multimedia/image_framework/mock/native/include",
+      "//foundation/multimedia/image_framework/mock/native/include/hilog",
       "//third_party/bounds_checking_function/include",
     ]
     deps = [
