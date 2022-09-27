@@ -89,7 +89,7 @@ uint32_t Plugin::Register(istream &metadata, string &&libraryPath, weak_ptr<Plug
     return SUCCESS;
 }
 
-bool CfiStartFunc_(PluginStartFunc startFunc_) _attribute_((no_sanitize("cfi"))) {
+bool CfiStartFunc_(PluginStartFunc startFunc_) __attribute__((no_sanitize("cfi"))) {
     return startFunc_();
 }
 
