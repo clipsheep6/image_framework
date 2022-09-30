@@ -163,7 +163,7 @@ ohos_shared_library("pixelconvertadapter") {
 
   #relative_install_dir = "module/multimedia"
   subsystem_name = "multimedia"
-  part_name = "multimedia_image_standard"
+  part_name = "multimedia_image_framework"
 }
 
 ohos_static_library("pixelconvertadapter_static") {
@@ -207,5 +207,5 @@ ohos_static_library("pixelconvertadapter_static") {
     ]
   }
   subsystem_name = "multimedia"
-  part_name = "multimedia_image_standard"
+  part_name = "multimedia_image_framework"
 }

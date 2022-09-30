@@ -88,7 +88,7 @@ ohos_shared_library("pluginmanager") {
 
   #relative_install_dir = "module/multimedia"
   subsystem_name = "multimedia"
-  part_name = "multimedia_image_standard"
+  part_name = "multimedia_image_framework"
 }
 
 ohos_static_library("pluginmanager_static") {
@@ -158,5 +158,5 @@ ohos_static_library("pluginmanager_static") {
     ]
   }
   subsystem_name = "multimedia"
-  part_name = "multimedia_image_standard"
+  part_name = "multimedia_image_framework"
 }

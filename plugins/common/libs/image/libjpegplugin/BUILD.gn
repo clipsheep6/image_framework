@@ -152,7 +152,7 @@ ohos_shared_library("jpegplugin") {
     ]
   }
 
-  part_name = "multimedia_image_standard"
+  part_name = "multimedia_image_framework"
 
   subsystem_name = "multimedia"
 }
@@ -161,5 +161,5 @@ ohos_prebuilt_etc("jpegpluginmetadata") {
   source = "jpegplugin.pluginmeta"
   relative_install_dir = "multimediaplugin/image"
   subsystem_name = "multimedia"
-  part_name = "multimedia_image_standard"
+  part_name = "multimedia_image_framework"
 }
