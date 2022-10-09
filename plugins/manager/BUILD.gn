@@ -134,6 +134,7 @@ ohos_static_library("pluginmanager_static") {
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
     ]
+    cflags = [ "-Wno-macro-redefined" ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
     include_dirs += [
