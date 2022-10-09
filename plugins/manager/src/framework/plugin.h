@@ -17,6 +17,8 @@
 #define PLUGIN_H
 
 #include <iostream>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include "nocopyable.h"

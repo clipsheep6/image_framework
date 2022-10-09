@@ -26,7 +26,9 @@
 
 #if !defined(_WIN32) && !defined(_APPLE)
 #include <sys/mman.h>
+#ifndef __gnu_linux__
 #include "ashmem.h"
+#endif
 #endif
 
 namespace OHOS {

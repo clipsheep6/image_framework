@@ -30,7 +30,9 @@
 
 #if !defined(_WIN32) && !defined(_APPLE) &&!defined(_IOS) &&!defined(_ANDROID)
 #include <sys/mman.h>
+#ifndef __gnu_linux__
 #include "ashmem.h"
+#endif
 #endif
 
 #include "ipc_file_descriptor.h"
@@ -1097,7 +1099,7 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
     if (size <= MIN_IMAGEDATA_SIZE) {
         return parcel.WriteUnpadBuffer(data, size);
     }
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(_IOS) &&!defined(_ANDROID)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(_IOS) && !defined(_ANDROID) && !defined(__gnu_linux__)
     int fd = AshmemCreate("Parcel ImageData", size);
     HiLog::Info(LABEL, "AshmemCreate:[%{public}d].", fd);
     if (fd < 0) {

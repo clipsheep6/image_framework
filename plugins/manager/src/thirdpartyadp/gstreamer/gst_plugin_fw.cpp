@@ -14,7 +14,7 @@
  */
 
 #include "gst_plugin_fw.h"
-#include "__mutex_base"
+#include <mutex>
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
 #include "log_tags.h"

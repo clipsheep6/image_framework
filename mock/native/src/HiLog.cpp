@@ -13,11 +13,7 @@
  * limitations under the License.
  */
 
-#include "__config"
-#include "iosfwd"
-#include "hilog/log.h"
 #include "hilog/log_cpp.h"
-#include "ostream"
 
 namespace OHOS {
 namespace HiviewDFX {
