@@ -15,10 +15,9 @@
 
 #include "attr_data.h"
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <utility>
-#include "__functional_base"
-#include "__tree"
 #include "cstdint"
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
