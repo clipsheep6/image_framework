@@ -39,6 +39,11 @@ config("utils_mock_config") {
   ]
 }
 
+if (current_os == "mingw" || current_os == "mac") {
+group("utils_mock_static") {
+  public_deps = [ "//commonlibrary/c_utils/base:utils" ]
+}
+} else {
 ohos_static_library("utils_mock_static") {
   if (use_mingw_win) {
     defines = image_decode_windows_defines
@@ -60,4 +65,5 @@ ohos_static_library("utils_mock_static") {
   ]
   deps = [ ":log_mock_static" ]
   subsystem_name = "multimedia"
+}
 }
