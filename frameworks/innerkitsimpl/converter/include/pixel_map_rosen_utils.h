@@ -25,7 +25,7 @@ class GrContext;
 
 namespace OHOS {
 namespace Media {
-class PixelMapRosenUtils {
+class OHOS_EXPORT PixelMapRosenUtils {
 public:
     static bool UploadToGpu(
         std::shared_ptr<PixelMap> pixelMap, GrContext *context, bool buildMips, bool limitToMaxTextureSize = false);
