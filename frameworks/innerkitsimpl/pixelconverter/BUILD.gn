@@ -110,7 +110,7 @@ ohos_shared_library("pixelconvertadapter") {
   } else {
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//third_party/flutter/build/skia:ace_skia_ohos",
+      "//third_party/flutter/build/skia:ace_skia",
     ]
 
     external_deps = [ "c_utils:utils" ]
