@@ -242,13 +242,7 @@ if (use_clang_ios) {
       } else {
         defines = image_decode_mac_defines
       }
-      sources -= [
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-      ]
+      sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp" ]
       deps = [
         "//foundation/graphic/graphic_2d:libsurface",
         "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
