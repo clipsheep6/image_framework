@@ -23,7 +23,9 @@
 #include "securec.h"
 
 #if !defined(_WIN32) && !defined(_APPLE)
+#ifndef __gnu_linux__
 #include "ashmem.h"
+#endif
 #include <sys/mman.h>
 #endif
 

@@ -25,7 +25,9 @@
 
 #if !defined(_WIN32) && !defined(_APPLE)
 #include <sys/mman.h>
+#ifndef __gnu_linux__
 #include "ashmem.h"
+#endif
 #endif
 
 namespace OHOS {
@@ -357,7 +359,7 @@ bool PostProc::AllocHeapBuffer(uint64_t bufferSize, uint8_t **buffer)
 
 uint8_t *PostProc::AllocSharedMemory(const Size &size, const uint64_t bufferSize, int &fd)
 {
-#if defined(_WIN32) || defined(_APPLE)
+#if defined(_WIN32) || defined(_APPLE) || defined(__gnu_linux__)
         return nullptr;
 #else
     fd = AshmemCreate("Parcel RawData", bufferSize);

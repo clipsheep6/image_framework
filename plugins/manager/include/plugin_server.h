@@ -17,10 +17,10 @@
 #define PLUGIN_SERVER_H
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
-#include "__functional_base"
 #include "attr_data.h"
 #include "iosfwd"
 #include "nocopyable.h"
