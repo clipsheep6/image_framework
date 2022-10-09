@@ -27,11 +27,7 @@
 #include "log_tags.h"
 #include "new"
 #include "plugin_errors.h"
-#ifndef _WIN32
 #include "securec.h"
-#else
-#include "memory.h"
-#endif
 #include "set"
 #include "string"
 #include "type_traits"
