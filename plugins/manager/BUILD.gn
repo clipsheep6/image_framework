@@ -128,8 +128,6 @@ ohos_static_library("pluginmanager_static") {
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
-    include_dirs +=
-        [ "//foundation/multimedia/image_framework/mock/native/include" ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
@@ -137,10 +135,7 @@ ohos_static_library("pluginmanager_static") {
     cflags = [ "-Wno-macro-redefined" ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
-    include_dirs += [
-      "//foundation/multimedia/image_framework/mock/native/include",
-      "//third_party/bounds_checking_function/include",
-    ]
+    include_dirs += [ "//third_party/bounds_checking_function/include" ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
