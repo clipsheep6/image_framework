@@ -156,7 +156,10 @@ ohos_shared_library("image_native") {
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
     ]
-    external_deps = [ "hitrace_native:hitrace_meter" ]
+    external_deps = [
+      "hitrace_native:hitrace_meter",
+      "ipc:ipc_core",
+    ]
   } else {
     defines = [ "DUAL_ADAPTER" ]
     DUAL_ADAPTER = true
