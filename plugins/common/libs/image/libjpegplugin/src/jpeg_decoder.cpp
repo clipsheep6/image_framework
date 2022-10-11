@@ -73,6 +73,9 @@ static const std::map<std::string, uint32_t> PROPERTY_INT = {
     {"Right-top", 90},
     {"Left-bottom", 270},
 };
+constexpr uint32_t JPEG_APP1_SIZE = 2;
+constexpr uint32_t ADDRESS_4 = 4;
+constexpr int OFFSET_8 = 8;
 } // namespace
 
 PluginServer &JpegDecoder::pluginServer_ = DelayedRefSingleton<PluginServer>::GetInstance();
@@ -788,13 +791,41 @@ uint32_t JpegDecoder::ModifyImageProperty(uint32_t index, const std::string &key
     return Media::SUCCESS;
 }
 
-uint32_t JpegDecoder::GetRedactionArea(const int &fd,
-                                       const int &redactionType,
-                                       std::vector<std::pair<uint32_t, uint32_t>> &ranges)
+uint32_t JpegDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges)
 {
-    HiLog::Debug(LABEL, "[GetRedactionArea] with fd:%{public}d, redactionType:%{public}d ", fd, redactionType);
-    uint32_t ret = exifInfo_.GetRedactionArea(fd, redactionType, ranges);
+    HiLog::Debug(LABEL, "[GetFilterArea] with privacyType:%{public}d ", privacyType);
+    if (srcMgr_.inputStream == nullptr) {
+        HiLog::Error(LABEL, "[GetFilterArea] srcMgr_.inputStream is nullptr.");
+        return Media::ERR_MEDIA_INVALID_OPERATION;
+    }
+    uint32_t curPos = srcMgr_.inputStream->Tell();
+    srcMgr_.inputStream->Seek(ADDRESS_4);
+    // app1SizeBuf is used to get value of EXIF data size
+    uint8_t *app1SizeBuf = new uint8_t[JPEG_APP1_SIZE];
+    uint32_t readSize = 0;
+    if (!srcMgr_.inputStream->Read(JPEG_APP1_SIZE, app1SizeBuf, JPEG_APP1_SIZE, readSize)) {
+        HiLog::Error(LABEL, "[GetFilterArea] get app1 size failed.");
+        return Media::ERR_MEDIA_INVALID_OPERATION;
+    }
+    uint32_t app1Size =
+        static_cast<unsigned int>(app1SizeBuf[1]) | static_cast<unsigned int>(app1SizeBuf[0] << OFFSET_8);
+    delete[] app1SizeBuf;
+    uint32_t fsize = static_cast<uint32_t>(srcMgr_.inputStream->GetStreamSize());
+    if (app1Size > fsize) {
+        HiLog::Error(LABEL, "[GetFilterArea] file format is illegal.");
+        return Media::ERR_MEDIA_INVALID_OPERATION;
+    }
+
+    srcMgr_.inputStream->Seek(0);
+    uint32_t bufSize = app1Size + ADDRESS_4;
+    // buf is from image file head to exif data end
+    uint8_t *buf = new uint8_t[bufSize];
+    srcMgr_.inputStream->Read(bufSize, buf, bufSize, readSize);
+    uint32_t ret = exifInfo_.GetFilterArea(buf, bufSize, privacyType, ranges);
+    delete[] buf;
+    srcMgr_.inputStream->Seek(curPos);
     if (ret != Media::SUCCESS) {
+        HiLog::Error(LABEL, "[GetFilterArea]: failed to get area, errno %{public}d", ret);
         return ret;
     }
     return Media::SUCCESS;
