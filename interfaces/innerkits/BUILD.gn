@@ -111,6 +111,10 @@ ohos_shared_library("image") {
 }
 
 ohos_shared_library("image_native") {
+  sanitize = {
+    cfi = true
+    debug = true
+  }
   public_configs = [ ":image_external_config" ]
 
   cflags = [
