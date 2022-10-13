@@ -91,6 +91,26 @@ namespace OHOS {
             return errorCode;
         }
 
+        int32_t ImageReceiver::GetBlodSize(uint32_t &addr, uint32_t maxSize) {
+            if (maxSize < BLOB_FLAG_SIZE) {
+                HiLog::Error(LABEL, "maxSize < BLOB_FLAG_SIZE");
+                return 0;
+            }
+
+            uin8_t *header = &addr + (maxSize - BLOB_FLAG_SIZE);
+            struct jpeg_blob *blob = (struct jpeg_blob *)(header);
+            if (blob->jpeg_blob_id != JPEG_BLOB_ID) {
+                HiLog::Debug(LABEL, "no blob format");
+                return maxSize;
+            }
+            int32_t dataSize = blob->jpeg_size;
+            if(dataSize > maxSize - BLOB_FLAG_SIZE) {
+                HiLog::Debug(LABEL, "dataSize > maxSize - BLOB_FLAG_SIZE");
+                return maxSize;
+            }
+            return dataSize;
+        }
+        
         int32_t ImageReceiver::SaveBufferAsImage(int &fd,
                                                  OHOS::sptr<OHOS::SurfaceBuffer> buffer,
                                                  InitializationOptions initializationOpts)
@@ -99,6 +119,9 @@ namespace OHOS {
             if (buffer != nullptr) {
                 uint32_t *addr = reinterpret_cast<uint32_t *>(buffer->GetVirAddr());
                 int32_t size = buffer->GetSize();
+                if (size == 0 && iraContext_->format == 2000) {
+                    size = GetBlodSize(addr, buffer->GetStride());
+                }
                 errorcode = SaveSTP(addr, (uint32_t)size, fd, initializationOpts);
                 if ((iraContext_->GetReceiverBufferConsumer()) != nullptr) {
                     (iraContext_->GetReceiverBufferConsumer())->ReleaseBuffer(buffer, -1);
