@@ -72,7 +72,7 @@ public:
     sptr<Surface> GetReceiverSurface();
     OHOS::sptr<OHOS::SurfaceBuffer> ReadNextImage();
     OHOS::sptr<OHOS::SurfaceBuffer> ReadLastImage();
-    int32_t GetBlodSize(uint32_t &addr, uint32_t maxSize)
+    int32_t GetBlodSize(uint32_t &addr, uint32_t maxSize);
     int32_t SaveBufferAsImage(int &fd,
                               OHOS::sptr<OHOS::SurfaceBuffer> buffer,
                               InitializationOptions initializationOpts);
