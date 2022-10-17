@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,19 +24,18 @@
 #include "pixel_map_utils.h"
 #include "post_proc.h"
 #include "parcel.h"
+#include "securec.h"
 #include "image_trace.h"
 #include "hitrace_meter.h"
-#ifndef _WIN32
-#include "securec.h"
-#else
-#include "memory.h"
-#endif
 
 #if !defined(_WIN32) && !defined(_APPLE)
 #include <sys/mman.h>
+#ifndef __gnu_linux__
 #include "ashmem.h"
-#include "ipc_file_descriptor.h"
 #endif
+#endif
+
+#include "ipc_file_descriptor.h"
 
 namespace OHOS {
 namespace Media {
@@ -1100,7 +1099,7 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
     if (size <= MIN_IMAGEDATA_SIZE) {
         return parcel.WriteUnpadBuffer(data, size);
     }
-#if !defined(_WIN32) && !defined(_APPLE)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(__gnu_linux__)
     int fd = AshmemCreate("Parcel ImageData", size);
     HiLog::Info(LABEL, "AshmemCreate:[%{public}d].", fd);
     if (fd < 0) {
@@ -1145,7 +1144,6 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
 uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 {
     uint8_t *base = nullptr;
-    int fd = -1;
 
     if (static_cast<unsigned int>(bufferSize) <= MIN_IMAGEDATA_SIZE) {
         if (bufferSize <= 0) {
@@ -1172,7 +1170,7 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
         }
     } else {
 #if !defined(_WIN32) && !defined(_APPLE)
-        fd = ReadFileDescriptor(parcel);
+        int fd = ReadFileDescriptor(parcel);
         if (fd < 0) {
             HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
             return nullptr;

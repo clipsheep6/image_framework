@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,14 +20,12 @@
 #include "image_utils.h"
 #include "pixel_convert.h"
 #include "pixel_map.h"
-#ifndef _WIN32
 #include "securec.h"
-#else
-#include "memory.h"
-#endif
 
 #if !defined(_WIN32) && !defined(_APPLE)
+#ifndef __gnu_linux__
 #include "ashmem.h"
+#endif
 #include <sys/mman.h>
 #endif
 
@@ -160,22 +158,12 @@ uint32_t BasicTransformer::TransformPixmap(const PixmapInfo &inPixmap, PixmapInf
     outPixmap.imageInfo.alphaType = inPixmap.imageInfo.alphaType;
     outPixmap.imageInfo.baseDensity = inPixmap.imageInfo.baseDensity;
 
-#ifdef _WIN32
-    errno_t backRet = memset_s(outPixmap.data, COLOR_DEFAULT, bufferSize * sizeof(uint8_t));
-    if (backRet != EOK) {
-        IMAGE_LOGE("[BasicTransformer]apply heap memory failed.", backRet);
-        ReleaseBuffer((allocate == nullptr) ? AllocatorType::HEAP_ALLOC : AllocatorType::SHARE_MEM_ALLOC,
-            fd, bufferSize, outPixmap.data);
-        return ERR_IMAGE_GENERAL_ERROR;
-    }
-#else
     if (memset_s(outPixmap.data, bufferSize * sizeof(uint8_t), COLOR_DEFAULT, bufferSize * sizeof(uint8_t)) != EOK) {
         IMAGE_LOGE("[BasicTransformer]apply heap memory failed.");
         ReleaseBuffer((allocate == nullptr) ? AllocatorType::HEAP_ALLOC : AllocatorType::SHARE_MEM_ALLOC,
             fd, bufferSize, outPixmap.data);
         return ERR_IMAGE_GENERAL_ERROR;
     }
-#endif
 
     if (!DrawPixelmap(inPixmap, pixelBytes, dstSize, outPixmap.data)) {
         IMAGE_LOGE("[BasicTransformer] the matrix can not invert.");

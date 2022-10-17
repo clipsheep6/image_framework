@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,15 +21,13 @@
 #include "image_utils.h"
 #include "media_errors.h"
 #include "pixel_convert_adapter.h"
-#ifndef _WIN32
 #include "securec.h"
-#else
-#include "memory.h"
-#endif
 
 #if !defined(_WIN32) && !defined(_APPLE)
 #include <sys/mman.h>
+#ifndef __gnu_linux__
 #include "ashmem.h"
+#endif
 #endif
 
 namespace OHOS {
@@ -350,15 +348,6 @@ bool PostProc::AllocHeapBuffer(uint64_t bufferSize, uint8_t **buffer)
                    static_cast<unsigned long long>(bufferSize));
         return false;
     }
-#ifdef _WIN32
-    errno_t backRet = memset_s(*buffer, 0, bufferSize);
-    if (backRet != EOK) {
-        IMAGE_LOGE("[PostProc]memset convertData fail, errorCode = %{public}d", backRet);
-        ReleaseBuffer(AllocatorType::HEAP_ALLOC, 0, 0, buffer);
-        return false;
-    }
-    return true;
-#else
     errno_t errRet = memset_s(*buffer, bufferSize, 0, bufferSize);
     if (errRet != EOK) {
         IMAGE_LOGE("[PostProc]memset convertData fail, errorCode = %{public}d", errRet);
@@ -366,12 +355,11 @@ bool PostProc::AllocHeapBuffer(uint64_t bufferSize, uint8_t **buffer)
         return false;
     }
     return true;
-#endif
 }
 
 uint8_t *PostProc::AllocSharedMemory(const Size &size, const uint64_t bufferSize, int &fd)
 {
-#if defined(_WIN32) || defined(_APPLE)
+#if defined(_WIN32) || defined(_APPLE) || defined(__gnu_linux__)
         return nullptr;
 #else
     fd = AshmemCreate("Parcel RawData", bufferSize);

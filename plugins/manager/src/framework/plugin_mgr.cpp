@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,6 +35,37 @@ using namespace OHOS::HiviewDFX;
 
 static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "PluginMgr" };
 PlatformAdp &PluginMgr::platformAdp_ = DelayedRefSingleton<PlatformAdp>::GetInstance();
+
+#if defined(_WIN32) || defined(_APPLE)
+namespace {
+string TransformFileName(const string& fileName)
+{
+    string::size_type pos = fileName.find(".");
+    string transformfileName = "";
+    if (pos == string::npos) {
+        transformfileName = fileName;
+
+#ifdef _WIN32
+        transformfileName = transformfileName.append(".dll");
+#elif defined _APPLE
+        transformfileName = transformfileName.append(".dylib");
+#endif
+
+        return transformfileName;
+    } else {
+        transformfileName = string(fileName).substr(0, pos + 1);
+
+#ifdef _WIN32
+        transformfileName = transformfileName.append("dll");
+#elif defined _APPLE
+        transformfileName = transformfileName.append("dylib");
+#endif
+
+        return transformfileName;
+    }
+}
+} // namespace
+#endif
 
 uint32_t PluginMgr::Register(const vector<string> &canonicalPaths)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,10 +15,9 @@
 
 #include "attr_data.h"
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <utility>
-#include "__functional_base"
-#include "__tree"
 #include "cstdint"
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
@@ -27,11 +26,7 @@
 #include "log_tags.h"
 #include "new"
 #include "plugin_errors.h"
-#ifndef _WIN32
 #include "securec.h"
-#else
-#include "memory.h"
-#endif
 #include "set"
 #include "string"
 #include "type_traits"
