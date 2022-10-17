@@ -37,12 +37,22 @@ public:
     virtual ~SurfaceBufferAvaliableListener()= default;
     virtual void OnSurfaceBufferAvaliable() = 0;
 };
+
+typedef struct jpeg_blob {
+    uint16_t jpeg_blob_id;
+    uint32_t jpeg_size;
+} jpeg_blob_t;
+
+enum {
+    JPEG_BLOB_ID = 0x00FF,
+}
 class ImageReceiver {
 public:
     std::shared_ptr<ImageReceiverContext> iraContext_ = nullptr;
     sptr<Surface> receiverConsumerSurface_ = nullptr;
     sptr<Surface> receiverProducerSurface_ = nullptr;
     std::shared_ptr<SurfaceBufferAvaliableListener> surfaceBufferAvaliableListener_ = nullptr;
+    static constexpr uint32_t BLOB_FLAG_SIZE = sizeof(struct jpeg_blob);
     ImageReceiver() {}
     ~ImageReceiver()
     {
@@ -62,6 +72,7 @@ public:
     sptr<Surface> GetReceiverSurface();
     OHOS::sptr<OHOS::SurfaceBuffer> ReadNextImage();
     OHOS::sptr<OHOS::SurfaceBuffer> ReadLastImage();
+    int32_t GetBlodSize(uint32_t &addr, uint32_t maxSize);
     int32_t SaveBufferAsImage(int &fd,
                               OHOS::sptr<OHOS::SurfaceBuffer> buffer,
                               InitializationOptions initializationOpts);
