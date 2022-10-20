@@ -234,6 +234,32 @@ napi_value ImageNapi::Create(napi_env env, sptr<SurfaceBuffer> surfaceBuffer,
     return result;
 }
 
+napi_value ImageNapi::Create(napi_env env,std::shared_ptr<ImageReceiver> imageReceiver)
+{
+    napi_status status;
+    napi_value constructor = nullptr, result = nullptr;
+
+    IMAGE_FUNCTION_IN();
+
+    napi_get_undefined(env, &result);
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (IMG_IS_OK(status)) {
+        staticInstance_ = nullptr;
+        staticImageReceiverInstance_ = imageReceiver;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        if (status == napi_ok) {
+            IMAGE_FUNCTION_OUT();
+            return result;
+        } else {
+            IMAGE_ERR("New instance could not be obtained");
+        }
+    }
+
+    IMAGE_ERR("Failed to get reference of constructor");
+    return result;
+}
+
 napi_value ImageNapi::CreateBufferToImage(napi_env env, sptr<SurfaceBuffer> surfaceBuffer,
     std::shared_ptr<ImageCreator> imageCreator)
 {
@@ -343,8 +369,15 @@ napi_value ImageNapi::JSGetClipRect(napi_env env, napi_callback_info info)
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
     }
-
-    return BuildJsRegion(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), NUM0, NUM0);
+    
+    if (surfaceBuffer != nullptr) {
+        return BuildJsRegion(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), NUM0, NUM0);
+    } else {
+        const WIDTH = 8192;
+        const HEIGHT = 8;
+        return BuildJsRegion(env, WIDTH, HEIGHT, NUM0, NUM0);
+    }
+    
 }
 
 napi_value ImageNapi::JsGetSize(napi_env env, napi_callback_info info)
@@ -370,7 +403,13 @@ napi_value ImageNapi::JsGetSize(napi_env env, napi_callback_info info)
         return result;
     }
 
-    return BuildJsSize(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight());
+    if (surfaceBuffer == nullptr){
+        const WIDTH = 8192;
+        const HEIGHT = 8;
+        return BuildJsSize(env, WIDTH, HEIGHT);
+    }else {
+        return BuildJsSize(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight());
+    }
 }
 
 napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
@@ -396,7 +435,11 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
         return result;
     }
 
-    napi_create_int32(env, surfaceBuffer->GetFormat(), &result);
+    if(surfaceBuffer == nullptr) {
+        napi_create_int32(env, 12, &result);
+    } else {
+        napi_create_int32(env, surfaceBuffer->GetFormat(), &result);
+    }
     return result;
 }
 

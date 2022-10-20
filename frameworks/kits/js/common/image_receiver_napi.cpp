@@ -423,6 +423,7 @@ napi_value ImageReceiverNapi::JsGetCapacity(napi_env env, napi_callback_info inf
     return JSCommonProcess(args);
 }
 
+
 napi_value ImageReceiverNapi::JsGetFormat(napi_env env, napi_callback_info info)
 {
     IMAGE_FUNCTION_IN();
@@ -531,7 +532,10 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
         ic.context->constructor_->isCallBackTest = true;
-        DoTest(ic.context->receiver_);
+        // DoTest(ic.context->receiver_);
+        if(ImageReceiverAvaliableListener != nullptr){
+            ImageReceiverAvaliableListener->OnSurfaceBufferAvaliable();
+        }
         return true;
     };
 
@@ -628,14 +632,19 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
             IMAGE_ERR("Native instance is nullptr");
             context->status = ERR_IMAGE_INIT_ABNORMAL;
         } else {
-            auto surfacebuffer = native->ReadLastImage();
+            auto surfacebuffer;
+            if (!context->constructor_->isCallBackTest) {
+                 surfacebuffer = native->ReadLastImage();
+                result = ImageNapi::Create(env, surfacebuffer, native);
+            }else {
+                result = ImageNapi::Create(env, native);
+            }
 #ifdef IMAGE_DEBUG_FLAG
             if (context->constructor_->isCallBackTest) {
                 context->constructor_->isCallBackTest = false;
                 DoCallBackTest(surfacebuffer);
             }
 #endif
-            result = ImageNapi::Create(env, surfacebuffer, native);
             if (result == nullptr) {
                 IMAGE_ERR("ImageNapi Create failed");
                 context->status = ERR_IMAGE_INIT_ABNORMAL;
@@ -674,14 +683,19 @@ napi_value ImageReceiverNapi::JsReadNextImage(napi_env env, napi_callback_info i
             IMAGE_ERR("Native instance is nullptr");
             context->status = ERR_IMAGE_INIT_ABNORMAL;
         } else {
-            auto surfacebuffer = native->ReadNextImage();
+            auto surfacebuffer;
+            if (!context->constructor_->isCallBackTest) {
+                surfacebuffer = native->ReadNextImage();
+                result = ImageNapi::Create(env, surfacebuffer, native);
+            }else {
+                result = ImageNapi::Create(env, native);
+            }
 #ifdef IMAGE_DEBUG_FLAG
             if (context->constructor_->isCallBackTest) {
                 context->constructor_->isCallBackTest = false;
                 DoCallBackTest(surfacebuffer);
             }
 #endif
-            result = ImageNapi::Create(env, surfacebuffer, native);
             if (result == nullptr) {
                 IMAGE_ERR("ImageNapi Create failed");
                 context->status = ERR_IMAGE_INIT_ABNORMAL;
@@ -845,6 +859,7 @@ napi_value ImageReceiverNapi::JsOn(napi_env env, napi_callback_info info)
             return false;
         }
         shared_ptr<ImageReceiverAvaliableListener> listener = make_shared<ImageReceiverAvaliableListener>();
+        imageReceiverAvaliableListener = listener;
         listener->context = std::move(ic.context);
         listener->context->env = args.env;
         listener->name = args.name;

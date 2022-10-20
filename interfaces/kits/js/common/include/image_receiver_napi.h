@@ -76,6 +76,7 @@ private:
     napi_env env_ = nullptr;
     std::shared_ptr<ImageReceiver> imageReceiver_;
     bool isRelease = false;
+    static shared_ptr<ImageReceiverAvaliableListener> imageReceiverAvaliableListener;
 };
 struct ImageReceiverAsyncContext {
     napi_env env = nullptr;
