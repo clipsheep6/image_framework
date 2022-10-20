@@ -631,7 +631,7 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
             IMAGE_ERR("Native instance is nullptr");
             context->status = ERR_IMAGE_INIT_ABNORMAL;
         } else {
-            auto surfacebuffer;
+            auto surfacebuffer = nullptr;
             if (!context->constructor_->isCallBackTest) {
                 surfacebuffer = native->ReadLastImage();
                 result = ImageNapi::Create(env, surfacebuffer, native);
@@ -682,11 +682,11 @@ napi_value ImageReceiverNapi::JsReadNextImage(napi_env env, napi_callback_info i
             IMAGE_ERR("Native instance is nullptr");
             context->status = ERR_IMAGE_INIT_ABNORMAL;
         } else {
-            auto surfacebuffer;
+            auto surfacebuffer = nullptr;
             if (!context->constructor_->isCallBackTest) {
                 surfacebuffer = native->ReadNextImage();
                 result = ImageNapi::Create(env, surfacebuffer, native);
-            }else {
+            } else {
                 result = ImageNapi::Create(env, native);
             }
 #ifdef IMAGE_DEBUG_FLAG
