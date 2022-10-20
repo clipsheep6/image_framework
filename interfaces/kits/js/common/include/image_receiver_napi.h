@@ -35,7 +35,7 @@ namespace OHOS {
 namespace Media {
 struct ImageReceiverCommonArgs;
 struct ImageReceiverAsyncContext;
-class ImageReceiverAvaliableListener : public SurfaceBufferAvaliableListener{};
+class ImageReceiverAvaliableListener : public SurfaceBufferAvaliableListener;
 using Context = ImageReceiverAsyncContext*;
 using CompleteCallback = void (*)(napi_env env, napi_status status, Context context);
 class ImageReceiverNapi {
