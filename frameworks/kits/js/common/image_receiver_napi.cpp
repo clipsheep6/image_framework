@@ -532,8 +532,7 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
         ic.context->constructor_->isCallBackTest = true;
-        // DoTest(ic.context->receiver_);
-        if(ImageReceiverAvaliableListener != nullptr){
+        if (ImageReceiverAvaliableListener != nullptr) {
             ImageReceiverAvaliableListener->OnSurfaceBufferAvaliable();
         }
         return true;
@@ -634,9 +633,9 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
         } else {
             auto surfacebuffer;
             if (!context->constructor_->isCallBackTest) {
-                 surfacebuffer = native->ReadLastImage();
+                surfacebuffer = native->ReadLastImage();
                 result = ImageNapi::Create(env, surfacebuffer, native);
-            }else {
+            } else {
                 result = ImageNapi::Create(env, native);
             }
 #ifdef IMAGE_DEBUG_FLAG

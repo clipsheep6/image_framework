@@ -234,7 +234,7 @@ napi_value ImageNapi::Create(napi_env env, sptr<SurfaceBuffer> surfaceBuffer,
     return result;
 }
 
-napi_value ImageNapi::Create(napi_env env,std::shared_ptr<ImageReceiver> imageReceiver)
+napi_value ImageNapi::Create(napi_env env, std::shared_ptr<ImageReceiver> imageReceiver)
 {
     napi_status status;
     napi_value constructor = nullptr, result = nullptr;
@@ -373,11 +373,10 @@ napi_value ImageNapi::JSGetClipRect(napi_env env, napi_callback_info info)
     if (surfaceBuffer != nullptr) {
         return BuildJsRegion(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), NUM0, NUM0);
     } else {
-        const WIDTH = 8192;
-        const HEIGHT = 8;
+        const int32_t WIDTH = 8192;
+        const int32_t HEIGHT = 8;
         return BuildJsRegion(env, WIDTH, HEIGHT, NUM0, NUM0);
     }
-    
 }
 
 napi_value ImageNapi::JsGetSize(napi_env env, napi_callback_info info)
@@ -403,11 +402,11 @@ napi_value ImageNapi::JsGetSize(napi_env env, napi_callback_info info)
         return result;
     }
 
-    if (surfaceBuffer == nullptr){
-        const WIDTH = 8192;
-        const HEIGHT = 8;
+    if (surfaceBuffer == nullptr) {
+        const int32_t WIDTH = 8192;
+        const int32_t HEIGHT = 8;
         return BuildJsSize(env, WIDTH, HEIGHT);
-    }else {
+    } else {
         return BuildJsSize(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight());
     }
 }
@@ -435,8 +434,9 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
         return result;
     }
 
-    if(surfaceBuffer == nullptr) {
-        napi_create_int32(env, 12, &result);
+    if (surfaceBuffer == nullptr) {
+        const int32_t FORMAT = 12;
+        napi_create_int32(env, FORMAT, &result);
     } else {
         napi_create_int32(env, surfaceBuffer->GetFormat(), &result);
     }
