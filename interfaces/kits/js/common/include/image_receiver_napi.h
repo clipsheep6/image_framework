@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <ftw.h>
 #include <securec.h>
+#include <surface.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <variant>

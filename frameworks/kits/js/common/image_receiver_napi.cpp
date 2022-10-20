@@ -423,7 +423,6 @@ napi_value ImageReceiverNapi::JsGetCapacity(napi_env env, napi_callback_info inf
     return JSCommonProcess(args);
 }
 
-
 napi_value ImageReceiverNapi::JsGetFormat(napi_env env, napi_callback_info info)
 {
     IMAGE_FUNCTION_IN();
@@ -532,8 +531,8 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
         ic.context->constructor_->isCallBackTest = true;
-        if (ImageReceiverAvaliableListener != nullptr) {
-            ImageReceiverAvaliableListener->OnSurfaceBufferAvaliable();
+        if (imageReceiverAvaliableListener != nullptr) {
+            imageReceiverAvaliableListener->OnSurfaceBufferAvaliable();
         }
         return true;
     };
@@ -631,7 +630,7 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
             IMAGE_ERR("Native instance is nullptr");
             context->status = ERR_IMAGE_INIT_ABNORMAL;
         } else {
-            auto surfacebuffer = nullptr;
+            sptr<SurfaceBuffer> surfacebuffer = nullptr;
             if (!context->constructor_->isCallBackTest) {
                 surfacebuffer = native->ReadLastImage();
                 result = ImageNapi::Create(env, surfacebuffer, native);
@@ -682,7 +681,7 @@ napi_value ImageReceiverNapi::JsReadNextImage(napi_env env, napi_callback_info i
             IMAGE_ERR("Native instance is nullptr");
             context->status = ERR_IMAGE_INIT_ABNORMAL;
         } else {
-            auto surfacebuffer = nullptr;
+            sptr<SurfaceBuffer> surfacebuffer = nullptr;
             if (!context->constructor_->isCallBackTest) {
                 surfacebuffer = native->ReadNextImage();
                 result = ImageNapi::Create(env, surfacebuffer, native);
