@@ -39,6 +39,7 @@ namespace Media {
 static const std::string CLASS_NAME = "ImageReceiver";
 shared_ptr<ImageReceiver> ImageReceiverNapi::staticInstance_ = nullptr;
 thread_local napi_ref ImageReceiverNapi::sConstructor_ = nullptr;
+shared_ptr<ImageReceiverAvaliableListener> ImageReceiverNapi::imageReceiverAvaliableListener = nullptr;
 using SurfaceListener = SurfaceBufferAvaliableListener;
 
 const int ARGS0 = 0;
