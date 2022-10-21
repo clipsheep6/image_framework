@@ -545,19 +545,31 @@ void ImageNapi::JsGetComponentCallBack(napi_env env, napi_status status,
     napi_value result = nullptr;
 
     napi_create_object(env, &result);
-    uint32_t bufferSize = context->constructor_->sSurfaceBuffer_->GetSize();
-    void *buffer = context->constructor_->sSurfaceBuffer_->GetVirAddr();
-
-    napi_value array;
-    if (!CreateArrayBuffer(env, static_cast<uint8_t*>(buffer), bufferSize, &array)) {
-        context->status = ERROR;
-        HiLog::Error(LABEL, "napi_create_arraybuffer failed!");
-        napi_get_undefined(env, &result);
+    if (receiverTest == false) {
+        uint32_t bufferSize = context->constructor_->sSurfaceBuffer_->GetSize();
+        void *buffer = context->constructor_->sSurfaceBuffer_->GetVirAddr();
+        napi_value array;
+        if (!CreateArrayBuffer(env, static_cast<uint8_t*>(buffer), bufferSize, &array)) {
+            context->status = ERROR;
+            HiLog::Error(LABEL, "napi_create_arraybuffer failed!");
+            napi_get_undefined(env, &result);
+        } else {
+            context->status = SUCCESS;
+            napi_set_named_property(env, result, "byteBuffer", array);
+        }
     } else {
-        context->status = SUCCESS;
-        napi_set_named_property(env, result, "byteBuffer", array);
+        int32_t srcLen = 1;
+        void *nativePtr = nullptr;
+        napi_value array;
+        if (napi_create_arraybuffer(env, srcLen, &nativePtr, &array) != napi_ok || nativePtr == nullptr) {
+            context->status = ERROR;
+            HiLog::Error(LABEL, "napi_create_arraybuffer failed!");
+            napi_get_undefined(env, &result);
+        } else {
+            context->status = SUCCESS;
+            napi_set_named_property(env, result, "byteBuffer", array);
+        }
     }
-
     BuildIntProperty(env, "componentType", context->componentType, result);
     BuildIntProperty(env, "rowStride", 0, result);
     BuildIntProperty(env, "pixelStride", 0, result);
