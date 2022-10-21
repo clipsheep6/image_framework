@@ -374,7 +374,7 @@ napi_value ImageNapi::JSGetClipRect(napi_env env, napi_callback_info info)
     
     if (surfaceBuffer != nullptr && receiverTest == false) {
         return BuildJsRegion(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), NUM0, NUM0);
-    } else if (receiverTest == true) {
+    } else {
         const int32_t WIDTH = 8192;
         const int32_t HEIGHT = 8;
         return BuildJsRegion(env, WIDTH, HEIGHT, NUM0, NUM0);
