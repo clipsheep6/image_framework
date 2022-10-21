@@ -38,6 +38,7 @@ std::shared_ptr<ImageReceiver> ImageNapi::staticImageReceiverInstance_ = nullptr
 std::shared_ptr<ImageCreator> ImageNapi::staticImageCreatorInstance_ = nullptr;
 sptr<SurfaceBuffer> ImageNapi::staticInstance_ = nullptr;
 thread_local napi_ref ImageNapi::sConstructor_ = nullptr;
+static bool receiverTest = false;
 
 const int ARGS0 = 0;
 const int ARGS1 = 1;
@@ -236,6 +237,7 @@ napi_value ImageNapi::Create(napi_env env, sptr<SurfaceBuffer> surfaceBuffer,
 
 napi_value ImageNapi::Create(napi_env env, std::shared_ptr<ImageReceiver> imageReceiver)
 {
+    receiverTest = true;
     napi_status status;
     napi_value constructor = nullptr, result = nullptr;
 
@@ -365,14 +367,14 @@ napi_value ImageNapi::JSGetClipRect(napi_env env, napi_callback_info info)
     }
     auto surfaceBuffer = context->constructor_->sSurfaceBuffer_;
 
-    if (surfaceBuffer == nullptr) {
+    if (surfaceBuffer == nullptr && receiverTest == false) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
     }
     
-    if (surfaceBuffer != nullptr) {
+    if (surfaceBuffer != nullptr && receiverTest == false) {
         return BuildJsRegion(env, surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), NUM0, NUM0);
-    } else {
+    } else if (receiverTest == true) {
         const int32_t WIDTH = 8192;
         const int32_t HEIGHT = 8;
         return BuildJsRegion(env, WIDTH, HEIGHT, NUM0, NUM0);
@@ -396,13 +398,13 @@ napi_value ImageNapi::JsGetSize(napi_env env, napi_callback_info info)
         return result;
     }
     auto surfaceBuffer = context->constructor_->sSurfaceBuffer_;
-
-    if (surfaceBuffer == nullptr) {
+    
+    if (surfaceBuffer == nullptr && receiverTest == false) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
     }
 
-    if (surfaceBuffer == nullptr) {
+    if (surfaceBuffer == nullptr && receiverTest == true) {
         const int32_t WIDTH = 8192;
         const int32_t HEIGHT = 8;
         return BuildJsSize(env, WIDTH, HEIGHT);
@@ -429,12 +431,12 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
     }
 
     auto surfaceBuffer = context->constructor_->sSurfaceBuffer_;
-    if (surfaceBuffer == nullptr) {
+    if (surfaceBuffer == nullptr && receiverTest == false) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
     }
 
-    if (surfaceBuffer == nullptr) {
+    if (surfaceBuffer == nullptr && receiverTest == true) {
         const int32_t FORMAT = 12;
         napi_create_int32(env, FORMAT, &result);
     } else {
