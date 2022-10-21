@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <ftw.h>
 #include <securec.h>
+#include <surface.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <variant>
@@ -35,6 +36,7 @@ namespace OHOS {
 namespace Media {
 struct ImageReceiverCommonArgs;
 struct ImageReceiverAsyncContext;
+class ImageReceiverAvaliableListener;
 using Context = ImageReceiverAsyncContext*;
 using CompleteCallback = void (*)(napi_env env, napi_status status, Context context);
 class ImageReceiverNapi {
@@ -76,6 +78,7 @@ private:
     napi_env env_ = nullptr;
     std::shared_ptr<ImageReceiver> imageReceiver_;
     bool isRelease = false;
+    static std::shared_ptr<ImageReceiverAvaliableListener> imageReceiverAvaliableListener;
 };
 struct ImageReceiverAsyncContext {
     napi_env env = nullptr;
