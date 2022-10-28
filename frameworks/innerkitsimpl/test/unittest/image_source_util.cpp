@@ -25,7 +25,6 @@
 #include "image_source_util.h"
 
 using namespace OHOS::Media;
-using namespace OHOS::HiviewDFX;
 using namespace OHOS::ImageSourceUtil;
 
 namespace OHOS {
