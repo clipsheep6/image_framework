@@ -207,7 +207,7 @@ HWTEST_F(InterfaceTest, InterfaceTest0010, TestSize.Level3)
     option.numberHint = OPTION_NUMBERHINT_TEST;
     size_t bufferSize = 0;
     bool ret = ImageUtils::GetFileSize(IMAGE_INPUT_JPEG_PATH, bufferSize);
-    ASSERT_EQ(ret, false);
+    ASSERT_EQ(ret, true);
     uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(bufferSize));
     ASSERT_NE(buffer, nullptr);
     uint32_t tmp = imagePacker.StartPacking(buffer, bufferSize, option);
@@ -230,7 +230,7 @@ HWTEST_F(InterfaceTest, InterfaceTest0011, TestSize.Level3)
     option.numberHint = OPTION_NUMBERHINT_TEST;
     size_t bufferSize = 0;
     bool ret = ImageUtils::GetFileSize(IMAGE_INPUT_JPEG_PATH, bufferSize);
-    ASSERT_EQ(ret, false);
+    ASSERT_EQ(ret, true);
     uint8_t *buffer = nullptr;
     uint32_t tmp = imagePacker.StartPacking(buffer, bufferSize, option);
     ASSERT_NE(tmp, SUCCESS);
