@@ -126,6 +126,10 @@ bool ReadFileToBuffer(const std::string &filePath, uint8_t *buffer, size_t buffe
         return false;
     }
     fclose(fp);
+    int ret = fclose(fp);
+    if (ret != 0) {
+        return true;
+    }
     return true;
 }
 } // namespace ImageSourceUtil
