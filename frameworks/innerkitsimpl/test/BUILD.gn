@@ -128,6 +128,7 @@ ohos_unittest("imagesourcetest") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/image_source_png_test.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/image_source_util.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/image_source_webp_test.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/image_source_test.cpp",
   ]
   if (DUAL_ADAPTER) {
     sources += [
