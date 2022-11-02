@@ -125,7 +125,6 @@ bool ReadFileToBuffer(const std::string &filePath, uint8_t *buffer, size_t buffe
         fclose(fp);
         return false;
     }
-    fclose(fp);
     int ret = fclose(fp);
     if (ret != 0) {
         return true;

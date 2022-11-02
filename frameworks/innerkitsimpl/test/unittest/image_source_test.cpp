@@ -14,9 +14,9 @@
  */
 
 #include <gtest/gtest.h>
+#include <fcntl.h>
 #include <fstream>
 #include "image_source.h"
-
 #include <algorithm>
 #include <vector>
 #include "buffer_source_stream.h"
@@ -219,6 +219,7 @@ HWTEST_F(ImageSourceTest, UnRegisterListener001, TestSize.Level3)
 HWTEST_F(ImageSourceTest, GetDecodeEvent001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceTest: GetDecodeEvent001 start";
+
     size_t bufferSize = 0;
     bool ret = ImageUtils::GetFileSize(IMAGE_INPUT_JPEG_PATH, bufferSize);
     ASSERT_EQ(ret, true);
@@ -356,7 +357,7 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty002, TestSize.Level3)
     uint32_t index = 0;
     std::string value;
     std::string key;
-    int fd = open("/data/receiver/Receiver_buffer7.jpg", O_RDWR | O_CREAT);
+    int fd = open("/data/receiver/Receiver_buffer7.jpg", std::fstream::binary | std::fstream::in);
     ret = imageSource->ModifyImageProperty(index, key, value, fd);
     ASSERT_NE(ret, 0);
 

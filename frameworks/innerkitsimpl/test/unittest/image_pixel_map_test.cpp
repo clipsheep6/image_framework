@@ -1015,7 +1015,6 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap030, TestSize.Level3)
         getReadPixel = false;
     }
     EXPECT_EQ(false, getReadPixel);
-    EXPECT_EQ(SUCCESS, ret);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap030 ReadPixel end";
 }
 
