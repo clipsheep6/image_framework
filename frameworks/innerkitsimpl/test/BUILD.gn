@@ -226,7 +226,6 @@ ohos_unittest("imagecolorspacetest") {
 
   cflags = [
     "-DIMAGE_DEBUG_FLAG",
-    "-DIMAGE_COLORSPACE_FLAG",
   ]
 
   sources = [
