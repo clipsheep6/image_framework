@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
+#include <algorithm>
 #include <fcntl.h>
 #include <fstream>
-#include "image_source.h"
-#include <algorithm>
+#include <gtest/gtest.h>
 #include <vector>
+#include "image_source.h"
 #include "buffer_source_stream.h"
 #include "file_source_stream.h"
 #include "image/abs_image_decoder.h"

@@ -187,31 +187,6 @@ HWTEST_F(ImageSourceJpegTest, TC033, TestSize.Level3)
 }
 
 /**
- * @tc.name: TC034
- * @tc.desc: Test GetImagePropertyString
- * @tc.type: FUNC
- */
-// HWTEST_F(ImageSourceJpegTest, TC034, TestSize.Level3)
-// {
-//     /**
-//      * @tc.steps: step1. create image source by correct jpeg data and jpeg format hit.
-//      * @tc.expected: step1. create image source success.
-//      */
-//     uint32_t errorCode = 0;
-//     SourceOptions opts;
-//     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
-//     ASSERT_EQ(errorCode, SUCCESS);
-//     ASSERT_NE(imageSource.get(), nullptr);
-
-//     uint32_t index = 0;
-//     std::string value = 0;
-//     std::string key = 0;
-//     uint32_t ret = imageSource->GetImagePropertyString(index, key, value);
-
-//     ASSERT_EQ(ret, SUCCESS);
-// }
-
-/**
  * @tc.name: TC035
  * @tc.desc: Test CreatePixelMap
  * @tc.type: FUNC
