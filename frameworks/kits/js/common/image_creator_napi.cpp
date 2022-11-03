@@ -495,7 +495,7 @@ napi_value ImageCreatorNapi::JsTest(napi_env env, napi_callback_info info)
     };
     args.argc = ARGS0;
 
-    args.nonAsyncBack = [](ImageCreatorCommonArgs &args, const ImageCreatorInnerContext &ic) -> bool {
+    args.nonAsyncBack = [](ImageCreatorCommonArgs &args, ImageCreatorInnerContext &ic) -> bool {
         DoTest(ic.context->creator_);
         return true;
     };
