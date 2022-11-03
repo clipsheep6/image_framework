@@ -78,8 +78,8 @@ bool ImageNapiUtils::GetNodeByName(napi_env env, napi_value root, const char* na
 bool ImageNapiUtils::GetUtf8String(napi_env env, napi_value root, std::string &res, bool eof)
 {
     size_t bufferSize = NUM0;
-    IMG_NAPI_CHECK_RET(bufferSize > NUM0 &&
-        IMG_IS_OK(napi_get_value_string_utf8(env, root, nullptr, NUM0, &bufferSize)), false);
+    IMG_NAPI_CHECK_RET(IMG_IS_OK(napi_get_value_string_utf8(env, root, nullptr,
+        NUM0, &bufferSize)) && bufferSize > NUM0, false);
     size_t resultSize = NUM0;
     if (eof) {
         bufferSize = bufferSize + NUM1;
