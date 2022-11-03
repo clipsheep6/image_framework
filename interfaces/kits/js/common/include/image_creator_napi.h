@@ -107,7 +107,7 @@ struct ImageCreatorInnerContext {
     std::unique_ptr<ImageCreatorAsyncContext> context = nullptr;
 };
 
-using CreatorCommonFunc = bool (*)(ImageCreatorCommonArgs &args, ImageCreatorInnerContext &ic);
+using CreatorCommonFunc = bool (*)(ImageCreatorCommonArgs &args, const ImageCreatorInnerContext &ic);
 
 enum class CreatorCallType : uint32_t {
     STATIC = 0,
