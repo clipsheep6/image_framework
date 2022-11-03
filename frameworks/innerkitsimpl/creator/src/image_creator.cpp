@@ -206,7 +206,7 @@ int32_t ImageCreator::SaveSenderBufferAsImage(OHOS::sptr<OHOS::SurfaceBuffer> bu
 {
     int32_t errorcode = 0;
     if (buffer != nullptr) {
-        uint32_t *addr = static_cast<uint32_t *>buffer->GetVirAddr();
+        uint32_t *addr = static_cast<uint32_t *>(buffer->GetVirAddr());
         uint8_t *addr2 = nullptr;
         int32_t size = buffer->GetSize();
         if (!AllocHeapBuffer(size, &addr2)) {
