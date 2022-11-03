@@ -61,10 +61,6 @@ void PixelMapParcel::ReleaseMemory(AllocatorType allocType, void *addr, void *co
 std::unique_ptr<PixelMap> PixelMapParcel::CreateFromParcel(OHOS::MessageParcel& data)
 {
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
-    if (pixelMap == nullptr) {
-        HiLog::Error(LABEL, "create pixelmap pointer fail");
-        return nullptr;
-    }
 
     ImageInfo imgInfo;
     imgInfo.size.width = data.ReadInt32();

@@ -133,11 +133,6 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
         return nullptr;
     }
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
-    if (dstPixelMap == nullptr) {
-        HiLog::Error(LABEL, "create pixelMap pointer fail");
-        return nullptr;
-    }
-
     ImageInfo srcImageInfo =
         MakeImageInfo(stride, opts.size.height, PixelFormat::BGRA_8888, AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL);
     PixelFormat dstPixelFormat = (opts.pixelFormat == PixelFormat::UNKNOWN ? PixelFormat::RGBA_8888 : opts.pixelFormat);
@@ -208,10 +203,6 @@ unique_ptr<PixelMap> PixelMap::Create(const InitializationOptions &opts)
 {
     HiLog::Info(LABEL, "PixelMap::Create3 enter");
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
-    if (dstPixelMap == nullptr) {
-        HiLog::Error(LABEL, "create pixelMap pointer fail");
-        return nullptr;
-    }
     PixelFormat dstPixelFormat = (opts.pixelFormat == PixelFormat::UNKNOWN ? PixelFormat::RGBA_8888 : opts.pixelFormat);
     AlphaType dstAlphaType =
         (opts.alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN) ? AlphaType::IMAGE_ALPHA_TYPE_PREMUL : opts.alphaType;
@@ -290,10 +281,6 @@ unique_ptr<PixelMap> PixelMap::Create(PixelMap &source, const Rect &srcRect, con
         return unique_ptr<PixelMap>(&source);
     }
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
-    if (dstPixelMap == nullptr) {
-        HiLog::Error(LABEL, "create pixelmap pointer fail");
-        return nullptr;
-    }
     if (cropType == CropValue::VALID) {
         dstImageInfo.size.width = sRect.width;
         dstImageInfo.size.height = sRect.height;
@@ -1090,7 +1077,7 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
         HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
         return false;
     }
-    if (data == nullptr || size > MAX_IMAGEDATA_SIZE) {
+    if (size > MAX_IMAGEDATA_SIZE) {
         return false;
     }
 
@@ -1145,8 +1132,6 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
 uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 {
     uint8_t *base = nullptr;
-    int fd = -1;
-
     if (static_cast<unsigned int>(bufferSize) <= MIN_IMAGEDATA_SIZE) {
         if (bufferSize <= 0) {
             HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
@@ -1172,7 +1157,7 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
         }
     } else {
 #if !defined(_WIN32) && !defined(_APPLE) &&!defined(_IOS) &&!defined(_ANDROID)
-        fd = ReadFileDescriptor(parcel);
+        int fd = ReadFileDescriptor(parcel);
         if (fd < 0) {
             HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
             return nullptr;
