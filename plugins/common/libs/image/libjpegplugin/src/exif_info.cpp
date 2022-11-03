@@ -325,7 +325,7 @@ int EXIFInfo::ParseExifData(const unsigned char *buf, unsigned len)
 
 int EXIFInfo::ParseExifData(const std::string &data)
 {
-    return ParseExifData(static_cast<const unsigned char *>(data.data()), data.length());
+    return ParseExifData((const unsigned char *)data.data(), data.length());
 }
 
 void EXIFInfo::SetExifTagValues(const ExifTag &tag, const std::string &value)

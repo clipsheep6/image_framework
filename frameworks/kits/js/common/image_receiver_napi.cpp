@@ -523,7 +523,7 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
     };
     args.argc = ARGS0;
 
-    args.nonAsyncBack = [](ImageReceiverCommonArgs &args, const ImageReceiverInnerContext &ic) -> bool {
+    args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
         ic.context->constructor_->isCallBackTest = true;
         DoTest(ic.context->receiver_);
         return true;

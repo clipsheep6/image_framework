@@ -97,7 +97,7 @@ struct ImageReceiverInnerContext {
     std::unique_ptr<ImageReceiverAsyncContext> context = nullptr;
 };
 
-using CommonFunc = bool (*)(ImageReceiverCommonArgs &args, const ImageReceiverInnerContext &ic);
+using CommonFunc = bool (*)(ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic);
 
 enum class CallType : uint32_t {
     STATIC = 0,

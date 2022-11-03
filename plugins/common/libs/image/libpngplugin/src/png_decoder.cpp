@@ -611,7 +611,7 @@ uint32_t PngDecoder::ReadIncrementalHead(InputDataStream *stream, PngImageInfo &
 
     DataStreamBuffer readData;
     if (!decodeHeadFlag_) {
-        png_set_keep_unknown_chunks(pngStructPtr_, PNG_HANDLE_CHUNK_ALWAYS, static_cast<png_byte *>(""), 0);
+        png_set_keep_unknown_chunks(pngStructPtr_, PNG_HANDLE_CHUNK_ALWAYS, (png_byte *)"", 0);
         png_set_read_user_chunk_fn(pngStructPtr_, static_cast<png_voidp>(&ninePatch_), ReadUserChunk);
         png_set_progressive_read_fn(pngStructPtr_, nullptr, nullptr, nullptr, nullptr);
         uint32_t ret = IncrementalRead(stream, static_cast<uint32_t>(CHUNK_SIZE), readData);
