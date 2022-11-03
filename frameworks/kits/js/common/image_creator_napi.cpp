@@ -174,7 +174,7 @@ napi_value ImageCreatorNapi::Constructor(napi_env env, napi_callback_info info)
         reference->env_ = env;
         reference->imageCreator_ = staticInstance_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
-                            ImageCreatorNapi::Destructor, nullptr, nullptr);
+                                ImageCreatorNapi::Destructor, nullptr, nullptr);
         if (status == napi_ok) {
             IMAGE_FUNCTION_OUT();
             reference.release();

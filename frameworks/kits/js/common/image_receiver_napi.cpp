@@ -180,14 +180,14 @@ napi_value ImageReceiverNapi::Constructor(napi_env env, napi_callback_info info)
         reference->env_ = env;
         reference->imageReceiver_ = staticInstance_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
-                            ImageReceiverNapi::Destructor, nullptr, nullptr);
+                                ImageReceiverNapi::Destructor, nullptr, nullptr);
         if (status == napi_ok) {
             IMAGE_FUNCTION_OUT();
             reference.release();
             return thisVar;
         } else {
             IMAGE_ERR("Failure wrapping js to native napi");
-        } 
+        }
     }
     return undefineVar;
 }

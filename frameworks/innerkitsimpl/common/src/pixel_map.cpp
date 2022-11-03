@@ -1132,8 +1132,6 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
 uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 {
     uint8_t *base = nullptr;
-
-
     if (static_cast<unsigned int>(bufferSize) <= MIN_IMAGEDATA_SIZE) {
         if (bufferSize <= 0) {
             HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
