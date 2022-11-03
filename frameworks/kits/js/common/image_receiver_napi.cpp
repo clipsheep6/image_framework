@@ -177,21 +177,18 @@ napi_value ImageReceiverNapi::Constructor(napi_env env, napi_callback_info info)
     status = napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<ImageReceiverNapi> reference = std::make_unique<ImageReceiverNapi>();
-        if (reference != nullptr) {
-            reference->env_ = env;
-            reference->imageReceiver_ = staticInstance_;
-            status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
-                               ImageReceiverNapi::Destructor, nullptr, nullptr);
-            if (status == napi_ok) {
-                IMAGE_FUNCTION_OUT();
-                reference.release();
-                return thisVar;
-            } else {
-                IMAGE_ERR("Failure wrapping js to native napi");
-            }
-        }
+        reference->env_ = env;
+        reference->imageReceiver_ = staticInstance_;
+        status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
+                            ImageReceiverNapi::Destructor, nullptr, nullptr);
+        if (status == napi_ok) {
+            IMAGE_FUNCTION_OUT();
+            reference.release();
+            return thisVar;
+        } else {
+            IMAGE_ERR("Failure wrapping js to native napi");
+        } 
     }
-
     return undefineVar;
 }
 
@@ -308,9 +305,6 @@ napi_value ImageReceiverNapi::JSCommonProcess(ImageReceiverCommonArgs &args)
 
     if (args.async != CallType::STATIC) {
         ic.context = std::make_unique<ImageReceiverAsyncContext>();
-        if (ic.context == nullptr) {
-            return ic.result;
-        }
         ic.status = napi_unwrap(args.env, ic.thisVar, reinterpret_cast<void**>(&(ic.context->constructor_)));
 
         IMG_NAPI_CHECK_RET_D(IMG_IS_READY(ic.status, ic.context->constructor_),
@@ -529,7 +523,7 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
     };
     args.argc = ARGS0;
 
-    args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
+    args.nonAsyncBack = [](ImageReceiverCommonArgs &args, const ImageReceiverInnerContext &ic) -> bool {
         ic.context->constructor_->isCallBackTest = true;
         DoTest(ic.context->receiver_);
         return true;
@@ -707,7 +701,7 @@ static bool CheckOnParam0(napi_env env, napi_value value, const std::string& ref
         return false;
     }
 
-    char *buffer = (char *)malloc((bufLength + 1) * sizeof(char));
+    char *buffer = static_cast<char *>(malloc((bufLength + 1) * sizeof(char)));
     if (buffer == nullptr) {
         return false;
     }
@@ -785,10 +779,6 @@ void ImageReceiverNapi::DoCallBack(shared_ptr<ImageReceiverAsyncContext> context
     }
 
     unique_ptr<uv_work_t> work = make_unique<uv_work_t>();
-    if (work == nullptr) {
-        IMAGE_ERR("DoCallBack: No memory");
-        return;
-    }
     work->data = reinterpret_cast<void *>(context.get());
     int ret = uv_queue_work(loop, work.get(), [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
         IMAGE_LINE_IN();

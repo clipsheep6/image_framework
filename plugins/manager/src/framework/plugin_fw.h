@@ -34,6 +34,8 @@ class ImplClassMgr;
 
 class PluginFw final : public NoCopyable {
 public:
+    PluginFw() {}
+    ~PluginFw() {}
     uint32_t Register(const std::vector<std::string> &canonicalPaths);
     PluginClassBase *CreateObject(uint16_t interfaceID, const std::string &className, uint32_t &errorCode);
     PluginClassBase *CreateObject(uint16_t interfaceID, uint16_t serviceType,
