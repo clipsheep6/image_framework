@@ -38,11 +38,6 @@ static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "ImplC
 uint32_t ImplClassMgr::AddClass(weak_ptr<Plugin> &plugin, const json &classInfo)
 {
     shared_ptr<ImplClass> implClass = std::make_shared<ImplClass>();
-    if (implClass == nullptr) {
-        HiLog::Error(LABEL, "AddClass: failed to create ImplClass.");
-        return ERR_INTERNAL;
-    }
-
     auto ret = implClass->Register(plugin, classInfo);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "AddClass: failed to register impClass.ERRNO: %{public}u.", ret);

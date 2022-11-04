@@ -334,7 +334,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         return nullptr;
     }
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
-    if (pixelMap == nullptr || pixelMap.get() == nullptr) {
+    if (pixelMap.get() == nullptr) {
         IMAGE_LOGE("[ImageSource]create the pixel map unique_ptr fail.");
         errorCode = ERR_IMAGE_MALLOC_ABNORMAL;
         return nullptr;
@@ -1058,10 +1058,10 @@ AbsImageDecoder *ImageSource::CreateDecoder(uint32_t &errorCode)
     if (opts_.sampleSize != 1) {
         encodedFormat = InnerFormat::EXTENDED_FORMAT;
     }
-    map<string, AttrData> capabilities = { { IMAGE_ENCODE_FORMAT, AttrData(encodedFormat) } };
 #if defined(_ANDROID) || defined(_IOS)
     auto decoder = new JpegDecoder();
 #else
+    map<string, AttrData> capabilities = { { IMAGE_ENCODE_FORMAT, AttrData(encodedFormat) } };
     auto decoder = pluginServer_.CreateObject<AbsImageDecoder>(AbsImageDecoder::SERVICE_DEFAULT, capabilities);
 #endif
     if (decoder == nullptr) {
@@ -1466,11 +1466,6 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t &errorCode)
         sourceOptions_.pixelFormat, sourceOptions_.size.width, sourceOptions_.size.height);
 
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
-    if (pixelMap == nullptr) {
-        IMAGE_LOGE("[ImageSource]create the pixel map unique_ptr fail.");
-        errorCode = ERR_IMAGE_MALLOC_ABNORMAL;
-        return nullptr;
-    }
 
     ImageInfo info;
     info.baseDensity = sourceOptions_.baseDensity;

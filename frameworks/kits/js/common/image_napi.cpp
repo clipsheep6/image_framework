@@ -286,20 +286,18 @@ napi_value ImageNapi::Constructor(napi_env env, napi_callback_info info)
     status = napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<ImageNapi> reference = std::make_unique<ImageNapi>();
-        if (reference != nullptr) {
-            reference->env_ = env;
-            reference->sSurfaceBuffer_ = staticInstance_;
-            reference->imageReceiver_ = staticImageReceiverInstance_;
-            staticImageReceiverInstance_ = nullptr;
-            status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
-                               ImageNapi::Destructor, nullptr, nullptr);
-            if (status == napi_ok) {
-                IMAGE_FUNCTION_OUT();
-                reference.release();
-                return thisVar;
-            } else {
-                IMAGE_ERR("Failure wrapping js to native napi");
-            }
+        reference->env_ = env;
+        reference->sSurfaceBuffer_ = staticInstance_;
+        reference->imageReceiver_ = staticImageReceiverInstance_;
+        staticImageReceiverInstance_ = nullptr;
+        status = napi_wrap(env, thisVar, reinterpret_cast<void *>(reference.get()),
+                            ImageNapi::Destructor, nullptr, nullptr);
+        if (status == napi_ok) {
+            IMAGE_FUNCTION_OUT();
+            reference.release();
+            return thisVar;
+        } else {
+            IMAGE_ERR("Failure wrapping js to native napi");
         }
     }
 
