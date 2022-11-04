@@ -262,15 +262,7 @@ uint32_t JpegEncoder::Yuv420spEncoder(const uint8_t *data)
     uint8_t *yPlane = const_cast<uint8_t *>(data);
     uint8_t *uvPlane = const_cast<uint8_t *>(data + yPlaneSize);
     auto uPlane = std::make_unique<uint8_t[]>((width >> SHIFT_MASK) * UV_SAMPLE_ROW);
-    if (uPlane == nullptr) {
-        HiLog::Error(LABEL, "allocate uPlane memory failed.");
-        return ERR_IMAGE_MALLOC_ABNORMAL;
-    }
     auto vPlane = std::make_unique<uint8_t[]>((width >> SHIFT_MASK) * UV_SAMPLE_ROW);
-    if (vPlane == nullptr) {
-        HiLog::Error(LABEL, "allocate vPlane memory failed.");
-        return ERR_IMAGE_MALLOC_ABNORMAL;
-    }
     while (encodeInfo_.next_scanline < height) {
         Deinterweave(uvPlane, uPlane.get(), vPlane.get(), encodeInfo_.next_scanline, width, height);
         for (uint32_t i = 0; i < Y_SAMPLE_ROW; i++) {
