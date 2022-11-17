@@ -74,6 +74,7 @@ bool ImageUtils::GetFileSize(const int fd, size_t &size)
     }
 
     int ret = fstat(fd, &statbuf);
+    IMAGE_LOGE("[ImageUtils::GetFileSize]fstart errno: %{public}d",errno);
     if (ret != 0) {
         IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d.", ret);
         return false;
