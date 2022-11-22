@@ -72,7 +72,7 @@ public:
 
 private:
     DISALLOW_COPY_AND_MOVE(JpegDecoder);
-    int ExifPrintMethod();
+    bool ParseExifData();
     J_COLOR_SPACE GetDecodeFormat(PlPixelFormat format, PlPixelFormat &outputFormat);
     void CreateHwDecompressor();
     uint32_t DoSwDecode(DecodeContext &context);

@@ -464,6 +464,7 @@ HWTEST_F(ImageSourceTest, GetMemoryUsagePreference001, TestSize.Level3)
 HWTEST_F(ImageSourceTest, GetFilterArea001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceTest: GetFilterArea001 start";
+
     int filterType = 0;
     std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
     fs->open("/data/local/tmp/image/test.jpg", std::fstream::binary | std::fstream::in);

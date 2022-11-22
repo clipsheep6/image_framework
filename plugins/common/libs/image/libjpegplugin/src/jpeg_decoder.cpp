@@ -125,30 +125,6 @@ void JpegDecoder::SetSource(InputDataStream &sourceStream)
 {
     srcMgr_.inputStream = &sourceStream;
     state_ = JpegDecodingState::SOURCE_INITED;
-    HiLog::Debug(LABEL, "SetSource ExifPrintMethod");
-    ExifPrintMethod();
-}
-
-int JpegDecoder::ExifPrintMethod()
-{
-    HiLog::Debug(LABEL, "ExifPrintMethod enter");
-    srcMgr_.inputStream->Seek(0);
-    unsigned long fsize = 0;
-    fsize = static_cast<unsigned long>(srcMgr_.inputStream->GetStreamSize());
-    unsigned char *buf = new unsigned char[fsize];
-    uint32_t readSize = 0;
-    srcMgr_.inputStream->Read(fsize, buf, fsize, readSize);
-    HiLog::Debug(LABEL, "parsing EXIF: fsize %{public}lu", fsize);
-    HiLog::Debug(LABEL, "parsing EXIF: readSize %{public}u", readSize);
-
-    int code = exifInfo_.ParseExifData(buf, fsize);
-    delete[] buf;
-    if (code) {
-        HiLog::Error(LABEL, "Error parsing EXIF: code %{public}d", code);
-        return ERR_MEDIA_VALUE_INVALID;
-    }
-
-    return Media::SUCCESS;
 }
 
 uint32_t JpegDecoder::GetImageSize(uint32_t index, PlSize &size)
@@ -596,6 +572,31 @@ uint32_t JpegDecoder::StartDecompress(const PixelDecodeOptions &opts)
     return Media::SUCCESS;
 }
 
+bool JpegDecoder::ParseExifData()
+{
+    HiLog::Debug(LABEL, "ParseExifData enter");
+    uint32_t curPos = srcMgr_.inputStream->Tell();
+    srcMgr_.inputStream->Seek(0);
+    unsigned long fsize = static_cast<unsigned long>(srcMgr_.inputStream->GetStreamSize());
+    if (fsize <= 0) {
+        HiLog::Error(LABEL, "Get stream size failed");
+        return false;
+    }
+    unsigned char *buf = new unsigned char[fsize];
+    uint32_t readSize = 0;
+    srcMgr_.inputStream->Read(fsize, buf, fsize, readSize);
+    HiLog::Debug(LABEL, "parsing EXIF: fsize %{public}lu", fsize);
+
+    int code = exifInfo_.ParseExifData(buf, fsize);
+    delete[] buf;
+    srcMgr_.inputStream->Seek(curPos);
+    if (code) {
+        HiLog::Error(LABEL, "Error parsing EXIF: code %{public}d", code);
+        return false;
+    }
+    return true;
+}
+
 uint32_t JpegDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     HiLog::Debug(LABEL, "[GetImagePropertyInt] enter jpeg plugin, key:%{public}s", key.c_str());
@@ -613,6 +614,18 @@ uint32_t JpegDecoder::GetImagePropertyInt(uint32_t index, const std::string &key
 uint32_t JpegDecoder::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
     HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, key:%{public}s", key.c_str());
+    if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
+        HiLog::Error(LABEL, "[GetImagePropertyString] this key is used to check the original format of raw image!");
+        return Media::ERR_MEDIA_VALUE_INVALID;
+    }
+
+    if (!exifInfo_.IsExifDataParsed()) {
+        if (!ParseExifData()) {
+            HiLog::Error(LABEL, "[GetImagePropertyString] Parse exif data failed!");
+            return Media::ERROR;
+        }
+    }
+
     if (IsSameTextStr(key, BITS_PER_SAMPLE)) {
         value = exifInfo_.bitsPerSample_;
     } else if (IsSameTextStr(key, ORIENTATION)) {

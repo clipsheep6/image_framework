@@ -278,7 +278,8 @@ EXIFInfo::EXIFInfo()
       isoSpeedRatings_(DEFAULT_EXIF_VALUE),
       sceneType_(DEFAULT_EXIF_VALUE),
       imageFileDirectory_(EXIF_IFD_COUNT),
-      exifData_(nullptr)
+      exifData_(nullptr),
+      isExifDataParsed_(false)
 {
 }
 
@@ -322,12 +323,18 @@ int EXIFInfo::ParseExifData(const unsigned char *buf, unsigned len)
     if (imageFileDirectory_ == EXIF_IFD_COUNT) {
         return PARSE_EXIF_IFD_ERROR;
     }
+    isExifDataParsed_ = true;
     return PARSE_EXIF_SUCCESS;
 }
 
 int EXIFInfo::ParseExifData(const std::string &data)
 {
     return ParseExifData((const unsigned char *)data.data(), data.length());
+}
+
+bool EXIFInfo::IsExifDataParsed()
+{
+    return isExifDataParsed_;
 }
 
 void EXIFInfo::SetExifTagValues(const ExifTag &tag, const std::string &value)
