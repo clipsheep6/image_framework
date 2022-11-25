@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 #include <gtest/gtest.h>
-#include "exif_info.h"
 #include <fcntl.h>
+#include "exif_info.h"
 #include "media_errors.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
 using namespace OHOS::ImagePlugin;
-//static const int PARSE_EXIF_DATA_ERROR = 10001;
-static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
+
 static const std::string IMAGE_INPUT_NULL_JPEG_PATH = "/data/local/tmp/image/test_null.jpg";
 static const std::string IMAGE_INPUT_ONE_PATH = "/data/local/tmp/image/test.123";
 class PluginLibJpegTest : public testing::Test {
