@@ -88,7 +88,7 @@ HWTEST_F(PluginLibJpegTest, exif_info004, TestSize.Level3)
     EXIFInfo exinfo;
     ExifTag tag = EXIF_TAG_GPS_LATITUDE;
     string value = "111";
-    uint32_t ret = exinfo.ModifyExifData(tag, value, IMAGE_INPUT_ONE_PATH);
+    exinfo.ModifyExifData(tag, value, IMAGE_INPUT_ONE_PATH);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: exif_info004 end";
 }
 
@@ -137,7 +137,7 @@ HWTEST_F(PluginLibJpegTest, exif_info007, TestSize.Level3)
     ExifTag tag = EXIF_TAG_GPS_LATITUDE;
     string value = "111";
     const int fd = open("/data/local/tmp/image/test.123", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-    uint32_t ret = exinfo.ModifyExifData(tag, value, fd);
+    exinfo.ModifyExifData(tag, value, fd);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: exif_info007 end";
 }
 
