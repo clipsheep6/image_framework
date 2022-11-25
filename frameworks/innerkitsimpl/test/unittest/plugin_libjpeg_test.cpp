@@ -20,7 +20,8 @@
 using namespace testing::ext;
 using namespace OHOS::Media;
 using namespace OHOS::ImagePlugin;
-
+namespace OHOS {
+namespace Media {
 static const std::string IMAGE_INPUT_NULL_JPEG_PATH = "/data/local/tmp/image/test_null.jpg";
 static const std::string IMAGE_INPUT_ONE_PATH = "/data/local/tmp/image/test.123";
 class PluginLibJpegTest : public testing::Test {
@@ -246,3 +247,5 @@ HWTEST_F(PluginLibJpegTest, exif_info013, TestSize.Level3)
     ASSERT_EQ(ret, ERR_MEDIA_BUFFER_TOO_SMALL);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: exif_info013 end";
 }
+} // namespace Multimedia
+} // namespace OHOS
