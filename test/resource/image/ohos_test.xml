@@ -61,6 +61,12 @@
             <option name="push" value="images/test.wbmp -> /data/local/tmp/image" src="res"/>
         </preparer>
     </target>
+    <target name="imagesourcetest">
+        <preparer>
+            <option name="push" value="images/test.123 -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_null.jpg -> /data/local/tmp/image" src="res"/>
+        </preparer>
+    </target>
         <target name="imagecolorspacetest">
         <preparer>
             <option name="push" value="images/jpeg_include_icc_profile.jpg -> /data/local/tmp/image" src="res"/>
