@@ -53,6 +53,5 @@ HWTEST_F(ImplClassMgrTest, AddClass001, TestSize.Level3)
     ASSERT_EQ(obj, nullptr);
     GTEST_LOG_(INFO) << "PluginsManagerSrcFrameWorkTest: AddClass001 end";
 }
-
 }
 }

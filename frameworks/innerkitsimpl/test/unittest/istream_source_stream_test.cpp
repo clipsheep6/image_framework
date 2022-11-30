@@ -64,6 +64,5 @@ HWTEST_F(IstreamSourceStreamTest, Peek001, TestSize.Level3)
     streamPtr->GetDataPtr();
     GTEST_LOG_(INFO) << "IstreamSourceStreamTest: Peek001 end";
 }
-
 }
 }

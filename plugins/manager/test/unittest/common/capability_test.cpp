@@ -69,6 +69,5 @@ HWTEST_F(CapabilityTest, SetCapabilityTest001, TestSize.Level3)
     ASSERT_NE(ret, SUCCESS);
     GTEST_LOG_(INFO) << "CapabilityTest: SetCapabilityTest001 end";
 }
-
 }
 }

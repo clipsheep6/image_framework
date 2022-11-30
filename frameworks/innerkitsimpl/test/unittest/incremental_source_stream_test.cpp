@@ -476,6 +476,5 @@ HWTEST_F(IncrementalSourceStreamTest, UpdateDataTest001, TestSize.Level3)
     ASSERT_EQ(ret, SUCCESS);
     GTEST_LOG_(INFO) << "IncrementalSourceStreamTest: UpdateDataTest001 end";
 }
-
 }
 }

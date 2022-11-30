@@ -53,6 +53,5 @@ HWTEST_F(FilePackerStreamTest, FilePackerStreamTest002, TestSize.Level3)
     filePackerStream2.BytesWritten();
     GTEST_LOG_(INFO) << "FilePackerStreamTest: FilePackerStreamTest002 end";
 }
-
 }
 }

@@ -454,6 +454,5 @@ HWTEST_F(FileSourceStreamTest, GetDataPtrTest001, TestSize.Level3)
     fileSourceStream->GetDataPtr();
     GTEST_LOG_(INFO) << "FileSourceStreamTest: GetDataPtrTest001 end";
 }
-
 }
 }

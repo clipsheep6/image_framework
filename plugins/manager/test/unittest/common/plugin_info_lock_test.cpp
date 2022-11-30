@@ -47,6 +47,5 @@ HWTEST_F(PluginInfoLockTest, PluginInfoLockTest001, TestSize.Level3)
     UniqueReadGuard<RWLock> lk(DelayedRefSingleton<PluginInfoLock>::GetInstance().rwLock_);
     GTEST_LOG_(INFO) << "PluginInfoLockTest: PluginInfoLockTest001 end";
 }
-
 }
 }
