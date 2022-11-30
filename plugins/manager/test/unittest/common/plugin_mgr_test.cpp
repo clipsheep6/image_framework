@@ -51,6 +51,5 @@ HWTEST_F(PluginMgrTest, PluginMgrTest001, TestSize.Level3)
     ASSERT_EQ(ret, SUCCESS);
     GTEST_LOG_(INFO) << "PluginMgrTest: PluginMgrTest001 end";
 }
-
 }
 }
