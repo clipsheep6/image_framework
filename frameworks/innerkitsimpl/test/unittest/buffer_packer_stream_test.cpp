@@ -180,5 +180,6 @@ HWTEST_F(BufferPackerStreamTest, BufferPackerStreamTest005, TestSize.Level3)
     ASSERT_EQ(ret, 0);
     GTEST_LOG_(INFO) << "BufferPackerStreamTest: BufferPackerStreamTest005 end";
 }
+
 }
 }

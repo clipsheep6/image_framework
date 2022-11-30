@@ -32,7 +32,15 @@ config("module_private_config") {
 ohos_unittest("PluginManagerTest") {
   module_out_path = module_output_path
 
-  sources = [ "//foundation/multimedia/image_framework/plugins/manager/test/unittest/common/plugin_manager_test.cpp" ]
+  sources = [ 
+    "//foundation/multimedia/image_framework/plugins/manager/test/unittest/common/plugin_manager_test.cpp",
+    "//foundation/multimedia/image_framework/plugins/manager/test/unittest/common/capability_test.cpp",
+    "//foundation/multimedia/image_framework/plugins/manager/test/unittest/common/impl_class_mgr_test.cpp",
+    "//foundation/multimedia/image_framework/plugins/manager/test/unittest/common/plugin_info_lock_test.cpp",
+    "//foundation/multimedia/image_framework/plugins/manager/test/unittest/common/plugin_mgr_test.cpp",
+  ]
+  
+  
 
   configs = [ ":module_private_config" ]
 

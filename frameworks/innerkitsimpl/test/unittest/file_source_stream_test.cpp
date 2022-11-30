@@ -440,5 +440,20 @@ HWTEST_F(FileSourceStreamTest, FileSourceStreamTest0020, TestSize.Level3)
     ASSERT_EQ(ret, ImagePlugin::FILE_STREAM_TYPE);
     GTEST_LOG_(INFO) << "FileSourceStreamTest: FileSourceStreamTest0020 end";
 }
+
+/**
+ * @tc.name: GetDataPtrTest001
+ * @tc.desc: GetDataPtr
+ * @tc.type: FUNC
+ */
+HWTEST_F(FileSourceStreamTest, GetDataPtrTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "FileSourceStreamTest: GetDataPtrTest001 start";
+    std::unique_ptr<FileSourceStream> fileSourceStream = FileSourceStream::CreateSourceStream(IMAGE_INPUT_JPG_PATH);
+    ASSERT_NE(fileSourceStream, nullptr);
+    fileSourceStream->GetDataPtr();
+    GTEST_LOG_(INFO) << "FileSourceStreamTest: GetDataPtrTest001 end";
+}
+
 }
 }

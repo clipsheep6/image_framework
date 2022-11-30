@@ -19,5 +19,6 @@ group("unittest") {
   deps = []
 
   deps += [ "unittest/common:unittest" ]
+  deps += [ "unittest/framework:unittest" ]
 }
 ###############################################################################
