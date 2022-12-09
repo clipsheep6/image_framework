@@ -79,9 +79,14 @@ ohos_shared_library("imageformatagent") {
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
   } else {
-    include_dirs += [ "//commonlibrary/c_utils/base/include" ]
+    include_dirs += [
+        "//commonlibrary/c_utils/base/include",
+        "//third_party/libheif",
+        "//third_party/libheif/libheif",
+    ]
     deps = [
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+      "//third_party/libheif:libheif",
     ]
 
     #    external_deps = [ "hilog:libhilog" ]
