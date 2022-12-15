@@ -68,6 +68,7 @@ struct PixmapInfo {
     ImageInfo imageInfo;
     uint8_t *data = nullptr;
     uint32_t bufferSize = 0;
+    int32_t* context = nullptr;
     bool isAutoDestruct = true;
     PixmapInfo(){}
 
