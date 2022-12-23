@@ -14,48 +14,31 @@
  */
 
 #include "plugin_export.h"
-#include "bmp_format_agent.h"
-#include "gif_format_agent.h"
-#include "heif_format_agent.h"
+#include "svg_decoder.h"
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
 #include "iosfwd"
-#include "jpeg_format_agent.h"
 #include "log_tags.h"
 #include "map"
 #include "plugin_class_base.h"
 #include "plugin_utils.h"
-#include "png_format_agent.h"
-#include "raw_format_agent.h"
-#include "svg_format_agent.h"
 #include "string"
 #include "utility"
-#include "wbmp_format_agent.h"
-#include "webp_format_agent.h"
-
 
 // plugin package name same as metadata.
 namespace {
-    const std::string PACKAGE_NAME = ("LibImageFormatAgent");
+    const std::string PACKAGE_NAME = ("LibSvgPlugin");
 }
 
 // register implement classes of this plugin.
 PLUGIN_EXPORT_REGISTER_CLASS_BEGIN
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::JpegFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::PngFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::GifFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::HeifFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::WebpFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::BmpFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::RawFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::SvgFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::WbmpFormatAgent)
+PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::SvgDecoder)
 PLUGIN_EXPORT_REGISTER_CLASS_END
 
 using std::string;
 using namespace OHOS::HiviewDFX;
 
-static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "LibImageFormatAgent" };
+static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "LibSvgPlugin" };
 
 #define PLUGIN_LOG_D(...) HiLog::Debug(LABEL, __VA_ARGS__)
 #define PLUGIN_LOG_E(...) HiLog::Error(LABEL, __VA_ARGS__)
