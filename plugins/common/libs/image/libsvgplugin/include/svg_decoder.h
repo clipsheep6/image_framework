@@ -19,7 +19,7 @@
 #include "plugin_class_base.h"
 #include "include/core/SkStream.h"
 #include "include/core/SkSize.h"
-#ifdef USE_NEW_SKIA_FLAG
+#ifdef USE_NEWSVG_IN_NEWSKIA_FLAG
 #include "modules/svg/include/SkSVGDOM.h"
 #else
 #include "experimental/svg/model/SkSVGDOM.h"

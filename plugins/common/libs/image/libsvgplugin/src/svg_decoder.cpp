@@ -35,6 +35,12 @@ bool AllocShareBuffer(DecodeContext &context, uint64_t byteCount)
     HiLog::Debug(LABEL, "[AllocShareBuffer] IN byteCount=%{public}llu",
         static_cast<unsigned long long>(byteCount));
 
+    if (byteCount > PIXEL_MAP_MAX_RAM_SIZE) {
+        HiLog::Error(LABEL, "[AllocShareBuffer] pixelmap buffer size %{public}llu out of max size",
+            static_cast<unsigned long long>(byteCount));
+        return false;
+    }
+
     int fd = AshmemCreate("SVG RawData", byteCount);
     if (fd < 0) {
         HiLog::Error(LABEL, "[AllocShareBuffer] create fail");
@@ -80,7 +86,13 @@ bool AllocHeapBuffer(DecodeContext &context, uint64_t byteCount)
     HiLog::Debug(LABEL, "[AllocHeapBuffer] IN byteCount=%{public}llu",
         static_cast<unsigned long long>(byteCount));
 
-    void *outputBuffer = malloc(byteCount);
+    if (byteCount > PIXEL_MAP_MAX_RAM_SIZE) {
+        HiLog::Error(LABEL, "[AllocHeapBuffer] pixelmap buffer size %{public}llu out of max size",
+            static_cast<unsigned long long>(byteCount));
+        return false;
+    }
+
+    auto outputBuffer = malloc(byteCount);
     if (outputBuffer == nullptr) {
         HiLog::Error(LABEL, "[AllocHeapBuffer] alloc buffer size:[%{public}llu] failed.",
             static_cast<unsigned long long>(byteCount));
@@ -423,10 +435,6 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
     info.colorSpace = PlColorSpace::UNKNOWN;
     info.alphaType = PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL;
 
-    //SkScalar width = static_cast<SkScalar>(opts_.desiredSize.width);
-    //SkScalar height = static_cast<SkScalar>(opts_.desiredSize.height);
-    //svgDom_->setContainerSize(SkSize::Make(width, height));
-
     HiLog::Debug(LABEL, "[DoSetDecodeOptions] OUT pixelFormat=%{public}d, alphaType=%{public}d, "
         "colorSpace=%{public}d, size=(%{public}u, %{public}u)",
         static_cast<int32_t>(info.pixelFormat), static_cast<int32_t>(info.alphaType),
@@ -474,7 +482,7 @@ uint32_t SvgDecoder::DoDecode(uint32_t index, DecodeContext &context)
     auto rowBytes = opts_.desiredSize.width * SVG_BYTES_PER_PIXEL;
     auto pixels = context.pixelsBuffer.buffer;
 
-	SkBitmap bitmap;
+    SkBitmap bitmap;
     if (!bitmap.installPixels(imageInfo, pixels, rowBytes)) {
         HiLog::Error(LABEL, "[DoDecode] bitmap install pixels failed.");
         return Media::ERROR;
@@ -484,7 +492,6 @@ uint32_t SvgDecoder::DoDecode(uint32_t index, DecodeContext &context)
     canvas->clear(SK_ColorTRANSPARENT);
     svgDom_->render(canvas.get());
 
-    // TODO ???
     bool result = canvas->readPixels(imageInfo, pixels, rowBytes, 0, 0);
     if (!result) {
         HiLog::Error(LABEL, "[DoDecode] read pixels failed.");

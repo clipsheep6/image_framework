@@ -180,7 +180,7 @@ ohos_shared_library("svgplugin") {
   }
   cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
   if (use_new_skia) {
-    cflags += [ "-DUSE_NEW_SKIA_FLAG" ]
+    cflags += [ "-DUSE_NEWSVG_IN_NEWSKIA_FLAG" ]
   }
   part_name = "multimedia_image_framework"
   subsystem_name = "multimedia"
