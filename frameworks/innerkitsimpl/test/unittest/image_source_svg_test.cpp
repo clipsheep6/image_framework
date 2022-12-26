@@ -35,8 +35,8 @@ namespace OHOS {
 namespace Multimedia {
 namespace {
 static constexpr HiLogLabel LABEL_TEST = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageSourceSvgTest" };
-static const std::string IMAGE_INPUT_SMALL_SVG_PATH = "/data/local/tmp/image/test_small.svg";
-static const std::string IMAGE_OUTPUT_SMALL_SVG_PATH = "/data/local/tmp/image/output_test_small.svg.jpg";
+static const std::string IMAGE_INPUT_SMALL_SVG_PATH = "/data/local/tmp/image/test.svg";
+static const std::string IMAGE_OUTPUT_SMALL_SVG_PATH = "/data/local/tmp/image/output_test.svg.jpg";
 static const std::string IMAGE_INPUT_LARGE_SVG_PATH = "/data/local/tmp/image/test_large.svg";
 static const std::string IMAGE_OUTPUT_LARGE_SVG_PATH = "/data/local/tmp/image/output_test_large.svg.jpg";
 }
