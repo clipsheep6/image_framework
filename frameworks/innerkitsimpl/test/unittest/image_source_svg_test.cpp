@@ -81,7 +81,7 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode001, TestSize.Level3)
      * @tc.steps: step3. compress the pixel map to jpg file.
      * @tc.expected: step3. pack pixel map success.
      */
-    int64_t packSize = PackImage(IMAGE_OUTPUT_SMALL_SVG_PATH, std::move(pixelMap));
+    auto packSize = PackImage(IMAGE_OUTPUT_SMALL_SVG_PATH, std::move(pixelMap));
     ASSERT_NE(packSize, 0);
 
     GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgImageDecode001 end";
@@ -121,7 +121,7 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode002, TestSize.Level3)
      * @tc.steps: step3. compress the pixel map to jpg file.
      * @tc.expected: step3. pack pixel map success.
      */
-    int64_t packSize = PackImage(IMAGE_OUTPUT_LARGE_SVG_PATH, std::move(pixelMap));
+    auto packSize = PackImage(IMAGE_OUTPUT_LARGE_SVG_PATH, std::move(pixelMap));
     ASSERT_NE(packSize, 0);
 
     GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgImageDecode002 end";

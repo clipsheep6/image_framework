@@ -142,7 +142,7 @@ HWTEST_F(SvgDecoderTest, GetImageSizeTest002, TestSize.Level3)
     ImagePlugin::PlSize plSize;
     svgDecoder->GetImageSize(0, plSize);
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     bool result = (svgDecoder != nullptr);
@@ -237,7 +237,7 @@ HWTEST_F(SvgDecoderTest, SetDecodeOptionsTest001, TestSize.Level3)
     GTEST_LOG_(INFO) << "SvgDecoderTest: SetDecodeOptionsTest001 start";
     auto svgDecoder = std::make_shared<SvgDecoder>();
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     PixelDecodeOptions opts;
@@ -261,7 +261,7 @@ HWTEST_F(SvgDecoderTest, SetDecodeOptionsTest002, TestSize.Level3)
     PlImageInfo info;
     svgDecoder->SetDecodeOptions(0, opts, info);
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     bool result = (svgDecoder != nullptr);
@@ -279,7 +279,7 @@ HWTEST_F(SvgDecoderTest, SetDecodeOptionsTest003, TestSize.Level3)
     GTEST_LOG_(INFO) << "SvgDecoderTest: SetDecodeOptionsTest003 start";
     auto svgDecoder = std::make_shared<SvgDecoder>();
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     PixelDecodeOptions opts;
@@ -321,7 +321,7 @@ HWTEST_F(SvgDecoderTest, DecodeTest001, TestSize.Level3)
     GTEST_LOG_(INFO) << "SvgDecoderTest: DecodeTest001 start";
     auto svgDecoder = std::make_shared<SvgDecoder>();
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     DecodeContext context;
@@ -343,7 +343,7 @@ HWTEST_F(SvgDecoderTest, DecodeTest002, TestSize.Level3)
     DecodeContext context;
     svgDecoder->Decode(0, context);
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     bool result = (svgDecoder != nullptr);
@@ -361,7 +361,7 @@ HWTEST_F(SvgDecoderTest, PromoteIncrementalDecodeTest001, TestSize.Level3)
     GTEST_LOG_(INFO) << "SvgDecoderTest: PromoteIncrementalDecodeTest001 start";
     auto svgDecoder = std::make_shared<SvgDecoder>();
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     ProgDecodeContext context;
@@ -383,7 +383,7 @@ HWTEST_F(SvgDecoderTest, PromoteIncrementalDecodeTest002, TestSize.Level3)
     ProgDecodeContext context;
     svgDecoder->PromoteIncrementalDecode(0, context);
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     svgDecoder->SetSource(*streamPtr.release());
     bool result = (svgDecoder != nullptr);

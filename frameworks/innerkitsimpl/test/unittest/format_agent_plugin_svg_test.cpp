@@ -49,7 +49,7 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest001 start";
     ImagePlugin::SvgFormatAgent formatAgent;
-    std::string ret = formatAgent.GetFormatType();
+    auto ret = formatAgent.GetFormatType();
     ASSERT_EQ(ret, SVG_FORMAT_TYPE);
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest001 end";
 }
@@ -63,7 +63,7 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest002, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest002 start";
     ImagePlugin::SvgFormatAgent formatAgent;
-    uint32_t ret = formatAgent.GetHeaderSize();
+    auto ret = formatAgent.GetHeaderSize();
     ASSERT_EQ(ret, sizeof(SVG_HEADER));
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest002 end";
 }
@@ -77,9 +77,9 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest003, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest003 start";
     ImagePlugin::SvgFormatAgent formatAgent;
-    uint32_t datasize = formatAgent.GetHeaderSize();
+    auto datasize = formatAgent.GetHeaderSize();
     void *headerData = nullptr;
-    bool ret = formatAgent.CheckFormat(headerData, datasize);
+    auto ret = formatAgent.CheckFormat(headerData, datasize);
     ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest003 end";
 }
@@ -93,20 +93,20 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest004, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest004 start";
     ImagePlugin::SvgFormatAgent formatAgent;
-    uint32_t datasize = formatAgent.GetHeaderSize();
+    auto datasize = formatAgent.GetHeaderSize();
     uint32_t errorCode = 0;
     SourceOptions opts;
     opts.formatHint = SVG_FORMAT_TYPE;
-    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_SVG_PATH, opts, errorCode);
+    auto imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_SVG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
     DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    auto pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
     
-    bool ret = formatAgent.CheckFormat(pixelMap->GetPixels(), datasize);
+    auto ret = formatAgent.CheckFormat(pixelMap->GetPixels(), datasize);
     ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest004 end";
 }
@@ -120,8 +120,8 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest005, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest005 start";
     ImagePlugin::SvgFormatAgent formatAgent;
-    uint32_t datasize = formatAgent.GetHeaderSize();
-    bool ret = formatAgent.CheckFormat(nullptr, datasize);
+    auto datasize = formatAgent.GetHeaderSize();
+    auto ret = formatAgent.CheckFormat(nullptr, datasize);
     ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest005 end";
 }
@@ -135,20 +135,20 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest006, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest006 start";
     ImagePlugin::SvgFormatAgent formatAgent;
-    uint32_t datasize = formatAgent.GetHeaderSize() - 10;
+    auto datasize = formatAgent.GetHeaderSize() - 10;
     uint32_t errorCode = 0;
     SourceOptions opts;
     opts.formatHint = SVG_FORMAT_TYPE;
-    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_SVG_PATH, opts, errorCode);
+    auto imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_SVG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
     DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    auto pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
     
-    bool ret = formatAgent.CheckFormat(pixelMap->GetPixels(), datasize);
+    auto ret = formatAgent.CheckFormat(pixelMap->GetPixels(), datasize);
     ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest006 end";
 }
