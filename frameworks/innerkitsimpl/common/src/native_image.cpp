@@ -14,27 +14,27 @@
  */
 
 #include <cinttypes>
+#include "native_image.h"
 #include "media_errors.h"
 #include "hilog/log.h"
-#include "log_tags.h"
-#include "native_image.h"
 
 using OHOS::HiviewDFX::HiLog;
 
 namespace {
-    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "NativeImage"};
+    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "NativeImage"};
     constexpr int32_t NUMI_0 = 0;
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
     constexpr uint32_t NUM_2 = 2;
-    const std::string DATA_SIZE_TAG = "dataSize";
+    const std::string SURFACE_DATA_SIZE_TAG = "dataSize";
 }
 
 namespace OHOS {
 namespace Media {
-NativeImage::NativeImage(sptr<SurfaceBuffer> buffer,
-    std::shared_ptr<IBufferProcessor> releaser) : buffer_(buffer), releaser_(releaser)
-{}
+NativeImage::NativeImage(sptr<SurfaceBuffer> buffer, IBufferProcessor releaser) :
+buffer_(buffer), releaser_(releaser)
+{
+}
 
 struct YUVData {
     std::vector<uint8_t> y;
@@ -101,7 +101,7 @@ int32_t NativeImage::SplitYUV422SPComponent()
     uint64_t surfaceSize = NUM_0;
     auto res = GetDataSize(surfaceSize);
     if (res != SUCCESS || surfaceSize == NUM_0) {
-        HiLog::Error(LABEL, "S size is 0");
+        HiLog::Error(LABEL, "Surface size is 0");
         return ERR_MEDIA_DATA_UNSUPPORT;
     }
 
@@ -118,7 +118,7 @@ int32_t NativeImage::SplitYUV422SPComponent()
     yuv.ySize = static_cast<uint64_t>(width * height);
     yuv.uvSize = static_cast<uint64_t>(height * uvStride);
     if (surfaceSize < (yuv.ySize + yuv.uvSize * NUM_2)) {
-        HiLog::Error(LABEL, "S size %{public}" PRIu64 " < y plane %{public}" PRIu64
+        HiLog::Error(LABEL, "Surface size %{public}" PRIu64 " < y plane %{public}" PRIu64
             " + uv plane %{public}" PRIu64, surfaceSize, yuv.ySize, yuv.uvSize * NUM_2);
         return ERR_MEDIA_DATA_UNSUPPORT;
     }
@@ -199,7 +199,6 @@ static std::unique_ptr<NativeComponent> BuildComponent(size_t size, int32_t row,
     std::unique_ptr<NativeComponent> component = std::make_unique<NativeComponent>();
     component->pixelStride = pixel;
     component->rowStride = row;
-    component->size = size;
     if (vir != nullptr) {
         component->virAddr = vir;
     } else {
@@ -238,9 +237,7 @@ NativeComponent* NativeImage::CreateComponent(int32_t type, size_t size, int32_t
 
 NativeComponent* NativeImage::CreateCombineComponent(int32_t type)
 {
-    uint64_t size = NUM_0;
-    GetDataSize(size);
-    return CreateComponent(type, static_cast<size_t>(size), buffer_->GetWidth(), NUM_1, GetSurfaceBufferAddr());
+    return CreateComponent(type, NUM_0, NUM_0, NUM_0, GetSurfaceBufferAddr());
 }
 int32_t NativeImage::GetSize(int32_t &width, int32_t &height)
 {
@@ -259,24 +256,24 @@ int32_t NativeImage::GetDataSize(uint64_t &size)
     }
 
     size = static_cast<uint64_t>(buffer_->GetSize());
-    auto extraData = buffer_->GetExtraData();
-    if (extraData == nullptr) {
-        HiLog::Info(LABEL, "Nullptr s extra data. return buffer size %{public}" PRIu64, size);
+    auto surfaceExtraData = buffer_->GetExtraData();
+    if (surfaceExtraData == nullptr) {
+        HiLog::Info(LABEL, "Nullptr surface extra data. return buffer size %{public}" PRIu64, size);
         return SUCCESS;
     }
 
     int32_t extraDataSize = NUMI_0;
-    auto res = extraData->ExtraGet(DATA_SIZE_TAG, extraDataSize);
+    auto res = surfaceExtraData->ExtraGet(SURFACE_DATA_SIZE_TAG, extraDataSize);
     if (res != NUM_0) {
-        HiLog::Info(LABEL, "S ExtraGet dataSize error %{public}d", res);
+        HiLog::Info(LABEL, "Surface ExtraGet dataSize error %{public}d", res);
     } else if (extraDataSize <= NUMI_0) {
-        HiLog::Info(LABEL, "S ExtraGet dataSize Ok, but size <= 0");
+        HiLog::Info(LABEL, "Surface ExtraGet dataSize Ok, but size <= 0");
     } else if (static_cast<uint64_t>(extraDataSize) > size) {
         HiLog::Info(LABEL,
-            "S ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
+            "Surface ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
             extraDataSize, size);
     } else {
-        HiLog::Info(LABEL, "S ExtraGet dataSize %{public}d", extraDataSize);
+        HiLog::Info(LABEL, "Surface ExtraGet dataSize %{public}d", extraDataSize);
         size = extraDataSize;
     }
     return SUCCESS;
@@ -307,18 +304,12 @@ NativeComponent* NativeImage::GetComponent(int32_t type)
     if (GetFormat(format) == SUCCESS && type == format) {
         return CreateCombineComponent(type);
     }
-    SplitSurfaceToComponent();
-    // Try again
-    component = GetCachedComponent(type);
 
-#ifdef COMPONENT_STRICT_CHECK
-    return component;
-#else // We don't check the input type anymore, return raw format component!!
-    if (component == nullptr && GetFormat(format) == SUCCESS) {
-        return CreateCombineComponent(format);
+    if(SplitSurfaceToComponent() != SUCCESS) {
+        return nullptr;
     }
-    return nullptr;
-#endif
+    // Try again
+    return GetCachedComponent(type);
 }
 
 void NativeImage::release()
@@ -328,12 +319,12 @@ void NativeImage::release()
     }
     HiLog::Info(LABEL, "NativeImage release");
     if (components_.size() > 0) {
-        components_.clear();
+        for (auto iter = components_.begin(); iter != components_.end(); iter++) {
+            iter->second = nullptr;
+            components_.erase(iter);
+        }
     }
-    if (releaser_ != nullptr && buffer_ != nullptr) {
-        releaser_->BufferRelease(buffer_);
-    }
-    releaser_ = nullptr;
+    releaser_.BufferRelease(buffer_);
     buffer_ = nullptr;
 }
 } // namespace Media
