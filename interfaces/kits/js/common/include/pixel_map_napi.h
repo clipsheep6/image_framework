@@ -33,6 +33,8 @@ public:
 
     static napi_value CreatePixelMap(napi_env env, std::shared_ptr<PixelMap> pixelmap);
     static std::shared_ptr<PixelMap> GetPixelMap(napi_env env, napi_value pixelmap);
+    static void PixelMapNapi::NativeRelease(napi_env env, napi_value value);
+    static void PixelMapNapi::DeleteReference(napi_env env);
     std::shared_ptr<PixelMap>* GetPixelMap();
     bool IsLockPixelMap();
     bool LockPixelMap();
