@@ -14,19 +14,12 @@
  */
 
 #include <gtest/gtest.h>
-#include <fstream>
-#include <fcntl.h>
-#include "image_type.h"
-#include "image_utils.h"
 #include "image_source.h"
-#include "pixel_map.h"
-#include "image_source_util.h"
 #include "media_errors.h"
 #include "svg_format_agent.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
-using namespace OHOS::ImageSourceUtil;
 
 namespace OHOS {
 namespace Multimedia {

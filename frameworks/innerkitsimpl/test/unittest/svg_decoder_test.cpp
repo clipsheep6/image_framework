@@ -14,7 +14,6 @@
  */
 #include <gtest/gtest.h>
 #include "svg_decoder.h"
-#include "image_packer.h"
 #include "buffer_source_stream.h"
 
 using namespace testing::ext;
