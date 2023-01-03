@@ -489,6 +489,10 @@ uint32_t SvgDecoder::DoDecode(uint32_t index, DecodeContext &context)
     }
 
     auto canvas = SkCanvas::MakeRasterDirect(imageInfo, bitmap.getPixels(), bitmap.rowBytes());
+    if (canvas == nullptr) {
+        HiLog::Error(LABEL, "[DoDecode] make canvas failed.");
+        return Media::ERROR;
+    }
     canvas->clear(SK_ColorTRANSPARENT);
     svgDom_->render(canvas.get());
 
