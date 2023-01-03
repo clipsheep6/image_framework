@@ -546,6 +546,22 @@ void PixelMapNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
 {
 }
 
+void PixelMapNapi::NativeRelease(napi_env env, napi_value value)
+{
+    PixelMapNapi *pixmapNapi = nullptr;
+    auto status = napi_unwrap(env, value, reinterpret_cast<void**>(&pixmapNapi));
+    if (status != napi_ok || pixmapNapi == nullptr) {
+        return;
+    }
+    delete pixmapNapi;
+    napi_wrap(env, value, nullptr, nullptr, nullptr, nullptr);
+}
+
+void PixelMapNapi::DeleteReference(napi_env env)
+{
+    napi_delete_reference(env, sConstructor_);
+}
+
 STATIC_EXEC_FUNC(CreatePixelMap)
 {
     auto context = static_cast<PixelMapAsyncContext*>(data);
