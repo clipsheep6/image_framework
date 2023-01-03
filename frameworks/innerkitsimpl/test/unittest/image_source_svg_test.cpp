@@ -35,10 +35,11 @@ namespace OHOS {
 namespace Multimedia {
 namespace {
 static constexpr HiLogLabel LABEL_TEST = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageSourceSvgTest" };
-static const std::string IMAGE_INPUT_SMALL_SVG_PATH = "/data/local/tmp/image/test.svg";
-static const std::string IMAGE_OUTPUT_SMALL_SVG_PATH = "/data/local/tmp/image/output_test.svg.jpg";
-static const std::string IMAGE_INPUT_LARGE_SVG_PATH = "/data/local/tmp/image/test_large.svg";
-static const std::string IMAGE_OUTPUT_LARGE_SVG_PATH = "/data/local/tmp/image/output_test_large.svg.jpg";
+static const std::string INPUT_PATH = "/data/local/tmp/image/";
+static const std::string OUTPUT_PATH = "/data/local/tmp/image/output_";
+static const std::string OUTPUT_EXT = ".jpg";
+static const std::string TEST_FILE_SVG = "test.svg";
+static const std::string TEST_FILE_LARGE_SVG = "test_large.svg";
 }
 
 class ImageSourceSvgTest : public testing::Test {
@@ -56,6 +57,8 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgImageDecode001 start";
 
+    const std::string testName = TEST_FILE_SVG;
+
     /**
      * @tc.steps: step1. create image source by correct svg file path and svg format hit.
      * @tc.expected: step1. create image source success.
@@ -63,7 +66,8 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode001, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     opts.formatHint = "image/svg+xml";
-    auto imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_SMALL_SVG_PATH, opts, errorCode);
+    const std::string inName = INPUT_PATH + testName;
+    auto imageSource = ImageSource::CreateImageSource(inName, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -81,7 +85,8 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode001, TestSize.Level3)
      * @tc.steps: step3. compress the pixel map to jpg file.
      * @tc.expected: step3. pack pixel map success.
      */
-    auto packSize = PackImage(IMAGE_OUTPUT_SMALL_SVG_PATH, std::move(pixelMap));
+    const std::string outName = OUTPUT_PATH + testName + OUTPUT_EXT;
+    auto packSize = PackImage(outName, std::move(pixelMap));
     ASSERT_NE(packSize, 0);
 
     GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgImageDecode001 end";
@@ -96,6 +101,8 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode002, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgImageDecode002 start";
 
+    const std::string testName = TEST_FILE_LARGE_SVG;
+
     /**
      * @tc.steps: step1. create image source by correct svg file path and svg format hit.
      * @tc.expected: step1. create image source success.
@@ -103,7 +110,8 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode002, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     opts.formatHint = "image/svg+xml";
-    auto imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_LARGE_SVG_PATH, opts, errorCode);
+    const std::string inName = INPUT_PATH + testName;
+    auto imageSource = ImageSource::CreateImageSource(inName, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -121,7 +129,8 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode002, TestSize.Level3)
      * @tc.steps: step3. compress the pixel map to jpg file.
      * @tc.expected: step3. pack pixel map success.
      */
-    auto packSize = PackImage(IMAGE_OUTPUT_LARGE_SVG_PATH, std::move(pixelMap));
+    const std::string outName = OUTPUT_PATH + testName + OUTPUT_EXT;
+    auto packSize = PackImage(outName, std::move(pixelMap));
     ASSERT_NE(packSize, 0);
 
     GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgImageDecode002 end";
