@@ -115,16 +115,6 @@ bool AllocHeapBuffer(DecodeContext &context, uint64_t byteCount)
     HiLog::Debug(LABEL, "[AllocHeapBuffer] OUT");
     return true;
 }
-/*
-SkImageInfo MakeImageInfo(const PixelDecodeOptions &opts)
-{
-    int width = opts.desiredSize.width;
-    int height = opts.desiredSize.height;
-    SkColorType colorType = SkColorType::kRGBA_8888_SkColorType;
-    SkAlphaType alphaType = SkAlphaType::kPremul_SkAlphaType;
-    return SkImageInfo::Make(width, height, colorType, alphaType);
-}
-*/
 } // namespace
 
 SvgDecoder::SvgDecoder()
@@ -341,25 +331,6 @@ bool SvgDecoder::AllocBuffer(DecodeContext &context)
 bool SvgDecoder::BuildStream()
 {
     HiLog::Debug(LABEL, "[BuildStream] IN");
-/*
-    if (inputStreamPtr_ == nullptr) {
-        HiLog::Error(LABEL, "[BuildStream] Stream is null.");
-        return false;
-    }
-
-    auto length = inputStreamPtr_->GetStreamSize();
-    if (inputStreamPtr_->GetStreamType() == ImagePlugin::BUFFER_SOURCE_TYPE) {
-        svgStream_ = std::make_unique<SkMemoryStream>(inputStreamPtr_->GetDataPtr(), length);
-    } else {
-        auto data = std::make_unique<uint8_t[]>(length);
-        uint32_t readSize = 0;
-        if (!inputStreamPtr_->Read(length, data.get(), length, readSize)) {
-            HiLog::Error(LABEL, "[BuildStream] read failed.");
-            return false;
-        }
-        svgStream_ = std::make_unique<SkMemoryStream>(data.get(), length, true);
-    }
-*/
     HiLog::Debug(LABEL, "[BuildStream] OUT");
     return true;
 }
@@ -367,29 +338,6 @@ bool SvgDecoder::BuildStream()
 bool SvgDecoder::BuildDom()
 {
     HiLog::Debug(LABEL, "[BuildDom] IN");
-/*
-    if (svgStream_ == nullptr) {
-        HiLog::Error(LABEL, "[BuildDom] Stream is null.");
-        return false;
-    }
-
-    svgDom_ = SkSVGDOM::MakeFromStream(*(svgStream_.get()));
-    if (svgDom_ == nullptr) {
-        HiLog::Error(LABEL, "[BuildDom] DOM is null.");
-        return false;
-    }
-
-    svgSize_ = svgDom_->containerSize();
-    if (svgSize_.isEmpty()) {
-        HiLog::Error(LABEL, "[BuildDom] size is empty.");
-        return false;
-    }
-
-    auto width = static_cast<uint32_t>(svgSize_.width());
-    auto height = static_cast<uint32_t>(svgSize_.height());
-
-    HiLog::Debug(LABEL, "[BuildDom] OUT size=(%{public}u, %{public}u)", width, height);
-*/
     return true;
 }
 
@@ -414,34 +362,6 @@ uint32_t SvgDecoder::DoDecodeHeader()
 uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info)
 {
     HiLog::Debug(LABEL, "[DoSetDecodeOptions] IN index=%{public}u", index);
-/*
-    if (svgDom_ == nullptr) {
-        HiLog::Error(LABEL, "[DoSetDecodeOptions] DOM is null.");
-        return Media::ERROR;
-    }
-
-    opts_ = opts;
-
-    auto svgSize = svgDom_->containerSize();
-    if (svgSize.isEmpty()) {
-        HiLog::Error(LABEL, "[DoSetDecodeOptions] size is empty.");
-        return Media::ERROR;
-    }
-
-    opts_.desiredSize.width = static_cast<uint32_t>(svgSize.width());
-    opts_.desiredSize.height = static_cast<uint32_t>(svgSize.height());
-
-    info.size.width = opts_.desiredSize.width;
-    info.size.height = opts_.desiredSize.height;
-    info.pixelFormat = PlPixelFormat::RGBA_8888;
-    info.colorSpace = PlColorSpace::UNKNOWN;
-    info.alphaType = PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL;
-
-    HiLog::Debug(LABEL, "[DoSetDecodeOptions] OUT pixelFormat=%{public}d, alphaType=%{public}d, "
-        "colorSpace=%{public}d, size=(%{public}u, %{public}u)",
-        static_cast<int32_t>(info.pixelFormat), static_cast<int32_t>(info.alphaType),
-        static_cast<int32_t>(info.colorSpace), info.size.width, info.size.height);
-*/
     return Media::SUCCESS;
 }
 
@@ -470,41 +390,6 @@ uint32_t SvgDecoder::DoGetImageSize(uint32_t index, PlSize &size)
 uint32_t SvgDecoder::DoDecode(uint32_t index, DecodeContext &context)
 {
     HiLog::Debug(LABEL, "[DoDecode] IN index=%{public}u", index);
-/*
-    if (svgDom_ == nullptr) {
-        HiLog::Error(LABEL, "[DoDecode] DOM is null.");
-        return Media::ERROR;
-    }
-
-    if (!AllocBuffer(context)) {
-        HiLog::Error(LABEL, "[DoDecode] alloc buffer failed.");
-        return Media::ERR_IMAGE_MALLOC_ABNORMAL;
-    }
-
-    auto imageInfo = MakeImageInfo(opts_);
-    auto rowBytes = opts_.desiredSize.width * SVG_BYTES_PER_PIXEL;
-    auto pixels = context.pixelsBuffer.buffer;
-
-    SkBitmap bitmap;
-    if (!bitmap.installPixels(imageInfo, pixels, rowBytes)) {
-        HiLog::Error(LABEL, "[DoDecode] bitmap install pixels failed.");
-        return Media::ERROR;
-    }
-
-    auto canvas = SkCanvas::MakeRasterDirect(imageInfo, bitmap.getPixels(), bitmap.rowBytes());
-    if (canvas == nullptr) {
-        HiLog::Error(LABEL, "[DoDecode] make canvas failed.");
-        return Media::ERROR;
-    }
-    canvas->clear(SK_ColorTRANSPARENT);
-    svgDom_->render(canvas.get());
-
-    bool result = canvas->readPixels(imageInfo, pixels, rowBytes, 0, 0);
-    if (!result) {
-        HiLog::Error(LABEL, "[DoDecode] read pixels failed.");
-        return Media::ERROR;
-    }
-*/
     HiLog::Debug(LABEL, "[DoDecode] OUT");
     return Media::SUCCESS;
 }
