@@ -35,48 +35,6 @@ bool AllocShareBuffer(DecodeContext &context, uint64_t byteCount)
     HiLog::Debug(LABEL, "[AllocShareBuffer] IN byteCount=%{public}llu",
         static_cast<unsigned long long>(byteCount));
 
-    if (byteCount > PIXEL_MAP_MAX_RAM_SIZE) {
-        HiLog::Error(LABEL, "[AllocShareBuffer] pixelmap buffer size %{public}llu out of max size",
-            static_cast<unsigned long long>(byteCount));
-        return false;
-    }
-
-    int fd = AshmemCreate("SVG RawData", byteCount);
-    if (fd < 0) {
-        HiLog::Error(LABEL, "[AllocShareBuffer] create fail");
-        return false;
-    }
-
-    int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
-    if (result < 0) {
-        HiLog::Error(LABEL, "[AllocShareBuffer] set fail");
-        ::close(fd);
-        return false;
-    }
-
-    void* ptr = ::mmap(nullptr, byteCount, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (ptr == MAP_FAILED) {
-        HiLog::Error(LABEL, "[AllocShareBuffer] map fail");
-        ::close(fd);
-        return false;
-    }
-
-    context.pixelsBuffer.buffer = ptr;
-    void *fdBuffer = new int32_t();
-    if (fdBuffer == nullptr) {
-        HiLog::Error(LABEL, "[AllocShareBuffer] new fdBuffer fail");
-        ::munmap(ptr, byteCount);
-        ::close(fd);
-        context.pixelsBuffer.buffer = nullptr;
-        return false;
-    }
-
-    *static_cast<int32_t *>(fdBuffer) = fd;
-    context.pixelsBuffer.context = fdBuffer;
-    context.pixelsBuffer.bufferSize = byteCount;
-    context.allocatorType = AllocatorType::SHARE_MEM_ALLOC;
-    context.freeFunc = nullptr;
-
     HiLog::Debug(LABEL, "[AllocShareBuffer] OUT");
     return true;
 }
@@ -85,32 +43,6 @@ bool AllocHeapBuffer(DecodeContext &context, uint64_t byteCount)
 {
     HiLog::Debug(LABEL, "[AllocHeapBuffer] IN byteCount=%{public}llu",
         static_cast<unsigned long long>(byteCount));
-
-    if (byteCount > PIXEL_MAP_MAX_RAM_SIZE) {
-        HiLog::Error(LABEL, "[AllocHeapBuffer] pixelmap buffer size %{public}llu out of max size",
-            static_cast<unsigned long long>(byteCount));
-        return false;
-    }
-
-    auto outputBuffer = malloc(byteCount);
-    if (outputBuffer == nullptr) {
-        HiLog::Error(LABEL, "[AllocHeapBuffer] alloc buffer size:[%{public}llu] failed.",
-            static_cast<unsigned long long>(byteCount));
-        return false;
-    }
-
-    if (memset_s(outputBuffer, byteCount, 0, byteCount) != EOK) {
-        HiLog::Error(LABEL, "[AllocHeapBuffer] memset buffer failed.");
-        free(outputBuffer);
-        outputBuffer = nullptr;
-        return false;
-    }
-
-    context.pixelsBuffer.buffer = outputBuffer;
-    context.pixelsBuffer.bufferSize = byteCount;
-    context.pixelsBuffer.context = nullptr;
-    context.allocatorType = AllocatorType::HEAP_ALLOC;
-    context.freeFunc = nullptr;
 
     HiLog::Debug(LABEL, "[AllocHeapBuffer] OUT");
     return true;
