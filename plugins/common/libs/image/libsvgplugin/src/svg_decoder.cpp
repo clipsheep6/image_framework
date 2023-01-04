@@ -82,77 +82,13 @@ void SvgDecoder::Reset()
 
 uint32_t SvgDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info)
 {
-    if (index >= SVG_IMAGE_NUM) {
-        HiLog::Error(LABEL, "[SetDecodeOptions] decode image index[%{public}u], out of range[%{public}u].",
-            index, SVG_IMAGE_NUM);
-        return Media::ERR_IMAGE_INVALID_PARAMETER;
-    }
-
-    HiLog::Debug(LABEL, "[SetDecodeOptions] IN index=%{public}u, pixelFormat=%{public}d, alphaType=%{public}d, "
-        "colorSpace=%{public}d, size=(%{public}u, %{public}u), state=%{public}d", index,
-        static_cast<int32_t>(opts.desiredPixelFormat), static_cast<int32_t>(opts.desireAlphaType),
-        static_cast<int32_t>(opts.desiredColorSpace), opts.desiredSize.width, opts.desiredSize.height, state_);
-
-    if (state_ < SvgDecodingState::SOURCE_INITED) {
-        HiLog::Error(LABEL, "[SetDecodeOptions] set decode options failed for state %{public}d.", state_);
-        return Media::ERR_MEDIA_INVALID_OPERATION;
-    }
-
-    if (state_ >= SvgDecodingState::IMAGE_DECODING) {
-        state_ = SvgDecodingState::SOURCE_INITED;
-    }
-
-    if (state_ < SvgDecodingState::BASE_INFO_PARSED) {
-        uint32_t ret = DoDecodeHeader();
-        if (ret != Media::SUCCESS) {
-            HiLog::Error(LABEL, "[SetDecodeOptions] decode header error on set decode options:%{public}u.", ret);
-            state_ = SvgDecodingState::BASE_INFO_PARSING;
-            return ret;
-        }
-
-        state_ = SvgDecodingState::BASE_INFO_PARSED;
-    }
-
-    // only state SvgDecodingState::BASE_INFO_PARSED can go here.
-    uint32_t ret = DoSetDecodeOptions(index, opts, info);
-    if (ret != Media::SUCCESS) {
-        HiLog::Error(LABEL, "[SetDecodeOptions] do set decode options:%{public}u.", ret);
-        state_ = SvgDecodingState::BASE_INFO_PARSING;
-        return ret;
-    }
-
-    state_ = SvgDecodingState::IMAGE_DECODING;
-
     HiLog::Debug(LABEL, "[SetDecodeOptions] OUT");
     return Media::SUCCESS;
 }
 
 uint32_t SvgDecoder::Decode(uint32_t index, DecodeContext &context)
 {
-    if (index >= SVG_IMAGE_NUM) {
-        HiLog::Error(LABEL, "[Decode] decode image index[%{public}u], out of range[%{public}u].",
-            index, SVG_IMAGE_NUM);
-        return Media::ERR_IMAGE_INVALID_PARAMETER;
-    }
-
-    HiLog::Debug(LABEL, "[Decode] IN index=%{public}u", index);
-
-    if (state_ < SvgDecodingState::IMAGE_DECODING) {
-        HiLog::Error(LABEL, "[Decode] decode failed for state %{public}d.", state_);
-        return Media::ERR_MEDIA_INVALID_OPERATION;
-    }
-
-    uint32_t ret = DoDecode(index, context);
-    if (ret == Media::SUCCESS) {
-        HiLog::Info(LABEL, "[Decode] success.");
-        state_ = SvgDecodingState::IMAGE_DECODED;
-    } else {
-        HiLog::Error(LABEL, "[Decode] fail, ret=%{public}u", ret);
-        state_ = SvgDecodingState::IMAGE_ERROR;
-    }
-
-    HiLog::Debug(LABEL, "[Decode] OUT ret=%{public}u", ret);
-    return ret;
+    return Media::SUCCESS;
 }
 
 uint32_t SvgDecoder::PromoteIncrementalDecode(uint32_t index, ProgDecodeContext &context)
@@ -176,16 +112,7 @@ uint32_t SvgDecoder::GetImageSize(uint32_t index, PlSize &size)
 
 bool SvgDecoder::AllocBuffer(DecodeContext &context)
 {
-    HiLog::Debug(LABEL, "[AllocBuffer] IN");
-
-    if (svgDom_ == nullptr) {
-        HiLog::Error(LABEL, "[AllocBuffer] DOM is null.");
-        return false;
-    }
-
-    bool ret = true;
-    HiLog::Debug(LABEL, "[AllocBuffer] OUT ret=%{public}d", ret);
-    return ret;
+    return true;
 }
 
 bool SvgDecoder::BuildStream()
