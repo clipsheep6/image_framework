@@ -28,25 +28,6 @@ using namespace Media;
 namespace {
 constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "SvgDecoder" };
 constexpr uint32_t SVG_IMAGE_NUM = 1;
-constexpr uint32_t SVG_BYTES_PER_PIXEL = 4;
-
-bool AllocShareBuffer(DecodeContext &context, uint64_t byteCount)
-{
-    HiLog::Debug(LABEL, "[AllocShareBuffer] IN byteCount=%{public}llu",
-        static_cast<unsigned long long>(byteCount));
-
-    HiLog::Debug(LABEL, "[AllocShareBuffer] OUT");
-    return true;
-}
-
-bool AllocHeapBuffer(DecodeContext &context, uint64_t byteCount)
-{
-    HiLog::Debug(LABEL, "[AllocHeapBuffer] IN byteCount=%{public}llu",
-        static_cast<unsigned long long>(byteCount));
-
-    HiLog::Debug(LABEL, "[AllocHeapBuffer] OUT");
-    return true;
-}
 } // namespace
 
 SvgDecoder::SvgDecoder()
@@ -190,43 +171,6 @@ uint32_t SvgDecoder::GetTopLevelImageNum(uint32_t &num)
 // return background size but not specific frame size, cause of frame drawing on background.
 uint32_t SvgDecoder::GetImageSize(uint32_t index, PlSize &size)
 {
-    if (index >= SVG_IMAGE_NUM) {
-        HiLog::Error(LABEL, "[GetImageSize] decode image index[%{public}u], out of range[%{public}u].",
-            index, SVG_IMAGE_NUM);
-        return Media::ERR_IMAGE_INVALID_PARAMETER;
-    }
-
-    HiLog::Debug(LABEL, "[GetImageSize] IN index=%{public}u", index);
-
-    if (state_ < SvgDecodingState::SOURCE_INITED) {
-        HiLog::Error(LABEL, "[GetImageSize] get image size failed for state %{public}d.", state_);
-        return ERR_MEDIA_INVALID_OPERATION;
-    }
-
-    if (state_ >= SvgDecodingState::BASE_INFO_PARSED) {
-        DoGetImageSize(index, size);
-        HiLog::Debug(LABEL, "[GetImageSize] OUT size=(%{public}u, %{public}u)", size.width, size.height);
-        return Media::SUCCESS;
-    }
-
-    // only state SvgDecodingState::SOURCE_INITED and SvgDecodingState::BASE_INFO_PARSING can go here.
-    uint32_t ret = DoDecodeHeader();
-    if (ret != Media::SUCCESS) {
-        HiLog::Error(LABEL, "[GetImageSize] decode header error on get image size, ret:%{public}u.", ret);
-        state_ = SvgDecodingState::BASE_INFO_PARSING;
-        return ret;
-    }
-
-    ret = DoGetImageSize(index, size);
-    if (ret != Media::SUCCESS) {
-        HiLog::Error(LABEL, "[GetImageSize] do get image size, ret:%{public}u.", ret);
-        state_ = SvgDecodingState::BASE_INFO_PARSING;
-        return ret;
-    }
-
-    state_ = SvgDecodingState::BASE_INFO_PARSED;
-
-    HiLog::Debug(LABEL, "[GetImageSize] OUT size=(%{public}u, %{public}u)", size.width, size.height);
     return Media::SUCCESS;
 }
 
@@ -240,22 +184,6 @@ bool SvgDecoder::AllocBuffer(DecodeContext &context)
     }
 
     bool ret = true;
-    if (context.pixelsBuffer.buffer == nullptr) {
-        auto svgSize = svgDom_->containerSize();
-        if (svgSize.isEmpty()) {
-            HiLog::Error(LABEL, "[AllocBuffer] size is empty.");
-            return false;
-        }
-        uint32_t width = static_cast<uint32_t>(svgSize.width());
-        uint32_t height = static_cast<uint32_t>(svgSize.height());
-        uint64_t byteCount = static_cast<uint64_t>(width) * height * SVG_BYTES_PER_PIXEL;
-        if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
-            ret = AllocShareBuffer(context, byteCount);
-        } else {
-            ret = AllocHeapBuffer(context, byteCount);
-        }
-    }
-
     HiLog::Debug(LABEL, "[AllocBuffer] OUT ret=%{public}d", ret);
     return ret;
 }
@@ -300,22 +228,6 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
 uint32_t SvgDecoder::DoGetImageSize(uint32_t index, PlSize &size)
 {
     HiLog::Debug(LABEL, "[DoGetImageSize] IN index=%{public}u", index);
-
-    if (svgDom_ == nullptr) {
-        HiLog::Error(LABEL, "[DoGetImageSize] DOM is null.");
-        return Media::ERROR;
-    }
-
-    auto svgSize = svgDom_->containerSize();
-    if (svgSize.isEmpty()) {
-        HiLog::Error(LABEL, "[DoGetImageSize] size is empty.");
-        return Media::ERROR;
-    }
-
-    size.width = static_cast<uint32_t>(svgSize.width());
-    size.height = static_cast<uint32_t>(svgSize.height());
-
-    HiLog::Debug(LABEL, "[DoGetImageSize] OUT size=(%{public}u, %{public}u)", size.width, size.height);
     return Media::SUCCESS;
 }
 
