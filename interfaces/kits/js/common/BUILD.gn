@@ -211,7 +211,6 @@ if (use_clang_ios) {
       "hichecker_native:libhichecker",
       "hitrace_native:hitrace_meter",
     ]
-    relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
     part_name = "multimedia_image_framework"
   }
