@@ -152,6 +152,12 @@ namespace OHOS {
                 buffer = nullptr;
             }
         }
+
+        void ImageReceiver::BufferRelease(OHOS::sptr<OHOS::SurfaceBuffer> &buffer)
+        {
+            ReleaseBuffer(buffer);
+        }
+
         void ImageReceiverSurfaceListener ::OnBufferAvailable()
         {
             HiLog::Debug(LABEL, "OnBufferAvailable");

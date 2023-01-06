@@ -730,24 +730,30 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
 
     args.callBack = [](napi_env env, napi_status status, Context context) {
         IMAGE_LINE_IN();
+        napi_value result = nullptr;
+
         auto native = context->constructor_->imageReceiver_;
         if (native == nullptr) {
-            IMAGE_ERR("Native instance is nullptr");
-            FailedCallbackRoutine(env, context, ERR_IMAGE_INIT_ABNORMAL);
-            return;
-        }
-        auto image = native->LastNativeImage();
-        if (image == nullptr) {
-            IMAGE_ERR("LastNativeImage is nullptr");
-            FailedCallbackRoutine(env, context, ERR_IMAGE_INIT_ABNORMAL);
-            return;
-        }
+            auto surfacebuffer = native->ReadLastImage();
 #ifdef IMAGE_DEBUG_FLAG
         if (context->constructor_->isCallBackTest) {
             context->constructor_->isCallBackTest = false;
 #ifdef IMAGE_SAVE_BUFFER_TO_PIC
             DoCallBackTest(image->GetBuffer());
 #endif
+            result = ImageNapi::Create(env, std::make_shared<NativeImage>(surfacebuffer, native));
+            if (result == nullptr) {
+                IMAGE_ERR("ImageNapi Create failed");
+            }
+        } else {
+            IMAGE_ERR("Native instance is nullptr");
+        }
+
+        if (result == nullptr) {
+            napi_get_undefined(env, &result);
+            context->status = ERR_IMAGE_INIT_ABNORMAL;
+        } else {
+            context->status = SUCCESS;
         }
 #endif
         napi_value result = ImageNapi::Create(env, image);
@@ -778,24 +784,30 @@ napi_value ImageReceiverNapi::JsReadNextImage(napi_env env, napi_callback_info i
 
     args.callBack = [](napi_env env, napi_status status, Context context) {
         IMAGE_LINE_IN();
+        napi_value result = nullptr;
+
         auto native = context->constructor_->imageReceiver_;
         if (native == nullptr) {
-            IMAGE_ERR("Native instance is nullptr");
-            FailedCallbackRoutine(env, context, ERR_IMAGE_INIT_ABNORMAL);
-            return;
-        }
-        auto image = native->NextNativeImage();
-        if (image == nullptr) {
-            IMAGE_ERR("NextNativeImage is nullptr");
-            FailedCallbackRoutine(env, context, ERR_IMAGE_INIT_ABNORMAL);
-            return;
-        }
+            auto surfacebuffer = native->ReadNextImage();
 #ifdef IMAGE_DEBUG_FLAG
         if (context->constructor_->isCallBackTest) {
             context->constructor_->isCallBackTest = false;
 #ifdef IMAGE_SAVE_BUFFER_TO_PIC
             DoCallBackTest(image->GetBuffer());
 #endif
+            result = ImageNapi::Create(env, std::make_shared<NativeImage>(surfacebuffer, native));
+            if (result == nullptr) {
+                IMAGE_ERR("ImageNapi Create failed");
+            }
+        } else {
+            IMAGE_ERR("Native instance is nullptr");
+        }
+
+        if (result == nullptr) {
+            napi_get_undefined(env, &result);
+            context->status = ERR_IMAGE_INIT_ABNORMAL;
+        } else {
+            context->status = SUCCESS;
         }
 #endif
         napi_value result = ImageNapi::Create(env, image);

@@ -31,10 +31,9 @@ namespace {
 
 namespace OHOS {
 namespace Media {
-NativeImage::NativeImage(sptr<SurfaceBuffer> buffer, IBufferProcessor releaser) :
-buffer_(buffer), releaser_(releaser)
-{
-}
+NativeImage::NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser) :
+    buffer_(buffer), releaser_(releaser)
+{}
 
 struct YUVData {
     std::vector<uint8_t> y;
@@ -199,6 +198,7 @@ static std::unique_ptr<NativeComponent> BuildComponent(size_t size, int32_t row,
     std::unique_ptr<NativeComponent> component = std::make_unique<NativeComponent>();
     component->pixelStride = pixel;
     component->rowStride = row;
+    component->size = size;
     if (vir != nullptr) {
         component->virAddr = vir;
     } else {
@@ -237,7 +237,9 @@ NativeComponent* NativeImage::CreateComponent(int32_t type, size_t size, int32_t
 
 NativeComponent* NativeImage::CreateCombineComponent(int32_t type)
 {
-    return CreateComponent(type, NUM_0, NUM_0, NUM_0, GetSurfaceBufferAddr());
+    uint64_t size = NUM_0;
+    GetDataSize(size);
+    return CreateComponent(type, static_cast<size_t>(size), NUM_0, NUM_0, GetSurfaceBufferAddr());
 }
 int32_t NativeImage::GetSize(int32_t &width, int32_t &height)
 {
@@ -324,7 +326,10 @@ void NativeImage::release()
             components_.erase(iter);
         }
     }
-    releaser_.BufferRelease(buffer_);
+    if (releaser_ != nullptr && buffer_ != nullptr) {
+        releaser_->BufferRelease(buffer_);
+    }
+    releaser_ = nullptr;
     buffer_ = nullptr;
 }
 } // namespace Media

@@ -37,16 +37,16 @@ struct ImageAsyncContext {
     napi_async_work work = nullptr;
     napi_deferred deferred = nullptr;
     napi_ref callbackRef = nullptr;
-    napi_ref thisRef = nullptr;
+    napi_value thisVar = nullptr;
     ImageNapi *napi = nullptr;
     uint32_t status;
     int32_t componentType;
     NativeImage* image = nullptr;
     NativeComponent* component = nullptr;
-    bool isTestContext = false;
 };
-ImageHolderManager<NativeImage> ImageNapi::sNativeImageHolder_;
+std::shared_ptr<NativeImage> ImageNapi::sNative_ = nullptr;
 thread_local napi_ref ImageNapi::sConstructor_ = nullptr;
+static bool g_receiverTest = false;
 
 ImageNapi::ImageNapi()
 {}
@@ -77,6 +77,7 @@ napi_value ImageNapi::Init(napi_env env, napi_value exports)
     size_t size = IMG_ARRAY_SIZE(props);
     napi_value thisVar = nullptr;
     auto name = MY_NAME.c_str();
+
     if (napi_define_class(env, name, SIZE_MAX, Constructor, nullptr, size, props, &thisVar) != napi_ok) {
         IMAGE_ERR("Define class failed");
         return exports;
@@ -125,37 +126,24 @@ napi_value ImageNapi::Constructor(napi_env env, napi_callback_info info)
     napi_value argv[NUM1];
 
     IMAGE_FUNCTION_IN();
-    napi_get_undefined(env, &undefineVar);
-    status = napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
-    if (status != napi_ok || thisVar == nullptr || argc != NUM1) {
-        IMAGE_ERR("Constructor Failed to napi_get_cb_info");
-        return undefineVar;
-    }
-    std::string id;
-    if (!ImageNapiUtils::GetUtf8String(env, argv[NUM0], id) || (id.size() == NUM0)) {
-        IMAGE_ERR("Failed to parse native image id");
-        return undefineVar;
-    }
-    std::unique_ptr<ImageNapi> napi = std::make_unique<ImageNapi>();
-    napi->native_ = sNativeImageHolder_.get(id);
-    napi->isTestImage_ = false;
-    if (napi->native_ == nullptr) {
-        if (MY_NAME.compare(id.c_str()) == 0) {
-            napi->isTestImage_ = true;
-        } else {
-            IMAGE_ERR("Failed to get native image");
-            return undefineVar;
+    status = napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+    if (status == napi_ok && thisVar != nullptr) {
+        std::unique_ptr<ImageNapi> napi = std::make_unique<ImageNapi>();
+        if (napi != nullptr) {
+            napi->native_ = sNative_;
+            sNative_ = nullptr;
+            status = napi_wrap(env, thisVar, reinterpret_cast<void *>(napi.get()),
+                               ImageNapi::Destructor, nullptr, nullptr);
+            if (status == napi_ok) {
+                IMAGE_FUNCTION_OUT();
+                napi.release();
+                return thisVar;
+            } else {
+                IMAGE_ERR("Failure wrapping js to native napi");
+            }
         }
     }
-    status = napi_wrap(env, thisVar,
-        reinterpret_cast<void *>(napi.get()), ImageNapi::Destructor, nullptr, nullptr);
-    if (status != napi_ok) {
-        IMAGE_ERR("Failure wrapping js to native napi");
-        return undefineVar;
-    }
-
-    napi.release();
-    IMAGE_FUNCTION_OUT();
+    napi_get_undefined(env, &thisVar);
     return thisVar;
 }
 
@@ -166,45 +154,19 @@ void ImageNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
     }
 }
 
-napi_value ImageNapi::Create(napi_env env)
-{
-    napi_value constructor = nullptr;
-    napi_value result = nullptr;
-    napi_value argv[NUM1];
-
-    IMAGE_FUNCTION_IN();
-    if (env == nullptr) {
-        IMAGE_ERR("Input args is invalid");
-        return nullptr;
-    }
-    if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok && constructor != nullptr) {
-        if (napi_create_string_utf8(env, MY_NAME.c_str(), NAPI_AUTO_LENGTH, &(argv[NUM0])) != napi_ok) {
-            IMAGE_ERR("Create native image id Failed");
-        }
-        if (napi_new_instance(env, constructor, NUM1, argv, &result) != napi_ok) {
-            IMAGE_ERR("New instance could not be obtained");
-        }
-    }
-    IMAGE_FUNCTION_OUT();
-    return result;
-}
 napi_value ImageNapi::Create(napi_env env, std::shared_ptr<NativeImage> nativeImage)
 {
     napi_value constructor = nullptr;
     napi_value result = nullptr;
-    napi_value argv[NUM1];
 
     IMAGE_FUNCTION_IN();
     if (env == nullptr || nativeImage == nullptr) {
-        IMAGE_ERR("Input args is invalid %{public}p vs %{public}p", env, nativeImage.get());
+        IMAGE_ERR("Input args is invalid");
         return nullptr;
     }
     if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok && constructor != nullptr) {
-        auto id = sNativeImageHolder_.save(nativeImage);
-        if (napi_create_string_utf8(env, id.c_str(), NAPI_AUTO_LENGTH, &(argv[NUM0])) != napi_ok) {
-            IMAGE_ERR("Create native image id Failed");
-        }
-        if (napi_new_instance(env, constructor, NUM1, argv, &result) != napi_ok) {
+        sNative_ = nativeImage;
+        if (napi_new_instance(env, constructor, NUM0, nullptr, &result) != napi_ok) {
             IMAGE_ERR("New instance could not be obtained");
         }
     }
@@ -247,6 +209,8 @@ static bool JsCreateWork(napi_env env, const char* name, AsyncExecCallback exec,
         IMAGE_ERR("fail to create async work %{public}d", status);
         return false;
     }
+    return true;
+}
 
     if (napi_queue_async_work(env, ctx->work) != napi_ok) {
         IMAGE_ERR("fail to queue async work");
@@ -254,7 +218,6 @@ static bool JsCreateWork(napi_env env, const char* name, AsyncExecCallback exec,
     }
     return true;
 }
-
 NativeImage* ImageNapi::GetNative()
 {
     if (native_ != nullptr) {
@@ -281,8 +244,8 @@ static std::unique_ptr<ImageAsyncContext> UnwrapContext(napi_env env, napi_callb
         IMAGE_ERR("fail to unwrap constructor_");
         return nullptr;
     }
+    ctx->thisVar = thisVar;
     ctx->image = ctx->napi->GetNative();
-    napi_create_reference(env, thisVar, NUM1, &(ctx->thisRef));
     return ctx;
 }
 
@@ -374,11 +337,6 @@ napi_value ImageNapi::JSGetClipRect(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
-    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
-        const int32_t WIDTH = 8192;
-        const int32_t HEIGHT = 8;
-        return BuildJsRegion(env, WIDTH, HEIGHT, NUM0, NUM0);
-    }
     if (context == nullptr || context->image == nullptr) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
@@ -400,11 +358,6 @@ napi_value ImageNapi::JsGetSize(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
-    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
-        const int32_t WIDTH = 8192;
-        const int32_t HEIGHT = 8;
-        return BuildJsSize(env, WIDTH, HEIGHT);
-    }
     if (context == nullptr || context->image == nullptr) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
@@ -426,11 +379,6 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
-    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
-        const int32_t FORMAT = 12;
-        napi_create_int32(env, FORMAT, &result);
-        return result;
-    }
     if (context == nullptr || context->image == nullptr) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
@@ -446,6 +394,21 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
     return result;
 }
 
+static void NapiRelease(napi_env env, ImageAsyncContext* context)
+{
+    if (context == nullptr) {
+        return;
+    }
+
+    if (context->napi != nullptr) {
+        delete context->napi;
+        context->napi = nullptr;
+    }
+    if (context->thisVar != nullptr) {
+        napi_wrap(env, context->thisVar, nullptr, nullptr, nullptr, nullptr);
+    }
+}
+
 static void JSReleaseCallBack(napi_env env, napi_status status,
                               ImageAsyncContext* context)
 {
@@ -457,6 +420,10 @@ static void JSReleaseCallBack(napi_env env, napi_status status,
         IMAGE_ERR("context is nullptr");
         return;
     }
+
+    context->napi->NativeRelease();
+    context->status = SUCCESS;
+    NapiRelease(env, context);
 
     if (context->thisRef != nullptr) {
         napi_value thisVar;
@@ -489,8 +456,9 @@ napi_value ImageNapi::JsRelease(napi_env env, napi_callback_info info)
         IMAGE_ERR("fail to unwrap constructor_");
         return result;
     }
+
     if (argc == NUM1) {
-        if (!JsGetCallbackFunc(env, argv[NUM0], &(context->callbackRef))) {
+        if (JsGetCallbackFunc(env, argv[NUM0], &(context->callbackRef))) {
             IMAGE_ERR("Unsupport arg 0 type");
             return result;
         }
@@ -523,8 +491,7 @@ static inline bool IsEqual(const int32_t& check,  ImageFormat format)
 {
     return (check == int32_t(format));
 }
-static inline bool IsEqual(const int32_t& check,  ComponentType type)
-{
+static inline bool IsEqual(const int32_t& check,  ComponentType type) {
     return (check == int32_t(type));
 }
 static inline bool IsYUVComponent(const int32_t& type)
@@ -558,37 +525,12 @@ static bool BuildJsComponentObject(napi_env env, int32_t type, uint8_t* buffer,
     BuildIntProperty(env, "pixelStride", component->pixelStride, *result);
     return true;
 }
-static void TestGetComponentCallBack(napi_env env, napi_status status, ImageAsyncContext* context)
-{
-    if (context == nullptr) {
-        HiLog::Error(LABEL, "Invalid input context");
-        return;
-    }
-    napi_value result;
-    napi_value array;
-    void *nativePtr = nullptr;
-    if (napi_create_arraybuffer(env, NUM1, &nativePtr, &array) != napi_ok || nativePtr == nullptr) {
-        return;
-    }
-    napi_create_object(env, &result);
-    napi_set_named_property(env, result, "byteBuffer", array);
-    BuildIntProperty(env, "componentType", context->componentType, result);
-    BuildIntProperty(env, "rowStride", NUM0, result);
-    BuildIntProperty(env, "pixelStride", NUM0, result);
-    context->status = SUCCESS;
-    CommonCallbackRoutine(env, context, result);
-}
 
 static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncContext* context)
 {
     IMAGE_FUNCTION_IN();
     napi_value result;
     napi_get_undefined(env, &result);
-
-    if (context != nullptr && context->napi != nullptr && context->isTestContext) {
-        TestGetComponentCallBack(env, status, context);
-        return;
-    }
 
     if (context == nullptr) {
         HiLog::Error(LABEL, "Invalid input context");
@@ -606,26 +548,6 @@ static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncC
     if (component->virAddr != nullptr) {
         buffer = component->virAddr;
     } else {
-        buffer = component->raw.data();
-    }
-
-    if (buffer == nullptr || component->size == NUM0) {
-        HiLog::Error(LABEL, "Invalid buffer");
-        CommonCallbackRoutine(env, context, result);
-        return;
-    }
-
-    if (BuildJsComponentObject(env, context->componentType, buffer, component, &result)) {
-        context->status = SUCCESS;
-    } else {
-        HiLog::Error(LABEL, "napi_create_arraybuffer failed!");
-    }
-
-    IMAGE_FUNCTION_OUT();
-    CommonCallbackRoutine(env, context, result);
-}
-static void JsGetComponentExec(napi_env env, ImageAsyncContext* context)
-{
     if (context == nullptr || context->napi == nullptr) {
         HiLog::Error(LABEL, "Invalid input context");
         return;
@@ -637,7 +559,6 @@ static void JsGetComponentExec(napi_env env, ImageAsyncContext* context)
         return;
     }
     context->component = native->GetComponent(context->componentType);
-}
 
 static bool JsGetComponentArgs(napi_env env, size_t argc, napi_value* argv, ImageAsyncContext* context)
 {
@@ -652,18 +573,13 @@ static bool JsGetComponentArgs(napi_env env, size_t argc, napi_value* argv, Imag
     }
 
     auto native = context->napi->GetNative();
-    if (native == nullptr && !context->isTestContext) {
+    if (native == nullptr) {
         IMAGE_ERR("native is nullptr");
         return false;
     }
 
     int32_t format = NUM0;
-    if (context->isTestContext) {
-        const int32_t TEST_FORMAT = 12;
-        format = TEST_FORMAT;
-    } else {
-        native->GetFormat(format);
-    }
+    native->GetFormat(format);
 
     if (!CheckComponentType(context->componentType, format)) {
         IMAGE_ERR("Unsupport component type 0 value: %{public}d", context->componentType);

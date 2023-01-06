@@ -42,7 +42,7 @@ public:
     virtual ~SurfaceBufferReleaseListener()= default;
     virtual void OnSurfaceBufferRelease() = 0;
 };
-class ImageCreator {
+class ImageCreator : public IBufferProcessor {
 public:
     sptr<IConsumerSurface> creatorConsumerSurface_ = nullptr;
     sptr<Surface> creatorProducerSurface_ = nullptr;
@@ -75,8 +75,9 @@ public:
     {
         surfaceBufferReleaseListener_ = release;
     };
-    sptr<IConsumerSurface> GetCreatorSurface();
-    static sptr<IConsumerSurface> getSurfaceById(std::string id);
+    void BufferRelease(sptr<SurfaceBuffer>& buffer) override;
+    sptr<Surface> GetCreatorSurface();
+    static sptr<Surface> getSurfaceById(std::string id);
     void ReleaseCreator();
     static GSError OnBufferRelease(sptr<SurfaceBuffer> &buffer);
     static std::map<uint8_t*, ImageCreator*> bufferCreatorMap_;

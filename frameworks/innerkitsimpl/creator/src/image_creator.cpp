@@ -284,6 +284,11 @@ sptr<IConsumerSurface> ImageCreator::getSurfaceById(std::string id)
     HiLog::Debug(LABEL, "getSurfaceByCreatorId");
     return surface;
 }
+void ImageCreator::BufferRelease(OHOS::sptr<OHOS::SurfaceBuffer> &buffer)
+{
+    // No need release buffer here
+    (void)buffer;
+}
 void ImageCreator::ReleaseCreator()
 {
     ImageCreator::~ImageCreator();

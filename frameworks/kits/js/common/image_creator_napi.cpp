@@ -568,10 +568,13 @@ napi_value ImageCreatorNapi::JsDequeueImage(napi_env env, napi_callback_info inf
 
         auto native = context->constructor_->imageCreator_;
         if (native != nullptr) {
-        result = ImageNapi::Create(env, native->DequeueNativeImage());
-        if (result == nullptr) {
-            IMAGE_ERR("ImageNapi Create failed");
-        }
+            auto surfacebuffer = native->DequeueImage();
+            if (surfacebuffer != nullptr) {
+                result = ImageNapi::Create(env, std::make_shared<NativeImage>(surfacebuffer, native));
+                if (result == nullptr) {
+                    IMAGE_ERR("ImageNapi Create failed");
+                }
+            }
         } else {
             IMAGE_ERR("Native instance is nullptr");
         }
@@ -607,7 +610,7 @@ static bool JsQueueArgs(napi_env env, size_t argc, napi_value* argv,
         auto argType0 = ImageNapiUtils::getType(env, argv[PARAM0]);
         if (argType0 == napi_object) {
             imageNapi_ = ImageNapi::GetNativeImage(env, argv[PARAM0]);
-            if (imageNapi_ == nullptr && !IsTestImageArgs(env, argv[PARAM0])) {
+            if (imageNapi_ == nullptr) {
                 ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
                     "Could not get queue type object");
                 return false;
@@ -659,8 +662,14 @@ void ImageCreatorNapi::JsQueueImageCallBack(napi_env env, napi_status status,
         if (SUCCESS != context->imageNapi_->CombineYUVComponents()) {
             IMAGE_ERR("JsQueueImageCallBack: try to combine componests");
         }
-        native->QueueNativeImage(context->imageNapi_);
-        context->status = SUCCESS;
+        auto surfacebuffer = context->imageNapi_->GetBuffer();
+        if (surfacebuffer != nullptr) {
+            native->QueueImage(surfacebuffer);
+            context->status = SUCCESS;
+        } else {
+            IMAGE_ERR("Surface buffer is nullptr");
+            context->status = ERR_IMAGE_INIT_ABNORMAL;
+        }
     }
     IMAGE_LINE_OUT();
     CommonCallbackRoutine(env, context, result);
