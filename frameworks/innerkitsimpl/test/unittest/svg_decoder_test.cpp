@@ -12,12 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <gtest/gtest.h>
 #include "svg_decoder.h"
 #include "buffer_source_stream.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
+
 namespace OHOS {
 namespace ImagePlugin {
 static constexpr size_t NUMBER_ONE = 1;
@@ -31,11 +33,13 @@ public:
 class MockInputDataStream : public SourceStream {
 public:
     MockInputDataStream() = default;
+    ~MockInputDataStream() {}
 
     uint32_t UpdateData(const uint8_t *data, uint32_t size, bool isCompleted) override
     {
         return ERR_IMAGE_DATA_UNSUPPORT;
     }
+
     bool Read(uint32_t desiredSize, DataStreamBuffer &outData) override
     {
         if (streamSize == NUMBER_ONE) {
@@ -102,7 +106,6 @@ public:
         streamSize = size;
     }
 
-    ~MockInputDataStream() {}
 private:
     bool returnValue_ = false;
     size_t streamSize = 0;
@@ -119,7 +122,7 @@ HWTEST_F(SvgDecoderTest, GetImageSizeTest001, TestSize.Level3)
     GTEST_LOG_(INFO) << "SvgDecoderTest: GetImageSizeTest001 start";
     auto svgDecoder = std::make_shared<SvgDecoder>();
     int size = 1000;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     ImagePlugin::PlSize plSize;
     svgDecoder->SetSource(*streamPtr.release());

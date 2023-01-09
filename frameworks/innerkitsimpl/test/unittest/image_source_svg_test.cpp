@@ -23,10 +23,12 @@ using namespace testing::ext;
 using namespace OHOS::Media;
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::ImageSourceUtil;
+
 namespace OHOS {
 namespace Multimedia {
 namespace {
 static constexpr HiLogLabel LABEL_TEST = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageSourceSvgTest" };
+static const std::string SVG_FORMAT_TYPE = "image/svg+xml";
 static const std::string INPUT_PATH = "/data/local/tmp/image/";
 static const std::string OUTPUT_PATH = "/data/local/tmp/image/output_";
 static const std::string OUTPUT_EXT = ".jpg";
@@ -57,7 +59,7 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode001, TestSize.Level3)
      */
     uint32_t errorCode = 0;
     SourceOptions opts;
-    opts.formatHint = "image/svg+xml";
+    opts.formatHint = SVG_FORMAT_TYPE;
     const std::string inName = INPUT_PATH + testName;
     auto imageSource = ImageSource::CreateImageSource(inName, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
@@ -101,7 +103,7 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecode002, TestSize.Level3)
      */
     uint32_t errorCode = 0;
     SourceOptions opts;
-    opts.formatHint = "image/svg+xml";
+    opts.formatHint = SVG_FORMAT_TYPE;
     const std::string inName = INPUT_PATH + testName;
     auto imageSource = ImageSource::CreateImageSource(inName, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
