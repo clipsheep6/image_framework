@@ -38,6 +38,9 @@ public:
     bool LockPixelMap();
     void UnlockPixelMap();
 
+    static void NativeRelease(napi_env env, napi_value pixelmap);
+    static void DeleteReference(napi_env env);
+
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
     static void Destructor(napi_env env, void *nativeObject, void *finalize);

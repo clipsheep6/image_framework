@@ -73,6 +73,7 @@ struct PixelMapAsyncContext {
 #if !defined(_IOS) && !defined(_ANDROID)
     std::shared_ptr<OHOS::ColorManager::ColorSpace> colorSpace;
 #endif
+    napi_value thisVar = nullptr;
 };
 
 static PixelFormat ParsePixlForamt(int32_t val)
@@ -549,6 +550,23 @@ void PixelMapNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
         nativeObject = nullptr;
     }
 }
+
+void PixelMapNapi::NativeRelease(napi_env env, napi_value value)
+{
+    PixelMapNapi *pixmapNapi = nullptr;
+    auto status = napi_unwrap(env, value, reinterpret_cast<void**>(&pixmapNapi));
+    if (status != napi_ok || pixmapNapi == nullptr) {
+        return;
+    }
+    delete pixmapNapi;
+    napi_wrap(env, value, nullptr, nullptr, nullptr, nullptr);
+}
+
+void PixelMapNapi::DeleteReference(napi_env env)
+{
+    napi_delete_reference(env, sConstructor_);
+}
+
 
 STATIC_EXEC_FUNC(CreatePixelMap)
 {
@@ -1302,6 +1320,7 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
     } else {
         napi_get_undefined(env, &result);
     }
+    asyncContext->thisVar = thisVar;
 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Release",
         [](napi_env env, void *data)
@@ -1317,6 +1336,12 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
 		            context->nConstructor->nativePixelMap_ = nullptr;
 		            context->nConstructor->nativeInner_ = nullptr;
 		        }
+
+                if (context != nullptr && context->thisVar != nullptr) {
+                    NativeRelease(env, context->thisVar);
+                }
+
+                // DeleteReference(env);
                 context->status = SUCCESS;
             }
         }, EmptyResultComplete, asyncContext, asyncContext->work);
