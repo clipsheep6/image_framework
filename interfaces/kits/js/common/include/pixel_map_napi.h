@@ -77,6 +77,7 @@ private:
 
     void release();
     static thread_local napi_ref sConstructor_;
+    static thread_local uint32_t sCount_;
     static std::shared_ptr<PixelMap> sPixelMap_;
 
     napi_env env_ = nullptr;
