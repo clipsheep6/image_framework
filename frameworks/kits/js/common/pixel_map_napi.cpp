@@ -19,6 +19,7 @@
 #include "image_napi_utils.h"
 #include "image_pixel_map_napi.h"
 #include "image_trace.h"
+#include "securec.h"
 #if !defined(_IOS) && !defined(_ANDROID)
 #include "color_space_object_convertor.h"
 #include "js_runtime_utils.h"
@@ -40,7 +41,9 @@ namespace Media {
 
 static const std::string CLASS_NAME = "PixelMap";
 thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
+thread_local uint32_t PixelMapNapi::sCount_ = 0;
 std::shared_ptr<PixelMap> PixelMapNapi::sPixelMap_ = nullptr;
+
 
 struct PositionArea {
     void* pixels;
@@ -73,6 +76,7 @@ struct PixelMapAsyncContext {
 #if !defined(_IOS) && !defined(_ANDROID)
     std::shared_ptr<OHOS::ColorManager::ColorSpace> colorSpace;
 #endif
+    napi_value thisVar = nullptr;
 };
 
 static PixelFormat ParsePixlForamt(int32_t val)
@@ -511,6 +515,24 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_UnAccessPix
     return OHOS_IMAGE_RESULT_SUCCESS;
 }
 
+static bool isTestMode(std::shared_ptr<PixelMap> pixelmap)
+{
+    if (pixelmap == nullptr) {
+        return false;
+    }
+    uint8_t* addr = static_cast<uint8_t*>(pixelmap->GetWritablePixels());
+    if (addr[0] == 0x12 && addr[1] == 0x34 && addr[2] == 0x56 && addr[4] == 0x78) {
+        return true;
+    }
+    return false;
+}
+
+static void RemoveWrap(napi_env env, napi_value value)
+{
+    void* tmp = nullptr;
+    napi_remove_wrap(env, value, &tmp);
+}
+
 napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 {
     napi_value undefineVar = nullptr;
@@ -520,10 +542,11 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     napi_get_undefined(env, &thisVar);
 
-    HiLog::Debug(LABEL, "Constructor IN");
+    PixelMap::MyLog("aaaa Constructor IN");
     IMG_JS_NO_ARGS(env, info, status, thisVar);
 
     IMG_NAPI_CHECK_RET(IMG_IS_READY(status, thisVar), undefineVar);
+    bool isTest = isTestMode(sPixelMap_);
     std::unique_ptr<PixelMapNapi> pPixelMapNapi = std::make_unique<PixelMapNapi>();
 
     IMG_NAPI_CHECK_RET(IMG_NOT_NULL(pPixelMapNapi), undefineVar);
@@ -534,16 +557,24 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 
     status = napi_wrap(env, thisVar, reinterpret_cast<void*>(pPixelMapNapi.get()),
         PixelMapNapi::Destructor, nullptr, nullptr);
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), undefineVar, HiLog::Error(LABEL, "Failure wrapping js to native napi"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), undefineVar, PixelMap::MyLog("Failure wrapping js to native napi"));
 
+    sCount_++;
+    PixelMap::MyLogCount(true, sCount_);
     pPixelMapNapi.release();
     sPixelMap_ = nullptr;
-
+    if (isTest) {
+        // NOTE: for test!!!!!!!!!!!!
+        RemoveWrap(env, thisVar);
+    }
+    PixelMap::MyLog("aaaa Constructor OUT");
     return thisVar;
 }
 
 void PixelMapNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
 {
+    sCount_--;
+    PixelMap::MyLogCount(false, sCount_);
     if (nativeObject != nullptr) {
         delete reinterpret_cast<PixelMapNapi*>(nativeObject);
         nativeObject = nullptr;
@@ -1302,6 +1333,7 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
     } else {
         napi_get_undefined(env, &result);
     }
+    asyncContext->thisVar = thisVar;
 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Release",
         [](napi_env env, void *data)
@@ -1317,9 +1349,19 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
 		            context->nConstructor->nativePixelMap_ = nullptr;
 		            context->nConstructor->nativeInner_ = nullptr;
 		        }
+                
                 context->status = SUCCESS;
             }
-        }, EmptyResultComplete, asyncContext, asyncContext->work);
+        }, [](napi_env env, napi_status status, void *data){
+            auto context = static_cast<PixelMapAsyncContext*>(data);
+            if (context != nullptr && context->thisVar != nullptr) {
+                PixelMap::MyLog("aaaa napi_remove_wrap !!!");
+                RemoveWrap(env, context->thisVar);
+                context->thisVar = nullptr;
+            }
+            EmptyResultComplete(env, status, data);
+        }
+        , asyncContext, asyncContext->work);
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
@@ -1892,6 +1934,9 @@ void PixelMapNapi::release()
         }
         isRelease = true;
     }
+    env_ = nullptr;
+    nativePixelMap_ = nullptr;
+    nativeInner_ = nullptr;
 }
 }  // namespace Media
 }  // namespace OHOS

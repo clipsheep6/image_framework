@@ -1663,5 +1663,17 @@ uint32_t PixelMap::crop(const Rect &rect)
         return *grColorSpace_;
     }
 #endif
+void PixelMap::MyLogCount(bool isConstructor, uint32_t count)
+{
+    HiLog::Info(LABEL, isConstructor?"aaaa Constructor %{public}u":"aaaa Destructor %{public}u", count);
+}
+void PixelMap::MyLog(const char *fmt, ...)
+{
+    va_list args; 
+    va_start(args, fmt); 
+    HiLog::Info(LABEL, fmt, args);
+    va_end(args);
+}
+
 } // namespace Media
 } // namespace OHOS

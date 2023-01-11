@@ -129,6 +129,8 @@ public:
 
     NATIVEEXPORT bool Marshalling(Parcel &data) const override;
     NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &data);
+    NATIVEEXPORT static void MyLog(const char *fmt, ...);
+    NATIVEEXPORT static void MyLogCount(bool isConstructor, uint32_t count);
 
 #ifdef IMAGE_COLORSPACE_FLAG
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----begin----
