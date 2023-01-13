@@ -734,14 +734,14 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
 
         auto native = context->constructor_->imageReceiver_;
         if (native == nullptr) {
-            auto surfacebuffer = native->ReadLastImage();
 #ifdef IMAGE_DEBUG_FLAG
-        if (context->constructor_->isCallBackTest) {
-            context->constructor_->isCallBackTest = false;
-#ifdef IMAGE_SAVE_BUFFER_TO_PIC
-            DoCallBackTest(image->GetBuffer());
+            auto surfacebuffer = native->ReadLastImage();
+            if (context->constructor_->isCallBackTest) {
+                context->constructor_->isCallBackTest = false;
+                DoCallBackTest(surfacebuffer);
+            }
 #endif
-            result = ImageNapi::Create(env, std::make_shared<NativeImage>(surfacebuffer, native));
+            result = ImageNapi::Create(env, native->LastNativeImage());
             if (result == nullptr) {
                 IMAGE_ERR("ImageNapi Create failed");
             }
@@ -788,14 +788,14 @@ napi_value ImageReceiverNapi::JsReadNextImage(napi_env env, napi_callback_info i
 
         auto native = context->constructor_->imageReceiver_;
         if (native == nullptr) {
-            auto surfacebuffer = native->ReadNextImage();
 #ifdef IMAGE_DEBUG_FLAG
-        if (context->constructor_->isCallBackTest) {
-            context->constructor_->isCallBackTest = false;
-#ifdef IMAGE_SAVE_BUFFER_TO_PIC
-            DoCallBackTest(image->GetBuffer());
+            auto surfacebuffer = native->ReadNextImage();
+            if (context->constructor_->isCallBackTest) {
+                context->constructor_->isCallBackTest = false;
+                DoCallBackTest(surfacebuffer);
+            }
 #endif
-            result = ImageNapi::Create(env, std::make_shared<NativeImage>(surfacebuffer, native));
+            result = ImageNapi::Create(env, native->NextNativeImage());
             if (result == nullptr) {
                 IMAGE_ERR("ImageNapi Create failed");
             }

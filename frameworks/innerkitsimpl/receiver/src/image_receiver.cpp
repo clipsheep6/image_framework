@@ -23,20 +23,25 @@
 
 namespace OHOS {
     namespace Media {
-        ImageReceiver::~ImageReceiver()
-        {
-            if (iraContext_ != nullptr) {
-                ImageReceiverManager::ReleaseReceiverById(iraContext_->GetReceiverKey());
-            }
-            if (receiverConsumerSurface_ != nullptr) {
-                receiverConsumerSurface_->UnregisterConsumerListener();
-            }
-            receiverConsumerSurface_ = nullptr;
-            receiverProducerSurface_ = nullptr;
-            iraContext_ = nullptr;
-            surfaceBufferAvaliableListener_ = nullptr;
-            bufferProcessor_ = nullptr;
+
+class ImageReceiverBufferProcessor : public IBufferProcessor {
+public:
+    explicit ImageReceiverBufferProcessor(ImageReceiver* receiver) : receiver_(receiver)
+    {
+    }
+    ~ImageReceiverBufferProcessor()
+    {
+        receiver_ = nullptr;
+    }
+    void BufferRelease(sptr<SurfaceBuffer>& buffer) override
+    {
+        if (receiver_ != nullptr) {
+            receiver_->ReleaseBuffer(buffer);
         }
+    }
+private:
+    ImageReceiver* receiver_ = nullptr;
+};
         constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "imageReceiver"};
         using namespace OHOS::HiviewDFX;
 
@@ -152,12 +157,6 @@ namespace OHOS {
                 buffer = nullptr;
             }
         }
-
-        void ImageReceiver::BufferRelease(OHOS::sptr<OHOS::SurfaceBuffer> &buffer)
-        {
-            ReleaseBuffer(buffer);
-        }
-
         void ImageReceiverSurfaceListener ::OnBufferAvailable()
         {
             HiLog::Debug(LABEL, "OnBufferAvailable");

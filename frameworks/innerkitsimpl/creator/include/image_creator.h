@@ -42,7 +42,7 @@ public:
     virtual ~SurfaceBufferReleaseListener()= default;
     virtual void OnSurfaceBufferRelease() = 0;
 };
-class ImageCreator : public IBufferProcessor {
+class ImageCreator {
 public:
     sptr<IConsumerSurface> creatorConsumerSurface_ = nullptr;
     sptr<Surface> creatorProducerSurface_ = nullptr;
@@ -75,7 +75,6 @@ public:
     {
         surfaceBufferReleaseListener_ = release;
     };
-    void BufferRelease(sptr<SurfaceBuffer>& buffer) override;
     sptr<Surface> GetCreatorSurface();
     static sptr<Surface> getSurfaceById(std::string id);
     void ReleaseCreator();

@@ -38,6 +38,24 @@ ImageCreator::~ImageCreator()
     surfaceBufferAvaliableListener_ = nullptr;
 }
 
+class ImageCreatorBufferProcessor : public IBufferProcessor {
+public:
+    explicit ImageCreatorBufferProcessor(ImageCreator* creator) : creator_(creator)
+    {
+    }
+    ~ImageCreatorBufferProcessor()
+    {
+        creator_ = nullptr;
+    }
+    void BufferRelease(sptr<SurfaceBuffer>& buffer) override
+    {
+        // Do not release heare.
+        (void)buffer;
+    }
+private:
+    ImageCreator* creator_ = nullptr;
+};
+
 GSError ImageCreator::OnBufferRelease(sptr<SurfaceBuffer> &buffer)
 {
     HiLog::Info(LABEL, "OnBufferRelease");
@@ -283,11 +301,6 @@ sptr<IConsumerSurface> ImageCreator::getSurfaceById(std::string id)
     sptr<IConsumerSurface> surface = imageCreatorManager.GetSurfaceByKeyId(id);
     HiLog::Debug(LABEL, "getSurfaceByCreatorId");
     return surface;
-}
-void ImageCreator::BufferRelease(OHOS::sptr<OHOS::SurfaceBuffer> &buffer)
-{
-    // No need release buffer here
-    (void)buffer;
 }
 void ImageCreator::ReleaseCreator()
 {

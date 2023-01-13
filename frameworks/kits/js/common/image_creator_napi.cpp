@@ -568,13 +568,10 @@ napi_value ImageCreatorNapi::JsDequeueImage(napi_env env, napi_callback_info inf
 
         auto native = context->constructor_->imageCreator_;
         if (native != nullptr) {
-            auto surfacebuffer = native->DequeueImage();
-            if (surfacebuffer != nullptr) {
-                result = ImageNapi::Create(env, std::make_shared<NativeImage>(surfacebuffer, native));
-                if (result == nullptr) {
-                    IMAGE_ERR("ImageNapi Create failed");
-                }
-            }
+        result = ImageNapi::Create(env, native->DequeueNativeImage());
+        if (result == nullptr) {
+            IMAGE_ERR("ImageNapi Create failed");
+        }
         } else {
             IMAGE_ERR("Native instance is nullptr");
         }
@@ -662,14 +659,8 @@ void ImageCreatorNapi::JsQueueImageCallBack(napi_env env, napi_status status,
         if (SUCCESS != context->imageNapi_->CombineYUVComponents()) {
             IMAGE_ERR("JsQueueImageCallBack: try to combine componests");
         }
-        auto surfacebuffer = context->imageNapi_->GetBuffer();
-        if (surfacebuffer != nullptr) {
-            native->QueueImage(surfacebuffer);
-            context->status = SUCCESS;
-        } else {
-            IMAGE_ERR("Surface buffer is nullptr");
-            context->status = ERR_IMAGE_INIT_ABNORMAL;
-        }
+        native->QueueNativeImage(context->imageNapi_);
+        context->status = SUCCESS;
     }
     IMAGE_LINE_OUT();
     CommonCallbackRoutine(env, context, result);

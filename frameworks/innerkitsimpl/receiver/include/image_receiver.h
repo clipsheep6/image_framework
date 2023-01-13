@@ -40,7 +40,7 @@ public:
     virtual ~SurfaceBufferAvaliableListener()= default;
     virtual void OnSurfaceBufferAvaliable() = 0;
 };
-class ImageReceiver : public IBufferProcessor {
+class ImageReceiver {
 public:
     std::shared_ptr<ImageReceiverContext> iraContext_ = nullptr;
     sptr<IConsumerSurface> receiverConsumerSurface_ = nullptr;
@@ -56,6 +56,7 @@ public:
         receiverProducerSurface_ = nullptr;
         iraContext_ = nullptr;
         surfaceBufferAvaliableListener_ = nullptr;
+        bufferProcessor_ = nullptr;
     }
     static inline int32_t pipeFd[2] = {};
     static inline std::string OPTION_FORMAT = "image/jpeg";
@@ -81,7 +82,12 @@ public:
     }
     static sptr<Surface> getSurfaceById(std::string id);
     void ReleaseReceiver();
-    void BufferRelease(sptr<SurfaceBuffer>& buffer) override;
+
+    std::shared_ptr<IBufferProcessor> GetBufferProcessor();
+    std::shared_ptr<NativeImage> NextNativeImage();
+    std::shared_ptr<NativeImage> LastNativeImage();
+private:
+    std::shared_ptr<IBufferProcessor> bufferProcessor_;
 };
 class ImageReceiverSurfaceListener : public IBufferConsumerListener {
 public:
