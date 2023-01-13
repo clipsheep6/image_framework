@@ -84,8 +84,8 @@ ohos_shared_library("svgplugin") {
   }
 
   sources = [
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/src/plugin_export.cpp",
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/src/svg_decoder.cpp",
+    "src/plugin_export.cpp",
+    "src/svg_decoder.cpp",
   ]
 
   include_dirs = [
@@ -110,74 +110,24 @@ ohos_shared_library("svgplugin") {
     ]
   }
 
-  if (use_mingw_win) {
-    defines = image_decode_windows_defines
-    include_dirs +=
-        [ "//foundation/multimedia/image_framework/mock/native/include" ]
-    deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
+  deps = [
+    "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
+    "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+  ]
+  if (use_new_skia) {
+    deps += [
+      ":svgplugin_svg",
       "//third_party/skia",
-    ]
-  } else if (use_clang_mac) {
-    defines = image_decode_mac_defines
-    include_dirs += [
-      "//foundation/multimedia/image_framework/mock/native/include",
-      "//third_party/bounds_checking_function/include",
-    ]
-    deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
-      "//third_party/bounds_checking_function:libsec_static",
-      "//third_party/skia",
-    ]
-  } else if (use_clang_ios) {
-    defines = image_decode_ios_defines
-    include_dirs += [
-      "//foundation/multimedia/image_framework/mock/native/include",
-      "//foundation/multimedia/image_framework/mock/native/include/secure",
-    ]
-    deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
-      "//third_party/flutter/build/skia:ace_skia_ios",
-    ]
-  } else if (use_clang_android) {
-    defines = image_decode_android_defines
-    include_dirs += [
-      "//commonlibrary/c_utils/base/include",
-      "//foundation/multimedia/image_framework/mock/native/include",
-    ]
-    deps = [
-      "//commonlibrary/c_utils/base:utils",
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/mock/native:utils_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
-      "//third_party/flutter/build/skia:ace_skia_android",
     ]
   } else {
-    include_dirs += [ "//commonlibrary/c_utils/base/include" ]
-    deps = [
-      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
-    ]
-    if (use_new_skia) {
-      deps += [
-        ":svgplugin_svg",
-        "//third_party/skia",
-      ]
-    } else {
-      deps += [ "//third_party/flutter/build/skia/ohos:skia_ohos" ]
-    }
-
-    external_deps = [
-      "c_utils:utils",
-      "hiviewdfx_hilog_native:libhilog",
-    ]
+    deps += [ "//third_party/flutter/build/skia/ohos:skia_ohos" ]
   }
+
+  external_deps = [
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+  ]
+
   cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
   if (use_new_skia) {
     cflags += [ "-DUSE_NEWSVG_IN_NEWSKIA_FLAG" ]
