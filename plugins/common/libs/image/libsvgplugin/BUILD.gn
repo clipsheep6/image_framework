@@ -13,8 +13,6 @@
 
 import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
-image_subsystem = "//foundation/multimedia/image_framework"
-graphic_subsystem = "//foundation/graphic/graphic_2d"
 
 use_new_skia = false
 if (use_new_skia) {
