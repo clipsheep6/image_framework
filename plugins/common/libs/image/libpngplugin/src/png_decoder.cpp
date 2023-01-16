@@ -14,6 +14,8 @@
  */
 
 #include "png_decoder.h"
+#include "hitrace_meter.h"
+#include "image_trace.h"
 #include "media_errors.h"
 #include "pngpriv.h"
 #include "pngstruct.h"
@@ -935,6 +937,7 @@ uint32_t PngDecoder::ConfigInfo(const PixelDecodeOptions &opts)
 
 uint32_t PngDecoder::DoOneTimeDecode(DecodeContext &context)
 {
+    StartTrace(HITRACE_TAG_ZIMAGE, "Png DoOneTimeDecode");
     if (idatLength_ <= 0) {
         HiLog::Error(LABEL, "normal decode the image source incomplete.");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
@@ -956,6 +959,7 @@ uint32_t PngDecoder::DoOneTimeDecode(DecodeContext &context)
         return ret;
     }
     streamPosition_ = inputStreamPtr_->Tell();
+    FinishTrace(HITRACE_TAG_ZIMAGE);
     return SUCCESS;
 }
 
