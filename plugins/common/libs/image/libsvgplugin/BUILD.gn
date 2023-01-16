@@ -14,67 +14,6 @@
 import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 
-use_new_skia = false
-if (use_new_skia) {
-  import("//third_party/skia/gn/skia.gni")
-  import("//third_party/skia/modules/skshaper/skshaper.gni")
-  import("//third_party/skia/modules/skunicode/skunicode.gni")
-  import("//third_party/skia/modules/svg/svg.gni")
-
-  config("public_config") {
-    defines = [
-      "SK_ENABLE_SVG",
-      "SK_SHAPER_HARFBUZZ_AVAILABLE",
-      "SK_UNICODE_AVAILABLE",
-      "SKUNICODE_IMPLEMENTATION=1",
-    ]
-    include_dirs = [ "include" ]
-  }
-
-  skia_source_set("svgplugin_skunicode") {
-    check_includes = false
-    public_configs = [ ":public_config" ]
-
-    public = skia_unicode_public
-    sources = skia_unicode_sources
-    sources += skia_unicode_runtime_icu_sources
-
-    deps = [
-      "//third_party/icu/icu4c:shared_icui18n",
-      "//third_party/skia:skia",
-    ]
-  }
-
-  skia_source_set("svgplugin_skshaper") {
-    check_includes = false
-    public_configs = [ ":public_config" ]
-
-    public = skia_shaper_public
-    sources = skia_shaper_primitive_sources
-
-    include_dirs = [ "//third_party/skia/third_party/externals/harfbuzz/src" ]
-    sources += skia_shaper_harfbuzz_sources
-
-    deps = [
-      ":svgplugin_skunicode",
-      "//third_party/skia:skia",
-    ]
-  }
-
-  skia_source_set("svgplugin_svg") {
-    check_includes = false
-    public_configs = [ ":public_config" ]
-
-    public = skia_svg_public
-    sources = skia_svg_sources
-
-    deps = [
-      ":svgplugin_skshaper",
-      "//third_party/skia:skia",
-    ]
-  }
-}
-
 ohos_shared_library("svgplugin") {
   if (!use_clang_android && !use_clang_ios) {
     sanitize = {
@@ -89,38 +28,21 @@ ohos_shared_library("svgplugin") {
   ]
 
   include_dirs = [
+    "$graphic_subsystem/utils/color_manager/export",
     "$image_subsystem/plugins/manager/include",
     "$image_subsystem/plugins/manager/include/image",
     "$image_subsystem/plugins/manager/include/pluginbase",
     "$image_subsystem/plugins/common/libs/image/libsvgplugin/include",
     "$image_subsystem/interfaces/innerkits/include",
     "$image_subsystem/frameworks/innerkitsimpl/utils/include",
-    "$graphic_subsystem/utils/color_manager/export",
+    "//third_party/flutter/skia",
   ]
-  if (use_new_skia) {
-    include_dirs += [
-      "//third_party/skia",
-      "//third_party/skia/include/core",
-    ]
-  } else {
-    include_dirs += [
-      "//third_party/flutter/skia/include/codec",
-      "//third_party/flutter/skia",
-    ]
-  }
 
   deps = [
     "$graphic_subsystem/utils/color_manager:color_manager",
     "$image_subsystem/plugins/manager:pluginmanager",
+    "//third_party/flutter/build/skia:ace_skia_ohos"
   ]
-  if (use_new_skia) {
-    deps += [
-      ":svgplugin_svg",
-      "//third_party/skia",
-    ]
-  } else {
-    deps += [ "//third_party/flutter/build/skia/ohos:skia_ohos" ]
-  }
 
   external_deps = [
     "c_utils:utils",
@@ -128,9 +50,7 @@ ohos_shared_library("svgplugin") {
   ]
 
   cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
-  if (use_new_skia) {
-    cflags += [ "-DUSE_NEWSVG_IN_NEWSKIA_FLAG" ]
-  }
+
   part_name = "multimedia_image_framework"
   subsystem_name = "multimedia"
 }
