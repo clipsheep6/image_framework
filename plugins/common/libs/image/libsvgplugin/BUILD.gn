@@ -41,7 +41,7 @@ ohos_shared_library("svgplugin") {
   deps = [
     "$graphic_subsystem/utils/color_manager:color_manager",
     "$image_subsystem/plugins/manager:pluginmanager",
-    "//third_party/flutter/build/skia:ace_skia_ohos"
+    "//third_party/flutter/build/skia:ace_skia_ohos",
   ]
 
   external_deps = [
