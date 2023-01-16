@@ -13,6 +13,8 @@
 
 import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+image_subsystem = "//foundation/multimedia/image_framework"
+graphic_subsystem = "//foundation/graphic/graphic_2d"
 
 use_new_skia = false
 if (use_new_skia) {
@@ -89,14 +91,13 @@ ohos_shared_library("svgplugin") {
   ]
 
   include_dirs = [
-    "//foundation/multimedia/utils/include",
-    "//foundation/multimedia/image_framework/plugins/manager/include",
-    "//foundation/multimedia/image_framework/plugins/manager/include/image",
-    "//foundation/multimedia/image_framework/plugins/manager/include/pluginbase",
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/include",
-    "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
-    "//foundation/graphic/graphic_2d/utils/color_manager/export",
+    "$image_subsystem/plugins/manager/include",
+    "$image_subsystem/plugins/manager/include/image",
+    "$image_subsystem/plugins/manager/include/pluginbase",
+    "$image_subsystem/plugins/common/libs/image/libsvgplugin/include",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/frameworks/innerkitsimpl/utils/include",
+    "$graphic_subsystem/utils/color_manager/export",
   ]
   if (use_new_skia) {
     include_dirs += [
@@ -111,8 +112,8 @@ ohos_shared_library("svgplugin") {
   }
 
   deps = [
-    "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
-    "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+    "$graphic_subsystem/utils/color_manager:color_manager",
+    "$image_subsystem/plugins/manager:pluginmanager",
   ]
   if (use_new_skia) {
     deps += [

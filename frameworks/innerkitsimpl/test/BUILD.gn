@@ -13,6 +13,7 @@
 
 import("//build/test.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+image_subsystem = "//foundation/multimedia/image_framework"
 
 module_output_path = "multimedia_image/image_framework"
 
@@ -563,7 +564,7 @@ ohos_unittest("plugintest") {
     "//commonlibrary/c_utils/base/include",
     "//third_party/libpng",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libpngplugin/include",
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/include",
+    "$image_subsystem/plugins/common/libs/image/libsvgplugin/include",
   ]
 
   sources = [
@@ -574,12 +575,12 @@ ohos_unittest("plugintest") {
   ]
 
   deps = [
+    "$image_subsystem/plugins/common/libs/image/libsvgplugin:svgplugin",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libpngplugin:pngplugin",
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin:svgplugin",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//third_party/libpng:png_static",
