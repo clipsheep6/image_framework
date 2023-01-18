@@ -257,6 +257,7 @@ uint32_t JpegDecoder::DoSwDecode(DecodeContext &context) __attribute__((no_sanit
         uint64_t byteCount = static_cast<uint64_t>(rowStride) * decodeInfo_.output_height;
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(_ANDROID) && !defined(_IOS)
+            StartTrace(HITRACE_TAG_ZIMAGE, "DoSwDecode SHARE_MEM_ALLOC AshmemCreate");
             int fd = AshmemCreate("JPEG RawData", byteCount);
             if (fd < 0) {
                 return ERR_SHAMEM_DATA_ABNORMAL;
@@ -285,6 +286,7 @@ uint32_t JpegDecoder::DoSwDecode(DecodeContext &context) __attribute__((no_sanit
             context.pixelsBuffer.bufferSize = byteCount;
             context.allocatorType = AllocatorType::SHARE_MEM_ALLOC;
             context.freeFunc = nullptr;
+            FinishTrace(HITRACE_TAG_ZIMAGE);
 #endif
         } else {
             void *outputBuffer = malloc(byteCount);
