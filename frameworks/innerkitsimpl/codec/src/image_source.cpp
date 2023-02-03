@@ -103,7 +103,8 @@ static const uint8_t NUM_2 = 2;
 static const uint8_t NUM_3 = 3;
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
-ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
+// ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
+ImageSource::FormatAgentMap ImageSource::formatAgentMap_;
 
 uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
 {
