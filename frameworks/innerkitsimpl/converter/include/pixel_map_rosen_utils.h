@@ -27,7 +27,7 @@ namespace OHOS {
 namespace Media {
 class OHOS_EXPORT PixelMapRosenUtils {
 public:
-    static bool UploadToGpu(
+    static OHOS_EXPORT bool UploadToGpu(
         std::shared_ptr<PixelMap> pixelMap, GrContext *context, bool buildMips, bool limitToMaxTextureSize = false);
     static sk_sp<SkImage> ExtractSkImage(std::shared_ptr<PixelMap> pixelMap);
 };
