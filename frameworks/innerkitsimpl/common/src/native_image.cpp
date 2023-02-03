@@ -306,12 +306,18 @@ NativeComponent* NativeImage::GetComponent(int32_t type)
     if (GetFormat(format) == SUCCESS && type == format) {
         return CreateCombineComponent(type);
     }
-
-    if(SplitSurfaceToComponent() != SUCCESS) {
-        return nullptr;
-    }
+    SplitSurfaceToComponent();;
     // Try again
-    return GetCachedComponent(type);
+    component = GetCachedComponent(type);
+
+#ifdef COMPONENT_STRICT_CHECK
+    return component;
+#else // We don't check the input type anymore, return raw format component!!
+    if (component == nullptr && GetFormat(format) == SUCCESS) {
+        return CreateCombineComponent(format);
+    }
+    return nullptr;
+#endif
 }
 
 void NativeImage::release()
@@ -321,10 +327,7 @@ void NativeImage::release()
     }
     HiLog::Info(LABEL, "NativeImage release");
     if (components_.size() > 0) {
-        for (auto iter = components_.begin(); iter != components_.end(); iter++) {
-            iter->second = nullptr;
-            components_.erase(iter);
-        }
+        components_.clear();
     }
     if (releaser_ != nullptr && buffer_ != nullptr) {
         releaser_->BufferRelease(buffer_);

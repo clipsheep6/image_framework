@@ -17,13 +17,36 @@
 namespace OHOS {
 namespace Media {
 using namespace std;
+
+string ImageReceiverManager::getNewId()
+{
+    std::lock_guard<std::mutex> guard(idMutex_);
+    string res = std::to_string(globalId_);
+    globalId_ ++;
+    return res;
+}
+
+bool ImageReceiverManager::isKeyIdExist(string id)
+{
+    return mapReceiver_.count(id) != 0;
+}
 string ImageReceiverManager::SaveImageReceiver(shared_ptr<ImageReceiver> imageReceiver)
 {
-    return receiverManager_.save(imageReceiver);
+    string id;
+    do {
+        id = getNewId();
+    } while (isKeyIdExist(id));
+
+    mapReceiver_.insert(pair<string, shared_ptr<ImageReceiver>>(id, imageReceiver));
+    return id;
 }
 shared_ptr<ImageReceiver> ImageReceiverManager::getImageReceiverByKeyId(string keyId)
 {
-    return receiverManager_.get(keyId);
+    auto iter = mapReceiver_.find(keyId);
+    if (iter != mapReceiver_.end()) {
+        return iter->second;
+    }
+    return nullptr;
 }
 sptr<Surface> ImageReceiverManager::getSurfaceByKeyId(string keyId)
 {
@@ -33,10 +56,13 @@ sptr<Surface> ImageReceiverManager::getSurfaceByKeyId(string keyId)
     }
     return nullptr;
 }
-void ImageReceiverManager::ReleaseReceiverById(string id)
+void ImageReceiverManager::releaseReceiverById(string id)
 {
     ImageReceiverManager& manager = ImageReceiverManager::getInstance();
-    manager.receiverManager_.release(id);
+    while (manager.isKeyIdExist(id))
+    {
+        manager.mapReceiver_.erase(id);
+    }
 }
 } // namespace Media
 } // namespace OHOS

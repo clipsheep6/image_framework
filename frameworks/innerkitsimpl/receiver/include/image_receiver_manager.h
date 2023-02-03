@@ -18,6 +18,7 @@
 
 #include <surface.h>
 #include <cstdint>
+#include <mutex>
 #include <string>
 #include <securec.h>
 #include "display_type.h"
@@ -40,11 +41,14 @@ public:
     string SaveImageReceiver(shared_ptr<ImageReceiver> imageReceiver);
     sptr<Surface> getSurfaceByKeyId(string keyId);
     shared_ptr<ImageReceiver> getImageReceiverByKeyId(string keyId);
-    static void ReleaseReceiverById(string id);
+    static void releaseReceiverById(string id);
+    bool isKeyIdExist(string id);
 private:
-
+    map<string, shared_ptr<ImageReceiver>> mapReceiver_;
+    std::mutex idMutex_;
+    uint32_t globalId_ = 0;
     ImageReceiverManager() {}
-    ImageHolderManager<ImageReceiver> receiverManager_;
+    string getNewId();
 };
 } // namespace Media
 } // namespace OHOS

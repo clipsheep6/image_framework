@@ -42,6 +42,20 @@ public:
 private:
     ImageReceiver* receiver_ = nullptr;
 };
+        ImageReceiver::~ImageReceiver()
+        {
+            if (iraContext_ != nullptr) {
+                ImageReceiverManager::releaseReceiverById(iraContext_->GetReceiverKey());
+            }
+            if (receiverConsumerSurface_ != nullptr) {
+                receiverConsumerSurface_->UnregisterConsumerListener();
+            }
+            receiverConsumerSurface_ = nullptr;
+            receiverProducerSurface_ = nullptr;
+            iraContext_ = nullptr;
+            surfaceBufferAvaliableListener_ = nullptr;
+            bufferProcessor_ = nullptr;
+        }
         constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "imageReceiver"};
         using namespace OHOS::HiviewDFX;
 

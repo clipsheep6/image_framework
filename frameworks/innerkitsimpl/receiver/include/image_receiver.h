@@ -47,17 +47,7 @@ public:
     sptr<Surface> receiverProducerSurface_ = nullptr;
     std::shared_ptr<SurfaceBufferAvaliableListener> surfaceBufferAvaliableListener_ = nullptr;
     ImageReceiver() {}
-    ~ImageReceiver()
-    {
-        if (receiverConsumerSurface_ != nullptr) {
-            receiverConsumerSurface_->UnregisterConsumerListener();
-        }
-        receiverConsumerSurface_ = nullptr;
-        receiverProducerSurface_ = nullptr;
-        iraContext_ = nullptr;
-        surfaceBufferAvaliableListener_ = nullptr;
-        bufferProcessor_ = nullptr;
-    }
+    ~ImageReceiver();
     static inline int32_t pipeFd[2] = {};
     static inline std::string OPTION_FORMAT = "image/jpeg";
     static inline std::int32_t OPTION_QUALITY = 100;

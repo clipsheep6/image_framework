@@ -116,10 +116,12 @@ static void CommonCallbackRoutine(napi_env env, Context &context, const napi_val
 
 void ImageReceiverNapi::NativeRelease()
 {
+    IMAGE_FUNCTION_IN();
     if (imageReceiver_ != nullptr) {
         imageReceiver_->~ImageReceiver();
         imageReceiver_ = nullptr;
     }
+    IMAGE_FUNCTION_OUT();
 }
 
 ImageReceiver* ImageReceiverNapi::GetNative()
@@ -733,15 +735,15 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
         napi_value result = nullptr;
 
         auto native = context->constructor_->imageReceiver_;
-        if (native == nullptr) {
+        if (native != nullptr) {
+            auto image = native->LastNativeImage();
 #ifdef IMAGE_DEBUG_FLAG
-            auto surfacebuffer = native->ReadLastImage();
-            if (context->constructor_->isCallBackTest) {
+            if (image != nullptr && context->constructor_->isCallBackTest) {
                 context->constructor_->isCallBackTest = false;
-                DoCallBackTest(surfacebuffer);
+                DoCallBackTest(image->GetBuffer());
             }
 #endif
-            result = ImageNapi::Create(env, native->LastNativeImage());
+            result = ImageNapi::Create(env, image);
             if (result == nullptr) {
                 IMAGE_ERR("ImageNapi Create failed");
             }
@@ -787,12 +789,12 @@ napi_value ImageReceiverNapi::JsReadNextImage(napi_env env, napi_callback_info i
         napi_value result = nullptr;
 
         auto native = context->constructor_->imageReceiver_;
-        if (native == nullptr) {
+        if (native != nullptr) {
+            auto image = native->NextNativeImage();
 #ifdef IMAGE_DEBUG_FLAG
-            auto surfacebuffer = native->ReadNextImage();
-            if (context->constructor_->isCallBackTest) {
+            if (image != nullptr && context->constructor_->isCallBackTest) {
                 context->constructor_->isCallBackTest = false;
-                DoCallBackTest(surfacebuffer);
+                DoCallBackTest(image->GetBuffer());
             }
 #endif
             result = ImageNapi::Create(env, native->NextNativeImage());
