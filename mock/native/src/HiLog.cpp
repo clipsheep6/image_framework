@@ -17,7 +17,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-using namespace std;
 int HiLog::Debug(const HiLogLabel &label, const char *fmt, ...)
 {
     return 0;
