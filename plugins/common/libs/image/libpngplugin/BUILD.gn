@@ -117,6 +117,8 @@ ohos_shared_library("pngplugin") {
   part_name = "multimedia_image_framework"
 
   subsystem_name = "multimedia"
+
+  version_script = "libpngplugin.versionscript"
 }
 
 ohos_prebuilt_etc("pngpluginmetadata") {
