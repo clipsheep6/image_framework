@@ -1208,7 +1208,7 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 
 bool PixelMap::WriteFileDescriptor(Parcel &parcel, int fd)
 {
-#if !defined(_IOS) &&!defined(_ANDROID)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(_IOS) &&!defined(_ANDROID)
     if (fd < 0) {
         return false;
     }
@@ -1218,12 +1218,14 @@ bool PixelMap::WriteFileDescriptor(Parcel &parcel, int fd)
     }
     sptr<IPCFileDescriptor> descriptor = new IPCFileDescriptor(dupFd);
     return parcel.WriteObject<IPCFileDescriptor>(descriptor);
+#else
+    return false;
 #endif
 }
 
 int PixelMap::ReadFileDescriptor(Parcel &parcel)
 {
-#if !defined(_IOS) &&!defined(_ANDROID)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(_IOS) &&!defined(_ANDROID)
     sptr<IPCFileDescriptor> descriptor = parcel.ReadObject<IPCFileDescriptor>();
     if (descriptor == nullptr) {
         return -1;
@@ -1233,6 +1235,8 @@ int PixelMap::ReadFileDescriptor(Parcel &parcel)
         return -1;
     }
     return dup(fd);
+#else
+    return -1;
 #endif
 }
 

@@ -252,10 +252,6 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
       ]
-      external_deps = [
-        "hitrace_native:hitrace_meter",
-        "ipc:ipc_core",
-      ]
     } else if (use_clang_android) {
       defines = image_decode_android_defines
       cflags -= [ "-DIMAGE_COLORSPACE_FLAG" ]
