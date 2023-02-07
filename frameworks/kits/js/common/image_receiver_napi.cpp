@@ -243,13 +243,13 @@ napi_value ImageReceiverNapi::Constructor(napi_env env, napi_callback_info info)
     auto reference = std::make_unique<ImageReceiverNapi>();
     reference->env_ = env;
     reference->imageReceiver_ = ImageReceiver::CreateImageReceiver((inputArgs.args)[PARAM0],
-        (inputArgs.args)[PARAM1], (inputArgs.args)[PARAM2], (inputArgs.args)[PARAM3]);
+        (inputArgs.args)[PARAM1],(inputArgs.args)[PARAM2], (inputArgs.args)[PARAM3]);
     if (reference->imageReceiver_ == nullptr) {
         IMAGE_ERR("Create native image receiver failed");
         return undefineVar;
     }
     napi_status status = napi_wrap(env, inputArgs.thisVar, reinterpret_cast<void *>(reference.get()),
-        ImageReceiverNapi::Destructor, nullptr, nullptr);
+                               ImageReceiverNapi::Destructor, nullptr, nullptr);
     if (status == napi_ok) {
         reference.release();
         return inputArgs.thisVar;
@@ -273,39 +273,6 @@ static bool checkFormat(int32_t format)
 }
 
 napi_value ImageReceiverNapi::CreateImageReceiverJsObject(napi_env env, struct ImageReceiverCreateArgs args)
-{
-    napi_status status;
-    napi_value constructor = nullptr;
-    napi_value result = nullptr;
-    ImageReceiverInputArgs inputArgs;
-    inputArgs.argc = ARGS4;
-
-    IMAGE_FUNCTION_IN();
-    if (!checkFormat(args.format)) {
-        IMAGE_ERR("Invailed type");
-        return nullptr;
-    }
-    napi_create_int32(env, args.width, &(inputArgs.argv[PARAM0]));
-    napi_create_int32(env, args.height, &(inputArgs.argv[PARAM1]));
-    napi_create_int32(env, args.format, &(inputArgs.argv[PARAM2]));
-    napi_create_int32(env, args.capicity, &(inputArgs.argv[PARAM3]));
-    status = napi_get_reference_value(env, sConstructor_, &constructor);
-    if (status != napi_ok || constructor == nullptr) {
-        IMAGE_ERR("Failed to get reference of constructor");
-        return nullptr;
-    }
-
-    status = napi_new_instance(env, constructor, inputArgs.argc, inputArgs.argv, &result);
-    if (status != napi_ok || result == nullptr) {
-        IMAGE_ERR("New instance could not be obtained");
-        return nullptr;
-    }
-
-    IMAGE_FUNCTION_OUT();
-    return result;
-}
-
-napi_value ImageReceiverNapi::JSCreateImageReceiver(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value constructor = nullptr, result = nullptr;
@@ -738,9 +705,13 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
         if (native != nullptr) {
             auto image = native->LastNativeImage();
 #ifdef IMAGE_DEBUG_FLAG
-            if (image != nullptr && context->constructor_->isCallBackTest) {
+            if (context->constructor_->isCallBackTest) {
                 context->constructor_->isCallBackTest = false;
-                DoCallBackTest(image->GetBuffer());
+#ifdef IMAGE_SAVE_BUFFER_TO_PIC
+                if (image != nullptr) {
+                    DoCallBackTest(image->GetBuffer());
+                }
+#endif
             }
 #endif
             result = ImageNapi::Create(env, image);
@@ -792,9 +763,13 @@ napi_value ImageReceiverNapi::JsReadNextImage(napi_env env, napi_callback_info i
         if (native != nullptr) {
             auto image = native->NextNativeImage();
 #ifdef IMAGE_DEBUG_FLAG
-            if (image != nullptr && context->constructor_->isCallBackTest) {
+            if (context->constructor_->isCallBackTest) {
                 context->constructor_->isCallBackTest = false;
-                DoCallBackTest(image->GetBuffer());
+#ifdef IMAGE_SAVE_BUFFER_TO_PIC
+                if (image != nullptr) {
+                    DoCallBackTest(image->GetBuffer());
+                }
+#endif
             }
 #endif
             result = ImageNapi::Create(env, native->NextNativeImage());

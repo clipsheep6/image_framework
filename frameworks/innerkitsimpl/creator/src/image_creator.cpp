@@ -56,6 +56,18 @@ private:
     ImageCreator* creator_ = nullptr;
 };
 
+ImageCreator::~ImageCreator()
+{
+    if (iraContext_ != nullptr) {
+        ImageCreatorManager::ReleaseCreatorById(iraContext_->GetCreatorKey());
+    }
+    creatorConsumerSurface_ = nullptr;
+    creatorProducerSurface_ = nullptr;
+    iraContext_ = nullptr;
+    surfaceBufferReleaseListener_ = nullptr;
+    surfaceBufferAvaliableListener_ = nullptr;
+}
+
 GSError ImageCreator::OnBufferRelease(sptr<SurfaceBuffer> &buffer)
 {
     HiLog::Info(LABEL, "OnBufferRelease");

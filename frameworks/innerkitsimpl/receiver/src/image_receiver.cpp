@@ -45,7 +45,7 @@ private:
         ImageReceiver::~ImageReceiver()
         {
             if (iraContext_ != nullptr) {
-                ImageReceiverManager::releaseReceiverById(iraContext_->GetReceiverKey());
+                ImageReceiverManager::ReleaseReceiverById(iraContext_->GetReceiverKey());
             }
             if (receiverConsumerSurface_ != nullptr) {
                 receiverConsumerSurface_->UnregisterConsumerListener();

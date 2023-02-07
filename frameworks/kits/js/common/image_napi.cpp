@@ -37,7 +37,7 @@ struct ImageAsyncContext {
     napi_async_work work = nullptr;
     napi_deferred deferred = nullptr;
     napi_ref callbackRef = nullptr;
-    napi_value thisVar = nullptr;
+    napi_ref thisRef = nullptr;
     ImageNapi *napi = nullptr;
     uint32_t status;
     int32_t componentType;
@@ -244,8 +244,8 @@ static std::unique_ptr<ImageAsyncContext> UnwrapContext(napi_env env, napi_callb
         IMAGE_ERR("fail to unwrap constructor_");
         return nullptr;
     }
-    ctx->thisVar = thisVar;
     ctx->image = ctx->napi->GetNative();
+    napi_create_reference(env, thisVar, NUM1, &(ctx->thisRef));
     return ctx;
 }
 
@@ -394,21 +394,6 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
     return result;
 }
 
-static void NapiRelease(napi_env env, ImageAsyncContext* context)
-{
-    if (context == nullptr) {
-        return;
-    }
-
-    if (context->napi != nullptr) {
-        delete context->napi;
-        context->napi = nullptr;
-    }
-    if (context->thisVar != nullptr) {
-        napi_wrap(env, context->thisVar, nullptr, nullptr, nullptr, nullptr);
-    }
-}
-
 static void JSReleaseCallBack(napi_env env, napi_status status,
                               ImageAsyncContext* context)
 {
@@ -420,10 +405,6 @@ static void JSReleaseCallBack(napi_env env, napi_status status,
         IMAGE_ERR("context is nullptr");
         return;
     }
-
-    context->napi->NativeRelease();
-    context->status = SUCCESS;
-    NapiRelease(env, context);
 
     if (context->thisRef != nullptr) {
         napi_value thisVar;
@@ -456,7 +437,6 @@ napi_value ImageNapi::JsRelease(napi_env env, napi_callback_info info)
         IMAGE_ERR("fail to unwrap constructor_");
         return result;
     }
-
     if (argc == NUM1) {
         if (JsGetCallbackFunc(env, argv[NUM0], &(context->callbackRef))) {
             IMAGE_ERR("Unsupport arg 0 type");

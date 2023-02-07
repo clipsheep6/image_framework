@@ -41,14 +41,11 @@ public:
     string SaveImageReceiver(shared_ptr<ImageReceiver> imageReceiver);
     sptr<Surface> getSurfaceByKeyId(string keyId);
     shared_ptr<ImageReceiver> getImageReceiverByKeyId(string keyId);
-    static void releaseReceiverById(string id);
-    bool isKeyIdExist(string id);
+    static void ReleaseReceiverById(string id);
 private:
-    map<string, shared_ptr<ImageReceiver>> mapReceiver_;
-    std::mutex idMutex_;
-    uint32_t globalId_ = 0;
+
     ImageReceiverManager() {}
-    string getNewId();
+    ImageHolderManager<ImageReceiver> receiverManager_;
 };
 } // namespace Media
 } // namespace OHOS
