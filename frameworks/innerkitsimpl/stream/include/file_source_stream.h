@@ -51,6 +51,7 @@ private:
     size_t fileOffset_ = 0;
     size_t fileOriginalOffset_ = 0;
     uint8_t *readBuffer_ = nullptr;
+    int ffd=-1;
 };
 } // namespace Media
 } // namespace OHOS
