@@ -26,10 +26,14 @@ using namespace OHOS::HiviewDFX;
 using namespace std;
 using namespace ImagePlugin;
 
-FileSourceStream::FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original, int fd = -1)
+FileSourceStream::FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original)
     : filePtr_(file), fileSize_(size), fileOffset_(offset), fileOriginalOffset_(original)
 {
-    if(fd != -1)ffd = fd;
+}
+
+FileSourceStream::FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original, int fd)
+    : filePtr_(file), fileSize_(size), fileOffset_(offset), fileOriginalOffset_(original), ffd(fd)
+{
 }
 
 FileSourceStream::~FileSourceStream()
