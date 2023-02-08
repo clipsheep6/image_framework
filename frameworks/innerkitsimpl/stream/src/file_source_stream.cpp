@@ -37,6 +37,7 @@ FileSourceStream::~FileSourceStream()
     IMAGE_LOGE("q_y  [FileSourceStream]FileSourceStream::~FileSourceStream() ");
     fclose(filePtr_);
     ResetReadBuffer();
+    IMAGE_LOGE("q_y  [FileSourceStream]FileSourceStream::~FileSourceStream()  ffd. %{public}d ", ffd);
 }
 
 unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &pathName)
