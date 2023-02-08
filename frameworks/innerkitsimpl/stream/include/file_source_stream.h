@@ -43,6 +43,7 @@ public:
 private:
     DISALLOW_COPY_AND_MOVE(FileSourceStream);
     FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original);
+    FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original, int fd);
     bool GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_t bufferSize, uint32_t &readSize);
     bool GetData(uint32_t desiredSize, ImagePlugin::DataStreamBuffer &outData);
     void ResetReadBuffer();
