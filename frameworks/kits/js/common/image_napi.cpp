@@ -44,7 +44,7 @@ struct ImageAsyncContext {
     NativeImage* image = nullptr;
     NativeComponent* component = nullptr;
 };
-std::shared_ptr<NativeImage> ImageNapi::sNative_ = nullptr;
+ImageHolderManager<NativeImage> ImageNapi::sNativeImageHolder_;
 thread_local napi_ref ImageNapi::sConstructor_ = nullptr;
 static bool g_receiverTest = false;
 
@@ -126,24 +126,32 @@ napi_value ImageNapi::Constructor(napi_env env, napi_callback_info info)
     napi_value argv[NUM1];
 
     IMAGE_FUNCTION_IN();
-    status = napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
-    if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<ImageNapi> napi = std::make_unique<ImageNapi>();
-        if (napi != nullptr) {
-            napi->native_ = sNative_;
-            sNative_ = nullptr;
-            status = napi_wrap(env, thisVar, reinterpret_cast<void *>(napi.get()),
-                               ImageNapi::Destructor, nullptr, nullptr);
-            if (status == napi_ok) {
-                IMAGE_FUNCTION_OUT();
-                napi.release();
-                return thisVar;
-            } else {
-                IMAGE_ERR("Failure wrapping js to native napi");
-            }
-        }
+    napi_get_undefined(env, &undefineVar);
+    status = napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (status != napi_ok || thisVar == nullptr || argc != NUM1) {
+        IMAGE_ERR("Constructor Failed to napi_get_cb_info");
+        return undefineVar;
     }
-    napi_get_undefined(env, &thisVar);
+    std::string id;
+    if (!ImageNapiUtils::GetUtf8String(env, argv[NUM0], id) || (id.size() == NUM0)) {
+        IMAGE_ERR("Failed to parse native image id");
+        return undefineVar;
+    }
+    std::unique_ptr<ImageNapi> napi = std::make_unique<ImageNapi>();
+    napi->native_ = sNativeImageHolder_.get(id);
+    if (napi->native_ == nullptr) {
+        IMAGE_ERR("Failed to get native image");
+        return undefineVar;
+    }
+    status = napi_wrap(env, thisVar,
+        reinterpret_cast<void *>(napi.get()), ImageNapi::Destructor, nullptr, nullptr);
+    if (status != napi_ok) {
+        IMAGE_ERR("Failure wrapping js to native napi");
+        return undefineVar;
+    }
+
+    napi.release();
+    IMAGE_FUNCTION_OUT();
     return thisVar;
 }
 
@@ -158,6 +166,7 @@ napi_value ImageNapi::Create(napi_env env, std::shared_ptr<NativeImage> nativeIm
 {
     napi_value constructor = nullptr;
     napi_value result = nullptr;
+    napi_value argv[NUM1];
 
     IMAGE_FUNCTION_IN();
     if (env == nullptr || nativeImage == nullptr) {
@@ -165,8 +174,11 @@ napi_value ImageNapi::Create(napi_env env, std::shared_ptr<NativeImage> nativeIm
         return nullptr;
     }
     if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok && constructor != nullptr) {
-        sNative_ = nativeImage;
-        if (napi_new_instance(env, constructor, NUM0, nullptr, &result) != napi_ok) {
+        auto id = sNativeImageHolder_.save(nativeImage);
+        if (napi_create_string_utf8(env, id.c_str(), NAPI_AUTO_LENGTH, &(argv[NUM0])) != napi_ok) {
+            IMAGE_ERR("Create native image id Failed");
+        }
+        if (napi_new_instance(env, constructor, NUM1, argv, &result) != napi_ok) {
             IMAGE_ERR("New instance could not be obtained");
         }
     }

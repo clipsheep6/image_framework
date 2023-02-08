@@ -18,6 +18,7 @@
 
 #include "native_image.h"
 #include "napi/native_api.h"
+#include "image_holder_manager.h"
 
 namespace OHOS {
 namespace Media {
@@ -44,7 +45,7 @@ private:
     static napi_value JsRelease(napi_env env, napi_callback_info info);
 
     static thread_local napi_ref sConstructor_;
-    static std::shared_ptr<NativeImage> sNative_;
+    static ImageHolderManager<NativeImage> sNativeImageHolder_;
     std::shared_ptr<NativeImage> native_;
 };
 } // namespace Media

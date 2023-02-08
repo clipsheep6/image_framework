@@ -47,24 +47,42 @@ public:
     std::shared_ptr<ContentType> get(std::string id)
     {
         std::lock_guard<std::mutex> guard(holderMutex_);
-        auto iter = holder_.find(id);
+        std::string localId = processEof(id);
+        auto iter = holder_.find(localId);
         if (iter != holder_.end()) {
             return iter->second;
+        }
+        return nullptr;
+    }
+    std::shared_ptr<ContentType> pop(std::string id)
+    {
+        std::lock_guard<std::mutex> guard(holderMutex_);
+        std::string localId = processEof(id);
+        auto iter = holder_.find(localId);
+        if (iter != holder_.end()) {
+            auto res = iter->second;
+            while (exist(localId))
+            {
+                holder_.erase(localId);
+            }
+            return res;
         }
         return nullptr;
     }
     void release(std::string id)
     {
         std::lock_guard<std::mutex> guard(holderMutex_);
-        while (exist(id))
+        std::string localId = processEof(id);
+        while (exist(localId))
         {
-            holder_.erase(id);
+            holder_.erase(localId);
         }
     }
     bool exist(std::string id)
     {
         std::lock_guard<std::mutex> guard(holderMutex_);
-        return holder_.count(id);
+        std::string localId = processEof(id);
+        return holder_.count(localId);
     }
 private:
     std::map<std::string, std::shared_ptr<ContentType>> holder_;
@@ -77,6 +95,15 @@ private:
         std::string res = std::to_string(gId_);
         gId_++;
         return res;
+    }
+    std::string processEof(std::string id)
+    {
+        if(!id.empty() && (id.back() == '\0')) {
+            std::string tmp = std::string(id);
+            tmp.pop_back();
+            return tmp;
+        }
+        return id;
     }
 };
 } // namespace Media
