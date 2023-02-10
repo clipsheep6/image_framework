@@ -599,7 +599,7 @@ bool JpegDecoder::ParseExifData()
     return true;
 }
 
-uint32_t JudgmentKey(const std::string &key) {
+uint32_t JpegDecoder::JudgmentKey(const std::string &key) {
     HiLog::Debug(LABEL, "[JudgmentKey] enter jpeg plugin, key:%{public}s", key.c_str());
     if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
         HiLog::Error(LABEL, "[JudgmentKey] this key is used to check the original format of raw image!");
