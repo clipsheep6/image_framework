@@ -605,19 +605,18 @@ uint32_t JpegDecoder::JudgmentKey(const std::string &key) {
         HiLog::Error(LABEL, "[JudgmentKey] this key is used to check the original format of raw image!");
         return Media::ERR_MEDIA_VALUE_INVALID;
     }
-
-    if (!exifInfo_.IsExifDataParsed()) {
-        if (!ParseExifData()) {
-            HiLog::Error(LABEL, "[JudgmentKey] Parse exif data failed!");
-            return Media::ERROR;
-        }
-    }
 }
 
 uint32_t JpegDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     HiLog::Debug(LABEL, "[GetImagePropertyInt] enter jpeg plugin, key:%{public}s", key.c_str());
     JudgmentKey(key);
+    if (!exifInfo_.IsExifDataParsed()) {
+        if (!ParseExifData()) {
+            HiLog::Error(LABEL, "[JudgmentKey] Parse exif data failed!");
+            return Media::ERROR;
+        }
+    }
     if (IsSameTextStr(key, ORIENTATION)) {
         if (PROPERTY_INT.find(exifInfo_.orientation_) != PROPERTY_INT.end()) {
             value = PROPERTY_INT.at(exifInfo_.orientation_);
@@ -637,6 +636,12 @@ uint32_t JpegDecoder::GetImagePropertyString(uint32_t index, const std::string &
 {
     HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, key:%{public}s", key.c_str());
     JudgmentKey(key);
+    if (!exifInfo_.IsExifDataParsed()) {
+        if (!ParseExifData()) {
+            HiLog::Error(LABEL, "[JudgmentKey] Parse exif data failed!");
+            return Media::ERROR;
+        }
+    }
     if (IsSameTextStr(key, BITS_PER_SAMPLE)) {
         value = exifInfo_.bitsPerSample_;
     } else if (IsSameTextStr(key, ORIENTATION)) {
