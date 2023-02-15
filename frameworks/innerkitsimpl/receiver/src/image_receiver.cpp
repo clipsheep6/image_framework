@@ -200,10 +200,10 @@ namespace OHOS {
         {
             int32_t flushFence = 0;
             int64_t timestamp = 0;
-            OHOS::Rect damage = {};
+            std::vector<OHOS::Rect> damages;
             OHOS::sptr<OHOS::SurfaceBuffer> buffer;
             sptr<IConsumerSurface> listenerConsumerSurface = iraContext_->GetReceiverBufferConsumer();
-            SurfaceError surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damage);
+            SurfaceError surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damages);
             if (surfaceError == SURFACE_ERROR_OK) {
                 iraContext_->currentBuffer_ = buffer;
             } else {
@@ -216,14 +216,14 @@ namespace OHOS {
         {
             int32_t flushFence = 0;
             int64_t timestamp = 0;
-            OHOS::Rect damage = {};
+            std::vector<OHOS::Rect> damages;
             OHOS::sptr<OHOS::SurfaceBuffer> buffer;
             OHOS::sptr<OHOS::SurfaceBuffer> bufferBefore;
             sptr<IConsumerSurface> listenerConsumerSurface = iraContext_->GetReceiverBufferConsumer();
-            SurfaceError surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damage);
+            SurfaceError surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damages);
             while (surfaceError == SURFACE_ERROR_OK) {
                 bufferBefore = buffer;
-                surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damage);
+                surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damages);
             }
             iraContext_->currentBuffer_ = bufferBefore;
             return iraContext_->GetCurrentBuffer();

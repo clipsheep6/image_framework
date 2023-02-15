@@ -251,8 +251,9 @@ void ImageCreator::QueueImage(OHOS::sptr<OHOS::SurfaceBuffer> &buffer)
     HiLog::Info(LABEL, "start Queue Image");
     int32_t flushFence = -1;
     BufferFlushConfig config;
-    config.damage.w = iraContext_->GetWidth();
-    config.damage.h = iraContext_->GetHeight();
+    OHOS::Rect rect = { .w = iraContext_->GetWidth(), .h = iraContext_->GetHeight(), };
+    config.damages.push_back(rect);
+
     sptr<Surface> creatorSurface = iraContext_->GetCreatorBufferProducer();
     SurfaceError surfaceError = creatorSurface->FlushBuffer(buffer, flushFence, config);
     HiLog::Info(LABEL, "finish Queue Image");
