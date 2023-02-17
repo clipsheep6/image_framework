@@ -46,7 +46,6 @@ struct ImageAsyncContext {
 };
 ImageHolderManager<NativeImage> ImageNapi::sNativeImageHolder_;
 thread_local napi_ref ImageNapi::sConstructor_ = nullptr;
-static bool g_receiverTest = false;
 
 ImageNapi::ImageNapi()
 {}
@@ -138,9 +137,14 @@ napi_value ImageNapi::Constructor(napi_env env, napi_callback_info info)
     }
     std::unique_ptr<ImageNapi> napi = std::make_unique<ImageNapi>();
     napi->native_ = sNativeImageHolder_.get(id);
+    napi->isTestImage_ = false;
     if (napi->native_ == nullptr) {
-        IMAGE_ERR("Failed to get native image");
-        return undefineVar;
+        if (MY_NAME.compare(id.c_str) == 0) {
+            napi->isTestImage_ = true;
+        } else {
+            IMAGE_ERR("Failed to get native image");
+            return undefineVar;
+        }
     }
     status = napi_wrap(env, thisVar,
         reinterpret_cast<void *>(napi.get()), ImageNapi::Destructor, nullptr, nullptr);
@@ -161,6 +165,28 @@ void ImageNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
     }
 }
 
+napi_value ImageNapi::Create(napi_env env)
+{
+    napi_value constructor = nullptr;
+    napi_value result = nullptr;
+    napi_value argv[NUM1];
+
+    IMAGE_FUNCTION_IN();
+    if (env == nullptr) {
+        IMAGE_ERR("Input args is invalid");
+        return nullptr;
+    }
+    if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok && constructor != nullptr) {
+        if (napi_create_string_utf8(env, MY_NAME.c_str(), NAPI_AUTO_LENGTH, &(argv[NUM0])) != napi_ok) {
+            IMAGE_ERR("Create native image id Failed");
+        }
+        if (napi_new_instance(env, constructor, NUM1, argv, &result) != napi_ok) {
+            IMAGE_ERR("New instance could not be obtained");
+        }
+    }
+    IMAGE_FUNCTION_OUT();
+    return result;
+}
 napi_value ImageNapi::Create(napi_env env, std::shared_ptr<NativeImage> nativeImage)
 {
     napi_value constructor = nullptr;
@@ -349,6 +375,11 @@ napi_value ImageNapi::JSGetClipRect(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
+    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
+        const int32_t WIDTH = 8192;
+        const int32_t HEIGHT = 8;
+        return BuildJsRegion(env, WIDTH, HEIGHT, NUM0, NUM0);
+    }
     if (context == nullptr || context->image == nullptr) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
@@ -370,6 +401,11 @@ napi_value ImageNapi::JsGetSize(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
+    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
+        const int32_t WIDTH = 8192;
+        const int32_t HEIGHT = 8;
+        return BuildJsSize(env, WIDTH, HEIGHT);
+    }
     if (context == nullptr || context->image == nullptr) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
@@ -391,6 +427,11 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
+    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
+        const int32_t FORMAT = 12;
+        napi_create_int32(env, FORMAT, &result);
+        return result;
+    }
     if (context == nullptr || context->image == nullptr) {
         IMAGE_ERR("Image surface buffer is nullptr");
         return result;
@@ -518,6 +559,26 @@ static bool BuildJsComponentObject(napi_env env, int32_t type, uint8_t* buffer,
     BuildIntProperty(env, "pixelStride", component->pixelStride, *result);
     return true;
 }
+static void TestGetComponentCallBack(napi_env env, napi_status status, ImageAsyncContext* context)
+{
+    if (context == nullptr) {
+        HiLog::Error(LABEL, "Invalid input context");
+        return;
+    }
+    napi_value result;
+    napi_value array;
+    void *nativePtr = nullptr;
+    if (napi_create_arraybuffer(env, NUM1, &nativePtr, &array) != napi_ok || nativePtr == nullptr) {
+        return;
+    }
+    napi_create_object(env, &result);
+    napi_set_named_property(env, result, "byteBuffer", array);
+    BuildIntProperty(env, "componentType", context->componentType, result);
+    BuildIntProperty(env, "rowStride", NUM0, result);
+    BuildIntProperty(env, "pixelStride", NUM0, result);
+    context->status = SUCCESS;
+    CommonCallbackRoutine(env, context, result);
+}
 
 static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncContext* context)
 {
@@ -525,10 +586,16 @@ static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncC
     napi_value result;
     napi_get_undefined(env, &result);
 
+    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
+        TestGetComponentCallBack(env, status, context);
+        return;
+    }
+
     if (context == nullptr) {
         HiLog::Error(LABEL, "Invalid input context");
         return;
     }
+
     context->status = ERROR;
     NativeComponent* component = context->component;
     if (component == nullptr) {
@@ -541,6 +608,26 @@ static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncC
     if (component->virAddr != nullptr) {
         buffer = component->virAddr;
     } else {
+        buffer = component->raw.data();
+    }
+
+    if (buffer == nullptr || component->size == NUM0) {
+        HiLog::Error(LABEL, "Invalid buffer");
+        CommonCallbackRoutine(env, context, result);
+        return;
+    }
+
+    if (BuildJsComponentObject(env, context->componentType, buffer, component, &result)) {
+        context->status = SUCCESS;
+    } else {
+        HiLog::Error(LABEL, "napi_create_arraybuffer failed!");
+    }
+
+    IMAGE_FUNCTION_OUT();
+    CommonCallbackRoutine(env, context, result);
+}
+static void JsGetComponentExec(napi_env env, ImageAsyncContext* context)
+{
     if (context == nullptr || context->napi == nullptr) {
         HiLog::Error(LABEL, "Invalid input context");
         return;
@@ -552,6 +639,7 @@ static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncC
         return;
     }
     context->component = native->GetComponent(context->componentType);
+}
 
 static bool JsGetComponentArgs(napi_env env, size_t argc, napi_value* argv, ImageAsyncContext* context)
 {

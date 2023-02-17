@@ -249,8 +249,10 @@ napi_value ImageCreatorNapi::JSCreateImageCreator(napi_env env, napi_callback_in
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
-        staticInstance_ = ImageCreator::CreateImageCreator(args[PARAM0],
-		    args[PARAM1], args[PARAM2], args[PARAM3]);
+        if (!g_creatorTest) {
+            staticInstance_ = ImageCreator::CreateImageCreator(args[PARAM0],
+                args[PARAM1], args[PARAM2], args[PARAM3]);
+        }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok) {
             IMAGE_FUNCTION_OUT();
