@@ -480,14 +480,14 @@ napi_value ImageCreatorNapi::JsGetFormat(napi_env env, napi_callback_info info)
 
 #ifdef IMAGE_DEBUG_FLAG
 static void TestAcquireBuffer(OHOS::sptr<OHOS::IConsumerSurface> &creatorSurface, int32_t &fence,
-    int64_t &timestamp, OHOS::Rect &damage, std::shared_ptr<ImageCreator> imageCreator)
+    int64_t &timestamp, std::vector<OHOS::Rect>& damages, std::shared_ptr<ImageCreator> imageCreator)
 {
     OHOS::sptr<OHOS::SurfaceBuffer> buffer;
     if (creatorSurface == nullptr) {
         IMAGE_ERR("Creator Surface is nullptr");
         return;
     }
-    creatorSurface->AcquireBuffer(buffer, fence, timestamp, damage);
+    creatorSurface->AcquireBuffer(buffer, fence, timestamp, damages);
     if (buffer == nullptr) {
         IMAGE_ERR("Creator Surface is nullptr");
         return;
@@ -518,9 +518,9 @@ static void DoTest(std::shared_ptr<ImageCreator> imageCreator)
     IMAGE_ERR("getDefaultHeight = %{public}d", creatorSurface->GetDefaultHeight());
     int32_t flushFence = 0;
     int64_t timestamp = 0;
-    OHOS::Rect damage = {};
+    std::vector<OHOS::Rect> damages;
     IMAGE_ERR("TestAcquireBuffer 1...");
-    TestAcquireBuffer(creatorSurface, flushFence, timestamp, damage, imageCreator);
+    TestAcquireBuffer(creatorSurface, flushFence, timestamp, damages, imageCreator);
 }
 static void DoCallBackAfterWork(uv_work_t *work, int status);
 napi_value ImageCreatorNapi::JsTest(napi_env env, napi_callback_info info)

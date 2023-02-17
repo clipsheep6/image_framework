@@ -520,12 +520,9 @@ static void DoTest(std::shared_ptr<ImageReceiver> imageReceiver, int pixelFormat
         .timeout = 0,
     };
 
-    OHOS::BufferFlushConfig flushConfig = {
-        .damage = {
-            .w = 0x100,
-            .h = 0x100,
-        },
-    };
+    OHOS::BufferFlushConfig flushConfig;
+    OHOS::Rect rect = { .w = 0x100, .h = 0x100, };
+    flushConfig.damages.push_back(rect);
 
     if (imageReceiver == nullptr || imageReceiver->iraContext_ == nullptr) {
         IMAGE_ERR("Image receiver DoTest imageReceiver is nullptr");
