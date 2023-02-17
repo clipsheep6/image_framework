@@ -23,25 +23,6 @@
 
 namespace OHOS {
     namespace Media {
-
-class ImageReceiverBufferProcessor : public IBufferProcessor {
-public:
-    explicit ImageReceiverBufferProcessor(ImageReceiver* receiver) : receiver_(receiver)
-    {
-    }
-    ~ImageReceiverBufferProcessor()
-    {
-        receiver_ = nullptr;
-    }
-    void BufferRelease(sptr<SurfaceBuffer>& buffer) override
-    {
-        if (receiver_ != nullptr) {
-            receiver_->ReleaseBuffer(buffer);
-        }
-    }
-private:
-    ImageReceiver* receiver_ = nullptr;
-};
         ImageReceiver::~ImageReceiver()
         {
             if (iraContext_ != nullptr) {

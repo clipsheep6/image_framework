@@ -38,36 +38,6 @@ ImageCreator::~ImageCreator()
     surfaceBufferAvaliableListener_ = nullptr;
 }
 
-class ImageCreatorBufferProcessor : public IBufferProcessor {
-public:
-    explicit ImageCreatorBufferProcessor(ImageCreator* creator) : creator_(creator)
-    {
-    }
-    ~ImageCreatorBufferProcessor()
-    {
-        creator_ = nullptr;
-    }
-    void BufferRelease(sptr<SurfaceBuffer>& buffer) override
-    {
-        // Do not release heare.
-        (void)buffer;
-    }
-private:
-    ImageCreator* creator_ = nullptr;
-};
-
-ImageCreator::~ImageCreator()
-{
-    if (iraContext_ != nullptr) {
-        ImageCreatorManager::ReleaseCreatorById(iraContext_->GetCreatorKey());
-    }
-    creatorConsumerSurface_ = nullptr;
-    creatorProducerSurface_ = nullptr;
-    iraContext_ = nullptr;
-    surfaceBufferReleaseListener_ = nullptr;
-    surfaceBufferAvaliableListener_ = nullptr;
-}
-
 GSError ImageCreator::OnBufferRelease(sptr<SurfaceBuffer> &buffer)
 {
     HiLog::Info(LABEL, "OnBufferRelease");

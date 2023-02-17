@@ -18,7 +18,6 @@
 
 #include <surface.h>
 #include <cstdint>
-#include <mutex>
 #include <string>
 #include <securec.h>
 #include "display_type.h"

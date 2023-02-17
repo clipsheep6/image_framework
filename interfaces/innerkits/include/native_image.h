@@ -19,7 +19,8 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <surface.h>
+#include "log_tags.h"
+#include "image_receiver_context.h"
 #include "image_format.h"
 
 namespace OHOS {
@@ -34,7 +35,7 @@ struct NativeComponent {
 
 class IBufferProcessor {
 public:
-    virtual ~IBufferProcessor(){};
+    virtual ~IBufferProcessor() {};
     virtual void BufferRelease(sptr<SurfaceBuffer>& buffer) = 0;
 };
 
