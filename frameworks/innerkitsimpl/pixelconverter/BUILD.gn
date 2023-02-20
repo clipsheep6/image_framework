@@ -21,7 +21,7 @@ config("pixelconvertadapter_public_config") {
   } else {
     skia_root = "//third_party/flutter"
   }
-  
+
   visibility = [ ":*" ]
   include_dirs = [
     "//foundation/multimedia/utils/include",
