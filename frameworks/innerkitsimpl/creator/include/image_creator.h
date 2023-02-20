@@ -75,8 +75,8 @@ public:
     {
         surfaceBufferReleaseListener_ = release;
     };
-    sptr<Surface> GetCreatorSurface();
-    static sptr<Surface> getSurfaceById(std::string id);
+    sptr<IConsumerSurface> GetCreatorSurface();
+    static sptr<IConsumerSurface> getSurfaceById(std::string id);
     void ReleaseCreator();
     static GSError OnBufferRelease(sptr<SurfaceBuffer> &buffer);
     static std::map<uint8_t*, ImageCreator*> bufferCreatorMap_;

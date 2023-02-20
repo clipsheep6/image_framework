@@ -43,6 +43,7 @@ struct ImageAsyncContext {
     int32_t componentType;
     NativeImage* image = nullptr;
     NativeComponent* component = nullptr;
+    bool isTestContext = false;
 };
 ImageHolderManager<NativeImage> ImageNapi::sNativeImageHolder_;
 thread_local napi_ref ImageNapi::sConstructor_ = nullptr;
@@ -139,7 +140,7 @@ napi_value ImageNapi::Constructor(napi_env env, napi_callback_info info)
     napi->native_ = sNativeImageHolder_.get(id);
     napi->isTestImage_ = false;
     if (napi->native_ == nullptr) {
-        if (MY_NAME.compare(id.c_str) == 0) {
+        if (MY_NAME.compare(id.c_str()) == 0) {
             napi->isTestImage_ = true;
         } else {
             IMAGE_ERR("Failed to get native image");
@@ -586,7 +587,7 @@ static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncC
     napi_value result;
     napi_get_undefined(env, &result);
 
-    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
+    if (context != nullptr && context->napi != nullptr && context->isTestContext) {
         TestGetComponentCallBack(env, status, context);
         return;
     }
@@ -697,6 +698,7 @@ napi_value ImageNapi::JsGetComponent(napi_env env, napi_callback_info info)
         napi_create_promise(env, &(context->deferred), &result);
     }
 
+    context->isTestContext = context->napi->isTestImage_;
     if (JsCreateWork(env, "JsGetComponent", JsGetComponentExec, JsGetComponentCallBack, context.get())) {
         context.release();
     }
