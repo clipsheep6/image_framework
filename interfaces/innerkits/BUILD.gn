@@ -335,7 +335,7 @@ if (use_clang_ios) {
       ]
       if (use_new_skia) {
         deps += [ "//third_party/skia:skia" ]
-        defines += [ "USE_NEW_SKIA" ]
+        defines += [ "NEW_SKIA" ]
       } else {
         deps += [ "//third_party/flutter/build/skia:ace_skia_ohos" ]
       }
