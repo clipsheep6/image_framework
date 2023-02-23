@@ -66,8 +66,8 @@ public:
     uint32_t GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges) override;
 
 #ifdef IMAGE_COLORSPACE_FLAG
-    OHOS::ColorManager::ColorSpace getGrColorSpace();
-    bool IsSupportICCProfile();
+    OHOS::ColorManager::ColorSpace getGrColorSpace() override;
+    bool IsSupportICCProfile() override;
 #endif
 
 private:
