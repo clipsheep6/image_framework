@@ -607,7 +607,7 @@ static bool JsQueueArgs(napi_env env, size_t argc, napi_value* argv,
         auto argType0 = ImageNapiUtils::getType(env, argv[PARAM0]);
         if (argType0 == napi_object) {
             imageNapi_ = ImageNapi::GetNativeImage(env, argv[PARAM0]);
-            if (imageNapi_ == nullptr) {
+            if (imageNapi_ == nullptr && !IsTestImageArgs(env, argv[PARAM0])) {
                 ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
                     "Could not get queue type object");
                 return false;

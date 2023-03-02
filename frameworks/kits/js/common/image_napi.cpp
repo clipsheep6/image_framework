@@ -492,7 +492,7 @@ napi_value ImageNapi::JsRelease(napi_env env, napi_callback_info info)
         return result;
     }
     if (argc == NUM1) {
-        if (JsGetCallbackFunc(env, argv[NUM0], &(context->callbackRef))) {
+        if (!JsGetCallbackFunc(env, argv[NUM0], &(context->callbackRef))) {
             IMAGE_ERR("Unsupport arg 0 type");
             return result;
         }
@@ -655,13 +655,18 @@ static bool JsGetComponentArgs(napi_env env, size_t argc, napi_value* argv, Imag
     }
 
     auto native = context->napi->GetNative();
-    if (native == nullptr) {
+    if (native == nullptr && !context->isTestContext) {
         IMAGE_ERR("native is nullptr");
         return false;
     }
 
     int32_t format = NUM0;
-    native->GetFormat(format);
+    if (context->isTestContext) {
+        const int32_t TEST_FORMAT = 12;
+        format = TEST_FORMAT;
+    } else {
+        native->GetFormat(format);
+    }
 
     if (!CheckComponentType(context->componentType, format)) {
         IMAGE_ERR("Unsupport component type 0 value: %{public}d", context->componentType);
@@ -697,8 +702,6 @@ napi_value ImageNapi::JsGetComponent(napi_env env, napi_callback_info info)
     if (context->callbackRef == nullptr) {
         napi_create_promise(env, &(context->deferred), &result);
     }
-
-    context->isTestContext = context->napi->isTestImage_;
     if (JsCreateWork(env, "JsGetComponent", JsGetComponentExec, JsGetComponentCallBack, context.get())) {
         context.release();
     }
