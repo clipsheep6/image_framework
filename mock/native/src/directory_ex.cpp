@@ -155,14 +155,14 @@ bool PathToRealPath(const string& path, string& realPath)
     }
 #else
     if (realpath(path.c_str(), tmpPath) == nullptr) {
-        HiLog::Error(LABEL, "path to realpath error");
+        HiLog::Error(LABEL, "path to realpath %{public}s error %{public}d", path.c_str(), errno);
         return false;
     }
 #endif
 
     realPath = tmpPath;
     if (access(realPath.c_str(), F_OK) != 0) {
-        HiLog::Error(LABEL, "check realpath (%{public}s) error", realPath.c_str());
+        HiLog::Error(LABEL, "check realpath (%{public}s) error %{public}d", realPath.c_str(), errno);
         return false;
     }
     return true;
