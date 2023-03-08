@@ -28,12 +28,20 @@ using namespace ImagePlugin;
 
 FileSourceStream::FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original)
     : filePtr_(file), fileSize_(size), fileOffset_(offset), fileOriginalOffset_(original)
-{}
+{
+}
+
+FileSourceStream::FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original, int fd)
+    : filePtr_(file), fileSize_(size), fileOffset_(offset), fileOriginalOffset_(original), ffd(fd)
+{
+}
 
 FileSourceStream::~FileSourceStream()
 {
+    IMAGE_LOGE("q_y  [FileSourceStream]FileSourceStream::~FileSourceStream() ");
     fclose(filePtr_);
     ResetReadBuffer();
+    IMAGE_LOGE("q_y  [FileSourceStream]FileSourceStream::~FileSourceStream()  ffd. %{public}d ", ffd);
 }
 
 unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &pathName)
@@ -67,6 +75,7 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)
     size_t size = 0;
 
     int dupFd = dup(fd);
+    IMAGE_LOGE("q_y  [FileSourceStream]Fail to dup fd. %{public}d + %{public}d ", fd, dupFd);
     if (dupFd < 0) {
         IMAGE_LOGE("[FileSourceStream]Fail to dup fd.");
         return nullptr;
@@ -93,7 +102,7 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)
         fclose(filePtr);
         return nullptr;
     }
-    return (unique_ptr<FileSourceStream>(new FileSourceStream(filePtr, size, offset, offset)));
+    return (unique_ptr<FileSourceStream>(new FileSourceStream(filePtr, size, offset, offset, dupFd)));
 }
 
 bool FileSourceStream::Read(uint32_t desiredSize, DataStreamBuffer &outData)
