@@ -14,6 +14,8 @@
  */
 
 #include "png_decoder.h"
+#include "hitrace_meter.h"
+#include "image_trace.h"
 #include "media_errors.h"
 #include "pngpriv.h"
 #include "pngstruct.h"
@@ -150,6 +152,7 @@ bool PngDecoder::HasProperty(std::string key)
 
 uint32_t PngDecoder::Decode(uint32_t index, DecodeContext &context)
 {
+    StartTrace(HITRACE_TAG_ZIMAGE, "Png Decode");
     // PNG format only supports one picture decoding, index in order to Compatible animation scene.
     if (index >= PNG_IMAGE_NUM) {
         HiLog::Error(LABEL, "decode image out of range, index:%{public}u, range:%{public}u.", index, PNG_IMAGE_NUM);
@@ -195,11 +198,13 @@ uint32_t PngDecoder::Decode(uint32_t index, DecodeContext &context)
         return SUCCESS;
     }
     state_ = PngDecodingState::IMAGE_ERROR;
+    FinishTrace(HITRACE_TAG_ZIMAGE);
     return ret;
 }
 
 uint8_t *PngDecoder::AllocOutputHeapBuffer(DecodeContext &context)
 {
+    StartTrace(HITRACE_TAG_ZIMAGE, "Png AllocOutputHeapBuffer");
     if (context.pixelsBuffer.buffer == nullptr) {
         uint64_t byteCount = static_cast<uint64_t>(pngImageInfo_.rowDataSize) * pngImageInfo_.height;
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
@@ -263,6 +268,7 @@ uint8_t *PngDecoder::AllocOutputHeapBuffer(DecodeContext &context)
             context.freeFunc = nullptr;
         }
     }
+    FinishTrace(HITRACE_TAG_ZIMAGE);
     return static_cast<uint8_t *>(context.pixelsBuffer.buffer);
 }
 
@@ -774,6 +780,7 @@ uint32_t PngDecoder::PushAllToDecode(InputDataStream *stream, size_t bufferSize,
 
 uint32_t PngDecoder::IncrementalReadRows(InputDataStream *stream)
 {
+    StartTrace(HITRACE_TAG_ZIMAGE, "Png IncrementalReadRows");
     if (stream == nullptr) {
         HiLog::Error(LABEL, "input data is null!");
         return ERR_IMAGE_GET_DATA_ABNORMAL;
@@ -818,6 +825,7 @@ uint32_t PngDecoder::IncrementalReadRows(InputDataStream *stream)
                      ret, idatLength_, incrementalLength_);
         return ret;
     }
+    FinishTrace(HITRACE_TAG_ZIMAGE);
     return SUCCESS;
 }
 
@@ -871,6 +879,7 @@ uint32_t PngDecoder::PushCurrentToDecode(InputDataStream *stream)
 
 uint32_t PngDecoder::DecodeHeader()
 {
+    StartTrace(HITRACE_TAG_ZIMAGE, "Png DecodeHeader");
     // only state PngDecodingState::SOURCE_INITED and PngDecodingState::BASE_INFO_PARSING can go in this function.
     if (inputStreamPtr_->IsStreamCompleted()) {
         // decode the png image header
@@ -901,6 +910,7 @@ uint32_t PngDecoder::DecodeHeader()
     }
     streamPosition_ = inputStreamPtr_->Tell();
     state_ = PngDecodingState::BASE_INFO_PARSED;
+    FinishTrace(HITRACE_TAG_ZIMAGE);
     return SUCCESS;
 }
 
@@ -935,6 +945,7 @@ uint32_t PngDecoder::ConfigInfo(const PixelDecodeOptions &opts)
 
 uint32_t PngDecoder::DoOneTimeDecode(DecodeContext &context)
 {
+    StartTrace(HITRACE_TAG_ZIMAGE, "Png DoOneTimeDecode");
     if (idatLength_ <= 0) {
         HiLog::Error(LABEL, "normal decode the image source incomplete.");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
@@ -956,6 +967,7 @@ uint32_t PngDecoder::DoOneTimeDecode(DecodeContext &context)
         return ret;
     }
     streamPosition_ = inputStreamPtr_->Tell();
+    FinishTrace(HITRACE_TAG_ZIMAGE);
     return SUCCESS;
 }
 
