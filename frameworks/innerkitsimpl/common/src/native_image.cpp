@@ -16,12 +16,13 @@
 #include <cinttypes>
 #include "media_errors.h"
 #include "hilog/log.h"
+#include "log_tags.h"
 #include "native_image.h"
 
 using OHOS::HiviewDFX::HiLog;
 
 namespace {
-    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "NativeImage"};
+    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "NativeImage"};
     constexpr int32_t NUMI_0 = 0;
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;

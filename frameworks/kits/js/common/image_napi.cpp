@@ -196,7 +196,7 @@ napi_value ImageNapi::Create(napi_env env, std::shared_ptr<NativeImage> nativeIm
 
     IMAGE_FUNCTION_IN();
     if (env == nullptr || nativeImage == nullptr) {
-        IMAGE_ERR("Input args is invalid");
+        IMAGE_ERR("Input args is invalid %{public}p vs %{public}p", env, nativeImage.get());
         return nullptr;
     }
     if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok && constructor != nullptr) {
@@ -247,8 +247,6 @@ static bool JsCreateWork(napi_env env, const char* name, AsyncExecCallback exec,
         IMAGE_ERR("fail to create async work %{public}d", status);
         return false;
     }
-    return true;
-}
 
     if (napi_queue_async_work(env, ctx->work) != napi_ok) {
         IMAGE_ERR("fail to queue async work");
@@ -596,7 +594,6 @@ static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncC
         HiLog::Error(LABEL, "Invalid input context");
         return;
     }
-
     context->status = ERROR;
     NativeComponent* component = context->component;
     if (component == nullptr) {
@@ -702,6 +699,7 @@ napi_value ImageNapi::JsGetComponent(napi_env env, napi_callback_info info)
     if (context->callbackRef == nullptr) {
         napi_create_promise(env, &(context->deferred), &result);
     }
+
     if (JsCreateWork(env, "JsGetComponent", JsGetComponentExec, JsGetComponentCallBack, context.get())) {
         context.release();
     }
