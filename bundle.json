@@ -25,10 +25,19 @@
       "ram": "10000KB",
       "deps": {
         "components": [
-          "ipc_core",
-          "libhilog",
-          "bytrace_core",
-          "libhichecker"
+          "zlib",
+          "utils_base",
+          "libpng",
+          "hitrace_native",
+          "ipc",
+          "thirdparty_giflib",
+          "hichecker_native",
+          "common",
+          "napi",
+          "flutter",
+          "multimedia",
+          "hiviewdfx_hilog_native",
+          "graphic_graphic_2d"
         ],
         "third_party": [
           "flutter",
