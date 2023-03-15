@@ -94,7 +94,7 @@ HWTEST_F(ImageColorSpaceTest, JpegColorSpaceDecode001, TestSize.Level3)
     uint8_t src[8] = {0, 1, 2, 3, 4, 5, 6, 7};
     uint8_t dst[8] = {0};
     ImageUtils::BGRAToARGB(src, dst, LENGTH);
-    for (inti = 0; i < LENGTH; i++) {
+    for (int i = 0; i < LENGTH; i++) {
         HiLog::Debug(LABEL_TEST, "BGRA:%{public}d ARGB:%{public}d", src[i], dst[i]);
     }
 }
