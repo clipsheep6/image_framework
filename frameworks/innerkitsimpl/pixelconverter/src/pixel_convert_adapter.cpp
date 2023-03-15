@@ -93,6 +93,25 @@ static void RGBAToARGB(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCoun
     }
 }
 
+static void BGRAToARGB(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount)
+{
+    if (byteCount % NUM_4 != NUM_0) {
+        HiLog::Error(LABEL, "Pixel count must multiple of 4.");
+        return;
+    }
+    uint8_t *src = srcPixels;
+    uint8_t *dst = dstPixels;
+    for (uint32_t i = NUM_0 ; i < byteCount; i += NUM_4) {
+        // 0-A 1-R 2-G 3-B
+        dst[NUM_0] = src[NUM_3];
+        dst[NUM_1] = src[NUM_2];
+        dst[NUM_2] = src[NUM_1];
+        dst[NUM_3] = src[NUM_0];
+        src += NUM_4;
+        dst += NUM_4;
+    }
+}
+
 static void RGBxToRGB(const uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount)
 {
     if (byteCount % NUM_4 != NUM_0) {
