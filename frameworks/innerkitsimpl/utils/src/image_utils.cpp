@@ -48,6 +48,12 @@ constexpr int32_t NV21_BYTES = 2;  // Each pixel is sorted on 3/2 bytes.
 constexpr float EPSILON = 1e-6;
 constexpr int MAX_DIMENSION = INT32_MAX >> 2;
 static bool g_pluginRegistered = false;
+static const uint8_t NUM_0 = 0;
+static const uint8_t NUM_1 = 1;
+static const uint8_t NUM_2 = 2;
+static const uint8_t NUM_3 = 3;
+static const uint8_t NUM_4 = 4;
+
 
 bool ImageUtils::GetFileSize(const string &pathName, size_t &size)
 {
@@ -148,6 +154,35 @@ uint32_t ImageUtils::RegisterPluginServer()
     return result;
 }
 
+static void ReversePixels(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount)
+{
+    if (byteCount % NUM_4 != NUM_0) {
+        IMAGE_LOGE("[ImageUtil]Pixel count must multiple of 4.");
+        return;
+    }
+    uint8_t *src = srcPixels;
+    uint8_t *dst = dstPixels;
+    for (uint32_t i = NUM_0 ; i < byteCount; i += NUM_4) {
+        // 0-B 1-G 2-R 3-A
+        dst[NUM_0] = src[NUM_3];
+        dst[NUM_1] = src[NUM_2];
+        dst[NUM_2] = src[NUM_1];
+        dst[NUM_3] = src[NUM_0];
+        src += NUM_4;
+        dst += NUM_4;
+    }
+}
+
+void ImageUtils::BGRAToARGB(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount)
+{
+    OHOS::Media::ReversePixels(srcPixels, dstPixels, byteCount);
+}
+
+void ImageUtils::ARGBToBGRA(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount)
+{
+    OHOS::Media::ReversePixels(srcPixels, dstPixels, byteCount);
+}
+
 PluginServer& ImageUtils::GetPluginServer()
 {
     if (!g_pluginRegistered) {
@@ -158,6 +193,7 @@ PluginServer& ImageUtils::GetPluginServer()
     }
     return DelayedRefSingleton<PluginServer>::GetInstance();
 }
+
 
 bool ImageUtils::PathToRealPath(const string &path, string &realPath)
 {
