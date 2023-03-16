@@ -144,7 +144,7 @@ static int32_t GetRGBxSize(const ImageInfo &imgInfo)
 static void ReversePixels(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount)
 {
     if (byteCount % NUM_4 != NUM_0) {
-        IMAGE_LOGE("[ImageUtil]Pixel count must multiple of 4.");
+        HiLog::Error(LABEL, "Pixel count must multiple of 4.");
         return;
     }
     uint8_t *src = srcPixels;
