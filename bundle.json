@@ -103,6 +103,15 @@
                         ]
                     },
                     "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_receiver_ndk"
+          },
+          {
+            "header": {
+              "header_base": "//foundation/multimedia/image_framework/framework/innerkitsimpl/pixelconverter/include/",
+              "header_files": [
+                "pixel_convert_adapter.h"
+              ]
+            },
+            "name": "//foundation/multimedia/image_framework/framework/innerkitsimpl/pixelconverter:pixelconvertadapter"
           }
         ],
         "test": [
