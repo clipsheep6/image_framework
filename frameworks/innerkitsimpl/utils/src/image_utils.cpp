@@ -159,6 +159,7 @@ PluginServer& ImageUtils::GetPluginServer()
     return DelayedRefSingleton<PluginServer>::GetInstance();
 }
 
+
 bool ImageUtils::PathToRealPath(const string &path, string &realPath)
 {
     if (path.empty()) {
