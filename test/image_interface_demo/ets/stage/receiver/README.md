@@ -1,6 +1,6 @@
 # Multimedia - Camera and Media Library
 
-### Introduction
+## Introduction
 
  This demo shows how to invoke the camera to take photos and record videos in eTS and how to use the **MediaLibrary** APIs to add, delete, modify, and query media files.
 
