@@ -173,7 +173,7 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//third_party/flutter/build/skia:ace_skia_ohos",
       ]
-      
+
       external_deps = [
         "c_utils:utils",
         "hitrace_native:hitrace_meter",

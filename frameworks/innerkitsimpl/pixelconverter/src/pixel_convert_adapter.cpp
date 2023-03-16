@@ -21,8 +21,8 @@
 #include "include/core/SkImageInfo.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkPixmap.h"
-#include "pixel_convert_adapter.h"
 #include "hitrace_meter.h"
+#include "pixel_convert_adapter.h"
 #ifdef _WIN32
 #include <iomanip>
 #endif
