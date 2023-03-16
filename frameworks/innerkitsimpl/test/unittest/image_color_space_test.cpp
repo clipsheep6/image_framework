@@ -29,7 +29,6 @@
 #include "media_errors.h"
 #include "pixel_map.h"
 #include "image_source_util.h"
-#include "pixel_convert_adapter.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -90,20 +89,6 @@ HWTEST_F(ImageColorSpaceTest, JpegColorSpaceDecode001, TestSize.Level3)
     EXPECT_NE(grColorSpace.GetXYZToRGB().size(), 0UL);
     EXPECT_NE(grColorSpace.GetRGBToXYZ().size(), 0UL);
 #endif
-    constexpr int32_t LENGTH = 8;
-    uint8_t src[LENGTH] = {0, 1, 2, 3, 4, 5, 6, 7};
-    uint8_t dst[LENGTH] = {0};
-    PixelConvertAdapter::BGRAToARGB(src, dst, LENGTH);
-    for (int i = 0; i < LENGTH; i++) {
-        GTEST_LOG_(INFO) << "BGRAToARGB" << "i:" << i << " " << static_cast<int>(src[i]) << "," << static_cast<int>(dst[i]);
-    }
-
-    uint8_t src2[LENGTH] = {7, 6, 5, 4, 3, 2, 1, 0};
-    uint8_t dst2[LENGTH] = {0};
-    PixelConvertAdapter::ARGBToBGRA(src2, dst2, LENGTH);
-    for (int i = 0; i < LENGTH; i++) {
-        GTEST_LOG_(INFO) << "ARGBToBGRA" << "i:" << i << " " << static_cast<int>(src2[i]) << "," << static_cast<int>(dst2[i]);
-    }
 }
 
 /**
