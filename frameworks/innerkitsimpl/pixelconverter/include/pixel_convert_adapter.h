@@ -31,6 +31,8 @@ public:
                                   const ImageInfo &srcInfo, void *dstPixels, uint32_t dstRowBytes,
                                   const ImageInfo &dstInfo);
     static bool EraseBitmap(const void *srcPixels, uint32_t srcRowBytes, const ImageInfo &srcInfo, uint32_t color);
+    static void BGRAToARGB(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount);
+    static void ARGBToBGRA(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount);
 };
 } // namespace Media
 } // namespace OHOS
