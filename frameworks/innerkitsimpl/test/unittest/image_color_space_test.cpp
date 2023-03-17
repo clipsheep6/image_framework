@@ -29,6 +29,7 @@
 #include "media_errors.h"
 #include "pixel_map.h"
 #include "image_source_util.h"
+#include "image_utils.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -89,6 +90,13 @@ HWTEST_F(ImageColorSpaceTest, JpegColorSpaceDecode001, TestSize.Level3)
     EXPECT_NE(grColorSpace.GetXYZToRGB().size(), 0UL);
     EXPECT_NE(grColorSpace.GetRGBToXYZ().size(), 0UL);
 #endif
+    constexpr int32_t LENGTH = 8;
+    uint8_t src[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    uint8_t dst[8] = {0};
+    ImageUtils::BGRAToARGB(src, dst, LENGTH);
+    for (int i = 0; i < LENGTH; i++) {
+        HiLog::Debug(LABEL_TEST, "BGRA:%{public}d ARGB:%{public}d", src[i], dst[i]);
+    }
 }
 
 /**
