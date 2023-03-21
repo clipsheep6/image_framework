@@ -609,14 +609,21 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     ImageReceiverCommonArgs args = {
         .env = env, .info = info,
-        .async = CallType::GETTER,
+        .async = CallType::ASYNC,
+        .name = "JsTest",
+        .callBack = nullptr,
+        .argc = ARGS1,
+        .queryArgs = PrepareOneArg,
     };
-    args.argc = ARGS0;
 
-    args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
-        ic.context->constructor_->isCallBackTest = true;
-        DoTest(ic.context->receiver_, PIXEL_FMT_RGBA_8888);
-        return true;
+    args.callBack = [](napi_env env, napi_status status, Context context) {
+        IMAGE_LINE_IN();
+        napi_value result = nullptr;
+        napi_get_undefined(env, &result);
+        if (context != nullptr) {
+            context->status = 801;
+        }
+    CommonCallbackRoutine(env, context, result);
     };
 
     return JSCommonProcess(args);
