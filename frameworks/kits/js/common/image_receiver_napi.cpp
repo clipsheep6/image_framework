@@ -614,8 +614,14 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
     args.argc = ARGS0;
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
+        napi_get_undefined(args.env, &(ic.result));
+        napi_value mess = nullptr;
         ic.context->constructor_->isCallBackTest = true;
-        DoTest(ic.context->receiver_, PIXEL_FMT_RGBA_8888);
+        napi_create_string_utf8(args.env, DEVICE_ERRCODE.c_str(), NAPI_AUTO_LENGTH, &mess);
+        ic.result = mess;
+        if (args.async != CallType::GETTER) {
+            DoTest(ic.context->receiver_, PIXEL_FMT_RGBA_8888);
+        }
         return true;
     };
 
