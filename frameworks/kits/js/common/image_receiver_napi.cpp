@@ -626,7 +626,8 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
     CommonCallbackRoutine(env, context, result);
     };
 
-    return JSCommonProcess(args);
+    //return JSCommonProcess(args);
+    return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(801), "rhw");
 }
 
 napi_value ImageReceiverNapi::JsTestYUV(napi_env env, napi_callback_info info)
