@@ -606,28 +606,31 @@ static void DoTest(std::shared_ptr<ImageReceiver> imageReceiver, int pixelFormat
 
 napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
 {
-    IMAGE_FUNCTION_IN();
-    ImageReceiverCommonArgs args = {
-        .env = env, .info = info,
-        .async = CallType::ASYNC,
-        .name = "JsTest",
-        .callBack = nullptr,
-        .argc = ARGS1,
-        .queryArgs = PrepareOneArg,
-    };
+    napi_value mess = nullptr;
+    napi_create_string_utf8(env,"801",NAPI_AUTO_LENGTH, &mess);
+    return mess;
+    // IMAGE_FUNCTION_IN();
+    // ImageReceiverCommonArgs args = {
+    //     .env = env, .info = info,
+    //     .async = CallType::ASYNC,
+    //     .name = "JsTest",
+    //     .callBack = nullptr,
+    //     .argc = ARGS1,
+    //     .queryArgs = PrepareOneArg,
+    // };
 
-    args.callBack = [](napi_env env, napi_status status, Context context) {
-        IMAGE_LINE_IN();
-        napi_value result = nullptr;
-        napi_get_undefined(env, &result);
-        if (context != nullptr) {
-            context->status = 801;
-        }
-    CommonCallbackRoutine(env, context, result);
-    };
+    // args.callBack = [](napi_env env, napi_status status, Context context) {
+    //     IMAGE_LINE_IN();
+    //     napi_value result = nullptr;
+    //     napi_get_undefined(env, &result);
+    //     if (context != nullptr) {
+    //         context->status = 801;
+    //     }
+    // CommonCallbackRoutine(env, context, result);
+    // };
 
     //return JSCommonProcess(args);
-    return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(801), "rhw");
+    //return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(801), "rhw");
 }
 
 napi_value ImageReceiverNapi::JsTestYUV(napi_env env, napi_callback_info info)
