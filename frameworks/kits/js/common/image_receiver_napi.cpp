@@ -614,10 +614,7 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
     args.argc = ARGS0;
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
-        napi_get_undefined(args.env, &(ic.result));
-        napi_value mess = nullptr;
-        napi_create_string_utf8(args.env,"801",NAPI_AUTO_LENGTH, &mess);
-        ic.result = mess;
+        napi_create_int32(args.env, 801, &(ic.result));
         return true;
     };
 
