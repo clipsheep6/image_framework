@@ -141,7 +141,6 @@ napi_value ImageReceiverNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("release", JsRelease),
 #ifdef IMAGE_DEBUG_FLAG
         DECLARE_NAPI_GETTER("test", JsTest),
-        DECLARE_NAPI_GETTER("checkDeviceTest", JsCheckDeviceTest),
         DECLARE_NAPI_GETTER("testYUV", JsTestYUV),
 #endif
         DECLARE_NAPI_GETTER("size", JsGetSize),
@@ -607,24 +606,6 @@ static void DoTest(std::shared_ptr<ImageReceiver> imageReceiver, int pixelFormat
 }
 
 napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
-{
-    IMAGE_FUNCTION_IN();
-    ImageReceiverCommonArgs args = {
-        .env = env, .info = info,
-        .async = CallType::GETTER,
-    };
-    args.argc = ARGS0;
-
-    args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
-        ic.context->constructor_->isCallBackTest = true;
-        DoTest(ic.context->receiver_, PIXEL_FMT_RGBA_8888);
-        return true;
-    };
-
-    return JSCommonProcess(args);
-}
-
-napi_value ImageReceiverNapi::JsCheckDeviceTest(napi_env env, napi_callback_info info)
 {
     IMAGE_FUNCTION_IN();
     ImageReceiverCommonArgs args = {
