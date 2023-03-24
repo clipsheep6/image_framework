@@ -616,8 +616,7 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
     args.argc = ARGS0;
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
-        ic.context->constructor_->isCallBackTest = true;
-        DoTest(ic.context->receiver_, PIXEL_FMT_RGBA_8888);
+        napi_create_int32(args.env, 801, &(ic.result));
         return true;
     };
 
