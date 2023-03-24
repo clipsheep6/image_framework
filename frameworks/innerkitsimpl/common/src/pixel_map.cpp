@@ -124,7 +124,7 @@ void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, Allocator
         FreePixelMap();
     }
     if (type == AllocatorType::SHARE_MEM_ALLOC && context == nullptr) {
-        HiLog::Debug(LABEL, "SetPixelsAddr error type %{public}d ", type);
+        HiLog::Error(LABEL, "SetPixelsAddr error type %{public}d ", type);
     }
     data_ = static_cast<uint8_t *>(addr);
     context_ = context;
