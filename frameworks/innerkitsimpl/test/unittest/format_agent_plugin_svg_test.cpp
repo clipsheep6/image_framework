@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,10 +27,7 @@ static const std::string IMAGE_INPUT_SVG_PATH = "/data/local/tmp/image/test.svg"
 static const std::string SVG_FORMAT_TYPE = "image/svg+xml";
 static constexpr uint8_t SVG_HEADER[] = { '<', '?', 'x', 'm', 'l' };
 
-class FormatAgentPluginSvgTest : public testing::Test {
-public:
-    FormatAgentPluginSvgTest() {}
-    ~FormatAgentPluginSvgTest() {}
+class FormatAgentPluginSvgTest : public testing::Test {}
 };
 
 /**
@@ -38,7 +35,7 @@ public:
  * @tc.desc: svg GetFormatType
  * @tc.type: FUNC
  */
-HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest001, TestSize.Level3)
+HWTEST_F(FormatAgentPluginSvgTest, SvgGetFormatTypeTest001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest001 start";
     ImagePlugin::SvgFormatAgent formatAgent;
@@ -52,7 +49,7 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest001, TestSize.Level3)
  * @tc.desc: svg GetHeaderSize
  * @tc.type: FUNC
  */
-HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest002, TestSize.Level3)
+HWTEST_F(FormatAgentPluginSvgTest, SvgGetHeaderSize001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest002 start";
     ImagePlugin::SvgFormatAgent formatAgent;
@@ -66,7 +63,7 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest002, TestSize.Level3)
  * @tc.desc: svg CheckFormat
  * @tc.type: FUNC
  */
-HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest003, TestSize.Level3)
+HWTEST_F(FormatAgentPluginSvgTest, SvgCheckFormatTest001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest003 start";
     ImagePlugin::SvgFormatAgent formatAgent;
@@ -82,7 +79,7 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest003, TestSize.Level3)
  * @tc.desc: svg CheckFormat
  * @tc.type: FUNC
  */
-HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest004, TestSize.Level3)
+HWTEST_F(FormatAgentPluginSvgTest, SvgCheckFormat002, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest004 start";
     ImagePlugin::SvgFormatAgent formatAgent;
@@ -109,7 +106,7 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest004, TestSize.Level3)
  * @tc.desc: svg CheckFormat
  * @tc.type: FUNC
  */
-HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest005, TestSize.Level3)
+HWTEST_F(FormatAgentPluginSvgTest, SvgCheckFormatTest003, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest005 start";
     ImagePlugin::SvgFormatAgent formatAgent;
@@ -124,7 +121,7 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest005, TestSize.Level3)
  * @tc.desc: svg CheckFormat
  * @tc.type: FUNC
  */
-HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest006, TestSize.Level3)
+HWTEST_F(FormatAgentPluginSvgTest, SvgCheckFormatTest004, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest006 start";
     ImagePlugin::SvgFormatAgent formatAgent;
@@ -144,6 +141,5 @@ HWTEST_F(FormatAgentPluginSvgTest, SvgFormatAgentPluginTest006, TestSize.Level3)
     auto ret = formatAgent.CheckFormat(pixelMap->GetPixels(), datasize);
     ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "FormatAgentPluginSvgTest: SvgFormatAgentPluginTest006 end";
-}
 }
 }
