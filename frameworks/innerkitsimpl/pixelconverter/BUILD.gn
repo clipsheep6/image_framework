@@ -12,9 +12,16 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 
 config("pixelconvertadapter_public_config") {
+  if (use_new_skia) {
+    skia_root = "//third_party"
+  } else {
+    skia_root = "//third_party/flutter"
+  }
+
   visibility = [ ":*" ]
   include_dirs = [
     "//foundation/multimedia/utils/include",
@@ -23,15 +30,15 @@ config("pixelconvertadapter_public_config") {
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//foundation/communication/ipc/utils/include",
     "//foundation/multimedia/media_utils_lite/interfaces/kits",
-    "//third_party/flutter/skia/include/core",
-    "//third_party/flutter/skia/include/encode",
-    "//third_party/flutter/skia",
-    "//third_party/flutter/skia/src/ports/skia_ohos",
-    "//third_party/flutter/skia/src/ports",
-    "//third_party/flutter/skia/src/images",
-    "//third_party/flutter/skia/src/ports/skia_ohos",
-    "//third_party/flutter/skia/third_party/externals/freetype/include/freetype",
-    "//third_party/flutter/skia/include/private",
+    "$skia_root/skia/include/core",
+    "$skia_root/skia/include/encode",
+    "$skia_root/skia",
+    "$skia_root/skia/src/ports/skia_ohos",
+    "$skia_root/skia/src/ports",
+    "$skia_root/skia/src/images",
+    "$skia_root/skia/src/ports/skia_ohos",
+    "$skia_root/skia/third_party/externals/freetype/include/freetype",
+    "$skia_root/skia/include/private",
     "//third_party/bounds_checking_function/include",
   ]
 
@@ -40,28 +47,28 @@ config("pixelconvertadapter_public_config") {
       "//foundation/multimedia/image_framework/mock/native/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "//foundation/communication/ipc/utils/include",
-      "//third_party/flutter/skia/include/core",
-      "//third_party/flutter/skia/include/encode",
-      "//third_party/flutter/skia",
-      "//third_party/flutter/skia/src/ports/skia_ohos",
-      "//third_party/flutter/skia/src/ports",
-      "//third_party/flutter/skia/src/images",
-      "//third_party/flutter/skia/src/ports/skia_ohos",
-      "//third_party/flutter/skia/third_party/externals/freetype/include/freetype",
+      "$skia_root/skia/include/core",
+      "$skia_root/skia/include/encode",
+      "$skia_root/skia",
+      "$skia_root/skia/src/ports/skia_ohos",
+      "$skia_root/skia/src/ports",
+      "$skia_root/skia/src/images",
+      "$skia_root/skia/src/ports/skia_ohos",
+      "$skia_root/skia/third_party/externals/freetype/include/freetype",
       "//third_party/bounds_checking_function/include",
     ]
   } else if (use_clang_mac) {
     include_dirs += [
       "//foundation/multimedia/image_framework/mock/native/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-      "//third_party/flutter/skia/include/core",
-      "//third_party/flutter/skia/include/encode",
-      "//third_party/flutter/skia",
-      "//third_party/flutter/skia/src/ports/skia_ohos",
-      "//third_party/flutter/skia/src/ports",
-      "//third_party/flutter/skia/src/images",
-      "//third_party/flutter/skia/src/ports/skia_ohos",
-      "//third_party/flutter/skia/third_party/externals/freetype/include/freetype",
+      "$skia_root/skia/include/core",
+      "$skia_root/skia/include/encode",
+      "$skia_root/skia",
+      "$skia_root/skia/src/ports/skia_ohos",
+      "$skia_root/skia/src/ports",
+      "$skia_root/skia/src/images",
+      "$skia_root/skia/src/ports/skia_ohos",
+      "$skia_root/skia/third_party/externals/freetype/include/freetype",
       "//third_party/bounds_checking_function/include",
     ]
   } else if (use_clang_ios) {
@@ -69,15 +76,15 @@ config("pixelconvertadapter_public_config") {
       "//commonlibrary/c_utils/base/include",
       "//foundation/communication/ipc/utils/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-      "//third_party/flutter/skia/include/core",
-      "//third_party/flutter/skia/include/encode",
-      "//third_party/flutter/skia",
-      "//third_party/flutter/skia/src/ports/skia_ohos",
-      "//third_party/flutter/skia/src/ports",
-      "//third_party/flutter/skia/src/images",
+      "$skia_root/skia/include/core",
+      "$skia_root/skia/include/encode",
+      "$skia_root/skia",
+      "$skia_root/skia/src/ports/skia_ohos",
+      "$skia_root/skia/src/ports",
+      "$skia_root/skia/src/images",
       "//third_party/expat/lib",
-      "//third_party/flutter/skia/include/private",
-      "//third_party/flutter/skia/third_party/externals/freetype/include/freetype",
+      "$skia_root/skia/include/private",
+      "$skia_root/skia/third_party/externals/freetype/include/freetype",
       "//third_party/bounds_checking_function/include",
       "//foundation/multimedia/image_framework/mock/native/include",
     ]
@@ -86,15 +93,15 @@ config("pixelconvertadapter_public_config") {
       "//commonlibrary/c_utils/base/include",
       "//foundation/communication/ipc/utils/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-      "//third_party/flutter/skia/include/core",
-      "//third_party/flutter/skia/include/encode",
-      "//third_party/flutter/skia",
-      "//third_party/flutter/skia/src/ports/skia_ohos",
-      "//third_party/flutter/skia/src/ports",
-      "//third_party/flutter/skia/src/images",
+      "$skia_root/skia/include/core",
+      "$skia_root/skia/include/encode",
+      "$skia_root/skia",
+      "$skia_root/skia/src/ports/skia_ohos",
+      "$skia_root/skia/src/ports",
+      "$skia_root/skia/src/images",
       "//third_party/expat/lib",
-      "//third_party/flutter/skia/include/private",
-      "//third_party/flutter/skia/third_party/externals/freetype/include/freetype",
+      "$skia_root/skia/include/private",
+      "$skia_root/skia/third_party/externals/freetype/include/freetype",
       "//third_party/bounds_checking_function/include",
       "//foundation/multimedia/image_framework/mock/native/include",
     ]
@@ -103,15 +110,15 @@ config("pixelconvertadapter_public_config") {
       "//commonlibrary/c_utils/base/include",
       "//foundation/communication/ipc/utils/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-      "//third_party/flutter/skia/include/core",
-      "//third_party/flutter/skia/include/encode",
-      "//third_party/flutter/skia",
-      "//third_party/flutter/skia/src/ports/skia_ohos",
-      "//third_party/flutter/skia/src/ports",
-      "//third_party/flutter/skia/src/images",
+      "$skia_root/skia/include/core",
+      "$skia_root/skia/include/encode",
+      "$skia_root/skia",
+      "$skia_root/skia/src/ports/skia_ohos",
+      "$skia_root/skia/src/ports",
+      "$skia_root/skia/src/images",
       "//third_party/expat/lib",
-      "//third_party/flutter/skia/include/private",
-      "//third_party/flutter/skia/third_party/externals/freetype/include/freetype",
+      "$skia_root/skia/include/private",
+      "$skia_root/skia/third_party/externals/freetype/include/freetype",
       "//third_party/bounds_checking_function/include",
     ]
   }
@@ -167,10 +174,13 @@ if (use_clang_ios) {
       aosp_deps = [ "shared_library:libnativewindow" ]
     } else {
       deps = [
-        "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-        "//third_party/flutter/build/skia:ace_skia_ohos",
+        "//foundation/multimedia/image_framework/mock/native:log_mock_static"
       ]
-
+      if (use_new_skia) {
+        deps += [ "//third_party/skia:skia" ]
+      } else {
+        deps += [ "//third_party/flutter/build/skia:ace_skia_ohos" ]
+      }
       external_deps = [ "c_utils:utils" ]
     }
 
@@ -212,9 +222,13 @@ ohos_static_library("pixelconvertadapter_static") {
     aosp_deps = [ "shared_library:libnativewindow" ]
   } else {
     deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//third_party/flutter/build/skia:ace_skia_ohos",
+      "//foundation/multimedia/image_framework/mock/native:log_mock_static"
     ]
+    if (use_new_skia) {
+      deps += [ "//third_party/skia:skia" ]
+    } else {
+      deps += [ "//third_party/flutter/build/skia:ace_skia_ohos" ]
+    }
 
     external_deps = [
       "c_utils:utils",

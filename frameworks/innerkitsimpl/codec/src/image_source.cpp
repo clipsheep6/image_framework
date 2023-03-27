@@ -38,6 +38,9 @@
 #include "include/jpeg_decoder.h"
 #endif
 #include "include/utils/SkBase64.h"
+#if defined(NEW_SKIA)
+#include "include/core/SkData.h"
+#endif
 #include "image_trace.h"
 #include "string_ex.h"
 
@@ -1370,7 +1373,24 @@ unique_ptr<SourceStream> ImageSource::DecodeBase64(const string &data)
     string b64Data = data.substr(encoding + BASE64_URL_PREFIX.size());
     size_t rawDataLen = b64Data.size() - count(b64Data.begin(), b64Data.end(), '=');
     rawDataLen -= (rawDataLen / INT_8) * INT_2;
+#ifdef NEW_SKIA
+    // size_t outputLen = 0;
+    // SkBase64::Error error = SkBase64::Decode(b64Data.data(), b64Data.size(), nullptr, &outputLen);
+    // if (error != SkBase64::Error::kNoError) {
+    //     IMAGE_LOGE("[ImageSource]base64 image decode failed!");
+    //     return nullptr;
+    // }
 
+    // sk_sp<SkData> resData = SkData::MakeUninitialized(outputLen);
+    // void* output = resData->writable_data();
+    // error = SkBase64::Decode(b64Data.data(), b64Data.size(), output, &outputLen);
+    // if (error != SkBase64::Error::kNoError) {
+    //     IMAGE_LOGE("[ImageSource]base64 image decode failed!");
+    //     return nullptr;
+    // }
+    // return
+    return nullptr;
+#else
     SkBase64 base64Decoder;
     if (base64Decoder.decode(b64Data.data(), b64Data.size()) != SkBase64::kNoError) {
         IMAGE_LOGE("[ImageSource]base64 image decode failed!");
@@ -1387,6 +1407,7 @@ unique_ptr<SourceStream> ImageSource::DecodeBase64(const string &data)
         base64Data = nullptr;
     }
     return result;
+#endif
 }
 
 bool ImageSource::IsSpecialYUV()
