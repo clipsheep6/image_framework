@@ -37,6 +37,7 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
 #include <cstdint>
 #include "napi/native_api.h"
+#include "image_mdk_common.h"
 namespace OHOS {
 namespace Media {
 #ifdef __cplusplus
@@ -44,20 +45,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Enumerates the error codes returned by the functions.
- *
- * @since 8
- * @version 1.0
- */
-enum {
-    /** Operation success. */
-    OHOS_IMAGE_RESULT_SUCCESS = 0,
-    /** Invalid value. */
-    OHOS_IMAGE_RESULT_BAD_PARAMETER = -1,
-};
-
-/**
- * @brief Enumerates the pixel formats.
+ * @brief Enumerates pixel formats.
  *
  * @since 8
  * @version 1.0
