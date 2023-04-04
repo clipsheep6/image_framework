@@ -125,9 +125,12 @@ void PixelMap::SetTrtansformered(bool isTrtansformered)
 
 void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type, CustomFreePixelMap func)
 {
-    if (data_ != nullptr || (type == AllocatorType::SHARE_MEM_ALLOC && context == nullptr)) {
-        HiLog::Error(LABEL, "SetPixelsAddr error type %{public}d ", type);
+    if (data_ != nullptr) {
+        HiLog::Error(LABEL, "SetPixelsAddr error ");
         FreePixelMap();
+    }
+    if (type == AllocatorType::SHARE_MEM_ALLOC && context == nullptr) {
+        HiLog::Error(LABEL, "SetPixelsAddr error type %{public}d ", type);
     }
     data_ = static_cast<uint8_t *>(addr);
     context_ = context;
@@ -1504,13 +1507,15 @@ bool PixelMap::EncodeTlv(std::vector<uint8_t> &buff) const
     WriteVarint(buff, GetVarintLen(imageInfo_.baseDensity));
     WriteVarint(buff, imageInfo_.baseDensity);
     WriteUint8(buff, TLV_IMAGE_ALLOCATORTYPE);
-    WriteVarint(buff, GetVarintLen(static_cast<int32_t>(allocatorType_)));
-    WriteVarint(buff, static_cast<int32_t>(allocatorType_));
+    AllocatorType tmpAllocatorType = allocatorType_;
     if (allocatorType_ == AllocatorType::SHARE_MEM_ALLOC) {
-        WriteUint8(buff, TLV_END); // end tag
-        HiLog::Error(LABEL, "pixel map tlv encode fail: unsupport SHARE_MEM_ALLOC");
-        return false;
+        tmpAllocatorType = AllocatorType::HEAP_ALLOC;
+        HiLog::Info(LABEL, "pixel map tlv encode unsupport SHARE_MEM_ALLOC, use HEAP_ALLOC."\
+                    "width: %{piblic}d, height: %{public}d",
+                    imageInfo_.size.width, imageInfo_.size.height);
     }
+    WriteVarint(buff, GetVarintLen(static_cast<int32_t>(tmpAllocatorType)));
+    WriteVarint(buff, static_cast<int32_t>(tmpAllocatorType));
     WriteUint8(buff, TLV_IMAGE_DATA);
     const uint8_t *data = data_;
     int32_t dataSize = rowDataSize_ * imageInfo_.size.height;
