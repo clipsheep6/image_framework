@@ -37,6 +37,9 @@ namespace {
 
 namespace OHOS {
 namespace Media {
+    #define LOGE(fmt, ...)               \
+    ::OHOS::HiviewDFX::HiLog::Error(::OHOS::HiviewDFX::HiLogLabel \
+        { LOG_CORE, 0xD001402, "image" }, "%{public}s: " fmt, __func__, ##__VA_ARGS__)
 
 static const std::string CLASS_NAME = "PixelMap";
 thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
@@ -275,6 +278,7 @@ PixelMapNapi::PixelMapNapi():env_(nullptr)
 
 PixelMapNapi::~PixelMapNapi()
 {
+    LOGE("~PixelMapNapi IN");
     release();
 }
 
@@ -513,6 +517,7 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_UnAccessPix
 
 napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 {
+    LOGE("Constructor IN");
     napi_value undefineVar = nullptr;
     napi_get_undefined(env, &undefineVar);
 
@@ -544,6 +549,7 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 
 void PixelMapNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
 {
+    LOGE("Destructor IN");
     if (nativeObject != nullptr) {
         delete reinterpret_cast<PixelMapNapi*>(nativeObject);
         nativeObject = nullptr;
@@ -552,6 +558,7 @@ void PixelMapNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
 
 STATIC_EXEC_FUNC(CreatePixelMap)
 {
+    LOGE("CreatePixelMapExec IN");
     auto context = static_cast<PixelMapAsyncContext*>(data);
     auto colors = static_cast<uint32_t*>(context->colorsBuffer);
     auto pixelmap = PixelMap::Create(colors, context->colorsBufferSize, context->opts);
@@ -567,6 +574,8 @@ STATIC_EXEC_FUNC(CreatePixelMap)
 
 void PixelMapNapi::CreatePixelMapComplete(napi_env env, napi_status status, void *data)
 {
+
+    LOGE("CreatePixelMapComplete IN");
     napi_value constructor = nullptr;
     napi_value result = nullptr;
 
@@ -591,6 +600,7 @@ void PixelMapNapi::CreatePixelMapComplete(napi_env env, napi_status status, void
 
 napi_value PixelMapNapi::CreatePixelMap(napi_env env, napi_callback_info info)
 {
+    LOGE("CreatePixelMap IN");
     napi_value globalValue;
     napi_get_global(env, &globalValue);
     napi_value func;
@@ -643,6 +653,7 @@ napi_value PixelMapNapi::CreatePixelMap(napi_env env, napi_callback_info info)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
+        LOGE("CreatePixelMap OUT");
     return result;
 }
 
