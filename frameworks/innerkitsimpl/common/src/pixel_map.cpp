@@ -1110,7 +1110,7 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
         HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
         return false;
     }
-    if (data == nullptr || size > MAX_IMAGEDATA_SIZE) {
+    if (size > MAX_IMAGEDATA_SIZE) {
         return false;
     }
 
