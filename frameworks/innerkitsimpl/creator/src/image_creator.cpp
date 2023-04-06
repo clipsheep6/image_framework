@@ -49,7 +49,7 @@ GSError ImageCreator::OnBufferRelease(sptr<SurfaceBuffer> &buffer)
         return GSERROR_NO_ENTRY;
     }
     auto icr = iter->second;
-    if (icr->surfaceBufferReleaseListener_ == nullptr) {
+    if (icr == nullptr || icr->surfaceBufferReleaseListener_ == nullptr) {
         HiLog::Info(LABEL, "empty icr");
         return GSERROR_NO_ENTRY;
     }
