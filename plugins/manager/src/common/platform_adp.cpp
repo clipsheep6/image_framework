@@ -53,6 +53,10 @@ FARPROC PlatformAdp::AdpGetSymAddress(HMODULE handle, const string &symbol)
 #else
 void *PlatformAdp::LoadLibrary(const std::string &packageName)
 {
+    if (packageName.empty()) {
+        HiLog::Error(LABEL, "packageName is empty.");
+        return nullptr;
+    }
     return dlopen(packageName.c_str(), RTLD_LAZY);
 }
 
