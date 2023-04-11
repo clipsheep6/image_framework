@@ -919,6 +919,26 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
             }
             break;
         }
+        case EXIF_TAG_COMPRESSED_BITS_PER_PIXEL: {
+            std::vector<std::string> longVec;
+            SplitStr(value, ",", longVec);
+            if (longVec.size() != CONSTANT_2) {
+                HiLog::Error(LABEL, "COMPRESSED_BITS_PER_PIXEL Invalid value %{public}s", value.c_str());
+                return false;
+            }
+
+            ExifRational longRational;
+            longRational.numerator = static_cast<ExifSLong>(atoi(longVec[0].c_str()));
+            longRational.denominator = static_cast<ExifSLong>(atoi(longVec[1].c_str()));
+            *ptrEntry = CreateExifTag(data, EXIF_IFD_0, EXIF_TAG_COMPRESSED_BITS_PER_PIXEL,
+                sizeof(longRational), EXIF_FORMAT_RATIONAL);
+            if ((*ptrEntry) == nullptr) {
+                HiLog::Error(LABEL, "Get exif entry failed.");
+                return false;
+            }
+            exif_set_rational((*ptrEntry)->data, order, longRational);
+            break;
+        }
         default:
             break;
     }
