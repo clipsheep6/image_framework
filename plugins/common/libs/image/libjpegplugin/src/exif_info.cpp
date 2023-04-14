@@ -843,7 +843,7 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
                 HiLog::Error(LABEL, "Get exif entry failed.");
                 return false;
             }
-            exif_set_long((*ptrEntry)->data, order, (ExifLong)atoi(value.c_str()));
+            exif_set_short((*ptrEntry)->data, order, (ExifShort)atoi(value.c_str()));
             break;
         }
         case EXIF_TAG_IMAGE_WIDTH: {
@@ -852,7 +852,7 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
                 HiLog::Error(LABEL, "Get exif entry failed.");
                 return false;
             }
-            exif_set_long((*ptrEntry)->data, order, (ExifLong)atoi(value.c_str()));
+            exif_set_short((*ptrEntry)->data, order, (ExifShort)atoi(value.c_str()));
             break;
         }
         case EXIF_TAG_GPS_LATITUDE: {
