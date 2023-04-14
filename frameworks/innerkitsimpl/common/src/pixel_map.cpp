@@ -15,7 +15,9 @@
 
 #include "pixel_map.h"
 #include <iostream>
+#include <sys/resource.h>
 #include <unistd.h>
+
 #include "hilog/log.h"
 #include "image_utils.h"
 #include "log_tags.h"
@@ -1204,6 +1206,16 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
         if (ptr == MAP_FAILED) {
             // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
             HiLog::Error(LABEL, "ReadImageData map failed, errno:%{public}d", errno);
+            return nullptr;
+        }
+
+        struct rlimit limit;
+        getrlimit(RLIMIT_DATA, &limit);
+        uintptr_t ptr_addr = reinterpret_cast<uintptr_t>(ptr);
+        uintptr_t limit_addr = limit.rlim_cur;
+
+        if (ptr_addr + bufferSize > limit_addr) {
+            HiLog::Error(LABEL,"Error: Memory range out of bounds.");
             return nullptr;
         }
 
