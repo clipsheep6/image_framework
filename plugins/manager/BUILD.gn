@@ -51,13 +51,13 @@ if (use_clang_ios) {
       "//foundation/multimedia/utils/include",
       "//third_party/json/single_include/nlohmann",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-      "$image_subsystem/mock/native/include/log",
+      "$image_subsystem/mock/native/include",
     ]
 
     defines = image_decode_ios_defines
     include_dirs += [
       "//commonlibrary/c_utils/base/include",
-      "$image_subsystem/mock/native/include/log",
+      "$image_subsystem/mock/native/include",
       "//foundation/multimedia/image_framework/mock/native/include/secure",
     ]
 
@@ -110,12 +110,12 @@ if (use_clang_ios) {
       "//foundation/multimedia/utils/include",
       "//third_party/json/single_include/nlohmann",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-      "$image_subsystem/mock/native/include/log",
+      "$image_subsystem/mock/native/include",
     ]
 
     if (use_mingw_win) {
       defines = image_decode_windows_defines
-      include_dirs += [ "$image_subsystem/mock/native/include/log" ]
+      include_dirs += [ "$image_subsystem/mock/native/include" ]
       deps = [ "$image_subsystem/mock/native:log_mock_static" ]
     } else if (use_clang_mac) {
       defines = image_decode_mac_defines
@@ -204,12 +204,12 @@ ohos_static_library("pluginmanager_static") {
     ]
   } else if (use_clang_ios) {
     defines = image_decode_ios_defines
-    include_dirs += [ "$image_subsystem/mock/native/include/log" ]
+    include_dirs += [ "$image_subsystem/mock/native/include" ]
     deps = [ "$image_subsystem/mock/native:log_mock_static" ]
   } else if (use_clang_android) {
     include_dirs += [
       "//commonlibrary/c_utils/base/include",
-      "$image_subsystem/mock/native/include/log",
+      "$image_subsystem/mock/native/include",
     ]
 
     deps = [
