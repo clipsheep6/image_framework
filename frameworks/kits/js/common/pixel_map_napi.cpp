@@ -19,7 +19,7 @@
 #include "image_napi_utils.h"
 #include "image_pixel_map_napi.h"
 #include "image_trace.h"
-#if !defined(_IOS) && !defined(_ANDROID)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
 #include "js_runtime_utils.h"
 #endif
@@ -70,7 +70,7 @@ struct PixelMapAsyncContext {
     double yArg = 0;
     bool xBarg = false;
     bool yBarg = false;
-#if !defined(_IOS) && !defined(_ANDROID)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     std::shared_ptr<OHOS::ColorManager::ColorSpace> colorSpace;
 #endif
 };
@@ -231,6 +231,12 @@ static void CommonCallbackRoutine(napi_env env, PixelMapAsyncContext* &asyncCont
     napi_get_undefined(env, &result[NUM_0]);
     napi_get_undefined(env, &result[NUM_1]);
 
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(env, &scope);
+    if (scope == nullptr) {
+        return;
+    }
+
     if (asyncContext == nullptr) {
         return;
     }
@@ -253,6 +259,7 @@ static void CommonCallbackRoutine(napi_env env, PixelMapAsyncContext* &asyncCont
     }
 
     napi_delete_async_work(env, asyncContext->work);
+    napi_close_handle_scope(env, scope);
 
     delete asyncContext;
     asyncContext = nullptr;
@@ -1820,7 +1827,7 @@ napi_value PixelMapNapi::GetColorSpace(napi_env env, napi_callback_info info)
 }
 static void ParseColorSpaceObject(NapiValues &nVal)
 {
-#if !defined(_IOS) && !defined(_ANDROID)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     auto csNativeValue = reinterpret_cast<NativeValue*>(nVal.argv[NUM_0]);
     auto csNativeObject = OHOS::AbilityRuntime::ConvertNativeValueTo<NativeObject>(csNativeValue);
     nVal.context->colorSpace = ColorManager::GetColorSpaceByJSObject(csNativeObject);
