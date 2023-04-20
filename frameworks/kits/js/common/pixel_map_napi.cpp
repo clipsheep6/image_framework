@@ -1310,23 +1310,31 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
         napi_get_undefined(env, &result);
     }
 
-    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Release",
-        [](napi_env env, void *data)
-        {
-            auto context = static_cast<PixelMapAsyncContext*>(data);
-            if (context->nConstructor->IsLockPixelMap()) {
-                context->status = ERROR;
-                return;
-            } else {
-                if (context->nConstructor->nativePixelMap_ != nullptr
-					&& context->nConstructor->nativePixelMap_ == context->nConstructor->nativeInner_)
-		        {
-		            context->nConstructor->nativePixelMap_ = nullptr;
-		            context->nConstructor->nativeInner_ = nullptr;
-		        }
-                context->status = SUCCESS;
+    napi_value _resource = nullptr;
+    napi_create_string_utf8(env, "Release", NAPI_AUTO_LENGTH, &_resource);
+
+    napi_async_execute_callback exec = [](napi_env env, void *data)
+    {
+        auto context = static_cast<PixelMapAsyncContext*>(data);
+        if (context->nConstructor->IsLockPixelMap()) {
+            context->status = ERROR;
+            return;
+        } else {
+            if (context->nConstructor->nativePixelMap_ != nullptr &&
+                context->nConstructor->nativePixelMap_ == context->nConstructor->nativeInner_)
+            {
+                context->nConstructor->nativePixelMap_ = nullptr;
+                context->nConstructor->nativeInner_ = nullptr;
             }
-        }, EmptyResultComplete, asyncContext, asyncContext->work);
+            context->status = SUCCESS;
+        }
+    };
+
+    napi_async_complete_callback complete = EmptyResultComplete;
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, _resource, exec,
+                                                complete, static_cast<void*>(asyncContext.get()), &asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    asyncContext.release();
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
