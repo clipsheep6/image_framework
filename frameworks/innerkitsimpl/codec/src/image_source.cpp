@@ -218,7 +218,9 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
 
     unique_ptr<SourceStream> streamPtr = DecodeBase64(pathName);
     if (streamPtr == nullptr) {
+        IMAGE_LOGD("[ImageSource] DecodeBase64 streamPtr == nullptr.");
         streamPtr = FileSourceStream::CreateSourceStream(pathName);
+        IMAGE_LOGD("[ImageSource] FileSourceStream::CreateSourceStream(pathName).");
     }
 
     if (streamPtr == nullptr) {
@@ -316,6 +318,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
 #if !defined(_WIN32) && !defined(_APPLE)
     StartTrace(HITRACE_TAG_ZIMAGE, "CreatePixelMap");
 #endif
+    IMAGE_LOGE("[ImageSource] CreatePixelMap start.");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     opts_ = opts;
     bool useSkia = opts_.sampleSize != 1;
@@ -323,6 +326,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         // we need reset to initial state to choose correct decoder
         Reset();
     }
+    IMAGE_LOGE("[ImageSource] CreatePixelMap GetValidImageStatus start. index = %{public}u", index);
     auto iter = GetValidImageStatus(index, errorCode);
     if (iter == imageStatusMap_.end()) {
         IMAGE_LOGE("[ImageSource]get valid image status fail on create pixel map, ret:%{public}u.", errorCode);
@@ -359,6 +363,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         .height = plInfo.size.height
     };
     PostProc::ValidCropValue(opts_.CropRect, size);
+    IMAGE_LOGE("[ImageSource] UpdatePixelMapInfo.");
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()));
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
@@ -366,9 +371,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     }
 
     DecodeContext context;
+    IMAGE_LOGE("[ImageSource] FinalOutputStep.");
     FinalOutputStep finalOutputStep = FinalOutputStep::NO_CHANGE;
     if (!useSkia) {
+        IMAGE_LOGE("[ImageSource] HasProperty start.");
         bool hasNinePatch = mainDecoder_->HasProperty(NINE_PATCH);
+        IMAGE_LOGE("[ImageSource] HasProperty end hasNinePatch: %{public}d.", hasNinePatch);
         finalOutputStep = GetFinalOutputStep(opts_, *(pixelMap.get()), hasNinePatch);
         IMAGE_LOGD("[ImageSource]finalOutputStep:%{public}d. opts.allocatorType %{public}d",
             finalOutputStep, opts_.allocatorType);
@@ -415,12 +423,16 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
-
+    IMAGE_LOGE("[ImageSource] pixelMap->SetPixelsAddr");
+    IMAGE_LOGE("[ImageSource] pixelMap->SetPixelsAddr bufferSize:%{public}d", context.pixelsBuffer.bufferSize);
+    IMAGE_LOGE("[ImageSource] pixelMap->SetPixelsAddr allocatorType:%{public}d", context.allocatorType);
     pixelMap->SetPixelsAddr(context.pixelsBuffer.buffer, context.pixelsBuffer.context, context.pixelsBuffer.bufferSize,
                             context.allocatorType, context.freeFunc);
+    IMAGE_LOGE("[ImageSource] pixelMap->SetPixelsAddr end");
     DecodeOptions procOpts;
     CopyOptionsToProcOpts(opts_, procOpts, *(pixelMap.get()));
     PostProc postProc;
+    IMAGE_LOGE("[ImageSource] postProc.DecodePostProc start");
     errorCode = postProc.DecodePostProc(procOpts, *(pixelMap.get()), finalOutputStep);
     if (errorCode != SUCCESS) {
         return nullptr;
@@ -434,6 +446,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
 #if !defined(_WIN32) && !defined(_APPLE)
     FinishTrace(HITRACE_TAG_ZIMAGE);
 #endif
+    IMAGE_LOGE("[ImageSource] pixelMap end");
     return pixelMap;
 }
 
@@ -802,37 +815,42 @@ ImageSource::FormatAgentMap ImageSource::InitClass()
 
 uint32_t ImageSource::CheckEncodedFormat(AbsImageFormatAgent &agent)
 {
+    IMAGE_LOGE("[ImageSource] CheckEncodedFormat start.");
     uint32_t size = agent.GetHeaderSize();
     ImagePlugin::DataStreamBuffer outData;
     if (sourceStreamPtr_ == nullptr) {
         IMAGE_LOGE("[ImageSource]check image format, source stream is null.");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
+    IMAGE_LOGE("[ImageSource]check image format, source stream is not null.");
     if (!sourceStreamPtr_->Peek(size, outData)) {
         IMAGE_LOGE("[ImageSource]stream peek the data fail.");
         return ERR_IMAGE_SOURCE_DATA;
     }
-
+    IMAGE_LOGE("[ImageSource]check image format, source stream peek success.");
     if (outData.inputStreamBuffer == nullptr || outData.dataSize < size) {
         IMAGE_LOGE("[ImageSource]the ouData is incomplete.");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
-
+    IMAGE_LOGE("[ImageSource]check image format, outData.inputStreamBuffer != nullptr && outData.dataSize >= size.");
     if (!agent.CheckFormat(outData.inputStreamBuffer, size)) {
         IMAGE_LOGE("[ImageSource]check mismatched format :%{public}s.", agent.GetFormatType().c_str());
         return ERR_IMAGE_MISMATCHED_FORMAT;
     }
+    IMAGE_LOGE("[ImageSource] CheckEncodedFormat end.");
     return SUCCESS;
 }
 
 uint32_t ImageSource::CheckFormatHint(const string &formatHint, FormatAgentMap::iterator &formatIter)
 {
+    IMAGE_LOGE("[ImageSource] CheckFormatHint start.");
     uint32_t ret = ERROR;
     formatIter = formatAgentMap_.find(formatHint);
     if (formatIter == formatAgentMap_.end()) {
         IMAGE_LOGE("[ImageSource]check input format fail.");
         return ret;
     }
+    IMAGE_LOGE("[ImageSource]check input format success.");
     AbsImageFormatAgent *agent = formatIter->second;
     ret = CheckEncodedFormat(*agent);
     if (ret != SUCCESS) {
@@ -841,14 +859,17 @@ uint32_t ImageSource::CheckFormatHint(const string &formatHint, FormatAgentMap::
         }
         return ret;
     }
+    IMAGE_LOGE("[ImageSource] CheckFormatHint end.");
     return SUCCESS;
 }
 
 uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
 {
+    IMAGE_LOGE("[ImageSource] GetEncodedFormat start.");
     bool streamIncomplete = false;
     auto hintIter = formatAgentMap_.end();
     if (!formatHint.empty()) {
+        IMAGE_LOGE("[ImageSource] GetEncodedFormat !formatHint.empty().");
         uint32_t ret = CheckFormatHint(formatHint, hintIter);
         if (ret == ERR_IMAGE_SOURCE_DATA) {
             IMAGE_LOGE("[ImageSource]image source data error.");
@@ -864,19 +885,23 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
     }
 
     for (auto iter = formatAgentMap_.begin(); iter != formatAgentMap_.end(); ++iter) {
+        IMAGE_LOGE("[ImageSource] GetEncodedFormat formatAgentMap_ start.");
         string curFormat = iter->first;
         if (iter == hintIter || curFormat == InnerFormat::RAW_FORMAT) {
+            IMAGE_LOGE("[ImageSource] iter == hintIter || curFormat == InnerFormat::RAW_FORMAT.");
             continue;  // has been checked before.
         }
         AbsImageFormatAgent *agent = iter->second;
         auto result = CheckEncodedFormat(*agent);
         if (result == ERR_IMAGE_MISMATCHED_FORMAT) {
+            IMAGE_LOGE("[ImageSource] result == ERR_IMAGE_MISMATCHED_FORMAT.");
             continue;
         } else if (result == SUCCESS) {
             IMAGE_LOGI("[ImageSource]GetEncodedFormat success format :%{public}s.", iter->first.c_str());
             format = iter->first;
             return SUCCESS;
         } else if (result == ERR_IMAGE_SOURCE_DATA_INCOMPLETE) {
+            IMAGE_LOGE("[ImageSource] result == ERR_IMAGE_SOURCE_DATA_INCOMPLETE.");
             streamIncomplete = true;
         }
     }
@@ -889,6 +914,7 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
     // default return raw image
     format = InnerFormat::RAW_FORMAT;
     IMAGE_LOGI("[ImageSource]image default to raw format.");
+    IMAGE_LOGE("[ImageSource] GetEncodedFormat end.");
     return SUCCESS;
 }
 
@@ -959,6 +985,7 @@ uint32_t ImageSource::OnSourceUnresolved()
 
 uint32_t ImageSource::DecodeSourceInfo(bool isAcquiredImageNum)
 {
+    IMAGE_LOGE("[ImageSource] DecodeSourceInfo start.");
     uint32_t ret = SUCCESS;
     if (decodeState_ >= SourceDecodingState::FILE_INFO_DECODED) {
         if (isAcquiredImageNum) {
@@ -967,6 +994,7 @@ uint32_t ImageSource::DecodeSourceInfo(bool isAcquiredImageNum)
             return SUCCESS;
         }
     }
+    IMAGE_LOGE("[ImageSource] decodeState_ < SourceDecodingState::FILE_INFO_DECODED.");
     if (decodeState_ == SourceDecodingState::UNRESOLVED) {
         ret = OnSourceUnresolved();
         if (ret != SUCCESS) {
@@ -974,6 +1002,7 @@ uint32_t ImageSource::DecodeSourceInfo(bool isAcquiredImageNum)
             return ret;
         }
     }
+    IMAGE_LOGE("[ImageSource] decodeState_ != SourceDecodingState::UNRESOLVED.");
     if (decodeState_ == SourceDecodingState::FORMAT_RECOGNIZED) {
         ret = OnSourceRecognized(isAcquiredImageNum);
         if (ret != SUCCESS) {
@@ -982,6 +1011,7 @@ uint32_t ImageSource::DecodeSourceInfo(bool isAcquiredImageNum)
         }
         return SUCCESS;
     }
+    IMAGE_LOGE("[ImageSource] decodeState_ != SourceDecodingState::FORMAT_RECOGNIZED.");
     IMAGE_LOGE("[ImageSource]invalid source state %{public}d on decode source info.", decodeState_);
     switch (decodeState_) {
         case SourceDecodingState::SOURCE_ERROR: {
@@ -1005,11 +1035,13 @@ uint32_t ImageSource::DecodeSourceInfo(bool isAcquiredImageNum)
             break;
         }
     }
+    IMAGE_LOGE("[ImageSource] DecodeSourceInfo end. ret:[%{public}d].", ret);
     return ret;
 }
 
 uint32_t ImageSource::DecodeImageInfo(uint32_t index, ImageStatusMap::iterator &iter)
 {
+    IMAGE_LOGE("[ImageSource] DecodeImageInfo start.");
     uint32_t ret = DecodeSourceInfo(false);
     if (ret != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode the image fail, ret:%{public}d.", ret);
@@ -1021,10 +1053,12 @@ uint32_t ImageSource::DecodeImageInfo(uint32_t index, ImageStatusMap::iterator &
     }
     ImagePlugin::PlSize size;
     ret = mainDecoder_->GetImageSize(index, size);
+    IMAGE_LOGE("[ImageSource]get image size.");
     if (ret == SUCCESS) {
         ImageDecodingStatus imageStatus;
         imageStatus.imageInfo.size.width = size.width;
         imageStatus.imageInfo.size.height = size.height;
+        IMAGE_LOGE("[ImageSource]get image size.width:%{public}d, size.height: %{public}d.", size.width, size.height);
         imageStatus.imageState = ImageDecodingState::BASE_INFO_PARSED;
         auto result = imageStatusMap_.insert(ImageStatusMap::value_type(index, imageStatus));
         iter = result.first;
@@ -1033,6 +1067,7 @@ uint32_t ImageSource::DecodeImageInfo(uint32_t index, ImageStatusMap::iterator &
         IMAGE_LOGE("[ImageSource]source data incomplete.");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     } else {
+        IMAGE_LOGE("[ImageSource] ret != ERR_IMAGE_SOURCE_DATA_INCOMPLETE.");
         ImageDecodingStatus status;
         status.imageState = ImageDecodingState::BASE_INFO_ERROR;
         auto errorResult = imageStatusMap_.insert(ImageStatusMap::value_type(index, status));
@@ -1160,6 +1195,7 @@ void ImageSource::CopyOptionsToProcOpts(const DecodeOptions &opts, DecodeOptions
 
 ImageSource::ImageStatusMap::iterator ImageSource::GetValidImageStatus(uint32_t index, uint32_t &errorCode)
 {
+    IMAGE_LOGE("[ImageSource] GetValidImageStatus start.index:%{public}u", index);
     auto iter = imageStatusMap_.find(index);
     if (iter == imageStatusMap_.end()) {
         errorCode = DecodeImageInfo(index, iter);
@@ -1346,33 +1382,37 @@ bool ImageSource::ImageConverChange(const Rect &cropRect, ImageInfo &dstImageInf
 }
 unique_ptr<SourceStream> ImageSource::DecodeBase64(const uint8_t *data, uint32_t size)
 {
+    IMAGE_LOGD("[ImageSource] start ImageSource::DecodeBase64(data, size) size: %{public}d.", size);
     string data1(reinterpret_cast<const char*>(data), size);
+    IMAGE_LOGD("[ImageSource] start ImageSource::DecodeBase64(data1).");
     return DecodeBase64(data1);
 }
 
 unique_ptr<SourceStream> ImageSource::DecodeBase64(const string &data)
 {
+    IMAGE_LOGD("[ImageSource] start ImageSource::DecodeBase64(data).");
     if (data.size() < IMAGE_URL_PREFIX.size() ||
        (data.compare(0, IMAGE_URL_PREFIX.size(), IMAGE_URL_PREFIX) != 0)) {
         IMAGE_LOGD("[ImageSource]Base64 image header mismatch.");
         return nullptr;
     }
-
+    IMAGE_LOGD("[ImageSource] DecodeBase64 IMAGE_URL_PREFIX.size() : %{public}d.", IMAGE_URL_PREFIX.size());
     size_t encoding = data.find(BASE64_URL_PREFIX, IMAGE_URL_PREFIX.size());
     if (encoding == data.npos) {
         IMAGE_LOGE("[ImageSource]Base64 mismatch.");
         return nullptr;
     }
+    IMAGE_LOGE("[ImageSource]Base64 match.");
     string b64Data = data.substr(encoding + BASE64_URL_PREFIX.size());
     size_t rawDataLen = b64Data.size() - count(b64Data.begin(), b64Data.end(), '=');
     rawDataLen -= (rawDataLen / INT_8) * INT_2;
-
+    IMAGE_LOGD("[ImageSource] DecodeBase64 rawDataLen = %{public}d.", rawDataLen);
     SkBase64 base64Decoder;
     if (base64Decoder.decode(b64Data.data(), b64Data.size()) != SkBase64::kNoError) {
         IMAGE_LOGE("[ImageSource]base64 image decode failed!");
         return nullptr;
     }
-
+    IMAGE_LOGE("[ImageSource] base64Decoder.decode.");
     auto base64Data = base64Decoder.getData();
     const uint8_t* imageData = reinterpret_cast<uint8_t*>(base64Data);
     IMAGE_LOGD("[ImageSource]Create BufferSource from decoded base64 string.");
