@@ -225,119 +225,131 @@ if (use_clang_android) {
     version_script = "libimage_native.versionscript"
   }
 }
-
-ohos_static_library("image_static") {
-  public_configs = [ ":image_external_config" ]
-
-  sources = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/matrix.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/scan_line_filter.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_source_stream.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-  ]
-
-  if (use_mingw_win) {
-    defines = image_decode_windows_defines
-    sources -= [
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-    ]
-    deps = [
-      "//foundation/graphic/graphic_2d:libsurface",
-      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils_static",
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
-    ]
-  } else if (use_clang_mac) {
-    defines = image_decode_mac_defines
-    sources -= [
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-    ]
-
-    deps = [
-      "//foundation/graphic/graphic_2d:libsurface",
-      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils_static",
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
-      "//third_party/bounds_checking_function:libsec_static",
-    ]
-  } else if (use_clang_ios) {
-    defines = image_decode_ios_defines
-    sources -= [
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
-    ]
-    deps = [
-      "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
-      "//foundation/arkui/napi:ace_napi",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
-    ]
-  } else if (use_clang_android) {
+if (use_clang_android) {
+  ohos_source_set("image_static") {
     defines = image_decode_android_defines
-    sources -= [
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
-    ]
-    deps = [
-      "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
-      "//commonlibrary/c_utils/base:utils",
-      "//foundation/arkui/napi:ace_napi",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
-    ]
-  } else {
-    defines = [ "DUAL_ADAPTER" ]
-    DUAL_ADAPTER = true
-
-    deps = [
-      "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
-      "//foundation/arkui/napi:ace_napi",
-      "//foundation/graphic/graphic_2d:libsurface",
-      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
-    ]
-
-    if (DUAL_ADAPTER) {
-    } else {
-      deps += [ "//third_party/libpng:libpng" ]
-    }
-    external_deps = [ "c_utils:utils" ]
+    cflags = image_native_android_cflags
+    sources = image_native_android_sources
+    include_dirs = image_native_android_include_dirs
+    deps = image_native_android_deps
+    version_script = "libimage_native.versionscript"
+    subsystem_name = "multimedia"
+    part_name = "multimedia_image_framework"
   }
-  subsystem_name = "multimedia"
-  part_name = "multimedia_image_framework"
+} else {
+  ohos_static_library("image_static") {
+    public_configs = [ ":image_external_config" ]
+
+    sources = [
+      "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_source.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/converter/src/matrix.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/converter/src/scan_line_filter.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/stream/src/buffer_source_stream.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
+      "$image_subsystem/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+    ]
+
+    if (use_mingw_win) {
+      defines = image_decode_windows_defines
+      sources -= [
+        "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+      ]
+      deps = [
+        "$graphic_subsystem:libsurface",
+        "$graphic_subsystem/utils/color_manager:color_manager",
+        "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
+        "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils_static",
+        "$image_subsystem/mock/native:log_mock_static",
+        "$image_subsystem/plugins/manager:pluginmanager_static",
+      ]
+    } else if (use_clang_mac) {
+      defines = image_decode_mac_defines
+      sources -= [
+        "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+      ]
+
+      deps = [
+        "$graphic_subsystem:libsurface",
+        "$graphic_subsystem/utils/color_manager:color_manager",
+        "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
+        "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils_static",
+        "$image_subsystem/mock/native:log_mock_static",
+        "$image_subsystem/plugins/manager:pluginmanager_static",
+        "//third_party/bounds_checking_function:libsec_static",
+      ]
+    } else if (use_clang_ios) {
+      defines = image_decode_ios_defines
+      sources -= [
+        "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
+      ]
+      deps = [
+        "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
+        "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+        "$image_subsystem/mock/native:log_mock_static",
+        "$image_subsystem/plugins/manager:pluginmanager",
+        "/$image_sep_f$image_oundation/arkui/napi:ace_napi",
+      ]
+    } else if (use_clang_android) {
+      defines = image_decode_android_defines
+      sources -= [
+        "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
+        "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
+      ]
+      deps = [
+        "$commonlibrary_subsystem/base:utils",
+        "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
+        "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+        "$image_subsystem/plugins/manager:pluginmanager",
+        "/$image_sep_f$image_oundation/arkui/napi:ace_napi",
+      ]
+    } else {
+      defines = [ "DUAL_ADAPTER" ]
+      DUAL_ADAPTER = true
+
+      deps = [
+        "$graphic_subsystem:libsurface",
+        "$graphic_subsystem/utils/color_manager:color_manager",
+        "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
+        "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+        "$image_subsystem/plugins/manager:pluginmanager",
+        "/$image_sep_f$image_oundation/arkui/napi:ace_napi",
+      ]
+
+      if (DUAL_ADAPTER) {
+      } else {
+        deps += [ "//third_party/libpng:libpng" ]
+      }
+      external_deps = [ "c_utils:utils" ]
+    }
+    subsystem_name = "multimedia"
+    part_name = "multimedia_image_framework"
+  }
 }
