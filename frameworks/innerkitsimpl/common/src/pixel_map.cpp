@@ -33,6 +33,12 @@
 #include "memory.h"
 #endif
 
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+#include "purgeable_ashmem.h"
+#include "purgeable_mem.h"
+#include "purgeable_resource_manager.h"
+#endif
+
 #if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
 #include <sys/mman.h>
 #include "ashmem.h"
@@ -60,6 +66,12 @@ constexpr uint8_t ALIGN_NUMBER = 4;
 PixelMap::~PixelMap()
 {
     FreePixelMap();
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    if (IsPurgeable()) {
+        PurgeableMem::PurgeableResourceManager::GetInstance().RemoveResource(this);
+        SetPurgeable(false);
+    }
+#endif
 }
 
 void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
@@ -1856,6 +1868,62 @@ uint32_t PixelMap::crop(const Rect &rect)
         }
         return *grColorSpace_;
     }
+#endif
+
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+void PixelMap::SetBuilderToBePurgeable(std::unique_ptr<PurgeableMem::PurgeableMemBuilder> &builder)
+{
+    HiLog::Debug(LABEL, "SetBuilderToBePurgeable in. allocatorType = %{public}d.", allocatorType_);
+    StartTrace(HITRACE_TAG_ZIMAGE, "PixelMap::SetBuilderToBePurgeable");
+    if (builder == nullptr) {
+        FinishTrace(HITRACE_TAG_ZIMAGE);
+        return;
+    }
+
+    if (allocatorType_ == AllocatorType::SHARE_MEM_ALLOC) {
+        std::shared_ptr<OHOS::PurgeableMem::PurgeableAshMem> tmpPtr =
+            std::make_shared<OHOS::PurgeableMem::PurgeableAshMem>(std::move(builder));
+        bool isChanged = tmpPtr->ChangeAshmemData(pixelsSize_, *(static_cast<int *>(context_)), data_);
+        if (isChanged) {
+            purgeableMem_ = tmpPtr;
+            purgeableMem_->BeginRead();
+            SetPurgeable(true);
+        } else {
+            HiLog::Error(LABEL, "ChangeAshmemData fail.");
+            SetPurgeable(false);
+        }
+    } else if (allocatorType_ == AllocatorType::HEAP_ALLOC) {
+        purgeableMem_ = std::make_shared<OHOS::PurgeableMem::PurgeableMem>(pixelsSize_, std::move(builder));
+        purgeableMem_->BeginRead();
+        SetPurgeable(true);
+    }
+
+    FinishTrace(HITRACE_TAG_ZIMAGE);
+}
+
+uint32_t PixelMap::BeginVisitPurgeableMem()
+{
+    StartTrace(HITRACE_TAG_ZIMAGE, "PurgeableResource::BeginVisitPurgeableMem");
+    HiLog::Debug(LABEL, "PurgeableResource::BeginVisitPurgeableMem");
+    if (purgeableMem_) {
+        purgeableMem_->BeginRead();
+    }
+
+    FinishTrace(HITRACE_TAG_ZIMAGE);
+    return 0;
+}
+
+uint32_t PixelMap::EndVisitPurgeableMem()
+{
+    StartTrace(HITRACE_TAG_ZIMAGE, "PurgeableResource::EndVisitPurgeableMem");
+    HiLog::Debug(LABEL, "PurgeableResource::EndVisitPurgeableMem");
+    if (purgeableMem_) {
+        purgeableMem_->EndRead();
+    }
+
+    FinishTrace(HITRACE_TAG_ZIMAGE);
+    return 0;
+}
 #endif
 } // namespace Media
 } // namespace OHOS

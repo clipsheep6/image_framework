@@ -265,6 +265,9 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const int fd, const Sourc
 #if !defined(_WIN32) && !defined(_APPLE)
     FinishTrace(HITRACE_TAG_ZIMAGE);
 #endif
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    sourcePtr->SetPurgeableMemResourceFd(fd);
+#endif
     return unique_ptr<ImageSource>(sourcePtr);
 }
 unique_ptr<ImageSource> ImageSource::CreateIncrementalImageSource(const IncrementalSourceOptions &opts,
@@ -1593,5 +1596,22 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
 
     return frameCount;
 }
+
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+size_t ImageSource::GetSourceSize()
+{
+    return sourceStreamPtr_ ? sourceStreamPtr_->GetStreamSize() : 0;
+}
+
+int ImageSource::GetPurgeableMemResourceFd()
+{
+    return purgeableResourceFd_;
+}
+
+void ImageSource::SetPurgeableMemResourceFd(int fd)
+{
+    purgeableResourceFd_ = fd;
+}
+#endif
 } // namespace Media
 } // namespace OHOS
