@@ -45,10 +45,6 @@ uint32_t PostProc::DecodePostProc(const DecodeOptions &opts, PixelMap &pixelMap,
     pixelMap.GetImageInfo(srcImageInfo);
     ImageInfo dstImageInfo;
     GetDstImageInfo(opts, pixelMap, srcImageInfo, dstImageInfo);
-    if (finalOutputStep == FinalOutputStep::ROTATE_CHANGE || finalOutputStep == FinalOutputStep::SIZE_CHANGE ||
-        finalOutputStep == FinalOutputStep::DENSITY_CHANGE) {
-        decodeOpts_.allocatorType = AllocatorType::HEAP_ALLOC;
-    }
     uint32_t errorCode = ConvertProc(opts.CropRect, dstImageInfo, pixelMap, srcImageInfo);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[PostProc]crop pixel map failed, errcode:%{public}u", errorCode);
@@ -57,9 +53,6 @@ uint32_t PostProc::DecodePostProc(const DecodeOptions &opts, PixelMap &pixelMap,
     decodeOpts_.allocatorType = opts.allocatorType;
     bool isNeedRotate = !ImageUtils::FloatCompareZero(opts.rotateDegrees);
     if (isNeedRotate) {
-        if (finalOutputStep == FinalOutputStep::SIZE_CHANGE || finalOutputStep == FinalOutputStep::DENSITY_CHANGE) {
-            decodeOpts_.allocatorType = AllocatorType::HEAP_ALLOC;
-        }
         if (!RotatePixelMap(opts.rotateDegrees, pixelMap)) {
             IMAGE_LOGE("[PostProc]rotate:transform pixel map failed");
             return ERR_IMAGE_TRANSFORM;
@@ -163,8 +156,20 @@ bool PostProc::CenterDisplay(PixelMap &pixelMap, int32_t srcWidth, int32_t srcHe
     int32_t top = max(0, srcHeight - targetHeight) / HALF;
     int32_t bufferSize = pixelMap.GetByteCount();
     uint8_t *dstPixels = nullptr;
-    if (!AllocHeapBuffer(bufferSize, &dstPixels)) {
-        return false;
+    // if (!AllocHeapBuffer(bufferSize, &dstPixels)) {
+    //     return false;
+    // }
+    int fd = 0;
+    if (pixelMap.GetAllocatorType() == AllocatorType::HEAP_ALLOC) {
+        if (!AllocHeapBuffer(bufferSize, &dstPixels)) {
+            return false;
+        }
+    } else {
+        dstPixels = AllocSharedMemory(dstImageInfo.size, bufferSize, fd);
+        if (dstPixels == nullptr) {
+            IMAGE_LOGE("[PostProc]CenterDisplay AllocSharedMemory failed");
+            return false;
+        }
     }
     int32_t copyHeight = srcHeight;
     if (srcHeight > targetHeight) {
@@ -192,7 +197,14 @@ bool PostProc::CenterDisplay(PixelMap &pixelMap, int32_t srcWidth, int32_t srcHe
             return false;
         }
     }
-    pixelMap.SetPixelsAddr(dstPixels, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
+    void *fdBuffer = nullptr;
+    if (pixelMap.GetAllocatorType() == AllocatorType::HEAP_ALLOC) {
+        pixelMap.SetPixelsAddr(dstPixels, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
+    } else {
+        fdBuffer = new int32_t();
+        *static_cast<int32_t *>(fdBuffer) = fd;
+        pixelMap.SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::SHARE_MEM_ALLOC, nullptr);
+    }
     return true;
 }
 
@@ -245,7 +257,14 @@ uint32_t PostProc::CheckScanlineFilter(const Rect &cropRect, ImageInfo &dstImage
         ReleaseBuffer(decodeOpts_.allocatorType, fd, bufferSize, &resultData);
         return result;
     }
-    pixelMap.SetPixelsAddr(resultData, nullptr, bufferSize, decodeOpts_.allocatorType, nullptr);
+
+    if (decodeOpts_.allocatorType == AllocatorType::HEAP_ALLOC) {
+        pixelMap.SetPixelsAddr(resultData, nullptr, bufferSize, decodeOpts_.allocatorType, nullptr);
+        return result;
+    }
+    void *fdBuffer = new int32_t();
+    *static_cast<int32_t *>(fdBuffer) = fd;
+    pixelMap.SetPixelsAddr(resultData, fdBuffer, bufferSize, decodeOpts_.allocatorType, nullptr);
     return result;
 }
 
@@ -306,7 +325,14 @@ uint32_t PostProc::PixelConvertProc(ImageInfo &dstImageInfo, PixelMap &pixelMap,
         ReleaseBuffer(decodeOpts_.allocatorType, fd, bufferSize, &resultData);
         return ret;
     }
-    pixelMap.SetPixelsAddr(resultData, nullptr, bufferSize, decodeOpts_.allocatorType, nullptr);
+    if (decodeOpts_.allocatorType == AllocatorType::HEAP_ALLOC) {
+        pixelMap.SetPixelsAddr(resultData, nullptr, bufferSize, decodeOpts_.allocatorType, nullptr);
+        return ret;
+    }
+
+    void *fdBuffer = new int32_t();
+    *static_cast<int32_t *>(fdBuffer) = fd;
+    pixelMap.SetPixelsAddr(resultData, fdBuffer, bufferSize, decodeOpts_.allocatorType, nullptr);
     return ret;
 }
 
