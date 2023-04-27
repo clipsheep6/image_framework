@@ -867,7 +867,7 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
             }
             std::vector<std::string> bitsVec;
             SplitStr(value, ",", bitsVec);
-            if (bitsVec.size() > CONSTANT_2) {
+            if (bitsVec.size() > CONSTANT_4) {
                 HiLog::Error(LABEL, "BITS_PER_SAMPLE Invalid value %{public}s", value.c_str());
                 return false;
             }
