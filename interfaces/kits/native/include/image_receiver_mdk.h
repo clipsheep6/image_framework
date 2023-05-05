@@ -14,6 +14,10 @@
  */
 
 /**
+ * To use this header file, you need to rely on libimage_receiver_ndk.z.so.
+ */
+
+/**
  * @addtogroup image
  * @{
  *
