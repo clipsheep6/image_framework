@@ -217,7 +217,6 @@ image_native_android_deps = [
   "//commonlibrary/c_utils/base:utilsbase",
 
   # image_native
-  "//foundation/arkui/napi:ace_napi",
 
   # webp
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",

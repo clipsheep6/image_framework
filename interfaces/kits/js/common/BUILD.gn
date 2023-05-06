@@ -271,7 +271,6 @@ if (use_clang_ios) {
         "$image_subsystem/interfaces/innerkits:image_native",
         "$image_subsystem/mock/native:log_mock_static",
         "$image_subsystem/plugins/manager:pluginmanager",
-        "$plugins_lib_root/napi:napi_android",
       ]
 
       external_deps = [
