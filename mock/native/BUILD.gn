@@ -16,8 +16,8 @@ import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 config("log_mock_config") {
   visibility = [ ":*" ]
   include_dirs = [
-    "include",
-    "include/log",
+    "$image_subsystem/mock/native/include",
+    "$image_subsystem/mock/native/include/include/utils",
   ]
 }
 
@@ -37,7 +37,7 @@ ohos_static_library("log_mock_static") {
 config("utils_mock_config") {
   visibility = [ ":*" ]
   include_dirs = [
-    "include",
+    "$image_subsystem/mock/native/include",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
   ]
