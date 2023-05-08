@@ -254,11 +254,11 @@ if (use_clang_ios) {
     ohos_shared_library("multimedia_image") {
       public_configs = [ ":image_external_config" ]
       sources = [
+        "$image_subsystem/frameworks/kits/js/common/image_napi_utils.cpp",
         "$image_subsystem/frameworks/kits/js/common/image_packer_napi.cpp",
         "$image_subsystem/frameworks/kits/js/common/image_source_napi.cpp",
         "$image_subsystem/frameworks/kits/js/common/native_module_ohos_image.cpp",
         "$image_subsystem/frameworks/kits/js/common/pixel_map_napi.cpp",
-        "$image_subsystem/kits/js/common/image_napi_utils.cpp",
       ]
 
       cflags = [ "-DIMAGE_DEBUG_FLAG" ]
