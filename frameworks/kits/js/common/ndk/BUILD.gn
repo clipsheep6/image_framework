@@ -54,3 +54,17 @@ ohos_shared_library("image_receiver_ndk") {
   subsystem_name = "multimedia"
   part_name = "multimedia_image_framework"
 }
+
+ohos_shared_library("image_source_ndk") {
+  sanitize = {
+    cfi = true
+    debug = false
+  }
+
+  sources = [ "image_source_mdk.cpp" ]
+  public_configs = [ ":native_public_config" ]
+  external_deps = [ "multimedia_image_framework:image" ]
+
+  subsystem_name = "multimedia"
+  part_name = "multimedia_image_framework"
+}
