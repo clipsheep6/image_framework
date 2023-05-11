@@ -227,6 +227,12 @@ private:
     bool IsSpecialYUV();
     bool ConvertYUV420ToRGBA(uint8_t *data, uint32_t size, bool isSupportOdd, bool isAddUV, uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapForYUV(uint32_t &errorCode);
+    uint32_t GetFormatExtended(std::string &format);
+    static std::unique_ptr<ImageSource> DoImageSourceCreate(
+        std::function<std::unique_ptr<SourceStream>(void)> stream,
+        const SourceOptions &opts, uint32_t &errorCode, const std::string traceName = "");
+    std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index,
+        const DecodeOptions &opts, uint32_t &errorCode);
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";

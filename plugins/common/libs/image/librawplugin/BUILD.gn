@@ -33,6 +33,7 @@ ohos_shared_library("rawplugin") {
   ]
 
   include_dirs = [
+    "../common/exifhelper",
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",

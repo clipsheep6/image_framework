@@ -25,7 +25,7 @@ ohos_shared_library("jpegplugin") {
     }
   }
   sources = [
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/exif_info.cpp",
+    # "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/exif_info.cpp",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/icc_profile_info.cpp",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/jpeg_decoder.cpp",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/jpeg_utils.cpp",
@@ -39,6 +39,7 @@ ohos_shared_library("jpegplugin") {
   ]
 
   include_dirs = [
+    "../common/exifhelper",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
     "//foundation/multimedia/image_framework/plugins/manager/include",
@@ -55,7 +56,7 @@ ohos_shared_library("jpegplugin") {
     "//third_party/flutter/skia/third_party/libjpeg-turbo",
     "//third_party/flutter/skia/third_party/externals/libjpeg-turbo",
     "//third_party/flutter/skia/third_party/skcms",
-    "//third_party/libexif",
+    # "//third_party/libexif",
   ]
 
   if (use_mingw_win) {
@@ -100,11 +101,14 @@ ohos_shared_library("jpegplugin") {
     ]
     deps = [
       #"//third_party/flutter/skia/third_party/libjpeg-turbo:libjpeg",
+      "../common:exifhelper",
       "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
       "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
       "//third_party/flutter/build/libjpeg:ace_libjpeg",
-      "//third_party/libexif:libexif",
+      "//third_party/flutter/build/skia:ace_skcms",
+      "//third_party/flutter/build/skia:ace_skia_ohos",
+    #   "//third_party/libexif:libexif",
     ]
     deps += skia_skcms
     deps += skia_platform
@@ -113,7 +117,7 @@ ohos_shared_library("jpegplugin") {
     } else {
       deps += [
         "//third_party/flutter/build/libjpeg:ace_libjpeg",
-        "//third_party/libexif:libexif",
+        # "//third_party/libexif:libexif",
       ]
       include_dirs += [
         "//third_party/flutter/skia/third_party/libjpeg-turbo",

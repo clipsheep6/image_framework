@@ -322,6 +322,29 @@ EXIFInfo::~EXIFInfo()
     }
 }
 
+static const int BIT4 = 4;
+static const int PRINT_WIDTH = 100;
+static const int PRINT_WIDTH_MOD = 99;
+static const uint8_t BIT4_MASK = 0xf;
+static void dumpBuffer(const uint8_t* tempBuffer, int64_t size)
+{
+    std::vector<char> ss;
+    char xx[] = "0123456789ABCDEF";
+    for (int i = 0; i < size; i++) {
+        ss.push_back(xx[(tempBuffer[i]>>BIT4)&BIT4_MASK]);
+        ss.push_back(xx[tempBuffer[i]&BIT4_MASK]);
+        if (i % PRINT_WIDTH == PRINT_WIDTH_MOD) {
+            ss.push_back('\0');
+            HiLog::Info(LABEL, "buffer[%{public}d] = [%{public}s]", i, ss.data());
+            ss.clear();
+            ss.resize(0);
+        }
+    }
+    ss.push_back('\0');
+    HiLog::Info(LABEL, "buffer[LAST] = [%{public}s]", ss.data());
+    ss.clear();
+    ss.resize(0);
+}
 int EXIFInfo::ParseExifData(const unsigned char *buf, unsigned len)
 {
     HiLog::Debug(LABEL, "ParseExifData ENTER");
@@ -332,6 +355,7 @@ int EXIFInfo::ParseExifData(const unsigned char *buf, unsigned len)
     exif_data_unset_option(exifData_, EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS);
     exif_data_load_data (exifData_, buf, len);
 
+    HiLog::Debug(LABEL, "ParseExifData1 ENTER");
     exif_data_foreach_content(exifData_,
         [](ExifContent *ec, void *userData) {
             ExifIfd ifd = exif_content_get_ifd(ec);
@@ -348,6 +372,7 @@ int EXIFInfo::ParseExifData(const unsigned char *buf, unsigned len)
                     char tagValueChar[1024];
                     exif_entry_get_value(ee, tagValueChar, sizeof(tagValueChar));
                     std::string tagValueStr(&tagValueChar[0], &tagValueChar[strlen(tagValueChar)]);
+                    HiLog::Debug(LABEL, "Get Tag[%{public}x]type[%{public}d]:[%{public}s]", ee->tag, ee->format, tagValueStr.c_str());
                     if ((static_cast<EXIFInfo*>(userData))->CheckExifEntryValid(exif_entry_get_ifd(ee), ee->tag)) {
                         (static_cast<EXIFInfo*>(userData))->SetExifTagValues(ee->tag, tagValueStr);
                     }
@@ -599,7 +624,6 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
         exif_data_unref(ptrExifData);
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
-
     if (!WriteExifDataToFile(ptrExifData, orginExifDataLength, fileLength, fileBuf, file)) {
         ReleaseSource(&fileBuf, &file);
         exif_data_unref(ptrExifData);
@@ -1008,6 +1032,7 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
                 HiLog::Error(LABEL, "Get exif entry failed.");
                 return false;
             }
+            HiLog::Error(LABEL, "Modify length %{public}d.", atoi(value.c_str()));
             ExifIntValueByFormat((*ptrEntry)->data, order, (*ptrEntry)->format, atoi(value.c_str()));
             break;
         }
@@ -1017,6 +1042,7 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
                 HiLog::Error(LABEL, "Get exif entry failed.");
                 return false;
             }
+            HiLog::Error(LABEL, "Modify width %{public}d.", atoi(value.c_str()));
             ExifIntValueByFormat((*ptrEntry)->data, order, (*ptrEntry)->format, atoi(value.c_str()));
             break;
         }
@@ -1093,6 +1119,7 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
                 HiLog::Error(LABEL, "Get exif entry failed.");
                 return false;
             }
+            HiLog::Error(LABEL, "EXIF_TAG_GPS_LONGITUDE_REF %{public}zu vs %{public}zu.", (*ptrEntry)->size, value.length());
             if (memcpy_s((*ptrEntry)->data, value.length(), value.c_str(), value.length()) != 0) {
                 HiLog::Error(LABEL, "LONGITUDE ref memcpy error");
             }
@@ -1110,11 +1137,12 @@ bool EXIFInfo::WriteExifDataToFile(ExifData *data, unsigned int orginExifDataLen
     unsigned char* exifDataBuf = nullptr;
     unsigned int exifDataBufLength = 0;
     exif_data_save_data(data, &exifDataBuf, &exifDataBufLength);
+
     if (exifDataBuf == nullptr) {
         HiLog::Error(LABEL, "Get Exif Data Buf failed!");
         return false;
     }
-
+    dumpBuffer(exifDataBuf, exifDataBufLength);
     // Write EXIF header
     if (fwrite(exifHeader, sizeof(exifHeader), 1, fp) != 1) {
         HiLog::Error(LABEL, "Error writing EXIF header to file!");

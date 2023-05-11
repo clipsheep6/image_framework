@@ -84,6 +84,7 @@ static const map<ColorSpace, PlColorSpace> COLOR_SPACE_MAP = {
 namespace InnerFormat {
     const string RAW_FORMAT = "image/x-raw";
     const string EXTENDED_FORMAT = "image/x-skia";
+    const string IMAGE_EXTENDED_CODEC = "image/extended";
     const string RAW_EXTENDED_FORMATS[] = {
         "image/x-sony-arw",
         "image/x-canon-cr2",
@@ -100,8 +101,9 @@ namespace InnerFormat {
 // BASE64 image prefix type data:image/<type>;base64,<data>
 static const std::string IMAGE_URL_PREFIX = "data:image/";
 static const std::string BASE64_URL_PREFIX = ";base64,";
+static const uint32_t FIRST_FRAME = 0;
 static const int INT_ZERO = 0;
-
+static const size_t SIZE_ZERO = 0;
 static const uint8_t NUM_0 = 0;
 static const uint8_t NUM_1 = 1;
 static const uint8_t NUM_2 = 2;
@@ -146,25 +148,23 @@ uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
     return SUCCESS;
 }
 
-unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is, const SourceOptions &opts,
-                                                       uint32_t &errorCode)
+unique_ptr<ImageSource> ImageSource::DoImageSourceCreate(
+    std::function<unique_ptr<SourceStream>(void)> stream,
+    const SourceOptions &opts, uint32_t &errorCode, const string traceName)
 {
 #if !defined(_WIN32) && !defined(_APPLE)
-    StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by istream");
+    StartTrace(HITRACE_TAG_ZIMAGE, traceName);
 #endif
-    IMAGE_LOGD("[ImageSource]create Imagesource with stream.");
-
-    unique_ptr<SourceStream> streamPtr = IstreamSourceStream::CreateSourceStream(move(is));
+    IMAGE_LOGD("[ImageSource]DoImageSourceCreate IN.");
+    errorCode = ERR_IMAGE_SOURCE_DATA;
+    auto streamPtr = stream();
     if (streamPtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create istream source stream.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
         return nullptr;
     }
-
-    ImageSource *sourcePtr = new (std::nothrow) ImageSource(std::move(streamPtr), opts);
+    
+    auto sourcePtr = new (std::nothrow) ImageSource(std::move(streamPtr), opts);
     if (sourcePtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create ImageSource with stream.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
+        IMAGE_LOGE("[ImageSource]failed to create ImageSource.");
         return nullptr;
     }
     errorCode = SUCCESS;
@@ -174,121 +174,86 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is, c
     return unique_ptr<ImageSource>(sourcePtr);
 }
 
-unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint32_t size, const SourceOptions &opts,
-                                                       uint32_t &errorCode)
+unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is,
+    const SourceOptions &opts, uint32_t &errorCode)
 {
-#if !defined(_WIN32) && !defined(_APPLE)
-    StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by data");
-#endif
-    IMAGE_LOGD("[ImageSource]create Imagesource with buffer.");
+    IMAGE_LOGD("[ImageSource]create Imagesource with stream.");
+    return DoImageSourceCreate([&is](){
+        auto stream = IstreamSourceStream::CreateSourceStream(move(is));
+        if (stream == nullptr) {
+            IMAGE_LOGE("[ImageSource]failed to create istream source stream.");
+        }
+        return stream;
+    }, opts, errorCode, "CreateImageSource by istream");
+}
 
+unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint32_t size,
+    const SourceOptions &opts, uint32_t &errorCode)
+{
+    IMAGE_LOGD("[ImageSource]create Imagesource with buffer.");
     if (data == nullptr || size == 0) {
         IMAGE_LOGE("[ImageSource]parameter error.");
-        errorCode = ERR_IMAGE_DATA_ABNORMAL;
         return nullptr;
     }
-
-    unique_ptr<SourceStream> streamPtr = DecodeBase64(data, size);
-    if (streamPtr == nullptr) {
-        streamPtr = BufferSourceStream::CreateSourceStream(data, size);
-    }
-
-    if (streamPtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create buffer source stream.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
-        return nullptr;
-    }
-
-    ImageSource *sourcePtr = new (std::nothrow) ImageSource(std::move(streamPtr), opts);
-    if (sourcePtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create ImageSource with buffer.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
-        return nullptr;
-    }
-    errorCode = SUCCESS;
-#if !defined(_WIN32) && !defined(_APPLE)
-    FinishTrace(HITRACE_TAG_ZIMAGE);
-#endif
-    return unique_ptr<ImageSource>(sourcePtr);
+    return DoImageSourceCreate([&data, &size](){
+        auto streamPtr = DecodeBase64(data, size);
+        if (streamPtr == nullptr) {
+            streamPtr = BufferSourceStream::CreateSourceStream(data, size);
+        }
+        if (streamPtr == nullptr) {
+            IMAGE_LOGE("[ImageSource]failed to create buffer source stream.");
+        }
+        return streamPtr;
+    }, opts, errorCode, "CreateImageSource by data");
 }
 
 unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathName, const SourceOptions &opts,
                                                        uint32_t &errorCode)
 {
-#if !defined(_WIN32) && !defined(_APPLE)
-    StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by path");
-#endif
     IMAGE_LOGD("[ImageSource]create Imagesource with pathName.");
-
-    unique_ptr<SourceStream> streamPtr = DecodeBase64(pathName);
-    if (streamPtr == nullptr) {
-        streamPtr = FileSourceStream::CreateSourceStream(pathName);
-    }
-
-    if (streamPtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create file source stream.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
+    if (pathName.size() == SIZE_ZERO) {
+        IMAGE_LOGE("[ImageSource]parameter error.");
         return nullptr;
     }
-
-    ImageSource *sourcePtr = new (std::nothrow) ImageSource(std::move(streamPtr), opts);
-    if (sourcePtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create ImageSource with pathName.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
-        return nullptr;
-    }
-    errorCode = SUCCESS;
-#if !defined(_WIN32) && !defined(_APPLE)
-    FinishTrace(HITRACE_TAG_ZIMAGE);
-#endif
-    return unique_ptr<ImageSource>(sourcePtr);
+    return DoImageSourceCreate([&pathName](){
+        auto streamPtr = DecodeBase64(pathName);
+        if (streamPtr == nullptr) {
+            streamPtr = FileSourceStream::CreateSourceStream(pathName);
+        }
+        if (streamPtr == nullptr) {
+            IMAGE_LOGE("[ImageSource]failed to create file path source stream.");
+        }
+        return streamPtr;
+    }, opts, errorCode, "CreateImageSource by path");
 }
 
 unique_ptr<ImageSource> ImageSource::CreateImageSource(const int fd, const SourceOptions &opts,
                                                        uint32_t &errorCode)
 {
-#if !defined(_WIN32) && !defined(_APPLE)
-    StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by fd");
-#endif
-    unique_ptr<SourceStream> streamPtr = FileSourceStream::CreateSourceStream(fd);
-    if (streamPtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create file source stream.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
-        return nullptr;
-    }
-    ImageSource *sourcePtr = new (std::nothrow) ImageSource(std::move(streamPtr), opts);
-    if (sourcePtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create ImageSource by fd.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
-        return nullptr;
-    }
-    errorCode = SUCCESS;
-#if !defined(_WIN32) && !defined(_APPLE)
-    FinishTrace(HITRACE_TAG_ZIMAGE);
-#endif
-    return unique_ptr<ImageSource>(sourcePtr);
+    IMAGE_LOGD("[ImageSource]create Imagesource with fd.");
+    return DoImageSourceCreate([&fd](){
+        auto streamPtr = FileSourceStream::CreateSourceStream(fd);
+        if (streamPtr == nullptr) {
+            IMAGE_LOGE("[ImageSource]failed to create file fd source stream.");
+        }
+        return streamPtr;
+    }, opts, errorCode, "CreateImageSource by fd");
 }
 unique_ptr<ImageSource> ImageSource::CreateIncrementalImageSource(const IncrementalSourceOptions &opts,
                                                                   uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create incremental ImageSource.");
-
-    unique_ptr<SourceStream> streamPtr = IncrementalSourceStream::CreateSourceStream(opts.incrementalMode);
-    if (streamPtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create incremental source stream.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
-        return nullptr;
+    auto sourcePtr = DoImageSourceCreate([&opts](){
+        auto streamPtr = IncrementalSourceStream::CreateSourceStream(opts.incrementalMode);
+        if (streamPtr == nullptr) {
+            IMAGE_LOGE("[ImageSource]failed to create incremental source stream.");
+        }
+        return streamPtr;
+    }, opts.sourceOptions, errorCode, "CreateImageSource by fd");
+    if (sourcePtr != nullptr) {
+        sourcePtr->SetIncrementalSource(true);
     }
-
-    ImageSource *sourcePtr = new (std::nothrow) ImageSource(std::move(streamPtr), opts.sourceOptions);
-    if (sourcePtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create incremental ImageSource.");
-        errorCode = ERR_IMAGE_SOURCE_DATA;
-        return nullptr;
-    }
-    sourcePtr->SetIncrementalSource(true);
-    errorCode = SUCCESS;
-    return unique_ptr<ImageSource>(sourcePtr);
+    return sourcePtr;
 }
 
 void ImageSource::Reset()
@@ -315,6 +280,191 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapEx(uint32_t index, const DecodeO
     return CreatePixelMap(index, opts, errorCode);
 }
 
+static bool IsExtendedCodec(AbsImageDecoder* decoder)
+{
+    const static string ENCODED_FORMAT_KEY = "EncodedFormat";
+    if (decoder != nullptr && decoder->HasProperty(ENCODED_FORMAT_KEY)) {
+        return true;
+    }
+    return false;
+}
+static inline bool IsSizeVailed(Size &size)
+{
+    return (size.width != INT_ZERO && size.height != INT_ZERO);
+}
+static inline void CopySize(Size &src, Size &dst)
+{
+    dst.width = src.width;
+    dst.height = src.height;
+}
+static inline bool IsDensityChange(int32_t srcDensity, int32_t wantDensity)
+{
+    return (srcDensity != 0 && wantDensity != 0 && srcDensity != wantDensity);
+}
+static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, int32_t wantDensity)
+{
+    return (prop * wantDensity + (srcDensity >> 1)) / srcDensity;
+}
+static void TransformSizeWithDensity(Size &srcSize, int32_t srcDensity, Size &wantSize,
+    int32_t wantDensity, Size &dstSize)
+{
+    if (IsSizeVailed(wantSize)) {
+        CopySize(wantSize, dstSize);
+    } else {
+        CopySize(srcSize, dstSize);
+    }
+    if (IsDensityChange(srcDensity, wantDensity)) {
+        dstSize.width = GetScalePropByDensity(dstSize.width, srcDensity, wantDensity);
+        dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
+    }
+}
+static inline void NotifyDecodeEvent(set<DecodeListener *> &listeners, DecodeEvent event,
+    std::unique_lock<std::mutex>* guard)
+{
+    if (listeners.size() == SIZE_ZERO) {
+        return;
+    }
+    for (auto listener : listeners) {
+        if (guard != nullptr) {
+            guard->unlock();
+        }
+        listener->OnEvent(static_cast<int>(event));
+        if (guard != nullptr) {
+            guard->lock();
+        }
+    }
+}
+static inline void FreeContextBuffer(Media::CustomFreePixelMap &func, PlImageBuffer &buffer)
+{
+    if (func != nullptr) {
+        func(buffer.buffer, buffer.context, buffer.dataSize);
+    } else {
+        free(buffer.buffer);
+        buffer.buffer = nullptr;
+    }
+}
+
+#define BEGIN_TRACE true
+#define FINISH_TRACE false
+static inline void trace(bool start, std::string name = "")
+{
+#if !defined(_WIN32) && !defined(_APPLE)
+    if (start) {
+        StartTrace(HITRACE_TAG_ZIMAGE, name);
+    } else {
+        FinishTrace(HITRACE_TAG_ZIMAGE);
+    }
+#else
+    (void) start;
+    (void) name;
+#endif
+}
+unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
+    const DecodeOptions &opts, uint32_t &errorCode)
+{
+    trace(BEGIN_TRACE, "CreatePixelMapExtended");
+    IMAGE_LOGD("[ImageSource]CreatePixelMapExtended IN");
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    opts_ = opts;
+    auto iter = GetValidImageStatus(index, errorCode);
+    if (iter == imageStatusMap_.end()) {
+        IMAGE_LOGE("[ImageSource]get valid image status fail on create pixel map, ret:%{public}u.", errorCode);
+        return nullptr;
+    }
+    IMAGE_LOGD("[ImageSource]GetValidImageStatus finished");
+    ImageInfo info;
+    errorCode = GetImageInfo(FIRST_FRAME, info);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]get image info failed, ret:%{public}u.", errorCode);
+        return nullptr;
+    }
+    if (!IsSizeVailed(info.size)) {
+        IMAGE_LOGE("[ImageSource]get image info invailed, size [%{public}d x %{public}d]",
+            info.size.width, info.size.height);
+        errorCode = ERR_IMAGE_DATA_ABNORMAL;
+        return nullptr;
+    }
+    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity,
+        opts_.desiredSize, opts_.fitDensity, opts_.desiredSize);
+    unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
+    ImagePlugin::PlImageInfo plInfo;
+    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
+        return nullptr;
+    }
+    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
+
+    // TODO:Check if skia support crop on decode
+    // Size size = {
+    //     .width = plInfo.size.width,
+    //     .height = plInfo.size.height
+    // };
+    // PostProc::ValidCropValue(opts_.CropRect, size);
+    errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()));
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
+        return nullptr;
+    }
+
+    DecodeContext context;
+    context.allocatorType = opts_.allocatorType;
+    // bool hasNinePatch = mainDecoder_->HasProperty(NINE_PATCH);
+    // finalOutputStep = GetFinalOutputStep(opts_, *(pixelMap.get()), hasNinePatch);
+    // IMAGE_LOGD("[ImageSource]finalOutputStep:%{public}d. opts.allocatorType %{public}d",
+    //     finalOutputStep, opts_.allocatorType);
+
+    // if (finalOutputStep == FinalOutputStep::NO_CHANGE) {
+    //     context.allocatorType = opts_.allocatorType;
+    // } else {
+    //     context.allocatorType = AllocatorType::HEAP_ALLOC;
+    // }
+
+    errorCode = mainDecoder_->Decode(index, context);
+    if (context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
+    }
+    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
+    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
+
+    guard.unlock();
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
+        FreeContextBuffer(context.freeFunc, context.pixelsBuffer);
+        return nullptr;
+    }
+
+#ifdef IMAGE_COLORSPACE_FLAG
+    // add graphic colorspace object to pixelMap.
+    bool isSupportICCProfile = mainDecoder_->IsSupportICCProfile();
+    if (isSupportICCProfile) {
+        OHOS::ColorManager::ColorSpace grColorSpace = mainDecoder_->getGrColorSpace();
+        pixelMap->InnerSetColorSpace(grColorSpace);
+    }
+#endif
+
+    pixelMap->SetPixelsAddr(context.pixelsBuffer.buffer, context.pixelsBuffer.context,
+        context.pixelsBuffer.bufferSize, context.allocatorType, context.freeFunc);
+    // TODO:Need check pixel change:
+    // 1. pixel size
+    // 2. crop
+    // 3. density
+    // 4. rotate
+    // 5. format
+
+    // rotateDegrees and rotateNewDegrees
+    if (!ImageUtils::FloatCompareZero(opts_.rotateDegrees)) {
+        pixelMap->rotate(opts_.rotateDegrees);
+    } else if (opts.rotateNewDegrees != INT_ZERO) {
+        pixelMap->rotate(opts_.rotateNewDegrees);
+    }
+
+    if (!context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
+    }
+    trace(FINISH_TRACE);
+    return pixelMap;
+}
 unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
 #if !defined(_WIN32) && !defined(_APPLE)
@@ -331,6 +481,10 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     if (iter == imageStatusMap_.end()) {
         IMAGE_LOGE("[ImageSource]get valid image status fail on create pixel map, ret:%{public}u.", errorCode);
         return nullptr;
+    }
+    if (IsExtendedCodec(mainDecoder_.get())) {
+        guard.unlock();
+        return CreatePixelMapExtended(index, opts, errorCode);
     }
     // the mainDecoder_ may be borrowed by Incremental decoding, so needs to be checked.
     if (InitMainDecoder() != SUCCESS) {
@@ -849,6 +1003,49 @@ uint32_t ImageSource::CheckFormatHint(const string &formatHint, FormatAgentMap::
     return SUCCESS;
 }
 
+AbsImageDecoder *DoCreateDecoder(std::string codecFormat,
+    PluginServer &pluginServer, InputDataStream &sourceData, uint32_t &errorCode)
+{
+    map<string, AttrData> capabilities = { { IMAGE_ENCODE_FORMAT, AttrData(codecFormat) } };
+    for (const auto &capability : capabilities) {
+        std::string x = "undefined";
+        capability.second.GetValue(x);
+        IMAGE_LOGD("[ImageSource] capabilities [%{public}s],[%{public}s]",
+            capability.first.c_str(), x.c_str());
+    }
+    auto decoder = pluginServer.CreateObject<AbsImageDecoder>(AbsImageDecoder::SERVICE_DEFAULT, capabilities);
+    if (decoder == nullptr) {
+        IMAGE_LOGE("[ImageSource]failed to create decoder object.");
+        errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
+        return nullptr;
+    }
+    errorCode = SUCCESS;
+    decoder->SetSource(sourceData);
+    return decoder;
+}
+uint32_t ImageSource::GetFormatExtended(string &format)
+{
+    if (mainDecoder_ != nullptr) {
+        format = sourceInfo_.encodedFormat;
+        return SUCCESS;
+    }
+    uint32_t errorCode = ERR_IMAGE_DECODE_ABNORMAL;
+    auto codec = DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *sourceStreamPtr_,
+        errorCode);
+    if (errorCode != SUCCESS || codec == nullptr) {
+        IMAGE_LOGE("[ImageSource]No extended decoder.");
+        return errorCode;
+    }
+    const static string EXT_ENCODED_FORMAT_KEY = "EncodedFormat";
+    auto decoderPtr = unique_ptr<AbsImageDecoder>(codec);
+    if (!decoderPtr->GetImagePropertyString(FIRST_FRAME, EXT_ENCODED_FORMAT_KEY, format)) {
+        IMAGE_LOGE("[ImageSource]Extended get format failed.");
+        return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
+    }
+    mainDecoder_ = std::move(decoderPtr);
+    return errorCode;
+}
+
 uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
 {
     bool streamIncomplete = false;
@@ -867,7 +1064,9 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
             IMAGE_LOGE("[ImageSource]image source data error ERR_IMAGE_SOURCE_DATA_INCOMPLETE.");
         }
     }
-
+    if (GetFormatExtended(format) == SUCCESS) {
+        return SUCCESS;
+    }
     for (auto iter = formatAgentMap_.begin(); iter != formatAgentMap_.end(); ++iter) {
         string curFormat = iter->first;
         if (iter == hintIter || curFormat == InnerFormat::RAW_FORMAT) {
@@ -1065,23 +1264,29 @@ AbsImageDecoder *ImageSource::CreateDecoder(uint32_t &errorCode)
     if (opts_.sampleSize != 1) {
         encodedFormat = InnerFormat::EXTENDED_FORMAT;
     }
-    map<string, AttrData> capabilities = { { IMAGE_ENCODE_FORMAT, AttrData(encodedFormat) } };
-    auto decoder = pluginServer_.CreateObject<AbsImageDecoder>(AbsImageDecoder::SERVICE_DEFAULT, capabilities);
-    if (decoder == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create decoder object.");
-        errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
-        return nullptr;
-    }
-    errorCode = SUCCESS;
-    decoder->SetSource(*sourceStreamPtr_);
-    return decoder;
+    return DoCreateDecoder(encodedFormat, pluginServer_, *sourceStreamPtr_, errorCode);
 }
 
-uint32_t ImageSource::SetDecodeOptions(std::unique_ptr<AbsImageDecoder> &decoder, uint32_t index,
-                                       const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo)
+static void GetDefaultPixelFormat(const PixelFormat desired, PlPixelFormat& out,
+    MemoryUsagePreference preference)
 {
+    if (desired != PixelFormat::UNKNOWN) {
+        auto formatPair = PIXEL_FORMAT_MAP.find(desired);
+        if (formatPair != PIXEL_FORMAT_MAP.end() && formatPair->second != PlPixelFormat::UNKNOWN) {
+            out = formatPair->second;
+        }
+    }
+    out = (preference == MemoryUsagePreference::LOW_RAM)?PlPixelFormat::RGB_565:PlPixelFormat::RGBA_8888;
+}
+
+uint32_t ImageSource::SetDecodeOptions(std::unique_ptr<AbsImageDecoder> &decoder,
+    uint32_t index, const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo)
+{
+    PlPixelFormat plDesiredFormat; 
+    GetDefaultPixelFormat(opts.desiredPixelFormat, plDesiredFormat, preference_);
     PixelDecodeOptions plOptions;
     CopyOptionsToPlugin(opts, plOptions);
+    plOptions.desiredPixelFormat = plDesiredFormat;
     uint32_t ret = decoder->SetDecodeOptions(index, plOptions, plInfo);
     if (ret != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decoder plugin set decode options fail (image index:%{public}u), ret:%{public}u.",
