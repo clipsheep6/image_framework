@@ -46,27 +46,6 @@ namespace {
     const std::string PACKAGE_NAME = ("LibImagePluginsExport");
 }
 
-// register implement classes of this plugin.
-PLUGIN_EXPORT_REGISTER_CLASS_BEGIN
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::BmpDecoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::BmpFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::JpegDecoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::JpegEncoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::JpegFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::PngDecoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::PngFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::GifDecoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::GifFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::WebpDecoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::WebpEncoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::WebpFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::WbmpFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::RawDecoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::RawFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::SvgDecoder)
-PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::SvgFormatAgent)
-PLUGIN_EXPORT_REGISTER_CLASS_END
-
 using std::string;
 using namespace OHOS::HiviewDFX;
 
@@ -78,24 +57,59 @@ static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "LibIm
 // define the external interface of this plugin.
 PLUGIN_EXPORT_DEFAULT_EXTERNAL_START()
 PLUGIN_EXPORT_DEFAULT_EXTERNAL_STOP()
+
+template<class ImplClassType>
+OHOS::MultimediaPlugin::PluginClassBase *InnerCreatePluginObject()
+{
+    return static_cast<OHOS::MultimediaPlugin::PluginClassBase *>(new (std::nothrow) ImplClassType());
+}
+
+static bool CompareClass(const string target, const string &className) {
+  return target.compare(className) == 0;
+}
+
 OHOS::MultimediaPlugin::PluginClassBase *PluginExternalCreate(const string &className)
 {
-    HiLog::Debug(LABEL, "LibImagePluginsExport: create object for package: %{public}s, class: %{public}s.",
-                 PACKAGE_NAME.c_str(), className.c_str());
-
-    auto iter = implClassMap.find(className);
-    if (iter == implClassMap.end()) {
-        HiLog::Error(LABEL, "LibImagePluginsExport: failed to find class: %{public}s, in package: %{public}s.",
-                     className.c_str(), PACKAGE_NAME.c_str());
-        return nullptr;
+    HiLog::Debug(LABEL, "LibImagePluginsExport: create object for package: %{public}s, class: %{public}s ===> new",
+                PACKAGE_NAME.c_str(), className.c_str());
+    if (CompareClass("OHOS::ImagePlugin::JpegDecoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::JpegDecoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::JpegEncoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::JpegEncoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::BmpDecoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::BmpDecoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::BmpFormatAgent", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::BmpFormatAgent>();
+    } else if (CompareClass("OHOS::ImagePlugin::JpegFormatAgent", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::JpegFormatAgent>();
+    } else if (CompareClass("OHOS::ImagePlugin::PngDecoder", className)) {
+      HiLog::Debug(LABEL, "LibImagePluginsExport: create PngDecoder");
+      return InnerCreatePluginObject<OHOS::ImagePlugin::PngDecoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::PngFormatAgent", className)) {
+      HiLog::Debug(LABEL, "LibImagePluginsExport: create PngFormatAgent");
+      return InnerCreatePluginObject<OHOS::ImagePlugin::PngFormatAgent>();
+    } else if (CompareClass("OHOS::ImagePlugin::GifDecoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::GifDecoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::GifFormatAgent", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::GifFormatAgent>();
+    } else if (CompareClass("OHOS::ImagePlugin::WebpDecoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::WebpDecoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::WebpEncoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::WebpEncoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::WebpFormatAgent", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::WebpFormatAgent>();
+    } else if (CompareClass("OHOS::ImagePlugin::WbmpFormatAgent", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::WbmpFormatAgent>();
+    } else if (CompareClass("OHOS::ImagePlugin::RawDecoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::RawDecoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::RawFormatAgent", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::RawFormatAgent>();
+    } else if (CompareClass("OHOS::ImagePlugin::SvgDecoder", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::SvgDecoder>();
+    } else if (CompareClass("OHOS::ImagePlugin::SvgFormatAgent", className)) {
+      return InnerCreatePluginObject<OHOS::ImagePlugin::SvgFormatAgent>();
     }
-
-    auto creator = iter->second;
-    if (creator == nullptr) {
-        HiLog::Error(LABEL, "LibImagePluginsExport: null creator for class: %{public}s, in package: %{public}s.",
-                     className.c_str(), PACKAGE_NAME.c_str());
-        return nullptr;
-    }
-
-    return creator();
+    HiLog::Error(LABEL, "LibImagePluginsExport: failed to find class: %{public}s, in package: %{public}s.",
+        className.c_str(), PACKAGE_NAME.c_str());
+    return nullptr;
 }
