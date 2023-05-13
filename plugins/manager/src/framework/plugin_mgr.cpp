@@ -39,7 +39,7 @@ using namespace OHOS::HiviewDFX;
 static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "PluginMgr" };
 PlatformAdp &PluginMgr::platformAdp_ = DelayedRefSingleton<PlatformAdp>::GetInstance();
 
-std::vector<std::string> getMETA_DATA() {
+std::vector<std::string> GetMataData() {
     const std::vector<std::string> META_DATA2 = {
     R"(
         {
@@ -435,7 +435,7 @@ std::vector<std::string> getMETA_DATA() {
 uint32_t PluginMgr::Register(const vector<string> &canonicalPaths)
 {
     if (canonicalPaths.empty()) {
-        const vector<string> &metadata = getMETA_DATA();
+        const vector<string> &metadata = GetMataData();
         for (size_t i = 0; i < metadata.size(); i++) {
             uint32_t errorCode = RegisterPlugin(metadata[i]);
             if (errorCode != SUCCESS) {
