@@ -21,6 +21,7 @@
 #include "hilog/log.h"
 #include "log_tags.h"
 #include "media_errors.h"
+#include "include/core/SkColor.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -378,7 +379,7 @@ bool SvgDecoder::BuildDom()
         return false;
     }
 
-    svgDom_ = SkSVGDOM::MakeFromStream(*(svgStream_.get()));
+    svgDom_ = SkSVGDOM::MakeFromStream(*(svgStream_.get()), SK_ColorRED);
     if (svgDom_ == nullptr) {
         HiLog::Error(LABEL, "[BuildDom] DOM is null.");
         return false;
@@ -499,7 +500,7 @@ uint32_t SvgDecoder::DoDecode(uint32_t index, DecodeContext &context)
         HiLog::Error(LABEL, "[DoDecode] make canvas failed.");
         return Media::ERROR;
     }
-    canvas->clear(SK_ColorTRANSPARENT);
+    canvas->clear(SK_ColorRED);
     svgDom_->render(canvas.get());
 
     bool result = canvas->readPixels(imageInfo, pixels, rowBytes, 0, 0);
