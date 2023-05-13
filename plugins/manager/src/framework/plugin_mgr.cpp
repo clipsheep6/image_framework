@@ -434,13 +434,8 @@ std::vector<std::string> getMETA_DATA() {
 
 uint32_t PluginMgr::Register(const vector<string> &canonicalPaths)
 {
-    HiLog::Warn(LABEL, "quanzhen ======== Register in");
-    HiLog::Warn(LABEL, "quanzhen ======== canonicalPaths.size  [%{public}lu]",canonicalPaths.size());
     if (canonicalPaths.empty()) {
-        HiLog::Warn(LABEL, "quanzhen ======== Register 1111111111111");
         const vector<string> &metadata = getMETA_DATA();
-        HiLog::Warn(LABEL, "quanzhen ======== OHOS::MultimediaPlugin::META_DATA.size  [%{public}lu]",OHOS::MultimediaPlugin::META_DATA.size());
-        HiLog::Warn(LABEL, "quanzhen ======== metadata.size  [%{public}lu]",metadata.size());
         for (size_t i = 0; i < metadata.size(); i++) {
             uint32_t errorCode = RegisterPlugin(metadata[i]);
             if (errorCode != SUCCESS) {
