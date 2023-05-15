@@ -153,11 +153,11 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is, c
     StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by istream");
 #endif
     IMAGE_LOGD("[ImageSource]create Imagesource with stream.");
-
+#if defined(IOS_PLATFORM) || defined(A_PLATFORM)
     if (formatAgentMap_.size() == 0) {
       formatAgentMap_ = InitClass();
     }
-
+#endif
     unique_ptr<SourceStream> streamPtr = IstreamSourceStream::CreateSourceStream(move(is));
     if (streamPtr == nullptr) {
         IMAGE_LOGE("[ImageSource]failed to create istream source stream.");
@@ -185,11 +185,11 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
     StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by data");
 #endif
     IMAGE_LOGD("[ImageSource]create Imagesource with buffer.");
-
+#if defined(IOS_PLATFORM) || defined(A_PLATFORM)
     if (formatAgentMap_.size() == 0) {
       formatAgentMap_ = InitClass();
     }
-
+#endif
     if (data == nullptr || size == 0) {
         IMAGE_LOGE("[ImageSource]parameter error.");
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
@@ -227,11 +227,11 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
     StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by path");
 #endif
     IMAGE_LOGD("[ImageSource]create Imagesource with pathName.");
-
+#if defined(IOS_PLATFORM) || defined(A_PLATFORM)
     if (formatAgentMap_.size() == 0) {
       formatAgentMap_ = InitClass();
     }
-
+#endif
     unique_ptr<SourceStream> streamPtr = DecodeBase64(pathName);
     if (streamPtr == nullptr) {
         streamPtr = FileSourceStream::CreateSourceStream(pathName);
