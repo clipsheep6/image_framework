@@ -40,7 +40,7 @@ static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "Plugi
 PlatformAdp &PluginMgr::platformAdp_ = DelayedRefSingleton<PlatformAdp>::GetInstance();
 
 std::vector<std::string> GetMataData() {
-    const std::vector<std::string> META_DATA2 = {
+    const std::vector<std::string> NEW_META_DATA = {
     R"(
         {
           "packageName":"LibJpegPlugin",
@@ -428,14 +428,18 @@ std::vector<std::string> GetMataData() {
         }
     )"
 };
-    HiLog::Warn(LABEL, "quanzhen ======== META_DATA2.size  [%{public}lu]",META_DATA2.size());
-    return META_DATA2;
+    HiLog::Warn(LABEL, " The NEW_META_DATA size is [%{public}lu]", NEW_META_DATA.size());
+    return NEW_META_DATA;
 }
 
 uint32_t PluginMgr::Register(const vector<string> &canonicalPaths)
 {
     if (canonicalPaths.empty()) {
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+        const vector<string> &metadata = OHOS::MultimediaPlugin::META_DATA;
+#else
         const vector<string> &metadata = GetMataData();
+#endif
         for (size_t i = 0; i < metadata.size(); i++) {
             uint32_t errorCode = RegisterPlugin(metadata[i]);
             if (errorCode != SUCCESS) {
