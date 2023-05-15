@@ -88,6 +88,8 @@ OHOS::MultimediaPlugin::PluginClassBase *PluginExternalCreate(const string &clas
                      className.c_str(), PACKAGE_NAME.c_str());
         return nullptr;
     }
+    
+    return creator();
 #else
     if (CompareClass("OHOS::ImagePlugin::JpegDecoder", className)) {
       return InnerCreatePluginObject<OHOS::ImagePlugin::JpegDecoder>();
