@@ -58,6 +58,7 @@ static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "LibIm
 PLUGIN_EXPORT_DEFAULT_EXTERNAL_START()
 PLUGIN_EXPORT_DEFAULT_EXTERNAL_STOP()
 
+#if defined(IOS_PLATFORM) || defined(A_PLATFORM)
 template<class ImplClassType>
 OHOS::MultimediaPlugin::PluginClassBase *InnerCreatePluginObject()
 {
@@ -67,11 +68,27 @@ OHOS::MultimediaPlugin::PluginClassBase *InnerCreatePluginObject()
 static bool CompareClass(const string target, const string &className) {
   return target.compare(className) == 0;
 }
+#endif
 
 OHOS::MultimediaPlugin::PluginClassBase *PluginExternalCreate(const string &className)
 {
-    HiLog::Debug(LABEL, "LibImagePluginsExport: create object for package: %{public}s, class: %{public}s ===> new",
+    HiLog::Debug(LABEL, "LibImagePluginsExport: create object for package: %{public}s, class: %{public}s.",
                 PACKAGE_NAME.c_str(), className.c_str());
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    auto iter = implClassMap.find(className);
+    if (iter == implClassMap.end()) {
+        HiLog::Error(LABEL, "LibImagePluginsExport: failed to find class: %{public}s, in package: %{public}s.",
+                     className.c_str(), PACKAGE_NAME.c_str());
+        return nullptr;
+    }
+
+    auto creator = iter->second;
+    if (creator == nullptr) {
+        HiLog::Error(LABEL, "LibImagePluginsExport: null creator for class: %{public}s, in package: %{public}s.",
+                     className.c_str(), PACKAGE_NAME.c_str());
+        return nullptr;
+    }
+#else
     if (CompareClass("OHOS::ImagePlugin::JpegDecoder", className)) {
       return InnerCreatePluginObject<OHOS::ImagePlugin::JpegDecoder>();
     } else if (CompareClass("OHOS::ImagePlugin::JpegEncoder", className)) {
@@ -112,4 +129,5 @@ OHOS::MultimediaPlugin::PluginClassBase *PluginExternalCreate(const string &clas
     HiLog::Error(LABEL, "LibImagePluginsExport: failed to find class: %{public}s, in package: %{public}s.",
         className.c_str(), PACKAGE_NAME.c_str());
     return nullptr;
+#endif
 }
