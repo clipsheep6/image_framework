@@ -155,7 +155,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is, c
     IMAGE_LOGD("[ImageSource]create Imagesource with stream.");
 #if defined(IOS_PLATFORM) || defined(A_PLATFORM)
     if (formatAgentMap_.size() == 0) {
-      formatAgentMap_ = InitClass();
+        IMAGE_LOGE("[ImageSource] init class with stream.");
+        formatAgentMap_ = InitClass();
     }
 #endif
     unique_ptr<SourceStream> streamPtr = IstreamSourceStream::CreateSourceStream(move(is));
@@ -187,7 +188,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
     IMAGE_LOGD("[ImageSource]create Imagesource with buffer.");
 #if defined(IOS_PLATFORM) || defined(A_PLATFORM)
     if (formatAgentMap_.size() == 0) {
-      formatAgentMap_ = InitClass();
+        IMAGE_LOGE("[ImageSource] init class with buffer.");
+        formatAgentMap_ = InitClass();
     }
 #endif
     if (data == nullptr || size == 0) {
@@ -229,7 +231,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
     IMAGE_LOGD("[ImageSource]create Imagesource with pathName.");
 #if defined(IOS_PLATFORM) || defined(A_PLATFORM)
     if (formatAgentMap_.size() == 0) {
-      formatAgentMap_ = InitClass();
+        IMAGE_LOGE("[ImageSource] init class with pathName.");
+        formatAgentMap_ = InitClass();
     }
 #endif
     unique_ptr<SourceStream> streamPtr = DecodeBase64(pathName);
