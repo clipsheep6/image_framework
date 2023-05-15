@@ -39,7 +39,8 @@ using namespace OHOS::HiviewDFX;
 static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "PluginMgr" };
 PlatformAdp &PluginMgr::platformAdp_ = DelayedRefSingleton<PlatformAdp>::GetInstance();
 
-std::vector<std::string> GetMataData() {
+std::vector<std::string> GetMataData()
+{
     const std::vector<std::string> NEW_META_DATA = {
     R"(
         {
