@@ -73,6 +73,7 @@ const std::string F_NUMBER = "FNumber";
 const std::string ISO_SPEED_RATINGS = "ISOSpeedRatings";
 const std::string SCENE_TYPE = "SceneType";
 const std::string COMPRESSED_BITS_PER_PIXEL = "CompressedBitsPerPixel";
+const std::string USER_COMMENT = "UserComment";
 static const std::map<std::string, uint32_t> PROPERTY_INT = {
     {"Top-left", 0},
     {"Bottom-right", 180},
@@ -733,6 +734,8 @@ uint32_t JpegDecoder::GetImagePropertyString(uint32_t index, const std::string &
         value = exifInfo_.sceneType_;
     } else if (IsSameTextStr(key, COMPRESSED_BITS_PER_PIXEL)) {
         value = exifInfo_.compressedBitsPerPixel_;
+    } else if (IsSameTextStr(key, USER_COMMENT)) {
+        value = exifInfo_.userComment_;
     } else {
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
@@ -830,6 +833,8 @@ ExifTag JpegDecoder::getExifTagFromKey(const std::string &key)
         return EXIF_TAG_SCENE_TYPE;
     } else if (IsSameTextStr(key, COMPRESSED_BITS_PER_PIXEL)) {
         return EXIF_TAG_COMPRESSED_BITS_PER_PIXEL;
+    } else if (IsSameTextStr(key, USER_COMMENT)) {
+        return EXIF_TAG_USER_COMMENT;
     } else {
         return EXIF_TAG_PRINT_IMAGE_MATCHING;
     }
