@@ -27,6 +27,7 @@ if (use_clang_ios) {
     ]
 
     sources = [
+      "src/image_type_converter.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
     ]
@@ -60,9 +61,11 @@ if (use_clang_ios) {
       "//commonlibrary/c_utils/base/include",
       "//foundation/multimedia/media_utils_lite/interfaces/kits",
       "//foundation/communication/ipc/utils/include",
+      "$skia_root/skia",
     ]
 
     sources = [
+      "src/image_type_converter.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
     ]
@@ -127,7 +130,10 @@ ohos_static_library("image_utils_static") {
     "//commonlibrary/c_utils/base/include",
   ]
 
-  sources = [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp" ]
+  sources = [ 
+    "src/image_type_converter.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp"
+  ]
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines

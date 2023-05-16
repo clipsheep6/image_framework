@@ -19,6 +19,10 @@
 
 #include "image_utils.h"
 #include "image_trace.h"
+#include "image_type_converter.h"
+#include "memory_manager.h"
+#include "include/core/SkBitmap.h"
+#include "include/core/SkCanvas.h"
 #include "hilog/log.h"
 #include "hitrace_meter.h"
 #include "log_tags.h"
@@ -1926,6 +1930,80 @@ uint32_t PixelMap::SetAlpha(const float percent)
     }
     return SUCCESS;
 }
+static SkImageInfo BuildSkImageInfo(PixelMap &pixelmap)
+{
+    int width = pixelmap.GetWidth();
+    int height = pixelmap.GetHeight();
+    SkColorType colorType = ImageTypeConverter::ToSkColorType(pixelmap.GetPixelFormat());
+    SkAlphaType alphaType = ImageTypeConverter::ToSkAlphaType(pixelmap.GetAlphaType());
+    sk_sp<SkColorSpace> colorSpace = nullptr;
+#ifdef IMAGE_COLORSPACE_FLAG
+    if (pixelmap.InnerGetGrColorSpacePtr() != nullptr) {
+        colorSpace = pixelmap.InnerGetGrColorSpacePtr()->ToSkColorSpace();
+    }
+#endif
+    HiLog::Debug(LABEL, "BuildSkImageInfo w %{public}d, h %{public}d", width, height);
+    HiLog::Debug(LABEL, "BuildSkImageInfo pf %{public}s, at %{public}s, skpf %{public}s, skat %{public}s",
+        ImageTypeConverter::ToName(pixelmap.GetPixelFormat()).c_str(),
+        ImageTypeConverter::ToName(pixelmap.GetAlphaType()).c_str(),
+        ImageTypeConverter::ToName(colorType).c_str(), ImageTypeConverter::ToName(alphaType).c_str());
+
+    return SkImageInfo::Make(width, height, colorType, alphaType, colorSpace);
+}
+static void ToImageInfo(ImageInfo &info, SkImageInfo &skInfo, bool sizeOnly = true)
+{
+    info.size.width = skInfo.width();
+    info.size.height = skInfo.height();
+    if (sizeOnly) {
+        return;
+    }
+    info.alphaType = ImageTypeConverter::ToAlphaType(skInfo.alphaType());
+    info.pixelFormat = ImageTypeConverter::ToPixelFormat(skInfo.colorType());
+}
+// static std::shared_ptr<SkBitmap> BuildSkBitmap(SkImageInfo &imageInfo, void* addr, size_t rowBytes)
+// {
+//     auto res = std::make_shared<SkBitmap>();
+//     res->installPixels(imageInfo, addr, rowBytes);
+//     return res;
+// }
+static void DumpSkRect(std::string name, SkRect &rect)
+{
+    HiLog::Debug(LABEL, "%{public}s rect [l %{public}f, t %{public}f, r %{public}f, b %{public}f]",
+        name.c_str(), rect.fLeft, rect.fTop, rect.fRight, rect.fBottom);
+}
+static void UpdatePixelmap(PixelMap &pixelmap, SkImageInfo &skinfo, AbsMemory &memory, bool sizeOnly = true)
+{
+    ImageInfo info;
+    pixelmap.GetImageInfo(info);
+    ToImageInfo(info, skinfo, sizeOnly);
+    pixelmap.SetImageInfo(info);
+    pixelmap.SetPixelsAddr(memory.data.data, memory.extend.data, memory.data.size, memory.GetType(), nullptr);
+}
+static uint32_t trans(PixelMap &pixelmap, float degs)
+{
+    SkMatrix skMatrix;
+    SkScalar degrees = degs;
+    SkRect src = SkRect::MakeIWH(pixelmap.GetWidth(), pixelmap.GetHeight());
+    skMatrix.setRotate(degrees);
+    SkRect dst = skMatrix.mapRect(src);
+    DumpSkRect("trans src ", src);
+    DumpSkRect("trans dst ", dst);
+    SkImageInfo srcInfo = BuildSkImageInfo(pixelmap);
+    SkImageInfo dstInfo = srcInfo.makeWH(dst.width() + 0.5f, dst.height() + 0.5f);
+    size_t dstSize = dstInfo.computeMinByteSize();
+    MemoryData memoryData = {nullptr, dstSize, "Trans ImageData"};
+    auto memory = MemoryManager::CreateMemory(pixelmap.GetAllocatorType(), memoryData);
+    SkBitmap srcBitmap;
+    srcBitmap.installPixels(srcInfo, const_cast<uint8_t*>(pixelmap.GetPixels()), srcInfo.minRowBytes());
+    SkBitmap dstBitmap;
+    dstBitmap.installPixels(dstInfo, memory->data.data, dstInfo.minRowBytes());
+    SkCanvas canvas(dstBitmap);
+    canvas.translate(-dst.fLeft, -dst.fTop);
+    canvas.rotate(degrees);
+    canvas.drawBitmap(srcBitmap, 0, 0);
+    UpdatePixelmap(pixelmap, dstInfo, *memory);
+    return SUCCESS;
+}
 
 void PixelMap::scale(float xAxis, float yAxis)
 {
@@ -1943,10 +2021,11 @@ void PixelMap::translate(float xAxis, float yAxis)
 }
 void PixelMap::rotate(float degrees)
 {
-    PostProc postProc;
-    if (!postProc.RotatePixelMap(degrees, *this)) {
-        HiLog::Error(LABEL, "rotate fail");
-    }
+    // PostProc postProc;
+    // if (!postProc.RotatePixelMap(degrees, *this)) {
+    //     HiLog::Error(LABEL, "rotate fail");
+    // }
+    trans(*this, degrees);
 }
 void PixelMap::flip(bool xAxis, bool yAxis)
 {
