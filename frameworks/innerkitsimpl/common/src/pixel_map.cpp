@@ -31,6 +31,7 @@
 #include "pixel_map_utils.h"
 #include "post_proc.h"
 #include "parcel.h"
+#include "pubdef.h"
 #ifndef _WIN32
 #include "securec.h"
 #else
@@ -1930,102 +1931,128 @@ uint32_t PixelMap::SetAlpha(const float percent)
     }
     return SUCCESS;
 }
-static SkImageInfo BuildSkImageInfo(PixelMap &pixelmap)
+static sk_sp<SkColorSpace> ToSkColorSpace(PixelMap *pixelmap)
 {
-    int width = pixelmap.GetWidth();
-    int height = pixelmap.GetHeight();
-    SkColorType colorType = ImageTypeConverter::ToSkColorType(pixelmap.GetPixelFormat());
-    SkAlphaType alphaType = ImageTypeConverter::ToSkAlphaType(pixelmap.GetAlphaType());
-    sk_sp<SkColorSpace> colorSpace = nullptr;
 #ifdef IMAGE_COLORSPACE_FLAG
-    if (pixelmap.InnerGetGrColorSpacePtr() != nullptr) {
-        colorSpace = pixelmap.InnerGetGrColorSpacePtr()->ToSkColorSpace();
+    if (pixelmap->InnerGetGrColorSpacePtr() == nullptr) {
+        return nullptr;
     }
+    return pixelmap->InnerGetGrColorSpacePtr()->ToSkColorSpace();
+#else
+    return nullptr;
 #endif
-    HiLog::Debug(LABEL, "BuildSkImageInfo w %{public}d, h %{public}d", width, height);
-    HiLog::Debug(LABEL, "BuildSkImageInfo pf %{public}s, at %{public}s, skpf %{public}s, skat %{public}s",
-        ImageTypeConverter::ToName(pixelmap.GetPixelFormat()).c_str(),
-        ImageTypeConverter::ToName(pixelmap.GetAlphaType()).c_str(),
-        ImageTypeConverter::ToName(colorType).c_str(), ImageTypeConverter::ToName(alphaType).c_str());
-
-    return SkImageInfo::Make(width, height, colorType, alphaType, colorSpace);
+}
+static SkImageInfo ToSkImageInfo(ImageInfo &info, sk_sp<SkColorSpace> colorSpace)
+{
+    SkColorType colorType = ImageTypeConverter::ToSkColorType(info.pixelFormat);
+    SkAlphaType alphaType = ImageTypeConverter::ToSkAlphaType(info.alphaType);
+    HiLog::Debug(LABEL, "ToSkImageInfo w %{public}d, h %{public}d", info.size.width, info.size.height);
+    HiLog::Debug(LABEL,
+        "ToSkImageInfo pf %{public}s, at %{public}s, skpf %{public}s, skat %{public}s",
+        ImageTypeConverter::ToName(info.pixelFormat).c_str(),
+        ImageTypeConverter::ToName(info.alphaType).c_str(),
+        ImageTypeConverter::ToName(colorType).c_str(),
+        ImageTypeConverter::ToName(alphaType).c_str()
+    );
+    return SkImageInfo::Make(info.size.width, info.size.height, colorType, alphaType, colorSpace);
 }
 static void ToImageInfo(ImageInfo &info, SkImageInfo &skInfo, bool sizeOnly = true)
 {
     info.size.width = skInfo.width();
     info.size.height = skInfo.height();
-    if (sizeOnly) {
-        return;
+    if (!sizeOnly) {
+        info.alphaType = ImageTypeConverter::ToAlphaType(skInfo.alphaType());
+        info.pixelFormat = ImageTypeConverter::ToPixelFormat(skInfo.colorType());
     }
-    info.alphaType = ImageTypeConverter::ToAlphaType(skInfo.alphaType());
-    info.pixelFormat = ImageTypeConverter::ToPixelFormat(skInfo.colorType());
 }
-// static std::shared_ptr<SkBitmap> BuildSkBitmap(SkImageInfo &imageInfo, void* addr, size_t rowBytes)
-// {
-//     auto res = std::make_shared<SkBitmap>();
-//     res->installPixels(imageInfo, addr, rowBytes);
-//     return res;
-// }
-static void DumpSkRect(std::string name, SkRect &rect)
+struct SkTransInfo {
+    SkRect r;
+    SkImageInfo info;
+    SkBitmap bitmap;
+};
+struct TransMemoryInfo {
+    AllocatorType allocType;
+    std::unique_ptr<AbsMemory> memory = nullptr;
+};
+constexpr float HALF = 0.5f;
+static inline int FloatToInt(float a)
 {
-    HiLog::Debug(LABEL, "%{public}s rect [l %{public}f, t %{public}f, r %{public}f, b %{public}f]",
-        name.c_str(), rect.fLeft, rect.fTop, rect.fRight, rect.fBottom);
+    return static_cast<int>(a + HALF);
 }
-static void UpdatePixelmap(PixelMap &pixelmap, SkImageInfo &skinfo, AbsMemory &memory, bool sizeOnly = true)
+static void GenSrcTransInfo(SkTransInfo &srcInfo, ImageInfo &imageInfo, uint8_t* pixels,
+    sk_sp<SkColorSpace> colorSpace)
 {
-    ImageInfo info;
-    pixelmap.GetImageInfo(info);
-    ToImageInfo(info, skinfo, sizeOnly);
-    pixelmap.SetImageInfo(info);
-    pixelmap.SetPixelsAddr(memory.data.data, memory.extend.data, memory.data.size, memory.GetType(), nullptr);
+    srcInfo.r = SkRect::MakeIWH(imageInfo.size.width, imageInfo.size.height);
+    srcInfo.info = ToSkImageInfo(imageInfo, colorSpace);
+    srcInfo.bitmap.installPixels(srcInfo.info, pixels, srcInfo.info.minRowBytes());
 }
-static uint32_t trans(PixelMap &pixelmap, float degs)
+static void GendstTransInfo(SkTransInfo &srcInfo, SkTransInfo &dstInfo, SkMatrix &matrix,
+    TransMemoryInfo &memoryInfo)
 {
-    SkMatrix skMatrix;
-    SkScalar degrees = degs;
-    SkRect src = SkRect::MakeIWH(pixelmap.GetWidth(), pixelmap.GetHeight());
-    skMatrix.setRotate(degrees);
-    SkRect dst = skMatrix.mapRect(src);
-    DumpSkRect("trans src ", src);
-    DumpSkRect("trans dst ", dst);
-    SkImageInfo srcInfo = BuildSkImageInfo(pixelmap);
-    SkImageInfo dstInfo = srcInfo.makeWH(dst.width() + 0.5f, dst.height() + 0.5f);
-    size_t dstSize = dstInfo.computeMinByteSize();
-    MemoryData memoryData = {nullptr, dstSize, "Trans ImageData"};
-    auto memory = MemoryManager::CreateMemory(pixelmap.GetAllocatorType(), memoryData);
-    SkBitmap srcBitmap;
-    srcBitmap.installPixels(srcInfo, const_cast<uint8_t*>(pixelmap.GetPixels()), srcInfo.minRowBytes());
-    SkBitmap dstBitmap;
-    dstBitmap.installPixels(dstInfo, memory->data.data, dstInfo.minRowBytes());
-    SkCanvas canvas(dstBitmap);
-    canvas.translate(-dst.fLeft, -dst.fTop);
-    canvas.rotate(degrees);
-    canvas.drawBitmap(srcBitmap, 0, 0);
-    UpdatePixelmap(pixelmap, dstInfo, *memory);
-    return SUCCESS;
+    dstInfo.r = matrix.mapRect(srcInfo.r);
+    int width = FloatToInt(dstInfo.r.width());
+    int height = FloatToInt(dstInfo.r.height());
+    if (matrix.isTranslate()) {
+        width += dstInfo.r.fLeft;
+        height += dstInfo.r.fTop;
+    }
+    dstInfo.info = srcInfo.info.makeWH(width, height);
+    MemoryData memoryData = {nullptr, dstInfo.info.computeMinByteSize(), "Trans ImageData"};
+    memoryInfo.memory = MemoryManager::CreateMemory(memoryInfo.allocType, memoryData);
+    dstInfo.bitmap.installPixels(dstInfo.info, memoryInfo.memory->data.data, dstInfo.info.minRowBytes());
 }
+struct TransInfos {
+    SkMatrix matrix;
+};
+void PixelMap::DoTranslation(TransInfos &infos)
+{
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
 
+    TransMemoryInfo dstMemory;
+    dstMemory.allocType = allocatorType_;
+
+    SkTransInfo src;
+    GenSrcTransInfo(src, imageInfo, data_, ToSkColorSpace(this));
+
+    SkTransInfo dst;
+    GendstTransInfo(src, dst, infos.matrix, dstMemory);
+    SkCanvas canvas(dst.bitmap);
+    if (!infos.matrix.isTranslate()) {
+        if (!EQUAL_TO_ZERO(dst.r.fLeft) || !EQUAL_TO_ZERO(dst.r.fTop)) {
+            canvas.translate(-dst.r.fLeft, -dst.r.fTop);
+        }
+    }
+    canvas.concat(infos.matrix);
+    canvas.drawBitmap(src.bitmap, FLOAT_ZERO, FLOAT_ZERO);
+
+    ToImageInfo(imageInfo, dst.info);
+    SetImageInfo(imageInfo);
+#ifdef IMAGE_COLORSPACE_FLAG
+    if (dst.bitmap.refColorSpace() != nullptr) {
+        grColorSpace_ = make_shared<OHOS::ColorManager::ColorSpace>(dst.bitmap.refColorSpace());
+    }
+#endif
+    auto m = dstMemory.memory.get();
+    SetPixelsAddr(m->data.data, m->extend.data, m->data.size, m->GetType(), nullptr);
+}
 void PixelMap::scale(float xAxis, float yAxis)
 {
-    PostProc postProc;
-    if (!postProc.ScalePixelMap(xAxis, yAxis, *this)) {
-        HiLog::Error(LABEL, "scale fail");
-    }
+    TransInfos infos;
+    infos.matrix.setScale(xAxis, yAxis);
+    DoTranslation(infos);
 }
 void PixelMap::translate(float xAxis, float yAxis)
 {
-    PostProc postProc;
-    if (!postProc.TranslatePixelMap(xAxis, yAxis, *this)) {
-        HiLog::Error(LABEL, "translate fail");
-    }
+    TransInfos infos;
+    infos.matrix.setTranslate(xAxis, yAxis);
+    DoTranslation(infos);
 }
 void PixelMap::rotate(float degrees)
 {
-    // PostProc postProc;
-    // if (!postProc.RotatePixelMap(degrees, *this)) {
-    //     HiLog::Error(LABEL, "rotate fail");
-    // }
-    trans(*this, degrees);
+    TransInfos infos;
+    infos.matrix.setRotate(degrees);
+    DoTranslation(infos);
 }
 void PixelMap::flip(bool xAxis, bool yAxis)
 {
@@ -2034,34 +2061,46 @@ void PixelMap::flip(bool xAxis, bool yAxis)
     }
     scale(xAxis ? -1 : 1, yAxis ? -1 : 1);
 }
+
 uint32_t PixelMap::crop(const Rect &rect)
 {
     if (!IsEditable()) {
         HiLog::Error(LABEL, "pixelmap is not allowed to crop, when editable is false");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
     }
-    PostProc postProc;
-    auto cropValue = PostProc::GetCropValue(rect, imageInfo_.size);
-    if (cropValue == CropValue::NOCROP) {
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+
+    SkTransInfo src;
+    GenSrcTransInfo(src, imageInfo, data_, ToSkColorSpace(this));
+
+    SkTransInfo dst;
+    SkIRect dstIRect = SkIRect::MakeXYWH(rect.left, rect.top, rect.width, rect.height);
+    dst.r = SkRect::Make(dstIRect);
+    if (dst.r == src.r) {
         return SUCCESS;
     }
-
-    if (cropValue == CropValue::INVALID) {
+    if (!src.r.contains(dst.r)) {
         HiLog::Error(LABEL, "Invalid crop rect");
         return ERR_IMAGE_CROP;
     }
-
-    ImageInfo dstImageInfo = {
-        .size = {
-            .width = rect.width,
-            .height = rect.height,
-        },
-        .pixelFormat = imageInfo_.pixelFormat,
-        .colorSpace = imageInfo_.colorSpace,
-        .alphaType = imageInfo_.alphaType,
-        .baseDensity = imageInfo_.baseDensity,
-    };
-    return postProc.ConvertProc(rect, dstImageInfo, *this, imageInfo_);
+    dst.info = src.info.makeWH(dstIRect.width(), dstIRect.height());
+    MemoryData memoryData = {nullptr, dst.info.computeMinByteSize(), "Trans ImageData"};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (!src.bitmap.readPixels(dst.info, m->data.data, dst.info.minRowBytes(),
+        dstIRect.fLeft, dstIRect.fTop)) {
+        HiLog::Error(LABEL, "ReadPixels failed");
+        return ERR_IMAGE_CROP;
+    }
+    ToImageInfo(imageInfo, dst.info);
+    SetImageInfo(imageInfo);
+#ifdef IMAGE_COLORSPACE_FLAG
+    if (dst.info.refColorSpace() != nullptr) {
+        grColorSpace_ = make_shared<OHOS::ColorManager::ColorSpace>(dst.info.refColorSpace());
+    }
+#endif
+    SetPixelsAddr(m->data.data, m->extend.data, m->data.size, m->GetType(), nullptr);
+    return SUCCESS;
 }
 
 #ifdef IMAGE_COLORSPACE_FLAG
