@@ -959,7 +959,7 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
                 HiLog::Error(LABEL, "User_Comment memcpy error");
             }
             break;
-        }     
+        }
         case EXIF_TAG_GPS_LATITUDE: {
             std::vector<std::string> latVec;
             SplitStr(value, ",", latVec);
