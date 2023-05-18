@@ -73,6 +73,10 @@ ohos_shared_library("rawplugin") {
     }
 
     external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+    external_deps += [
+      "drivers_interface_codec:image_idl_headers",
+      "drivers_interface_codec:libimage_proxy_1.0",
+    ]
   }
 
   part_name = "multimedia_image_framework"

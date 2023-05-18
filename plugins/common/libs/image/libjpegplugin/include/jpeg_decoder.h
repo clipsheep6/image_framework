@@ -32,6 +32,8 @@
 #include "plugin_server.h"
 #include "exif_info.h"
 
+#include "v1_0/icodec_image_jpeg.h"
+
 namespace OHOS {
 namespace ImagePlugin {
 enum class JpegDecodingState : int32_t {

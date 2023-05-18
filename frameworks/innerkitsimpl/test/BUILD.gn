@@ -738,6 +738,10 @@ ohos_unittest("pluginlibjpegtest") {
     "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
   ]
+  external_deps += [
+    "drivers_interface_codec:image_idl_headers",
+    "drivers_interface_codec:libimage_proxy_1.0",
+  ]
 }
 
 ohos_unittest("rawdecodertest") {

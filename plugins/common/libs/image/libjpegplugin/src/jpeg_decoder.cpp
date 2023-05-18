@@ -20,6 +20,7 @@
 #include "jerror.h"
 #include "media_errors.h"
 #include "string_ex.h"
+#include "jpeg_hardware_decoder.h"
 #ifndef _WIN32
 #include "securec.h"
 #else
@@ -416,6 +417,8 @@ uint32_t JpegDecoder::Decode(uint32_t index, DecodeContext &context)
     }
     // only state JpegDecodingState::IMAGE_DECODING can go here.
     if (hwJpegDecompress_ != nullptr) {
+        JpegHardwareDecoder jhde;
+        jhde.GetHardwareInfo();
         srcMgr_.inputStream->Seek(streamPosition_);
         uint32_t ret = hwJpegDecompress_->Decompress(&decodeInfo_, srcMgr_.inputStream, context);
         if (ret == Media::SUCCESS) {
