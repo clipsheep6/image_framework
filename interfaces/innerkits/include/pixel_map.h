@@ -26,6 +26,11 @@
 #include "image_type.h"
 #include "parcel.h"
 
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+#include "purgeable_mem_builder.h"
+#include "purgeable_resource_interface.h"
+#endif
+
 namespace OHOS {
 namespace Media {
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
@@ -49,7 +54,11 @@ constexpr uint8_t ARGB_B_SHIFT = 0;
 // Define pixel map malloc max size 600MB
 constexpr int32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
 
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+class PixelMap : public Parcelable, public PurgeableMem::PurgeableResourceInterface {
+#else
 class PixelMap : public Parcelable {
+#endif
 public:
     PixelMap()
     {
@@ -161,6 +170,16 @@ public:
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----end-------
 #endif
 
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    NATIVEEXPORT void SetBuilderToBePurgeable(std::unique_ptr<PurgeableMem::PurgeableMemBuilder> &builder);
+    NATIVEEXPORT uint32_t BeginVisitPurgeableMem() override;
+    NATIVEEXPORT uint32_t EndVisitPurgeableMem() override;
+    NATIVEEXPORT void VisitPurgeableMemForImageCallback();
+    NATIVEEXPORT void EndVisitAndRemovePurgeableResource();
+    NATIVEEXPORT void SetPurgeableResRebuildCallback(std::function<void()> callback);
+    std::function<void()> callback_;
+#endif
+
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
     static constexpr uint8_t TLV_VARINT_MASK = 0x7F;
@@ -260,6 +279,10 @@ private:
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
 #else
     std::shared_ptr<uint8_t> grColorSpace_ = nullptr;
+#endif
+
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    std::shared_ptr<PurgeableMem::PurgeableMemBase> purgeableMem_;
 #endif
 };
 } // namespace Media

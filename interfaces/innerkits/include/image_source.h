@@ -181,6 +181,12 @@ public:
     NATIVEEXPORT std::unique_ptr<std::vector<int32_t>> GetDelayTime(uint32_t &errorCode);
     NATIVEEXPORT uint32_t GetFrameCount(uint32_t &errorCode);
 
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    NATIVEEXPORT size_t GetSourceSize();
+    NATIVEEXPORT int GetPurgeableMemResourceFd();
+    NATIVEEXPORT void SetPurgeableMemResourceFd(int);
+#endif
+
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
     using FormatAgentMap = std::map<std::string, ImagePlugin::AbsImageFormatAgent *>;
@@ -249,6 +255,9 @@ private:
     bool isIncrementalSource_ = false;
     bool isIncrementalCompleted_ = false;
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    int purgeableResourceFd_ = -1;
+#endif
 };
 } // namespace Media
 } // namespace OHOS
