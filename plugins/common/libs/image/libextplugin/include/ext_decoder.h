@@ -40,8 +40,10 @@ public:
     void Reset() override;
     void SetSource(InputDataStream &sourceStream) override;
 #ifdef IMAGE_COLORSPACE_FLAG
+    OHOS::ColorManager::ColorSpace getGrColorSpace() override;
     bool IsSupportICCProfile() override;
 #endif
+
 private:
     bool CheckCodec();
     bool CheckIndexVailed(uint32_t index);

@@ -19,6 +19,30 @@ skia_root = "${third_party_root}/flutter/skia"
 if (use_mingw_win || use_clang_mac) {
   graphic_root = "/${image_sep_f}${image_oundation}/${graphic_multimedia}"
 }
+
+ohos_static_library("exifhelper") {
+  if (!use_clang_android && !use_clang_ios) {
+    sanitize = {
+      cfi = true
+      debug = false
+    }
+  }
+  sources = [ "../libjpegplugin/src/exif_info.cpp" ]
+  include_dirs = [
+    "../libjpegplugin/include",
+    "${image_subsystem}/interfaces/innerkits/include",
+    "${third_party_root}/libexif"
+  ]
+  deps = [ "${third_party_root}/libexif:libexif" ]
+  external_deps = [
+    "c_utils:utils",
+    "hitrace_native:hitrace_meter",
+    "hiviewdfx_hilog_native:libhilog",
+  ]
+  part_name = "multimedia_image_framework"
+  subsystem_name = "multimedia"
+}
+
 config("plugins_includes") {
   include_dirs = [
     "${image_subsystem}/plugins/manager/include",
@@ -104,6 +128,7 @@ ohos_shared_library("extplugin") {
   } else {
     include_dirs += [ "//commonlibrary/c_utils/base/include" ]
     deps = [
+      ":exifhelper",
       "${graphic_subsystem}/utils/color_manager:color_manager",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/plugins/manager:pluginmanager",

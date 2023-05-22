@@ -381,9 +381,17 @@ SkColorType ExtDecoder::ConvertToColorType(PlPixelFormat format, PlPixelFormat &
     return kRGBA_8888_SkColorType;
 }
 #ifdef IMAGE_COLORSPACE_FLAG
+OHOS::ColorManager::ColorSpace ExtDecoder::getGrColorSpace()
+{
+    return OHOS::ColorManager::ColorSpace(info_.refColorSpace());
+}
+
 bool ExtDecoder::IsSupportICCProfile()
 {
-    return false;
+    if (info_.isEmpty()) {
+        return false;
+    }
+    return info_.refColorSpace() != nullptr;
 }
 #endif
 } // namespace ImagePlugin
