@@ -1851,6 +1851,10 @@ static int8_t GetAlphaIndex(const PixelFormat& pixelFormat)
 
 uint32_t PixelMap::SetAlpha(const float percent)
 {
+    if (editable_ == false) {
+        HiLog::Error(LABEL, "pixelmap is not allowed to be edited");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
     auto alphaType = GetAlphaType();
     if (alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN ||
         alphaType == AlphaType::IMAGE_ALPHA_TYPE_OPAQUE) {
@@ -1925,6 +1929,10 @@ void PixelMap::flip(bool xAxis, bool yAxis)
 }
 uint32_t PixelMap::crop(const Rect &rect)
 {
+    if (editable_ == false) {
+        HiLog::Error(LABEL, "pixelmap is not allowed to be edited");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
     PostProc postProc;
     auto cropValue = PostProc::GetCropValue(rect, imageInfo_.size);
     if (cropValue == CropValue::NOCROP) {
