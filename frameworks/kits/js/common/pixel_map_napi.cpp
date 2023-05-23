@@ -1283,53 +1283,21 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
-    int32_t refCount = 1;
     napi_status status;
     napi_value thisVar = nullptr;
-    napi_value argValue[1] = {0};
-    size_t argCount = 1;
+    size_t argCount = 0;
 
-    HiLog::Debug(LABEL, "Release IN");
-    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
 
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
 
-    std::unique_ptr<PixelMapAsyncContext> asyncContext = std::make_unique<PixelMapAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
-        nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
 
-    if (argCount == 1 && ImageNapiUtils::getType(env, argValue[argCount - 1]) == napi_function) {
-        napi_create_reference(env, argValue[argCount - 1], refCount, &asyncContext->callbackRef);
-    }
+    pixelMapNapi->nativePixelMap_ = nullptr;
 
-    if (asyncContext->callbackRef == nullptr) {
-        napi_create_promise(env, &(asyncContext->deferred), &result);
-    } else {
-        napi_get_undefined(env, &result);
-    }
-
-    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Release",
-        [](napi_env env, void *data)
-        {
-            auto context = static_cast<PixelMapAsyncContext*>(data);
-            if (context->nConstructor->IsLockPixelMap()) {
-                context->status = ERROR;
-                return;
-            } else {
-                if (context->nConstructor->nativePixelMap_ != nullptr
-					&& context->nConstructor->nativePixelMap_ == context->nConstructor->nativeInner_)
-		        {
-		            context->nConstructor->nativePixelMap_ = nullptr;
-		            context->nConstructor->nativeInner_ = nullptr;
-		        }
-                context->status = SUCCESS;
-            }
-        }, EmptyResultComplete, asyncContext, asyncContext->work);
-
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
-        nullptr, HiLog::Error(LABEL, "fail to create async work"));
     return result;
 }
 
