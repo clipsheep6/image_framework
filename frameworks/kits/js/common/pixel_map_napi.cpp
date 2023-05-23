@@ -1310,25 +1310,20 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
         napi_get_undefined(env, &result);
     }
 
-    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Release",
-        [](napi_env env, void *data)
+    if (asyncContext->nConstructor->IsLockPixelMap()) {
+        asyncContext->status = ERROR;
+        return;
+    } else {
+        if (asyncContext->nConstructor->nativePixelMap_ != nullptr
+            && asyncContext->nConstructor->nativePixelMap_ == asyncContext->nConstructor->nativeInner_)
         {
-            auto context = static_cast<PixelMapAsyncContext*>(data);
-            if (context->nConstructor->IsLockPixelMap()) {
-                context->status = ERROR;
-                return;
-            } else {
-                if (context->nConstructor->nativePixelMap_ != nullptr
-					&& context->nConstructor->nativePixelMap_ == context->nConstructor->nativeInner_)
-		        {
-		            context->nConstructor->nativePixelMap_ = nullptr;
-		            context->nConstructor->nativeInner_ = nullptr;
-		        }
-                context->status = SUCCESS;
-            }
-        }, EmptyResultComplete, asyncContext, asyncContext->work);
+            asyncContext->nConstructor->nativePixelMap_ = nullptr;
+            asyncContext->nConstructor->nativeInner_ = nullptr;
+        }
+        asyncContext->status = SUCCESS;
+    }
 
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(asyncContext->status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
     return result;
 }
