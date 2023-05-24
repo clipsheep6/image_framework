@@ -22,6 +22,7 @@
 #include "log_tags.h"
 #include "media_errors.h"
 #include "securec.h"
+#include "string_ex.h"
 
 namespace {
     constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "ExtDecoder"};
@@ -37,6 +38,8 @@ using namespace std;
 const static string CODEC_INITED_KEY = "CodecInited";
 const static string ENCODED_FORMAT_KEY = "EncodedFormat";
 const static string EXT_SHAREMEM_NAME = "EXT RawData";
+const static string TAG_ORIENTATION_STRING = "Orientation";
+const static string TAG_ORIENTATION_INT = "OrientationInt";
 struct ColorTypeOutput
 {
     PlPixelFormat outFormat;
@@ -297,17 +300,17 @@ static uint32_t GetFormatName(SkEncodedImageFormat format, std::string &name)
     HiLog::Error(LABEL, "GetFormatName: get encoded format name failed %{public}d.", format);
     return ERR_IMAGE_DATA_UNSUPPORT;
 }
-uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
-{
-    if (!CheckIndexVailed(index)) {
-        return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
-    }
-    if (ENCODED_FORMAT_KEY.compare(key) == ZERO) {
-        SkEncodedImageFormat format = codec_->getEncodedFormat();
-        return GetFormatName(format, value);
-    }
-    return ERR_IMAGE_DATA_UNSUPPORT;
-}
+// uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
+// {
+//     if (!CheckIndexVailed(index)) {
+//         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
+//     }
+//     if (ENCODED_FORMAT_KEY.compare(key) == ZERO) {
+//         SkEncodedImageFormat format = codec_->getEncodedFormat();
+//         return GetFormatName(format, value);
+//     }
+//     return ERR_IMAGE_DATA_UNSUPPORT;
+// }
 bool ExtDecoder::ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType)
 {
     if (info_.isEmpty()) {
@@ -355,7 +358,7 @@ SkAlphaType ExtDecoder::ConvertToAlphaType(PlAlphaType desiredType, PlAlphaType 
     SkAlphaType res;
     if (ConvertInfoToAlphaType(res, outputType)) {
         HiLog::Debug(LABEL, "Using alpha type:%{public}d", outputType);
-        return res;    
+        return res;
     }
     HiLog::Debug(LABEL, "Using default alpha type:%{public}d", PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL);
     outputType = PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL;
@@ -374,7 +377,7 @@ SkColorType ExtDecoder::ConvertToColorType(PlPixelFormat format, PlPixelFormat &
     SkColorType res;
     if (ConvertInfoToColorType(res, outputFormat)) {
         HiLog::Debug(LABEL, "Using pixel format:%{public}d", outputFormat);
-        return res;    
+        return res;
     }
     HiLog::Debug(LABEL, "Using default pixel format:%{public}d", PlPixelFormat::RGBA_8888);
     outputFormat = PlPixelFormat::RGBA_8888;
@@ -394,5 +397,155 @@ bool ExtDecoder::IsSupportICCProfile()
     return info_.refColorSpace() != nullptr;
 }
 #endif
+static uint32_t ProcessWithStreamData(InputDataStream *input,
+    std::function<uint32_t(uint8_t*, size_t)> process)
+{
+    size_t inputSize = input->GetStreamSize();
+    if (inputSize <= SIZE_ZERO) {
+        return Media::ERR_MEDIA_INVALID_VALUE;
+    }
+    uint8_t* buffer = nullptr;
+    if (input->GetDataPtr() != nullptr) {
+        buffer = input->GetDataPtr();
+    } else {
+        auto tmpBuffer = std::make_unique<uint8_t[]>(inputSize);
+        buffer = tmpBuffer.get();
+        auto savePos = input->Tell();
+        input->Seek(SIZE_ZERO);
+        uint32_t readSize = 0;
+        input->Read(inputSize, buffer, inputSize, readSize);
+        input->Seek(savePos);
+    }
+    return process(buffer, inputSize);
+}
+static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
+{
+    if (info.IsExifDataParsed()) {
+        return true;
+    }
+    HiLog::Debug(LABEL, "ParseExifData enter");
+    auto code = ProcessWithStreamData(input, [&info](uint8_t* buffer, size_t size) {
+        return info.ParseExifData(buffer, size);
+    });
+    if (code != SUCCESS) {
+        HiLog::Error(LABEL, "Error parsing EXIF: code %{public}d", code);
+    }
+    return code == SUCCESS;
+}
+bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res)
+{
+    if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
+        HiLog::Error(LABEL, "[GetPropertyCheck] this key is used to check the original format of raw image!");
+        res = Media::ERR_MEDIA_VALUE_INVALID;
+        return false;
+    }
+    if (!CheckIndexVailed(index)) {
+        res = Media::ERR_IMAGE_DECODE_HEAD_ABNORMAL;
+        return false;
+    }
+    SkEncodedImageFormat format = codec_->getEncodedFormat();
+    if (format != SkEncodedImageFormat::kJPEG) {
+        res = Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        return true;
+    }
+    auto result = ParseExifData(stream_, exifInfo_);
+    if (!result) {
+        res = Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+    return result;
+}
+
+uint32_t ExtDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
+{
+    HiLog::Debug(LABEL, "[GetImagePropertyInt] enter ExtDecoder plugin, key:%{public}s", key.c_str());
+    uint32_t res = Media::ERR_IMAGE_DATA_ABNORMAL;
+    if (!GetPropertyCheck(index, key, res)) {
+        return res;
+    }
+    // There can add some not need exif property
+    if (res == Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
+        return res;
+    }
+    // Need exif property following
+    if (IsSameTextStr(key, TAG_ORIENTATION_STRING)) {
+        std::string strValue;
+        res = exifInfo_.GetExifData(TAG_ORIENTATION_INT, strValue);
+        if (res != SUCCESS) {
+            return res;
+        }
+        value = atoi(strValue.c_str());
+        return value;
+    }
+    HiLog::Error(LABEL, "[GetImagePropertyInt] The key:%{public}s is not supported int32_t", key.c_str());
+    return Media::ERR_MEDIA_VALUE_INVALID;
+}
+
+uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
+{
+    HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, key:%{public}s", key.c_str());
+    uint32_t res = Media::ERR_IMAGE_DATA_ABNORMAL;
+    if (!GetPropertyCheck(index, key, res)) {
+        return res;
+    }
+    // There can add some not need exif property
+    if (ENCODED_FORMAT_KEY.compare(key) == ZERO) {
+        SkEncodedImageFormat format = codec_->getEncodedFormat();
+        return GetFormatName(format, value);
+    }
+    if (res == Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
+        return res;
+    }
+    // Need exif property following
+    res = exifInfo_.GetExifData(key, value);
+    HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, value:%{public}s", value.c_str());
+    return Media::SUCCESS;
+}
+
+uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
+    const std::string &value, const std::string &path)
+{
+    HiLog::Debug(LABEL, "[ModifyImageProperty] with path:%{public}s, key:%{public}s, value:%{public}s",
+        path.c_str(), key.c_str(), value.c_str());
+    return exifInfo_.ModifyExifData(key, value, path);
+}
+uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
+    const std::string &value, const int fd)
+{
+    HiLog::Debug(LABEL, "[ModifyImageProperty] with fd:%{public}d, key:%{public}s, value:%{public}s",
+        fd, key.c_str(), value.c_str());
+    return exifInfo_.ModifyExifData(key, value, fd);
+}
+uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
+    const std::string &value, uint8_t *data, uint32_t size)
+{
+    HiLog::Debug(LABEL, "[ModifyImageProperty] with key:%{public}s, value:%{public}s",
+        key.c_str(), value.c_str());
+    return exifInfo_.ModifyExifData(key, value, data, size);
+}
+uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges)
+{
+    HiLog::Debug(LABEL, "[GetFilterArea] with privacyType:%{public}d ", privacyType);
+    if (!CheckCodec()) {
+        HiLog::Error(LABEL, "Check codec failed");
+        return Media::ERR_MEDIA_INVALID_OPERATION;;
+    }
+    SkEncodedImageFormat format = codec_->getEncodedFormat();
+    if (format != SkEncodedImageFormat::kJPEG) {
+        return Media::ERR_MEDIA_INVALID_OPERATION;;
+    }
+    constexpr size_t APP1_SIZE_H_OFF = 4;
+    constexpr size_t APP1_SIZE_L_OFF = 5;
+        constexpr size_t U8_SHIFT = 8;
+    return ProcessWithStreamData(stream_, [this, &privacyType, &ranges](uint8_t* buffer, size_t size){
+        size_t appSize = (static_cast<size_t>(buffer[APP1_SIZE_H_OFF]) << U8_SHIFT) | buffer[APP1_SIZE_L_OFF];
+        HiLog::Debug(LABEL, "[GetFilterArea]: get app1 area size %{public}d", appSize);
+        appSize += APP1_SIZE_H_OFF;
+        auto ret = exifInfo_.GetFilterArea(buffer, (appSize < size)?appSize:size, privacyType, ranges);
+        if (ret != Media::SUCCESS) {
+            HiLog::Error(LABEL, "[GetFilterArea]: failed to get area %{public}d", ret);
+        }
+        return ret;
+    });
+}
 } // namespace ImagePlugin
 } // namespace OHOS

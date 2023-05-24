@@ -1038,8 +1038,9 @@ uint32_t ImageSource::GetFormatExtended(string &format)
     }
     const static string EXT_ENCODED_FORMAT_KEY = "EncodedFormat";
     auto decoderPtr = unique_ptr<AbsImageDecoder>(codec);
-    if (!decoderPtr->GetImagePropertyString(FIRST_FRAME, EXT_ENCODED_FORMAT_KEY, format)) {
-        IMAGE_LOGE("[ImageSource]Extended get format failed.");
+    errorCode = decoderPtr->GetImagePropertyString(FIRST_FRAME, EXT_ENCODED_FORMAT_KEY, format);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]Extended get format failed %{public}d.", errorCode);
         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
     }
     mainDecoder_ = std::move(decoderPtr);

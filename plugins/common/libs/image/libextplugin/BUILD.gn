@@ -58,6 +58,12 @@ config("skia_includes") {
     "${skia_root}/third_party/skcms",
   ]
 }
+config("third_part_includes") {
+  include_dirs = [
+    "../libjpegplugin/include",
+    "${third_party_root}/libexif",
+  ]
+}
 config("win_config") {
   if (use_mingw_win) {
     defines = image_decode_windows_defines
@@ -100,6 +106,7 @@ ohos_shared_library("extplugin") {
   configs = [
     ":plugins_includes",
     ":skia_includes",
+    ":third_part_includes",
   ]
   include_dirs = [
     "include",

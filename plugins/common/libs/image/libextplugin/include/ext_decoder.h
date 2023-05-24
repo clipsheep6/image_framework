@@ -21,6 +21,7 @@
 
 #include "abs_image_decoder.h"
 #include "ext_stream.h"
+#include "exif_info.h"
 #include "nocopyable.h"
 #include "plugin_class_base.h"
 #include "SkCodec.h"
@@ -36,9 +37,19 @@ public:
     uint32_t GetImageSize(uint32_t index, PlSize &size) override;
     uint32_t PromoteIncrementalDecode(uint32_t index, ProgDecodeContext &context) override;
     uint32_t SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info) override;
-    uint32_t GetImagePropertyString(uint32_t index, const std::string &key, std::string &value) override;
     void Reset() override;
     void SetSource(InputDataStream &sourceStream) override;
+
+    uint32_t GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value) override;
+    uint32_t GetImagePropertyString(uint32_t index, const std::string &key, std::string &value) override;
+    uint32_t ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
+        const std::string &path) override;
+    uint32_t ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
+        const int fd) override;
+    uint32_t ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
+        uint8_t *data, uint32_t size) override;
+    uint32_t GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges) override;
+
 #ifdef IMAGE_COLORSPACE_FLAG
     OHOS::ColorManager::ColorSpace getGrColorSpace() override;
     bool IsSupportICCProfile() override;
@@ -50,6 +61,7 @@ private:
     bool DecodeHeader();
     bool ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType);
     bool ConvertInfoToColorType(SkColorType &format, PlPixelFormat &outputFormat);
+    bool GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res);
     SkAlphaType ConvertToAlphaType(PlAlphaType desiredType, PlAlphaType &outputType);
     SkColorType ConvertToColorType(PlPixelFormat format, PlPixelFormat &outputFormat);
     uint32_t SetContextPixelsBuffer(uint64_t byteCount, DecodeContext &context);
@@ -60,6 +72,7 @@ private:
     SkCodec::Options dstOptions_;
     SkIRect dstSubset_;
     int32_t frameCount_;
+    EXIFInfo exifInfo_;
 };
 } // namespace ImagePlugin
 } // namespace OHOS
