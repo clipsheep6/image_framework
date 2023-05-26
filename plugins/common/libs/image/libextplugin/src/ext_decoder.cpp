@@ -27,6 +27,7 @@
 namespace {
     constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "ExtDecoder"};
     constexpr static int32_t ZERO = 0;
+    constexpr static int32_t OFFSIT = 1;
     constexpr static size_t SIZE_ZERO = 0;
 }
 
@@ -37,6 +38,8 @@ using namespace OHOS::HiviewDFX;
 using namespace std;
 const static string CODEC_INITED_KEY = "CodecInited";
 const static string ENCODED_FORMAT_KEY = "EncodedFormat";
+const static string SUPPORT_SCALE_KEY = "SupportScale";
+const static string SUPPORT_CROP_KEY = "SupportCrop";
 const static string EXT_SHAREMEM_NAME = "EXT RawData";
 const static string TAG_ORIENTATION_STRING = "Orientation";
 const static string TAG_ORIENTATION_INT = "OrientationInt";
@@ -148,12 +151,39 @@ void ExtDecoder::Reset()
     dstSubset_ = SkIRect::MakeEmpty();
     info_.reset();
 }
+bool ExtDecoder::IsSupportScaleOnDecode()
+{
+    constexpr float HALF_SCALE = 0.5f;
+    if (info_.isEmpty() && !DecodeHeader()) {
+        return false;
+    }
+    if (codec_->getScaledDimensions(HALF_SCALE).equals(info_.width(), info_.height())) {
+        return true;
+    }
+    return false;
+}
+bool ExtDecoder::IsSupportCropOnDecode()
+{
+    if (info_.isEmpty() && !DecodeHeader()) {
+        return false;
+    }
+    SkIRect orgbounds = info_.bounds();
+    SkIRect innerRect = orgbounds.makeInset(OFFSIT, OFFSIT);
+    if (orgbounds.contains(innerRect) && codec_->getValidSubset(&innerRect)) {
+        return true;
+    }
+    return false;
+}
 bool ExtDecoder::HasProperty(string key)
 {
     if (CODEC_INITED_KEY.compare(key) == ZERO) {
         return CheckCodec();
     } else if (ENCODED_FORMAT_KEY.compare(key) == ZERO) {
         return true;
+    } else if (SUPPORT_SCALE_KEY.compare(key) == ZERO) {
+        return IsSupportScaleOnDecode();
+    } else if (SUPPORT_CROP_KEY.compare(key) == ZERO) {
+        return IsSupportCropOnDecode();
     }
     return false;
 }
@@ -183,15 +213,22 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     }
     auto desireColor = ConvertToColorType(opts.desiredPixelFormat, info.pixelFormat);
     auto desireAlpha = ConvertToAlphaType(opts.desireAlphaType, info.alphaType);
-    dstInfo_ = SkImageInfo::Make(opts.desiredSize.width,
-        opts.desiredSize.height, desireColor, desireAlpha, info_.refColorSpace());
+    //skia only support low down scale
+    if (IsSupportScaleOnDecode() && opts.desiredSize.width < static_cast<uint32_t>(info_.width()) &&
+        opts.desiredSize.height < static_cast<uint32_t>(info_.height())) {
+        dstInfo_ = SkImageInfo::Make(opts.desiredSize.width,
+            opts.desiredSize.height, desireColor, desireAlpha, info_.refColorSpace());
+    } else {
+        dstInfo_ = SkImageInfo::Make(info_.width(),info_.height(),
+            desireColor, desireAlpha, info_.refColorSpace());
+    }
     if (ImageUtils::CheckMulOverflow(dstInfo_.width(), dstInfo_.height(), dstInfo_.bytesPerPixel())) {
         HiLog::Error(LABEL, "SetDecodeOptions failed, width:%{public}d, height:%{public}d is too large",
                      dstInfo_.width(), dstInfo_.height());
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     dstOptions_.fFrameIndex = index;
-    if (opts.CropRect.width != ZERO && opts.CropRect.height != ZERO) {
+    if (IsSupportCropOnDecode() && opts.CropRect.width != ZERO && opts.CropRect.height != ZERO) {
         dstSubset_ = SkIRect::MakeXYWH(opts.CropRect.left, opts.CropRect.top,
             opts.CropRect.width, opts.CropRect.height);
         dstOptions_.fSubset = &dstSubset_;
@@ -498,7 +535,7 @@ uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &k
     // Need exif property following
     res = exifInfo_.GetExifData(key, value);
     HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, value:%{public}s", value.c_str());
-    return Media::SUCCESS;
+    return res;
 }
 
 uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,

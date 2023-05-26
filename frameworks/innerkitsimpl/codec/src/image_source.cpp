@@ -359,81 +359,71 @@ static inline void trace(bool start, std::string name = "")
     (void) name;
 #endif
 }
+static void ContextToAddrInfos(DecodeContext &context, PixelMapAddrInfos &addrInfos)
+{
+    addrInfos.addr = static_cast<uint8_t*>(context.pixelsBuffer.buffer);
+    addrInfos.context =static_cast<uint8_t*>(context.pixelsBuffer.context);
+    addrInfos.size =context.pixelsBuffer.bufferSize;
+    addrInfos.type =context.allocatorType;
+    addrInfos.func =context.freeFunc;
+}
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     const DecodeOptions &opts, uint32_t &errorCode)
 {
     trace(BEGIN_TRACE, "CreatePixelMapExtended");
     IMAGE_LOGD("[ImageSource]CreatePixelMapExtended IN");
-    std::unique_lock<std::mutex> guard(decodingMutex_);
     opts_ = opts;
-    auto iter = GetValidImageStatus(index, errorCode);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on create pixel map, ret:%{public}u.", errorCode);
-        return nullptr;
-    }
-    IMAGE_LOGD("[ImageSource]GetValidImageStatus finished");
     ImageInfo info;
     errorCode = GetImageInfo(FIRST_FRAME, info);
-    if (errorCode != SUCCESS) {
+    if (errorCode != SUCCESS || !IsSizeVailed(info.size)) {
         IMAGE_LOGE("[ImageSource]get image info failed, ret:%{public}u.", errorCode);
-        return nullptr;
-    }
-    if (!IsSizeVailed(info.size)) {
-        IMAGE_LOGE("[ImageSource]get image info invailed, size [%{public}d x %{public}d]",
-            info.size.width, info.size.height);
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
         return nullptr;
     }
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity,
-        opts_.desiredSize, opts_.fitDensity, opts_.desiredSize);
-    unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
+        opts_.desiredSize);
     ImagePlugin::PlImageInfo plInfo;
     errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
+    IMAGE_LOGD("[ImageSource]GetValidImageStatus SetDecodeOptions finished");
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
         return nullptr;
     }
     NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-
-    // TODO:Check if skia support crop on decode
-    // Size size = {
-    //     .width = plInfo.size.width,
-    //     .height = plInfo.size.height
-    // };
-    // PostProc::ValidCropValue(opts_.CropRect, size);
-    errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()));
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
-        return nullptr;
-    }
-
     DecodeContext context;
     context.allocatorType = opts_.allocatorType;
-    // bool hasNinePatch = mainDecoder_->HasProperty(NINE_PATCH);
-    // finalOutputStep = GetFinalOutputStep(opts_, *(pixelMap.get()), hasNinePatch);
-    // IMAGE_LOGD("[ImageSource]finalOutputStep:%{public}d. opts.allocatorType %{public}d",
-    //     finalOutputStep, opts_.allocatorType);
-
-    // if (finalOutputStep == FinalOutputStep::NO_CHANGE) {
-    //     context.allocatorType = opts_.allocatorType;
-    // } else {
-    //     context.allocatorType = AllocatorType::HEAP_ALLOC;
-    // }
-
     errorCode = mainDecoder_->Decode(index, context);
     if (context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
     }
     ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
     ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
-
     guard.unlock();
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
         FreeContextBuffer(context.freeFunc, context.pixelsBuffer);
         return nullptr;
     }
-
+    PixelMapAddrInfos addrInfos;
+    ContextToAddrInfos(context, addrInfos);
+    auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, errorCode);
+    if (!context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
+    }
+    IMAGE_LOGD("[ImageSource]CreatePixelMapExtended OUT");
+    trace(FINISH_TRACE);
+    return pixelMap;
+}
+unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
+    PixelMapAddrInfos &addrInfos, uint32_t &errorCode)
+{
+    unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
+    errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
+        return nullptr;
+    }
 #ifdef IMAGE_COLORSPACE_FLAG
     // add graphic colorspace object to pixelMap.
     bool isSupportICCProfile = mainDecoder_->IsSupportICCProfile();
@@ -442,27 +432,34 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
-
-    pixelMap->SetPixelsAddr(context.pixelsBuffer.buffer, context.pixelsBuffer.context,
-        context.pixelsBuffer.bufferSize, context.allocatorType, context.freeFunc);
-    // TODO:Need check pixel change:
+    pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
+    // Need check pixel change:
     // 1. pixel size
     // 2. crop
     // 3. density
     // 4. rotate
     // 5. format
-
+    const static string SUPPORT_CROP_KEY = "SupportCrop";
+    if (!mainDecoder_->HasProperty(SUPPORT_CROP_KEY) &&
+        opts_.CropRect.width > INT_ZERO && opts_.CropRect.height > INT_ZERO) {
+        errorCode = pixelMap->crop(opts_.CropRect);
+        if (errorCode != SUCCESS) {
+            IMAGE_LOGE("[ImageSource]CropRect pixelmap fail, ret:%{public}u.", errorCode);
+            return nullptr;
+        }
+    }
+    if (opts_.desiredSize.height != pixelMap->GetHeight() ||
+        opts_.desiredSize.width != pixelMap->GetWidth()) {
+        float xScale = static_cast<float>(opts_.desiredSize.width)/pixelMap->GetWidth();
+        float yScale = static_cast<float>(opts_.desiredSize.height)/pixelMap->GetHeight();
+        pixelMap->scale(xScale, yScale);
+    }
     // rotateDegrees and rotateNewDegrees
     if (!ImageUtils::FloatCompareZero(opts_.rotateDegrees)) {
         pixelMap->rotate(opts_.rotateDegrees);
-    } else if (opts.rotateNewDegrees != INT_ZERO) {
+    } else if (opts_.rotateNewDegrees != INT_ZERO) {
         pixelMap->rotate(opts_.rotateNewDegrees);
     }
-
-    if (!context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
-    }
-    trace(FINISH_TRACE);
     return pixelMap;
 }
 unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
@@ -1313,10 +1310,13 @@ uint32_t ImageSource::SetDecodeOptions(std::unique_ptr<AbsImageDecoder> &decoder
 }
 
 uint32_t ImageSource::UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo,
-                                         PixelMap &pixelMap)
+    PixelMap &pixelMap, int32_t fitDensity)
 {
     ImageInfo info;
     info.baseDensity = sourceInfo_.baseDensity;
+    if (fitDensity != INT_ZERO) {
+        info.baseDensity = fitDensity;
+    }
     info.size.width = plInfo.size.width;
     info.size.height = plInfo.size.height;
     info.pixelFormat = static_cast<PixelFormat>(plInfo.pixelFormat);

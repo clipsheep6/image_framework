@@ -59,6 +59,8 @@ private:
     bool CheckCodec();
     bool CheckIndexVailed(uint32_t index);
     bool DecodeHeader();
+    bool IsSupportScaleOnDecode();
+    bool IsSupportCropOnDecode();
     bool ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType);
     bool ConvertInfoToColorType(SkColorType &format, PlPixelFormat &outputFormat);
     bool GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res);

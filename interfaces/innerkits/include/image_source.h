@@ -120,7 +120,13 @@ struct IncrementalDecodingContext {
     ImageDecodingState IncrementalState = ImageDecodingState::UNRESOLVED;
     uint8_t decodingProgress = 0;
 };
-
+struct PixelMapAddrInfos {
+    uint8_t *addr;
+    uint8_t *context;
+    uint32_t size;
+    AllocatorType type;
+    CustomFreePixelMap func;
+};
 class SourceStream;
 
 class ImageSource {
@@ -205,7 +211,8 @@ private:
     uint32_t OnSourceUnresolved();
     uint32_t SetDecodeOptions(std::unique_ptr<ImagePlugin::AbsImageDecoder> &decoder, uint32_t index,
                               const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo);
-    uint32_t UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo, PixelMap &pixelMap);
+    uint32_t UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo,
+        PixelMap &pixelMap, int32_t fitDensity = 0);
     // declare friend class, only IncrementalPixelMap can call PromoteDecoding function.
     friend class IncrementalPixelMap;
     uint32_t PromoteDecoding(uint32_t index, const DecodeOptions &opts, PixelMap &pixelMap, ImageDecodingState &state,
@@ -231,9 +238,10 @@ private:
     static std::unique_ptr<ImageSource> DoImageSourceCreate(
         std::function<std::unique_ptr<SourceStream>(void)> stream,
         const SourceOptions &opts, uint32_t &errorCode, const std::string traceName = "");
-    std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index,
-        const DecodeOptions &opts, uint32_t &errorCode);
-
+    std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index,const DecodeOptions &opts,
+        uint32_t &errorCode);
+    std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
+        PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
