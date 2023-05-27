@@ -1035,6 +1035,11 @@ uint32_t ImageSource::GetFormatExtended(string &format)
     }
     const static string EXT_ENCODED_FORMAT_KEY = "EncodedFormat";
     auto decoderPtr = unique_ptr<AbsImageDecoder>(codec);
+    ProgDecodeContext context;
+    if (IsIncrementalSource() &&
+        decoderPtr->PromoteIncrementalDecode(UINT32_MAX, context) == ERR_IMAGE_DATA_UNSUPPORT) {
+        return ERR_IMAGE_DATA_UNSUPPORT;
+    }
     errorCode = decoderPtr->GetImagePropertyString(FIRST_FRAME, EXT_ENCODED_FORMAT_KEY, format);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]Extended get format failed %{public}d.", errorCode);
@@ -1111,8 +1116,6 @@ uint32_t ImageSource::OnSourceRecognized(bool isAcquiredImageNum)
         // update new format
         sourceInfo_.encodedFormat = value;
         IMAGE_LOGI("[ImageSource] update new format, value:%{public}s", value.c_str());
-    } else {
-        IMAGE_LOGD("[ImageSource] GetImagePropertyString fail, ret:%{public}u", ret);
     }
 
     if (isAcquiredImageNum) {

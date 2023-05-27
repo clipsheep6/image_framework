@@ -323,7 +323,7 @@ bool ExtDecoder::CheckIndexVailed(uint32_t index)
     if (frameCount_ == ZERO && !DecodeHeader()) {
         return false;
     }
-    return static_cast<int32_t>(index) < frameCount_;
+    return static_cast<int32_t>(index) >= ZERO && static_cast<int32_t>(index) < frameCount_;
 }
 static uint32_t GetFormatName(SkEncodedImageFormat format, std::string &name)
 {
