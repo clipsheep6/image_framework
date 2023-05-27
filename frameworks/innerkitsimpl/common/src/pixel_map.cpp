@@ -1196,7 +1196,9 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
         return parcel.WriteUnpadBuffer(data, size);
     }
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    int fd = AshmemCreate("Parcel ImageData", size);
+    uint32_t id = uniqueId_;
+    std::string name = "Parcel ImageData, uniqueId: " + std::to_string(id);
+    int fd = AshmemCreate(name.c_str(), size);
     HiLog::Info(LABEL, "AshmemCreate:[%{public}d].", fd);
     if (fd < 0) {
         return false;

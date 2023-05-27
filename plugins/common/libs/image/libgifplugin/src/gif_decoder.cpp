@@ -511,7 +511,9 @@ uint32_t GifDecoder::RedirectOutputBuffer(DecodeContext &context)
     if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
         if (context.pixelsBuffer.buffer == nullptr) {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
-            int fd = AshmemCreate("GIF RawData", imageBufferSize);
+            uint32_t id = context.pixelmapUniqueId_;
+            std::string name = "GIF RawData, uniqueId: " + std::to_string(id);
+            int fd = AshmemCreate(name.c_str(), imageBufferSize);
             if (fd < 0) {
                 return ERR_SHAMEM_DATA_ABNORMAL;
             }
