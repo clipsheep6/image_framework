@@ -20,6 +20,23 @@
           "value": "image/extended"
         }
       ]
+    },
+    {
+      "className":"OHOS::ImagePlugin::ExtEncoder",
+      "services": [
+        {
+          "interfaceID":3,
+          "serviceType":0
+        }
+      ],
+      "priority":100,
+      "capabilities": [
+        {
+          "name":"encodeFormat",
+          "type":"string",
+          "value": "image/extended"
+        }
+      ]
     }
   ]
 }

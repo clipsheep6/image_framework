@@ -17,6 +17,7 @@
 
 #include <algorithm>
 
+#include "ext_pixel_convert.h"
 #include "hilog/log.h"
 #include "image_utils.h"
 #include "log_tags.h"
@@ -27,6 +28,8 @@
 namespace {
     constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "ExtDecoder"};
     constexpr static int32_t ZERO = 0;
+    constexpr static int32_t NUM_3 = 3;
+    constexpr static int32_t NUM_4 = 4;
     constexpr static int32_t OFFSIT = 1;
     constexpr static size_t SIZE_ZERO = 0;
 }
@@ -54,6 +57,7 @@ static const map<PlPixelFormat, ColorTypeOutput> COLOR_TYPE_MAP = {
     { PlPixelFormat::BGRA_8888, { PlPixelFormat::BGRA_8888, kBGRA_8888_SkColorType } },
     { PlPixelFormat::ALPHA_8, { PlPixelFormat::ALPHA_8, kAlpha_8_SkColorType } },
     { PlPixelFormat::RGB_565, { PlPixelFormat::RGB_565, kRGB_565_SkColorType } },
+    { PlPixelFormat::RGB_888, { PlPixelFormat::RGB_888, kRGB_888x_SkColorType } },
 };
 static const map<PlAlphaType, SkAlphaType> ALPHA_TYPE_MAP = {
     { PlAlphaType::IMAGE_ALPHA_TYPE_OPAQUE, kOpaque_SkAlphaType },
@@ -190,11 +194,12 @@ bool ExtDecoder::HasProperty(string key)
 
 uint32_t ExtDecoder::GetImageSize(uint32_t index, PlSize &size)
 {
+    HiLog::Debug(LABEL, "GetImageSize index:%{public}u", index);
     if (!CheckIndexVailed(index)) {
         HiLog::Error(LABEL, "Invalid index:%{public}u, range:%{public}d", index, frameCount_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-
+    HiLog::Error(LABEL, "GetImageSize index:%{public}u, range:%{public}d", index, frameCount_);
     // Info has been get in check process, or empty on get failed.
     if (info_.isEmpty()) {
         HiLog::Error(LABEL, "GetImageSize failed, decode header failed.");
@@ -249,6 +254,29 @@ uint32_t ExtDecoder::SetContextPixelsBuffer(uint64_t byteCount, DecodeContext &c
     return HeapMemAlloc(context, byteCount);
 }
 
+static void DebugInfo(SkImageInfo &info, SkImageInfo &dstInfo, SkCodec::Options &opts)
+{
+    HiLog::Debug(LABEL, "Decode source info: WH[%{public}d x %{public}d], A %{public}d, C %{public}d.",
+        info.width(), info.height(),
+        info.alphaType(), info.colorType());
+    HiLog::Debug(LABEL, "Decode dst info: WH[%{public}d x %{public}d], A %{public}d, C %{public}d.",
+        dstInfo.width(), dstInfo.height(), dstInfo.alphaType(), dstInfo.colorType());
+    if (opts.fSubset != nullptr) {
+        HiLog::Debug(LABEL, "Decode dstOpts sub: (%{public}d, %{public}d), WH[%{public}d x %{public}d]",
+            opts.fSubset->fLeft, opts.fSubset->fTop,
+            opts.fSubset->width(), opts.fSubset->height());
+    }
+}
+static uint32_t RGBxToRGB(uint8_t* srcBuffer, size_t srsSize,
+    uint8_t* dstBuffer, size_t dstSize, size_t pixelCount)
+{
+    ExtPixels src = {srcBuffer, srsSize, pixelCount};
+    ExtPixels dst = {dstBuffer, dstSize, pixelCount};
+    auto res = ExtPixelConvert::RGBxToRGB(src, dst);
+    HiLog::Error(LABEL, "RGBxToRGB failed %{public}d", res);
+    return res;
+}
+
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
     if (!CheckIndexVailed(index)) {
@@ -263,21 +291,38 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         HiLog::Error(LABEL, "Decode failed, dst info is empty");
         return ERR_IMAGE_DECODE_FAILED;
     }
+    uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
+    uint8_t *dstBuffer = nullptr;
+    if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
+        auto tmpBuffer = make_unique<uint8_t[]>(byteCount);
+        if (tmpBuffer == nullptr) {
+            HiLog::Debug(LABEL, "Decode tmp alloc byte count %{public}llu.", byteCount);
+            return ERR_IMAGE_MALLOC_ABNORMAL;
+        }
+        dstBuffer = tmpBuffer.get();
+        byteCount = byteCount / NUM_4 * NUM_3;
+    }
     if (context.pixelsBuffer.buffer == nullptr) {
-        uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
         HiLog::Debug(LABEL, "Decode alloc byte count %{public}llu.", byteCount);
         uint32_t res = SetContextPixelsBuffer(byteCount, context);
         if (res != SUCCESS) {
             return res;
         }
+        if (dstBuffer == nullptr) {
+            dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
+        }
     }
     dstOptions_.fFrameIndex = index;
-    uint8_t *dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
-    size_t rowBytes = dstInfo_.minRowBytes64();
-    SkCodec::Result ret = codec_->getPixels(dstInfo_, dstBuffer, rowBytes, &dstOptions_);
+    DebugInfo(info_, dstInfo_, dstOptions_);
+    SkCodec::Result ret = codec_->getPixels(dstInfo_, dstBuffer, dstInfo_.minRowBytes64(), &dstOptions_);
     if (ret != SkCodec::kSuccess) {
         HiLog::Error(LABEL, "Decode failed, get pixels failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
+        return RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(),
+            static_cast<uint8_t*>(context.pixelsBuffer.buffer),
+            byteCount, dstInfo_.width()*dstInfo_.height());
     }
     return SUCCESS;
 }
@@ -472,7 +517,6 @@ static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
 bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res)
 {
     if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
-        HiLog::Error(LABEL, "[GetPropertyCheck] this key is used to check the original format of raw image!");
         res = Media::ERR_MEDIA_VALUE_INVALID;
         return false;
     }

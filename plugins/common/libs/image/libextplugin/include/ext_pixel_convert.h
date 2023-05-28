@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_STREAM_INCLUDE_PACKER_STREAM_H_
-#define FRAMEWORKS_INNERKITSIMPL_STREAM_INCLUDE_PACKER_STREAM_H_
+#ifndef PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_PIXEL_CONVERT_H_
+#define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_PIXEL_CONVERT_H_
 
-#include "image/output_data_stream.h"
+#include <cstddef>
+#include <cstdint>
+#include "media_errors.h"
 
 namespace OHOS {
-namespace Media {
-class PackerStream : public ImagePlugin::OutputDataStream {
+namespace ImagePlugin {
+struct ExtPixels
+{
+    uint8_t* data;
+    size_t byteCount;
+    size_t pixelCount;
+};
+
+class ExtPixelConvert {
 public:
-    virtual int64_t BytesWritten() = 0;
-    bool GetCurrentSize(size_t &size) override {
-        size = BytesWritten();
-        return true;
-    }
+    static uint32_t RGBxToRGB(const ExtPixels &src, ExtPixels &dst);
+    static uint32_t RGBToRGBx(const ExtPixels &src, ExtPixels &dst);
 };
 } // namespace Media
 } // namespace OHOS
 
-#endif // FRAMEWORKS_INNERKITSIMPL_STREAM_INCLUDE_PACKER_STREAM_H_
+#endif // PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_PIXEL_CONVERT_H_

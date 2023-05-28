@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,32 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_STREAM_H_
-#define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_STREAM_H_
-
+#ifndef PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_WSTREAM_H_
+#define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_WSTREAM_H_
 #include <cstddef>
 
-#include "input_data_stream.h"
+#include "output_data_stream.h"
 #include "nocopyable.h"
 #include "SkStream.h"
 
 namespace OHOS {
 namespace ImagePlugin {
-class ExtStream : public SkStream, NoCopyable {
+class ExtWStream : public SkWStream, NoCopyable {
 public:
-    ExtStream() = default;
-    explicit ExtStream(InputDataStream *stream);
-    virtual ~ExtStream() override {
+    ExtWStream() = default;
+    explicit ExtWStream(OutputDataStream *stream);
+    virtual ~ExtWStream() override {
         stream_ = nullptr;
     }
-
-    size_t read(void *buffer, size_t size) override;
-    size_t peek(void *buffer, size_t size) const override;
-    bool isAtEnd() const override;
+    bool write(const void* buffer, size_t size) override;
+    void flush() override;
+    size_t bytesWritten() const override;
 private:
-    ImagePlugin::InputDataStream *stream_;
+    ImagePlugin::OutputDataStream *stream_;
 };
 } // namespace ImagePlugin
 } // namespace OHOS
 
-#endif // PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_STREAM_H_
+#endif // PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_WSTREAM_H_

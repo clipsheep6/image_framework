@@ -15,6 +15,7 @@
 
 #include "plugin_export.h"
 #include "ext_decoder.h"
+#include "ext_encoder.h"
 #include "hilog/log.h"
 #include "log_tags.h"
 #include "plugin_utils.h"
@@ -27,6 +28,7 @@ namespace {
 // register implement classes of this plugin.
 PLUGIN_EXPORT_REGISTER_CLASS_BEGIN
 PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::ExtDecoder)
+PLUGIN_EXPORT_REGISTER_CLASS(OHOS::ImagePlugin::ExtEncoder)
 PLUGIN_EXPORT_REGISTER_CLASS_END
 
 using std::string;

@@ -29,6 +29,9 @@ public:
     virtual bool GetCapicity(size_t &size) {
         return false;
     }
+    virtual bool GetCurrentSize(size_t &size) {
+        return false;
+    }
 };
 } // namespace ImagePlugin
 } // namespace OHOS

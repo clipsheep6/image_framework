@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef EXT_DECODER_H
-#define EXT_DECODER_H
+#ifndef PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_DECODER_H_
+#define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_DECODER_H_
 
 #include <cstdint>
 #include <string>
@@ -79,4 +79,4 @@ private:
 } // namespace ImagePlugin
 } // namespace OHOS
 
-#endif // EXT_DECODER_H
+#endif // PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_DECODER_H_

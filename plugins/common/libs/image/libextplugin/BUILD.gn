@@ -99,8 +99,11 @@ ohos_shared_library("extplugin") {
     }
   }
   sources = [
+    "src/ext_encoder.cpp",
     "src/ext_decoder.cpp",
+    "src/ext_pixel_convert.cpp",
     "src/ext_stream.cpp",
+    "src/ext_wstream.cpp",
     "src/plugin_export.cpp",
   ]
   configs = [
@@ -137,6 +140,7 @@ ohos_shared_library("extplugin") {
     deps = [
       ":exifhelper",
       "${graphic_subsystem}/utils/color_manager:color_manager",
+      "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/plugins/manager:pluginmanager",
       "${third_party_root}/flutter/build/skia:ace_skia_ohos",

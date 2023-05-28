@@ -34,6 +34,7 @@ using namespace ImagePlugin;
 using namespace MultimediaPlugin;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImagePacker" };
 static constexpr uint8_t QUALITY_MAX = 100;
+const static std::string EXTENDED_ENCODER = "image/extended";
 
 PluginServer &ImagePacker::pluginServer_ = ImageUtils::GetPluginServer();
 
@@ -76,6 +77,9 @@ uint32_t ImagePacker::StartPackingImpl(const PackOption &option)
     }
     PlEncodeOptions plOpts;
     CopyOptionsToPlugin(option, plOpts);
+    if (exEncoder_ != nullptr) {
+        exEncoder_->StartEncode(*packerStream_.get(), plOpts);
+    }
     return encoder_->StartEncode(*packerStream_.get(), plOpts);
 }
 
@@ -173,6 +177,9 @@ uint32_t ImagePacker::AddImage(PixelMap &pixelMap)
         HiLog::Error(LABEL, "AddImage get encoder plugin failed.");
         return ERR_IMAGE_MISMATCHED_FORMAT;
     }
+    if (exEncoder_ != nullptr) {
+        exEncoder_->AddImage(pixelMap);
+    }
     return encoder_->AddImage(pixelMap);
 }
 
@@ -216,6 +223,16 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 
 uint32_t ImagePacker::FinalizePacking()
 {
+    if (exEncoder_ != nullptr) {
+        auto res = exEncoder_->FinalizeEncode();
+        if (res == SUCCESS) {
+            encoder_.reset();
+            return res;
+        }
+        HiLog::Error(LABEL, "FinalizePacking exEncoder_  failed %{public}d, try other encoder.", res);
+    } else {
+        HiLog::Error(LABEL, "FinalizePacking exEncoder_  nullptr, try other encoder.");
+    }
     if (encoder_ == nullptr) {
         HiLog::Error(LABEL, "FinalizePacking get encoder plugin failed.");
         return ERR_IMAGE_MISMATCHED_FORMAT;
@@ -229,23 +246,31 @@ uint32_t ImagePacker::FinalizePacking(int64_t &packedSize)
     packedSize = (packerStream_ != nullptr) ? packerStream_->BytesWritten() : 0;
     return ret;
 }
+static ImagePlugin::AbsImageEncoder* GetEncoder(PluginServer &pluginServer, std::string format)
+{
+    std::map<std::string, AttrData> capabilities;
+    capabilities.insert(std::map<std::string, AttrData>::value_type(IMAGE_ENCODE_FORMAT, AttrData(format)));
+    return pluginServer.CreateObject<AbsImageEncoder>(AbsImageEncoder::SERVICE_DEFAULT, capabilities);
+}
 
 bool ImagePacker::GetEncoderPlugin(const PackOption &option)
 {
-    std::map<std::string, AttrData> capabilities;
-    capabilities.insert(std::map<std::string, AttrData>::value_type(IMAGE_ENCODE_FORMAT, AttrData(option.format)));
     if (encoder_ != nullptr) {
-        encoder_.reset();
     }
-    encoder_ = std::unique_ptr<ImagePlugin::AbsImageEncoder>(
-        pluginServer_.CreateObject<AbsImageEncoder>(AbsImageEncoder::SERVICE_DEFAULT, capabilities));
-    return (encoder_ != nullptr);
+        encoder_.reset();
+    if (exEncoder_ != nullptr) {
+        exEncoder_.reset();
+    }
+    exEncoder_ = std::unique_ptr<ImagePlugin::AbsImageEncoder>(GetEncoder(pluginServer_, EXTENDED_ENCODER));
+    encoder_ = std::unique_ptr<ImagePlugin::AbsImageEncoder>(GetEncoder(pluginServer_, option.format));
+    return encoder_ != nullptr;
 }
 
 void ImagePacker::CopyOptionsToPlugin(const PackOption &opts, PlEncodeOptions &plOpts)
 {
     plOpts.numberHint = opts.numberHint;
     plOpts.quality = opts.quality;
+    plOpts.format = opts.format;
 }
 
 void ImagePacker::FreeOldPackerStream()

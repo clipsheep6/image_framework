@@ -84,6 +84,7 @@ private:
     static MultimediaPlugin::PluginServer &pluginServer_;
     std::unique_ptr<PackerStream> packerStream_;
     std::unique_ptr<ImagePlugin::AbsImageEncoder> encoder_;
+    std::unique_ptr<ImagePlugin::AbsImageEncoder> exEncoder_;
     std::unique_ptr<PixelMap> pixelMap_;  // inner imagesource create, our manage the lifecycle
 };
 } // namespace Media
