@@ -23,6 +23,7 @@
 #include "memory_manager.h"
 #include "include/core/SkBitmap.h"
 #include "include/core/SkCanvas.h"
+#include "include/core/SkImage.h"
 #include "hilog/log.h"
 #include "hitrace_meter.h"
 #include "log_tags.h"
@@ -2024,7 +2025,8 @@ void PixelMap::DoTranslation(TransInfos &infos)
         }
     }
     canvas.concat(infos.matrix);
-    canvas.drawBitmap(src.bitmap, FLOAT_ZERO, FLOAT_ZERO);
+    auto skimage = SkImage::MakeFromBitmap(src.bitmap);
+    canvas.drawImage(skimage, FLOAT_ZERO, FLOAT_ZERO);
 
     ToImageInfo(imageInfo, dst.info);
     SetImageInfo(imageInfo);

@@ -160,8 +160,10 @@ std::unique_ptr<AbsMemory> MemoryManager::CreateMemory(AllocatorType type, Memor
     }
     res->data.data = data.data;
     res->data.size = data.size;
+    res->data.tag = data.tag;
     res->extend.data = extend.data;
     res->extend.size = extend.size;
+    res->extend.tag = extend.tag;
     if (res->data.data == nullptr) {
         res->Create();
     }

@@ -15,7 +15,6 @@ import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 third_party_dir = "/third_party"
 third_party_root = "/${third_party_dir}"
-skia_root = "${third_party_root}/flutter/skia"
 if (use_mingw_win || use_clang_mac) {
   graphic_root = "/${image_sep_f}${image_oundation}/${graphic_multimedia}"
 }
@@ -52,10 +51,10 @@ config("plugins_includes") {
 }
 config("skia_includes") {
   include_dirs = [
-    "${skia_root}",
-    "${skia_root}/include/codec",
-    "${skia_root}/include/core",
-    "${skia_root}/third_party/skcms",
+    "${skia_root}/skia",
+    "${skia_root}/skia/include/codec",
+    "${skia_root}/skia/include/core",
+    "${skia_root}/skia/third_party/skcms",
   ]
 }
 config("third_part_includes") {
@@ -124,8 +123,8 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils_static",
       "${image_subsystem}/mock/native:log_mock_static",
       "${image_subsystem}/plugins/manager:pluginmanager_static",
-      "${third_party_root}/flutter/build/skia:ace_skia_core",
     ]
+    deps += skia_core
   } else if (use_clang_mac) {
     configs += [":mac_config"]
     deps = [
@@ -143,8 +142,8 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/plugins/manager:pluginmanager",
-      "${third_party_root}/flutter/build/skia:ace_skia_ohos",
     ]
+    deps += skia_platform
 
     external_deps = [
       "c_utils:utils",
