@@ -530,7 +530,7 @@ static uint32_t HeapMemoryRelease(PlImageBuffer &plBuffer)
     return SUCCESS;
 }
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
-static inline void ReleaseSharedMemory(int* fdPtr, void* ptr = nullptr, size_t size = SIZE_ZERO)
+static inline void ReleaseSharedMemory(int* fdPtr, uint8_t* ptr = nullptr, size_t size = SIZE_ZERO)
 {
     if (ptr != nullptr && ptr != MAP_FAILED) {
         ::munmap(ptr, size);
@@ -563,7 +563,7 @@ static uint32_t SharedMemoryCreate(PlImageBuffer &plBuffer)
     plBuffer.buffer = ::mmap(nullptr, plBuffer.bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, *fdPtr, 0);
     if (plBuffer.buffer == MAP_FAILED) {
         HiLog::Error(LABEL, "SharedMemoryCreate mmap failed, errno:%{public}d", errno);
-        ReleaseSharedMemory(fdPtr.get(), plBuffer.buffer, plBuffer.bufferSize);
+        ReleaseSharedMemory(fdPtr.get(), static_cast<uint8_t*>(plBuffer.buffer), plBuffer.bufferSize);
         return ERR_IMAGE_DATA_ABNORMAL;
     }
     plBuffer.context = fdPtr.release();
@@ -574,7 +574,7 @@ static uint32_t SharedMemoryRelease(PlImageBuffer &plBuffer)
 {
     HiLog::Debug(LABEL, "SharedMemoryRelease IN");
     std::unique_ptr<int> fdPtr = std::unique_ptr<int>(static_cast<int*>(plBuffer.context));
-    ReleaseSharedMemory(fdPtr.get(), plBuffer.buffer, plBuffer.bufferSize);
+    ReleaseSharedMemory(fdPtr.get(), static_cast<uint8_t*>(plBuffer.buffer), plBuffer.bufferSize);
     plBuffer.buffer = nullptr;
     plBuffer.bufferSize = SIZE_ZERO;
     plBuffer.dataSize = SIZE_ZERO;
@@ -641,7 +641,7 @@ uint32_t GifDecoder::RedirectOutputBuffer(DecodeContext &context)
     if (memcpy_s(context.pixelsBuffer.buffer, context.pixelsBuffer.bufferSize,
         localPixelMapBuffer_, imageBufferSize) != 0) {
         HiLog::Error(LABEL, "[RedirectOutputBuffer]memory copy size %{public}llu failed",
-                        static_cast<unsigned long long>(imageBufferSize));
+            static_cast<unsigned long long>(imageBufferSize));
         FreeMemory(context);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
