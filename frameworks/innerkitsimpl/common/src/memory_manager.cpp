@@ -64,7 +64,7 @@ uint32_t HeapMemory::Release()
     data.data = nullptr;
     return SUCCESS;
 }
-static inline void ReleaseSharedMemory(int* fdPtr, void* ptr = nullptr, size_t size = SIZE_ZERO)
+static inline void ReleaseSharedMemory(int* fdPtr, uint8_t* ptr = nullptr, size_t size = SIZE_ZERO)
 {
     if (ptr != nullptr && ptr != MAP_FAILED) {
         ::munmap(ptr, size);
@@ -101,7 +101,7 @@ uint32_t SharedMemory::Create()
     data.data = ::mmap(nullptr, data.size, PROT_READ | PROT_WRITE, MAP_SHARED, *fdPtr, 0);
     if (data.data == MAP_FAILED) {
         HiLog::Error(LABEL, "SharedMemory::Create mmap failed, errno:%{public}d", errno);
-        ReleaseSharedMemory(fdPtr.get(), data.data, data.size);
+        ReleaseSharedMemory(fdPtr.get(), static_cast<uint8_t*>(data.data), data.size);
         return ERR_IMAGE_DATA_ABNORMAL;
     }
     extend.size = sizeof(int);
@@ -116,7 +116,7 @@ uint32_t SharedMemory::Release()
 {
 #ifdef SUPPORT_SHARED_MEMORY
     HiLog::Debug(LABEL, "SharedMemory::Release IN");
-    ReleaseSharedMemory(static_cast<int*>(extend.data), data.data, data.size);
+    ReleaseSharedMemory(static_cast<int*>(extend.data), static_cast<uint8_t*>(data.data), data.size);
     data.data = nullptr;
     data.size = SIZE_ZERO;
     if (extend.data != nullptr) {
