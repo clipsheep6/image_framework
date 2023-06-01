@@ -42,7 +42,7 @@ uint32_t HeapMemory::Create()
         return SUCCESS;
     }
     if (data.size == SIZE_ZERO) {
-        HiLog::Error(LABEL, "HeapMemory::Create has created");
+        HiLog::Error(LABEL, "HeapMemory::Create size is 0");
         return ERR_IMAGE_DATA_ABNORMAL;
     }
     auto dataPtr = std::make_unique<uint8_t[]>(data.size);
