@@ -76,6 +76,7 @@ HWTEST_F(ImageSourceGifTest, GifImageDecode001, TestSize.Level3)
      * @tc.expected: step3. decode image source to bitmap success.
      */
     DecodeOptions decodeOpts;
+    decodeOpts.allocatetype = AllocatorType::HEAP_ALLOC;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     HiLog::Debug(LABEL_TEST, "create bitmap code=%{public}d.", errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
@@ -180,6 +181,7 @@ HWTEST_F(ImageSourceGifTest, GifImageDecode004, TestSize.Level3)
      * @tc.expected: step2. decode image source to pixel map success.
      */
     DecodeOptions decodeOpts;
+    decodeOpts.allocatetype = AllocatorType::HEAP_ALLOC;
     decodeOpts.desiredPixelFormat = PixelFormat::BGRA_8888;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     HiLog::Debug(LABEL_TEST, "create bitmap code=%{public}d.", errorCode);
@@ -230,6 +232,7 @@ HWTEST_F(ImageSourceGifTest, GifImageDecode005, TestSize.Level3)
      * @tc.expected: step2. decode image source to pixel map success.
      */
     DecodeOptions decodeOpts;
+    decodeOpts.allocatetype = AllocatorType::HEAP_ALLOC;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
@@ -283,6 +286,7 @@ HWTEST_F(ImageSourceGifTest, GifImageDecode006, TestSize.Level3)
      * @tc.expected: step3. decode image source to bitmap success.
      */
     DecodeOptions decodeOpts;
+    decodeOpts.allocatetype = AllocatorType::HEAP_ALLOC;
     uint32_t color = 0;
     uint32_t posX = 15;
     uint32_t posY = 15;
