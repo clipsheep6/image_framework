@@ -135,7 +135,7 @@ ohos_shared_library("extplugin") {
       "${third_party_root}/bounds_checking_function:libsec_static",
     ]
   } else {
-    include_dirs += [ "//commonlibrary/c_utils/base/include" ]
+    include_dirs += [ "${commonlibrary_subsystem}/base/include" ]
     deps = [
       ":exifhelper",
       "${graphic_subsystem}/utils/color_manager:color_manager",
