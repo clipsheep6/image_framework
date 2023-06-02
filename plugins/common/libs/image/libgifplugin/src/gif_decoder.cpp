@@ -638,6 +638,45 @@ uint32_t GifDecoder::RedirectOutputBuffer(DecodeContext &context)
     int32_t bgWidth = gifPtr_->SWidth;
     int32_t bgHeight = gifPtr_->SHeight;
     uint64_t imageBufferSize = static_cast<uint64_t>(bgWidth * bgHeight * sizeof(uint32_t));
+
+    if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
+        if (context.pixelsBuffer.buffer == nullptr) {
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
+            uint32_t id = context.pixelmapUniqueId_;
+            std::string name = "GIF RawData, uniqueId: " + std::to_string(id);
+            int fd = AshmemCreate(name.c_str(), imageBufferSize);
+            if (fd < 0) {
+                return ERR_SHAMEM_DATA_ABNORMAL;
+            }
+            int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
+            if (result < 0) {
+                ::close(fd);
+                return ERR_SHAMEM_DATA_ABNORMAL;
+            }
+            void* ptr = ::mmap(nullptr, imageBufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+            if (ptr == MAP_FAILED) {
+                ::close(fd);
+                return ERR_SHAMEM_DATA_ABNORMAL;
+            }
+            context.pixelsBuffer.buffer = ptr;
+            void *fdBuffer = new int32_t();
+            if (fdBuffer == nullptr) {
+                HiLog::Error(LABEL, "new fdBuffer fail");
+                ::munmap(ptr, imageBufferSize);
+                ::close(fd);
+                context.pixelsBuffer.buffer = nullptr;
+                return ERR_SHAMEM_DATA_ABNORMAL;
+            }
+            *static_cast<int32_t *>(fdBuffer) = fd;
+            context.pixelsBuffer.context = fdBuffer;
+            context.pixelsBuffer.bufferSize = imageBufferSize;
+            context.pixelsBuffer.dataSize = imageBufferSize;
+            context.allocatorType = AllocatorType::SHARE_MEM_ALLOC;
+            context.freeFunc = nullptr;
+#endif
+        }
+    } else {
+        bool isPluginAllocateMemory = false;
     uint32_t allocRes = SUCCESS;
     if (context.pixelsBuffer.buffer == nullptr) {
         context.pixelsBuffer.bufferSize = imageBufferSize;
