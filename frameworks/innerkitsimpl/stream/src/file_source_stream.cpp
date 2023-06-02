@@ -18,8 +18,8 @@
 #include "image_utils.h"
 #include "media_errors.h"
 #include "directory_ex.h"
-#include "file_source_stream.h"
 #include "file_packer_stream.h"
+#include "file_source_stream.h"
 
 #if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
 #include <sys/mman.h>

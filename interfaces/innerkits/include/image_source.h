@@ -238,7 +238,7 @@ private:
     static std::unique_ptr<ImageSource> DoImageSourceCreate(
         std::function<std::unique_ptr<SourceStream>(void)> stream,
         const SourceOptions &opts, uint32_t &errorCode, const std::string traceName = "");
-    std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index,const DecodeOptions &opts,
+    std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts,
         uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
         PixelMapAddrInfos &addrInfos, uint32_t &errorCode);

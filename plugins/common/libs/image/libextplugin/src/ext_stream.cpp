@@ -32,9 +32,9 @@ struct InputStream {
 ExtStream::ExtStream(InputDataStream *stream) : stream_(stream)
 {
 }
-static void InputStreamInit(InputStream &buf, void* input, size_t size)
+static void InputStreamInit(InputStream &buf, uint8_t *input, size_t size)
 {
-    buf.buf = static_cast<uint8_t *>(input);
+    buf.buf = input;
     buf.size = static_cast<uint32_t>(size);
     buf.resSize = static_cast<uint32_t>(size);
 }
@@ -60,7 +60,7 @@ size_t ExtStream::read(void *buffer, size_t size)
         return Skip(stream_, size);
     }
     InputStream buf;
-    InputStreamInit(buf, buffer, size);
+    InputStreamInit(buf, static_cast<uint8_t *>(buffer), size);
     if (!stream_->Read(buf.size, buf.buf, buf.size, buf.resSize)) {
         HiLog::Error(LABEL, "read failed, desire read size=%{public}u", buf.resSize);
         return 0;
@@ -77,7 +77,7 @@ size_t ExtStream::peek(void *buffer, size_t size) const
         return SIZE_ZERO;
     }
     InputStream buf;
-    InputStreamInit(buf, buffer, size);
+    InputStreamInit(buf, static_cast<uint8_t *>(buffer), size);
     if (!stream_->Peek(buf.size, buf.buf, buf.size, buf.resSize)) {
         HiLog::Error(LABEL, "peek failed, desire read size=%{public}u", buf.resSize);
         return 0;

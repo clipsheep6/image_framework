@@ -24,8 +24,7 @@
 
 namespace OHOS {
 namespace Media {
-struct MemoryData
-{
+struct MemoryData {
     void* data;
     size_t size;
     const char* tag;

@@ -114,30 +114,14 @@ static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
             HiLog::Error(LABEL, "ExtEncoder::BuildSkBitmap pixel convert failed %{public}d", res);
             return res;
         }
-// DEBUG BUFFER
-        {
-            std::string dumpSrc = "";
-            std::string dumpDst = "";
-            uint8_t* srcss = static_cast<uint8_t*>(pixelMap->GetWritablePixels());
-            for (int i = 0; i < 20; i++) {
-                dumpSrc += std::to_string(srcss[i]) + " ";
-                dumpDst += std::to_string(holder.buf[i]) + " ";
-            }
-            HiLog::Error(LABEL, "ExtEncoder::BuildSkBitmap src [%{public}s], dst[%{public}s]", dumpSrc.c_str(), dumpDst.c_str());
-        }
         pixels = holder.buf.get();
         skInfo = skInfo.makeColorType(SkColorType::kRGBA_8888_SkColorType);
     }
 
-    std::string infoDump;
-    skInfo.dump(infoDump, 1);
-    HiLog::Debug(LABEL, "ExtEncoder::BuildSkBitmap BitmapInfo %{public}s", infoDump.c_str());
-    if(!bitmap.installPixels(skInfo, pixels, skInfo.minRowBytes())) {
+    if (!bitmap.installPixels(skInfo, pixels, skInfo.minRowBytes())) {
         HiLog::Error(LABEL, "ExtEncoder::BuildSkBitmap to skbitmap failed");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-    HiLog::Debug(LABEL, "ExtEncoder::BuildSkBitmap pixelmap size %{public}u", pixelMap->GetCapacity());
-    HiLog::Debug(LABEL, "ExtEncoder::BuildSkBitmap computeByteSize %{public}zu", bitmap.computeByteSize());
     return res;
 }
 uint32_t ExtEncoder::FinalizeEncode()

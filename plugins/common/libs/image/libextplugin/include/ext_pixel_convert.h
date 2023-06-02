@@ -22,8 +22,7 @@
 
 namespace OHOS {
 namespace ImagePlugin {
-struct ExtPixels
-{
+struct ExtPixels {
     uint8_t* data;
     size_t byteCount;
     size_t pixelCount;

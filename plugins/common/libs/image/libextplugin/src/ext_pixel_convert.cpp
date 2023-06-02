@@ -16,9 +16,9 @@
 #include "media_errors.h"
 
 namespace {
-     constexpr uint32_t NUM_0 = 0;
-     constexpr uint32_t NUM_3 = 3;
-     constexpr uint32_t NUM_4 = 4;
+    constexpr uint32_t NUM_0 = 0;
+    constexpr uint32_t NUM_3 = 3;
+    constexpr uint32_t NUM_4 = 4;
 }
 
 namespace OHOS {
@@ -31,15 +31,13 @@ static T* Cast(uint8_t* buffer)
     void* tmp = buffer;
     return static_cast<T*>(tmp);
 }
-struct RGBxPixel
-{
+struct RGBxPixel {
     uint8_t r;
     uint8_t g;
     uint8_t b;
     uint8_t x;
 };
-struct RGBPixel
-{
+struct RGBPixel {
     uint8_t r;
     uint8_t g;
     uint8_t b;

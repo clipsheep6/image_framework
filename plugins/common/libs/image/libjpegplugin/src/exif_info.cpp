@@ -340,8 +340,7 @@ EXIFInfo::EXIFInfo()
       exifData_(nullptr),
       isExifDataParsed_(false)
 {
-    for (auto i = TAG_MAP.begin(); i != TAG_MAP.end(); i++)
-    {
+    for (auto i = TAG_MAP.begin(); i != TAG_MAP.end(); i++) {
         exifTags_[i->first] = DEFAULT_EXIF_VALUE;
     }
 }
@@ -356,8 +355,7 @@ EXIFInfo::~EXIFInfo()
 }
 static void inline DumpTagsMap(std::map<ExifTag, std::string> &tags)
 {
-    for (auto i = tags.begin(); i != tags.end(); i++)
-    {
+    for (auto i = tags.begin(); i != tags.end(); i++) {
         if (TAG_MAP.count(i->first) == 0) {
             HiLog::Debug(LABEL, "DumpTagsMap %{public}d -> %{public}s.", i->first, i->second.c_str());
             continue;
@@ -1716,8 +1714,7 @@ static void NumSplit(std::string &src, std::vector<std::string> &out)
     if (last <= (src.size() - SIZE_ONE)) {
         res.push_back(src.substr(last));
     }
-    for (size_t i = SIZE_ZERO; i < res.size() && i < out.size(); i++)
-    {
+    for (size_t i = SIZE_ZERO; i < res.size() && i < out.size(); i++) {
         out[i] = res[i];
     }
 }

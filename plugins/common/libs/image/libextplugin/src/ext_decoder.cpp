@@ -46,8 +46,7 @@ const static string SUPPORT_CROP_KEY = "SupportCrop";
 const static string EXT_SHAREMEM_NAME = "EXT RawData";
 const static string TAG_ORIENTATION_STRING = "Orientation";
 const static string TAG_ORIENTATION_INT = "OrientationInt";
-struct ColorTypeOutput
-{
+struct ColorTypeOutput {
     PlPixelFormat outFormat;
     SkColorType skFormat;
 };
@@ -218,13 +217,13 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     }
     auto desireColor = ConvertToColorType(opts.desiredPixelFormat, info.pixelFormat);
     auto desireAlpha = ConvertToAlphaType(opts.desireAlphaType, info.alphaType);
-    //skia only support low down scale
+    // SK only support low down scale
     if (IsSupportScaleOnDecode() && opts.desiredSize.width < static_cast<uint32_t>(info_.width()) &&
         opts.desiredSize.height < static_cast<uint32_t>(info_.height())) {
         dstInfo_ = SkImageInfo::Make(opts.desiredSize.width,
             opts.desiredSize.height, desireColor, desireAlpha, info_.refColorSpace());
     } else {
-        dstInfo_ = SkImageInfo::Make(info_.width(),info_.height(),
+        dstInfo_ = SkImageInfo::Make(info_.width(), info_.height(),
             desireColor, desireAlpha, info_.refColorSpace());
     }
     if (ImageUtils::CheckMulOverflow(dstInfo_.width(), dstInfo_.height(), dstInfo_.bytesPerPixel())) {
@@ -382,17 +381,6 @@ static uint32_t GetFormatName(SkEncodedImageFormat format, std::string &name)
     HiLog::Error(LABEL, "GetFormatName: get encoded format name failed %{public}d.", format);
     return ERR_IMAGE_DATA_UNSUPPORT;
 }
-// uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
-// {
-//     if (!CheckIndexVailed(index)) {
-//         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
-//     }
-//     if (ENCODED_FORMAT_KEY.compare(key) == ZERO) {
-//         SkEncodedImageFormat format = codec_->getEncodedFormat();
-//         return GetFormatName(format, value);
-//     }
-//     return ERR_IMAGE_DATA_UNSUPPORT;
-// }
 bool ExtDecoder::ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType)
 {
     if (info_.isEmpty()) {
@@ -617,7 +605,7 @@ uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair
     constexpr size_t APP1_SIZE_H_OFF = 4;
     constexpr size_t APP1_SIZE_L_OFF = 5;
         constexpr size_t U8_SHIFT = 8;
-    return ProcessWithStreamData(stream_, [this, &privacyType, &ranges](uint8_t* buffer, size_t size){
+    return ProcessWithStreamData(stream_, [this, &privacyType, &ranges](uint8_t* buffer, size_t size) {
         size_t appSize = (static_cast<size_t>(buffer[APP1_SIZE_H_OFF]) << U8_SHIFT) | buffer[APP1_SIZE_L_OFF];
         HiLog::Debug(LABEL, "[GetFilterArea]: get app1 area size %{public}d", appSize);
         appSize += APP1_SIZE_H_OFF;

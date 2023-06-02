@@ -28,7 +28,8 @@ class ExtStream : public SkStream, NoCopyable {
 public:
     ExtStream() = default;
     explicit ExtStream(InputDataStream *stream);
-    virtual ~ExtStream() override {
+    virtual ~ExtStream() override
+    {
         stream_ = nullptr;
     }
 

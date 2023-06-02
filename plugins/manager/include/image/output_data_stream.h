@@ -25,11 +25,13 @@ public:
     virtual ~OutputDataStream() {}
     virtual bool Write(const uint8_t *buffer, uint32_t size) = 0;
     virtual void Flush() {}
-    //False means no limit, true needs return act capicity by size
-    virtual bool GetCapicity(size_t &size) {
+    // False means no limit, true needs return act capicity by size
+    virtual bool GetCapicity(size_t &size)
+    {
         return false;
     }
-    virtual bool GetCurrentSize(size_t &size) {
+    virtual bool GetCurrentSize(size_t &size)
+    {
         return false;
     }
 };

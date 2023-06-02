@@ -27,7 +27,8 @@ class ExtWStream : public SkWStream, NoCopyable {
 public:
     ExtWStream() = default;
     explicit ExtWStream(OutputDataStream *stream);
-    virtual ~ExtWStream() override {
+    virtual ~ExtWStream() override
+    {
         stream_ = nullptr;
     }
     bool write(const void* buffer, size_t size) override;

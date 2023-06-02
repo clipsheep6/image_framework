@@ -18,15 +18,13 @@ namespace OHOS {
 namespace Media {
 const static int DEFAULT_INDEX = 0;
 using std::string;
-struct PixelFormatPair
-{
+struct PixelFormatPair {
     SkColorType skColorType;
     PixelFormat pixelFormat;
     string skColorTypeName;
     string pixelFormatName;
 };
-struct AlphaTypePair
-{
+struct AlphaTypePair {
     SkAlphaType skAlphaType;
     AlphaType alphaType;
     string skAlphaTypeName;
@@ -34,31 +32,31 @@ struct AlphaTypePair
 };
 static PixelFormatPair PixelFormatPairs[] = {
     {SkColorType::kUnknown_SkColorType, PixelFormat::UNKNOWN,
-    "kUnknown_SkColorType", "PixelFormat::UNKNOWN"},
+        "kUnknown_SkColorType", "PixelFormat::UNKNOWN"},
     {SkColorType::kRGBA_8888_SkColorType, PixelFormat::ARGB_8888,
-    "kRGBA_8888_SkColorType", "PixelFormat::ARGB_8888"},
+        "kRGBA_8888_SkColorType", "PixelFormat::ARGB_8888"},
     {SkColorType::kAlpha_8_SkColorType, PixelFormat::ALPHA_8,
-    "kAlpha_8_SkColorType", "PixelFormat::ALPHA_8"},
+        "kAlpha_8_SkColorType", "PixelFormat::ALPHA_8"},
     {SkColorType::kRGB_565_SkColorType, PixelFormat::RGB_565,
-    "kRGB_565_SkColorType", "PixelFormat::RGB_565"},
+        "kRGB_565_SkColorType", "PixelFormat::RGB_565"},
     {SkColorType::kRGBA_F16_SkColorType, PixelFormat::RGBA_F16,
-    "kRGBA_F16_SkColorType", "PixelFormat::RGBA_F16"},
+        "kRGBA_F16_SkColorType", "PixelFormat::RGBA_F16"},
     {SkColorType::kRGBA_8888_SkColorType, PixelFormat::RGBA_8888,
-    "kRGBA_8888_SkColorType", "PixelFormat::RGBA_8888"},
+        "kRGBA_8888_SkColorType", "PixelFormat::RGBA_8888"},
     {SkColorType::kBGRA_8888_SkColorType, PixelFormat::BGRA_8888,
-    "kBGRA_8888_SkColorType", "PixelFormat::BGRA_8888"},
+        "kBGRA_8888_SkColorType", "PixelFormat::BGRA_8888"},
     {SkColorType::kRGB_888x_SkColorType, PixelFormat::RGB_888,
-    "kRGB_888x_SkColorType", "PixelFormat::RGB_888"},
+        "kRGB_888x_SkColorType", "PixelFormat::RGB_888"},
 };
 static AlphaTypePair AlphaTypePairs[] = {
     {SkAlphaType::kUnknown_SkAlphaType, AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN,
-    "kUnknown_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN"},
+        "kUnknown_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN"},
     {SkAlphaType::kOpaque_SkAlphaType, AlphaType::IMAGE_ALPHA_TYPE_OPAQUE,
-    "kOpaque_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_OPAQUE"},
+        "kOpaque_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_OPAQUE"},
     {SkAlphaType::kPremul_SkAlphaType, AlphaType::IMAGE_ALPHA_TYPE_PREMUL,
-    "kPremul_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_PREMUL"},
+        "kPremul_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_PREMUL"},
     {SkAlphaType::kUnpremul_SkAlphaType, AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL,
-    "kUnpremul_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL"},
+        "kUnpremul_SkAlphaType", "AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL"},
 };
 
 template<typename T, typename C, unsigned L>
@@ -74,28 +72,28 @@ static T find(T (&infos)[L], C compare)
 
 SkColorType ImageTypeConverter::ToSkColorType(const PixelFormat pixelFormat)
 {
-    auto res = find(PixelFormatPairs, [pixelFormat](PixelFormatPair iter){
+    auto res = find(PixelFormatPairs, [pixelFormat](PixelFormatPair iter) {
         return (iter.pixelFormat == pixelFormat);
     });
     return res.skColorType;
 }
 SkAlphaType ImageTypeConverter::ToSkAlphaType(const AlphaType alphaType)
 {
-    auto res = find(AlphaTypePairs, [alphaType](AlphaTypePair iter){
+    auto res = find(AlphaTypePairs, [alphaType](AlphaTypePair iter) {
         return (iter.alphaType == alphaType);
     });
     return res.skAlphaType;
 }
 PixelFormat ImageTypeConverter::ToPixelFormat(const SkColorType type)
 {
-    auto res = find(PixelFormatPairs, [type](PixelFormatPair iter){
+    auto res = find(PixelFormatPairs, [type](PixelFormatPair iter) {
         return (iter.skColorType == type);
     });
     return res.pixelFormat;
 }
 AlphaType ImageTypeConverter::ToAlphaType(const SkAlphaType type)
 {
-    auto res = find(AlphaTypePairs, [type](AlphaTypePair iter){
+    auto res = find(AlphaTypePairs, [type](AlphaTypePair iter) {
         return (iter.skAlphaType == type);
     });
     return res.alphaType;
@@ -103,28 +101,28 @@ AlphaType ImageTypeConverter::ToAlphaType(const SkAlphaType type)
 
 const string ImageTypeConverter::ToName(const PixelFormat pixelFormat)
 {
-    auto res = find(PixelFormatPairs, [pixelFormat](PixelFormatPair iter){
+    auto res = find(PixelFormatPairs, [pixelFormat](PixelFormatPair iter) {
         return (iter.pixelFormat == pixelFormat);
     });
     return res.pixelFormatName;
 }
 const string ImageTypeConverter::ToName(const AlphaType alphaType)
 {
-    auto res = find(AlphaTypePairs, [alphaType](AlphaTypePair iter){
+    auto res = find(AlphaTypePairs, [alphaType](AlphaTypePair iter) {
         return (iter.alphaType == alphaType);
     });
     return res.alphaTypeName;
 }
 const string ImageTypeConverter::ToName(const SkColorType type)
 {
-    auto res = find(PixelFormatPairs, [type](PixelFormatPair iter){
+    auto res = find(PixelFormatPairs, [type](PixelFormatPair iter) {
         return (iter.skColorType == type);
     });
     return res.skColorTypeName;
 }
 const string ImageTypeConverter::ToName(const SkAlphaType type)
 {
-    auto res = find(AlphaTypePairs, [type](AlphaTypePair iter){
+    auto res = find(AlphaTypePairs, [type](AlphaTypePair iter) {
         return (iter.skAlphaType == type);
     });
     return res.skAlphaTypeName;

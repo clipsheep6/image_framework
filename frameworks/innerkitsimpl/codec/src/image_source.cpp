@@ -178,13 +178,13 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is,
     const SourceOptions &opts, uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with stream.");
-    return DoImageSourceCreate([&is](){
+    return DoImageSourceCreate([&is]() {
         auto stream = IstreamSourceStream::CreateSourceStream(move(is));
         if (stream == nullptr) {
             IMAGE_LOGE("[ImageSource]failed to create istream source stream.");
         }
         return stream;
-    }, opts, errorCode, "CreateImageSource by istream");
+        }, opts, errorCode, "CreateImageSource by istream");
 }
 
 unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint32_t size,
@@ -195,7 +195,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
         IMAGE_LOGE("[ImageSource]parameter error.");
         return nullptr;
     }
-    return DoImageSourceCreate([&data, &size](){
+    return DoImageSourceCreate([&data, &size]() {
         auto streamPtr = DecodeBase64(data, size);
         if (streamPtr == nullptr) {
             streamPtr = BufferSourceStream::CreateSourceStream(data, size);
@@ -204,7 +204,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
             IMAGE_LOGE("[ImageSource]failed to create buffer source stream.");
         }
         return streamPtr;
-    }, opts, errorCode, "CreateImageSource by data");
+        }, opts, errorCode, "CreateImageSource by data");
 }
 
 unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathName, const SourceOptions &opts,
@@ -215,7 +215,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
         IMAGE_LOGE("[ImageSource]parameter error.");
         return nullptr;
     }
-    return DoImageSourceCreate([&pathName](){
+    return DoImageSourceCreate([&pathName]() {
         auto streamPtr = DecodeBase64(pathName);
         if (streamPtr == nullptr) {
             streamPtr = FileSourceStream::CreateSourceStream(pathName);
@@ -224,26 +224,26 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
             IMAGE_LOGE("[ImageSource]failed to create file path source stream.");
         }
         return streamPtr;
-    }, opts, errorCode, "CreateImageSource by path");
+        }, opts, errorCode, "CreateImageSource by path");
 }
 
 unique_ptr<ImageSource> ImageSource::CreateImageSource(const int fd, const SourceOptions &opts,
                                                        uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with fd.");
-    return DoImageSourceCreate([&fd](){
+    return DoImageSourceCreate([&fd]() {
         auto streamPtr = FileSourceStream::CreateSourceStream(fd);
         if (streamPtr == nullptr) {
             IMAGE_LOGE("[ImageSource]failed to create file fd source stream.");
         }
         return streamPtr;
-    }, opts, errorCode, "CreateImageSource by fd");
+        }, opts, errorCode, "CreateImageSource by fd");
 }
 unique_ptr<ImageSource> ImageSource::CreateIncrementalImageSource(const IncrementalSourceOptions &opts,
                                                                   uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create incremental ImageSource.");
-    auto sourcePtr = DoImageSourceCreate([&opts](){
+    auto sourcePtr = DoImageSourceCreate([&opts]() {
         auto streamPtr = IncrementalSourceStream::CreateSourceStream(opts.incrementalMode);
         if (streamPtr == nullptr) {
             IMAGE_LOGE("[ImageSource]failed to create incremental source stream.");
@@ -303,7 +303,10 @@ static inline bool IsDensityChange(int32_t srcDensity, int32_t wantDensity)
 }
 static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, int32_t wantDensity)
 {
-    return (prop * wantDensity + (srcDensity >> 1)) / srcDensity;
+    if (srcDensity != INT_ZERO) {
+        return (prop * wantDensity + (srcDensity >> 1)) / srcDensity;
+    }
+    return prop;
 }
 static void TransformSizeWithDensity(Size &srcSize, int32_t srcDensity, Size &wantSize,
     int32_t wantDensity, Size &dstSize)
@@ -318,7 +321,7 @@ static void TransformSizeWithDensity(Size &srcSize, int32_t srcDensity, Size &wa
         dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
     }
 }
-static inline void NotifyDecodeEvent(set<DecodeListener *> &listeners, DecodeEvent event,
+static void NotifyDecodeEvent(set<DecodeListener *> &listeners, DecodeEvent event,
     std::unique_lock<std::mutex>* guard)
 {
     if (listeners.size() == SIZE_ZERO) {
@@ -1283,7 +1286,7 @@ static void GetDefaultPixelFormat(const PixelFormat desired, PlPixelFormat& out,
 uint32_t ImageSource::SetDecodeOptions(std::unique_ptr<AbsImageDecoder> &decoder,
     uint32_t index, const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo)
 {
-    PlPixelFormat plDesiredFormat; 
+    PlPixelFormat plDesiredFormat;
     GetDefaultPixelFormat(opts.desiredPixelFormat, plDesiredFormat, preference_);
     PixelDecodeOptions plOptions;
     CopyOptionsToPlugin(opts, plOptions);

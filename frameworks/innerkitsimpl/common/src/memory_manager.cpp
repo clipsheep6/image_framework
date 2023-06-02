@@ -138,11 +138,9 @@ std::unique_ptr<AbsMemory> MemoryManager::CreateMemory(AllocatorType type, Memor
 std::unique_ptr<AbsMemory> MemoryManager::CreateMemory(AllocatorType type, MemoryData &data, MemoryData &extend)
 {
     std::unique_ptr<AbsMemory> res = nullptr;
-    switch (type)
-    {
+    switch (type) {
         case AllocatorType::SHARE_MEM_ALLOC:
             res = std::make_unique<SharedMemory>();
-            //res = std::unique_ptr<AbsMemory>(new (std::nothrow)SharedMemory());
             break;
         case AllocatorType::CUSTOM_ALLOC:
             HiLog::Error(LABEL, "MemoryManager::CreateMemory unsupported CUSTOM_ALLOC now");
@@ -151,7 +149,6 @@ std::unique_ptr<AbsMemory> MemoryManager::CreateMemory(AllocatorType type, Memor
         case AllocatorType::HEAP_ALLOC:
         default:
             res = std::make_unique<HeapMemory>();
-            //res = std::unique_ptr<AbsMemory>(new (std::nothrow)HeapMemory());
             break;
     }
     if (res == nullptr) {
