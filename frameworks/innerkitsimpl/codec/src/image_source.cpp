@@ -303,7 +303,7 @@ static inline bool IsDensityChange(int32_t srcDensity, int32_t wantDensity)
 }
 static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, int32_t wantDensity)
 {
-    if (srcDensity != INT_ZERO) {
+    if (srcDensity != 0) {
         return (prop * wantDensity + (srcDensity >> 1)) / srcDensity;
     }
     return prop;

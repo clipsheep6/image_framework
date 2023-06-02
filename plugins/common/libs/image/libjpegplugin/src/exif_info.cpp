@@ -1799,7 +1799,7 @@ uint32_t EXIFInfo::GetExifData(const std::string name, std::string &value)
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     value = exifTags_.at(tag);
-    if(IsSameTextStr(value, DEFAULT_EXIF_VALUE)) {
+    if (IsSameTextStr(value, DEFAULT_EXIF_VALUE)) {
         HiLog::Error(LABEL, "GetExifData %{public}s[%{public}d] value is DEFAULT_EXIF_VALUE.",
             name.c_str(), tag);
         return Media::ERR_MEDIA_VALUE_INVALID;
