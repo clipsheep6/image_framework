@@ -30,7 +30,7 @@ ohos_static_library("exifhelper") {
   include_dirs = [
     "../libjpegplugin/include",
     "${image_subsystem}/interfaces/innerkits/include",
-    "${third_party_root}/libexif"
+    "${third_party_root}/libexif",
   ]
   deps = [ "${third_party_root}/libexif:libexif" ]
   external_deps = [
@@ -98,8 +98,8 @@ ohos_shared_library("extplugin") {
     }
   }
   sources = [
-    "src/ext_encoder.cpp",
     "src/ext_decoder.cpp",
+    "src/ext_encoder.cpp",
     "src/ext_pixel_convert.cpp",
     "src/ext_stream.cpp",
     "src/ext_wstream.cpp",
@@ -117,7 +117,7 @@ ohos_shared_library("extplugin") {
     "${graphic_subsystem}/utils/color_manager/export",
   ]
   if (use_mingw_win) {
-    configs += [":win_config"]
+    configs += [ ":win_config" ]
     deps = [
       "${graphic_root}/ide/libs/skia:skia",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils_static",
@@ -126,7 +126,7 @@ ohos_shared_library("extplugin") {
     ]
     deps += skia_core
   } else if (use_clang_mac) {
-    configs += [":mac_config"]
+    configs += [ ":mac_config" ]
     deps = [
       "${graphic_root}/ide/libs/skia:skia",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils_static",
@@ -139,8 +139,8 @@ ohos_shared_library("extplugin") {
     deps = [
       ":exifhelper",
       "${graphic_subsystem}/utils/color_manager:color_manager",
-      "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+      "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
     ]
     deps += skia_platform

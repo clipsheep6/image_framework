@@ -46,6 +46,8 @@ group("multimediaplugin") {
       #      "image/libheifplugin:heifpluginmetadata",
       "image/libbmpplugin:bmpplugin",
       "image/libbmpplugin:bmppluginmetadata",
+      "image/libextplugin:extplugin",
+      "image/libextplugin:extpluginmetadata",
       "image/libjpegplugin:jpegplugin",
       "image/libjpegplugin:jpegpluginmetadata",
       "image/libpngplugin:pngplugin",
@@ -56,8 +58,6 @@ group("multimediaplugin") {
       "image/libsvgplugin:svgpluginmetadata",
       "image/libwebpplugin:webpplugin",
       "image/libwebpplugin:webppluginmetadata",
-      "image/libextplugin:extplugin",
-      "image/libextplugin:extpluginmetadata",
 
       #      "//foundation/multimedia/image_framework/adapter/frameworks/libhwjpegplugin:hwjpegplugin",
       #      "//foundation/multimedia/image_framework/adapter/frameworks/libhwjpegplugin:hwjpegpluginmetadata",
