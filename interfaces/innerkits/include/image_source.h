@@ -212,7 +212,9 @@ private:
     uint32_t SetDecodeOptions(std::unique_ptr<ImagePlugin::AbsImageDecoder> &decoder, uint32_t index,
                               const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo);
     uint32_t UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo,
-        PixelMap &pixelMap, int32_t fitDensity = 0);
+        PixelMap &pixelMap);
+    uint32_t UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo,
+        PixelMap &pixelMap, int32_t fitDensity);
     // declare friend class, only IncrementalPixelMap can call PromoteDecoding function.
     friend class IncrementalPixelMap;
     uint32_t PromoteDecoding(uint32_t index, const DecodeOptions &opts, PixelMap &pixelMap, ImageDecodingState &state,

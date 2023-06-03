@@ -1316,6 +1316,11 @@ uint32_t ImageSource::SetDecodeOptions(std::unique_ptr<AbsImageDecoder> &decoder
 }
 
 uint32_t ImageSource::UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo,
+    PixelMap &pixelMap)
+{
+    return UpdatePixelMapInfo(opts, plInfo, pixelMap, INT_ZERO);
+}
+uint32_t ImageSource::UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo,
     PixelMap &pixelMap, int32_t fitDensity)
 {
     ImageInfo info;
