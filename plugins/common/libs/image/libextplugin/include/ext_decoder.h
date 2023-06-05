@@ -35,6 +35,7 @@ public:
     bool HasProperty(std::string key) override;
     uint32_t Decode(uint32_t index, DecodeContext &context) override;
     uint32_t GetImageSize(uint32_t index, PlSize &size) override;
+    uint32_t GetTopLevelImageNum(uint32_t &num) override;
     uint32_t PromoteIncrementalDecode(uint32_t index, ProgDecodeContext &context) override;
     uint32_t SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info) override;
     void Reset() override;

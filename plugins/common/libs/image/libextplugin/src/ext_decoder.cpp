@@ -584,12 +584,31 @@ bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32
     return result;
 }
 
+static uint32_t GetDelayTime(SkCodec * codec, uint32_t index, int32_t &value)
+{
+    if (codec->getEncodedFormat() != SkEncodedImageFormat::kGIF) {
+        HiLog::Error(LABEL, "[GetDelayTime] Should not get delay time in %{public}d", codec->getEncodedFormat());
+        return ERR_MEDIA_INVALID_PARAM;
+    }
+    auto frameInfos = codec->getFrameInfo();
+    if (index > frameInfos.size() - 1) {
+        HiLog::Error(LABEL, "[GetDelayTime] frame size %{public}zu, index:%{public}d", frameInfos.size(), index);
+        return ERR_MEDIA_INVALID_PARAM;
+    }
+    value = frameInfos[index].fDuration;
+    HiLog::Debug(LABEL, "[GetDelayTime] index[%{public}d]:%{public}d", index, value);
+    return SUCCESS;
+}
+
 uint32_t ExtDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     HiLog::Debug(LABEL, "[GetImagePropertyInt] enter ExtDecoder plugin, key:%{public}s", key.c_str());
     uint32_t res = Media::ERR_IMAGE_DATA_ABNORMAL;
     if (!GetPropertyCheck(index, key, res)) {
         return res;
+    }
+    if (GIF_IMAGE_DELAY_TIME.compare(key) == ZERO) {
+        return GetDelayTime(codec_.get(), index, value);
     }
     // There can add some not need exif property
     if (res == Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
@@ -620,6 +639,11 @@ uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &k
     if (ENCODED_FORMAT_KEY.compare(key) == ZERO) {
         SkEncodedImageFormat format = codec_->getEncodedFormat();
         return GetFormatName(format, value);
+    } else if (GIF_IMAGE_DELAY_TIME.compare(key) == ZERO) {
+        int delayTime = ZERO;
+        res = GetDelayTime(codec_.get(), index, delayTime);
+        value = std::to_string(delayTime);
+        return res;
     }
     if (res == Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
         return res;
@@ -675,6 +699,14 @@ uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair
         }
         return ret;
     });
+}
+uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
+{
+    if (!CheckIndexVailed(SIZE_ZERO) && frameCount_ <= ZERO) {
+        return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
+    }
+    num = frameCount_;
+    return SUCCESS;
 }
 } // namespace ImagePlugin
 } // namespace OHOS
