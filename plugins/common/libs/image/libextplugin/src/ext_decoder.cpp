@@ -47,6 +47,7 @@ const static string SUPPORT_CROP_KEY = "SupportCrop";
 const static string EXT_SHAREMEM_NAME = "EXT RawData";
 const static string TAG_ORIENTATION_STRING = "Orientation";
 const static string TAG_ORIENTATION_INT = "OrientationInt";
+const static string GIF_IMAGE_DELAY_TIME = "GIFDelayTime";
 struct ColorTypeOutput {
     PlPixelFormat outFormat;
     SkColorType skFormat;
