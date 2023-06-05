@@ -315,6 +315,19 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapEx(uint32_t index, const DecodeO
     return CreatePixelMap(index, opts, errorCode);
 }
 
+void ReleaseMemory(void *addr, void *context, uint32_t size)
+{
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+        int *fd = static_cast<int *>(context);
+        if (addr != nullptr) {
+            ::munmap(addr, size);
+        }
+        if (fd != nullptr) {
+            ::close(*fd);
+        }
+#endif
+}
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
 #if !defined(_WIN32) && !defined(_APPLE)
@@ -403,6 +416,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
             if (context.freeFunc != nullptr) {
                 context.freeFunc(context.pixelsBuffer.buffer, context.pixelsBuffer.context,
                                  context.pixelsBuffer.bufferSize);
+            } else if (context.allocatorType == AllocatorType::SHARE_MEM_ALLOC) {
+                ReleaseMemory(context.pixelsBuffer.buffer, context.pixelsBuffer.context,
+                              context.pixelsBuffer.bufferSize);
             } else {
                 free(context.pixelsBuffer.buffer);
                 context.pixelsBuffer.buffer = nullptr;
