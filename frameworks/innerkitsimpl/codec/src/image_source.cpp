@@ -341,7 +341,9 @@ static inline void FreeContextBuffer(Media::CustomFreePixelMap &func, PlImageBuf
 {
     if (func != nullptr) {
         func(buffer.buffer, buffer.context, buffer.dataSize);
-    } else {
+        return;
+    }
+    if (buffer.buffer != nullptr) {
         free(buffer.buffer);
         buffer.buffer = nullptr;
     }
@@ -418,6 +420,21 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     trace(FINISH_TRACE);
     return pixelMap;
 }
+static void GetValidCropRect(const Rect &src, ImagePlugin::PlImageInfo &plInfo, Rect &dst)
+{
+    dst.top = src.top;
+    dst.left = src.left;
+    dst.width = src.width;
+    dst.height = src.height;
+    int32_t dstBottom = dst.top + dst.height;
+    int32_t dstRight = dst.left + dst.width;
+    if (dst.top >= 0 && dstBottom > 0 && static_cast<uint32_t>(dstBottom) > plInfo.size.height) {
+        dst.height = plInfo.size.height - dst.top;
+    }
+    if (dst.left >= 0 && dstRight > 0 && static_cast<uint32_t>(dstRight) > plInfo.size.width) {
+        dst.width = plInfo.size.width - dst.left;
+    }
+}
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
     PixelMapAddrInfos &addrInfos, uint32_t &errorCode)
 {
@@ -445,23 +462,25 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     const static string SUPPORT_CROP_KEY = "SupportCrop";
     if (!mainDecoder_->HasProperty(SUPPORT_CROP_KEY) &&
         opts_.CropRect.width > INT_ZERO && opts_.CropRect.height > INT_ZERO) {
-        errorCode = pixelMap->crop(opts_.CropRect);
+        Rect crop;
+        GetValidCropRect(opts_.CropRect, plInfo, crop);
+        errorCode = pixelMap->crop(crop);
         if (errorCode != SUCCESS) {
             IMAGE_LOGE("[ImageSource]CropRect pixelmap fail, ret:%{public}u.", errorCode);
             return nullptr;
         }
-    }
-    if (opts_.desiredSize.height != pixelMap->GetHeight() ||
-        opts_.desiredSize.width != pixelMap->GetWidth()) {
-        float xScale = static_cast<float>(opts_.desiredSize.width)/pixelMap->GetWidth();
-        float yScale = static_cast<float>(opts_.desiredSize.height)/pixelMap->GetHeight();
-        pixelMap->scale(xScale, yScale);
     }
     // rotateDegrees and rotateNewDegrees
     if (!ImageUtils::FloatCompareZero(opts_.rotateDegrees)) {
         pixelMap->rotate(opts_.rotateDegrees);
     } else if (opts_.rotateNewDegrees != INT_ZERO) {
         pixelMap->rotate(opts_.rotateNewDegrees);
+    }
+    if (opts_.desiredSize.height != pixelMap->GetHeight() ||
+        opts_.desiredSize.width != pixelMap->GetWidth()) {
+        float xScale = static_cast<float>(opts_.desiredSize.width)/pixelMap->GetWidth();
+        float yScale = static_cast<float>(opts_.desiredSize.height)/pixelMap->GetHeight();
+        pixelMap->scale(xScale, yScale);
     }
     return pixelMap;
 }

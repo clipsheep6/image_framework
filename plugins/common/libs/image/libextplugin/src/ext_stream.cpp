@@ -61,7 +61,12 @@ size_t ExtStream::read(void *buffer, size_t size)
     }
     InputStream buf;
     InputStreamInit(buf, static_cast<uint8_t *>(buffer), size);
-    if (!stream_->Read(buf.size, buf.buf, buf.size, buf.resSize)) {
+    
+    uint32_t desiredSize = buf.size;
+    if (stream_->GetStreamSize() != SIZE_ZERO && stream_->GetStreamSize() < desiredSize) {
+        desiredSize = stream_->GetStreamSize();
+    }
+    if (!stream_->Read(desiredSize, buf.buf, buf.size, buf.resSize)) {
         HiLog::Error(LABEL, "read failed, desire read size=%{public}u", buf.resSize);
         return 0;
     }

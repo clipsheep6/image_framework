@@ -32,6 +32,7 @@ namespace {
     constexpr static int32_t NUM_4 = 4;
     constexpr static int32_t OFFSIT = 1;
     constexpr static size_t SIZE_ZERO = 0;
+    constexpr static uint32_t DEFAULT_SAMPLE_SIZE = 1;
 }
 
 namespace OHOS {
@@ -154,25 +155,52 @@ void ExtDecoder::Reset()
     dstSubset_ = SkIRect::MakeEmpty();
     info_.reset();
 }
-bool ExtDecoder::IsSupportScaleOnDecode()
+static inline float Max(float a, float b)
 {
-    constexpr float HALF_SCALE = 0.5f;
+    return (a > b)?a:b;
+}
+bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
+{
     if (info_.isEmpty() && !DecodeHeader()) {
         return false;
     }
-    if (codec_->getScaledDimensions(HALF_SCALE).equals(info_.width(), info_.height())) {
-        return true;
+    float finalScale = scale;
+    if (scale == ZERO) {
+        finalScale = Max(static_cast<float>(dWidth)/info_.width(),
+            static_cast<float>(dHeight)/info_.height());
     }
-    return false;
+    auto scaledDimension = codec_->getScaledDimensions(finalScale);
+    dWidth = scaledDimension.width();
+    dHeight = scaledDimension.height();
+    scale = finalScale;
+    HiLog::Debug(LABEL, "IsSupportScaleOnDecode info [%{public}d x %{public}d]", info_.width(), info_.height());
+    HiLog::Debug(LABEL, "IsSupportScaleOnDecode [%{public}d x %{public}d]", dWidth, dHeight);
+    HiLog::Debug(LABEL, "IsSupportScaleOnDecode [%{public}f]", scale);
+    return true;
+}
+bool ExtDecoder::IsSupportScaleOnDecode()
+{
+    constexpr float HALF_SCALE = 0.5f;
+    int w = ZERO;
+    int h = ZERO;
+    float scale = HALF_SCALE;
+    return GetScaledSize(w, h, scale);
 }
 bool ExtDecoder::IsSupportCropOnDecode()
 {
     if (info_.isEmpty() && !DecodeHeader()) {
         return false;
     }
+    SkIRect innerRect = info_.bounds().makeInset(OFFSIT, OFFSIT);
+    return IsSupportCropOnDecode(innerRect);
+}
+bool ExtDecoder::IsSupportCropOnDecode(SkIRect &target)
+{
+    if (info_.isEmpty() && !DecodeHeader()) {
+        return false;
+    }
     SkIRect orgbounds = info_.bounds();
-    SkIRect innerRect = orgbounds.makeInset(OFFSIT, OFFSIT);
-    if (orgbounds.contains(innerRect) && codec_->getValidSubset(&innerRect)) {
+    if (orgbounds.contains(target) && codec_->getValidSubset(&target)) {
         return true;
     }
     return false;
@@ -209,19 +237,45 @@ uint32_t ExtDecoder::GetImageSize(uint32_t index, PlSize &size)
     return SUCCESS;
 }
 
+static inline bool IsLowDownScale(const PlSize &size, SkImageInfo &info)
+{
+    return size.width < static_cast<uint32_t>(info.width()) &&
+        size.height < static_cast<uint32_t>(info.height());
+}
+
+static inline bool IsValidCrop(const PlRect &crop, SkImageInfo &info, SkIRect &out)
+{
+    out = SkIRect::MakeXYWH(crop.left, crop.top, crop.width, crop.height);
+    if (out.fLeft < ZERO || out.fTop < ZERO) {
+        return false;
+    }
+    if (out.fRight > info.width()) {
+        out.fRight = info.width();
+    }
+    if (out.fBottom > info.height()) {
+        out.fBottom = info.height();
+    }
+    return true;
+}
+
 uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info)
 {
     if (!CheckIndexVailed(index)) {
         HiLog::Error(LABEL, "Invalid index:%{public}u, range:%{public}d", index, frameCount_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
+    if (opts.sampleSize != DEFAULT_SAMPLE_SIZE) {
+        HiLog::Error(LABEL, "Do not support sample size now!");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
     auto desireColor = ConvertToColorType(opts.desiredPixelFormat, info.pixelFormat);
     auto desireAlpha = ConvertToAlphaType(opts.desireAlphaType, info.alphaType);
     // SK only support low down scale
-    if (IsSupportScaleOnDecode() && opts.desiredSize.width < static_cast<uint32_t>(info_.width()) &&
-        opts.desiredSize.height < static_cast<uint32_t>(info_.height())) {
-        dstInfo_ = SkImageInfo::Make(opts.desiredSize.width,
-            opts.desiredSize.height, desireColor, desireAlpha, info_.refColorSpace());
+    int dstWidth = opts.desiredSize.width;
+    int dstHeight = opts.desiredSize.height;
+    float scale = ZERO;
+    if (IsLowDownScale(opts.desiredSize, info_) && GetScaledSize(dstWidth, dstHeight, scale)) {
+        dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha, info_.refColorSpace());
     } else {
         dstInfo_ = SkImageInfo::Make(info_.width(), info_.height(),
             desireColor, desireAlpha, info_.refColorSpace());
@@ -232,11 +286,17 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     dstOptions_.fFrameIndex = index;
-    if (IsSupportCropOnDecode() && opts.CropRect.width != ZERO && opts.CropRect.height != ZERO) {
-        dstSubset_ = SkIRect::MakeXYWH(opts.CropRect.left, opts.CropRect.top,
-            opts.CropRect.width, opts.CropRect.height);
+
+    if (!IsValidCrop(opts.CropRect, info_, dstSubset_)) {
+        HiLog::Error(LABEL,
+            "Invalid crop rect xy [%{public}d x %{public}d], wh [%{public}d x %{public}d]",
+            dstSubset_.left(), dstSubset_.top(), dstSubset_.width(), dstSubset_.height());
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (IsSupportCropOnDecode(dstSubset_)) {
         dstOptions_.fSubset = &dstSubset_;
     }
+
     info.size.width = dstInfo_.width();
     info.size.height = dstInfo_.height();
     return SUCCESS;

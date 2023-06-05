@@ -60,7 +60,9 @@ private:
     bool CheckIndexVailed(uint32_t index);
     bool DecodeHeader();
     bool IsSupportScaleOnDecode();
+    bool GetScaledSize(int &dWidth, int &dHeight, float &scale);
     bool IsSupportCropOnDecode();
+    bool IsSupportCropOnDecode(SkIRect &target);
     bool ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType);
     bool ConvertInfoToColorType(SkColorType &format, PlPixelFormat &outputFormat);
     bool GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res);
