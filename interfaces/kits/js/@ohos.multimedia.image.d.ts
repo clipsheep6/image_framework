@@ -218,6 +218,198 @@ declare namespace image {
      * @syscap SystemCapability.Multimedia.Image.Core
      */
     F_NUMBER = 'FNumber',
+
+    /**
+     * Date time
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    DATE_TIME = 'DateTime',
+
+    /**
+     * GPS time stamp
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    GPS_TIME_STAMP = 'GPSTimeStamp',
+
+    /**
+     * GPS date stamp
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    GPS_DATE_STAMP = 'GPSDateStamp',
+
+    /**
+     * Image description
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    IMAGE_DESCRIPTION = 'ImageDescription',
+
+    /**
+     * Make
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    MAKE = 'Make',
+
+    /**
+     * Model
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    MODEL = 'Model',
+
+    /**
+     * Photo mode
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    PHOTO_MODE = 'PhotoMode',
+
+    /**
+     * Sensitivity type
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    SENSITIVITY_TYPE = 'SensitivityType',
+
+    /**
+     * Standard output sensitivity
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    STANDARD_OUTPUT_SENSITIVITY = 'StandardOutputSensitivity',
+
+    /**
+     * Recommended exposure index
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    RECOMMENDED_EXPOSURE_INDEX = 'RecommendedExposureIndex',
+
+    /**
+     * ISO speed
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    ISO_SPEED = 'ISOSpeedRatings',
+
+    /**
+     * Aperture value
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    APERTURE_VALUE = 'ApertureValue',
+
+    /**
+     * Exposure bias value
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    EXPOSURE_BIAS_VALUE = 'ExposureBiasValue',
+
+    /**
+     * Metering mode
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    METERING_MODE = 'MeteringMode',
+
+    /**
+     * Light source
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    LIGHT_SOURCE = 'LightSource',
+
+    /**
+     * Flash
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    FLASH = 'Flash',
+
+    /**
+     * Focal length
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    FOCAL_LENGTH = 'FocalLength',
+
+    /**
+     * User comment
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    USER_COMMENT = 'UserComment',
+
+    /**
+     * Pixel x dimension
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    PIXEL_X_DIMENSION = 'PixelXDimension',
+
+    /**
+     * Pixel y dimension
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    PIXEL_Y_DIMENSION = 'PixelYDimension',
+
+    /**
+     * White balance
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    WHITE_BALANCE = 'WhiteBalance',
+
+    /**
+     * Focal length in 35mm film
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    FOCAL_LENGTH_IN_35_MM_FILM = 'FocalLengthIn35mmFilm',
+
+    /**
+     * Capture mode
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    CAPTURE_MODE = 'HwMnoteCaptureMode',
+
+    /**
+     * Physical aperture
+     *
+     * @syscap SystemCapability.Multimedia.Image.Core
+     * @since 9
+     */
+    PHYSICAL_APERTURE = 'HwMnotePhysicalAperture'
   }
 
   /**
