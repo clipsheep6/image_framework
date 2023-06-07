@@ -40,7 +40,7 @@ namespace {
 static const std::map<SkEncodedImageFormat, std::string> FORMAT_NAME = {
     {SkEncodedImageFormat::kBMP, "image/bmp"},
     {SkEncodedImageFormat::kGIF, "image/gif"},
-    {SkEncodedImageFormat::kICO, "image/png"},
+    {SkEncodedImageFormat::kICO, "image/ico"},
     {SkEncodedImageFormat::kJPEG, "image/jpeg"},
     {SkEncodedImageFormat::kPNG, "image/png"},
     {SkEncodedImageFormat::kWBMP, "image/bmp"},
