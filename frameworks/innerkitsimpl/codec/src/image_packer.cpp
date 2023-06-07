@@ -78,7 +78,7 @@ uint32_t ImagePacker::StartPackingImpl(const PackOption &option)
     }
     PlEncodeOptions plOpts;
     CopyOptionsToPlugin(option, plOpts);
-    return DoEncodingFunc([this, &plOpts](ImagePlugin::AbsImageEncoder* encoder){
+    return DoEncodingFunc([this, &plOpts](ImagePlugin::AbsImageEncoder* encoder) {
         return encoder->StartEncode(*packerStream_.get(), plOpts);
     });
 }
@@ -173,7 +173,7 @@ uint32_t ImagePacker::StartPackingAdapter(PackerStream &outputStream, const Pack
 
 uint32_t ImagePacker::AddImage(PixelMap &pixelMap)
 {
-    return DoEncodingFunc([this, &pixelMap](ImagePlugin::AbsImageEncoder* encoder){
+    return DoEncodingFunc([this, &pixelMap](ImagePlugin::AbsImageEncoder* encoder) {
         return encoder->AddImage(pixelMap);
     });
 }
@@ -218,13 +218,13 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 
 uint32_t ImagePacker::FinalizePacking()
 {
-    return DoEncodingFunc([](ImagePlugin::AbsImageEncoder* encoder){
+    return DoEncodingFunc([](ImagePlugin::AbsImageEncoder* encoder) {
         auto res = encoder->FinalizeEncode();
         if (res != SUCCESS) {
             HiLog::Error(LABEL, "FinalizePacking failed %{public}d.", res);
         }
         return res;
-    }, false);
+        }, false);
 }
 
 uint32_t ImagePacker::FinalizePacking(int64_t &packedSize)
@@ -286,8 +286,7 @@ uint32_t ImagePacker::DoEncodingFunc(std::function<uint32_t(ImagePlugin::AbsImag
     std::vector<uint32_t> rets;
     rets.resize(SIZE_ZERO);
     bool isSuccessOnce = false;
-    for (size_t i = SIZE_ZERO; i < encoders_.size(); i++)
-    {
+    for (size_t i = SIZE_ZERO; i < encoders_.size(); i++) {
         if (!forAll && isSuccessOnce) {
             HiLog::Debug(LABEL, "DoEncodingFunc encoding successed, reset other encoder %{public}d.", i);
             encoders_.at(i).reset();
