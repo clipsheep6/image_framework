@@ -33,6 +33,10 @@ ohos_shared_library("rawplugin") {
   ]
 
   include_dirs = [
+    "//drivers/interface/codec/image",
+    "//drivers/interface/display/buffer",
+    "//drivers/interface/display/buffer/v1_0/include",
+    "//drivers/peripheral/display/interfaces/include",
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
@@ -76,6 +80,10 @@ ohos_shared_library("rawplugin") {
     external_deps += [
       "drivers_interface_codec:image_idl_headers",
       "drivers_interface_codec:libimage_proxy_1.0",
+      "drivers_interface_display:display_buffer_idl_headers",
+      "drivers_interface_display:display_composer_idl_headers",
+      "drivers_interface_display:libdisplay_buffer_hdi_impl",
+      "drivers_interface_display:libdisplay_composer_hdi_impl",
     ]
   }
 
