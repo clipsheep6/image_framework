@@ -96,10 +96,6 @@ ohos_copy("image_declaration") {
   module_install_name = ""
 }
 
-declare_args() {
-  purgeable_ashmem_enable = false
-}
-
 if (use_clang_android) {
   ohos_source_set("image_native") {
     public_configs = [ ":image_external_config" ]
