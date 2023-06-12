@@ -26,7 +26,10 @@ ohos_static_library("exifhelper") {
       debug = false
     }
   }
-  sources = [ "../libjpegplugin/src/exif_info.cpp" ]
+  sources = [
+    "../libjpegplugin/src/exif_info.cpp",
+    "../libjpegplugin/src/exif_maker_note.cpp",
+  ]
   include_dirs = [
     "../libjpegplugin/include",
     "${image_subsystem}/interfaces/innerkits/include",
