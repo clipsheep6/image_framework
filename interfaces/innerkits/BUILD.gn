@@ -13,7 +13,6 @@
 
 import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
-import("//commonlibrary/memory_utils/purgeable_mem_config.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 import("$image_subsystem/plugins/cross/image_native_android.gni")
 import("$image_subsystem/plugins/cross/image_native_ios.gni")
@@ -95,6 +94,10 @@ ohos_copy("image_declaration") {
   outputs = [ target_out_dir + "/$target_name/" ]
   module_source_dir = target_out_dir + "/$target_name"
   module_install_name = ""
+}
+
+declare_args() {
+  purgeable_ashmem_enable = false
 }
 
 if (use_clang_android) {
