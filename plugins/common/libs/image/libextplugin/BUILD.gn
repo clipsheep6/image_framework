@@ -114,7 +114,6 @@ ohos_shared_library("extplugin") {
     "include",
     "${image_subsystem}/interfaces/innerkits/include",
     "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
-    "${graphic_subsystem}/utils/color_manager/export",
   ]
   if (use_mingw_win) {
     configs += [ ":win_config" ]
@@ -138,7 +137,6 @@ ohos_shared_library("extplugin") {
     include_dirs += [ "${commonlibrary_subsystem}/base/include" ]
     deps = [
       ":exifhelper",
-      "${graphic_subsystem}/utils/color_manager:color_manager",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
@@ -147,6 +145,7 @@ ohos_shared_library("extplugin") {
 
     external_deps = [
       "c_utils:utils",
+      "graphic_standard:color_manager",
       "hiviewdfx_hilog_native:libhilog",
     ]
   }
