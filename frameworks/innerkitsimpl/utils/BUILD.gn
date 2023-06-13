@@ -40,9 +40,9 @@ if (use_clang_ios) {
     ]
 
     #relative_install_dir = "module/multimedia"
-    subsystem_name = "multimedia"
+    subsystem_name = "graphic"
     innerapi_tags = [ "platformsdk_indirect" ]
-    part_name = "multimedia_image_framework"
+    part_name = "image_framework"
   }
 } else {
   ohos_shared_library("image_utils") {
@@ -112,9 +112,9 @@ if (use_clang_ios) {
     }
 
     #relative_install_dir = "module/multimedia"
-    subsystem_name = "multimedia"
+    subsystem_name = "graphic"
     innerapi_tags = [ "platformsdk_indirect" ]
-    part_name = "multimedia_image_framework"
+    part_name = "image_framework"
   }
 }
 
@@ -172,6 +172,6 @@ ohos_static_library("image_utils_static") {
       "hiviewdfx_hilog_native:libhilog",
     ]
   }
-  subsystem_name = "multimedia"
-  part_name = "multimedia_image_framework"
+  subsystem_name = "graphic"
+  part_name = "image_framework"
 }

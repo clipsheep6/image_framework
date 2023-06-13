@@ -31,7 +31,7 @@ ohos_static_library("log_mock_static") {
     sources -= [ "$image_subsystem/mock/native/src/HiLog.cpp" ]
     deps = [ "$graphic_subsystem/rosen/modules/platform:hilog" ]
   }
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
 }
 
 config("utils_mock_config") {
@@ -62,5 +62,5 @@ ohos_static_library("utils_mock_static") {
     "//foundation/multimedia/image_framework/mock/native/src/rwlock.cpp",
   ]
   deps = [ ":log_mock_static" ]
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
 }
