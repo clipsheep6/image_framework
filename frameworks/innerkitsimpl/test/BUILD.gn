@@ -35,6 +35,7 @@ ohos_unittest("commontest") {
     "//foundation/multimedia/image_framework/plugins/manager/include",
   ]
   sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest/native_image_test.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/pixel_map_parcel_test.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/pixel_map_test.cpp",
   ]
@@ -169,6 +170,31 @@ ohos_unittest("imagesourcetest") {
 
   # external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
   resource_config_file = "//foundation/multimedia/image_framework/test/resource/image/ohos_test.xml"
+}
+
+ohos_unittest("jpegdecoderextest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "$image_subsystem/frameworks/innerkitsimpl/converter/include",
+    "$image_subsystem/frameworks/innerkitsimpl/utils/include",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/plugins/common/libs/image/libjpegplugin/include",
+    "$image_subsystem/plugins/manager/include",
+    "//third_party/googletest/googletest/include",
+  ]
+  sources = [ "unittest/jpeg_decoder_ex_test.cpp" ]
+  deps = [
+    "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+    "$image_subsystem/interfaces/innerkits:image_native",
+    "$image_subsystem/plugins/common/libs/image/libjpegplugin:jpegplugin",
+    "//third_party/googletest:gmock_main",
+    "//third_party/googletest:gtest_main",
+  ]
+
+  external_deps = [ "c_utils:utils" ]
+
+  resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
 }
 
 ohos_unittest("format_agent_plugin_src_test") {
@@ -866,6 +892,7 @@ ohos_unittest("ndktest") {
   module_out_path = module_output_path
 
   include_dirs = [
+    "$image_subsystem/frameworks/kits/js/common/ndk/include",
     "/utils/include",
     "/interfaces/innerkits/include",
     "//third_party/googletest/googletest/include",
@@ -873,9 +900,14 @@ ohos_unittest("ndktest") {
     "../../../../../arkui/napi/interfaces/kits",
     "//third_party/node/src",
   ]
-  sources = [ "unittest/ndk_test.cpp" ]
+  sources = [
+    "unittest/image_ndk_test.cpp",
+    "unittest/ndk_test.cpp",
+  ]
 
   deps = [
+    "$image_subsystem/frameworks/kits/js/common/ndk:image_ndk",
+    "$image_subsystem/frameworks/kits/js/common/ndk:image_receiver_ndk",
     "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap_ndk",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
@@ -901,6 +933,7 @@ group("unittest") {
     ":imagesourcetest",
     ":imageutilstest",
     ":interfacetest",
+    ":jpegdecoderextest",
     ":ndktest",
     ":pixelconvertadaptertest",
     ":pluginlibjpegtest",

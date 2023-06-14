@@ -25,6 +25,10 @@
 #endif
 #include "image_type.h"
 #include "parcel.h"
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+#include "purgeable_mem_base.h"
+#include "purgeable_mem_builder.h"
+#endif
 
 namespace OHOS {
 namespace Media {
@@ -36,7 +40,7 @@ struct InitializationOptions {
     PixelFormat pixelFormat = PixelFormat::UNKNOWN;
     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     ScaleMode scaleMode = ScaleMode::FIT_TARGET_SIZE;
-    bool editable = false;
+    bool editable = true;
     bool useSourceIfMatch = false;
 };
 
@@ -112,7 +116,7 @@ public:
     NATIVEEXPORT AllocatorType GetAllocatorType();
     NATIVEEXPORT void *GetFd() const;
     NATIVEEXPORT void SetFreePixelMapProc(CustomFreePixelMap func);
-    NATIVEEXPORT void SetTrtansformered(bool isTrtansformered);
+    NATIVEEXPORT void SetTransformered(bool isTransformered);
 
     NATIVEEXPORT uint32_t GetCapacity()
     {
@@ -126,7 +130,7 @@ public:
 
     NATIVEEXPORT bool IsTransformered()
     {
-        return isTrtansformered_;
+        return isTransformered_;
     }
 
     // judgement whether create pixelmap use source as result
@@ -159,6 +163,23 @@ public:
         return grColorSpace_;
     }
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----end-------
+#endif
+
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    NATIVEEXPORT bool IsPurgeable() const
+    {
+        return purgeableMemPtr_ != nullptr;
+    }
+
+    NATIVEEXPORT std::shared_ptr<PurgeableMem::PurgeableMemBase> GetPurgeableMemPtr() const
+    {
+        return purgeableMemPtr_;
+    }
+
+    NATIVEEXPORT void SetPurgeableMemPtr(std::shared_ptr<PurgeableMem::PurgeableMemBase> pmPtr)
+    {
+        purgeableMemPtr_ = pmPtr;
+    }
 #endif
 
 private:
@@ -200,7 +221,7 @@ private:
                           const uint32_t &stride, const Rect &region);
     void ReleaseSharedMemory(void *addr, void *context, uint32_t size);
     static void ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataSize, void **buffer);
-    static void *AllocSharedMemory(const uint64_t bufferSize, int &fd);
+    static void *AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId);
     void SetEditable(bool editable)
     {
         editable_ = editable;
@@ -248,9 +269,9 @@ private:
     CustomFreePixelMap freePixelMapProc_ = nullptr;
     AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;
     uint32_t pixelsSize_ = 0;
-    bool editable_ = false;
+    bool editable_ = true;
     bool useSourceAsResponse_ = false;
-    bool isTrtansformered_ = false;
+    bool isTransformered_ = false;
     std::shared_ptr<std::mutex> transformMutex_ = std::make_shared<std::mutex>();
 
     // only used by rosen backend
@@ -260,6 +281,12 @@ private:
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
 #else
     std::shared_ptr<uint8_t> grColorSpace_ = nullptr;
+#endif
+
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    std::shared_ptr<PurgeableMem::PurgeableMemBase> purgeableMemPtr_ = nullptr;
+#else
+    std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
 };
 } // namespace Media

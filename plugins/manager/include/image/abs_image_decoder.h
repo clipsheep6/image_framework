@@ -47,6 +47,8 @@ struct NinePatchContext {
 struct DecodeContext {
     // In: input the image head info.
     PlImageInfo info;
+    // In: input the pixelmap uniqueId.
+    uint32_t pixelmapUniqueId_;
     // InOut: input the buffer and bufferSize, output pixels data and dataSize.
     PlImageBuffer pixelsBuffer;
     // In: whether the source data is completed.
@@ -101,6 +103,7 @@ struct PixelDecodeOptions {
 class AbsImageDecoder {
 public:
     static constexpr uint32_t DEFAULT_IMAGE_NUM = 1;
+    static constexpr uint32_t E_NO_EXIF = 1;
 
     AbsImageDecoder() = default;
 
@@ -172,7 +175,7 @@ public:
     // get filter area.
     virtual uint32_t GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges)
     {
-        return Media::ERR_MEDIA_INVALID_OPERATION;
+        return E_NO_EXIF;
     }
 
 #ifdef IMAGE_COLORSPACE_FLAG

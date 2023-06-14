@@ -13,6 +13,7 @@
 
 import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
+import("//commonlibrary/memory_utils/purgeable_mem_config.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 import("$image_subsystem/plugins/cross/image_native_android.gni")
 import("$image_subsystem/plugins/cross/image_native_ios.gni")
@@ -105,6 +106,7 @@ if (use_clang_android) {
     include_dirs = image_native_android_include_dirs
     deps = image_native_android_deps
     subsystem_name = "multimedia"
+    innerapi_tags = [ "platformsdk" ]
     part_name = "multimedia_image_framework"
   }
 } else if (use_clang_ios) {
@@ -117,6 +119,7 @@ if (use_clang_android) {
     deps = image_native_ios_deps
     external_deps = image_native_ios_external_deps
     subsystem_name = "multimedia"
+    innerapi_tags = [ "platformsdk" ]
     part_name = "multimedia_image_framework"
   }
 } else {
@@ -220,8 +223,14 @@ if (use_clang_android) {
       ]
     }
 
+    if (purgeable_ashmem_enable) {
+      defines += [ "IMAGE_PURGEABLE_PIXELMAP" ]
+      external_deps += [ "memory_utils:libpurgeablemem" ]
+    }
+
     #  relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
+    innerapi_tags = [ "platformsdk" ]
     part_name = "multimedia_image_framework"
     version_script = "libimage_native.versionscript"
   }

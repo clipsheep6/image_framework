@@ -371,6 +371,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
 
     DecodeContext context;
     FinalOutputStep finalOutputStep = FinalOutputStep::NO_CHANGE;
+    context.pixelmapUniqueId_ = pixelMap->GetUniqueId();
     if (!useSkia) {
         bool hasNinePatch = mainDecoder_->HasProperty(NINE_PATCH);
         finalOutputStep = GetFinalOutputStep(opts_, *(pixelMap.get()), hasNinePatch);
@@ -404,8 +405,8 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
                 context.freeFunc(context.pixelsBuffer.buffer, context.pixelsBuffer.context,
                                  context.pixelsBuffer.bufferSize);
             } else {
-                free(context.pixelsBuffer.buffer);
-                context.pixelsBuffer.buffer = nullptr;
+                PixelMap::ReleaseMemory(context.allocatorType, context.pixelsBuffer.buffer,
+                                        context.pixelsBuffer.context, context.pixelsBuffer.bufferSize);
             }
         }
         return nullptr;
@@ -438,6 +439,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
 #if !defined(_WIN32) && !defined(_APPLE)
     FinishTrace(HITRACE_TAG_ZIMAGE);
 #endif
+    pixelMap->SetEditable(opts.editable);
     return pixelMap;
 }
 
@@ -1108,8 +1110,6 @@ uint32_t ImageSource::SetDecodeOptions(std::unique_ptr<AbsImageDecoder> &decoder
 uint32_t ImageSource::UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin::PlImageInfo &plInfo,
                                          PixelMap &pixelMap)
 {
-    pixelMap.SetEditable(opts.editable);
-
     ImageInfo info;
     info.baseDensity = sourceInfo_.baseDensity;
     info.size.width = plInfo.size.width;
@@ -1596,5 +1596,11 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
 
     return frameCount;
 }
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+size_t ImageSource::GetSourceSize() const
+{
+    return sourceStreamPtr_ ? sourceStreamPtr_->GetStreamSize() : 0;
+}
+#endif
 } // namespace Media
 } // namespace OHOS

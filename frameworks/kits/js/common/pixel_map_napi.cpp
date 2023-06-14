@@ -130,7 +130,6 @@ static bool parseInitializationOptions(napi_env env, napi_value root, Initializa
     }
 
     if (!GET_BOOL_BY_NAME(root, "editable", opts->editable)) {
-        HiLog::Info(LABEL, "no editable in initialization options");
         opts->editable = true;
     }
 
@@ -369,7 +368,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
 
 std::shared_ptr<PixelMap> PixelMapNapi::GetPixelMap(napi_env env, napi_value pixelmap)
 {
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
 
     napi_status status = napi_unwrap(env, pixelmap, reinterpret_cast<void**>(&pixelMapNapi));
     if (!IMG_IS_OK(status)) {
@@ -457,7 +456,6 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_GetImageInf
     HiLog::Debug(LABEL, "GetImageInfo, w=%{public}u, h=%{public}u, r=%{public}u, f=%{public}d",
         info->width, info->height, info->rowSize, info->pixelFormat);
 
-    HiLog::Debug(LABEL, "GetImageInfo OUT");
     return OHOS_IMAGE_RESULT_SUCCESS;
 }
 
@@ -514,7 +512,6 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_UnAccessPix
 
     pixmapNapi->UnlockPixelMap();
 
-    HiLog::Debug(LABEL, "UnAccessPixels OUT");
     return OHOS_IMAGE_RESULT_SUCCESS;
 }
 
@@ -700,7 +697,7 @@ napi_value PixelMapNapi::GetIsEditable(napi_env env, napi_callback_info info)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
 
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
@@ -1031,7 +1028,7 @@ napi_value PixelMapNapi::GetBytesNumberPerRow(napi_env env, napi_callback_info i
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
 
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
@@ -1064,7 +1061,7 @@ napi_value PixelMapNapi::GetPixelBytesNumber(napi_env env, napi_callback_info in
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
 
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
@@ -1096,7 +1093,7 @@ napi_value PixelMapNapi::IsSupportAlpha(napi_env env, napi_callback_info info)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
 
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
@@ -1133,7 +1130,7 @@ napi_value PixelMapNapi::SetAlphaAble(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_boolean, "Invalid input type");
     NAPI_ASSERT(env, napi_get_value_bool(env, argValue[NUM_0], &isAlphaAble) == napi_ok, "Parse input error");
 
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
@@ -1154,7 +1151,6 @@ napi_value PixelMapNapi::SetAlphaAble(napi_env env, napi_callback_info info)
 
 static void CreateAlphaPixelmapComplete(napi_env env, napi_status status, void *data)
 {
-    HiLog::Debug(LABEL, "[PixelMap]CreateAlphaPixelmapComplete IN");
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
     auto context = static_cast<PixelMapAsyncContext*>(data);
@@ -1165,7 +1161,6 @@ static void CreateAlphaPixelmapComplete(napi_env env, napi_status status, void *
     } else {
         context->status = ERROR;
     }
-    HiLog::Debug(LABEL, "[PixelMap]CreateAlphaPixelmapComplete OUT");
     CommonCallbackRoutine(env, context, result);
 }
 
@@ -1225,7 +1220,7 @@ napi_value PixelMapNapi::GetDensity(napi_env env, napi_callback_info info)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, HiLog::Error(LABEL, "fail to napi_get_cb_info"));
 
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
@@ -1262,7 +1257,7 @@ napi_value PixelMapNapi::SetDensity(napi_env env, napi_callback_info info)
         "Density input mismatch");
     NAPI_ASSERT(env, napi_get_value_uint32(env, argValue[NUM_0], &density) == napi_ok, "Could not parse density");
 
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = std::make_unique<PixelMapNapi>();
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));

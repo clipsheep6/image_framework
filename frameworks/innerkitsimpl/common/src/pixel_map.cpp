@@ -33,7 +33,11 @@
 #include "memory.h"
 #endif
 
-#if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+#include "purgeable_resource_manager.h"
+#endif
+
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include <sys/mman.h>
 #include "ashmem.h"
 #include "ipc_file_descriptor.h"
@@ -59,6 +63,13 @@ constexpr uint8_t ALIGN_NUMBER = 4;
 
 PixelMap::~PixelMap()
 {
+#ifdef IMAGE_PURGEABLE_PIXELMAP
+    if (purgeableMemPtr_) {
+        PurgeableMem::PurgeableResourceManager::GetInstance().RemoveResource(purgeableMemPtr_);
+        purgeableMemPtr_.reset();
+        purgeableMemPtr_ = nullptr;
+    }
+#endif
     FreePixelMap();
 }
 
@@ -118,10 +129,10 @@ void PixelMap::SetFreePixelMapProc(CustomFreePixelMap func)
     freePixelMapProc_ = func;
 }
 
-void PixelMap::SetTrtansformered(bool isTrtansformered)
+void PixelMap::SetTransformered(bool isTransformered)
 {
     std::unique_lock<std::mutex> lock(*transformMutex_);
-    isTrtansformered_ = isTrtansformered;
+    isTransformered_ = isTransformered;
 }
 
 void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type, CustomFreePixelMap func)
@@ -176,14 +187,11 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
         return nullptr;
     }
     int fd = 0;
-    void *dstPixels = AllocSharedMemory(bufferSize, fd);
+    void *dstPixels = AllocSharedMemory(bufferSize, fd, dstPixelMap->GetUniqueId());
     if (dstPixels == nullptr) {
         HiLog::Error(LABEL, "allocate memory size %{public}u fail", bufferSize);
         return nullptr;
     }
-
-    void *fdBuffer = new int32_t();
-    *static_cast<int32_t *>(fdBuffer) = fd;
 
     Position dstPosition;
     if (!PixelConvertAdapter::WritePixelsConvert(reinterpret_cast<const void *>(colors + offset),
@@ -194,6 +202,9 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
         dstPixels = nullptr;
         return nullptr;
     }
+
+    void *fdBuffer = new int32_t();
+    *static_cast<int32_t *>(fdBuffer) = fd;
     dstPixelMap->SetEditable(opts.editable);
     dstPixelMap->SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::SHARE_MEM_ALLOC, nullptr);
     return dstPixelMap;
@@ -201,7 +212,7 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
 
 void PixelMap::ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataSize, void **buffer)
 {
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(_IOS) &&!defined(_ANDROID)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     if (allocatorType == AllocatorType::SHARE_MEM_ALLOC) {
         if (*buffer != nullptr) {
             ::munmap(*buffer, dataSize);
@@ -220,9 +231,11 @@ void PixelMap::ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataS
     }
 }
 
-void *PixelMap::AllocSharedMemory(const uint64_t bufferSize, int &fd)
+void *PixelMap::AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId)
 {
-    fd = AshmemCreate("PixelMap RawData", bufferSize);
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    std::string name = "PixelMap RawData, uniqueId: " + std::to_string(uniqueId);
+    fd = AshmemCreate(name.c_str(), bufferSize);
     if (fd < 0) {
         HiLog::Error(LABEL, "AllocSharedMemory fd error");
         return nullptr;
@@ -241,6 +254,7 @@ void *PixelMap::AllocSharedMemory(const uint64_t bufferSize, int &fd)
         return nullptr;
     }
     return ptr;
+#endif
 }
 
 bool PixelMap::CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t offset, int32_t stride,
@@ -295,14 +309,18 @@ unique_ptr<PixelMap> PixelMap::Create(const InitializationOptions &opts)
         HiLog::Error(LABEL, "calloc parameter bufferSize:[%{public}d] error.", bufferSize);
         return nullptr;
     }
-    uint8_t *dstPixels = static_cast<uint8_t *>(calloc(bufferSize, 1));
+    int fd = 0;
+    void *dstPixels = AllocSharedMemory(bufferSize, fd, dstPixelMap->GetUniqueId());
     if (dstPixels == nullptr) {
         HiLog::Error(LABEL, "allocate memory size %{public}u fail", bufferSize);
         return nullptr;
     }
     // update alpha opaque
-    UpdatePixelsAlpha(dstImageInfo.alphaType, dstImageInfo.pixelFormat, dstPixels, *dstPixelMap.get());
-    dstPixelMap->SetPixelsAddr(dstPixels, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
+    UpdatePixelsAlpha(dstImageInfo.alphaType, dstImageInfo.pixelFormat,
+                      static_cast<uint8_t *>(dstPixels), *dstPixelMap.get());
+    void *fdBuffer = new int32_t();
+    *static_cast<int32_t *>(fdBuffer) = fd;
+    dstPixelMap->SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::SHARE_MEM_ALLOC, nullptr);
     dstPixelMap->SetEditable(opts.editable);
     return dstPixelMap;
 }
@@ -401,7 +419,7 @@ bool PixelMap::SourceCropAndConvert(PixelMap &source, const ImageInfo &srcImageI
     int fd = 0;
     void *dstPixels = nullptr;
     if (source.GetAllocatorType() == AllocatorType::SHARE_MEM_ALLOC) {
-        dstPixels = AllocSharedMemory(bufferSize, fd);
+        dstPixels = AllocSharedMemory(bufferSize, fd, dstPixelMap.GetUniqueId());
     } else {
         dstPixels = malloc(bufferSize);
     }
@@ -484,7 +502,7 @@ bool PixelMap::CopyPixelMap(PixelMap &source, PixelMap &dstPixelMap)
     int fd = 0;
     void *dstPixels = nullptr;
     if (source.GetAllocatorType() == AllocatorType::SHARE_MEM_ALLOC) {
-        dstPixels = AllocSharedMemory(bufferSize, fd);
+        dstPixels = AllocSharedMemory(bufferSize, fd, dstPixelMap.GetUniqueId());
     } else {
         dstPixels = malloc(bufferSize);
     }
@@ -1194,7 +1212,9 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
         return parcel.WriteUnpadBuffer(data, size);
     }
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    int fd = AshmemCreate("Parcel ImageData", size);
+    uint32_t id = GetUniqueId();
+    std::string name = "Parcel ImageData, uniqueId: " + std::to_string(id);
+    int fd = AshmemCreate(name.c_str(), size);
     HiLog::Info(LABEL, "AshmemCreate:[%{public}d].", fd);
     if (fd < 0) {
         return false;
@@ -1374,6 +1394,11 @@ bool PixelMap::Marshalling(Parcel &parcel) const
         return false;
     }
 
+    if (!parcel.WriteBool(editable_)) {
+        HiLog::Error(LABEL, "write pixel map editable to parcel failed.");
+        return false;
+    }
+
     if (!parcel.WriteInt32(static_cast<int32_t>(allocatorType_))) {
         HiLog::Error(LABEL, "write pixel map allocator type:[%{public}d] to parcel failed.",
                      allocatorType_);
@@ -1435,10 +1460,14 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         return nullptr;
     }
 
+    bool isEditable = parcel.ReadBool();
+    pixelMap->SetEditable(isEditable);
+    
     AllocatorType allocType = static_cast<AllocatorType>(parcel.ReadInt32());
     int32_t bufferSize = parcel.ReadInt32();
     int32_t bytesPerPixel = ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
     if (bytesPerPixel == 0) {
+        delete pixelMap;
         HiLog::Error(LABEL, "unmarshalling get bytes by per pixel fail.");
         return nullptr;
     }
@@ -1450,6 +1479,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         rowDataSize = bytesPerPixel * imgInfo.size.width;
     }
     if (bufferSize != rowDataSize * imgInfo.size.height) {
+        delete pixelMap;
         HiLog::Error(LABEL, "unmarshalling bufferSize parcelling error");
         return nullptr;
     }
@@ -1699,6 +1729,11 @@ PixelMap *PixelMap::DecodeTlv(std::vector<uint8_t> &buff)
         HiLog::Error(LABEL, "pixel map tlv decode fail: set image info error[%{public}d]", ret);
         return nullptr;
     }
+    if (dataSize != pixelMap->GetByteCount()) {
+        delete pixelMap;
+        HiLog::Error(LABEL, "pixel map tlv decode fail: dataSize not match");
+        return nullptr;
+    }
     pixelMap->SetPixelsAddr(data, nullptr, dataSize, static_cast<AllocatorType>(allocType), nullptr);
     return pixelMap;
 }
@@ -1847,6 +1882,10 @@ static int8_t GetAlphaIndex(const PixelFormat& pixelFormat)
 
 uint32_t PixelMap::SetAlpha(const float percent)
 {
+    if (!IsEditable()) {
+        HiLog::Error(LABEL, "pixelmap is not allowed to set alpha, when editable is false");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
     auto alphaType = GetAlphaType();
     if (alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN ||
         alphaType == AlphaType::IMAGE_ALPHA_TYPE_OPAQUE) {
@@ -1921,6 +1960,10 @@ void PixelMap::flip(bool xAxis, bool yAxis)
 }
 uint32_t PixelMap::crop(const Rect &rect)
 {
+    if (!IsEditable()) {
+        HiLog::Error(LABEL, "pixelmap is not allowed to crop, when editable is false");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
     PostProc postProc;
     auto cropValue = PostProc::GetCropValue(rect, imageInfo_.size);
     if (cropValue == CropValue::NOCROP) {
