@@ -20,6 +20,7 @@
 #include <string>
 #include "abs_image_decoder.h"
 #include "abs_image_decompress_component.h"
+#include "jpeg_hardware_decoder.h"
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
 #endif
@@ -31,6 +32,7 @@
 #include "plugin_class_base.h"
 #include "plugin_server.h"
 #include "exif_info.h"
+
 
 namespace OHOS {
 namespace ImagePlugin {

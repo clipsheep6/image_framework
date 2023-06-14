@@ -27,7 +27,10 @@
         "components": [
           "common",
           "c_utils",
+          "drivers_interface_codec",
+          "drivers_interface_display",
           "graphic_standard",
+          "hdf_core",
           "hichecker_native",
           "hitrace_native",
           "hiviewdfx_hilog_native",

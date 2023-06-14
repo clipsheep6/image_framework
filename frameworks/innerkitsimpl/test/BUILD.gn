@@ -725,6 +725,10 @@ ohos_unittest("pluginlibjpegtest") {
   module_out_path = module_output_path
 
   include_dirs = [
+    "//drivers/interface/codec/image",
+    "//drivers/interface/display/buffer",
+    "//drivers/interface/display/buffer/v1_0/include",
+    "//drivers/peripheral/display/interfaces/include",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
     "//foundation/multimedia/image_framework/plugins/manager/include",
@@ -763,6 +767,15 @@ ohos_unittest("pluginlibjpegtest") {
     "c_utils:utils",
     "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
+  ]
+  external_deps += [
+    "drivers_interface_codec:image_idl_headers",
+    "drivers_interface_codec:libimage_proxy_1.0",
+    "drivers_interface_display:display_buffer_idl_headers",
+    "drivers_interface_display:display_composer_idl_headers",
+    "drivers_interface_display:libdisplay_buffer_hdi_impl",
+    "drivers_interface_display:libdisplay_composer_hdi_impl",
+    "hdf_core:libhdi",
   ]
 }
 
