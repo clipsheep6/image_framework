@@ -13,29 +13,33 @@
  * limitations under the License.
  */
 
-#ifndef OUTPUT_DATA_STREAM_H
-#define OUTPUT_DATA_STREAM_H
+#ifndef PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_STREAM_H_
+#define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_STREAM_H_
 
-#include <cinttypes>
+#include <cstddef>
+
+#include "input_data_stream.h"
+#include "nocopyable.h"
+#include "SkStream.h"
 
 namespace OHOS {
 namespace ImagePlugin {
-class OutputDataStream {
+class ExtStream : public SkStream, NoCopyable {
 public:
-    virtual ~OutputDataStream() {}
-    virtual bool Write(const uint8_t *buffer, uint32_t size) = 0;
-    virtual void Flush() {}
-    // False means no limit, true needs return act capicity by size
-    virtual bool GetCapicity(size_t &size)
+    ExtStream() = default;
+    explicit ExtStream(InputDataStream *stream);
+    virtual ~ExtStream() override
     {
-        return false;
+        stream_ = nullptr;
     }
-    virtual bool GetCurrentSize(size_t &size)
-    {
-        return false;
-    }
+
+    size_t read(void *buffer, size_t size) override;
+    size_t peek(void *buffer, size_t size) const override;
+    bool isAtEnd() const override;
+private:
+    ImagePlugin::InputDataStream *stream_;
 };
 } // namespace ImagePlugin
 } // namespace OHOS
 
-#endif // OUTPUT_DATA_STREAM_H
+#endif // PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_STREAM_H_
