@@ -49,6 +49,7 @@ config("image_external_config") {
     "//drivers/peripheral/display/interfaces/include",
     "//drivers/peripheral/base",
     "//third_party/flutter/skia/third_party/externals/libjpeg-turbo",
+    "//foundation/communication/ipc/ipc/native/src/napi_common/include",
   ]
 
   include_dirs += [
@@ -238,6 +239,7 @@ if (use_clang_ios) {
         "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
         "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+        "//foundation/communication/ipc/interfaces/innerkits/ipc_napi_common:ipc_napi",
       ]
     }
 
