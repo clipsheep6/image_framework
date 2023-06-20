@@ -39,10 +39,408 @@ using namespace OHOS::HiviewDFX;
 static constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "PluginMgr" };
 PlatformAdp &PluginMgr::platformAdp_ = DelayedRefSingleton<PlatformAdp>::GetInstance();
 
+std::vector<std::string> GetMataData()
+{
+    const std::vector<std::string> NEW_META_DATA = {
+    R"(
+        {
+          "packageName":"LibJpegPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libjpegplugin.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::JpegDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/jpeg"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::JpegEncoder",
+              "services": [
+                {
+                  "interfaceID":3,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/jpeg"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibPngPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libpngplugin.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::PngDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/png"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibRawPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"librawplugin.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::RawDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/x-raw"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibSvgPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libsvgplugin.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::SvgDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/svg+xml"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibWebpPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libwebpplugin.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::WebpDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/webp"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::WebpEncoder",
+              "services": [
+                {
+                  "interfaceID":3,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/webp"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibBmpPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libbmpplugin.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::BmpDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/bmp"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibGifPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libgifplugin.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::GifDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/gif"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibImageFormatAgent",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libimageformatagent.z.so",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::JpegFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/jpeg"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::PngFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/png"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::GifFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/gif"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::HeifFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/heif"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::WebpFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/webp"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::BmpFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/bmp"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::WbmpFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/vnd.wap.wbmp"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::SvgFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/svg+xml"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::RawFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/x-raw"
+                }
+              ]
+            }
+          ]
+        }
+    )"
+};
+    HiLog::Warn(LABEL, " The NEW_META_DATA size is [%{public}lu]", NEW_META_DATA.size());
+    return NEW_META_DATA;
+}
+
 uint32_t PluginMgr::Register(const vector<string> &canonicalPaths)
 {
     if (canonicalPaths.empty()) {
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
         const vector<string> &metadata = OHOS::MultimediaPlugin::META_DATA;
+#else
+        const vector<string> &metadata = GetMataData();
+#endif
         for (size_t i = 0; i < metadata.size(); i++) {
             uint32_t errorCode = RegisterPlugin(metadata[i]);
             if (errorCode != SUCCESS) {
