@@ -38,6 +38,6 @@ ohos_shared_library("pluginexample1") {
     "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
   ]
 
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
   part_name = "multimedia_image"
 }

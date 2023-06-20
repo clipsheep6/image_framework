@@ -37,8 +37,8 @@ ohos_shared_library("image_ndk") {
   public_configs = [ ":native_public_config" ]
   external_deps = [ "multimedia_image_framework:image" ]
 
-  subsystem_name = "multimedia"
-  part_name = "multimedia_image_framework"
+  subsystem_name = "graphic"
+  part_name = "image_framework"
 }
 
 ohos_shared_library("image_receiver_ndk") {
@@ -51,6 +51,6 @@ ohos_shared_library("image_receiver_ndk") {
   public_configs = [ ":native_public_config" ]
   external_deps = [ "multimedia_image_framework:image" ]
 
-  subsystem_name = "multimedia"
-  part_name = "multimedia_image_framework"
+  subsystem_name = "graphic"
+  part_name = "image_framework"
 }

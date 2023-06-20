@@ -40,6 +40,6 @@ ohos_shared_library("pluginexample3") {
 
   #  external_deps = [ "hilog:libhilog" ]
 
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
   part_name = "multimedia_image"
 }

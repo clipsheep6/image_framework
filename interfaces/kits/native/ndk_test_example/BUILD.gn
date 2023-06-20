@@ -52,6 +52,6 @@ ohos_shared_library("mypixelmap") {
 
   relative_install_dir = "module"
 
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
   part_name = "multimedia_image"
 }
