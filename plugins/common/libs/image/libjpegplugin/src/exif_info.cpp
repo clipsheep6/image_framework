@@ -1694,11 +1694,6 @@ bool EXIFInfo::CheckExifEntryValidEx(const ExifIfd &ifd, const ExifTag &tag)
     return ret;
 }
 
-static inline bool isStrNum(char c)
-{
-    return (c >= '0' && c <= '9');
-}
-
 static void NumSplit(std::string &src, std::vector<std::string> &out)
 {
     if (src.size() == SIZE_ZERO) {
@@ -1707,7 +1702,7 @@ static void NumSplit(std::string &src, std::vector<std::string> &out)
     std::vector<std::string> res;
     size_t last = SIZE_ZERO;
     for (size_t i = SIZE_ZERO; i < src.size(); i++) {
-        if (!isStrNum(src[i])) {
+        if (!std::isdigit(src[i])) {
             size_t splitSize = i - last;
             if (splitSize != SIZE_ZERO) {
                 res.push_back(src.substr(last, splitSize));
