@@ -53,7 +53,6 @@ namespace {
     static constexpr ExifTag TAG_SENSITIVITY_TYPE = static_cast<ExifTag>(0x8830);
     static constexpr ExifTag TAG_STANDARD_OUTPUT_SENSITIVITY = static_cast<ExifTag>(0x8831);
     static constexpr ExifTag TAG_RECOMMENDED_EXPOSURE_INDEX = static_cast<ExifTag>(0x8832);
-    static constexpr size_t SIZE_ZERO = 0;
     static constexpr size_t SIZE_ONE = 1;
 
     /* raw EXIF header data */
@@ -1696,15 +1695,15 @@ bool EXIFInfo::CheckExifEntryValidEx(const ExifIfd &ifd, const ExifTag &tag)
 
 static void NumSplit(std::string &src, std::vector<std::string> &out)
 {
-    if (src.size() == SIZE_ZERO) {
+    if (src.size() == 0) {
         return;
     }
     std::vector<std::string> res;
-    size_t last = SIZE_ZERO;
-    for (size_t i = SIZE_ZERO; i < src.size(); i++) {
+    size_t last = 0;
+    for (size_t i = 0; i < src.size(); i++) {
         if (!std::isdigit(src[i])) {
             size_t splitSize = i - last;
-            if (splitSize != SIZE_ZERO) {
+            if (splitSize != 0) {
                 res.push_back(src.substr(last, splitSize));
             }
             last = i + SIZE_ONE;
@@ -1713,7 +1712,7 @@ static void NumSplit(std::string &src, std::vector<std::string> &out)
     if (last <= (src.size() - SIZE_ONE)) {
         res.push_back(src.substr(last));
     }
-    for (size_t i = SIZE_ZERO; i < res.size() && i < out.size(); i++) {
+    for (size_t i = 0; i < res.size() && i < out.size(); i++) {
         out[i] = res[i];
     }
 }
@@ -1721,7 +1720,7 @@ static void NumSplit(std::string &src, std::vector<std::string> &out)
 static std::string JoinStr(std::vector<std::string> &in, const std::string delim)
 {
     std::string res = "";
-    for (size_t i = SIZE_ZERO; i < (in.size() - SIZE_ONE); i++) {
+    for (size_t i = 0; i < (in.size() - SIZE_ONE); i++) {
         res.append(in[i]).append(delim);
     }
     res.append(in.back());
@@ -1760,7 +1759,7 @@ static uint32_t SpecialExifData(EXIFInfo* info, const std::string name, std::str
         if (res != Media::SUCCESS) {
             return res;
         }
-        if (ORIENTATION_INT_MAP.count(orgValue) == SIZE_ZERO) {
+        if (ORIENTATION_INT_MAP.count(orgValue) == 0) {
             HiLog::Debug(LABEL, "SpecialExifData %{public}s not found %{public}s.",
                 name.c_str(), orgValue.c_str());
             return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
