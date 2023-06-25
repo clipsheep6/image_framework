@@ -30,7 +30,7 @@ config("pixelconvertadapter_public_config") {
     "$skia_root/skia/src/ports",
     "$skia_root/skia/src/images",
     "$skia_root/skia/src/ports/skia_ohos",
-"$skia_root/skia/third_party/externals/freetype/include/freetype",
+    "$skia_root/skia/third_party/externals/freetype/include/freetype",
     "$skia_root/skia/include/private",
     "//third_party/bounds_checking_function/include",
   ]
