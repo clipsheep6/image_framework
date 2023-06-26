@@ -21,6 +21,17 @@ using namespace testing::ext;
 using namespace OHOS::Media;
 namespace OHOS {
 namespace Multimedia {
+static constexpr int32_t WIDTH_3 = 3;
+static constexpr int32_t HEIGHT_4 = 4;
+static constexpr int32_t PIXEL_4 = 4;
+static constexpr int32_t MAX_NUM = 255;
+static constexpr int32_t NUM_163 = 163;
+static constexpr int32_t NUM_213 = 213;
+static constexpr int32_t NUM_234 = 234;
+static constexpr int32_t NUM_1 = 1;
+static constexpr int32_t NUM_2 = 2;
+static constexpr int32_t NUM_3 = 3;
+
 class ImageTransformTest : public testing::Test {
 public:
     ImageTransformTest() {}
@@ -35,46 +46,46 @@ public:
  */
 void ConstructPixmapInfo(PixmapInfo &pixmapInfo)
 {
-    pixmapInfo.imageInfo.size.width = 3;
-    pixmapInfo.imageInfo.size.height = 4;
+    pixmapInfo.imageInfo.size.width = WIDTH_3;
+    pixmapInfo.imageInfo.size.height = HEIGHT_4;
     pixmapInfo.imageInfo.pixelFormat = PixelFormat::ARGB_8888;
     pixmapInfo.imageInfo.colorSpace = ColorSpace::SRGB;
     int32_t width = 3;
     int32_t height = 4;
-    pixmapInfo.data = new uint8_t[width * height * 4];
+    pixmapInfo.data = new uint8_t[width * height * PIXEL_4];
 
     if (pixmapInfo.data == nullptr) {
         return;
     }
-    pixmapInfo.bufferSize = width * height * 4;
-    if (memset_s(pixmapInfo.data, sizeof(width * height * 4), 0, sizeof(width * height * 4)) != EOK) {
+    pixmapInfo.bufferSize = width * height * PIXEL_4;
+    if (memset_s(pixmapInfo.data, sizeof(width * height * PIXEL_4), 0, sizeof(width * height * PIXEL_4)) != EOK) {
         ASSERT_NE(*pixmapInfo.data, 0);
     }
     for (int32_t i = 0; i < width * height; ++i) {
-        int rb = i * 4;
+        int rb = i * PIXEL_4;
         // the 0th item set red
         if (i == 0) {
-            *(pixmapInfo.data + rb) = 255;
-            *(pixmapInfo.data + rb + 1) = 255;
+            *(pixmapInfo.data + rb) = MAX_NUM;
+            *(pixmapInfo.data + rb + NUM_1) = MAX_NUM;
         }
         // the 2th item set green
         if (i == 2) {
-            *(pixmapInfo.data + rb) = 255;
-            *(pixmapInfo.data + rb + 2) = 255;
+            *(pixmapInfo.data + rb) = MAX_NUM;
+            *(pixmapInfo.data + rb + NUM_2) = MAX_NUM;
         }
 
         // the 9th item set blue
         if (i == 9) {
-            *(pixmapInfo.data + rb) = 255;
-            *(pixmapInfo.data + rb + 3) = 255;
+            *(pixmapInfo.data + rb) = MAX_NUM;
+            *(pixmapInfo.data + rb + NUM_3) = MAX_NUM;
         }
 
         // the 11th item rand
         if (i == 11) {
-            *(pixmapInfo.data + rb) = 255;
-            *(pixmapInfo.data + rb + 1) = 163;
-            *(pixmapInfo.data + rb + 2) = 213;
-            *(pixmapInfo.data + rb + 3) = 234;
+            *(pixmapInfo.data + rb) = MAX_NUM;
+            *(pixmapInfo.data + rb + NUM_1) = NUM_163;
+            *(pixmapInfo.data + rb + NUM_2) = NUM_213;
+            *(pixmapInfo.data + rb + NUM_3) = NUM_234;
         }
     }
 }
@@ -113,24 +124,24 @@ HWTEST_F(ImageTransformTest, ImageTransformTest001, TestSize.Level3)
         int rb = i * 4;
         // after scale 2.0, the 0th item change to 0th item
         if (i == 0) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), MAX_NUM);
         }
 
         // after scale 2.0, the 2th item change to 5th item
         if (i == 5) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), MAX_NUM);
         }
 
         // after scale 2.0, the 9th item change to 42th item
         if (i == 42) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), MAX_NUM);
         }
 
         // after scale 2.0, the 11th item change to 47th item
         if (i == 47) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), 163);
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), 213);
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), 234);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), NUM_163);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), NUM_213);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), NUM_234);
         }
     }
     if (inPutInfo.data != nullptr) {
@@ -178,17 +189,17 @@ HWTEST_F(ImageTransformTest, ImageTransformTest002, TestSize.Level3)
         int rb = i * 4;
         // after rotate 90, the 0th change to 9th
         if (i == 0) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), MAX_NUM);
         }
 
         // after rotate 90, the 3th item change to 0th item
         if (i == 3) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), MAX_NUM);
         }
 
         // after rotate 90, the 11th item change to 2th item
         if (i == 11) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), MAX_NUM);
         }
     }
     if (inPutInfo.data != nullptr) {
@@ -237,24 +248,24 @@ HWTEST_F(ImageTransformTest, ImageTransformTest003, TestSize.Level3)
         int rb = i * 4;
         // after rotate 180, the 0th change to 11th
         if (i == 0) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), 163);
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), 213);
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), 234);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), NUM_163);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), NUM_213);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), NUM_234);
         }
 
         // after rotate 180, the 2th item change to 9th item
         if (i == 2) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 3)), MAX_NUM);
         }
 
         // after rotate 180, the 9th item change to 2th item
         if (i == 9) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 2)), MAX_NUM);
         }
 
         // after rotate 180, the 11th item change to 0th item
         if (i == 11) {
-            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), 255);
+            EXPECT_EQ((int32_t)(*(outPutInfo.data + rb + 1)), MAX_NUM);
         }
     }
     if (inPutInfo.data != nullptr) {
@@ -408,7 +419,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0012, TestSize.Level3)
     inPutInfo.imageInfo.colorSpace = ColorSpace::SRGB;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     BasicTransformer trans;
     uint32_t res = trans.TransformPixmap(inPutInfo, outPutInfo);
@@ -430,7 +441,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0013, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::ARGB_8888;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     BasicTransformer trans;
     uint32_t res = trans.TransformPixmap(inPutInfo, outPutInfo);
@@ -452,7 +463,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0014, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::ARGB_8888;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     BasicTransformer trans;
     uint32_t res = trans.TransformPixmap(inPutInfo, outPutInfo);
@@ -474,7 +485,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0015, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::ARGB_8888;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     ASSERT_EQ(outPutInfo.data, nullptr);
     BasicTransformer trans;
@@ -497,7 +508,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0016, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::ARGB_8888;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     ASSERT_EQ(outPutInfo.data, nullptr);
     BasicTransformer trans;
@@ -520,7 +531,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0017, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::ARGB_8888;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     ASSERT_EQ(outPutInfo.data, nullptr);
     BasicTransformer trans;
@@ -542,7 +553,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0018, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::RGB_888;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     outPutInfo.imageInfo.size.width = 3;
     outPutInfo.imageInfo.size.height = 4;
@@ -567,7 +578,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0019, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::ALPHA_8;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     outPutInfo.imageInfo.size.width = 3;
     outPutInfo.imageInfo.size.height = 4;
@@ -592,7 +603,7 @@ HWTEST_F(ImageTransformTest, ImageTransformTest0020, TestSize.Level3)
     inPutInfo.imageInfo.pixelFormat = PixelFormat::RGBA_F16;
     int32_t width = 3;
     int32_t height = 4;
-    inPutInfo.data = new uint8_t[width * height * 4];
+    inPutInfo.data = new uint8_t[width * height * PIXEL_4];
     PixmapInfo outPutInfo;
     outPutInfo.imageInfo.size.width = 3;
     outPutInfo.imageInfo.size.height = 4;
