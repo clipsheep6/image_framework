@@ -465,6 +465,8 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     }
 #endif
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
+    auto saveEditable = pixelMap->IsEditable();
+    pixelMap->SetEditable(true);
     // Need check pixel change:
     // 1. pixel size
     // 2. crop
@@ -494,6 +496,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
         float yScale = static_cast<float>(opts_.desiredSize.height)/pixelMap->GetHeight();
         pixelMap->scale(xScale, yScale);
     }
+    pixelMap->SetEditable(saveEditable);
     return pixelMap;
 }
 
