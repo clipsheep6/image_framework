@@ -240,7 +240,7 @@ void PixelMap::ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataS
 void *PixelMap::AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId)
 {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
-    std::string name = "PixelMap RawData, uniqueId: " + std::to_string(uniqueId);
+    std::string name = "PixelMap RawData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(uniqueId);
     fd = AshmemCreate(name.c_str(), bufferSize);
     if (fd < 0) {
         HiLog::Error(LABEL, "AllocSharedMemory fd error");
@@ -1219,7 +1219,7 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
     }
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
     uint32_t id = GetUniqueId();
-    std::string name = "Parcel ImageData, uniqueId: " + std::to_string(id);
+    std::string name = "Parcel ImageData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(id);
     int fd = AshmemCreate(name.c_str(), size);
     HiLog::Info(LABEL, "AshmemCreate:[%{public}d].", fd);
     if (fd < 0) {
@@ -1888,10 +1888,6 @@ static int8_t GetAlphaIndex(const PixelFormat& pixelFormat)
 
 uint32_t PixelMap::SetAlpha(const float percent)
 {
-    if (!IsEditable()) {
-        HiLog::Error(LABEL, "pixelmap is not allowed to set alpha, when editable is false");
-        return ERR_IMAGE_READ_PIXELMAP_FAILED;
-    }
     auto alphaType = GetAlphaType();
     if (alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN ||
         alphaType == AlphaType::IMAGE_ALPHA_TYPE_OPAQUE) {
@@ -2062,6 +2058,10 @@ void PixelMap::scale(float xAxis, float yAxis)
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     DoTranslation(infos);
+    PostProc postProc;
+    if (!postProc.ScalePixelMap(xAxis, yAxis, *this)) {
+        HiLog::Error(LABEL, "scale fail");
+    }
 }
 
 void PixelMap::translate(float xAxis, float yAxis)
@@ -2073,6 +2073,10 @@ void PixelMap::translate(float xAxis, float yAxis)
     TransInfos infos;
     infos.matrix.setTranslate(xAxis, yAxis);
     DoTranslation(infos);
+    PostProc postProc;
+    if (!postProc.TranslatePixelMap(xAxis, yAxis, *this)) {
+        HiLog::Error(LABEL, "translate fail");
+    }
 }
 
 void PixelMap::rotate(float degrees)
@@ -2084,14 +2088,14 @@ void PixelMap::rotate(float degrees)
     TransInfos infos;
     infos.matrix.setRotate(degrees);
     DoTranslation(infos);
+    PostProc postProc;
+    if (!postProc.RotatePixelMap(degrees, *this)) {
+        HiLog::Error(LABEL, "rotate fail");
+    }
 }
 
 void PixelMap::flip(bool xAxis, bool yAxis)
 {
-    if (!IsEditable()) {
-        HiLog::Error(LABEL, "pixelmap is not allowed to flip, when editable is false");
-        return;
-    }
     if (xAxis == false && yAxis == false) {
         return;
     }
