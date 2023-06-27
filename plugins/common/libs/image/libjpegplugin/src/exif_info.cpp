@@ -289,7 +289,31 @@ const std::map<ExifTag, std::string> TAG_MAP = {
     {ExifTag::EXIF_TAG_FNUMBER, "FNumber"},
     {ExifTag::EXIF_TAG_ISO_SPEED_RATINGS, "ISOSpeedRatings"},
     {ExifTag::EXIF_TAG_SCENE_TYPE, "SceneType"},
-    {ExifTag::EXIF_TAG_COMPRESSED_BITS_PER_PIXEL, "CompressedBitsPerPixel"}
+    {ExifTag::EXIF_TAG_COMPRESSED_BITS_PER_PIXEL, "CompressedBitsPerPixel"},
+    {ExifTag::EXIF_TAG_DATE_TIME, "DateTime"},
+    {ExifTag::EXIF_TAG_GPS_TIME_STAMP, "GPSTimeStamp"},
+    {ExifTag::EXIF_TAG_GPS_DATE_STAMP, "GPSDateStamp"},
+    {ExifTag::EXIF_TAG_IMAGE_DESCRIPTION, "ImageDescription"},
+    {ExifTag::EXIF_TAG_MAKE, "Make"},
+    {ExifTag::EXIF_TAG_MODEL, "Model"},
+    {ExifTag::EXIF_TAG_JPEG_PROC, "PhotoMode"},
+    {ExifTag::EXIF_TAG_SENSITIVITY_TYPE, "SensitivityType"},
+    {ExifTag::EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY, "StandardOutputSensitivity"},
+    {ExifTag::EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX, "RecommendedExposureIndex"},
+    {ExifTag::EXIF_TAG_ISO_SPEED, "ISOSpeedRatings"},
+    {ExifTag::EXIF_TAG_APERTURE_VALUE, "ApertureValue"},
+    {ExifTag::EXIF_TAG_EXPOSURE_BIAS_VALUE, "ExposureBiasValue"},
+    {ExifTag::EXIF_TAG_METERING_MODE, "MeteringMode"},
+    {ExifTag::EXIF_TAG_LIGHT_SOURCE, "LightSource"},
+    {ExifTag::EXIF_TAG_FLASH, "Flash"},
+    {ExifTag::EXIF_TAG_FOCAL_LENGTH, "FocalLength"},
+    {ExifTag::EXIF_TAG_USER_COMMENT, "UserComment"},
+    {ExifTag::EXIF_TAG_PIXEL_X_DIMENSION, "PixelXDimension"},
+    {ExifTag::EXIF_TAG_PIXEL_Y_DIMENSION, "PixelYDimension"},
+    {ExifTag::EXIF_TAG_WHITE_BALANCE, "WhiteBalance"},
+    {ExifTag::EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM, "FocalLengthIn35mmFilm"},
+    {static_cast<ExifTag>(ExifMakerNote::HW_MNOTE_TAG_CAPTURE_MODE), "HwMnoteCaptureMode"},
+    {static_cast<ExifTag>(ExifMakerNote::HW_MNOTE_TAG_PHYSICAL_APERTURE), "HwMnotePhysicalAperture"},
 };
 static const std::map<std::string, uint32_t> ORIENTATION_INT_MAP = {
     {"Top-left", 0},
@@ -407,6 +431,10 @@ int EXIFInfo::ParseExifData(const unsigned char *buf, unsigned len)
     if (exifMakerNote.Parser(exifData_, buf, len) == Media::SUCCESS) {
         hwMnoteCaptureMode_ = exifMakerNote.hwCaptureMode;
         hwMnotePhysicalAperture_ = exifMakerNote.hwPhysicalAperture;
+        SetExifTagValues(static_cast<ExifTag>(ExifMakerNote::HW_MNOTE_TAG_CAPTURE_MODE),
+            exifMakerNote.hwCaptureMode);
+        SetExifTagValues(static_cast<ExifTag>(ExifMakerNote::HW_MNOTE_TAG_PHYSICAL_APERTURE),
+            exifMakerNote.hwPhysicalAperture);
     }
 
     isExifDataParsed_ = true;
