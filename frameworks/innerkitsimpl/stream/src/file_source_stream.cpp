@@ -245,11 +245,55 @@ size_t FileSourceStream::GetStreamSize()
 
 uint8_t *FileSourceStream::GetDataPtr()
 {
+    dumpSwitch_ = true;
     return nullptr;
+}
+
+constexpr uint8_t MASK = 0xf;
+constexpr uint8_t MAX_NUM = 9;
+constexpr uint8_t A_NUM = 0xa;
+constexpr uint8_t BIT4 = 4;
+constexpr size_t SIZE_ZERO = 0;
+constexpr size_t SIZE_TEST_BUFFER = 10;
+constexpr int INVALID_FD = -1;
+static char DumpU8L(uint8_t a)
+{
+    uint8_t f = a & MASK;
+    if (f > MAX_NUM) {
+        return 'A' + (f - A_NUM);
+    } else {
+        return '0' + f;
+    }
+}
+static char DumpU8H(uint8_t a)
+{
+    return DumpU8L((a >> BIT4) & MASK);
 }
 
 uint32_t FileSourceStream::GetStreamType()
 {
+    if (dumpSwitch_) {
+        dumpSwitch_ = false;
+        int fd = fileno(filePtr_);
+        if (fd >= INVALID_FD) {
+            size_t size = SIZE_ZERO;
+            ImageUtils::GetFileSize(fd, size);
+            IMAGE_LOGE("[FileSourceStream]Current file size is %{public}zu.", size);
+        }
+        uint32_t saveOffset = Tell();
+        Seek(SIZE_ZERO);
+        uint8_t buffer[SIZE_TEST_BUFFER];
+        uint32_t outSize = SIZE_ZERO;
+        Read(SIZE_TEST_BUFFER, buffer, SIZE_TEST_BUFFER, outSize);
+        Seek(saveOffset);
+        std::vector<char> dumpVector;
+        for (size_t i = 0; i < SIZE_TEST_BUFFER; i++) {
+            dumpVector.push_back(DumpU8H(buffer[i]));
+            dumpVector.push_back(DumpU8L(buffer[i]));
+        }
+        dumpVector.push_back('\0');
+        IMAGE_LOGE("[FileSourceStream]buffer = [%{public}s]", dumpVector.data());
+    }
     return ImagePlugin::FILE_STREAM_TYPE;
 }
 

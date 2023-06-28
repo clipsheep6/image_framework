@@ -321,6 +321,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     StartTrace(HITRACE_TAG_ZIMAGE, "CreatePixelMap");
 #endif
     std::unique_lock<std::mutex> guard(decodingMutex_);
+    //Notify dump
+    if (sourceStreamPtr_ != nullptr) {
+        sourceStreamPtr_->GetDataPtr();
+        sourceStreamPtr_->GetStreamType();
+    }
+
     opts_ = opts;
     bool useSkia = opts_.sampleSize != 1;
     if (useSkia) {
