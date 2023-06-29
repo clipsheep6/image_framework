@@ -218,7 +218,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
 #if !defined(_WIN32) && !defined(_APPLE)
     StartTrace(HITRACE_TAG_ZIMAGE, "CreateImageSource by path");
 #endif
-    IMAGE_LOGD("[ImageSource]create Imagesource with pathName.");
+    std::string name = std::to_string(getpid()) + "_" + pathName;
+    IMAGE_LOGE("[ImageSource]create Imagesource with pathName: %{public}s", name.c_str());
 
     unique_ptr<SourceStream> streamPtr = DecodeBase64(pathName);
     if (streamPtr == nullptr) {
