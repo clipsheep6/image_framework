@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "image_pixel_map_napi.h"
+#include "image_pixel_map_mdk.h"
 
 #include "common_utils.h"
 #include "image_pixel_map_napi_kits.h"
