@@ -19,7 +19,7 @@
 #include "common_utils.h"
 #include "pixel_map.h"
 #include "pixel_map_napi.h"
-#include "image_pixel_map_napi.h"
+#include "image_pixel_map_mdk.h"
 
 namespace OHOS {
 namespace Media {
