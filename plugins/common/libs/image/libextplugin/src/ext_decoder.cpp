@@ -30,7 +30,7 @@ namespace {
     constexpr static int32_t ZERO = 0;
     constexpr static int32_t NUM_3 = 3;
     constexpr static int32_t NUM_4 = 4;
-    constexpr static int32_t OFFSIT = 1;
+    constexpr static int32_t OFFSET = 1;
     constexpr static size_t SIZE_ZERO = 0;
     constexpr static uint32_t DEFAULT_SAMPLE_SIZE = 1;
 }
@@ -48,10 +48,12 @@ const static string EXT_SHAREMEM_NAME = "EXT RawData";
 const static string TAG_ORIENTATION_STRING = "Orientation";
 const static string TAG_ORIENTATION_INT = "OrientationInt";
 const static string GIF_IMAGE_DELAY_TIME = "GIFDelayTime";
+
 struct ColorTypeOutput {
     PlPixelFormat outFormat;
     SkColorType skFormat;
 };
+
 static const map<PlPixelFormat, ColorTypeOutput> COLOR_TYPE_MAP = {
     { PlPixelFormat::UNKNOWN, { PlPixelFormat::RGBA_8888, kRGBA_8888_SkColorType } },
     { PlPixelFormat::RGBA_8888, { PlPixelFormat::RGBA_8888, kRGBA_8888_SkColorType } },
@@ -60,11 +62,13 @@ static const map<PlPixelFormat, ColorTypeOutput> COLOR_TYPE_MAP = {
     { PlPixelFormat::RGB_565, { PlPixelFormat::RGB_565, kRGB_565_SkColorType } },
     { PlPixelFormat::RGB_888, { PlPixelFormat::RGB_888, kRGB_888x_SkColorType } },
 };
+
 static const map<PlAlphaType, SkAlphaType> ALPHA_TYPE_MAP = {
     { PlAlphaType::IMAGE_ALPHA_TYPE_OPAQUE, kOpaque_SkAlphaType },
     { PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL, kPremul_SkAlphaType },
     { PlAlphaType::IMAGE_ALPHA_TYPE_UNPREMUL, kUnpremul_SkAlphaType },
 };
+
 static const map<SkEncodedImageFormat, string> FORMAT_NAME = {
     { SkEncodedImageFormat::kBMP, "image/bmp" },
     { SkEncodedImageFormat::kGIF, "image/gif" },
@@ -79,6 +83,7 @@ static const map<SkEncodedImageFormat, string> FORMAT_NAME = {
     { SkEncodedImageFormat::kDNG, "" },
     { SkEncodedImageFormat::kHEIF, "image/heif" },
 };
+
 static void SetDecodeContextBuffer(DecodeContext &context,
     AllocatorType type, uint8_t* ptr, uint64_t count, int32_t* fd)
 {
@@ -88,6 +93,7 @@ static void SetDecodeContextBuffer(DecodeContext &context,
     context.pixelsBuffer.bufferSize = count;
     context.pixelsBuffer.context = fd;
 }
+
 static uint32_t ShareMemAlloc(DecodeContext &context, uint64_t count)
 {
 #if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
@@ -121,6 +127,7 @@ static uint32_t ShareMemAlloc(DecodeContext &context, uint64_t count)
     return SUCCESS;
 #endif
 }
+
 static uint32_t HeapMemAlloc(DecodeContext &context, uint64_t count)
 {
     auto out = make_unique<uint8_t[]>(count);
@@ -144,10 +151,12 @@ static uint32_t HeapMemAlloc(DecodeContext &context, uint64_t count)
 ExtDecoder::ExtDecoder() : codec_(nullptr), frameCount_(ZERO)
 {
 }
+
 void ExtDecoder::SetSource(InputDataStream &sourceStream)
 {
     stream_ = &sourceStream;
 }
+
 void ExtDecoder::Reset()
 {
     stream_ = nullptr;
@@ -156,10 +165,12 @@ void ExtDecoder::Reset()
     dstSubset_ = SkIRect::MakeEmpty();
     info_.reset();
 }
+
 static inline float Max(float a, float b)
 {
     return (a > b) ? a : b;
 }
+
 bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
 {
     if (info_.isEmpty() && !DecodeHeader()) {
@@ -179,6 +190,7 @@ bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
     HiLog::Debug(LABEL, "IsSupportScaleOnDecode [%{public}f]", scale);
     return true;
 }
+
 bool ExtDecoder::IsSupportScaleOnDecode()
 {
     constexpr float HALF_SCALE = 0.5f;
@@ -187,14 +199,16 @@ bool ExtDecoder::IsSupportScaleOnDecode()
     float scale = HALF_SCALE;
     return GetScaledSize(w, h, scale);
 }
+
 bool ExtDecoder::IsSupportCropOnDecode()
 {
     if (info_.isEmpty() && !DecodeHeader()) {
         return false;
     }
-    SkIRect innerRect = info_.bounds().makeInset(OFFSIT, OFFSIT);
+    SkIRect innerRect = info_.bounds().makeInset(OFFSET, OFFSET);
     return IsSupportCropOnDecode(innerRect);
 }
+
 bool ExtDecoder::IsSupportCropOnDecode(SkIRect &target)
 {
     if (info_.isEmpty() && !DecodeHeader()) {
@@ -206,6 +220,7 @@ bool ExtDecoder::IsSupportCropOnDecode(SkIRect &target)
     }
     return false;
 }
+
 bool ExtDecoder::HasProperty(string key)
 {
     if (CODEC_INITED_KEY.compare(key) == ZERO) {
@@ -223,7 +238,7 @@ bool ExtDecoder::HasProperty(string key)
 uint32_t ExtDecoder::GetImageSize(uint32_t index, PlSize &size)
 {
     HiLog::Debug(LABEL, "GetImageSize index:%{public}u", index);
-    if (!CheckIndexVailed(index)) {
+    if (!CheckIndexValied(index)) {
         HiLog::Error(LABEL, "Invalid index:%{public}u, range:%{public}d", index, frameCount_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
@@ -261,7 +276,7 @@ static inline bool IsValidCrop(const PlRect &crop, SkImageInfo &info, SkIRect &o
 
 uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info)
 {
-    if (!CheckIndexVailed(index)) {
+    if (!CheckIndexValied(index)) {
         HiLog::Error(LABEL, "Invalid index:%{public}u, range:%{public}d", index, frameCount_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
@@ -327,19 +342,22 @@ static void DebugInfo(SkImageInfo &info, SkImageInfo &dstInfo, SkCodec::Options 
             opts.fSubset->width(), opts.fSubset->height());
     }
 }
+
 static uint32_t RGBxToRGB(uint8_t* srcBuffer, size_t srsSize,
     uint8_t* dstBuffer, size_t dstSize, size_t pixelCount)
 {
     ExtPixels src = {srcBuffer, srsSize, pixelCount};
     ExtPixels dst = {dstBuffer, dstSize, pixelCount};
     auto res = ExtPixelConvert::RGBxToRGB(src, dst);
-    HiLog::Error(LABEL, "RGBxToRGB failed %{public}d", res);
+    if (res != SUCCESS) {
+        HiLog::Error(LABEL, "RGBxToRGB failed %{public}d", res);
+    }
     return res;
 }
 
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
-    if (!CheckIndexVailed(index)) {
+    if (!CheckIndexValied(index)) {
         HiLog::Error(LABEL, "Decode failed, invalid index:%{public}u, range:%{public}d", index, frameCount_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
@@ -356,14 +374,14 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
         auto tmpBuffer = make_unique<uint8_t[]>(byteCount);
         if (tmpBuffer == nullptr) {
-            HiLog::Debug(LABEL, "Decode tmp alloc byte count %{public}llu.", byteCount);
+            HiLog::Debug(LABEL, "Decode tmp alloc byte count");
             return ERR_IMAGE_MALLOC_ABNORMAL;
         }
         dstBuffer = tmpBuffer.get();
         byteCount = byteCount / NUM_4 * NUM_3;
     }
     if (context.pixelsBuffer.buffer == nullptr) {
-        HiLog::Debug(LABEL, "Decode alloc byte count %{public}llu.", byteCount);
+        HiLog::Debug(LABEL, "Decode alloc byte count.");
         uint32_t res = SetContextPixelsBuffer(byteCount, context);
         if (res != SUCCESS) {
             return res;
@@ -423,13 +441,15 @@ bool ExtDecoder::DecodeHeader()
     HiLog::Debug(LABEL, "DecodeHeader: get frame count %{public}d.", frameCount_);
     return true;
 }
-bool ExtDecoder::CheckIndexVailed(uint32_t index)
+
+bool ExtDecoder::CheckIndexValied(uint32_t index)
 {
     if (frameCount_ == ZERO && !DecodeHeader()) {
         return false;
     }
     return static_cast<int32_t>(index) >= ZERO && static_cast<int32_t>(index) < frameCount_;
 }
+
 static uint32_t GetFormatName(SkEncodedImageFormat format, std::string &name)
 {
     auto formatNameIter = FORMAT_NAME.find(format);
@@ -442,6 +462,7 @@ static uint32_t GetFormatName(SkEncodedImageFormat format, std::string &name)
     HiLog::Error(LABEL, "GetFormatName: get encoded format name failed %{public}d.", format);
     return ERR_IMAGE_DATA_UNSUPPORT;
 }
+
 bool ExtDecoder::ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType)
 {
     if (info_.isEmpty()) {
@@ -459,6 +480,7 @@ bool ExtDecoder::ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &out
     alphaType = findItem->second;
     return true;
 }
+
 bool ExtDecoder::ConvertInfoToColorType(SkColorType &format, PlPixelFormat &outputFormat)
 {
     if (info_.isEmpty()) {
@@ -476,6 +498,7 @@ bool ExtDecoder::ConvertInfoToColorType(SkColorType &format, PlPixelFormat &outp
     outputFormat = findItem->second.outFormat;
     return true;
 }
+
 SkAlphaType ExtDecoder::ConvertToAlphaType(PlAlphaType desiredType, PlAlphaType &outputType)
 {
     if (desiredType != PlAlphaType::IMAGE_ALPHA_TYPE_UNKNOWN) {
@@ -495,6 +518,7 @@ SkAlphaType ExtDecoder::ConvertToAlphaType(PlAlphaType desiredType, PlAlphaType 
     outputType = PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL;
     return SkAlphaType::kPremul_SkAlphaType;
 }
+
 SkColorType ExtDecoder::ConvertToColorType(PlPixelFormat format, PlPixelFormat &outputFormat)
 {
     if (format != PlPixelFormat::UNKNOWN) {
@@ -514,6 +538,7 @@ SkColorType ExtDecoder::ConvertToColorType(PlPixelFormat format, PlPixelFormat &
     outputFormat = PlPixelFormat::RGBA_8888;
     return kRGBA_8888_SkColorType;
 }
+
 #ifdef IMAGE_COLORSPACE_FLAG
 OHOS::ColorManager::ColorSpace ExtDecoder::getGrColorSpace()
 {
@@ -528,6 +553,7 @@ bool ExtDecoder::IsSupportICCProfile()
     return info_.refColorSpace() != nullptr;
 }
 #endif
+
 static uint32_t ProcessWithStreamData(InputDataStream *input,
     std::function<uint32_t(uint8_t*, size_t)> process)
 {
@@ -549,6 +575,7 @@ static uint32_t ProcessWithStreamData(InputDataStream *input,
     }
     return process(buffer, inputSize);
 }
+
 static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
 {
     if (info.IsExifDataParsed()) {
@@ -563,13 +590,14 @@ static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
     }
     return code == SUCCESS;
 }
+
 bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res)
 {
     if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
         res = Media::ERR_MEDIA_VALUE_INVALID;
         return false;
     }
-    if (!CheckIndexVailed(index)) {
+    if (!CheckIndexValied(index)) {
         res = Media::ERR_IMAGE_DECODE_HEAD_ABNORMAL;
         return false;
     }
@@ -662,6 +690,7 @@ uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
         path.c_str(), key.c_str(), value.c_str());
     return exifInfo_.ModifyExifData(key, value, path);
 }
+
 uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const int fd)
 {
@@ -669,6 +698,7 @@ uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
         fd, key.c_str(), value.c_str());
     return exifInfo_.ModifyExifData(key, value, fd);
 }
+
 uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, uint8_t *data, uint32_t size)
 {
@@ -676,6 +706,7 @@ uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
         key.c_str(), value.c_str());
     return exifInfo_.ModifyExifData(key, value, data, size);
 }
+
 uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges)
 {
     HiLog::Debug(LABEL, "[GetFilterArea] with privacyType:%{public}d ", privacyType);
@@ -692,7 +723,7 @@ uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair
     constexpr size_t U8_SHIFT = 8;
     return ProcessWithStreamData(stream_, [this, &privacyType, &ranges](uint8_t* buffer, size_t size) {
         size_t appSize = (static_cast<size_t>(buffer[APP1_SIZE_H_OFF]) << U8_SHIFT) | buffer[APP1_SIZE_L_OFF];
-        HiLog::Debug(LABEL, "[GetFilterArea]: get app1 area size %{public}d", appSize);
+        HiLog::Debug(LABEL, "[GetFilterArea]: get app1 area size");
         appSize += APP1_SIZE_H_OFF;
         auto ret = exifInfo_.GetFilterArea(buffer, (appSize < size) ? appSize : size, privacyType, ranges);
         if (ret != Media::SUCCESS) {
@@ -701,9 +732,10 @@ uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair
         return ret;
     });
 }
+
 uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
 {
-    if (!CheckIndexVailed(SIZE_ZERO) && frameCount_ <= ZERO) {
+    if (!CheckIndexValied(SIZE_ZERO) && frameCount_ <= ZERO) {
         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
     }
     num = frameCount_;
