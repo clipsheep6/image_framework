@@ -48,6 +48,8 @@ config("image_external_config") {
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//drivers/peripheral/display/interfaces/include",
     "//drivers/peripheral/base",
+    "//third_party/flutter/skia/third_party/externals/libjpeg-turbo",
+    "//foundation/communication/ipc/ipc/native/src/napi_common/include",
     "$skia_root/skia/third_party/externals/libjpeg-turbo",
   ]
 
@@ -244,6 +246,7 @@ if (use_clang_ios) {
       "c_utils:utils",
       "hichecker:libhichecker",
       "hitrace_native:hitrace_meter",
+      "ipc:ipc_napi",
     ]
     output_name = "libimage_napi"
     subsystem_name = "multimedia"

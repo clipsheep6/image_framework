@@ -10,8 +10,8 @@
     "dirs": {},
     "scripts": {},
     "component": {
-      "name": "multimedia_image_framework",
-      "subsystem": "multimedia",
+      "name": "image_framework",
+      "subsystem": "graphic",
       "syscap": [
         "SystemCapability.Multimedia.Image.Core",
         "SystemCapability.Multimedia.Image.ImageSource",
@@ -46,8 +46,9 @@
           "giflib",
           "bounds_checking_function",
           "expat",
+          "json",
           "third_party_skia",
-          "json"
+          "ipc"
         ]
       },
       "build": {
