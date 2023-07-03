@@ -37,6 +37,9 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
 #include <cstdint>
 #include "napi/native_api.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 namespace OHOS {
 namespace Media {
 
@@ -142,9 +145,7 @@ int32_t OH_UnAccessPixels(napi_env env, napi_value value);
 }
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 /**
  * @brief Defines the native pixel map information.
