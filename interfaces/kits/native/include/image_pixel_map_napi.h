@@ -37,12 +37,13 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
 #include <cstdint>
 #include "napi/native_api.h"
-namespace OHOS {
-namespace Media {
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
+namespace OHOS {
+namespace Media {
 /**
  * @brief Enumerates the error codes returned by the functions.
  *
@@ -96,16 +97,19 @@ struct OhosPixelMapInfo {
     int32_t pixelFormat;
 };
 
+}
+}
+
 /**
  * @brief Defines the native pixel map information.
- * @since 9
+ * @since 10
  * @version 2.0
  */
 struct NativePixelMap;
 
 /**
  * @brief Defines the data type name of the native pixel map.
- * @since 9
+ * @since 10
  * @version 2.0
  */
 typedef struct NativePixelMap NativePixelMap;
@@ -190,6 +194,8 @@ struct OhosPixelMapCreateOps {
     uint32_t scaleMode;
 };
 
+namespace OHOS {
+namespace Media {
 /**
  * @brief Obtains the information about a <b>PixelMap</b> object
  * and stores the information to the {@link OhosPixelMapInfo} struct.
@@ -234,6 +240,10 @@ int32_t OH_AccessPixels(napi_env env, napi_value value, void** addrPtr);
  * @version 1.0
  */
 int32_t OH_UnAccessPixels(napi_env env, napi_value value);
+
+/** @} */
+} // namespace Media
+} // namespace OHOS
 
 /**
  * @brief Creates a <b>PixelMap</b> object.
@@ -468,7 +478,4 @@ int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native);
 #ifdef __cplusplus
 };
 #endif
-/** @} */
-} // namespace Media
-} // namespace OHOS
 #endif // INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
