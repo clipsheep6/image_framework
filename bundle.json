@@ -35,6 +35,7 @@
           "ipc_core",
           "libhilog",
           "bytrace_core",
+          "memory_utils",
           "multimedia",
           "napi",
           "zlib",
