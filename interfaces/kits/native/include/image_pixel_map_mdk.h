@@ -369,7 +369,7 @@ int32_t OH_PixelMap_GetImageInfo(const NativePixelMap* native, OhosPixelMapInfo 
  * @param native Indicates the pointer to a <b>NativePixelMap</b> object.
  * @param addr Indicates the double pointer to the memory address.
  * @see UnAccessPixels
- * @return Returns {@link OHOS_IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
+ * @return Returns {@link IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
  * @since 10
  * @version 2.0
  */
@@ -380,7 +380,7 @@ int32_t OH_PixelMap_AccessPixels(const NativePixelMap* native, void** addr);
  * This function is used with {@link OH_PixelMap_AccessPixels} in pairs.
  *
  * @param native Indicates the pointer to a <b>NativePixelMap</b> object.
- * @return Returns {@link OHOS_IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
+ * @return Returns {@link IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
  * @see AccessPixels
  * @since 10
  * @version 2.0

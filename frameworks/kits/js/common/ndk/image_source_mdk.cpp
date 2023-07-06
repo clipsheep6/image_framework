@@ -17,9 +17,8 @@
 
 #include "common_utils.h"
 #include "image_source_mdk_kits.h"
+using namespace OHOS::Media;
 
-namespace OHOS {
-namespace Media {
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -210,5 +209,3 @@ int32_t OH_ImageSource_Release(ImageSourceNative* native)
 #ifdef __cplusplus
 };
 #endif
-}  // namespace Media
-}  // namespace OHOS
