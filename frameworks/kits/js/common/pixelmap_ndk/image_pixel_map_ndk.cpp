@@ -24,7 +24,7 @@ namespace Media {
 extern "C" {
 #endif
 
-struct NativePixelMap {
+struct NativePixelMap_ {
     PixelMapNapi* napi = nullptr;
 };
 
