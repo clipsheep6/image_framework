@@ -135,7 +135,7 @@ static int32_t PixelMapNapiCreateAlpha(napi_env env, PixelMapNapiArgs* args)
     }
 
     *(args->outValue) = PixelMapNapi::CreatePixelMap(env, std::move(alphaPixelMap));
-    return isUndefine(env, *(args->outValue))?IMAGE_RESULT_BAD_PARAMETER:OHOS_IMAGE_RESULT_SUCCESS;
+    return isUndefine(env, *(args->outValue))?IMAGE_RESULT_BAD_PARAMETER:IMAGE_RESULT_SUCCESS;
 }
 
 static PixelMap* CheckAndGetPixelMap(PixelMapNapi* native, const PixelMapNapiArgs* args)
