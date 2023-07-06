@@ -17,7 +17,7 @@
 #include "media_errors.h"
 #include "hilog/log.h"
 #include "image_napi_utils.h"
-#include "image_pixel_map_napi.h"
+#include "image_pixel_map_mdk.h"
 #include "image_trace.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
