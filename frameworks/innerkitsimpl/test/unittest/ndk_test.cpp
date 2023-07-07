@@ -20,6 +20,7 @@
 #include "image_pixel_map_napi_kits.h"
 
 using namespace testing::ext;
+using namespace OHOS::Media;
 class NdkTest : public testing::Test {
 public:
     NdkTest() {}
