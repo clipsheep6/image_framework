@@ -39,29 +39,11 @@
 #include <stdint.h>
 #include "napi/native_api.h"
 #include "image_mdk_common.h"
+#include "image_pixel_map_napi.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @brief Defines the pixel map information.
- *
- * @since 10 
- * @version 1.0
- */
-struct OhosPixelMapInfo {
-    /** Image width, in pixels. */
-    uint32_t width;
-    /** Image height, in pixels. */
-    uint32_t height;
-    /** Number of bytes per row. */
-    uint32_t rowSize;
-    /** Pixel format. */
-    int32_t pixelFormat;
-};
-
-typedef struct OhosPixelMapInfo OhosPixelMapInfo;
 
 /**
  * @brief Defines the native pixel map information.
