@@ -39,7 +39,7 @@ struct PixelMapNapiArgs {
     float inFloat1;
     napi_value* outValue;
     int32_t* outNum;
-    OhosPixelMapInfo *outInfo;
+    OhosPixelMapInfos *outInfo;
     void** outAddr;
 };
 

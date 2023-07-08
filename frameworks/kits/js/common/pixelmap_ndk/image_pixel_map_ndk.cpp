@@ -205,7 +205,7 @@ int32_t OH_PixelMap_Crop(const NativePixelMap* native, int32_t x, int32_t y, int
 }
 
 MIDK_EXPORT
-int32_t OH_PixelMap_GetImageInfo(const NativePixelMap* native, OhosPixelMapInfo *info)
+int32_t OH_PixelMap_GetImageInfo(const NativePixelMap* native, OhosPixelMapInfos *info)
 {
     if (native == nullptr || native->napi == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
