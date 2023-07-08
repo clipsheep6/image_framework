@@ -39,7 +39,6 @@
 #include <stdint.h>
 #include "napi/native_api.h"
 #include "image_mdk_common.h"
-#include "image_pixel_map_napi.h"
 
 #ifdef __cplusplus
 extern "C" {
