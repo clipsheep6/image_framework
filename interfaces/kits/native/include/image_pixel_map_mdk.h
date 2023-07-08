@@ -59,6 +59,23 @@ struct NativePixelMap_;
 typedef struct NativePixelMap_ NativePixelMap;
 
 /**
+ * @brief Defines the pixel map information.
+ *
+ * @since 10
+ * @version 1.0
+ */
+typedef struct OhosPixelMapInfos {
+    /** Image width, in pixels. */
+    uint32_t width;
+    /** Image height, in pixels. */
+    uint32_t height;
+    /** Number of bytes per row. */
+    uint32_t rowSize;
+    /** Pixel format. */
+    int32_t pixelFormat;
+}OhosPixelMapInfos;
+
+/**
  * @brief Enumerates the pixel map alpha types.
  *
  * @since 10
@@ -338,11 +355,11 @@ int32_t OH_PixelMap_Crop(const NativePixelMap* native, int32_t x, int32_t y, int
  * @param native Indicates the pointer to a <b>NativePixelMap</b> object.
  * @param info Indicates the pointer to the image information.
  * @return Returns <b>0</b> if the operation is successful; returns an error code otherwise.
- * @see OhosPixelMapInfo
+ * @see OhosPixelMapInfos
  * @since 10
  * @version 2.0
  */
-int32_t OH_PixelMap_GetImageInfo(const NativePixelMap* native, OhosPixelMapInfo *info);
+int32_t OH_PixelMap_GetImageInfo(const NativePixelMap* native, OhosPixelMapInfos *info);
 
 /**
  * @brief Obtains the memory address of a <b>NativePixelMap</b> object and locks the memory.
