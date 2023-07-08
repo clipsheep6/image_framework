@@ -25,6 +25,7 @@ ohos_shared_library("pixelmap_ndk") {
     "//foundation/arkui/napi/interfaces/inner_api",
     "//foundation/arkui/napi/interfaces/kits",
     "//third_party/node/src",
+    "//foundation/multimedia/image_framework/interfaces/kits/native/include"
   ]
 
   sources = [

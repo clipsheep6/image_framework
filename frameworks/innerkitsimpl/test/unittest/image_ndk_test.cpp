@@ -22,8 +22,6 @@
 #include "image_receiver_mdk_kits.h"
 
 using namespace testing::ext;
-namespace OHOS {
-namespace Media {
 static constexpr int32_t UNSUCCESS = -1;
 class ImageNdkTest : public testing::Test {
 public:
@@ -250,7 +248,7 @@ HWTEST_F(ImageNdkTest, OH_Image_Receiver_ReleaseTest, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_Receiver_ReleaseTest start";
     ImageReceiverNative *p = nullptr;
     int32_t res = OH_Image_Receiver_Release(p);
-    ASSERT_EQ(res, OHOS_IMAGE_RESULT_SUCCESS);
+    ASSERT_EQ(res, IMAGE_RESULT_SUCCESS);
 
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_Receiver_ReleaseTest end";
 }
@@ -269,7 +267,5 @@ HWTEST_F(ImageNdkTest, OH_Image_InitImageNativeTest, TestSize.Level3)
     ASSERT_EQ(res, nullptr);
 
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_InitImageNativeTest end";
-}
-}
 }
 
