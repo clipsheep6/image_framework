@@ -19,12 +19,14 @@ group("multimediaplugin") {
     deps = [
       "image/formatagentplugin:formatagentmetadata",
       "image/formatagentplugin:imageformatagent",
-      "image/libgifplugin:gifplugin",
-      "image/libgifplugin:gifpluginmetadata",
+
+      #"image/libgifplugin:gifplugin",
+      #"image/libgifplugin:gifpluginmetadata",
       "image/libjpegplugin:jpegplugin",
       "image/libjpegplugin:jpegpluginmetadata",
-      "image/libpngplugin:pngplugin",
-      "image/libpngplugin:pngpluginmetadata",
+
+      #"image/libpngplugin:pngplugin",
+      #"image/libpngplugin:pngpluginmetadata",
       "image/librawplugin:rawplugin",
       "image/librawplugin:rawpluginmetadata",
       "image/libsvgplugin:svgplugin",
@@ -39,8 +41,9 @@ group("multimediaplugin") {
     deps = [
       "image/formatagentplugin:formatagentmetadata",
       "image/formatagentplugin:imageformatagent",
-      "image/libgifplugin:gifplugin",
-      "image/libgifplugin:gifpluginmetadata",
+
+      #"image/libgifplugin:gifplugin",
+      #"image/libgifplugin:gifpluginmetadata",
 
       #      "image/libheifplugin:heifplugin",
       #      "image/libheifplugin:heifpluginmetadata",
@@ -50,8 +53,9 @@ group("multimediaplugin") {
       "image/libextplugin:extpluginmetadata",
       "image/libjpegplugin:jpegplugin",
       "image/libjpegplugin:jpegpluginmetadata",
-      "image/libpngplugin:pngplugin",
-      "image/libpngplugin:pngpluginmetadata",
+
+      #"image/libpngplugin:pngplugin",
+      #"image/libpngplugin:pngpluginmetadata",
       "image/librawplugin:rawplugin",
       "image/librawplugin:rawpluginmetadata",
       "image/libsvgplugin:svgplugin",
