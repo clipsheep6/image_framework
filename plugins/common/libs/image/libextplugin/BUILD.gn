@@ -23,6 +23,7 @@ ohos_static_library("exifhelper") {
   if (!use_clang_android && !use_clang_ios) {
     sanitize = {
       cfi = true
+      cfi_cross_dso = true
       debug = false
     }
   }
@@ -38,8 +39,8 @@ ohos_static_library("exifhelper") {
   deps = [ "${third_party_root}/libexif:libexif" ]
   external_deps = [
     "c_utils:utils",
-    "hitrace_native:hitrace_meter",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
   ]
   part_name = "multimedia_image_framework"
   subsystem_name = "multimedia"
@@ -97,6 +98,7 @@ ohos_shared_library("extplugin") {
   if (!use_clang_android && !use_clang_ios) {
     sanitize = {
       cfi = true
+      cfi_cross_dso = true
       debug = false
     }
   }
@@ -148,8 +150,8 @@ ohos_shared_library("extplugin") {
 
     external_deps = [
       "c_utils:utils",
-      "graphic_standard:color_manager",
-      "hiviewdfx_hilog_native:libhilog",
+      "graphic_2d:color_manager",
+      "hilog:libhilog",
     ]
   }
   cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]

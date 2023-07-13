@@ -160,6 +160,7 @@ if (use_clang_ios) {
     if (!use_clang_android && !use_clang_ios) {
       sanitize = {
         cfi = true
+        cfi_cross_dso = true
         debug = false
       }
     }
@@ -189,6 +190,7 @@ if (use_clang_ios) {
     if (!use_clang_android && !use_clang_ios) {
       sanitize = {
         cfi = true
+        cfi_cross_dso = true
         debug = false
       }
     }
@@ -246,7 +248,7 @@ if (use_clang_ios) {
     external_deps = [
       "c_utils:utils",
       "hichecker:libhichecker",
-      "hitrace_native:hitrace_meter",
+      "hitrace:hitrace_meter",
     ]
     output_name = "libimage_napi"
     subsystem_name = "multimedia"
@@ -281,7 +283,7 @@ if (use_clang_ios) {
       external_deps = [
         "c_utils:utils",
         "hichecker:libhichecker",
-        "hitrace_native:hitrace_meter",
+        "hitrace:hitrace_meter",
       ]
       relative_install_dir = "module/multimedia"
       subsystem_name = "multimedia"
