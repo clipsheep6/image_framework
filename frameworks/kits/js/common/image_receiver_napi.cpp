@@ -60,6 +60,7 @@ struct ImageEnum {
 static std::vector<struct ImageEnum> sImageFormatMap = {
     {"CAMERA_APP_INNER", 4, ""},
     {"JPEG", 2000, ""},
+    {"YCBCR_422_SP", 1000, ""},
 };
 
 ImageReceiverNapi::ImageReceiverNapi():env_(nullptr)
