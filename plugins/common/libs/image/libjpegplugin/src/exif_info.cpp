@@ -483,6 +483,8 @@ void EXIFInfo::SetExifTagValues(const ExifTag &tag, const std::string &value)
         sceneType_ = value;
     } else if (tag == EXIF_TAG_COMPRESSED_BITS_PER_PIXEL) {
         compressedBitsPerPixel_ = value;
+    } else if (tag == EXIF_TAG_USER_COMMENT) {
+        userComment_ = value;
     } else {
         SetExifTagValuesEx(tag, value);
     }
@@ -1109,6 +1111,18 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
             exif_set_rational((*ptrEntry)->data, order, rat);
             break;
         }
+        case EXIF_TAG_USER_COMMENT: {
+            *ptrEntry = CreateExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_USER_COMMENT,
+                value.length(), EXIF_FORMAT_UNDEFINED);
+            if ((*ptrEntry) == nullptr) {
+                HiLog::Error(LABEL, "Get exif entry failed.");
+                return false;
+            }
+            if (memcpy_s((*ptrEntry)->data, value.length(), value.c_str(), value.length()) != 0) {
+                HiLog::Error(LABEL, "User_Comment memcpy error");
+            }
+            break;
+        }
         case EXIF_TAG_GPS_LATITUDE: {
             std::vector<std::string> latVec;
             SplitStr(value, ",", latVec);
@@ -1650,7 +1664,8 @@ bool EXIFInfo::CheckExifEntryValid(const ExifIfd &ifd, const ExifTag &tag)
                 tag == EXIF_TAG_FNUMBER ||
                 tag == EXIF_TAG_ISO_SPEED_RATINGS ||
                 tag == EXIF_TAG_SCENE_TYPE ||
-                tag == EXIF_TAG_COMPRESSED_BITS_PER_PIXEL) {
+                tag == EXIF_TAG_COMPRESSED_BITS_PER_PIXEL ||
+                tag == EXIF_TAG_USER_COMMENT) {
                 ret = true;
             }
             break;
