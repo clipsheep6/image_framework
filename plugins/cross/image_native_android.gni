@@ -13,124 +13,124 @@
 
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
-import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+import("//foundation/graphic/image_framework/ide/image_decode_config.gni")
 import("//third_party/flutter/flutter_config.gni")
 
 image_native_android_cflags = [ "-DIMAGE_DEBUG_FLAG" ]
 
 image_native_android_sources = [
   # manager
-  "//foundation/multimedia/image_framework/plugins/manager/src/common/attr_data.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/common/platform_adp.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/capability.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/impl_class.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/impl_class_key.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/impl_class_mgr.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/json_helper.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/plugin.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/plugin_export.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/plugin_fw.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/plugin_info_lock.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework/plugin_mgr.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/plugin_server.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/pluginbase/plugin_class_base.cpp",
-  "//foundation/multimedia/image_framework/plugins/manager/src/thirdpartyadp/gstreamer/gst_plugin_fw.cpp",
+  "$image_subsystem/plugins/manager/src/common/attr_data.cpp",
+  "$image_subsystem/plugins/manager/src/common/platform_adp.cpp",
+  "$image_subsystem/plugins/manager/src/framework/capability.cpp",
+  "$image_subsystem/plugins/manager/src/framework/impl_class.cpp",
+  "$image_subsystem/plugins/manager/src/framework/impl_class_key.cpp",
+  "$image_subsystem/plugins/manager/src/framework/impl_class_mgr.cpp",
+  "$image_subsystem/plugins/manager/src/framework/json_helper.cpp",
+  "$image_subsystem/plugins/manager/src/framework/plugin.cpp",
+  "$image_subsystem/plugins/manager/src/framework/plugin_export.cpp",
+  "$image_subsystem/plugins/manager/src/framework/plugin_fw.cpp",
+  "$image_subsystem/plugins/manager/src/framework/plugin_info_lock.cpp",
+  "$image_subsystem/plugins/manager/src/framework/plugin_mgr.cpp",
+  "$image_subsystem/plugins/manager/src/plugin_server.cpp",
+  "$image_subsystem/plugins/manager/src/pluginbase/plugin_class_base.cpp",
+  "$image_subsystem/plugins/manager/src/thirdpartyadp/gstreamer/gst_plugin_fw.cpp",
 
   # jpeg
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/codec/src/image_source.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
   "//third_party/flutter/skia/third_party/externals/libjpeg-turbo/jdicc.c",
 
   # image_native
   "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/native_image.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/matrix.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/scan_line_filter.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_source_stream.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/common/src/native_image.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/converter/src/matrix.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/converter/src/scan_line_filter.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/src/buffer_source_stream.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
 
   # image_napi
-  "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_napi_utils.cpp",
-  "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_packer_napi.cpp",
-  "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp",
-  "//foundation/multimedia/image_framework/frameworks/kits/js/common/native_module_ohos_image.cpp",
-  "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixel_map_napi.cpp",
+  "$image_subsystem/frameworks/kits/js/common/image_napi_utils.cpp",
+  "$image_subsystem/frameworks/kits/js/common/image_packer_napi.cpp",
+  "$image_subsystem/frameworks/kits/js/common/image_source_napi.cpp",
+  "$image_subsystem/frameworks/kits/js/common/native_module_ohos_image.cpp",
+  "$image_subsystem/frameworks/kits/js/common/pixel_map_napi.cpp",
 
   # formatagent
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/bmp_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/gif_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/heif_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/jpeg_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/png_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/raw_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/svg_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/wbmp_format_agent.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/webp_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/bmp_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/gif_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/heif_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/jpeg_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/png_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/raw_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/svg_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/wbmp_format_agent.cpp",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/src/webp_format_agent.cpp",
 
   # bmp
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libbmpplugin/src/bmp_decoder.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libbmpplugin/src/bmp_stream.cpp",
+  "$image_subsystem/plugins/common/libs/image/libbmpplugin/src/bmp_decoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libbmpplugin/src/bmp_stream.cpp",
 
   # gif
   "${image_subsystem}/plugins/common/libs/image/libjpegplugin/src/exif_maker_note.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libgifplugin/src/gif_decoder.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/exif_info.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/icc_profile_info.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/jpeg_decoder.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/jpeg_encoder.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/src/jpeg_utils.cpp",
+  "$image_subsystem/plugins/common/libs/image/libgifplugin/src/gif_decoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libjpegplugin/src/exif_info.cpp",
+  "$image_subsystem/plugins/common/libs/image/libjpegplugin/src/icc_profile_info.cpp",
+  "$image_subsystem/plugins/common/libs/image/libjpegplugin/src/jpeg_decoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libjpegplugin/src/jpeg_encoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libjpegplugin/src/jpeg_utils.cpp",
 
   # png
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libpngplugin/src/nine_patch_listener.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libpngplugin/src/png_decoder.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libpngplugin/src/png_ninepatch_res.cpp",
+  "$image_subsystem/plugins/common/libs/image/libpngplugin/src/nine_patch_listener.cpp",
+  "$image_subsystem/plugins/common/libs/image/libpngplugin/src/png_decoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libpngplugin/src/png_ninepatch_res.cpp",
 
   # raw
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/librawplugin/src/raw_decoder.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/librawplugin/src/raw_stream.cpp",
+  "$image_subsystem/plugins/common/libs/image/librawplugin/src/raw_decoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/librawplugin/src/raw_stream.cpp",
 
   # svg
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/src/svg_decoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libsvgplugin/src/svg_decoder.cpp",
 
   # webp
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libwebpplugin/src/webp_decoder.cpp",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libwebpplugin/src/webp_encoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libwebpplugin/src/webp_decoder.cpp",
+  "$image_subsystem/plugins/common/libs/image/libwebpplugin/src/webp_encoder.cpp",
 ]
 
 # image_native: not support
 image_native_android_sources -= [
   "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/creator/src/image_creator_manager.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver.cpp",
+  "$image_subsystem/frameworks/innerkitsimpl/receiver/src/image_receiver_manager.cpp",
 ]
 
 image_native_android_include_dirs = [
   # common
   "//foundation/multimedia/utils/include",
-  "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-  "//foundation/multimedia/image_framework/plugins/manager/include",
-  "//foundation/multimedia/image_framework/plugins/manager/include/image",
-  "//foundation/multimedia/image_framework/plugins/manager/include/pluginbase",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
+  "$image_subsystem/interfaces/innerkits/include",
+  "$image_subsystem/plugins/manager/include",
+  "$image_subsystem/plugins/manager/include/image",
+  "$image_subsystem/plugins/manager/include/pluginbase",
+  "$image_subsystem/frameworks/innerkitsimpl/utils/include",
   "//foundation/graphic/graphic_2d/utils/color_manager/export",
   "$skia_root/skia/include/codec",
   "$skia_root/skia",
@@ -141,13 +141,13 @@ image_native_android_include_dirs = [
   # image_native
   "//utils/system/safwk/native/include",
   "//foundation/ability/ability_runtime/interfaces/inner_api/runtime/include/",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/include",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/include",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/include",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/include",
-  "//foundation/multimedia/image_framework/frameworks/kits/js/common/include",
-  "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
-  "//foundation/multimedia/image_framework/interfaces/kits/native/include",
+  "$image_subsystem/frameworks/innerkitsimpl/receiver/include",
+  "$image_subsystem/frameworks/innerkitsimpl/creator/include",
+  "$image_subsystem/frameworks/innerkitsimpl/codec/include",
+  "$image_subsystem/frameworks/innerkitsimpl/common/include",
+  "$image_subsystem/frameworks/kits/js/common/include",
+  "$image_subsystem/interfaces/kits/js/common/include",
+  "$image_subsystem/interfaces/kits/native/include",
   "//utils/jni/jnikit/include",
   "//foundation/graphic/graphic_2d/interfaces/inner_api/surface",
   "//foundation/graphic/graphic_2d/interfaces/inner_api/common",
@@ -158,8 +158,8 @@ image_native_android_include_dirs = [
   "//drivers/peripheral/base",
 
   # webp
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter/include",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libwebpplugin/include",
+  "$image_subsystem/frameworks/innerkitsimpl/pixelconverter/include",
+  "$image_subsystem/plugins/common/libs/image/libwebpplugin/include",
   "//third_party/flutter/skia/third_party/externals/libwebp/src",
   "$skia_root/skia/include/encode",
   "$skia_root/skia/src/ports/skia_ohos",
@@ -173,40 +173,40 @@ image_native_android_include_dirs = [
   "$image_subsystem/plugins/common/libs/image/libsvgplugin/include",
 
   # bmp
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libbmpplugin/include",
+  "$image_subsystem/plugins/common/libs/image/libbmpplugin/include",
 
   # manager
-  "//foundation/multimedia/image_framework/plugins/manager/include/utils",
-  "//foundation/multimedia/image_framework/plugins/manager/src/common",
-  "//foundation/multimedia/image_framework/plugins/manager/src/framework",
-  "//foundation/multimedia/image_framework/plugins/manager/src/pluginbase",
-  "//foundation/multimedia/image_framework/plugins/manager/src/thirdpartyadp/gstreamer",
+  "$image_subsystem/plugins/manager/include/utils",
+  "$image_subsystem/plugins/manager/src/common",
+  "$image_subsystem/plugins/manager/src/framework",
+  "$image_subsystem/plugins/manager/src/pluginbase",
+  "$image_subsystem/plugins/manager/src/thirdpartyadp/gstreamer",
   "//third_party/json/single_include/nlohmann",
   "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
 
   # jpeg
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/include",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/include",
+  "$image_subsystem/plugins/common/libs/image/libjpegplugin/include",
+  "$image_subsystem/frameworks/innerkitsimpl/converter/include",
   "//third_party/flutter/skia/third_party/libjpeg-turbo",
   "//third_party/flutter/skia/third_party/externals/libjpeg-turbo",
   "//third_party/libexif",
 
   # gif
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libgifplugin/include",
+  "$image_subsystem/plugins/common/libs/image/libgifplugin/include",
   "//third_party/giflib",
 
   # formatagent
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/include",
+  "$image_subsystem/plugins/common/libs/image/formatagentplugin/include",
 
   # png
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libpngplugin/include",
+  "$image_subsystem/plugins/common/libs/image/libpngplugin/include",
   "//third_party/zlib",
   "//third_party/libpng",
 
   # raw
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/include",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin",
-  "//foundation/multimedia/image_framework/plugins/common/libs/image/librawplugin/include",
+  "$image_subsystem/frameworks/innerkitsimpl/stream/include",
+  "$image_subsystem/plugins/common/libs/image/libjpegplugin",
+  "$image_subsystem/plugins/common/libs/image/librawplugin/include",
   "//third_party/skia",
   "//third_party/skia/third_party/externals/libjpeg-turbo",
 ]
@@ -221,11 +221,11 @@ image_native_android_deps = [
   "//foundation/arkui/napi:ace_napi",
 
   # webp
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
+  "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter_static",
 
   # bmp
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils_static",
-  "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+  "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils_static",
+  "$image_subsystem/mock/native:log_mock_static",
 
   # jpeg
   "//third_party/flutter/build/libjpeg:ace_libjpeg",

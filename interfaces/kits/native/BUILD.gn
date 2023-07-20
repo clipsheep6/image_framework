@@ -20,7 +20,7 @@ ohos_ndk_library("libpixelmap_ndk") {
 }
 
 ohos_ndk_headers("image_header") {
-  dest_dir = "$ndk_headers_out_dir/multimedia/image_framework"
+  dest_dir = "$ndk_headers_out_dir/graphic/image_framework"
   sources = [ "./include/image_pixel_map_napi.h" ]
 }
 
@@ -31,7 +31,7 @@ ohos_ndk_library("libimage_ndk") {
 }
 
 ohos_ndk_headers("image_ndk_header") {
-  dest_dir = "$ndk_headers_out_dir/multimedia/image_framework"
+  dest_dir = "$ndk_headers_out_dir/graphic/image_framework"
   sources = [
     "./include/image_mdk.h",
     "./include/image_mdk_common.h",
@@ -45,7 +45,7 @@ ohos_ndk_library("libimage_receiver_ndk") {
 }
 
 ohos_ndk_headers("image_receiver_ndk_header") {
-  dest_dir = "$ndk_headers_out_dir/multimedia/image_framework"
+  dest_dir = "$ndk_headers_out_dir/graphic/image_framework"
   sources = [ "./include/image_receiver_mdk.h" ]
 }
 
@@ -56,6 +56,6 @@ ohos_ndk_library("libimage_source_ndk") {
 }
 
 ohos_ndk_headers("image_source_ndk_header") {
-  dest_dir = "$ndk_headers_out_dir/multimedia/image_framework"
+  dest_dir = "$ndk_headers_out_dir/graphic/image_framework"
   sources = [ "./include/image_source_mdk.h" ]
 }
