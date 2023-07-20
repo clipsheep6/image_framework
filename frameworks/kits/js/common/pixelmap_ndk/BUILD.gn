@@ -13,7 +13,7 @@
 
 import("//build/ohos.gni")
 
-SUBSYSTEM_DIR = "//foundation/multimedia/image_framework"
+SUBSYSTEM_DIR = "//foundation/graphic/image_framework"
 
 ohos_shared_library("pixelmap_ndk") {
   sanitize = {
@@ -39,6 +39,6 @@ ohos_shared_library("pixelmap_ndk") {
   deps = [ "$SUBSYSTEM_DIR/interfaces/kits/js/common:image" ]
 
   innerapi_tags = [ "ndk" ]
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
   part_name = "image_framework"
 }
