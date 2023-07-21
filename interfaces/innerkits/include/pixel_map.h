@@ -52,7 +52,7 @@ constexpr uint8_t ARGB_R_SHIFT = 16;
 constexpr uint8_t ARGB_G_SHIFT = 8;
 constexpr uint8_t ARGB_B_SHIFT = 0;
 // Define pixel map malloc max size 600MB
-constexpr int32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
+constexpr uint32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
 
 class PixelMap : public Parcelable {
 public:
