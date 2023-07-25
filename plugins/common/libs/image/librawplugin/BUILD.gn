@@ -63,7 +63,6 @@ ohos_shared_library("rawplugin") {
     defines = [ "DUAL_ADAPTER" ]
     DUAL_ADAPTER = true
     deps = [
-      "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
       "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
       "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin:jpegplugin",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
@@ -73,10 +72,13 @@ ohos_shared_library("rawplugin") {
     if (DUAL_ADAPTER) {
     }
 
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [
+      "graphic_2d:color_manager",
+      "hilog:libhilog",
+    ]
   }
 
-  part_name = "multimedia_image_framework"
+  part_name = "image_framework"
   subsystem_name = "multimedia"
 }
 
@@ -84,5 +86,5 @@ ohos_prebuilt_etc("rawpluginmetadata") {
   source = "rawplugin.pluginmeta"
   relative_install_dir = "multimediaplugin/image"
   subsystem_name = "multimedia"
-  part_name = "multimedia_image_framework"
+  part_name = "image_framework"
 }
