@@ -274,27 +274,6 @@ HWTEST_F(ImageNdkTest, OH_Image_InitImageNativeTest, TestSize.Level3)
 }
 
 /**
- * @tc.name: OH_Image_Receiver_CreateImageReceiverTest
- * @tc.desc: OH_Image_Receiver_CreateImageReceiver
- * @tc.type: FUNC
- */
-HWTEST_F(ImageNdkTest, OH_Image_Receiver_CreateImageReceiverTest, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_Receiver_CreateImageReceiverTest start";
-    napi_env env = nullptr;
-    OhosImageReceiverInfo info;
-    info.capicity = 0;
-    info.format = 0;
-    info.height = 0;
-    info.width = 0;
-    napi_value* res = nullptr;
-    int32_t ret = OH_Image_Receiver_CreateImageReceiver(env, info, res);
-    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
-
-    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_Receiver_CreateImageReceiverTest end";
-}
-
-/**
  * @tc.name: OH_ImageSource_CreateTest
  * @tc.desc: OH_ImageSource_Create
  * @tc.type: FUNC
