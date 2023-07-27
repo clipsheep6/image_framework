@@ -12,8 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-
-SUBSYSTEM_DIR = "//foundation/multimedia/image_framework"
+import("../../../../../ide/image_decode_config.gni")
 
 ohos_shared_library("pixelmap_ndk") {
   sanitize = {
@@ -34,11 +33,11 @@ ohos_shared_library("pixelmap_ndk") {
   ]
 
   public_configs =
-      [ "$SUBSYSTEM_DIR/interfaces/innerkits:image_external_config" ]
+      [ "$image_subsystem/interfaces/innerkits:image_external_config" ]
 
-  deps = [ "$SUBSYSTEM_DIR/interfaces/kits/js/common:image" ]
+  deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
 
   innerapi_tags = [ "ndk" ]
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
   part_name = "image_framework"
 }

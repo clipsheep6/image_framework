@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+import("../../ide/image_decode_config.gni")
 config("log_mock_config") {
   visibility = [ ":*" ]
   include_dirs = [
@@ -24,14 +24,14 @@ config("log_mock_config") {
 ohos_static_library("log_mock_static") {
   configs = [ ":log_mock_config" ]
   sources = [
-    "//foundation/multimedia/image_framework/mock/native/src/HiLog.cpp",
-    "//foundation/multimedia/image_framework/mock/native/src/hitrace_meter.cpp",
+    "$image_subsystem/mock/native/src/HiLog.cpp",
+    "$image_subsystem/mock/native/src/hitrace_meter.cpp",
   ]
   if (use_clang_ios || use_clang_android) {
     sources -= [ "$image_subsystem/mock/native/src/HiLog.cpp" ]
     deps = [ "$graphic_subsystem/rosen/modules/platform:hilog" ]
   }
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
 }
 
 config("utils_mock_config") {
@@ -39,7 +39,7 @@ config("utils_mock_config") {
   include_dirs = [
     "include",
     "//foundation/multimedia/utils/include",
-    "//foundation/multimedia/image_framework/interfaces/innerkits/include",
+    "$image_subsystem/interfaces/innerkits/include",
   ]
 }
 
@@ -55,12 +55,12 @@ ohos_static_library("utils_mock_static") {
   }
   configs = [ ":utils_mock_config" ]
   sources = [
-    "//foundation/multimedia/image_framework/mock/native/src/directory_ex.cpp",
-    "//foundation/multimedia/image_framework/mock/native/src/message_parcel.cpp",
-    "//foundation/multimedia/image_framework/mock/native/src/parcel.cpp",
-    "//foundation/multimedia/image_framework/mock/native/src/refbase.cpp",
-    "//foundation/multimedia/image_framework/mock/native/src/rwlock.cpp",
+    "$image_subsystem/mock/native/src/directory_ex.cpp",
+    "$image_subsystem/mock/native/src/message_parcel.cpp",
+    "$image_subsystem/mock/native/src/parcel.cpp",
+    "$image_subsystem/mock/native/src/refbase.cpp",
+    "$image_subsystem/mock/native/src/rwlock.cpp",
   ]
   deps = [ ":log_mock_static" ]
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
 }

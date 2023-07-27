@@ -13,7 +13,7 @@
 
 #import("//build/config/ohos/rules.gni")
 import("//build/ohos.gni")
-import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+import("ide/image_decode_config.gni")
 group("image_framework") {
   if (use_clang_ios) {
     deps = [
