@@ -37,11 +37,12 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
 #include <cstdint>
 #include "napi/native_api.h"
-namespace OHOS {
-namespace Media {
 #ifdef __cplusplus
 extern "C" {
 #endif
+namespace OHOS {
+namespace Media {
+
 
 /**
  * @brief Enumerates the error codes returned by the functions.
@@ -97,15 +98,65 @@ struct OhosPixelMapInfo {
 };
 
 /**
+ * @brief Obtains the information about a <b>PixelMap</b> object
+ * and stores the information to the {@link OhosPixelMapInfo} struct.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param value Indicates the <b>PixelMap</b> object at the application layer.
+ * @param info Indicates the pointer to the object that stores the information obtained.
+ * For details, see {@link OhosPixelMapInfo}.
+ * @return Returns <b>0</b> if the information is obtained and stored successfully; returns an error code otherwise.
+ * @see OhosPixelMapInfo
+ * @since 8
+ * @version 1.0
+ */
+int32_t OH_GetImageInfo(napi_env env, napi_value value, OhosPixelMapInfo *info);
+
+/**
+ * @brief Obtains the memory address of a <b>PixelMap</b> object and locks the memory.
+ *
+ * After the function is executed successfully, <b>*addrPtr</b> is the memory address to be accessed.
+ * After the access operation is complete, you must use {@link OH_UnAccessPixels} to unlock the memory.
+ * Otherwise, the resources in the memory cannot be released.
+ * After the memory is unlocked, its address cannot be accessed or operated.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param value Indicates the <b>PixelMap</b> object at the application layer.
+ * @param addrPtr Indicates the double pointer to the memory address.
+ * @see UnAccessPixels
+ * @return Returns {@link OHOS_IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
+ * @since 8
+ * @version 1.0
+ */
+int32_t OH_AccessPixels(napi_env env, napi_value value, void** addrPtr);
+
+/**
+ * @brief Unlocks the memory of a <b>PixelMap</b> object. This function is used with {@link OH_AccessPixels} in pairs.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param value Indicates the <b>PixelMap</b> object at the application layer.
+ * @return Returns {@link OHOS_IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
+ * @see AccessPixels
+ * @since 8
+ * @version 1.0
+ */
+int32_t OH_UnAccessPixels(napi_env env, napi_value value);
+
+}
+}
+
+
+
+/**
  * @brief Defines the native pixel map information.
- * @since 9
+ * @since 10
  * @version 2.0
  */
 struct NativePixelMap;
 
 /**
  * @brief Defines the data type name of the native pixel map.
- * @since 9
+ * @since 10
  * @version 2.0
  */
 typedef struct NativePixelMap NativePixelMap;
@@ -189,51 +240,6 @@ struct OhosPixelMapCreateOps {
     /** Scale mode of the image. */
     uint32_t scaleMode;
 };
-
-/**
- * @brief Obtains the information about a <b>PixelMap</b> object
- * and stores the information to the {@link OhosPixelMapInfo} struct.
- *
- * @param env Indicates the NAPI environment pointer.
- * @param value Indicates the <b>PixelMap</b> object at the application layer.
- * @param info Indicates the pointer to the object that stores the information obtained.
- * For details, see {@link OhosPixelMapInfo}.
- * @return Returns <b>0</b> if the information is obtained and stored successfully; returns an error code otherwise.
- * @see OhosPixelMapInfo
- * @since 8
- * @version 1.0
- */
-int32_t OH_GetImageInfo(napi_env env, napi_value value, OhosPixelMapInfo *info);
-
-/**
- * @brief Obtains the memory address of a <b>PixelMap</b> object and locks the memory.
- *
- * After the function is executed successfully, <b>*addrPtr</b> is the memory address to be accessed.
- * After the access operation is complete, you must use {@link OH_UnAccessPixels} to unlock the memory.
- * Otherwise, the resources in the memory cannot be released.
- * After the memory is unlocked, its address cannot be accessed or operated.
- *
- * @param env Indicates the NAPI environment pointer.
- * @param value Indicates the <b>PixelMap</b> object at the application layer.
- * @param addrPtr Indicates the double pointer to the memory address.
- * @see UnAccessPixels
- * @return Returns {@link OHOS_IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
- * @since 8
- * @version 1.0
- */
-int32_t OH_AccessPixels(napi_env env, napi_value value, void** addrPtr);
-
-/**
- * @brief Unlocks the memory of a <b>PixelMap</b> object. This function is used with {@link OH_AccessPixels} in pairs.
- *
- * @param env Indicates the NAPI environment pointer.
- * @param value Indicates the <b>PixelMap</b> object at the application layer.
- * @return Returns {@link OHOS_IMAGE_RESULT_SUCCESS} if the operation is successful; returns an error code otherwise.
- * @see AccessPixels
- * @since 8
- * @version 1.0
- */
-int32_t OH_UnAccessPixels(napi_env env, napi_value value);
 
 /**
  * @brief Creates a <b>PixelMap</b> object.
@@ -468,7 +474,4 @@ int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native);
 #ifdef __cplusplus
 };
 #endif
-/** @} */
-} // namespace Media
-} // namespace OHOS
 #endif // INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
