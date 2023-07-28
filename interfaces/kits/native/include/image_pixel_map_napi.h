@@ -37,24 +37,11 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
 #include <cstdint>
 #include "napi/native_api.h"
-namespace OHOS {
-namespace Media {
+#include "image_mdk_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @brief Enumerates the error codes returned by the functions.
- *
- * @since 8
- * @version 1.0
- */
-enum {
-    /** Operation success. */
-    OHOS_IMAGE_RESULT_SUCCESS = 0,
-    /** Invalid value. */
-    OHOS_IMAGE_RESULT_BAD_PARAMETER = -1,
-};
 
 /**
  * @brief Enumerates the pixel formats.
@@ -468,7 +455,4 @@ int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native);
 #ifdef __cplusplus
 };
 #endif
-/** @} */
-} // namespace Media
-} // namespace OHOS
 #endif // INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PIXEL_MAP_NAPI_H_
