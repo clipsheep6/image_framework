@@ -12,14 +12,14 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+import("../../../ide/image_decode_config.gni")
 
 config("pixelconvertadapter_public_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "//foundation/multimedia/utils/include",
-    "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter/include",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/frameworks/innerkitsimpl/pixelconverter/include",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//foundation/communication/ipc/utils/include",
     "//foundation/multimedia/media_utils_lite/interfaces/kits",
@@ -37,7 +37,7 @@ config("pixelconvertadapter_public_config") {
 
   if (use_mingw_win) {
     include_dirs += [
-      "//foundation/multimedia/image_framework/mock/native/include",
+      "$image_subsystem/mock/native/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "//foundation/communication/ipc/utils/include",
       "$skia_root/skia/include/core",
@@ -52,7 +52,7 @@ config("pixelconvertadapter_public_config") {
     ]
   } else if (use_clang_mac) {
     include_dirs += [
-      "//foundation/multimedia/image_framework/mock/native/include",
+      "$image_subsystem/mock/native/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "$skia_root/skia/include/core",
       "$skia_root/skia/include/encode",
@@ -119,18 +119,18 @@ config("pixelconvertadapter_public_config") {
 
 if (use_clang_ios) {
   ohos_source_set("pixelconvertadapter") {
-    sources = [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter/src/pixel_convert_adapter.cpp" ]
+    sources = [ "$image_subsystem/frameworks/innerkitsimpl/pixelconverter/src/pixel_convert_adapter.cpp" ]
 
     public_configs = [ ":pixelconvertadapter_public_config" ]
 
     defines = image_decode_ios_defines
     deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      "$image_subsystem/mock/native:log_mock_static",
     ]
     deps += skia_platform
 
     #relative_install_dir = "module/multimedia"
-    subsystem_name = "multimedia"
+    subsystem_name = "graphic"
     part_name = "image_framework"
   }
 } else {
@@ -142,75 +142,75 @@ if (use_clang_ios) {
         debug = false
       }
     }
-    sources = [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter/src/pixel_convert_adapter.cpp" ]
+    sources = [ "$image_subsystem/frameworks/innerkitsimpl/pixelconverter/src/pixel_convert_adapter.cpp" ]
 
     public_configs = [ ":pixelconvertadapter_public_config" ]
 
     if (use_mingw_win) {
       defines = image_decode_windows_defines
       deps = [
-        "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+        "$image_subsystem/mock/native:log_mock_static",
       ]
       deps += skia_platform
     } else if (use_clang_mac) {
       defines = image_decode_mac_defines
       deps = [
-        "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+        "$image_subsystem/mock/native:log_mock_static",
       ]
       deps += skia_platform
     } else if (use_clang_android) {
       deps = [
-        "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+        "$image_subsystem/mock/native:log_mock_static",
       ]
 
       libs = [ "nativewindow" ]
     } else {
       deps = [
-        "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+        "$image_subsystem/mock/native:log_mock_static",
       ]
       deps += skia_platform
       external_deps = [ "c_utils:utils" ]
     }
 
     #relative_install_dir = "module/multimedia"
-    subsystem_name = "multimedia"
+    subsystem_name = "graphic"
     innerapi_tags = [ "platformsdk" ]
     part_name = "image_framework"
   }
 }
 
 ohos_static_library("pixelconvertadapter_static") {
-  sources = [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter/src/pixel_convert_adapter.cpp" ]
+  sources = [ "$image_subsystem/frameworks/innerkitsimpl/pixelconverter/src/pixel_convert_adapter.cpp" ]
   public_configs = [ ":pixelconvertadapter_public_config" ]
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
     deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      "$image_subsystem/mock/native:log_mock_static",
     ]
     deps += skia_platform
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
     deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      "$image_subsystem/mock/native:log_mock_static",
     ]
     deps += skia_platform
   } else if (use_clang_ios) {
     defines = image_decode_ios_defines
     deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      "$image_subsystem/mock/native:log_mock_static",
     ]
     deps += skia_platform
   } else if (use_clang_android) {
     deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      "$image_subsystem/mock/native:log_mock_static",
     ]
     deps += skia_platform
 
     libs = [ "nativewindow" ]
   } else {
     deps = [
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      "$image_subsystem/mock/native:log_mock_static",
     ]
     deps += skia_platform
 
@@ -219,6 +219,6 @@ ohos_static_library("pixelconvertadapter_static") {
       "hilog:libhilog",
     ]
   }
-  subsystem_name = "multimedia"
+  subsystem_name = "graphic"
   part_name = "image_framework"
 }

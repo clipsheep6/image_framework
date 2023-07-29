@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
 import("//foundation/graphic/graphic_2d/graphic_config.gni")
-import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+import("../../../../ide/image_decode_config.gni")
 
 config("image_external_config") {
   include_dirs = [
@@ -22,22 +22,22 @@ config("image_external_config") {
     "//utils/system/safwk/native/include",
     "${image_subsystem}/frameworks/kits/js/common/ndk/include",
     "//foundation/ability/ability_runtime/interfaces/inner_api/runtime/include/",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
-    "//foundation/multimedia/image_framework/frameworks/kits/js/common/include",
-    "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
+    "$image_subsystem/frameworks/innerkitsimpl/receiver/include",
+    "$image_subsystem/frameworks/innerkitsimpl/creator/include",
+    "$image_subsystem/frameworks/innerkitsimpl/pixelconverter/include",
+    "$image_subsystem/frameworks/innerkitsimpl/converter/include",
+    "$image_subsystem/frameworks/innerkitsimpl/codec/include",
+    "$image_subsystem/frameworks/innerkitsimpl/common/include",
+    "$image_subsystem/frameworks/innerkitsimpl/stream/include",
+    "$image_subsystem/frameworks/innerkitsimpl/utils/include",
+    "$image_subsystem/frameworks/kits/js/common/include",
+    "$image_subsystem/interfaces/kits/js/common/include",
     "//foundation/multimedia/utils/include",
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin",
-    "//foundation/multimedia/image_framework/plugins/manager/include",
-    "//foundation/multimedia/image_framework/plugins/manager/include/image",
-    "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-    "//foundation/multimedia/image_framework/interfaces/kits/native/include",
+    "$image_subsystem/plugins/common/libs/image/libjpegplugin",
+    "$image_subsystem/plugins/manager/include",
+    "$image_subsystem/plugins/manager/include/image",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/interfaces/kits/native/include",
     "//utils/jni/jnikit/include",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//foundation/graphic/graphic_2d/interfaces/inner_api/surface",
@@ -53,10 +53,10 @@ config("image_external_config") {
   ]
 
   include_dirs += [
-    "//foundation/multimedia/image_framework/plugins/manager/include/pluginbase",
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/include",
+    "$image_subsystem/plugins/manager/include/pluginbase",
+    "$image_subsystem/plugins/common/libs/image/libjpegplugin/include",
+    "$image_subsystem/frameworks/innerkitsimpl/utils/include",
+    "$image_subsystem/frameworks/innerkitsimpl/converter/include",
     "$skia_root/skia/include/codec",
     "$skia_root/skia",
     "$skia_root/skia/include/core",
@@ -68,10 +68,10 @@ config("image_external_config") {
 
   if (use_mingw_win) {
     include_dirs +=
-        [ "//foundation/multimedia/image_framework/mock/native/include" ]
+        [ "$image_subsystem/mock/native/include" ]
   } else if (use_clang_mac) {
     include_dirs += [
-      "//foundation/multimedia/image_framework/mock/native/include",
+      "$image_subsystem/mock/native/include",
       "//third_party/bounds_checking_function/include",
       "//commonlibrary/c_utils/base/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
@@ -80,11 +80,11 @@ config("image_external_config") {
     include_dirs += [
       "//third_party/libpng",
       "$image_subsystem/mock/native/include/log",
-      "//foundation/multimedia/image_framework/mock/native/include/secure",
+      "$image_subsystem/mock/native/include/secure",
     ]
     include_dirs -= [
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/include",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/include",
+      "$image_subsystem/frameworks/innerkitsimpl/receiver/include",
+      "$image_subsystem/frameworks/innerkitsimpl/creator/include",
       "//foundation/graphic/graphic_2d/interfaces/inner_api/surface",
       "//foundation/graphic/graphic_2d/interfaces/inner_api/common",
       "//foundation/graphic/graphic_2d/utils/buffer_handle/export",
@@ -98,8 +98,8 @@ config("image_external_config") {
     ]
 
     include_dirs -= [
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/include",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/include",
+      "$image_subsystem/frameworks/innerkitsimpl/receiver/include",
+      "$image_subsystem/frameworks/innerkitsimpl/creator/include",
       "//foundation/graphic/graphic_2d/interfaces/inner_api/surface",
       "//foundation/graphic/graphic_2d/interfaces/inner_api/common",
       "//foundation/graphic/graphic_2d/utils/buffer_handle/export",
@@ -116,11 +116,11 @@ config("image_external_config") {
 
 js_declaration("image_js") {
   part_name = "image_framework"
-  sources = [ "//foundation/multimedia/image_framework/interfaces/kits/js/@ohos.multimedia.image.d.ts" ]
+  sources = [ "$image_subsystem/interfaces/kits/js/@ohos.multimedia.image.d.ts" ]
 }
 
 ohos_copy("image_declaration") {
-  sources = [ "//foundation/multimedia/image_framework/interfaces/kits/js/@ohos.multimedia.image.d.ts" ]
+  sources = [ "$image_subsystem/interfaces/kits/js/@ohos.multimedia.image.d.ts" ]
   outputs = [ target_out_dir + "/$target_name/" ]
   module_source_dir = target_out_dir + "/$target_name"
   module_install_name = ""
@@ -131,11 +131,11 @@ if (use_clang_ios) {
     public_configs = [ ":image_external_config" ]
     sources = [
       "$image_subsystem/frameworks/kits/js/common/image_pixel_map_napi_kits.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_napi_utils.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_packer_napi.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/native_module_ohos_image.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixel_map_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_napi_utils.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_packer_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_source_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/native_module_ohos_image.cpp",
+      "$image_subsystem/frameworks/kits/js/common/pixel_map_napi.cpp",
     ]
 
     cflags = [ "-DIMAGE_DEBUG_FLAG" ]
@@ -143,15 +143,15 @@ if (use_clang_ios) {
     defines = image_decode_ios_defines
     deps = [
       "//foundation/arkui/napi:ace_napi",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-      "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
-      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+      "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+      "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+      "$image_subsystem/interfaces/innerkits:image_native",
+      "$image_subsystem/mock/native:log_mock_static",
+      "$image_subsystem/plugins/manager:pluginmanager",
     ]
 
     #relative_install_dir = "module/multimedia"
-    subsystem_name = "multimedia"
+    subsystem_name = "graphic"
     part_name = "image_framework"
   }
 } else {
@@ -181,7 +181,7 @@ if (use_clang_ios) {
 
     output_name = "libimage"
     relative_install_dir = "module/multimedia"
-    subsystem_name = "multimedia"
+    subsystem_name = "graphic"
     part_name = "image_framework"
   }
 
@@ -199,13 +199,13 @@ if (use_clang_ios) {
       "$image_subsystem/frameworks/kits/js/common/image_pixel_map_napi_kits.cpp",
       "$image_subsystem/frameworks/kits/js/common/image_receiver_mdk_kits.cpp",
       "$image_subsystem/frameworks/kits/js/common/image_source_mdk_kits.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_creator_napi.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_napi.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_napi_utils.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_packer_napi.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_receiver_napi.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp",
-      "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixel_map_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_creator_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_napi_utils.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_packer_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_receiver_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/image_source_napi.cpp",
+      "$image_subsystem/frameworks/kits/js/common/pixel_map_napi.cpp",
     ]
 
     cflags = [
@@ -219,24 +219,24 @@ if (use_clang_ios) {
       sources -= [
         "$image_subsystem/frameworks/kits/js/common/image_mdk_kits.cpp",
         "$image_subsystem/frameworks/kits/js/common/image_receiver_mdk_kits.cpp",
-        "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_creator_napi.cpp",
-        "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_napi.cpp",
-        "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_receiver_napi.cpp",
+        "$image_subsystem/frameworks/kits/js/common/image_creator_napi.cpp",
+        "$image_subsystem/frameworks/kits/js/common/image_napi.cpp",
+        "$image_subsystem/frameworks/kits/js/common/image_receiver_napi.cpp",
       ]
       deps = [
         "//commonlibrary/c_utils/base:utils",
         "//foundation/arkui/napi:ace_napi",
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-        "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
-        "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-        "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+        "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+        "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+        "$image_subsystem/interfaces/innerkits:image_native",
+        "$image_subsystem/mock/native:log_mock_static",
+        "$image_subsystem/plugins/manager:pluginmanager",
       ]
     } else {
       deps = [
         "$ipc_subsystem/communication/ipc/interfaces/innerkits/ipc_napi_common:ipc_napi",
-        "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
-        "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+        "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+        "$image_subsystem/interfaces/innerkits:image_native",
       ]
     }
 
@@ -252,7 +252,7 @@ if (use_clang_ios) {
       "napi:ace_napi",
     ]
     output_name = "libimage_napi"
-    subsystem_name = "multimedia"
+    subsystem_name = "graphic"
     innerapi_tags = [ "platformsdk" ]
     part_name = "image_framework"
   }
@@ -287,7 +287,7 @@ if (use_clang_ios) {
         "hitrace:hitrace_meter",
       ]
       relative_install_dir = "module/multimedia"
-      subsystem_name = "multimedia"
+      subsystem_name = "graphic"
       part_name = "image_framework"
     }
   }
