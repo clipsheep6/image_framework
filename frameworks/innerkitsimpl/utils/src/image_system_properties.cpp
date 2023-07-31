@@ -16,6 +16,7 @@
 #include "image_system_properties.h"
 
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#include <string>
 #include <parameter.h>
 #include <parameters.h>
 #endif
@@ -23,6 +24,9 @@
 #include "hilog/log_cpp.h"
 #include "image_log.h"
 
+extern "C" {
+extern char* __progname;
+}
 namespace OHOS {
 namespace Media {
 bool ImageSystemProperties::GetSkiaEnabled()
@@ -35,7 +39,13 @@ bool ImageSystemProperties::GetSkiaEnabled()
 bool ImageSystemProperties::GetSurfaceBufferEnabled()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    return system::GetBoolParameter("persist.multimedia.image.surfacebuffer.enabled", false);
+    bool isPhotos = false;
+    if (strncmp(__progname, "mos.photo", strlen("mos.photo")) == 0 ||
+        strncmp(__progname, "myapplication", strlen("myapplication")) == 0) {
+        isPhotos = true;
+    }
+    static bool isPhone = system::GetParameter("const.product.devicetype", "pc") == "phone";
+    return system::GetBoolParameter("persist.multimedia.image.surfacebuffer.enabled", true) && isPhotos && isPhone;
 #endif
 }
 } // namespace Media
