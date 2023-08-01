@@ -34,12 +34,8 @@ ohos_shared_library("pluginexample3") {
     "//foundation/multimedia/image_framework/plugins/manager/test/unittest/common/plugin_example/interface/vision",
   ]
 
-  deps = [
-    "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-    "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
-  ]
-
-  #  external_deps = [ "hilog:libhilog" ]
+  deps = [ "//foundation/multimedia/image_framework/plugins/manager:pluginmanager" ]
+  external_deps = [ "hilog:libhilog" ]
 
   subsystem_name = "multimedia"
   part_name = "multimedia_image"
