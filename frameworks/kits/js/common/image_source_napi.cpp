@@ -341,7 +341,7 @@ napi_value ImageSourceNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getImageInfo", GetImageInfo),
         DECLARE_NAPI_FUNCTION("modifyImageProperty", ModifyImageProperty),
         DECLARE_NAPI_FUNCTION("getImageProperty", GetImageProperty),
-        DECLARE_NAPI_FUNCTION("getDelayTimeList", GetDelayTime),
+        DECLARE_NAPI_FUNCTION("getDelayTime", GetDelayTime),
         DECLARE_NAPI_FUNCTION("getFrameCount", GetFrameCount),
         DECLARE_NAPI_FUNCTION("createPixelMapList", CreatePixelMapList),
         DECLARE_NAPI_FUNCTION("createPixelMap", CreatePixelMap),
