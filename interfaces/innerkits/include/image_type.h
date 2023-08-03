@@ -155,6 +155,11 @@ struct ImageInfo {
     int32_t baseDensity = 0;
 };
 
+struct FillColor {
+    bool isValidColor = false;
+    uint32_t color = 0;
+};
+
 struct DecodeOptions {
     int32_t fitDensity = 0;
     Rect CropRect;
@@ -170,6 +175,7 @@ struct DecodeOptions {
     bool allowPartialImage = true;
     bool editable = false;
     MemoryUsagePreference preference = MemoryUsagePreference::DEFAULT;
+    FillColor fillColor;
 };
 
 enum class ScaleMode : int32_t {
