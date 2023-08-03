@@ -467,9 +467,6 @@ bool SvgDecoder::BuildDom()
         return false;
     }
 
-    if (opts_.plSVGResize.isValidPercentage) {
-        svgDom_->setResizePercentage(opts_.plSVGResize.resizePercentage);
-    }
     svgSize_ = svgDom_->containerSize();
     if (svgSize_.isEmpty()) {
         HiLog::Error(LABEL, "[BuildDom] size is empty.");
@@ -511,7 +508,10 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
     }
 
     opts_ = opts;
-
+    
+    if (opts_.plSVGResize.isValidPercentage) {
+        svgDom_->setResizePercentage(opts_.plSVGResize.resizePercentage);
+    }  
     auto svgSize = svgDom_->containerSize();
     if (svgSize.isEmpty()) {
         HiLog::Error(LABEL, "[DoSetDecodeOptions] size is empty.");
