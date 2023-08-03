@@ -15,6 +15,7 @@
 
 #include "svg_decoder.h"
 
+#include <sstream>
 #include "include/core/SkBitmap.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkImageInfo.h"
@@ -36,6 +37,9 @@ namespace {
 constexpr HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "SvgDecoder" };
 constexpr uint32_t SVG_IMAGE_NUM = 1;
 constexpr uint32_t SVG_BYTES_PER_PIXEL = 4;
+constexpr uint32_t SVG_FILL_COLOR_ATTR_WIDTH = 6;
+constexpr uint32_t SVG_FILL_COLOR_MASK = 0xFFFFFF;
+const std::string SVG_FILL_COLOR_ATTR = "fill";
 
 bool AllocShareBuffer(DecodeContext &context, uint64_t byteCount)
 {
@@ -426,6 +430,34 @@ bool SvgDecoder::BuildStream()
     return true;
 }
 
+static void SetSVGFillColor(SkSVGNode* node, std::string color)
+{
+    if (node == nullptr) {
+        return;
+    }
+    HiLog::Debug(LABEL, "[SetSVGFillColor] node tag %{public}d %{public}s.", node->tag(), color.c_str());
+    node->setAttribute(SVG_FILL_COLOR_ATTR.c_str(), color.c_str());
+    for (auto childNode : node->getChild()) {
+        SetSVGFillColor(childNode.get(), color);
+    }
+}
+
+static void SetSVGFillColor(SkSVGNode* node, uint32_t color)
+{
+    std::stringstream stream;
+    stream.fill('0');
+    stream.width(SVG_FILL_COLOR_ATTR_WIDTH);
+    stream << std::hex <<(color & SVG_FILL_COLOR_MASK);
+    std::string newValue(stream.str());
+    SetSVGFillColor(node, "#" + newValue);
+}
+
+// static void SetSVGResizePercentage(sk_sp<SkSVGDOM> svgDom, uint32_t resizePercentage)
+// {
+//     svgDom.get()->fContainerSize.fWidth *= resizePercentage / 100;
+//     svgDom.get()->fContainerSize.fHeight *= resizePercentage / 100;
+// } 
+
 bool SvgDecoder::BuildDom()
 {
     HiLog::Debug(LABEL, "[BuildDom] IN");
@@ -441,6 +473,9 @@ bool SvgDecoder::BuildDom()
         return false;
     }
 
+    if (opts_.plSVGResize.isValidPercentage) {
+        svgDom_->setSVGResizePercentage(opts_.plSVGResize.resizePercentage);
+    }
     svgSize_ = svgDom_->containerSize();
     if (svgSize_.isEmpty()) {
         HiLog::Error(LABEL, "[BuildDom] size is empty.");
@@ -534,6 +569,10 @@ uint32_t SvgDecoder::DoDecode(uint32_t index, DecodeContext &context)
     if (svgDom_ == nullptr) {
         HiLog::Error(LABEL, "[DoDecode] DOM is null.");
         return Media::ERROR;
+    }
+    
+    if (opts_.plFillColor.isValidColor) {
+        SetSVGFillColor(svgDom_->getRoot(), opts_.plFillColor.color);
     }
 
     if (!AllocBuffer(context)) {
