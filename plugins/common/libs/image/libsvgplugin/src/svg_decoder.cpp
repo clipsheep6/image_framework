@@ -511,7 +511,7 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
     
     if (opts_.plSVGResize.isValidPercentage) {
         svgDom_->setResizePercentage(opts_.plSVGResize.resizePercentage);
-    }  
+    }
     auto svgSize = svgDom_->containerSize();
     if (svgSize.isEmpty()) {
         HiLog::Error(LABEL, "[DoSetDecodeOptions] size is empty.");
