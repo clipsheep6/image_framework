@@ -98,6 +98,7 @@ struct PixelDecodeOptions {
     PlAlphaType desireAlphaType = PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL;
     bool allowPartialImage = true;
     bool editable = false;
+    PlFillColor plFillColor;
 };
 
 class AbsImageDecoder {

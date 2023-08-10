@@ -587,6 +587,13 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
     if (!GET_INT32_BY_NAME(root, "fitDensity", opts->fitDensity)) {
         HiLog::Debug(LABEL, "no fitDensity");
     }
+
+    if (GET_UINT32_BY_NAME(root, "fillColor", opts->fillColor.color)) {
+        opts->fillColor.isValidColor = true;
+        HiLog::Debug(LABEL, "fillColor %{public}x", opts->fillColor.color);
+    } else {
+        HiLog::Debug(LABEL, "no fillColor");
+    }
     return true;
 }
 
