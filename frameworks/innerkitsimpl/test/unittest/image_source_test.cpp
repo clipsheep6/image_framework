@@ -98,6 +98,7 @@ HWTEST_F(ImageSourceTest, GetSupportedFormats003, TestSize.Level3)
     std::set<std::string> formats;
     if (imageSource != nullptr) {
         imageSource->GetSupportedFormats(formats);
+        imageSource->GetSourceSize();
     }
     GTEST_LOG_(INFO) << "ImageSourceTest: GetSupportedFormats003 end";
 }
