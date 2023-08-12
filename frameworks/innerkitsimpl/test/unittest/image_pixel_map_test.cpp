@@ -1276,7 +1276,10 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput001, TestSize.Level3)
 
     ImageInfo imageInfo;
     pixelMap->GetImageInfo(imageInfo);
-
+    pixelMap->IsPurgeable();
+    pixelMap->GetPurgeableMemPtr();
+    std::shared_ptr<PurgeableMem::PurgeableMemBase> res = pixelMap.GetPurgeableMemPtr();
+    pixelMap.SetPurgeableMemPtr(res);
     // test source is nullptr
     ASSERT_EQ(source, nullptr);
     status = pixelMap->WritePixels(source, bufferSize, offset, stride, region);
