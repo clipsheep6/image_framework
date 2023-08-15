@@ -526,7 +526,7 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
     if (opts_.plSVGResize.isValidPercentage) {
         svgDom_->setResizePercentage(uint32_t(opts_.plSVGResize.resizePercentage * scaleFitDesired));
     } else {
-        svgDom_->setResizePercentage(uint32_t(scaleFitDesired));
+        svgDom_->setResizePercentage(uint32_t(DEFAULT_RESIZE_PERCENTAGE * scaleFitDesired));
     }
 
     info.size.width = opts_.desiredSize.width;
