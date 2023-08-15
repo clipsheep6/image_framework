@@ -509,18 +509,24 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
 
     opts_ = opts;
 
-    if (opts_.plSVGResize.isValidPercentage) {
-        svgDom_->setResizePercentage(opts_.plSVGResize.resizePercentage);
-    }
-
     auto svgSize = svgDom_->containerSize();
     if (svgSize.isEmpty()) {
         HiLog::Error(LABEL, "[DoSetDecodeOptions] size is empty.");
         return Media::ERROR;
     }
 
-    opts_.desiredSize.width = static_cast<uint32_t>(svgSize.width());
-    opts_.desiredSize.height = static_cast<uint32_t>(svgSize.height());
+    if (opts_.desiredSize.width == 0 && opts_.desiredSize.height == 0) {
+        opts_.desiredSize.width = static_cast<uint32_t>(svgSize.width());
+        opts_.desiredSize.height = static_cast<uint32_t>(svgSize.height());
+    } 
+
+    float scaleFitDesired = std::min(opts_.desiredSize.width / svgSize.width(), opts_.desiredSize.height / svgSize.height());
+
+    if (opts_.plSVGResize.isValidPercentage) {
+        svgDom_->setResizePercentage(uint32_t(opts_.plSVGResize.resizePercentage * scaleFitDesired));
+    } else {
+        svgDom_->setResizePercentage(uint32_t(scaleFitDesired));
+    }
 
     info.size.width = opts_.desiredSize.width;
     info.size.height = opts_.desiredSize.height;
