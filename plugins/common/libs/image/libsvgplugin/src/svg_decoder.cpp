@@ -520,7 +520,8 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
         opts_.desiredSize.height = static_cast<uint32_t>(svgSize.height());
     } 
 
-    float scaleFitDesired = std::min(opts_.desiredSize.width / svgSize.width(), opts_.desiredSize.height / svgSize.height());
+    float scaleFitDesired = std::min(opts_.desiredSize.width / svgSize.width(), 
+        opts_.desiredSize.height / svgSize.height());
 
     if (opts_.plSVGResize.isValidPercentage) {
         svgDom_->setResizePercentage(uint32_t(opts_.plSVGResize.resizePercentage * scaleFitDesired));
