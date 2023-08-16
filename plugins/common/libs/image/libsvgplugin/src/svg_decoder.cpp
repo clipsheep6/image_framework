@@ -521,7 +521,7 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
     }
 
     float scaleFitDesired = 1.0;
-    if (opts_.desiredSize.width != 0 && opts_.desiredSize.height != 0) {
+    if (opts_.desiredSize.width && opts_.desiredSize.height) {
         scaleFitDesired = std::min(static_cast<float>(opts_.desiredSize.width / svgSize.width()),
             static_cast<float>(opts_.desiredSize.height / svgSize.height()));
     }
