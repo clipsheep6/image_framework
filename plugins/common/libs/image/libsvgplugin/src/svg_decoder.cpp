@@ -516,29 +516,19 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
         return Media::ERROR;
     }
 
-    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh get origin width = %{public}u, height = %{public}u",
-        opts_.desiredSize.width, opts_.desiredSize.height);
-
     if (opts_.desiredSize.width == 0 && opts_.desiredSize.height == 0) {
         opts_.desiredSize.width = static_cast<uint32_t>(svgSize.width());
         opts_.desiredSize.height = static_cast<uint32_t>(svgSize.height());
     }
 
-    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh get new width = %{public}u, height = %{public}u",
-        opts_.desiredSize.width, opts_.desiredSize.height);
-
-    float scaleFitDesired = std::min(float(opts_.desiredSize.width / svgSize.width()),
-        float(opts_.desiredSize.height / svgSize.height()));
-
-    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh get scaleFitDesired = %{public}f", scaleFitDesired);
+    float scaleFitDesired = std::min(static_cast<float>(opts_.desiredSize.width / svgSize.width()),
+        static_cast<float>(opts_.desiredSize.height / svgSize.height()));
 
     if (opts_.plSVGResize.isValidPercentage) {
-        svgDom_->setResizePercentage(uint32_t(opts_.plSVGResize.resizePercentage * scaleFitDesired));
+        svgDom_->setResizePercentage(static_cast<uint32_t>(opts_.plSVGResize.resizePercentage * scaleFitDesired));
     } else {
-        svgDom_->setResizePercentage(uint32_t(DEFAULT_RESIZE_PERCENTAGE * scaleFitDesired));
+        svgDom_->setResizePercentage(static_cast<uint32_t>(DEFAULT_RESIZE_PERCENTAGE * scaleFitDesired));
     }
-
-    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh get SVGSize = %{public}f", svgDom_->containerSize().width());
 
     info.size.width = opts_.desiredSize.width;
     info.size.height = opts_.desiredSize.height;
