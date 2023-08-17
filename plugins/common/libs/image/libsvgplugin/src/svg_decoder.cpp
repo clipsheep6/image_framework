@@ -521,18 +521,19 @@ uint32_t SvgDecoder::DoSetDecodeOptions(uint32_t index, const PixelDecodeOptions
         scaleFitDesired = std::min(static_cast<float>(opts_.desiredSize.width) / svgSize.width(),
             static_cast<float>(opts_.desiredSize.height) / svgSize.height());
     }
-
+    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh scaleFitDesired is %{public}f.", scaleFitDesired);
     if (opts_.plSVGResize.isValidPercentage) {
         svgDom_->setResizePercentage(static_cast<uint32_t>(opts_.plSVGResize.resizePercentage * scaleFitDesired));
     } else {
         svgDom_->setResizePercentage(static_cast<uint32_t>(DEFAULT_RESIZE_PERCENTAGE * scaleFitDesired));
     }
-
+    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh desiredSize.width is %{public}u.", opts_.desiredSize.width);
     opts_.desiredSize.width = static_cast<uint32_t>(svgDom_->containerSize().width());
     opts_.desiredSize.height = static_cast<uint32_t>(svgDom_->containerSize().height());
-
+    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh desiredSize.width is %{public}u.", opts_.desiredSize.width);
     info.size.width = opts_.desiredSize.width;
     info.size.height = opts_.desiredSize.height;
+    HiLog::Error(LABEL, "[DoSetDecodeOptions] gh info.size.width is %{public}u.", info.size.width);
     info.pixelFormat = PlPixelFormat::RGBA_8888;
     info.colorSpace = PlColorSpace::UNKNOWN;
     info.alphaType = PlAlphaType::IMAGE_ALPHA_TYPE_PREMUL;
