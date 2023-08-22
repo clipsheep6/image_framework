@@ -228,6 +228,27 @@ HWTEST_F(WebpDecoderTest, GetImageSizeTest006, TestSize.Level3)
 }
 
 /**
+ * @tc.name: GetImageSizeTest007
+ * @tc.desc: Test of GetImageSize
+ * @tc.type: FUNC
+ */
+HWTEST_F(WebpDecoderTest, GetImageSizeTest007, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "WebpDecoderTest: GetImageSizeTest007 start";
+    auto webpDecoder = std::make_shared<WebpDecoder>();
+    auto mock = std::make_shared<MockInputDataStream>();
+    mock->SetStreamSize(2);
+    mock->SetReturn(true);
+    webpDecoder->SetSource(*mock.get());
+    ImagePlugin::PlSize plSize;
+    webpDecoder->GetImageSize(0, plSize);
+    webpDecoder->GetImageSize(0, plSize);
+    bool result = (webpDecoder != nullptr);
+    ASSERT_EQ(result, true);
+    GTEST_LOG_(INFO) << "WebpDecoderTest: GetImageSizeTest007 end";
+}
+
+/**
  * @tc.name: SetDecodeOptionsTest001
  * @tc.desc: Test of SetDecodeOptions
  * @tc.type: FUNC
