@@ -432,6 +432,7 @@ bool ExtDecoder::ResetCodec()
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
     uint32_t res = PreDecodeCheck(index);
+
     if (res != SUCCESS) {
         return res;
     }
@@ -460,7 +461,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         rowStride = sbBuffer->GetStride();
     }
     SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
-    HiLog::Debug(LABEL, "decode format %{public}d", skEncodeFormat);
+    HiLog::Debug(LABEL, "decode format %{public}d  rowStride:%{public}d   ", skEncodeFormat, rowStride);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
         return GifDecode(index, context, rowStride);
     }
