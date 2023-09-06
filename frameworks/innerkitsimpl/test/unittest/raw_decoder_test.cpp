@@ -485,6 +485,48 @@ HWTEST_F(RawDecoderTest, SetDecodeOptionsTest006, TestSize.Level3)
 }
 
 /**
+ * @tc.name: SetDecodeOptionsTest007
+ * @tc.desc: Test of SetDecodeOptions
+ * @tc.type: FUNC
+ */
+HWTEST_F(RawDecoderTest, SetDecodeOptionsTest007, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "RawDecoderTest: SetDecodeOptionsTest007 start";
+    auto rawDecoder = std::make_shared<RawDecoder>();
+    PixelDecodeOptions opts;
+    PlImageInfo info;
+    rawDecoder->SetDecodeOptions(5, opts, info);
+    int size = 1000;
+    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
+    auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
+    rawDecoder->SetSource(*streamPtr.release());
+    bool result = (rawDecoder != nullptr);
+    ASSERT_EQ(result, true);
+    GTEST_LOG_(INFO) << "RawDecoderTest: SetDecodeOptionsTest007 end";
+}
+
+/**
+ * @tc.name: SetDecodeOptionsTest008
+ * @tc.desc: Test of SetDecodeOptions
+ * @tc.type: FUNC
+ */
+HWTEST_F(RawDecoderTest, SetDecodeOptionsTest008, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "RawDecoderTest: SetDecodeOptionsTest008 start";
+    auto rawDecoder = std::make_shared<RawDecoder>();
+    auto mock = std::make_shared<MockInputDataStream>();
+    mock->SetStreamSize(0);
+    mock->SetReturn(true);
+    rawDecoder->SetSource(*mock.get());
+    PixelDecodeOptions opts;
+    PlImageInfo info;
+    rawDecoder->SetDecodeOptions(2, opts, info);
+    bool result = (rawDecoder != nullptr);
+    ASSERT_EQ(result, true);
+    GTEST_LOG_(INFO) << "RawDecoderTest: SetDecodeOptionsTest006 end";
+}
+
+/**
  * @tc.name: DecodeTest001
  * @tc.desc: Test of Decode
  * @tc.type: FUNC
