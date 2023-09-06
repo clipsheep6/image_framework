@@ -502,7 +502,7 @@ HWTEST_F(RawDecoderTest, SetDecodeOptionsTest007, TestSize.Level3)
     rawDecoder->SetSource(*streamPtr.release());
     bool result = (rawDecoder != nullptr);
     ASSERT_EQ(result, true);
-    GTEST_LOG_(INFO) << "RawDecoderTest: SetDecodeOptionsTest002 end";
+    GTEST_LOG_(INFO) << "RawDecoderTest: SetDecodeOptionsTest007 end";
 }
 
 /**
