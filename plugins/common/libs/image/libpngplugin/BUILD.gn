@@ -36,6 +36,7 @@ ohos_shared_library("pngplugin") {
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libpngplugin/include",
     "//third_party/zlib",
     "//third_party/libpng",
+    "//third_party/libpng/libpng-1.6.37",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//third_party/flutter/skia/third_party/libjpeg-turbo",
@@ -53,6 +54,7 @@ ohos_shared_library("pngplugin") {
     include_dirs += [
       "//foundation/multimedia/image_framework/mock/native/include",
       "//third_party/libpng",
+      "//third_party/libpng/libpng-1.6.37",
     ]
     deps += [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
@@ -66,6 +68,7 @@ ohos_shared_library("pngplugin") {
     include_dirs += [
       "//foundation/multimedia/image_framework/mock/native/include",
       "//third_party/libpng",
+      "//third_party/libpng/libpng-1.6.37",
       "//third_party/bounds_checking_function/include",
     ]
     deps += [
@@ -80,6 +83,7 @@ ohos_shared_library("pngplugin") {
     include_dirs += [
       "//commonlibrary/c_utils/base/include",
       "//third_party/libpng",
+      "//third_party/libpng/libpng-1.6.37",
     ]
     deps += [
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
@@ -89,7 +93,10 @@ ohos_shared_library("pngplugin") {
     if (DUAL_ADAPTER) {
     } else {
       deps += [ "//third_party/libpng:libpng" ]
-      include_dirs += [ "//third_party/libpng" ]
+      include_dirs += [
+        "//third_party/libpng",
+        "//third_party/libpng/libpng-1.6.37",
+      ]
     }
     external_deps = [
       "c_utils:utils",
