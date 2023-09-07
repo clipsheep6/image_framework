@@ -67,5 +67,13 @@ bool ImageSystemProperties::GetAntiAliasingEnabled()
     return false;
 #endif
 }
+
+bool ImageSystemProperties::GetHardWareDecodeEnabled()
+{
+#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+    return isDeviceSupportsAA && system::GetBoolParameter("persist.multimedia.image.hardwaredecode.enabled", false);
+#else
+    return false;
+#endif
 } // namespace Media
 } // namespace OHOS
