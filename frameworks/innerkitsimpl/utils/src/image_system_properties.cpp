@@ -71,7 +71,7 @@ bool ImageSystemProperties::GetAntiAliasingEnabled()
 bool ImageSystemProperties::GetHardWareDecodeEnabled()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    return isDeviceSupportsAA && system::GetBoolParameter("persist.multimedia.image.hardwaredecode.enabled", false);
+    return system::GetBoolParameter("persist.multimedia.image.hardwaredecode.enabled", false);
 #else
     return false;
 #endif
