@@ -19,6 +19,7 @@
 
 #include "ext_pixel_convert.h"
 #include "hilog/log.h"
+#include "image_system_properties.h"
 #include "image_utils.h"
 #include "log_tags.h"
 #include "media_errors.h"
@@ -42,6 +43,7 @@ namespace {
 namespace OHOS {
 namespace ImagePlugin {
 using namespace Media;
+using namespace OHOS::HDI::Base;
 using namespace OHOS::HiviewDFX;
 using namespace std;
 const static string CODEC_INITED_KEY = "CodecInited";
@@ -139,7 +141,7 @@ static uint32_t DmaMemAlloc(DecodeContext &context, uint64_t count, SkImageInfo 
         .width = dstInfo.width(),
         .height = dstInfo.height(),
         .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
-        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // hardware decode only support rgba8888
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
         .timeout = 0,
         .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
@@ -429,8 +431,28 @@ bool ExtDecoder::ResetCodec()
     return ExtDecoder::CheckCodec();
 }
 
+#ifdef JPEG_HE_DECODE_ENABLE
+uint32_t ExtDecoder::DoHardwareDecode(DecodeContext &context)
+{
+    if (ImageSystemProperties::GetHardWareDecodeEnabled()) {
+        if (HardWareDecode(context) == SUCCESS) {
+            Hilog::Info(LABEL, "hardware decode success");
+            return SUCCESS;
+        }
+    }
+    Hilog::Error(LABEL, "jpeg hardware decode failed, turn to software decode");
+    return ERROR;
+}
+#endif
+
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
+#ifdef JPEG_HE_DECODE_ENABLE
+    if (codec_->getEncodedFormat() == SkEncodedImageFormat::KJPEG &&
+            DoHardwareDecode(context) == SUCCESS) {
+        return SUCCESS;
+    }
+#endif
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
@@ -443,7 +465,6 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         byteCount = byteCount / NUM_4 * NUM_3;
     }
     if (context.pixelsBuffer.buffer == nullptr) {
-        HiLog::Debug(LABEL, "Decode alloc byte count.");
         res = SetContextPixelsBuffer(byteCount, context);
         if (res != SUCCESS) {
             return res;
@@ -480,6 +501,65 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     }
     return SUCCESS;
 }
+
+#ifdef JPEG_HE_DECODE_ENABLE
+uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
+{
+    uint64_t byteCount = static_cast<uint64_t>(dstInfo.height()) * dstInfo.weith() * dstInfo.bytesPerPixel();
+    uint32_t ret = DmaMemAlloc(context. byteCount, info_);
+    if (ret != SUCCESS) {
+        HiLog::Error(LABEL, "Alloc outputBuffer failed, ret=%{public}d", ret);
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    BufferHandle *handle = (static_cast<SurfaceBuffer*>(context.pixelsBuffer.context))->GetBufferHandle();
+    if (outputColorFmt_ == PIXEL_FMT_RGBA_8888) {
+        outputBufferSize_.width = static_cast<uint32_t>(handle->stride) / NUM_4;
+    } else { // PIXEL_FMT_YCRCB_420_SP
+        outputBufferSize_.width = static_cast<uint32_t>(handle->stride);
+    }
+    outputBufferSize_.height = static_cast<uint32_t>(handle->height);
+    outputBuffer_.buffer = new NativeBuffer(handle);
+    outputBuffer_.fenceFd = -1;
+    return SUCCESS;
+}
+
+bool CheckContext(const SkImageInfo &imageInfo, const DecodeContext &context)
+{
+    if (context.pixelFormat != PlPixelFormat::RGBA_8888) {
+        HiLog::Error(LABEL, "hardware decode only support rgba_8888 format");
+        return false;
+    }
+    return true;
+}
+
+uint32_t ExtDecoder::HardwareDecode(DecodeContext &context)
+{
+    JpegHardwareDecoder hwDecoder;
+    orgImageSize_.width = dstInfo_.width();
+    orgImageSize_.height = dstInfo_.height();
+    if (!hwDecoder.IsHardwareDecodeSupported("iamge/jpeg", orgImageSize_)) {
+        HiLog::Error(LABEL, "hardware decode unsupported.");
+        return ERROR;
+    }
+
+    if (!CheckContext(dstInfo_, context)) {
+        HiLog::Error(LABEL, "hardware decode not supported this decode option.");
+        return ERROR;
+    }
+
+    uint32_t ret = AllocOutputBuffer(context);
+    if (ret != SUCCESS) {
+        HiLog::Error(LABEL, "Decode failed, Alloc OutputBuffer failed, ret=%{public}d", ret);
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    ret = hwDecoder.Decode(codec_.get(), stream_, orgImageSize_, sampleSize_, outpotBuffer_);
+    if (ret != SUCCESS) {
+        HiLog::Error(LABEL, "failed to do jpeg hardware decode, err=%{public}d", ret);
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    return SUCCESS;
+}
+#endif
 
 uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride)
 {

@@ -22,6 +22,7 @@ public:
     static bool GetSkiaEnabled();
     static bool GetSurfaceBufferEnabled();
     static bool GetAntiAliasingEnabled();
+    static bool GetHardWareDecodeEnabled();
 private:
     ImageSystemProperties() = default;
 };
