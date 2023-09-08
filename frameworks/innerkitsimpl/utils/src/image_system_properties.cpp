@@ -75,5 +75,6 @@ bool ImageSystemProperties::GetHardWareDecodeEnabled()
 #else
     return false;
 #endif
+}
 } // namespace Media
 } // namespace OHOS
