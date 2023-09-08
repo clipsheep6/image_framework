@@ -21,12 +21,15 @@
 
 #include "SkCodec.h"
 #include "abs_image_decoder.h"
-#include "display_type.h"
 #include "ext_stream.h"
 #include "exif_info.h"
-#include "hardware/jpeg_hw_decoder.h"
 #include "nocopyable.h"
 #include "plugin_class_base.h"
+
+#ifdef JPEG_HW_DECODE_ENABLE
+#include "display_type.h"
+#include "hardware/jpeg_hw_decoder.h"
+#endif
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -91,7 +94,7 @@ private:
     EXIFInfo exifInfo_;
     uint8_t *gifCache_ = nullptr;
 
-    //hardware
+    // hardware
     OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer outputBuffer_;
     PlSize scaledImgSize_;
     PlSize orgImgSize_;
