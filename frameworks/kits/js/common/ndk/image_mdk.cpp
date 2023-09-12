@@ -78,7 +78,7 @@ MIDK_EXPORT
 int32_t OH_Image_GetComponent(const ImageNative* native, int32_t componentType,
     struct OhosImageComponent* componentNative)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || componentNative == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageNapiArgs args;
