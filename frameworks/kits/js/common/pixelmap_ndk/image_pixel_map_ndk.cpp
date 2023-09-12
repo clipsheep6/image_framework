@@ -46,7 +46,7 @@ int32_t OH_PixelMap_CreatePixelMap(napi_env env, OhosPixelMapCreateOps info,
     if (env == nullptr || res == nullptr) {
         return IMAGE_RESULT_JNI_ENV_ABNORMAL;
     }
-    if (info == nullptr || buf == nullptr) {
+    if (buf == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     PixelMapNapiArgs args;
