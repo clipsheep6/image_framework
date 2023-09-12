@@ -47,9 +47,6 @@ int32_t OH_Image_Receiver_CreateImageReceiver(napi_env env,
     if (env == nullptr || res == nullptr) {
         return IMAGE_RESULT_JNI_ENV_ABNORMAL;
     }
-    if (info == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
-    }
     ImageReceiverArgs args;
     args.inNum0 = info.width;
     args.inNum1 = info.height;
