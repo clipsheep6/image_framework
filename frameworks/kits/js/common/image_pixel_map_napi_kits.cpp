@@ -112,6 +112,9 @@ static int32_t PixelMapNapiCreate(napi_env env, PixelMapNapiArgs* args)
 
 static int32_t PixelMapNapiCreateAlpha(napi_env env, PixelMapNapiArgs* args)
 {
+    if (env == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
     if (args == nullptr || args->outValue == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
