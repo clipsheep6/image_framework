@@ -87,7 +87,7 @@ int32_t OH_ImageSource_GetSupportedFormats(struct OhosImageSourceSupportedFormat
 {
     if (res == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
-    } 
+    }
     ImageSourceArgs args;
     args.outFormats = res;
     auto ret = ImageSourceNativeCall(STA_FUNC_IMAGE_SOURCE_GET_SUPPORTED_FORMATS, &args);
