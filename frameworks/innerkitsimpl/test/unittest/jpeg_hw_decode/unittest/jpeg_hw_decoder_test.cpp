@@ -40,7 +40,7 @@ HWTEST_F(JpegHwDecoderUnitTest, supported_img_inner_size, TestSize.Level1)
     PlSize srcImgSize = {
         .width = 2736,
         .height = 3648
-    };       
+    };
     bool ret = testObj.IsHardwareDecodeSupported(JPEG_FORMAT, srcImgSize);
     ASSERT_FALSE(ret);
 }
@@ -221,4 +221,4 @@ HWTEST_F(JpegHwDecoderUnitTest, PrepareInputData, TestSize.Level1)
     auto ret = testObj.PrepareInputData(codec, srcStream);
     ASSERT_FALSE(ret);
 }
-} //namespace OHOS::Media
+} // namespace OHOS::Media
