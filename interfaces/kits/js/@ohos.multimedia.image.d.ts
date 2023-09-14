@@ -843,6 +843,17 @@ declare namespace image {
   function createPixelMap(colors: ArrayBuffer, options: InitializationOptions): Promise<PixelMap>;
 
   /**
+   * Creates a PixelMap object based on MessageSequence parameter.
+   *
+   * @param { rpc.MessageSequence } sequence rpc.MessageSequence parameter.
+   * @syscap SystemCapability.Multimedia.Image.Core
+   * @throws { BusinessError } 62980115 - If the input parameter invalid.
+   * @throws { BusinessError } 62980097 - If the ipc error.
+   * @throws { BusinessError } 62980096 - If fail to create async work.
+   * @since 10
+   */
+  function CreatePixelMapFromParcel(sequence: rpc.MessageSequence): PixelMap;
+  /**
    * Creates an ImageSource instance based on the URI.
    * @since 6
    * @syscap SystemCapability.Multimedia.Image.ImageSource
@@ -1223,14 +1234,14 @@ declare namespace image {
     getColorSpace(): colorSpaceManager.ColorSpaceManager;
 
     /**
-         * Marshalling pixelmap and write into MessageSequence.
-         *
-         * @param { rpc.MessageSequence } sequence rpc.MessageSequence parameter.
-         * @syscap SystemCapability.Multimedia.Image.Core
-         * @throws { BusinessError } 62980115 - If the input parameter invalid.
-         * @throws { BusinessError } 62980097 - If the ipc error.
-         * @since 10
-         */
+      * Marshalling pixelmap and write into MessageSequence.
+      *
+      * @param { rpc.MessageSequence } sequence rpc.MessageSequence parameter.
+      * @syscap SystemCapability.Multimedia.Image.Core
+      * @throws { BusinessError } 62980115 - If the input parameter invalid.
+      * @throws { BusinessError } 62980097 - If the ipc error.
+      * @since 10
+    */
     marshalling(sequence: rpc.MessageSequence): void;
 
     /**

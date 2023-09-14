@@ -37,6 +37,10 @@ public:
     bool IsLockPixelMap();
     bool LockPixelMap();
     void UnlockPixelMap();
+    static const std::string CREATE_PIXEL_MAP_FROM_PARCEL = "CreatePixelMapFromParcel";
+    static const std::map<std::string, std::set<int>> ETS_API_ERROR_CODE = {
+        {CREATE_PIXEL_MAP_FROM_PARCEL, {62980115, 62980097, 62980096}}
+    };
 
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
@@ -50,6 +54,9 @@ private:
     static void CreatePixelMapComplete(napi_env env, napi_status status, void *data);
     static napi_value Unmarshalling(napi_env env, napi_callback_info info);
     static void UnmarshallingComplete(napi_env env, napi_status status, void *data);
+    static napi_value CreatePixelMapFromParcel(napi_env env, napi_callback_info info);
+    static napi_value ThrowExceptionError(napi_env env, const std::string &tag, const PIXEL_MAP_ERR &error);
+
 
     // methods
     static napi_value ReadPixelsToBuffer(napi_env env, napi_callback_info info);
