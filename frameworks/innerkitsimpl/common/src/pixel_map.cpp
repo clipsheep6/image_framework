@@ -1609,6 +1609,17 @@ bool PixelMap::ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo)
 
 PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 {
+    PIXEL_MAP_ERR error;
+    PixelMap* dstPixelMap = PixelMap::Unmarshalling(parcel, error);
+    if (dstPixelMap == nullptr || error.errorCode != SUCCESS) {
+        HiLog::Error(LABEL, "unmarshalling failed errorCode:%{public}d, errorInfo:%{public}s",
+            error.errorCode, error.errorInfo.c_str());
+    }
+    return dstPixelMap;
+}
+
+PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
+{
     PixelMap *pixelMap = new PixelMap();
     if (pixelMap == nullptr) {
         return nullptr;

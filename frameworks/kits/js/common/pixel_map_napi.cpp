@@ -39,8 +39,12 @@ namespace {
 
 namespace OHOS {
 namespace Media {
-
+static const std::string CREATE_PIXEL_MAP_FROM_PARCEL = "createPixelMapFromParcel";
+static const std::map<std::string, std::set<int>> ETS_API_ERROR_CODE = {
+    {CREATE_PIXEL_MAP_FROM_PARCEL, {62980115, 62980097, 62980096}}
+};
 static const std::string CLASS_NAME = "PixelMap";
+
 thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
 std::shared_ptr<PixelMap> PixelMapNapi::sPixelMap_ = nullptr;
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
@@ -350,6 +354,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMap", CreatePixelMap),
         DECLARE_NAPI_STATIC_FUNCTION("unmarshalling", Unmarshalling),
+        DECLARE_NAPI_STATIC_FUNCTION(CREATE_PIXEL_MAP_FROM_PARCEL, CreatePixelMapFromParcel),
     };
 
     napi_value constructor = nullptr;
@@ -784,6 +789,80 @@ napi_value PixelMapNapi::Unmarshalling(napi_env env, napi_callback_info info)
     if (!IMG_IS_OK(status)) {
         return ImageNapiUtils::ThrowExceptionError(
             env, ERROR, "Fail to create async work");
+    }
+    return result;
+#else
+    napi_value result = nullptr;
+    return result;
+#endif
+}
+
+napi_value PixelMapNapi::ThrowExceptionError(napi_env env, const std::string &tag, const PIXEL_MAP_ERR &error)
+{
+    auto errNode = ETS_API_ERROR_CODE.find(tag);
+    if (errNode != ETS_API_ERROR_CODE.end()) {
+        auto codeSet = errNode.second();
+        if (codeSet.find(error.errorCode) != errNode.end()){
+            return ImageNapiUtils::ThrowExceptionError(
+                env, std::reinterpret_cast<const uint32_t>(error.errorCode), error.errorInfo);
+        }
+    }
+    return ImageNapiUtils::ThrowExceptionError(
+        env, ERR_IMAGE_INVALID_PARAMETER, "Fail to unmarshalling");
+}
+
+napi_value PixelMapNapi::CreatePixelMapFromParcel(napi_env env, napi_callback_info info)
+{
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    napi_value globalValue;
+    napi_get_global(env, &globalValue);
+    napi_value func;
+    napi_get_named_property(env, globalValue, "requireNapi", &func);
+    napi_value imageInfo;
+    napi_create_string_utf8(env, "multimedia.image", NAPI_AUTO_LENGTH, &imageInfo);
+    napi_value funcArgv[1] = { imageInfo };
+    napi_value returnValue;
+    napi_call_function(env, globalValue, func, 1, funcArgv, &returnValue);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    int32_t refCount = 1;
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value argValue[NUM_1] = {0};
+    size_t argCount = NUM_1;
+    HiLog::Debug(LABEL, "CreatePixelMapFromParcel IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    if (!IMG_IS_OK(status) || argCount != NUM_1) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "Fail to napi_get_cb_info");
+    }
+    std::unique_ptr<PixelMapAsyncContext> asyncContext = std::make_unique<PixelMapAsyncContext>();
+    napi_unwrap(env, argValue[NUM_0], (void **)&napi_messageSequence);
+    auto messageParcel = napi_messageSequence->GetMessageParcel();
+    auto pixelmap1 = PixelMap::Unmarshalling(*messageParcel);
+    if (!IMG_NOT_NULL(pixelmap1)) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "Fail to unmarshalling");
+    }
+
+    PIXEL_MAP_ERR error;
+    auto pixelmap = PixelMap::Unmarshalling(*messageParcel, error);
+    HiLog::Error(LABEL, "Unmarshalling error:%{public}d", error.errorCode);
+    if (!IMG_NOT_NULL(pixelmap)) {
+        return PixelMapNapi::ThrowExceptionError(env, CREATE_PIXEL_MAP_FROM_PARCEL, error);
+    }
+
+
+    napi_value constructor = nullptr;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (IMG_IS_OK(status)) {
+        sPixelMap_ = std::make_shared<OHOS::Media::PixelMap>(pixelmap);
+        status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+    }
+    if (!IMG_IS_OK(status)) {
+        HiLog::Error(LABEL, "New instance could not be obtained");
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "New instance could not be obtained");
     }
     return result;
 #else

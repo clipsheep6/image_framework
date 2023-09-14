@@ -24,6 +24,7 @@
 #include "color_space.h"
 #endif
 #include "image_type.h"
+#include "media_errors.h"
 #include "parcel.h"
 #ifdef IMAGE_PURGEABLE_PIXELMAP
 #include "purgeable_mem_base.h"
@@ -54,7 +55,12 @@ constexpr uint8_t ARGB_B_SHIFT = 0;
 // Define pixel map malloc max size 600MB
 constexpr int32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
 
-class PixelMap : public Parcelable {
+typedef struct PixelMapError {
+    uint32_t errorCode = OHOS::Media::SUCCESS;
+    std::string errorInfo = "default error";
+} PIXEL_MAP_ERR;
+
+class PixelMap : public Parcelable, PIXEL_MAP_ERR {
 public:
     PixelMap()
     {
@@ -158,8 +164,9 @@ public:
         return uniqueId_;
     }
 
-    NATIVEEXPORT bool Marshalling(Parcel &data) const override;
-    NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &data);
+    NATIVEEXPORT bool Marshalling(Parcel &parcel) const override;
+    NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &parcel);
+    NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error);
     NATIVEEXPORT bool EncodeTlv(std::vector<uint8_t> &buff) const;
     NATIVEEXPORT static PixelMap *DecodeTlv(std::vector<uint8_t> &buff);
 
