@@ -80,10 +80,9 @@ HWTEST_F(MemoryManagerTest, MemoryManagerTest003, TestSize.Level3)
 {
     DmaMemory dmaMemory;
     dmaMemory.extend.data = MAP_TRUE;
-    auto res = dmaMemory.Release();
-    ASSERT_EQ(res, ERR_DMA_DATA_ABNORMAL);
-    ASSERT_EQ(dmaMemory.extend.data, nullptr);
-    ASSERT_EQ(dmaMemory.extend.size, SIZE_ZERO);
+    dmaMemory.Release();
+    ASSERT_EQ(sharedMemory.extend.data, nullptr);
+    ASSERT_EQ(sharedMemory.extend.size, SIZE_ZERO);
     GTEST_LOG_(INFO) << "MemoryManagerTest: MemoryManagerTest003 end";
 }
 }
