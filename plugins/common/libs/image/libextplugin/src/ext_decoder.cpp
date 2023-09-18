@@ -431,7 +431,7 @@ bool ExtDecoder::ResetCodec()
     return ExtDecoder::CheckCodec();
 }
 
-#ifdef JPEG_HE_DECODE_ENABLE
+
 uint32_t ExtDecoder::DoHardwareDecode(DecodeContext &context)
 {
     if (ImageSystemProperties::GetHardWareDecodeEnabled()) {
@@ -443,16 +443,16 @@ uint32_t ExtDecoder::DoHardwareDecode(DecodeContext &context)
     Hilog::Error(LABEL, "jpeg hardware decode failed, turn to software decode");
     return ERROR;
 }
-#endif
+
 
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
-#ifdef JPEG_HE_DECODE_ENABLE
+
     if (codec_->getEncodedFormat() == SkEncodedImageFormat::KJPEG &&
             DoHardwareDecode(context) == SUCCESS) {
         return SUCCESS;
     }
-#endif
+
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
@@ -502,7 +502,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     return SUCCESS;
 }
 
-#ifdef JPEG_HE_DECODE_ENABLE
+
 uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
 {
     uint64_t byteCount = static_cast<uint64_t>(dstInfo.height()) * dstInfo.weith() * dstInfo.bytesPerPixel();
@@ -559,7 +559,7 @@ uint32_t ExtDecoder::HardwareDecode(DecodeContext &context)
     }
     return SUCCESS;
 }
-#endif
+
 
 uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride)
 {
