@@ -149,6 +149,7 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
+    external_deps = [ "ability_runtime:module_manager" ]
 
     #relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
@@ -177,7 +178,10 @@ if (use_clang_ios) {
       "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
     ]
 
-    external_deps = [ "napi:ace_napi" ]
+    external_deps = [
+      "ability_runtime:module_manager",
+      "napi:ace_napi",
+    ]
 
     output_name = "libimage"
     relative_install_dir = "module/multimedia"
@@ -240,6 +244,7 @@ if (use_clang_ios) {
     }
 
     external_deps = [
+      "ability_runtime:module_manager",
       "c_utils:utils",
       "graphic_2d:color_manager",
       "graphic_2d:color_space_object_convertor",
@@ -280,6 +285,7 @@ if (use_clang_ios) {
       ]
 
       external_deps = [
+        "ability_runtime:module_manager",
         "c_utils:utils",
         "hichecker:libhichecker",
         "hitrace:hitrace_meter",
