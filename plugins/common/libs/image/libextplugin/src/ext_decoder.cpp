@@ -534,24 +534,27 @@ bool CheckContext(const SkImageInfo &imageInfo, const DecodeContext &context)
 
 uint32_t ExtDecoder::HardwareDecode(DecodeContext &context)
 {
+    Hilog::Info(LABEL, "hardware decode in");
     JpegHardwareDecoder hwDecoder;
     orgImageSize_.width = dstInfo_.width();
     orgImageSize_.height = dstInfo_.height();
+    Hilog::Info(LABEL, "hardware decode IsHardwareDecodeSupported start");
     if (!hwDecoder.IsHardwareDecodeSupported("iamge/jpeg", orgImageSize_)) {
         HiLog::Error(LABEL, "hardware decode unsupported.");
         return ERROR;
     }
-
+    Hilog::Info(LABEL, "hardware decode CheckContext in");
     if (!CheckContext(dstInfo_, context)) {
         HiLog::Error(LABEL, "hardware decode not supported this decode option.");
         return ERROR;
     }
-
+    Hilog::Info(LABEL, "hardware decode AllocOutputBuffer in");
     uint32_t ret = AllocOutputBuffer(context);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "Decode failed, Alloc OutputBuffer failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
+    Hilog::Info(LABEL, "hardware decode Decode in");
     ret = hwDecoder.Decode(codec_.get(), stream_, orgImageSize_, sampleSize_, outpotBuffer_);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "failed to do jpeg hardware decode, err=%{public}d", ret);
