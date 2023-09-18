@@ -18,6 +18,8 @@
 #include "pixel_map.h"
 #include "pixel_map_parcel.h"
 
+#define MAP_TRUE ((void *) 1)
+
 using namespace testing::ext;
 using namespace OHOS::Media;
 namespace OHOS {
@@ -77,5 +79,40 @@ HWTEST_F(PixelMapParcelTest, PixelMapParcelTest001, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "PixelMapParcelTest: PixelMapParcelTest001 end";
 }
+
+/**
+ * @tc.name: PixelMapParcelTest002
+ * @tc.desc: Test of GetPixel8, GetPixel16, GetPixel32
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapParcelTest, PixelMapParcelTest002, TestSize.Level3)
+{
+    PixelMapParcel pixelMapParcel;
+    AllocatorType allocType;
+    allocType = AllocatorType::HEAP_ALLOC;
+    void *addr = MAP_TRUE;
+    void *context = MAP_TRUE;
+    uint32_t size = 0;
+    pixelMapParcel.ReleaseMemory(allocType, addr, context, size);
+    ASSERT_EQ(addr, nullptr);
+    GTEST_LOG_(INFO) << "PixelMapParcelTest: PixelMapParcelTest002 end";
+}
+
+/**
+ * @tc.name: PixelMapParcelTest002
+ * @tc.desc: Test of GetPixel8, GetPixel16, GetPixel32
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapParcelTest, PixelMapParcelTest002, TestSize.Level3)
+{
+    PixelMap* pixelMap = new PixelMap;
+    pixelMap.context_ = -1;
+    MessageParcel data;
+    PixelMapParcel pixelMapParcel;
+    auto res = pixelMapParcel.WriteToParcel(pixelMap, data);
+    ASSERT_EQ(res, false);
+    GTEST_LOG_(INFO) << "PixelMapParcelTest: PixelMapParcelTest002 end";
+}
+
 }
 }
