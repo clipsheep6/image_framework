@@ -539,7 +539,7 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
     orgImgSize_.width = dstInfo_.width();
     orgImgSize_.height = dstInfo_.height();
     HiLog::Info(LABEL, "hardware decode IsHardwareDecodeSupported start");
-    if (!hwDecoder.IsHardwareDecodeSupported("iamge/jpeg", orgImgSize_)) {
+    if (!hwDecoder.IsHardwareDecodeSupported("image/jpeg", orgImgSize_)) {
         HiLog::Error(LABEL, "hardware decode unsupported.");
         return ERROR;
     }
