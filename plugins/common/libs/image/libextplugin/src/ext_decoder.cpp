@@ -432,7 +432,7 @@ bool ExtDecoder::ResetCodec()
 }
 
 
-uint32_t ExtDecoder::DoHardwareDecode(DecodeContext &context)
+uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 {
     if (ImageSystemProperties::GetHardWareDecodeEnabled()) {
         if (HardWareDecode(context) == SUCCESS) {
@@ -505,8 +505,8 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 
 uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
 {
-    uint64_t byteCount = static_cast<uint64_t>(dstInfo.height()) * dstInfo.weith() * dstInfo.bytesPerPixel();
-    uint32_t ret = DmaMemAlloc(context. byteCount, info_);
+    uint64_t byteCount = static_cast<uint64_t>(dstInfo_.height()) * dstInfo_.weith() * dstInfo_.bytesPerPixel();
+    uint32_t ret = DmaMemAlloc(context, byteCount, info_);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "Alloc outputBuffer failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
@@ -532,30 +532,30 @@ bool CheckContext(const SkImageInfo &imageInfo, const DecodeContext &context)
     return true;
 }
 
-uint32_t ExtDecoder::HardwareDecode(DecodeContext &context)
+uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
 {
-    Hilog::Info(LABEL, "hardware decode in");
+    HiLog::Info(LABEL, "hardware decode in");
     JpegHardwareDecoder hwDecoder;
-    orgImageSize_.width = dstInfo_.width();
-    orgImageSize_.height = dstInfo_.height();
-    Hilog::Info(LABEL, "hardware decode IsHardwareDecodeSupported start");
-    if (!hwDecoder.IsHardwareDecodeSupported("iamge/jpeg", orgImageSize_)) {
+    orgImgSize_.width = dstInfo_.width();
+    orgImgSize_.height = dstInfo_.height();
+    HiLog::Info(LABEL, "hardware decode IsHardwareDecodeSupported start");
+    if (!hwDecoder.IsHardwareDecodeSupported("iamge/jpeg", orgImgSize_)) {
         HiLog::Error(LABEL, "hardware decode unsupported.");
         return ERROR;
     }
-    Hilog::Info(LABEL, "hardware decode CheckContext in");
+    HiLog::Info(LABEL, "hardware decode CheckContext in");
     if (!CheckContext(dstInfo_, context)) {
         HiLog::Error(LABEL, "hardware decode not supported this decode option.");
         return ERROR;
     }
-    Hilog::Info(LABEL, "hardware decode AllocOutputBuffer in");
+    HiLog::Info(LABEL, "hardware decode AllocOutputBuffer in");
     uint32_t ret = AllocOutputBuffer(context);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "Decode failed, Alloc OutputBuffer failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
-    Hilog::Info(LABEL, "hardware decode Decode in");
-    ret = hwDecoder.Decode(codec_.get(), stream_, orgImageSize_, sampleSize_, outpotBuffer_);
+    HiLog::Info(LABEL, "hardware decode Decode in");
+    ret = hwDecoder.Decode(codec_.get(), stream_, orgImgSize_, sampleSize_, outpotBuffer_);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "failed to do jpeg hardware decode, err=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
