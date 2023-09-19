@@ -436,11 +436,11 @@ uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 {
     if (ImageSystemProperties::GetHardWareDecodeEnabled()) {
         if (HardWareDecode(context) == SUCCESS) {
-            Hilog::Info(LABEL, "hardware decode success");
+            HiLog::Info(LABEL, "hardware decode success");
             return SUCCESS;
         }
     }
-    Hilog::Error(LABEL, "jpeg hardware decode failed, turn to software decode");
+    HiLog::Error(LABEL, "jpeg hardware decode failed, turn to software decode");
     return ERROR;
 }
 
@@ -448,8 +448,8 @@ uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
 
-    if (codec_->getEncodedFormat() == SkEncodedImageFormat::KJPEG &&
-            DoHardwareDecode(context) == SUCCESS) {
+    if (codec_->getEncodedFormat() == SkEncodedImageFormat::kJPEG &&
+            DoHardWareDecode(context) == SUCCESS) {
         return SUCCESS;
     }
 
@@ -505,7 +505,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 
 uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
 {
-    uint64_t byteCount = static_cast<uint64_t>(dstInfo_.height()) * dstInfo_.weith() * dstInfo_.bytesPerPixel();
+    uint64_t byteCount = static_cast<uint64_t>(dstInfo_.height()) * dstInfo_.width() * dstInfo_.bytesPerPixel();
     uint32_t ret = DmaMemAlloc(context, byteCount, info_);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "Alloc outputBuffer failed, ret=%{public}d", ret);
@@ -555,7 +555,7 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     HiLog::Info(LABEL, "hardware decode Decode in");
-    ret = hwDecoder.Decode(codec_.get(), stream_, orgImgSize_, sampleSize_, outpotBuffer_);
+    ret = hwDecoder.Decode(codec_.get(), stream_, orgImgSize_, sampleSize_, outputBuffer_);
     if (ret != SUCCESS) {
         HiLog::Error(LABEL, "failed to do jpeg hardware decode, err=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
