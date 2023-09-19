@@ -99,6 +99,7 @@ private:
     PixelFormat outputColorFmt_ = PIXEL_FMT_RGBA_8888;
     uint32_t sampleSize_ = 1;
 
+    uint32_t gifCacheIndex_ = 0;
 };
 } // namespace ImagePlugin
 } // namespace OHOS
