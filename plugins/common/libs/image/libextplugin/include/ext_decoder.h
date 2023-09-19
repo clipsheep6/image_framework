@@ -43,8 +43,8 @@ public:
     uint32_t Decode(uint32_t index, DecodeContext &context) override;
 
     uint32_t AllocOutputBuffer(DecodeContext &context);
-    uint32_t HardwareDecode(DecodeContext &context);
-    uint32_t DoHardwareDecode(DecodeContext &context);
+    uint32_t HardWareDecode(DecodeContext &context);
+    uint32_t DoHardWareDecode(DecodeContext &context);
 
     uint32_t GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride);
     uint32_t GetImageSize(uint32_t index, PlSize &size) override;
