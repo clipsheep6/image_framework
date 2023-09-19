@@ -18,20 +18,14 @@
 
 #include <cstdint>
 #include <string>
-
 #include "SkCodec.h"
 #include "abs_image_decoder.h"
-
 #include "ext_stream.h"
 #include "exif_info.h"
-
 #include "nocopyable.h"
 #include "plugin_class_base.h"
-
-#ifdef JPEG_HW_DECODE_ENABLE
 #include "display_type.h"
 #include "hardware/jpeg_hw_decoder.h"
-#endif
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -102,6 +96,8 @@ private:
     PlSize scaledImgSize_;
     PlSize orgImgSize_;
     PlSize outputBufferSize_;
+    PixelFormat outputColorFmt_ = PIXEL_FMT_RGBA_8888;
+    uint32_t sampleSize_ = 1;
 
 };
 } // namespace ImagePlugin
