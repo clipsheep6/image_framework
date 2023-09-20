@@ -1268,5 +1268,341 @@ HWTEST_F(PixelMapTest, SetPurgeableMemPtrTest, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetPurgeableMemPtrTest SetPurgeableMemPtr end";
 }
 #endif
+
+/**
+ * @tc.name: PixelMapTest031
+ * @tc.desc: Create
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest031, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest031 start";
+    PixelMap srcPixelMap;
+    ImageInfo imageInfo;
+    imageInfo.size.width = 200;
+    imageInfo.size.height = 300;
+    imageInfo.pixelFormat = PixelFormat::ARGB_8888;
+    imageInfo.colorSpace = ColorSpace::SRGB;
+    imageInfo.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    srcPixelMap.SetImageInfo(imageInfo);
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::ARGB_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = false;
+    Rect srcRect;
+    srcRect.width = 200;
+    srcRect.height = 300;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(srcPixelMap, srcRect, opts);
+    EXPECT_EQ(pixelMap, &srcPixelMap);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest031 end";
+}
+
+/**
+ * @tc.name: PixelMapTest032
+ * @tc.desc: ScalePixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest032, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest032 start";
+    PixelMap dstPixelMap;
+    ImageInfo imageInfo;
+    imageInfo.size.width = 200;
+    imageInfo.size.height = 300;
+    imageInfo.pixelFormat = PixelFormat::ARGB_8888;
+    imageInfo.colorSpace = ColorSpace::SRGB;
+    imageInfo.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    dstPixelMap.SetImageInfo(imageInfo);
+    Size targetSize;
+    targetSize.width = 200;
+    targetSize.height = 300;
+    Size dstSize;
+    dstSize.width = 100;
+    dstSize.height = 200;
+    ScaleMode scaleMode;
+    scaleMode = ScaleMode::CENTER_CROP;
+    auto ret = PixelMap::ScalePixelMap(targetSize, dstSize, scaleMode, dstPixelMap);
+    EXPECT_FALSE(ret);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest032 end";
+}
+
+/**
+ * @tc.name: PixelMapTest033
+ * @tc.desc: RGB565ToARGB
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest033, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest033 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::RGB_565;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap != nullptr);
+    uint8_t in = 0;
+    uint32_t inCount = 65;
+    uint32_t *out = new uint32_t(0);
+    uint32_t outCount = 34;
+    auto ret = pixelMap->RGB565ToARGB(in, inCount, out, outCount);
+    EXPECT_FALSE(ret);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest033 end";
+}
+
+/**
+ * @tc.name: PixelMapTest034
+ * @tc.desc: ARGB8888ToARGB
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest034, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest034 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::ARGB_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap != nullptr);
+    uint8_t in = 0;
+    uint32_t inCount = 65;
+    uint32_t *out = new uint32_t(0);
+    uint32_t outCount = 34;
+    auto ret = pixelMap->ARGB8888ToARGB(in, inCount, out, outCount);
+    EXPECT_FALSE(ret);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest034 end";
+}
+
+/**
+ * @tc.name: PixelMapTest035
+ * @tc.desc: RGBA8888ToARGB
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest035, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest035 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::RGBA_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap != nullptr);
+    uint8_t in = 0;
+    uint32_t inCount = 65;
+    uint32_t *out = new uint32_t(0);
+    uint32_t outCount = 34;
+    auto ret = pixelMap->RGBA8888ToARGB(in, inCount, out, outCount);
+    EXPECT_FALSE(ret);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest035 end";
+}
+
+/**
+ * @tc.name: PixelMapTest036
+ * @tc.desc: BGRA8888ToARGB
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest036, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest036 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::BGRA_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap != nullptr);
+    uint8_t in = 0;
+    uint32_t inCount = 65;
+    uint32_t *out = new uint32_t(0);
+    uint32_t outCount = 34;
+    auto ret = pixelMap->BGRA8888ToARGB(in, inCount, out, outCount);
+    EXPECT_FALSE(ret);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest036 end";
+}
+
+/**
+ * @tc.name: PixelMapTest037
+ * @tc.desc: RGB888ToARGB
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest037, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest037 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::RGB_888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap != nullptr);
+    uint8_t in = 0;
+    uint32_t inCount = 65;
+    uint32_t *out = new uint32_t(0);
+    uint32_t outCount = 34;
+    auto ret = pixelMap->RGB888ToARGB(in, inCount, out, outCount);
+    EXPECT_FALSE(ret);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest037 end";
+}
+
+/**
+ * @tc.name: PixelMapTest038
+ * @tc.desc: WritePixels
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest038, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest038 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::ARGB_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap != nullptr);
+    Rect rect;
+    rect.left = 0;
+    rect.top = -1;
+    rect.width = 1;
+    rect.height = 2;
+    uint64_t bufferSize = 96;
+    uint32_t offset = 0;
+    uint32_t stride = 8;
+    uint8_t *dst = new uint8_t(0);
+    auto ret = pixelMap->WritePixels(dst, bufferSize, offset, stride, rect);
+    EXPECT_NE(ret, SUCCESS);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest038 end";
+}
+
+/**
+ * @tc.name: PixelMapTest039
+ * @tc.desc: ReleaseMemory
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest039, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest039 start";
+    std::unique_ptr<PixelMap> pixelMap = std::make_unique<PixelMap>();
+    ImageInfo imageInfo;
+    imageInfo.size.width = 200;
+    imageInfo.size.height = 300;
+    imageInfo.pixelFormat = PixelFormat::ARGB_8888;
+    imageInfo.colorSpace = ColorSpace::SRGB;
+    pixelMap->SetImageInfo(imageInfo);
+    int32_t rowDataSize = 200;
+    uint32_t bufferSize = rowDataSize * 300;
+    void *buffer = malloc(bufferSize);
+    char *ch = static_cast<char *>(buffer);
+    for (unsigned int i = 0; i < bufferSize; i++) {
+        *(ch++) = (char)i;
+    }
+    int32_t contextSize = 10;
+    void *context = malloc(contextSize);
+    EXPECT_TRUE(context != nullptr);
+    char *contextChar = static_cast<char *>(context);
+    for (unsigned int i = 0; i < contextSize; i++) {
+        *(contextChar++) = (char)i;
+    }
+    pixelMap->ReleaseMemory(AllocatorType::HEAP_ALLOC, buffer, context, bufferSize);
+    EXPECT_EQ(buffer, nullptr);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest039 end";
+}
+
+/**
+ * @tc.name: PixelMapTest040
+ * @tc.desc: Unmarshalling
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest040, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest040 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::ARGB_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap1 = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap1 != nullptr);
+    Parcel data;
+    int32_t value = 0;
+    data.WriteInt32(value);
+    PixelMap *pixelMap2 = PixelMap::Unmarshalling(data);
+    EXPECT_EQ(pixelMap2, nullptr);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest040 end";
+}
+
+/**
+ * @tc.name: PixelMapTest041
+ * @tc.desc: DoTranslation
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest041, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest041 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::ARGB_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap != nullptr);
+    TransInfos infos;
+    auto ret = pixelMap->DoTranslation(infos);
+    EXPECT_TRUE(ret);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest041 end";
+}
+
+/**
+ * @tc.name: PixelMapTest042
+ * @tc.desc: crop
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest042, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest042 start";
+    auto pixelMap = ConstructPixmap(200, 300, PixelFormat::ARGB_8888, AlphaType::IMAGE_ALPHA_TYPE_OPAQUE,
+        AllocatorType::DMA_ALLOC);
+    EXPECT_TRUE(pixelMap != nullptr);
+    Rect rect;
+    rect.left = 0;
+    rect.top = 0;
+    rect.height = 100;
+    rect.width = 100;
+    auto ret = pixelMap->crop(rect);
+    EXPECT_EQ(ret, SUCCESS);
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest042 end";
+}
 }
 }
