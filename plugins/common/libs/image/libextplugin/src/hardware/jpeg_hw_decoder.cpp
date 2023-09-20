@@ -98,19 +98,29 @@ uint32_t JpegHardwareDecoder::Decode(SkCodec *codec, ImagePlugin::InputDataStrea
                                      PlSize srcImgSize, uint32_t sampleSize, CodecImageBuffer& outputBuffer)
 {
     LifeSpanTimer decodeTimer("jpeg hardware decode");
-    JPEG_HW_LOGI("jpeg hardware decode start: img=[%{public}ux%{public}u], sampleSize=%{public}u",
+    JPEG_HW_LOGE("jpeg hardware decode start: img=[%{public}ux%{public}u], sampleSize=%{public}u",
                  srcImgSize.width, srcImgSize.height, sampleSize);
     if (hwDecoder_ == nullptr || bufferMgr_ == nullptr) {
         JPEG_HW_LOGE("failed to get hardware decoder or failed to get buffer manager!");
         return Media::ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (!IsHardwareDecodeSupported(JPEG_FORMAT_DESC, srcImgSize)) {
+        JPEG_HW_LOGE("failed to get hardware decoder NOT HardwareDecodeSupported!");
         return Media::ERR_IMAGE_DATA_UNSUPPORT;
     }
     decodeInfo_.sampleSize = sampleSize;
     bool ret = InitDecoder();
+    if (!ret) {
+        JPEG_HW_LOGE("failed to Init Decoder!");
+    }
     ret = ret && PrepareInputData(codec, srcStream);
+    if (!ret) {
+        JPEG_HW_LOGE("failed to Prepare InputData!");
+    }
     ret = ret && DoDecode(outputBuffer);
+    if (!ret) {
+        JPEG_HW_LOGE("failed to Do Decode!");
+    }
     RecycleAllocatedResource();
     if (ret) {
         JPEG_HW_LOGI("jpeg hardware decode succeed");
