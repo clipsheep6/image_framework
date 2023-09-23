@@ -106,13 +106,11 @@ static const std::string IMAGE_URL_PREFIX = "data:image/";
 static const std::string BASE64_URL_PREFIX = ";base64,";
 static const uint32_t FIRST_FRAME = 0;
 static const int INT_ZERO = 0;
-static const int INT_255 = 255;
 static const size_t SIZE_ZERO = 0;
 static const uint8_t NUM_0 = 0;
 static const uint8_t NUM_1 = 1;
 static const uint8_t NUM_2 = 2;
 static const uint8_t NUM_3 = 3;
-static const uint8_t NUM_4 = 4;
 static const int DMA_SIZE = 512;
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
@@ -425,25 +423,20 @@ bool isSizeSupported(const Size &size)
     return size.width >= DMA_SIZE && size.height >= DMA_SIZE;
 }
 
-bool IsWidthAligned(const int32_t &width)
-{
-    return ((width * NUM_4) & INT_255) == INT_ZERO;
-}
-
 bool IsSupportDma(const DecodeOptions &opts, ImageInfo &info, bool hasDesiredSizeOptions)
 {
 #if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
     IMAGE_LOGE("Unsupport dma mem alloc");
     return false;
 #else
+    // used for test surfacebuffer
     if (ImageSystemProperties::GetSurfaceBufferEnabled() &&
         isSizeSupported(hasDesiredSizeOptions ? opts.desiredSize : info.size)) {
         return true;
     }
 
     if (ImageSystemProperties::GetDmaEnabled() && isFormatSupported(opts.desiredPixelFormat)) {
-        return isSizeSupported(hasDesiredSizeOptions ? opts.desiredSize : info.size) &&
-            IsWidthAligned(opts.desiredSize.width);
+        return isSizeSupported(hasDesiredSizeOptions ? opts.desiredSize : info.size);
     }
     return false;
 #endif
