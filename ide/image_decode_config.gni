@@ -103,6 +103,6 @@ declare_args() {
 
   if (defined(global_parts_info) &&
       !defined(global_parts_info.hdf_derivers_interface_display)) {
-    enable_jpeg_hw_decode = false
+    enable_jpeg_hw_decode = true
   }
 }

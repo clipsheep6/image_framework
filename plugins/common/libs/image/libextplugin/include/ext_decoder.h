@@ -18,13 +18,14 @@
 
 #include <cstdint>
 #include <string>
-
 #include "SkCodec.h"
 #include "abs_image_decoder.h"
 #include "ext_stream.h"
 #include "exif_info.h"
 #include "nocopyable.h"
 #include "plugin_class_base.h"
+#include "display_type.h"
+#include "hardware/jpeg_hw_decoder.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -34,6 +35,11 @@ public:
     ~ExtDecoder() override;
     bool HasProperty(std::string key) override;
     uint32_t Decode(uint32_t index, DecodeContext &context) override;
+
+    uint32_t AllocOutputBuffer(DecodeContext &context);
+    uint32_t HardWareDecode(DecodeContext &context);
+    uint32_t DoHardWareDecode(DecodeContext &context);
+
     uint32_t GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride);
     uint32_t GetImageSize(uint32_t index, PlSize &size) override;
     uint32_t GetTopLevelImageNum(uint32_t &num) override;
@@ -83,6 +89,16 @@ private:
     int32_t frameCount_ = 0;
     EXIFInfo exifInfo_;
     uint8_t *gifCache_ = nullptr;
+
+
+    // hardware
+    OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer outputBuffer_;
+    PlSize scaledImgSize_;
+    PlSize orgImgSize_;
+    PlSize outputBufferSize_;
+    PixelFormat outputColorFmt_ = PIXEL_FMT_RGBA_8888;
+    uint32_t sampleSize_ = 1;
+
     uint32_t gifCacheIndex_ = 0;
 };
 } // namespace ImagePlugin
