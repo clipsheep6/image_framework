@@ -176,7 +176,8 @@ void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, Allocator
 
 bool CheckConvertParmas(const ImageInfo &src, const ImageInfo &dst)
 {
-    return src.size.width == dst.size.width &&
+    return src.pixelFormat == dst.pixelFormat &&
+        src.size.width == dst.size.width &&
         src.size.height == dst.size.height &&
         src.alphaType == dst.alphaType;
 }
@@ -1286,6 +1287,12 @@ bool PixelMap::WritePixels(const uint32_t &color)
         HiLog::Error(LABEL, "erase pixels by color call EraseBitmap fail.");
         return false;
     }
+    return true;
+}
+
+bool PixelMap::SetAllocatorType(AllocatorType allocatorType)
+{
+    allocatorType_ = allocatorType;
     return true;
 }
 
