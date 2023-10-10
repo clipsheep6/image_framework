@@ -249,6 +249,7 @@ HWTEST_F(NapiTest, NapiTest0014, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "NapiTest: NapiTest0014 end";
 }
+
 /**
  * @tc.name: NapiTest0015
  * @tc.desc: OH_PixelMap_SetOpacity
@@ -262,6 +263,53 @@ HWTEST_F(NapiTest, NapiTest0015, TestSize.Level3)
     ASSERT_EQ(resource.buffer, nullptr);
 
     GTEST_LOG_(INFO) << "NapiTest: NapiTest0015 end";
+}
+
+/**
+ * @tc.name: NapiTest0016
+ * @tc.desc: OH_PixelMap_SetOpacity
+ * @tc.type: FUNC
+ */
+HWTEST_F(NapiTest, NapiTest0016, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0016 start";
+    PixelMapNapi napi;
+    napi_env env = nullptr;
+    std::string &tag = nullptr;
+    std::uint32_t &code = nullptr;
+    std::string &info = nullptr;
+    ImageNapiUtils imageNapiUtils;
+    napi_value res = ThrowExceptionError(env,tag,code,info);               
+    ASSERT_EQ(res, imageNapiUtils.ThrowExceptionError(env, ERROR, "Operation failed"));
+
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0016 end";
+}
+
+/**
+ * @tc.name: NapiTest0017
+ * @tc.desc: OH_PixelMap_SetOpacity
+ * @tc.type: FUNC
+ */
+HWTEST_F(NapiTest, NapiTest0017, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0017 start";
+    PixelMapNapi pixelMapNapi;
+    napi_env env;
+    napi_callback_info info;
+    napi_value result;
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value argValue[1] = {0};
+    size_t argCount = 1;
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    napi_get_undefined(env, &result);
+    napi_value constructor = nullptr;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    status = napi_new_instance(env, constructor, 0, nullptr, &result);
+    napi_value res = CreatePixelMapFromParcel(env,info);             
+    ASSERT_EQ(res, result);
+
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0017 end";
 }
 }
 }
