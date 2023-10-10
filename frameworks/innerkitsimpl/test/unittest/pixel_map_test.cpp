@@ -1275,7 +1275,7 @@ HWTEST_F(PixelMapTest, SetPurgeableMemPtrTest, TestSize.Level3)
  * @tc.desc: test SetAllocatorType
  * @tc.type: FUNC
  */
-HWTEST_F(PixelMapTest, SetPurgeableMemPtrTest, TestSize.Level3)
+HWTEST_F(PixelMapTest, SetAllocatorTypeTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType start";
     PixelMap pixelMap;
