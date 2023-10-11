@@ -1277,7 +1277,7 @@ HWTEST_F(PixelMapTest, SetPurgeableMemPtrTest, TestSize.Level3)
  */
 HWTEST_F(PixelMapTest, Unmarshalling, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImagePixelMapTest: Unmarshalling InnerSetColorSpace start";
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: Unmarshalling start";
     PixelMap pixelMap;
     ImageInfo info;
     info.size.width = 3;
@@ -1291,7 +1291,7 @@ HWTEST_F(PixelMapTest, Unmarshalling, TestSize.Level3)
     PixelMap* dstPixelMap = pixelMap.Unmarshalling(parcel, error);
     PixelMap* ret = pixelMap.Unmarshalling(parcel);
     ASSERT_EQ(ret, dstPixelMap);
-    GTEST_LOG_(INFO) << "ImagePixelMapTest: Unmarshalling InnerSetColorSpace end";
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: Unmarshalling end";
 }
 }
 }
