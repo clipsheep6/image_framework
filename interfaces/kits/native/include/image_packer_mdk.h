@@ -19,31 +19,19 @@
  *
  * @brief Provides native APIs for encoding image data
  *
- * The encoding image data module part of image module.
- * It used to pack pixel data infomation into a target like data or file.
- *
- * @since 11
- * @version 4.1
+ * @Syscap SystemCapability.Multimedia.Image
+ * @since 10
+ * @version 5.0
  */
 
 /**
  * @file image_packer_mdk.h
  *
- * @brief Declares APIs for encoding image into data or file.
+ * @brief Declares APIs for encoding image data into buffer or file.
+ * Need link <b>libimage_packerndk.z.so</b>
  *
- * The packing image data module used to pack pixel data into a target.
- *
- * The following steps are recommended for packing process:
- * Create a image packer object by calling OH_ImagePacker_Create function.
- * And then covert the image packer object to ImagePacker_Native by OH_ImagePacker_InitNative.
- * Next using OH_ImagePacker_PackToData or OH_ImagePacker_PackToFile to pack source to target area with
- * requird packing options.
- * Finally, release the ImagePacker_Native by OH_ImagePacker_Release.
- *
- * @library libimage_packer_ndk.z.so
- * @syscap SystemCapability.Multimedia.Image
- * @since 11
- * @version 4.1
+ * @since 10
+ * @version 5.0
  */
 
 #ifndef INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PACKER_MDK_H_
@@ -55,36 +43,30 @@
 extern "C" {
 #endif
 
-struct ImagePacker_Native_;
+struct ImagePackerNative_;
 
 /**
  * @brief Defines an image packer object at the native layer for the image packer interface.
  *
- * @since 11
- * @version 4.1
+ * @since 10
+ * @version 5.0
  */
-typedef struct ImagePacker_Native_ ImagePacker_Native;
+typedef struct ImagePackerNative_ ImagePackerNative;
 
 /**
  * @brief Defines the image packing options.
  *
- * @since 11
- * @version 4.1
+ * @since 10
+ * @version 5.0
  */
-struct ImagePacker_Opts_ {
+struct OhosImagePackerOpts {
     /** Encoding format. */
-    const char* format;
+    const char* foramt;
     /** Encoding quality. */
     int quality;
+    /** Encoding source, a JS pixel map object or a JS image source object. */
+    napi_value source;
 };
-
-/**
- * @brief Defines alias of image packing options.
- *
- * @since 11
- * @version 4.1
- */
-typedef struct ImagePacker_Opts_ ImagePacker_Opts;
 
 /**
  * @brief Creates an <b>ImagePacker</b> object at the JavaScript native layer.
@@ -92,85 +74,78 @@ typedef struct ImagePacker_Opts_ ImagePacker_Opts;
  * @param env Indicates a pointer to the JavaScript Native Interface (JNI) environment.
  * @param res Indicates a pointer to the <b>ImagePacker</b> object created at the JavaScript native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal NAPI environment.
+ * @see {@link ImagePackerNative}
  *
  * @Syscap SystemCapability.Multimedia.Image
- * @since 11
- * @version 4.1
+ * @since 10
+ * @version 5.0
  */
 int32_t OH_ImagePacker_Create(napi_env env, napi_value *res);
 
 /**
- * @brief Parses an {@link ImagePacker_Native} object at the native layer
- * from a JavaScript native API <b>ImagePacker</b> object.
+ * @brief Parses an {@link ImagePackerNative} object at the native layer from a JavaScript native API <b>ImagePacker</b> object.
  *
  * @param env Indicates the pointer to the JavaScript Native Interface (JNI) environment.
  * @param packer Indicates a JavaScript native API <b>ImagePacker</b> object.
- * @return Returns an {@link ImagePacker_Native} pointer object if the operation is successful
+ * @return Returns an {@link ImagePackerNative} pointer object if the operation is successful
  * returns a null pointer otherwise.
- * @see {@link OH_ImagePacker_Release}
- * @since 11
- * @version 4.1
+ * @see ImagePackerNative, OH_ImagePacker_Release
+ * @since 10
+ * @version 5.0
  */
-ImagePacker_Native* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
+ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
 
 /**
- * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the data with required format
+ * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the buffer with required format
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
- * @param source Indicates an encoding source, a JS pixel map object or a JS image source object .
- * @param opts Indicates the encoding {@link ImagePacker_Opts} .
- * @param outData Indicates the pointer to the encoded data.
+ * @param opts Indicates the encoding {@link OhosImagePackerOpts} .
+ * @param outBuffer Indicates the pointer to the encoded data.
  * @param size Indicates the pointer to the {@link OhosImageComponent} object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
-  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
-  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
-  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
-  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
-  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
-  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
- * @see {@link OH_ImagePacker_PackToFile}
- * @since 11
- * @version 4.1
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see ImageNative, OhosImageComponent
+ * @since 10
+ * @version 5.0
  */
-int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
-    ImagePacker_Opts* opts, uint8_t* outData, size_t* size);
+int32_t OH_ImagePacker_Packing(ImagePackerNative* native, struct OhosImagePackerOpts* opts, uint8_t* outBuffer, size_t size);
 
 /**
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the a file with fd with required format
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
- * @param source Indicates an encoding source, a JS pixel map object or a JS image source object .
- * @param opts Indicates the encoding {@link ImagePacker_Opts} .
+ * @param opts Indicates the encoding {@link OhosImagePackerOpts} .
  * @param fd Indicates the a writable file descriptor.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
-  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
-  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
-  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
-  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
-  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
-  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
- * @see {@link OH_ImagePacker_PackToData}
- * @since 11
- * @version 4.1
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see ImageNative, OhosImageComponent
+ * @since 10
+ * @version 5.0
  */
-int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
-    ImagePacker_Opts* opts, int fd);
+int32_t OH_ImagePacker_Packing_To_File(ImagePackerNative* native, struct OhosImagePackerOpts* opts, int fd);
 
 
 /**
- * @brief Releases an {@link ImagePacker_Native} object at the native layer.
+ * @brief Releases an {@link ImagePackerNative} object at the native layer.
  * Note: This API is not used to release a JavaScript native API <b>ImagePacker</b> object.
- * It is used to release the object {@link ImagePacker_Native} at the native layer
+ * It is used to release the object {@link ImagePackerNative} at the native layer
  * parsed by calling {@link OH_ImagePacker_InitNative}.
  *
- * @param native Indicates the pointer to an {@link ImagePacker_Native} object at the native layer.
+ * @param native Indicates the pointer to an {@link ImageNative} object at the native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * @see {@link OH_ImagePacker_InitNative}
- * @since 11
- * @version 4.1
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see ImageNative, OH_Image_InitImageNative
+ * @since 10
+ * @version 5.0
  */
-int32_t OH_ImagePacker_Release(ImagePacker_Native* native);
+int32_t OH_ImagePacker_Release(ImagePackerNative* native);
 #ifdef __cplusplus
 };
 #endif

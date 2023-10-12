@@ -22,7 +22,7 @@ using namespace OHOS::Media;
 #ifdef __cplusplus
 extern "C" {
 #endif
-struct ImagePacker_Native_ {
+struct ImagePackerNative_ {
     ImagePackerNapi* napi = nullptr;
     napi_env env = nullptr;
 };
@@ -37,9 +37,9 @@ int32_t OH_ImagePacker_Create(napi_env env, napi_value *res)
 }
 
 MIDK_EXPORT
-ImagePacker_Native* OH_ImagePacker_InitNative(napi_env env, napi_value packer)
+ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer)
 {
-    std::unique_ptr<ImagePacker_Native> result = std::make_unique<ImagePacker_Native>();
+    std::unique_ptr<ImagePackerNative> result = std::make_unique<ImagePackerNative>();
     result->napi = ImagePackerNapi_Unwrap(env, packer);
     if (result->napi == nullptr) {
         return nullptr;
@@ -49,8 +49,8 @@ ImagePacker_Native* OH_ImagePacker_InitNative(napi_env env, napi_value packer)
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
-    ImagePacker_Opts* opts, uint8_t* outData, size_t* size)
+int32_t OH_ImagePacker_Packing(ImagePackerNative* native,
+    struct OhosImagePackerOpts* opts, uint8_t* outBuffer, size_t size)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -58,16 +58,15 @@ int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
     ImagePackerArgs args;
     args.inEnv = native->env;
     args.inNapi = native->napi;
-    args.inVal = source;
     args.inOpts = opts;
-    args.outData = outData;
-    args.dataSize = size;
-    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKTODATA, &args);
+    args.outBuffer = outBuffer;
+    args.bufferSize = size;
+    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKING, &args);
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
-    ImagePacker_Opts* opts, int fd)
+int32_t OH_ImagePacker_Packing_To_File(ImagePackerNative* native,
+    struct OhosImagePackerOpts* opts, int fd)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -75,14 +74,12 @@ int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
     ImagePackerArgs args;
     args.inEnv = native->env;
     args.inNapi = native->napi;
-    args.inVal = source;
-    args.inOpts = opts;
     args.inNum0 = fd;
-    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKTOFILE, &args);
+    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKING_TO_FILE, &args);
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_Release(ImagePacker_Native* native)
+int32_t OH_ImagePacker_Release(ImagePackerNative* native)
 {
     if (native != nullptr) {
         delete native;
