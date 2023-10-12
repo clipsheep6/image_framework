@@ -1269,4 +1269,21 @@ HWTEST_F(PixelMapTest, SetPurgeableMemPtrTest, TestSize.Level3)
 }
 #endif
 }
+
+/**
+ * @tc.name: SetAllocatorType
+ * @tc.desc: test SetAllocatorType
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, SetAllocatorTypeTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType start";
+    PixelMap pixelMap;
+    AllocatorType allocatorType = AllocatorType::DMA_ALLOC;
+    bool res = PixelMap.SetAllocatorType(allocatorType);
+    ASSERT_EQ(res, true);
+    AllocatorType allocatorType_ = PixelMap::GetAllocatorType();
+    ASSERT_EQ(allocatorType, allocatorType_);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType end";
+}
 }
