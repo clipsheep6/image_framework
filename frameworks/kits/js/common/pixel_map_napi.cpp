@@ -345,6 +345,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("marshalling", Marshalling),
         DECLARE_NAPI_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_GETTER("isEditable", GetIsEditable),
+        DECLARE_NAPI_FUNCTION("isStrideAlignment", IsStrideAlignment),        
     };
 
     napi_property_descriptor static_prop[] = {
@@ -819,6 +820,26 @@ napi_value PixelMapNapi::GetIsEditable(napi_env env, napi_callback_info info)
     napi_get_boolean(env, isEditable, &result);
     pixelMapNapi.release();
 
+    return result;
+}
+
+napi_value PixelMapNapi::IsStrideAlignment(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi),
+        result, HiLog::Error(LABEL, "fail to unwrap context"));
+    if (pixelMapNapi->nativePixelMap_ == nullptr) {
+        return result;
+    }
+    bool isEditable =
+        pixelMapNapi->nativePixelMap_->SetAllocatorType(AllocatorType::DMA_ALLOC);
+    napi_get_boolean(env, isEditable, &result);
+    pixelMapNapi.release();
     return result;
 }
 
