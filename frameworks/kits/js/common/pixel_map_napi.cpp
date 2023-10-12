@@ -1094,6 +1094,9 @@ STATIC_COMPLETE_FUNC(GetImageInfo)
     napi_value densityValue = nullptr;
     napi_create_int32(env, static_cast<int32_t>(context->imageInfo.baseDensity), &densityValue);
     napi_set_named_property(env, result, "density", densityValue);
+    napi_value strideValue = nullptr;
+    napi_create_int32(env, static_cast<int32_t>(context->rPixelMap->GetRowStride()), &strideValue);
+    napi_set_named_property(env, result, "stride", strideValue);
     if (!IMG_IS_OK(status)) {
         context->status = ERROR;
         HiLog::Error(LABEL, "napi_create_int32 failed!");
