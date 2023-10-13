@@ -98,7 +98,7 @@ static std::shared_ptr<ImageSource> GetNativeImageSouce(napi_env env, napi_value
 static int32_t DoStartPacking(std::shared_ptr<ImagePacker> &packer, struct ImagePackerArgs* args)
 {
     PackOption option;
-    option.format = args->inOpts->foramt;
+    option.format = args->inOpts->format;
     option.quality = args->inOpts->quality;
     if (args->outBuffer != nullptr && args->bufferSize != SIZE_ZERO) {
         return packer->StartPacking(args->outBuffer, args->bufferSize, option);
