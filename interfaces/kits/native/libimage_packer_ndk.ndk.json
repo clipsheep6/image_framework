@@ -10,7 +10,7 @@
         "name": "OH_ImagePacker_Packing"
     },
     {
-        "name": "OH_ImagePacker_Packing_To_File"
+        "name": "OH_ImagePacker_PackingToFile"
     },
     {
         "name": "OH_ImagePacker_Release"
