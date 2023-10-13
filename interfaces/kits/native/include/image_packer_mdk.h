@@ -61,7 +61,7 @@ typedef struct ImagePackerNative_ ImagePackerNative;
  */
 struct OhosImagePackerOpts {
     /** Encoding format. */
-    const char* foramt;
+    const char* format;
     /** Encoding quality. */
     int quality;
     /** Encoding source, a JS pixel map object or a JS image source object. */
