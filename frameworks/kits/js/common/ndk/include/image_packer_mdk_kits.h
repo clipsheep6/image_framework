@@ -32,14 +32,14 @@ struct ImagePackerArgs {
     int32_t inNum0 = -1;
     struct OhosImagePackerOpts* inOpts;
     uint8_t* outBuffer;
-    size_t bufferSize;
+    size_t* bufferSize;
     napi_value* outVal;
 };
 
 enum {
     ENV_FUNC_IMAGEPACKER_CREATE,
     CTX_FUNC_IMAGEPACKER_PACKING,
-    CTX_FUNC_IMAGEPACKER_PACKING_TO_FILE,
+    CTX_FUNC_IMAGEPACKER_PACKINGTOFILE,
 };
 ImagePackerNapi* ImagePackerNapi_Unwrap(napi_env env, napi_value value);
 int32_t ImagePackerNativeCall(int32_t mode, struct ImagePackerArgs* args);

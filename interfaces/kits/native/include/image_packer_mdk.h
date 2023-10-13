@@ -113,7 +113,7 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @version 5.0
  */
 int32_t OH_ImagePacker_Packing(ImagePackerNative* native, struct OhosImagePackerOpts* opts,
-    uint8_t* outBuffer, size_t size);
+    uint8_t* outBuffer, size_t* size);
 
 /**
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the a file with fd with required format
@@ -129,7 +129,7 @@ int32_t OH_ImagePacker_Packing(ImagePackerNative* native, struct OhosImagePacker
  * @since 10
  * @version 5.0
  */
-int32_t OH_ImagePacker_Packing_To_File(ImagePackerNative* native, struct OhosImagePackerOpts* opts, int fd);
+int32_t OH_ImagePacker_PackingToFile(ImagePackerNative* native, struct OhosImagePackerOpts* opts, int fd);
 
 
 /**
