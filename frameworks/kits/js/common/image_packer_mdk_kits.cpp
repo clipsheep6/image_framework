@@ -77,8 +77,7 @@ static int32_t ImagePackerNapiCreate(struct ImagePackerArgs* args)
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     *(args->outVal) = ImagePackerNapi::CreateImagePacker(args->inEnv, nullptr);
-    if (*(args->outVal) == nullptr)
-    {
+    if (*(args->outVal) == nullptr) {
         HiLog::Error(LABEL, "ImageSourceNapiCreate native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }

@@ -84,7 +84,8 @@ struct OhosImagePackerOpts {
 int32_t OH_ImagePacker_Create(napi_env env, napi_value *res);
 
 /**
- * @brief Parses an {@link ImagePackerNative} object at the native layer from a JavaScript native API <b>ImagePacker</b> object.
+ * @brief Parses an {@link ImagePackerNative} object at the native layer
+ * from a JavaScript native API <b>ImagePacker</b> object.
  *
  * @param env Indicates the pointer to the JavaScript Native Interface (JNI) environment.
  * @param packer Indicates a JavaScript native API <b>ImagePacker</b> object.
@@ -111,7 +112,8 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @since 10
  * @version 5.0
  */
-int32_t OH_ImagePacker_Packing(ImagePackerNative* native, struct OhosImagePackerOpts* opts, uint8_t* outBuffer, size_t size);
+int32_t OH_ImagePacker_Packing(ImagePackerNative* native, struct OhosImagePackerOpts* opts,
+    uint8_t* outBuffer, size_t size);
 
 /**
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the a file with fd with required format
