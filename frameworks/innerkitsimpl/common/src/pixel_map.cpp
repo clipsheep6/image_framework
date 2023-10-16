@@ -1649,8 +1649,20 @@ bool PixelMap::ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo)
 
 PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 {
+    PIXEL_MAP_ERR error;
+    PixelMap* dstPixelMap = PixelMap::Unmarshalling(parcel, error);
+    if (dstPixelMap == nullptr || error.errorCode != SUCCESS) {
+        HiLog::Error(LABEL, "unmarshalling failed errorCode:%{public}d, errorInfo:%{public}s",
+            error.errorCode, error.errorInfo.c_str());
+    }
+    return dstPixelMap;
+}
+
+PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
+{
     PixelMap *pixelMap = new PixelMap();
     if (pixelMap == nullptr) {
+        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "pixelmap create failed");
         return nullptr;
     }
 
@@ -1658,6 +1670,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
     if (!pixelMap->ReadImageInfo(parcel, imgInfo)) {
         HiLog::Error(LABEL, "read imageInfo fail");
         delete pixelMap;
+        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_READ_PIXELMAP_FAILED, "read pixelmap failed");
         return nullptr;
     }
 
@@ -1676,6 +1689,8 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
     if (bufferSize != rowDataSize * imgInfo.size.height) {
         delete pixelMap;
         HiLog::Error(LABEL, "unmarshalling bufferSize parcelling error");
+        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_BUFFER_SIZE_PARCEL_ERROR,
+            "unmarshalling bufferSize parcelling error");
         return nullptr;
     }
     uint8_t *base = nullptr;
@@ -1686,6 +1701,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         if (fd < 0) {
             HiLog::Error(LABEL, "fd < 0");
             delete pixelMap;
+            PixelMap::ConstructPixelMapError(error, ERR_IMAGE_GET_FD_BAD, "fd acquisition failed");
             return nullptr;
         }
         void* ptr = ::mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -1695,6 +1711,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
                 ::close(fd);
                 delete pixelMap;
                 HiLog::Error(LABEL, "shared memory map in memalloc failed, errno:%{public}d", errno);
+                PixelMap::ConstructPixelMapError(error, ERR_IMAGE_GET_FD_BAD, "shared memory map in memalloc failed");
                 return nullptr;
             }
         }
@@ -1720,6 +1737,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         if (base == nullptr) {
             HiLog::Error(LABEL, "get pixel memory size:[%{public}d] error.", bufferSize);
             delete pixelMap;
+            PixelMap::ConstructPixelMapError(error, ERR_IMAGE_GET_DATA_ABNORMAL, "ReadImageData failed");
             return nullptr;
         }
     }
