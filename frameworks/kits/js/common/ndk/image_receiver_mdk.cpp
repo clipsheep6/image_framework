@@ -44,6 +44,9 @@ MIDK_EXPORT
 int32_t OH_Image_Receiver_CreateImageReceiver(napi_env env,
     struct OhosImageReceiverInfo info, napi_value* res)
 {
+    if (env == nullptr || res == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
     ImageReceiverArgs args;
     args.inNum0 = info.width;
     args.inNum1 = info.height;
@@ -56,7 +59,7 @@ int32_t OH_Image_Receiver_CreateImageReceiver(napi_env env,
 MIDK_EXPORT
 int32_t OH_Image_Receiver_GetReceivingSurfaceId(const ImageReceiverNative* native, char* id, size_t len)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || id == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageReceiverArgs args;
@@ -71,6 +74,9 @@ int32_t OH_Image_Receiver_ReadLatestImage(const ImageReceiverNative* native, nap
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    if (image == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
     ImageReceiverArgs args;
     args.outValue = image;
     args.inEnv = native->env;
@@ -83,6 +89,9 @@ int32_t OH_Image_Receiver_ReadNextImage(const ImageReceiverNative* native, napi_
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    if (image == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
     ImageReceiverArgs args;
     args.outValue = image;
     args.inEnv = native->env;
@@ -92,7 +101,7 @@ int32_t OH_Image_Receiver_ReadNextImage(const ImageReceiverNative* native, napi_
 MIDK_EXPORT
 int32_t OH_Image_Receiver_On(const ImageReceiverNative* native, OH_Image_Receiver_On_Callback callback)
 {
-    if (native == nullptr || native->napi == nullptr || callback == nullptr) {
+    if (native == nullptr || native->napi == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageReceiverArgs args;
@@ -103,7 +112,7 @@ int32_t OH_Image_Receiver_On(const ImageReceiverNative* native, OH_Image_Receive
 MIDK_EXPORT
 int32_t OH_Image_Receiver_GetSize(const ImageReceiverNative* native, struct OhosImageSize* size)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || size == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageReceiverArgs args;
@@ -114,7 +123,7 @@ int32_t OH_Image_Receiver_GetSize(const ImageReceiverNative* native, struct Ohos
 MIDK_EXPORT
 int32_t OH_Image_Receiver_GetCapacity(const ImageReceiverNative* native, int32_t* capacity)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || capacity == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageReceiverArgs args;
@@ -125,7 +134,7 @@ int32_t OH_Image_Receiver_GetCapacity(const ImageReceiverNative* native, int32_t
 MIDK_EXPORT
 int32_t OH_Image_Receiver_GetFormat(const ImageReceiverNative* native, int32_t* format)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || format == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageReceiverArgs args;

@@ -44,10 +44,12 @@ static ImageReceiver* CheckAndGetReceiver(ImageReceiverNapi* native, const struc
 
 static int32_t ImageReceiverNapiCreate(napi_env env, struct ImageReceiverArgs* args)
 {
-    if (args == nullptr) {
+    if (env == nullptr) {
         return IMAGE_RESULT_JNI_ENV_ABNORMAL;
     }
-
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     ImageReceiverCreateArgs createArgs;
     createArgs.width = args->inNum0;
     createArgs.height = args->inNum1;
@@ -62,6 +64,12 @@ static int32_t ImageReceiverNapiCreate(napi_env env, struct ImageReceiverArgs* a
 
 static int32_t ImageReceiverNapiGetReceiverId(ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto receiver = CheckAndGetReceiver(native, args);
     if (receiver == nullptr || receiver->iraContext_ == nullptr || args->id == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -76,9 +84,15 @@ static int32_t ImageReceiverNapiGetReceiverId(ImageReceiverNapi* native, struct 
 
 static int32_t ImageReceiverNapiReadLatestImage(ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto receiver = CheckAndGetReceiver(native, args);
     if (receiver == nullptr || args->inEnv == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     auto image = receiver->LastNativeImage();
     if (image == nullptr) {
@@ -90,9 +104,15 @@ static int32_t ImageReceiverNapiReadLatestImage(ImageReceiverNapi* native, struc
 
 static int32_t ImageReceiverNapiReadNextImage(ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto receiver = CheckAndGetReceiver(native, args);
     if (receiver == nullptr || args->inEnv == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     auto image = receiver->NextNativeImage();
     if (image == nullptr) {
@@ -104,9 +124,15 @@ static int32_t ImageReceiverNapiReadNextImage(ImageReceiverNapi* native, struct 
 
 static int32_t ImageReceiverNapiOn(ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto receiver = CheckAndGetReceiver(native, args);
     if (receiver == nullptr || args->callback == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     std::shared_ptr<ImageReceiverNapiListener> listener = std::make_shared<ImageReceiverNapiListener>();
     listener->callBack = args->callback;
@@ -116,9 +142,15 @@ static int32_t ImageReceiverNapiOn(ImageReceiverNapi* native, struct ImageReceiv
 
 static int32_t ImageReceiverNapiGetSize(ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto receiver = CheckAndGetReceiver(native, args);
     if (receiver == nullptr || receiver->iraContext_ == nullptr || args->outSize == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     args->outSize->width = receiver->iraContext_->GetWidth();
     args->outSize->height = receiver->iraContext_->GetHeight();
@@ -127,9 +159,15 @@ static int32_t ImageReceiverNapiGetSize(ImageReceiverNapi* native, struct ImageR
 
 static int32_t ImageReceiverNapiGetCapacity(ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto receiver = CheckAndGetReceiver(native, args);
     if (receiver == nullptr || receiver->iraContext_ == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     *(args->outNum0) = receiver->iraContext_->GetCapicity();
     return IMAGE_RESULT_SUCCESS;
@@ -137,9 +175,15 @@ static int32_t ImageReceiverNapiGetCapacity(ImageReceiverNapi* native, struct Im
 
 static int32_t ImageReceiverNapiGetFormat(ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto receiver = CheckAndGetReceiver(native, args);
     if (receiver == nullptr || receiver->iraContext_ == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     *(args->outNum0) = receiver->iraContext_->GetFormat();
     return IMAGE_RESULT_SUCCESS;
@@ -160,6 +204,12 @@ static const std::map<int32_t, ImageReceiverNapiCtxFunc> g_CtxFunctions = {
 MIDK_EXPORT
 int32_t ImageReceiverNativeEnvCall(int32_t mode, napi_env env, struct ImageReceiverArgs* args)
 {
+    if (env == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto funcSearch = g_EnvFunctions.find(mode);
     if (funcSearch == g_EnvFunctions.end()) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -170,6 +220,12 @@ int32_t ImageReceiverNativeEnvCall(int32_t mode, napi_env env, struct ImageRecei
 MIDK_EXPORT
 int32_t ImageReceiverNativeCtxCall(int32_t mode, ImageReceiverNapi* native, struct ImageReceiverArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto funcSearch = g_CtxFunctions.find(mode);
     if (funcSearch == g_CtxFunctions.end()) {
         return IMAGE_RESULT_BAD_PARAMETER;

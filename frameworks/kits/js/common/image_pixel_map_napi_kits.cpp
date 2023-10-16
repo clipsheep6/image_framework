@@ -112,6 +112,9 @@ static int32_t PixelMapNapiCreate(napi_env env, PixelMapNapiArgs* args)
 
 static int32_t PixelMapNapiCreateAlpha(napi_env env, PixelMapNapiArgs* args)
 {
+    if (env == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
     if (args == nullptr || args->outValue == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
@@ -148,6 +151,12 @@ static PixelMap* CheckAndGetPixelMap(PixelMapNapi* native, const PixelMapNapiArg
 
 static int32_t PixelMapNapiGetRowBytes(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -158,6 +167,12 @@ static int32_t PixelMapNapiGetRowBytes(PixelMapNapi* native, PixelMapNapiArgs* a
 
 static int32_t PixelMapNapiIsEditable(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -169,6 +184,12 @@ static int32_t PixelMapNapiIsEditable(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiIsSupportAlpha(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -180,6 +201,12 @@ static int32_t PixelMapNapiIsSupportAlpha(PixelMapNapi* native, PixelMapNapiArgs
 
 static int32_t PixelMapNapiSetAlphaAble(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -199,6 +226,12 @@ static int32_t PixelMapNapiSetAlphaAble(PixelMapNapi* native, PixelMapNapiArgs* 
 
 static int32_t PixelMapNapiGetDensity(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -210,6 +243,12 @@ static int32_t PixelMapNapiGetDensity(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiSetDensity(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -228,6 +267,12 @@ static int32_t PixelMapNapiSetDensity(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiSetOpacity(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -241,6 +286,12 @@ static int32_t PixelMapNapiSetOpacity(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiScale(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -251,6 +302,12 @@ static int32_t PixelMapNapiScale(PixelMapNapi* native, PixelMapNapiArgs* args)
 
 static int32_t PixelMapNapiTranslate(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -262,6 +319,12 @@ static int32_t PixelMapNapiTranslate(PixelMapNapi* native, PixelMapNapiArgs* arg
 
 static int32_t PixelMapNapiRotate(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -273,6 +336,12 @@ static int32_t PixelMapNapiRotate(PixelMapNapi* native, PixelMapNapiArgs* args)
 
 static int32_t PixelMapNapiFlip(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -284,6 +353,12 @@ static int32_t PixelMapNapiFlip(PixelMapNapi* native, PixelMapNapiArgs* args)
 
 static int32_t PixelMapNapiCrop(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -299,6 +374,12 @@ static int32_t PixelMapNapiCrop(PixelMapNapi* native, PixelMapNapiArgs* args)
 
 static int32_t PixelMapNapiGetImageInfo(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr || args->outInfo == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -315,6 +396,12 @@ static int32_t PixelMapNapiGetImageInfo(PixelMapNapi* native, PixelMapNapiArgs* 
 
 static int32_t PixelMapNapiAccessPixels(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto pixelmap = CheckAndGetPixelMap(native, args);
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -326,6 +413,12 @@ static int32_t PixelMapNapiAccessPixels(PixelMapNapi* native, PixelMapNapiArgs* 
 
 static int32_t PixelMapNapiUnAccessPixels(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     if (native != nullptr) {
         native->UnlockPixelMap();
     }
@@ -357,6 +450,12 @@ static const std::map<int32_t, PixelMapNapiCtxFunc> g_CtxFunctions = {
 MIDK_EXPORT
 int32_t PixelMapNapiNativeEnvCall(int32_t mode, napi_env env, PixelMapNapiArgs* args)
 {
+    if (env == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto funcSearch = g_EnvFunctions.find(mode);
     if (funcSearch == g_EnvFunctions.end()) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -367,6 +466,12 @@ int32_t PixelMapNapiNativeEnvCall(int32_t mode, napi_env env, PixelMapNapiArgs* 
 MIDK_EXPORT
 int32_t PixelMapNapiNativeCtxCall(int32_t mode, PixelMapNapi* native, PixelMapNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto funcSearch = g_CtxFunctions.find(mode);
     if (funcSearch == g_CtxFunctions.end()) {
         return IMAGE_RESULT_BAD_PARAMETER;

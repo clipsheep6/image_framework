@@ -47,13 +47,19 @@ static NativeImage* CheckAndGetImage(ImageNapi* native, const struct ImageNapiAr
 
 static int32_t ImageNapiClipRect(ImageNapi* native, struct ImageNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto nativeImage = CheckAndGetImage(native, args);
     if (nativeImage == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
 
     if (nativeImage->GetSize(args->outRect->width, args->outRect->height) != NUM_0) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
 
     args->outRect->x = NUM_0;
@@ -63,6 +69,12 @@ static int32_t ImageNapiClipRect(ImageNapi* native, struct ImageNapiArgs* args)
 
 static int32_t ImageNapiSize(ImageNapi* native, struct ImageNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto nativeImage = CheckAndGetImage(native, args);
     if (nativeImage == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -76,6 +88,12 @@ static int32_t ImageNapiSize(ImageNapi* native, struct ImageNapiArgs* args)
 
 static int32_t ImageNapiFormat(ImageNapi* native, struct ImageNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto nativeImage = CheckAndGetImage(native, args);
     if (nativeImage == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -90,9 +108,15 @@ static int32_t ImageNapiFormat(ImageNapi* native, struct ImageNapiArgs* args)
 
 static int32_t ImageNapiGetComponent(ImageNapi* native, struct ImageNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto nativeImage = CheckAndGetImage(native, args);
     if (nativeImage == nullptr || args->outComponent == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
 
     auto nativeComponent = nativeImage->GetComponent(args->inNum0);
@@ -126,6 +150,12 @@ static const std::map<int32_t, ImageNapiCtxFunc> g_CtxFunctions = {
 MIDK_EXPORT
 int32_t ImageNapiNativeCtxCall(int32_t mode, ImageNapi* native, struct ImageNapiArgs* args)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (args == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     auto funcSearch = g_CtxFunctions.find(mode);
     if (funcSearch == g_CtxFunctions.end()) {
         return IMAGE_RESULT_BAD_PARAMETER;

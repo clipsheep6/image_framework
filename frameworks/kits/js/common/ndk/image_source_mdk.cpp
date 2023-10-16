@@ -48,6 +48,12 @@ MIDK_EXPORT
 int32_t OH_ImageSource_Create(napi_env env, struct OhosImageSource* src,
     struct OhosImageSourceOps* ops, napi_value *res)
 {
+    if (env == nullptr || res == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (src == nullptr || ops == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     ImageSourceArgs args;
     args.inEnv = env;
     args.source = src;
@@ -61,6 +67,12 @@ MIDK_EXPORT
 int32_t OH_ImageSource_CreateIncremental(napi_env env,
     struct OhosImageSource* source, struct OhosImageSourceOps* ops, napi_value *res)
 {
+    if (env == nullptr || res == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
+    }
+    if (source == nullptr || ops == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     ImageSourceArgs args;
     args.inEnv = env;
     args.source = source;
@@ -73,6 +85,9 @@ int32_t OH_ImageSource_CreateIncremental(napi_env env,
 MIDK_EXPORT
 int32_t OH_ImageSource_GetSupportedFormats(struct OhosImageSourceSupportedFormatList* res)
 {
+    if (res == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     ImageSourceArgs args;
     args.outFormats = res;
     auto ret = ImageSourceNativeCall(STA_FUNC_IMAGE_SOURCE_GET_SUPPORTED_FORMATS, &args);
@@ -83,8 +98,11 @@ MIDK_EXPORT
 int32_t OH_ImageSource_CreatePixelMap(const ImageSourceNative* native,
     struct OhosImageDecodingOps* ops, napi_value *res)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || ops == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    if (res == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
     }
     ImageSourceArgs args;
     args.napi = native->napi;
@@ -99,8 +117,11 @@ MIDK_EXPORT
 int32_t OH_ImageSource_CreatePixelMapList(const ImageSourceNative* native,
     struct OhosImageDecodingOps* ops, napi_value* res)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || ops == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    if (res == nullptr) {
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
     }
     ImageSourceArgs args;
     args.napi = native->napi;
@@ -115,7 +136,7 @@ MIDK_EXPORT
 int32_t OH_ImageSource_GetDelayTime(const ImageSourceNative* native,
     struct OhosImageSourceDelayTimeList* res)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || res == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageSourceArgs args;
@@ -128,7 +149,7 @@ int32_t OH_ImageSource_GetDelayTime(const ImageSourceNative* native,
 MIDK_EXPORT
 int32_t OH_ImageSource_GetFrameCount(const ImageSourceNative* native, uint32_t *res)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || res == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageSourceArgs args;
@@ -142,7 +163,7 @@ MIDK_EXPORT
 int32_t OH_ImageSource_GetImageInfo(const ImageSourceNative* native, int32_t index,
     struct OhosImageSourceInfo* info)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || info == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageSourceArgs args;
@@ -157,7 +178,7 @@ MIDK_EXPORT
 int32_t OH_ImageSource_GetImageProperty(const ImageSourceNative* native,
     struct OhosImageSourceProperty* key, struct OhosImageSourceProperty* value)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || key == nullptr || value == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageSourceArgs args;
@@ -172,7 +193,7 @@ MIDK_EXPORT
 int32_t OH_ImageSource_ModifyImageProperty(const ImageSourceNative* native,
     struct OhosImageSourceProperty* key, struct OhosImageSourceProperty* value)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || key == nullptr || value == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageSourceArgs args;
@@ -187,7 +208,7 @@ MIDK_EXPORT
 int32_t OH_ImageSource_UpdateData(const ImageSourceNative* native,
     struct OhosImageSourceUpdateData* data)
 {
-    if (native == nullptr || native->napi == nullptr) {
+    if (native == nullptr || native->napi == nullptr || data == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageSourceArgs args;
