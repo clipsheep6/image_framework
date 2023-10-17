@@ -922,7 +922,7 @@ HWTEST_F(PixelMapTest, PixelMapTest024, TestSize.Level3)
     void *context = malloc(contextSize);
     EXPECT_TRUE(context != nullptr);
     char *contextChar = static_cast<char *>(context);
-    for (unsigned int i = 0; i < contextSize; i++) {
+    for (int32_t i = 0; i < contextSize; i++) {
         *(contextChar++) = (char)i;
     }
     pixelMap->SetPixelsAddr(buffer, context, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
@@ -1149,7 +1149,7 @@ HWTEST_F(PixelMapTest, SetAndGetRowStride, TestSize.Level3)
     uint32_t stride = 1;
     pixelMap.SetRowStride(stride);
     uint32_t res = pixelMap.GetRowStride();
-    ASSERT_EQ(res, 1);
+    ASSERT_EQ(res, stride);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAndGetRowStride end";
 }
 
@@ -1279,10 +1279,16 @@ HWTEST_F(PixelMapTest, SetAllocatorTypeTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType start";
     PixelMap pixelMap;
+    ImageInfo info;
+    info.size.width = 3;
+    info.size.height = 3;
+    info.pixelFormat = PixelFormat::ALPHA_8;
+    info.colorSpace = ColorSpace::SRGB;
+    pixelMap.SetImageInfo(info);
     AllocatorType allocatorType = AllocatorType::DMA_ALLOC;
     bool res = PixelMap.SetAllocatorType(allocatorType);
     ASSERT_EQ(res, true);
-    AllocatorType allocatorType_ = PixelMap::GetAllocatorType();
+    AllocatorType allocatorType_ = PixelMap.GetAllocatorType();
     ASSERT_EQ(allocatorType, allocatorType_);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType end";
 }
