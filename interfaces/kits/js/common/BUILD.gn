@@ -49,6 +49,7 @@ config("image_external_config") {
     "//drivers/peripheral/display/interfaces/include",
     "//drivers/peripheral/base",
     "$skia_root/skia/third_party/externals/libjpeg-turbo",
+    "$ipc_subsystem/../base/global/resource_management/interfaces/native/resource/include",
     "$ipc_subsystem/communication/ipc/ipc/native/src/napi_common/include",
   ]
 

@@ -108,6 +108,21 @@ static ImageSourceNapi* UnwrapNativeObject(napi_env env, napi_value value)
     return nullptr;
 }
 
+static bool isValidRawFile(RawFileDescriptor &rawFile)
+{
+    return rawFile.fd != INVALID_FD && rawFile.start >= SIZE_ZERO && rawFile.length > SIZE_ZERO;
+}
+
+static std::unique_ptr<ImageSource> CreateRawFileSource(RawFileDescriptor &rawFile,
+    SourceOptions &opts, ImageResource &resource, uint32_t &errorCode)
+{
+    resource.type = ImageResourceType::IMAGE_RESOURCE_RAW_FILE;
+    resource.fd = rawFile.fd;
+    resource.fileStart = rawFile.start;
+    resource.fileLength = rawFile.length;
+    return ImageSource::CreateImageSource(rawFile.fd, rawFile.start, rawFile.length, opts, errorCode);
+}
+
 static int32_t ImageSourceNativeCreate(struct OhosImageSource* source,
     struct OhosImageSourceOps* ops, std::shared_ptr<ImageSource> &result, ImageResource &resource)
 {
@@ -141,6 +156,9 @@ static int32_t ImageSourceNativeCreate(struct OhosImageSource* source,
         resource.type = ImageResourceType::IMAGE_RESOURCE_BUFFER;
         resource.buffer = source->buffer;
         resource.bufferSize = source->bufferSize;
+    } else if (isValidRawFile(source->rawFile)) {
+        HiLog::Debug(LABEL, "ImageSourceNativeCreate by raw file");
+        nativeImageSource = CreateRawFileSource(source->rawFile, opts, resource, errorCode);
     }
     if (nativeImageSource != nullptr) {
         result = std::move(nativeImageSource);
@@ -490,6 +508,9 @@ static uint32_t NativePropertyModify(ImageSource* native, ImageResource &imageRe
         HiLog::Debug(LABEL, "NativePropertyModify buffer resource");
         errorCode = native->ModifyImageProperty(DEFAULT_INDEX, key, val,
             imageResource.buffer, imageResource.bufferSize);
+    } else if (type == ImageResourceType::IMAGE_RESOURCE_RAW_FILE) {
+        HiLog::Error(LABEL, "NativePropertyModify raw file is read only resource, could not support modify");
+        return IMAGE_RESULT_MEDIA_INVALID_OPERATION;
     } else {
         HiLog::Error(LABEL, "NativePropertyModify %{public}d resource error", type);
         return IMAGE_RESULT_BAD_PARAMETER;

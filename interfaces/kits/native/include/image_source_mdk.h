@@ -39,6 +39,7 @@
 #include <cstdint>
 #include "napi/native_api.h"
 #include "image_mdk_common.h"
+#include "raw_file.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -304,6 +305,8 @@ struct OhosImageSource {
     uint8_t* buffer = nullptr;
     /** Size of the image source buffer. */
     size_t bufferSize = 0;
+    /** Size of the image source buffer. */
+    RawFileDescriptor rawFile;
 };
 
 /**
