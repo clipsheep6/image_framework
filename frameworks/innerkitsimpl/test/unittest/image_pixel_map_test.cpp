@@ -511,7 +511,7 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap011, TestSize.Level3)
 
     PixelMap *pixelmap2 = PixelMap::Unmarshalling(data);
     Parcel data1;
-    bool ret1 = pixelmap2.get()->Marshalling(data1);
+    bool ret1 = pixelmap2.Marshalling(data1);
     EXPECT_EQ(true, ret1);
     EXPECT_EQ(pixelmap1->GetHeight(), pixelmap2->GetHeight());
     EXPECT_EQ(pixelmap1->GetWidth(), pixelmap2->GetWidth());
