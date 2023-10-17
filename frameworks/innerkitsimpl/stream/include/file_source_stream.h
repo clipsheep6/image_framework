@@ -28,6 +28,8 @@ class FileSourceStream : public SourceStream {
 public:
     static std::unique_ptr<FileSourceStream> CreateSourceStream(const std::string &pathName);
     static std::unique_ptr<FileSourceStream> CreateSourceStream(const int fd);
+    static std::unique_ptr<FileSourceStream> CreateSourceStream(
+        const int fd, int32_t offset, int32_t size);
     ~FileSourceStream() override;
 
     bool Read(uint32_t desiredSize, ImagePlugin::DataStreamBuffer &outData) override;

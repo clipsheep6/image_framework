@@ -103,6 +103,28 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)
     return (unique_ptr<FileSourceStream>(new FileSourceStream(filePtr, size, offset, offset)));
 }
 
+unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(
+    const int fd, int32_t offset, int32_t length)
+{
+    int dupFd = dup(fd);
+    if (dupFd < 0) {
+        IMAGE_LOGE("[FileSourceStream]Fail to dup fd.");
+        return nullptr;
+    }
+
+    FILE *filePtr = fdopen(dupFd, "rb");
+    if (filePtr == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]open file fail.");
+        return nullptr;
+    }
+
+    int ret = fseek(filePtr, offset, SEEK_SET);
+    if (ret != 0) {
+        IMAGE_LOGE("[FileSourceStream]Go to %{public}d position fail, ret:%{public}d.", offset, ret);
+    }
+    return (unique_ptr<FileSourceStream>(new FileSourceStream(filePtr, length, offset, offset)));
+}
+
 bool FileSourceStream::Read(uint32_t desiredSize, DataStreamBuffer &outData)
 {
     if (desiredSize == 0 || filePtr_ == nullptr) {
