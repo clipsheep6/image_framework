@@ -1307,6 +1307,12 @@ bool PixelMap::WritePixels(const uint32_t &color)
     return true;
 }
 
+bool PixelMap::SetAllocatorType(AllocatorType allocatorType)
+{
+    allocatorType_ = allocatorType;
+    return true;
+}
+
 AllocatorType PixelMap::GetAllocatorType()
 {
     return allocatorType_;
