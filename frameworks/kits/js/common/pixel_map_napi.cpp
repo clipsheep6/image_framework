@@ -837,7 +837,7 @@ napi_value PixelMapNapi::IsStrideAlignment(napi_env env, napi_callback_info info
         return result;
     }
     bool isEditable =
-        pixelMapNapi->nativePixelMap_->SetAllocatorType(AllocatorType::DMA_ALLOC);
+        pixelMapNapi->nativePixelMap_->GetAllocatorType(AllocatorType::DMA_ALLOC);
     napi_get_boolean(env, isEditable, &result);
     pixelMapNapi.release();
     return result;
