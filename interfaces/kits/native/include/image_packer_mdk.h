@@ -64,8 +64,6 @@ struct OhosImagePackerOpts {
     const char* format;
     /** Encoding quality. */
     int quality;
-    /** Encoding source, a JS pixel map object or a JS image source object. */
-    napi_value source;
 };
 
 /**
@@ -101,6 +99,7 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the buffer with required format
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
+ * @param source Indicates an encoding source, a JS pixel map object or a JS image source object .
  * @param opts Indicates the encoding {@link OhosImagePackerOpts} .
  * @param outBuffer Indicates the pointer to the encoded data.
  * @param size Indicates the pointer to the {@link OhosImageComponent} object obtained.
@@ -112,13 +111,14 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @since 10
  * @version 5.0
  */
-int32_t OH_ImagePacker_Packing(ImagePackerNative* native, struct OhosImagePackerOpts* opts,
-    uint8_t* outBuffer, size_t* size);
+int32_t OH_ImagePacker_PackingToBuffer(ImagePackerNative* native, napi_value source,
+    struct OhosImagePackerOpts* opts, uint8_t* outBuffer, size_t* size);
 
 /**
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the a file with fd with required format
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
+ * @param source Indicates an encoding source, a JS pixel map object or a JS image source object .
  * @param opts Indicates the encoding {@link OhosImagePackerOpts} .
  * @param fd Indicates the a writable file descriptor.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
@@ -129,7 +129,8 @@ int32_t OH_ImagePacker_Packing(ImagePackerNative* native, struct OhosImagePacker
  * @since 10
  * @version 5.0
  */
-int32_t OH_ImagePacker_PackingToFile(ImagePackerNative* native, struct OhosImagePackerOpts* opts, int fd);
+int32_t OH_ImagePacker_PackingToFile(ImagePackerNative* native, napi_value source,
+    struct OhosImagePackerOpts* opts, int fd);
 
 
 /**
