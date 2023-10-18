@@ -118,7 +118,6 @@ public:
     NATIVEEXPORT uint32_t WritePixels(const uint8_t *source, const uint64_t &bufferSize);
     NATIVEEXPORT bool WritePixels(const uint32_t &color);
     NATIVEEXPORT void FreePixelMap();
-    NATIVEEXPORT bool SetAllocatorType(AllocatorType allocatorType);
     NATIVEEXPORT AllocatorType GetAllocatorType();
     NATIVEEXPORT void *GetFd() const;
     NATIVEEXPORT void SetFreePixelMapProc(CustomFreePixelMap func);
