@@ -1292,3 +1292,4 @@ HWTEST_F(PixelMapTest, SetAllocatorTypeTest, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType end";
 }
 }
+}
