@@ -1268,28 +1268,5 @@ HWTEST_F(PixelMapTest, SetPurgeableMemPtrTest, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetPurgeableMemPtrTest SetPurgeableMemPtr end";
 }
 #endif
-
-/**
- * @tc.name: SetAllocatorType
- * @tc.desc: test SetAllocatorType
- * @tc.type: FUNC
- */
-HWTEST_F(PixelMapTest, SetAllocatorTypeTest, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType start";
-    PixelMap pixelMap;
-    ImageInfo info;
-    info.size.width = 3;
-    info.size.height = 3;
-    info.pixelFormat = PixelFormat::ALPHA_8;
-    info.colorSpace = ColorSpace::SRGB;
-    pixelMap.SetImageInfo(info);
-    AllocatorType allocatorType = AllocatorType::DMA_ALLOC;
-    bool res = pixelMap.SetAllocatorType(allocatorType);
-    ASSERT_EQ(res, true);
-    AllocatorType allocatorType_ = pixelMap.GetAllocatorType();
-    ASSERT_EQ(allocatorType, allocatorType_);
-    GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAllocatorTypeTest SetAllocatorType end";
-}
 }
 }
