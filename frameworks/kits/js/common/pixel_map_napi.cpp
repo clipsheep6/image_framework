@@ -836,9 +836,9 @@ napi_value PixelMapNapi::IsStrideAlignment(napi_env env, napi_callback_info info
     if (pixelMapNapi->nativePixelMap_ == nullptr) {
         return result;
     }
-    bool isEditable =
+    bool isDMA =
         pixelMapNapi->nativePixelMap_->IsStrideAlignment();
-    napi_get_boolean(env, isEditable, &result);
+    napi_get_boolean(env, isDMA, &result);
     pixelMapNapi.release();
     return result;
 }
