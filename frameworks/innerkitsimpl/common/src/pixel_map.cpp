@@ -1309,7 +1309,7 @@ bool PixelMap::WritePixels(const uint32_t &color)
 
 bool PixelMap::IsStrideAlignment()
 {
-    if (allocatorType_ == AllocatorType::DMA_ALLOC){
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         return true;
     }
     return false;
