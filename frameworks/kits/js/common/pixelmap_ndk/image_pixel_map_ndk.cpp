@@ -89,13 +89,13 @@ int32_t OH_PixelMap_GetIsEditable(const NativePixelMap* native, int32_t* editabl
 }
 
 MIDK_EXPORT
-int32_t OH_PixelMap_IsStrideAlignment(const NativePixelMap* native, int32_t* isstrideAlignment)
+int32_t OH_PixelMap_IsStrideAlignment(const NativePixelMap* native, int32_t* strideAlignment)
 {
     if (native == nullptr || native->napi == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     PixelMapNapiArgs args;
-    args.outNum = isstrideAlignment;
+    args.outNum = strideAlignment;
     return PixelMapNapiNativeCtxCall(CTX_FUNC_IS_EDITABLE, native->napi, &args);
 }
 
