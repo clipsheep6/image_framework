@@ -305,7 +305,7 @@ struct OhosImageSource {
     uint8_t* buffer = nullptr;
     /** Size of the image source buffer. */
     size_t bufferSize = 0;
-    /** Size of the image source buffer. */
+    /** Raw file descriptor of the image source. */
     RawFileDescriptor rawFile;
 };
 
