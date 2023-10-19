@@ -271,6 +271,23 @@ int32_t OH_PixelMap_GetBytesNumberPerRow(const NativePixelMap* native, int32_t* 
 int32_t OH_PixelMap_GetIsEditable(const NativePixelMap* native, int32_t* editable);
 
 /**
+ * @brief Checks whether a <b>PixelMap</b> object is strideAlignment.
+ *
+ * @param native Indicates the pointer to a <b>NativePixelMap</b> object.
+ * @param strideAlignment Indicates the pointer to the support for strideAlignment channels.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_ABNORMAL - if image input data error.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INDEX_INVALID - if invalid index.
+ * @see IsStrideAlignment
+ * @since 10
+ * @version 1.0
+ */
+int32_t OH_PixelMap_IsStrideAlignment(const NativePixelMap* native, int32_t* strideAlignment);
+
+/**
  * @brief Checks whether a <b>PixelMap</b> object supports alpha channels.
  *
  * @param native Indicates the pointer to a <b>NativePixelMap</b> object.
