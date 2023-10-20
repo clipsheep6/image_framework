@@ -122,7 +122,7 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(
     if (ret != 0) {
         IMAGE_LOGE("[FileSourceStream]Go to %{public}d position fail, ret:%{public}d.", offset, ret);
     }
-    return (unique_ptr<FileSourceStream>(new FileSourceStream(filePtr, length, offset, offset)));
+    return make_unique<FileSourceStream>(filePtr, length, offset, offset);
 }
 
 bool FileSourceStream::Read(uint32_t desiredSize, DataStreamBuffer &outData)

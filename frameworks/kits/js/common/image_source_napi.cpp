@@ -53,13 +53,11 @@ napi_ref ImageSourceNapi::imageFormatRef_ = nullptr;
 napi_ref ImageSourceNapi::alphaTypeRef_ = nullptr;
 napi_ref ImageSourceNapi::scaleModeRef_ = nullptr;
 napi_ref ImageSourceNapi::componentTypeRef_ = nullptr;
-struct RawFileDescriptorInfo
-{
+struct RawFileDescriptorInfo {
     int32_t fd = INVALID_FD;
     int32_t offset;
     int32_t length;
 };
-
 
 struct ImageSourceAsyncContext {
     napi_env env;
@@ -774,7 +772,7 @@ static std::unique_ptr<ImageSource> CreateNativeImageSource(napi_env env, napi_v
         napi_get_value_int32(env, argValue, &context->fdIndex);
         HiLog::Debug(LABEL, "CreateImageSource fdIndex is [%{public}d]", context->fdIndex);
         imageSource = ImageSource::CreateImageSource(context->fdIndex, opts, errorCode);
-    } else if(isRawFileDescriptor(env, argValue, context)) {
+    } else if (isRawFileDescriptor(env, argValue, context)) {
         HiLog::Debug(LABEL,
             "CreateImageSource RawFileDescriptor fd: %{public}d, offset: %{public}d, length: %{public}d",
             context->rawFileInfo.fd, context->rawFileInfo.offset, context->rawFileInfo.length);
