@@ -915,6 +915,7 @@ ohos_unittest("ndktest") {
   ]
   sources = [
     "unittest/image_ndk_test.cpp",
+    "unittest/image_packer_mdk_test.cpp",
     "unittest/ndk_test.cpp",
   ]
 
