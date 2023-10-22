@@ -32,7 +32,7 @@ public:
 
 /**
  * @tc.name: OH_ImagePacker_Create
- * @tc.desc: test SetData and ClearData data type is bool
+ * @tc.desc: test OH_ImagePacker_Create
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Create, TestSize.Level3)
@@ -47,7 +47,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Create, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImagePacker_InitNative
- * @tc.desc: test 
+ * @tc.desc: test OH_ImagePacker_InitNative
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
@@ -62,7 +62,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImagePacker_PackingToBuffer
- * @tc.desc: test 
+ * @tc.desc: test OH_ImagePacker_PackingToBuffer
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToBuffer, TestSize.Level3)
@@ -80,7 +80,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToBuffer, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImagePacker_PackingToFile
- * @tc.desc: test 
+ * @tc.desc: test OH_ImagePacker_PackingToFile
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToFile, TestSize.Level3)
@@ -97,7 +97,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToFile, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImagePacker_Release
- * @tc.desc: test 
+ * @tc.desc: test OH_ImagePacker_Release
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Release, TestSize.Level3)
