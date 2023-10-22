@@ -32,7 +32,7 @@ public:
 
 /**
  * @tc.name: OH_ImagePacker_Create
- * @tc.desc: test OH_ImagePacker_Create
+ * @tc.desc: test SetData and ClearData data type is bool
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Create, TestSize.Level3)
@@ -47,7 +47,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Create, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImagePacker_InitNative
- * @tc.desc: test OH_ImagePacker_InitNative
+ * @tc.desc: test 
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
@@ -55,55 +55,55 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_InitNative start";
     napi_env env = nullptr;
     napi_value packer = nullptr;
-    ImagePacker_Native*  ret = OH_ImagePacker_InitNative(env, packer);
+    ImagePackerNative*  ret = OH_ImagePacker_InitNative(env, packer);
     ASSERT_EQ(ret, nullptr);
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_InitNative end";
 }
 
 /**
- * @tc.name: OH_ImagePacker_PackToData
- * @tc.desc: test OH_ImagePacker_PackToData
+ * @tc.name: OH_ImagePacker_PackingToBuffer
+ * @tc.desc: test 
  * @tc.type: FUNC
  */
-HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToData, TestSize.Level3)
+HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToBuffer, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToData start";
-    ImagePacker_Native* native = nullptr;
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToBuffer start";
+    ImagePackerNative* native = nullptr;
     napi_value source = nullptr;
-    ImagePacker_Opts opts;
-    uint8_t* outData = nullptr;
+    struct OhosImagePackerOpts opts;
+    uint8_t* outBuffer = nullptr;
     size_t size = TEST_SIZE;
-    int32_t ret = OH_ImagePacker_PackToData(native, source, &opts, outData, &size);
+    int32_t ret = OH_ImagePacker_PackingToBuffer(native, source, &opts, outBuffer, &size);
     ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToData end";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToBuffer end";
 }
 
 /**
- * @tc.name: OH_ImagePacker_PackToFile
- * @tc.desc: test OH_ImagePacker_PackToFile
+ * @tc.name: OH_ImagePacker_PackingToFile
+ * @tc.desc: test 
  * @tc.type: FUNC
  */
-HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToFile, TestSize.Level3)
+HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToFile, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToFile start";
-    ImagePacker_Native* native = nullptr;
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToFile start";
+    ImagePackerNative* native = nullptr;
     napi_value source = nullptr;
-    ImagePacker_Opts opts;
+    struct OhosImagePackerOpts opts;
     int fd = TEST_FD;
-    int32_t ret = OH_ImagePacker_PackToFile(native, source, &opts, fd);
+    int32_t ret = OH_ImagePacker_PackingToFile(native, source, &opts, fd);
     ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToFile end";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToFile end";
 }
 
 /**
  * @tc.name: OH_ImagePacker_Release
- * @tc.desc: test OH_ImagePacker_Release
+ * @tc.desc: test 
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Release, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_Release start";
-    ImagePacker_Native* native = nullptr;
+    ImagePackerNative* native = nullptr;
     int32_t ret = OH_ImagePacker_Release(native);
     ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_Release end";
