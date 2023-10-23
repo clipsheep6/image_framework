@@ -491,8 +491,8 @@ napi_value ImagePackerNapi::Packing(napi_env env, napi_callback_info info)
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackingError",
             [](napi_env env, void *data) {}, PackingErrorComplete, asyncContext, asyncContext->work);
     } else {
-        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Packing",
-            PackingExec, PackingComplete, asyncContext, asyncContext->work);
+        IMG_CREATE_CREATE_ASYNC_WORK_WITH_QOS(env, status, "Packing",
+            PackingExec, PackingComplete, asyncContext, asyncContext->work, napi_qos_user_initiated);
     }
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
@@ -693,8 +693,8 @@ napi_value ImagePackerNapi::PackingToFile(napi_env env, napi_callback_info info)
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackingError",
             [](napi_env env, void *data) {}, PackingErrorComplete, asyncContext, asyncContext->work);
     } else {
-        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackingToFile",
-            PackingToFileExec, PackingToFileComplete, asyncContext, asyncContext->work);
+        IMG_CREATE_CREATE_ASYNC_WORK_WITH_QOS(env, status, "PackingToFile",
+            PackingToFileExec, PackingToFileComplete, asyncContext, asyncContext->work, napi_qos_user_initiated);
     }
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
