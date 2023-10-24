@@ -143,6 +143,8 @@ public:
                                                                        const SourceOptions &opts, uint32_t &errorCode);
     NATIVEEXPORT static std::unique_ptr<ImageSource> CreateImageSource(const int fd, const SourceOptions &opts,
                                                        uint32_t &errorCode);
+    NATIVEEXPORT static std::unique_ptr<ImageSource> CreateImageSource(
+        const int fd, int32_t offset, int32_t length, const SourceOptions &opts, uint32_t &errorCode);
     NATIVEEXPORT static std::unique_ptr<ImageSource> CreateIncrementalImageSource(const IncrementalSourceOptions &opts,
                                                                                   uint32_t &errorCode);
 
@@ -191,8 +193,7 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
-    NATIVEEXPORT static std::unique_ptr<ImageSource> CreateImageSource(
-        const int fd, int32_t offset, int32_t length, const SourceOptions &opts, uint32_t &errorCode);
+
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
     using FormatAgentMap = std::map<std::string, ImagePlugin::AbsImageFormatAgent *>;

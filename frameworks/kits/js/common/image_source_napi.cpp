@@ -53,6 +53,7 @@ napi_ref ImageSourceNapi::imageFormatRef_ = nullptr;
 napi_ref ImageSourceNapi::alphaTypeRef_ = nullptr;
 napi_ref ImageSourceNapi::scaleModeRef_ = nullptr;
 napi_ref ImageSourceNapi::componentTypeRef_ = nullptr;
+
 struct RawFileDescriptorInfo {
     int32_t fd = INVALID_FD;
     int32_t offset;
@@ -712,11 +713,13 @@ static void PrepareNapiEnv(napi_env env)
     napi_value returnValue;
     napi_call_function(env, globalValue, func, 1, funcArgv, &returnValue);
 }
+
 static bool hasNamedProperty(napi_env env, napi_value object, std::string name)
 {
     bool res = false;
     return (napi_has_named_property(env, object, name.c_str(), &res) == napi_ok) && res;
 }
+
 static bool parseRawFileItem(napi_env env, napi_value argValue, std::string item, int32_t* value)
 {
     napi_value nItem;
@@ -730,6 +733,7 @@ static bool parseRawFileItem(napi_env env, napi_value argValue, std::string item
     }
     return true;
 }
+
 static bool isRawFileDescriptor(napi_env env, napi_value argValue, ImageSourceAsyncContext* context)
 {
     if (env == nullptr || argValue == nullptr || context == nullptr) {
@@ -751,6 +755,7 @@ static bool isRawFileDescriptor(napi_env env, napi_value argValue, ImageSourceAs
     HiLog::Error(LABEL, "Failed to parse RawFileDescriptor item");
     return false;
 }
+
 static std::unique_ptr<ImageSource> CreateNativeImageSource(napi_env env, napi_value argValue,
     SourceOptions &opts, ImageSourceAsyncContext* context)
 {
