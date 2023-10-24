@@ -1335,6 +1335,14 @@ bool PixelMap::WritePixels(const uint32_t &color)
     return true;
 }
 
+bool PixelMap::IsStrideAlignment()
+{
+    if (allocatorType_ == AllocatorType::SHARE_MEM_ALLOC) {
+        return true;
+    }
+    return false;
+}
+
 AllocatorType PixelMap::GetAllocatorType()
 {
     return allocatorType_;
