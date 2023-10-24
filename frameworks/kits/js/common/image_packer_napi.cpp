@@ -618,11 +618,6 @@ STATIC_EXEC_FUNC(PackingToFile)
     int64_t packedSize = 0;
     auto context = static_cast<ImagePackerAsyncContext*>(data);
     HiLog::Debug(LABEL, "image packer get supported format");
-    std::set<std::string> formats;
-    uint32_t ret = context->rImagePacker->GetSupportedFormats(formats);
-    if (ret != SUCCESS) {
-        HiLog::Error(LABEL, "image packer get supported format failed, ret=%{public}u.", ret);
-    }
     if (context->fd <= INVALID_FD) {
         BuildMsgOnError(env, context, context->fd <= INVALID_FD, "ImagePacker invalid fd");
         return;
