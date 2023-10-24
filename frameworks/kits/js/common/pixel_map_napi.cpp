@@ -913,8 +913,8 @@ napi_value PixelMapNapi::IsStrideAlignment(napi_env env, napi_callback_info info
     if (pixelMapNapi->nativePixelMap_ == nullptr) {
         return result;
     }
-    bool isDMA =
-        pixelMapNapi->nativePixelMap_->IsStrideAlignment();
+    PixelMap pixelmap;
+    bool isDMA =pixelmap.IsStrideAlignment();
     napi_get_boolean(env, isDMA, &result);
     pixelMapNapi.release();
     return result;
