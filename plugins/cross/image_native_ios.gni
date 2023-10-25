@@ -19,6 +19,7 @@ import("//third_party/flutter/flutter_config.gni")
 image_native_ios_cflags = [ "-DIMAGE_DEBUG_FLAG" ]
 
 image_native_ios_sources = [
+  "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
   # plugin_manager
   "//foundation/multimedia/image_framework/plugins/manager/src/common/attr_data.cpp",
   "//foundation/multimedia/image_framework/plugins/manager/src/common/platform_adp.cpp",

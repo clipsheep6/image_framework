@@ -21,10 +21,10 @@
 #include <vector>
 #include <cmath>
 #include <unistd.h>
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+// #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include <sys/mman.h>
 #include "ashmem.h"
-#endif
+// #endif
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
 #endif
