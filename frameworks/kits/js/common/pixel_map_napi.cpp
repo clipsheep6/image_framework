@@ -530,6 +530,47 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_UnAccessPix
     return OHOS_IMAGE_RESULT_SUCCESS;
 }
 
+inline void *DetachCallbackFunc(napi_env env, void *value, void *hint)
+{
+    return value;
+}
+
+static void MessageSequenceRefcb(napi_env env, void *value, void *hint)
+{
+
+}
+
+napi_value AttachServiceExtensionContext(napi_env env, void *value, void *hint)
+{
+    if (value == nullptr) {
+        return nullptr;
+    }
+    (void)hint;
+    auto pPixelMapNapi = reinterpret_cast<std::weak_ptr<PixelMap> *>(value)->lock();
+    IMG_NAPI_CHECK_RET(IMG_NOT_NULL(pPixelMapNapi), nullptr);
+
+    napi_value global = nullptr;
+    napi_status status = napi_get_global(env, &global);
+    NAPI_ASSERT(env, status == napi_ok, "napi_get_global failed");
+    napi_value constructor = nullptr;
+    status = napi_get_named_property(env, global, CLASS_NAME.c_str(), &constructor);
+    NAPI_ASSERT(env, status == napi_ok, "napi_get_named_property failed");
+
+    // create a new js remote object
+    napi_value result = nullptr;
+    status = napi_new_instance(env, constructor, 0, nullptr, &result);
+    NAPI_ASSERT(env, status == napi_ok, "failed to construct js Messagesequence when attach");
+
+    PixelMapNapi *createHolder = nullptr;
+    status = napi_remove_wrap(env, result, (void **)&createHolder);
+    NAPI_ASSERT(env, status == napi_ok && createHolder != nullptr, "failed to remove create holdor when attach");
+
+    // retrieve and remove create holder
+    status = napi_wrap(env, result, pPixelMapNapi.get(), MessageSequenceRefcb, nullptr, nullptr);
+    NAPI_ASSERT(env, status == napi_ok, "wrap js RemoteObject nad native holder failed when attach");
+    return result;
+}
+
 napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 {
     napi_value undefineVar = nullptr;
@@ -550,6 +591,9 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
     pPixelMapNapi->env_ = env;
     pPixelMapNapi->nativePixelMap_ = sPixelMap_;
     pPixelMapNapi->nativeInner_ = sPixelMap_;
+
+    napi_coerce_to_native_binding_object(
+        env, thisVar, DetachCallbackFunc, AttachServiceExtensionContext, pPixelMapNapi.get(), nullptr);
 
     status = napi_wrap(env, thisVar, reinterpret_cast<void*>(pPixelMapNapi.get()),
         PixelMapNapi::Destructor, nullptr, nullptr);
