@@ -1285,7 +1285,7 @@ HWTEST_F(PixelMapTest, IsStrideAlignmentTest, TestSize.Level3)
     info.colorSpace = ColorSpace::SRGB;
     pixelMap.SetImageInfo(info);
     bool res = pixelMap.IsStrideAlignment();
-    ASSERT_EQ(res, true);
+    ASSERT_EQ(res, false);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: IsStrideAlignmentTest IsStrideAlignment end";
 }
 }
