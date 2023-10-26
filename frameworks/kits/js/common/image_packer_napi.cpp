@@ -214,7 +214,7 @@ napi_value ImagePackerNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
         DECLARE_NAPI_FUNCTION("packing", Packing),
-        DECLARE_NAPI_FUNCTION("packingToFile", PackingToFile),
+        DECLARE_NAPI_FUNCTION("packToFile", PackToFile),
         DECLARE_NAPI_FUNCTION("packingFromPixelMap", Packing),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_GETTER("supportedFormats", GetSupportedFormats),
@@ -585,7 +585,7 @@ napi_value ImagePackerNapi::Release(napi_env env, napi_callback_info info)
     return result;
 }
 
-static void ParserPackingToFileArguments(napi_env env,
+static void ParserPackToFileArguments(napi_env env,
     napi_value* argv, size_t argc, ImagePackerAsyncContext* context)
 {
     int32_t refCount = 1;
@@ -613,7 +613,7 @@ static void ParserPackingToFileArguments(napi_env env,
     }
 }
 
-STATIC_EXEC_FUNC(PackingToFile)
+STATIC_EXEC_FUNC(PackToFile)
 {
     int64_t packedSize = 0;
     auto context = static_cast<ImagePackerAsyncContext*>(data);
@@ -649,7 +649,7 @@ STATIC_EXEC_FUNC(PackingToFile)
     }
 }
 
-STATIC_COMPLETE_FUNC(PackingToFile)
+STATIC_COMPLETE_FUNC(PackToFile)
 {
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
@@ -658,9 +658,9 @@ STATIC_COMPLETE_FUNC(PackingToFile)
     CommonCallbackRoutine(env, context, result);
 }
 
-napi_value ImagePackerNapi::PackingToFile(napi_env env, napi_callback_info info)
+napi_value ImagePackerNapi::PackToFile(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "PackingToFile");
+    StartTrace(HITRACE_TAG_ZIMAGE, "PackToFile");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_FOUR;
@@ -677,7 +677,7 @@ napi_value ImagePackerNapi::PackingToFile(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, IMG_IS_READY(status, asyncContext->constructor_), "fail to unwrap constructor_");
 
     asyncContext->rImagePacker = std::move(asyncContext->constructor_->nativeImgPck);
-    ParserPackingToFileArguments(env, argv, argc, asyncContext.get());
+    ParserPackToFileArguments(env, argv, argc, asyncContext.get());
     if (asyncContext->callbackRef == nullptr) {
         napi_create_promise(env, &(asyncContext->deferred), &result);
     }
@@ -688,8 +688,8 @@ napi_value ImagePackerNapi::PackingToFile(napi_env env, napi_callback_info info)
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackingError",
             [](napi_env env, void *data) {}, PackingErrorComplete, asyncContext, asyncContext->work);
     } else {
-        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackingToFile",
-            PackingToFileExec, PackingToFileComplete, asyncContext, asyncContext->work);
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "PackToFile",
+            PackToFileExec, PackToFileComplete, asyncContext, asyncContext->work);
     }
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
