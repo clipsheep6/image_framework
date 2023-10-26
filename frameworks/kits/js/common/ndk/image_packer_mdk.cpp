@@ -49,7 +49,7 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer)
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_PackingToBuffer(ImagePackerNative* native, napi_value source,
+int32_t OH_ImagePacker_PackToBuffer(ImagePackerNative* native, napi_value source,
     struct OhosImagePackerOpts* opts, uint8_t* outBuffer, size_t* size)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
@@ -62,11 +62,11 @@ int32_t OH_ImagePacker_PackingToBuffer(ImagePackerNative* native, napi_value sou
     args.inOpts = opts;
     args.outBuffer = outBuffer;
     args.bufferSize = size;
-    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKINGTOBUFFER, &args);
+    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKTOBUFFER, &args);
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_PackingToFile(ImagePackerNative* native, napi_value source,
+int32_t OH_ImagePacker_PackToFile(ImagePackerNative* native, napi_value source,
     struct OhosImagePackerOpts* opts, int fd)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
@@ -78,7 +78,7 @@ int32_t OH_ImagePacker_PackingToFile(ImagePackerNative* native, napi_value sourc
     args.inVal = source;
     args.inOpts = opts;
     args.inNum0 = fd;
-    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKINGTOFILE, &args);
+    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKTOFILE, &args);
 }
 
 MIDK_EXPORT

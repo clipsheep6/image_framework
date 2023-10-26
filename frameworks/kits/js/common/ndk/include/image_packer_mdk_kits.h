@@ -39,8 +39,8 @@ struct ImagePackerArgs {
 
 enum {
     ENV_FUNC_IMAGEPACKER_CREATE,
-    CTX_FUNC_IMAGEPACKER_PACKINGTOBUFFER,
-    CTX_FUNC_IMAGEPACKER_PACKINGTOFILE,
+    CTX_FUNC_IMAGEPACKER_PACKTOBUFFER,
+    CTX_FUNC_IMAGEPACKER_PACKTOFILE,
 };
 ImagePackerNapi* ImagePackerNapi_Unwrap(napi_env env, napi_value value);
 int32_t ImagePackerNativeCall(int32_t mode, struct ImagePackerArgs* args);

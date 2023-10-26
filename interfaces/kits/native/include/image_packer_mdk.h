@@ -111,7 +111,7 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @since 10
  * @version 5.0
  */
-int32_t OH_ImagePacker_PackingToBuffer(ImagePackerNative* native, napi_value source,
+int32_t OH_ImagePacker_PackToBuffer(ImagePackerNative* native, napi_value source,
     struct OhosImagePackerOpts* opts, uint8_t* outBuffer, size_t* size);
 
 /**
@@ -129,7 +129,7 @@ int32_t OH_ImagePacker_PackingToBuffer(ImagePackerNative* native, napi_value sou
  * @since 10
  * @version 5.0
  */
-int32_t OH_ImagePacker_PackingToFile(ImagePackerNative* native, napi_value source,
+int32_t OH_ImagePacker_PackToFile(ImagePackerNative* native, napi_value source,
     struct OhosImagePackerOpts* opts, int fd);
 
 
