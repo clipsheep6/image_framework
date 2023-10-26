@@ -61,38 +61,38 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
 }
 
 /**
- * @tc.name: OH_ImagePacker_PackingToBuffer
- * @tc.desc: test OH_ImagePacker_PackingToBuffer
+ * @tc.name: OH_ImagePacker_PackToBuffer
+ * @tc.desc: test OH_ImagePacker_PackToBuffer
  * @tc.type: FUNC
  */
-HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToBuffer, TestSize.Level3)
+HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToBuffer, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToBuffer start";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToBuffer start";
     ImagePackerNative* native = nullptr;
     napi_value source = nullptr;
     struct OhosImagePackerOpts opts;
     uint8_t* outBuffer = nullptr;
     size_t size = TEST_SIZE;
-    int32_t ret = OH_ImagePacker_PackingToBuffer(native, source, &opts, outBuffer, &size);
+    int32_t ret = OH_ImagePacker_PackToBuffer(native, source, &opts, outBuffer, &size);
     ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToBuffer end";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToBuffer end";
 }
 
 /**
- * @tc.name: OH_ImagePacker_PackingToFile
- * @tc.desc: test OH_ImagePacker_PackingToFile
+ * @tc.name: OH_ImagePacker_PackToFile
+ * @tc.desc: test OH_ImagePacker_PackToFile
  * @tc.type: FUNC
  */
-HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackingToFile, TestSize.Level3)
+HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToFile, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToFile start";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToFile start";
     ImagePackerNative* native = nullptr;
     napi_value source = nullptr;
     struct OhosImagePackerOpts opts;
     int fd = TEST_FD;
-    int32_t ret = OH_ImagePacker_PackingToFile(native, source, &opts, fd);
+    int32_t ret = OH_ImagePacker_PackToFile(native, source, &opts, fd);
     ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackingToFile end";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToFile end";
 }
 
 /**

@@ -7,10 +7,10 @@
         "name": "OH_ImagePacker_InitNative"
     },
     {
-        "name": "OH_ImagePacker_PackingToBuffer"
+        "name": "OH_ImagePacker_PackToBuffer"
     },
     {
-        "name": "OH_ImagePacker_PackingToFile"
+        "name": "OH_ImagePacker_PackToFile"
     },
     {
         "name": "OH_ImagePacker_Release"
