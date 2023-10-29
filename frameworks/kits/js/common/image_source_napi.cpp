@@ -781,8 +781,9 @@ static std::unique_ptr<ImageSource> CreateNativeImageSource(napi_env env, napi_v
         HiLog::Debug(LABEL,
             "CreateImageSource RawFileDescriptor fd: %{public}d, offset: %{public}d, length: %{public}d",
             context->rawFileInfo.fd, context->rawFileInfo.offset, context->rawFileInfo.length);
+        int32_t fileSize = context->rawFileInfo.offset + context->rawFileInfo.length;
         imageSource = ImageSource::CreateImageSource(context->rawFileInfo.fd,
-            context->rawFileInfo.offset, context->rawFileInfo.length, opts, errorCode);
+            context->rawFileInfo.offset, fileSize, opts, errorCode);
     } else { // Input Buffer
         uint32_t refCount = NUM_1;
         napi_ref arrayRef = nullptr;

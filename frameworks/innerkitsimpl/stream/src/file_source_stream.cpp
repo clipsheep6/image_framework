@@ -212,7 +212,7 @@ bool FileSourceStream::Seek(uint32_t position)
 
 uint32_t FileSourceStream::Tell()
 {
-    return fileOffset_;
+    return fileOffset_ - fileOriginalOffset_;
 }
 
 bool FileSourceStream::GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_t bufferSize, uint32_t &readSize)
@@ -269,7 +269,7 @@ bool FileSourceStream::GetData(uint32_t desiredSize, DataStreamBuffer &outData)
 
 size_t FileSourceStream::GetStreamSize()
 {
-    return fileSize_;
+    return fileSize_ - fileOriginalOffset_;
 }
 
 static bool DupFd(FILE *f, int &res)
