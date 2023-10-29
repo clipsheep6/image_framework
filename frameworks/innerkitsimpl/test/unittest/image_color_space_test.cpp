@@ -29,6 +29,7 @@
 #include "media_errors.h"
 #include "pixel_map.h"
 #include "image_source_util.h"
+#include "astcenc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -260,6 +261,160 @@ HWTEST_F(ImageColorSpaceTest, JpegColorSpaceEncode002, TestSize.Level3)
     OHOS::ColorManager::ColorSpace grColorSpaceTwo = pixelMapTwo->InnerGetGrColorSpace();
     EXPECT_EQ(grColorSpaceTwo.ToSkColorSpace(), nullptr);
 #endif
+}
+
+/**
+ * @tc.name: astc_test_001
+ * @tc.desc: Encode jpeg image, which don't contain ICC to file source stream.
+ * @tc.type: FUNC
+ */
+#define TEXTURE_HEAD_BYTES (16)
+static const uint32_t ASTC_MAGIC_ID = 0x5CA1AB13;
+
+typedef struct TextureEncodeOptionsType {
+    int32_t width_;
+    int32_t height_;
+    uint8_t blockX_;
+    uint8_t blockY_;
+} TextureEncodeOptions;
+
+struct astc_header
+{
+    uint8_t magic[4];
+    uint8_t block_x;
+    uint8_t block_y;
+    uint8_t block_z;
+    uint8_t dim_x[3];
+    uint8_t dim_y[3];
+    uint8_t dim_z[3];
+};
+
+typedef struct AstcEncoderInfo {
+    astc_header head;
+    astcenc_config config;
+    astcenc_profile profile;
+    astcenc_context* codec_context;
+    astcenc_image image_;
+    astcenc_swizzle swizzle_;
+    uint8_t* data_out_;
+    size_t data_len_;
+    astcenc_error error_;
+} AstcEncoder;
+
+void GenAstcHeader(astc_header &hdr, astcenc_image img, TextureEncodeOptions *encodeParams)
+{
+    hdr.magic[0] = ASTC_MAGIC_ID & 0xFF;
+    hdr.magic[1] = (ASTC_MAGIC_ID >> 8) & 0xFF;
+    hdr.magic[2] = (ASTC_MAGIC_ID >> 16) & 0xFF;
+    hdr.magic[3] = (ASTC_MAGIC_ID >> 24) & 0xFF;
+
+    hdr.block_x = static_cast<uint8_t>(encodeParams->blockX_);
+    hdr.block_y = static_cast<uint8_t>(encodeParams->blockY_);
+    hdr.block_z = 1;
+
+    hdr.dim_x[0] = img.dim_x & 0xFF;
+    hdr.dim_x[1] = (img.dim_x >> 8) & 0xFF;
+    hdr.dim_x[2] = (img.dim_x >> 16) & 0xFF;
+
+    hdr.dim_y[0] = img.dim_x & 0xFF;
+    hdr.dim_y[1] = (img.dim_x >> 8) & 0xFF;
+    hdr.dim_y[2] = (img.dim_x >> 16) & 0xFF;
+
+    hdr.dim_z[0] = img.dim_x & 0xFF;
+    hdr.dim_z[1] = (img.dim_x >> 8) & 0xFF;
+    hdr.dim_z[2] = (img.dim_x >> 16) & 0xFF;
+}
+
+int InitAstcencConfig(astcenc_profile profile, TextureEncodeOptions *option, astcenc_config& config)
+{
+    unsigned int block_x = option->blockX_;
+    unsigned int block_y = option->blockY_;
+    unsigned int block_z = 1;
+
+    float quality = ASTCENC_PRE_FAST;
+    unsigned int flags = 0;
+    astcenc_error status = astcenc_config_init(profile, block_x, block_y,
+        block_z, quality, flags, &config);
+    if (status == ASTCENC_ERR_BAD_BLOCK_SIZE)
+    {
+        HiLog::Debug(LABEL_TEST, "ERROR: block size is invalid");
+        return 1;
+    }
+    else if (status == ASTCENC_ERR_BAD_CPU_FLOAT)
+    {
+        HiLog::Debug(LABEL_TEST, "ERROR: astcenc must not be compiled with fast-math");
+        return 1;
+    }
+    else if (status != ASTCENC_SUCCESS)
+    {
+        HiLog::Debug(LABEL_TEST, "ERROR: config failed");
+        return 1;
+    }
+    return 0;
+}
+
+HWTEST_F(ImageColorSpaceTest, astc_test_001, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg file path and jpeg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    static char rgbaFile[512] = "/data/local/256x256.rgba";
+    static char astcFile[512] = "/data/local/256x256.astc";
+    int w = 256;
+    int h = 256;
+    int fileSize = w * h * 4;
+    uint8_t *inRGBA = (uint8_t*)malloc(fileSize);
+    FILE *inFp = fopen(rgbaFile, "rb");
+    if (!inFp) {
+        HiLog::Error(LABEL_TEST, "astc uint test error");
+    }
+    fread(inRGBA, 1, fileSize, inFp);
+    fclose(inFp);
+    AstcEncoder work;
+    TextureEncodeOptions encodeParams;
+    encodeParams.width_ = w;
+    encodeParams.height_ = h;
+    encodeParams.blockX_ = 4;
+    encodeParams.blockY_ = 4;
+    InitAstcencConfig(work.profile, &encodeParams, work.config);
+    astcenc_context_alloc(&work.config, 1, &work.codec_context);
+    work.swizzle_ = {ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A};
+    work.image_.dim_x = encodeParams.width_;
+    work.image_.dim_y = encodeParams.height_;
+    work.image_.dim_z = 1;
+    work.image_.data_type = ASTCENC_TYPE_U8;
+    work.image_.data = (void **)malloc(sizeof(void*) * work.image_.dim_z);
+    GenAstcHeader(work.head, work.image_, &encodeParams);
+
+    work.image_.data[0] = inRGBA;
+    int outSize = ((encodeParams.width_ + encodeParams.blockX_ - 1) / encodeParams.blockX_) *
+        ((encodeParams.height_ + encodeParams.blockY_ -1) / encodeParams.blockY_) * TEXTURE_HEAD_BYTES + TEXTURE_HEAD_BYTES;
+    uint8_t *buffer = (uint8_t*)malloc(outSize);
+    memcpy(buffer, &work.head, sizeof(astc_header));
+    work.data_out_ = buffer + TEXTURE_HEAD_BYTES;
+    work.data_len_ = outSize - TEXTURE_HEAD_BYTES;
+    work.error_ = astcenc_compress_image(work.codec_context, &work.image_, &work.swizzle_, work.data_out_, work.data_len_, 0);
+    if (ASTCENC_SUCCESS != work.error_) {
+        HiLog::Error(LABEL_TEST, "compress failed");
+    }
+    int encBytes = work.data_len_ + TEXTURE_HEAD_BYTES;
+
+    EXPECT_EQ(ASTCENC_SUCCESS, work.error_);
+
+    FILE *outFp = fopen(astcFile, "wb");
+    if (!inFp) {
+        HiLog::Error(LABEL_TEST, "fopen failed");
+    }
+    fwrite(buffer, 1, encBytes, outFp);
+    fclose(outFp);
+    if (inRGBA) free(inRGBA);
+    if (buffer) free(buffer);
+    if (work.codec_context != nullptr) {
+        astcenc_context_free(work.codec_context);
+        work.codec_context = nullptr;
+    }
+    free(work.image_.data);
 }
 } // namespace Multimedia
 } // namespace OHOS

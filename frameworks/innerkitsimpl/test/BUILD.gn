@@ -324,6 +324,7 @@ ohos_unittest("imagecolorspacetest") {
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//third_party/googletest/googletest/include",
     "//commonlibrary/c_utils/base/include",
+    "//third_party/astc-encoder/Source",
   ]
 
   cflags = [ "-DIMAGE_DEBUG_FLAG" ]
@@ -338,6 +339,7 @@ ohos_unittest("imagecolorspacetest") {
     "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
+    "//third_party/astc-encoder:astc_encoder_shared",
   ]
 
   resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
