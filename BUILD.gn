@@ -41,7 +41,10 @@ group("image_framework") {
 }
 
 group("plugins") {
-  deps = [ "plugins/manager:pluginmanager" ]
+  deps = [ 
+      "plugins/manager:pluginmanager",
+      "//third_party/astc-encoder:astc_encoder_shared1",
+       ]
 
   if (!use_clang_android && !use_clang_ios) {
     deps += [ "plugins/common/libs:multimediaplugin" ]
