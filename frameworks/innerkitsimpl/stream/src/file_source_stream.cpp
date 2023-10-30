@@ -23,6 +23,7 @@
 
 #if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
 #include <sys/mman.h>
+#include "ashmem.h"
 #define SUPPORT_MMAP
 #endif
 
@@ -218,7 +219,7 @@ uint32_t FileSourceStream::Tell()
 bool FileSourceStream::GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_t bufferSize, uint32_t &readSize)
 {
     if (fileSize_ == fileOffset_) {
-        IMAGE_LOGE("[FileSourceStream]read finish, offset:%{public}zu ,dataSize%{public}zu.", fileOffset_, fileSize_);
+        IMAGE_LOGE("[FileSourceStream]read finish, offset:%{public}zu ,dataSize:%{public}zu.", fileOffset_, fileSize_);
         return false;
     }
     if (desiredSize > (fileSize_ - fileOffset_)) {
@@ -293,14 +294,46 @@ uint8_t *FileSourceStream::GetDataPtr()
         return fileData_;
     }
 #ifdef SUPPORT_MMAP
-    if (!DupFd(filePtr_, mmapFd_)) {
+    int fd = -1;
+    if (!DupFd(filePtr_, fd)) {
         return nullptr;
     }
-    auto mmptr = ::mmap(nullptr, fileSize_, PROT_READ, MAP_SHARED, mmapFd_, 0);
+    auto mmptr = ::mmap(nullptr, fileSize_, PROT_READ, MAP_SHARED, fd, 0);
     if (mmptr == MAP_FAILED) {
         HiLog::Error(LABEL, "[FileSourceStream] mmap failed, errno:%{public}d", errno);
-        return nullptr;
+        ::close(fd);
+
+        // fallback to read entire file into shared memory
+        fd = AshmemCreate("FileSourceStream GetDataPtr", fileSize_);
+        if (fd < 0) {
+            IMAGE_LOGE("[FileSourceStream]GetDataPtr AshmemCreate fd < 0.");
+            return nullptr;
+        }
+        int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
+        if (result < 0) {
+            IMAGE_LOGE("[FileSourceStream]GetDataPtr AshmemSetProt error.");
+            ::close(fd);
+            return nullptr;
+        }
+        mmptr = ::mmap(nullptr, fileSize_, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (mmptr == MAP_FAILED || mmptr == nullptr) {
+            IMAGE_LOGE("[FileSourceStream]GetDataPtr data is nullptr.");
+            ::close(fd);
+            return nullptr;
+        }
+        uint32_t readSize = 0;
+        auto oldFileOffset = fileOffset_;
+        Seek(0);
+        if (!Peek(fileSize_, static_cast<uint8_t*>(mmptr), fileSize_, readSize)) {
+            Seek(oldFileOffset);
+            IMAGE_LOGE("[FileSourceStream] read file data into mmptr failed.");
+            ::munmap(static_cast<uint8_t*>(mmptr), fileSize_);
+            ::close(fd);
+            return nullptr;
+        }
+        Seek(oldFileOffset);
     }
+    mmapFd_ = fd;
     fileData_ = static_cast<uint8_t*>(mmptr);
 #endif
     return fileData_;
@@ -317,10 +350,11 @@ void FileSourceStream::ResetReadBuffer()
         free(readBuffer_);
         readBuffer_ = nullptr;
     }
-    if (fileData_ != nullptr && !mmapFdPassedOn_) {
+    if (fileData_ != nullptr && mmapFd_ >= 0) {
 #ifdef SUPPORT_MMAP
         ::munmap(fileData_, fileSize_);
-        close(mmapFd_);
+        ::close(mmapFd_);
+        mmapFd_ = -1;
 #endif
     }
     fileData_ = nullptr;
@@ -336,10 +370,20 @@ OutputDataStream* FileSourceStream::ToOutputDataStream()
     return new (std::nothrow) FilePackerStream(dupFd);
 }
 
-int FileSourceStream::GetMMapFd()
+bool FileSourceStream::GetMMapFd(int& res)
 {
-    mmapFdPassedOn_ = true;
-    return mmapFd_;
+    if (mmapFd_ < 0) {
+        res = -1;
+        return false;
+    }
+    res = dup(mmapFd_);
+    if (res < 0) {
+        IMAGE_LOGE("[FileSourceStream] fail to get mmap fd.");
+        return false;
+    }
+    ::close(mmapFd_);
+    mmapFd_ = -1;
+    return true;
 }
 } // namespace Media
 } // namespace OHOS
