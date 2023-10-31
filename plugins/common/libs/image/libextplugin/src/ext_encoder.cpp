@@ -30,7 +30,12 @@
 #include "string_ex.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
+#include "texture_encoder.h"
 #endif
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <chrono>
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -137,10 +142,18 @@ static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
     return res;
 }
 
+bool IsAstc(const std::string &format)
+{
+    return format.find("image/astc") == 0;
+}
+
 uint32_t ExtEncoder::FinalizeEncode()
 {
     if (pixelmap_ == nullptr || output_ == nullptr) {
         return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (IsAstc(opts_.format)) {
+        return ASTCEncoder();
     }
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
@@ -163,6 +176,44 @@ uint32_t ExtEncoder::FinalizeEncode()
         HiLog::Error(LABEL, "ExtEncoder::FinalizeEncode encode failed");
         return ERR_IMAGE_ENCODE_FAILED;
     }
+    return SUCCESS;
+}
+
+void extractDimensions(std::string &format, TextureEncodeOptions &param)
+{
+    std::size_t slashPos = format.find('/');
+    if (slashPos != std::string::npos) {
+        std::string dimensions = format.substr(slashPos + 1);
+        std::size_t starPos = dimensions.find('*');
+        if (starPos != std::string::npos) {
+            std::string widthStr = dimensions.substr(0, starPos);
+            std::string heightStr = dimensions.substr(starPos + 1);
+
+            param.blockX_ = static_cast<uint8_t>(std::stoi(widthStr));
+            param.blockY_ = static_cast<uint8_t>(std::stoi(heightStr));
+        }
+    }
+}
+
+uint32_t ExtEncoder::ASTCEncoder()
+{
+    ImageInfo imageInfo;
+    pixelmap_->GetImageInfo(imageInfo);
+    TextureEncodeOptions param;
+    param.width_ = imageInfo.size.width;
+    param.height_ = imageInfo.size.height;
+
+    extractDimensions(opts_.format, param);
+
+    void *handle = nullptr;
+    uint32_t astcOutSize;
+    size_t requestSize;
+    output_->GetCapicity(requestSize);
+
+    TextureCreate(&handle, &param);
+    TextureEncode(handle, reinterpret_cast<uint8_t *>(pixelmap_->GetWritablePixels()), pixelmap_->GetRowBytes(),
+                    pixelmap_->GetPixelFormat(), output_->GetAddr(), requestSize, astcOutSize);
+    output_->SetOffSet(astcOutSize);
     return SUCCESS;
 }
 } // namespace ImagePlugin
