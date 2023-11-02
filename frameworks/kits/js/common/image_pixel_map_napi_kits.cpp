@@ -49,10 +49,10 @@ static bool isUndefine(napi_env env, napi_value value)
 }
 static PixelMap* GetPixelMap(PixelMapNapi* napi)
 {
-    if (napi == nullptr || napi->GetPixelMap() == nullptr) {
+    if (napi == nullptr || napi->GetPixelNapiInner() == nullptr) {
         return nullptr;
     }
-    return napi->GetPixelMap()->get();
+    return &(napi->GetPixelNapiInner()->get());
 }
 
 static PixelFormat ParsePixelForamt(int32_t val)

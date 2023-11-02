@@ -26,10 +26,12 @@
 #endif
 #include "hitrace_meter.h"
 #include "pixel_map.h"
+#include "log_tags.h"
 
 using OHOS::HiviewDFX::HiLog;
 namespace {
-    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "PixelMapNapi"};
+    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
+        LOG_TAG_DOMAIN_ID_PIXEL_MAP_NAPI, "PixelMapNapi"};
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
     constexpr uint32_t NUM_2 = 2;
@@ -409,6 +411,11 @@ std::shared_ptr<PixelMap>* PixelMapNapi::GetPixelMap()
     return &nativePixelMap_;
 }
 
+std::shared_ptr<PixelMap> GetPixelNapiInner()
+{
+    return nativePixelMap_;
+}
+
 bool PixelMapNapi::IsLockPixelMap()
 {
     return (lockCount > 0);
@@ -455,17 +462,17 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_GetImageInf
         return OHOS_IMAGE_RESULT_BAD_PARAMETER;
     }
 
-    std::shared_ptr<PixelMap> *pixelMap = pixmapNapi->GetPixelMap();
-    if ((pixelMap == nullptr) || ((*pixelMap) == nullptr)) {
+    std::shared_ptr<PixelMap> pixelMap = pixmapNapi->GetPixelNapiInner();
+    if (pixelMap == nullptr) {
         HiLog::Error(LABEL, "pixelMap is nullptr");
         return OHOS_IMAGE_RESULT_BAD_PARAMETER;
     }
 
     ImageInfo imageInfo;
-    (*pixelMap)->GetImageInfo(imageInfo);
+    pixelMap->GetImageInfo(imageInfo);
     info->width = imageInfo.size.width;
     info->height = imageInfo.size.height;
-    info->rowSize = (*pixelMap)->GetRowStride();
+    info->rowSize = pixelMap->GetRowStride();
     info->pixelFormat = static_cast<int32_t>(imageInfo.pixelFormat);
 
     HiLog::Debug(LABEL, "GetImageInfo, w=%{public}u, h=%{public}u, r=%{public}u, f=%{public}d",
@@ -486,13 +493,13 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_AccessPixel
         return OHOS_IMAGE_RESULT_BAD_PARAMETER;
     }
 
-    std::shared_ptr<PixelMap> *pixelMap = pixmapNapi->GetPixelMap();
-    if ((pixelMap == nullptr) || ((*pixelMap) == nullptr)) {
+    std::shared_ptr<PixelMap> pixelMap = pixmapNapi->GetPixelNapiInner();
+    if (pixelMap == nullptr) {
         HiLog::Error(LABEL, "pixelMap is nullptr");
         return OHOS_IMAGE_RESULT_BAD_PARAMETER;
     }
 
-    const uint8_t *constPixels = (*pixelMap)->GetPixels();
+    const uint8_t *constPixels = pixelMap->GetPixels();
     if (constPixels == nullptr) {
         HiLog::Error(LABEL, "const pixels is nullptr");
         return OHOS_IMAGE_RESULT_BAD_PARAMETER;
@@ -539,7 +546,7 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     napi_get_undefined(env, &thisVar);
 
-    HiLog::Debug(LABEL, "Constructor IN");
+    HiLog::Info(LABEL, "Constructor IN");
     IMG_JS_NO_ARGS(env, info, status, thisVar);
 
     IMG_NAPI_CHECK_RET(IMG_IS_READY(status, thisVar), undefineVar);
@@ -562,6 +569,7 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 
 void PixelMapNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
 {
+    HiLog::Info(LABEL, "Destructor IN");
     if (nativeObject != nullptr) {
         delete reinterpret_cast<PixelMapNapi*>(nativeObject);
         nativeObject = nullptr;
