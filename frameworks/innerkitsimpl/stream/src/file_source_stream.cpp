@@ -103,6 +103,29 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)
     return (unique_ptr<FileSourceStream>(new FileSourceStream(filePtr, size, offset, offset)));
 }
 
+unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(
+    const int fd, int32_t offset, int32_t length)
+{
+    int dupFd = dup(fd);
+    if (dupFd < 0) {
+        IMAGE_LOGE("[FileSourceStream]Fail to dup fd.");
+        return nullptr;
+    }
+
+    FILE *filePtr = fdopen(dupFd, "rb");
+    if (filePtr == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]open file fail.");
+        return nullptr;
+    }
+
+    int ret = fseek(filePtr, offset, SEEK_SET);
+    if (ret != 0) {
+        IMAGE_LOGE("[FileSourceStream]Go to %{public}d position fail, ret:%{public}d.", offset, ret);
+        return nullptr;
+    }
+    return make_unique<FileSourceStream>(filePtr, length, offset, offset);
+}
+
 bool FileSourceStream::Read(uint32_t desiredSize, DataStreamBuffer &outData)
 {
     if (desiredSize == 0 || filePtr_ == nullptr) {
@@ -189,7 +212,7 @@ bool FileSourceStream::Seek(uint32_t position)
 
 uint32_t FileSourceStream::Tell()
 {
-    return fileOffset_;
+    return fileOffset_ - fileOriginalOffset_;
 }
 
 bool FileSourceStream::GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_t bufferSize, uint32_t &readSize)
@@ -246,7 +269,7 @@ bool FileSourceStream::GetData(uint32_t desiredSize, DataStreamBuffer &outData)
 
 size_t FileSourceStream::GetStreamSize()
 {
-    return fileSize_;
+    return fileSize_ - fileOriginalOffset_;
 }
 
 static bool DupFd(FILE *f, int &res)
@@ -270,16 +293,14 @@ uint8_t *FileSourceStream::GetDataPtr()
         return fileData_;
     }
 #ifdef SUPPORT_MMAP
-    int dupFd = -1;
-    if (!DupFd(filePtr_, dupFd)) {
+    if (!DupFd(filePtr_, mmapFd_)) {
         return nullptr;
     }
-    auto mmptr = ::mmap(nullptr, fileSize_, PROT_READ, MAP_SHARED, dupFd, 0);
+    auto mmptr = ::mmap(nullptr, fileSize_, PROT_READ, MAP_SHARED, mmapFd_, 0);
     if (mmptr == MAP_FAILED) {
         HiLog::Error(LABEL, "[FileSourceStream] mmap failed, errno:%{public}d", errno);
         return nullptr;
     }
-    close(dupFd);
     fileData_ = static_cast<uint8_t*>(mmptr);
 #endif
     return fileData_;
@@ -296,12 +317,13 @@ void FileSourceStream::ResetReadBuffer()
         free(readBuffer_);
         readBuffer_ = nullptr;
     }
-    if (fileData_ != nullptr) {
+    if (fileData_ != nullptr && !mmapFdPassedOn_) {
 #ifdef SUPPORT_MMAP
         ::munmap(fileData_, fileSize_);
-        fileData_ = nullptr;
+        close(mmapFd_);
 #endif
     }
+    fileData_ = nullptr;
 }
 
 OutputDataStream* FileSourceStream::ToOutputDataStream()
@@ -312,6 +334,12 @@ OutputDataStream* FileSourceStream::ToOutputDataStream()
         return nullptr;
     }
     return new (std::nothrow) FilePackerStream(dupFd);
+}
+
+int FileSourceStream::GetMMapFd()
+{
+    mmapFdPassedOn_ = true;
+    return mmapFd_;
 }
 } // namespace Media
 } // namespace OHOS

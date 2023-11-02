@@ -108,6 +108,9 @@ enum class PixelFormat : int32_t {
     NV21 = 8,  // Each pixel is sorted on 3/2 bytes.
     NV12 = 9,
     CMYK = 10,
+    ASTC_4x4 = 11,
+    ASTC_6x6 = 12,
+    ASTC_8x8 = 13,
 };
 
 enum class AlphaType : int32_t {
@@ -198,6 +201,13 @@ enum class ScaleMode : int32_t {
 };
 
 enum class IncrementalMode { FULL_DATA = 0, INCREMENTAL_DATA = 1 };
+
+enum class AntiAliasingOption : int32_t {
+    NONE = 0,
+    LOW = 1,
+    MEDIUM = 2,
+    HIGH = 3,
+};
 } // namespace Media
 } // namespace OHOS
 

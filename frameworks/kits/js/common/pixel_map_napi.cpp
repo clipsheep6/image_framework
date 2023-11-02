@@ -39,8 +39,15 @@ namespace {
 
 namespace OHOS {
 namespace Media {
-
+static const std::string CREATE_PIXEL_MAP_FROM_PARCEL = "createPixelMapFromParcel";
+static const std::string MARSHALLING = "marshalling";
+static const std::map<std::string, std::set<uint32_t>> ETS_API_ERROR_CODE = {
+    {CREATE_PIXEL_MAP_FROM_PARCEL, {62980096, 62980105, 62980115, 62980097,
+        62980177, 62980178, 62980179, 62980180, 62980246}},
+    {MARSHALLING, {62980115, 62980097, 62980096}}
+};
 static const std::string CLASS_NAME = "PixelMap";
+
 thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
 std::shared_ptr<PixelMap> PixelMapNapi::sPixelMap_ = nullptr;
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
@@ -350,6 +357,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMap", CreatePixelMap),
         DECLARE_NAPI_STATIC_FUNCTION("unmarshalling", Unmarshalling),
+        DECLARE_NAPI_STATIC_FUNCTION(CREATE_PIXEL_MAP_FROM_PARCEL.c_str(), CreatePixelMapFromParcel),
     };
 
     napi_value constructor = nullptr;
@@ -541,7 +549,6 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 
     pPixelMapNapi->env_ = env;
     pPixelMapNapi->nativePixelMap_ = sPixelMap_;
-    pPixelMapNapi->nativeInner_ = sPixelMap_;
 
     status = napi_wrap(env, thisVar, reinterpret_cast<void*>(pPixelMapNapi.get()),
         PixelMapNapi::Destructor, nullptr, nullptr);
@@ -791,6 +798,75 @@ napi_value PixelMapNapi::Unmarshalling(napi_env env, napi_callback_info info)
     return result;
 #endif
 }
+
+napi_value PixelMapNapi::ThrowExceptionError(napi_env env,
+    const std::string &tag, const std::uint32_t &code, const std::string &info)
+{
+    auto errNode = ETS_API_ERROR_CODE.find(tag);
+    if (errNode != ETS_API_ERROR_CODE.end() &&
+        errNode->second.find(code) != errNode->second.end()) {
+        return ImageNapiUtils::ThrowExceptionError(env, code, info);
+    }
+    return ImageNapiUtils::ThrowExceptionError(env, ERROR, "Operation failed");
+}
+
+napi_value PixelMapNapi::CreatePixelMapFromParcel(napi_env env, napi_callback_info info)
+#if defined(IOS_PLATFORM) || defined(A_PLATFORM)
+{
+    napi_value result = nullptr;
+    return result;
+}
+#else
+{
+    napi_value globalValue;
+    napi_get_global(env, &globalValue);
+    napi_value func;
+    napi_get_named_property(env, globalValue, "requireNapi", &func);
+    napi_value imageInfo;
+    napi_create_string_utf8(env, "multimedia.image", NAPI_AUTO_LENGTH, &imageInfo);
+    napi_value funcArgv[1] = { imageInfo };
+    napi_value returnValue;
+    napi_call_function(env, globalValue, func, 1, funcArgv, &returnValue);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value argValue[NUM_1] = {0};
+    size_t argCount = NUM_1;
+    HiLog::Debug(LABEL, "CreatePixelMapFromParcel IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    if (!IMG_IS_OK(status) || argCount != NUM_1) {
+        return PixelMapNapi::ThrowExceptionError(env,
+            CREATE_PIXEL_MAP_FROM_PARCEL, ERR_IMAGE_INVALID_PARAMETER, "Fail to napi_get_cb_info");
+    }
+    std::unique_ptr<PixelMapAsyncContext> asyncContext = std::make_unique<PixelMapAsyncContext>();
+    napi_unwrap(env, argValue[NUM_0], (void **)&napi_messageSequence);
+    auto messageParcel = napi_messageSequence->GetMessageParcel();
+    if (messageParcel == nullptr) {
+        return PixelMapNapi::ThrowExceptionError(env,
+            CREATE_PIXEL_MAP_FROM_PARCEL, ERR_IPC, "get pacel failed");
+    }
+    PIXEL_MAP_ERR error;
+    auto pixelmap = PixelMap::Unmarshalling(*messageParcel, error);
+    if (!IMG_NOT_NULL(pixelmap)) {
+        return PixelMapNapi::ThrowExceptionError(env,
+            CREATE_PIXEL_MAP_FROM_PARCEL, error.errorCode, error.errorInfo);
+    }
+    std::shared_ptr<OHOS::Media::PixelMap> pixelPtr(pixelmap);
+    napi_value constructor = nullptr;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (IMG_IS_OK(status)) {
+        sPixelMap_ = std::move(pixelPtr);
+        status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+    }
+    if (!IMG_IS_OK(status)) {
+        HiLog::Error(LABEL, "New instance could not be obtained");
+        return PixelMapNapi::ThrowExceptionError(env,
+            CREATE_PIXEL_MAP_FROM_PARCEL, ERR_IMAGE_NAPI_ERROR, "New instance could not be obtained");
+    }
+    return result;
+}
+#endif
 
 napi_value PixelMapNapi::GetIsEditable(napi_env env, napi_callback_info info)
 {
@@ -1417,11 +1493,8 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
     if (asyncContext->nConstructor->IsLockPixelMap()) {
         asyncContext->status = ERROR;
     } else {
-        if (asyncContext->nConstructor->nativePixelMap_ != nullptr
-            && asyncContext->nConstructor->nativePixelMap_ == asyncContext->nConstructor->nativeInner_)
-        {
-            asyncContext->nConstructor->nativePixelMap_ = nullptr;
-            asyncContext->nConstructor->nativeInner_ = nullptr;
+        if (asyncContext->nConstructor->nativePixelMap_ != nullptr) {
+            asyncContext->nConstructor->nativePixelMap_.reset();
         }
         asyncContext->status = SUCCESS;
     }
@@ -1970,8 +2043,7 @@ void PixelMapNapi::release()
 {
     if (!isRelease) {
         if (nativePixelMap_ != nullptr) {
-            nativePixelMap_ = nullptr;
-            nativeInner_ = nullptr;
+            nativePixelMap_.reset();
         }
         isRelease = true;
     }

@@ -71,9 +71,21 @@ constexpr uint8_t PER_PIXEL_LEN = 1;
 constexpr uint8_t FILL_NUMBER = 3;
 constexpr uint8_t ALIGN_NUMBER = 4;
 
-constexpr int32_t AntiAliasingSize = 350;
+static const uint8_t NUM_2 = 2;
+static const uint8_t NUM_3 = 3;
+static const uint8_t NUM_5 = 5;
+static const uint8_t NUM_6 = 6;
+static const uint8_t NUM_7 = 7;
+
+constexpr int32_t ANTIALIASING_SIZE = 350;
 PixelMap::~PixelMap()
 {
+    FreePixelMap();
+}
+
+void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
+{
+    // remove PixelMap from purgeable LRU if it is purgeable PixelMap
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     if (purgeableMemPtr_) {
         PurgeableMem::PurgeableResourceManager::GetInstance().RemoveResource(purgeableMemPtr_);
@@ -81,11 +93,7 @@ PixelMap::~PixelMap()
         purgeableMemPtr_ = nullptr;
     }
 #endif
-    FreePixelMap();
-}
 
-void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
-{
     if (data_ == nullptr) {
         return;
     }
@@ -346,7 +354,7 @@ bool PixelMap::CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t
 
 unique_ptr<PixelMap> PixelMap::Create(const InitializationOptions &opts)
 {
-    HiLog::Info(LABEL, "PixelMap::Create3 enter");
+    HiLog::Debug(LABEL, "PixelMap::Create3 enter");
     unique_ptr<PixelMap> dstPixelMap = make_unique<PixelMap>();
     if (dstPixelMap == nullptr) {
         HiLog::Error(LABEL, "create pixelMap pointer fail");
@@ -669,6 +677,11 @@ bool PixelMap::GetPixelFormatDetail(const PixelFormat format)
         case PixelFormat::RGBA_F16:
             pixelBytes_ = BGRA_F16_BYTES;
             break;
+        case PixelFormat::ASTC_4x4:
+        case PixelFormat::ASTC_6x6:
+        case PixelFormat::ASTC_8x8:
+            pixelBytes_ = ASTC_4x4_BYTES;
+            break;
         default: {
             HiLog::Error(LABEL, "pixel format:[%{public}d] not supported.", format);
             return false;
@@ -692,6 +705,36 @@ uint32_t PixelMap::SetImageInfo(ImageInfo &info)
     return SetImageInfo(info, false);
 }
 
+uint32_t PixelMap::SetRowDataSizeForImageInfo(ImageInfo info)
+{
+    if (info.pixelFormat == PixelFormat::ALPHA_8) {
+        rowDataSize_ = pixelBytes_ * ((info.size.width + FILL_NUMBER) / ALIGN_NUMBER * ALIGN_NUMBER);
+        SetRowStride(rowDataSize_);
+        HiLog::Info(LABEL, "ALPHA_8 rowDataSize_ %{public}d.", rowDataSize_);
+    } else if (info.pixelFormat == PixelFormat::ASTC_4x4) {
+        rowDataSize_ = pixelBytes_ * (((info.size.width + NUM_3) >> NUM_2) << NUM_2);
+    } else if (info.pixelFormat == PixelFormat::ASTC_6x6) {
+        rowDataSize_ = pixelBytes_ * (((info.size.width + NUM_5) / NUM_6) * NUM_6);
+    } else if (info.pixelFormat == PixelFormat::ASTC_8x8) {
+        rowDataSize_ = pixelBytes_ * (((info.size.width + NUM_7) >> NUM_3) << NUM_3);
+    } else {
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+        if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+            if (context_ == nullptr) {
+                HiLog::Error(LABEL, "set imageInfo context_ null");
+                return ERR_IMAGE_DATA_ABNORMAL;
+            }
+            SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(context_);
+            SetRowStride(sbBuffer->GetStride());
+        } else {
+            SetRowStride(pixelBytes_ * info.size.width);
+        }
+#endif
+        rowDataSize_ = pixelBytes_ * info.size.width;
+    }
+    return SUCCESS;
+}
+
 uint32_t PixelMap::SetImageInfo(ImageInfo &info, bool isReused)
 {
     if (info.size.width <= 0 || info.size.height <= 0) {
@@ -713,25 +756,12 @@ uint32_t PixelMap::SetImageInfo(ImageInfo &info, bool isReused)
         HiLog::Error(LABEL, "image size is out of range.");
         return ERR_IMAGE_TOO_LARGE;
     }
-    if (info.pixelFormat == PixelFormat::ALPHA_8) {
-        rowDataSize_ = pixelBytes_ * ((info.size.width + FILL_NUMBER) / ALIGN_NUMBER * ALIGN_NUMBER);
-        SetRowStride(rowDataSize_);
-        HiLog::Info(LABEL, "ALPHA_8 rowDataSize_ %{public}d.", rowDataSize_);
-    } else {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
-        if (allocatorType_ == AllocatorType::DMA_ALLOC) {
-            if (context_ == nullptr) {
-                HiLog::Error(LABEL, "set imageInfo context_ null");
-                return ERR_IMAGE_DATA_ABNORMAL;
-            }
-            SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(context_);
-            SetRowStride(sbBuffer->GetStride());
-        } else {
-            SetRowStride(pixelBytes_ * info.size.width);
-        }
-#endif
-        rowDataSize_ = pixelBytes_ * info.size.width;
+
+    if (SetRowDataSizeForImageInfo(info) != SUCCESS) {
+        HiLog::Error(LABEL, "pixel map set rowDataSize error.");
+        return ERR_IMAGE_DATA_ABNORMAL;
     }
+
     if (rowDataSize_ != 0 && info.size.height > (PIXEL_MAP_MAX_RAM_SIZE / rowDataSize_)) {
         ResetPixelMap();
         HiLog::Error(LABEL, "pixel map byte count out of range.");
@@ -1566,6 +1596,11 @@ bool PixelMap::WriteInfoToParcel(Parcel &parcel) const
         return false;
     }
 
+    if (!parcel.WriteBool(isAstc_)) {
+        HiLog::Error(LABEL, "write pixel map isAstc_ to parcel failed.");
+        return false;
+    }
+
     if (!parcel.WriteInt32(static_cast<int32_t>(allocatorType_))) {
         HiLog::Error(LABEL, "write pixel map allocator type:[%{public}d] to parcel failed.",
                      allocatorType_);
@@ -1578,6 +1613,9 @@ bool PixelMap::Marshalling(Parcel &parcel) const
 {
     int32_t PIXEL_MAP_INFO_MAX_LENGTH = 128;
     int32_t bufferSize = rowDataSize_ * imageInfo_.size.height;
+    if (isAstc_) {
+        bufferSize = pixelsSize_;
+    }
     if (static_cast<size_t>(bufferSize) <= MIN_IMAGEDATA_SIZE &&
         static_cast<size_t>(bufferSize + PIXEL_MAP_INFO_MAX_LENGTH) > parcel.GetDataCapacity() &&
         !parcel.SetDataCapacity(bufferSize + PIXEL_MAP_INFO_MAX_LENGTH)) {
@@ -1647,8 +1685,20 @@ bool PixelMap::ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo)
 
 PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 {
+    PIXEL_MAP_ERR error;
+    PixelMap* dstPixelMap = PixelMap::Unmarshalling(parcel, error);
+    if (dstPixelMap == nullptr || error.errorCode != SUCCESS) {
+        HiLog::Error(LABEL, "unmarshalling failed errorCode:%{public}d, errorInfo:%{public}s",
+            error.errorCode, error.errorInfo.c_str());
+    }
+    return dstPixelMap;
+}
+
+PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
+{
     PixelMap *pixelMap = new PixelMap();
     if (pixelMap == nullptr) {
+        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "pixelmap create failed");
         return nullptr;
     }
 
@@ -1656,12 +1706,16 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
     if (!pixelMap->ReadImageInfo(parcel, imgInfo)) {
         HiLog::Error(LABEL, "read imageInfo fail");
         delete pixelMap;
+        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_READ_PIXELMAP_FAILED, "read pixelmap failed");
         return nullptr;
     }
 
     bool isEditable = parcel.ReadBool();
     pixelMap->SetEditable(isEditable);
-    
+
+    bool isAstc = parcel.ReadBool();
+    pixelMap->SetAstc(isAstc);
+
     AllocatorType allocType = static_cast<AllocatorType>(parcel.ReadInt32());
     int32_t rowDataSize = parcel.ReadInt32();
     int32_t bufferSize = parcel.ReadInt32();
@@ -1671,9 +1725,11 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         HiLog::Error(LABEL, "unmarshalling get bytes by per pixel fail.");
         return nullptr;
     }
-    if (bufferSize != rowDataSize * imgInfo.size.height) {
+    if ((!isAstc) && bufferSize != rowDataSize * imgInfo.size.height) {
         delete pixelMap;
         HiLog::Error(LABEL, "unmarshalling bufferSize parcelling error");
+        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_BUFFER_SIZE_PARCEL_ERROR,
+            "unmarshalling bufferSize parcelling error");
         return nullptr;
     }
     uint8_t *base = nullptr;
@@ -1684,6 +1740,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         if (fd < 0) {
             HiLog::Error(LABEL, "fd < 0");
             delete pixelMap;
+            PixelMap::ConstructPixelMapError(error, ERR_IMAGE_GET_FD_BAD, "fd acquisition failed");
             return nullptr;
         }
         void* ptr = ::mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -1693,6 +1750,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
                 ::close(fd);
                 delete pixelMap;
                 HiLog::Error(LABEL, "shared memory map in memalloc failed, errno:%{public}d", errno);
+                PixelMap::ConstructPixelMapError(error, ERR_IMAGE_GET_FD_BAD, "shared memory map in memalloc failed");
                 return nullptr;
             }
         }
@@ -1718,6 +1776,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
         if (base == nullptr) {
             HiLog::Error(LABEL, "get pixel memory size:[%{public}d] error.", bufferSize);
             delete pixelMap;
+            PixelMap::ConstructPixelMapError(error, ERR_IMAGE_GET_DATA_ABNORMAL, "ReadImageData failed");
             return nullptr;
         }
     }
@@ -1846,13 +1905,7 @@ bool PixelMap::EncodeTlv(std::vector<uint8_t> &buff) const
     WriteVarint(buff, GetVarintLen(imageInfo_.baseDensity));
     WriteVarint(buff, imageInfo_.baseDensity);
     WriteUint8(buff, TLV_IMAGE_ALLOCATORTYPE);
-    AllocatorType tmpAllocatorType = allocatorType_;
-    if (allocatorType_ == AllocatorType::SHARE_MEM_ALLOC) {
-        tmpAllocatorType = AllocatorType::HEAP_ALLOC;
-        HiLog::Info(LABEL, "pixel map tlv encode unsupport SHARE_MEM_ALLOC, use HEAP_ALLOC."\
-                    "width: %{piblic}d, height: %{public}d",
-                    imageInfo_.size.width, imageInfo_.size.height);
-    }
+    AllocatorType tmpAllocatorType = AllocatorType::HEAP_ALLOC;
     WriteVarint(buff, GetVarintLen(static_cast<int32_t>(tmpAllocatorType)));
     WriteVarint(buff, static_cast<int32_t>(tmpAllocatorType));
     WriteUint8(buff, TLV_IMAGE_DATA);
@@ -1900,6 +1953,7 @@ void PixelMap::ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t 
                 break;
             case TLV_IMAGE_ALLOCATORTYPE:
                 type = ReadVarint(buff, cursor);
+                HiLog::Info(LABEL, "pixel alloctype: %{public}d", type);
                 break;
             case TLV_IMAGE_DATA:
                 size = len;
@@ -1988,6 +2042,12 @@ static const string GetNamedPixelFormat(const PixelFormat pixelFormat)
             return "Pixel Format BGRA_8888";
         case PixelFormat::RGBA_F16:
             return "Pixel Format RGBA_F16";
+        case PixelFormat::ASTC_4x4:
+            return "Pixel Format ASTC_4x4";
+        case PixelFormat::ASTC_6x6:
+            return "Pixel Format ASTC_6x6";
+        case PixelFormat::ASTC_8x8:
+            return "Pixel Format ASTC_8x8";
         default:
             return "Pixel Format UNKNOWN";
     }
@@ -2258,13 +2318,24 @@ struct TransInfos {
     SkMatrix matrix;
 };
 
-bool IsSupportAntiAliasing(const ImageInfo& imageInfo)
+bool IsSupportAntiAliasing(const ImageInfo& imageInfo, const AntiAliasingOption &option)
 {
-    return imageInfo.size.width <= AntiAliasingSize &&
-            imageInfo.size.height <= AntiAliasingSize;
+    return option != AntiAliasingOption::NONE && imageInfo.size.width <= ANTIALIASING_SIZE &&
+            imageInfo.size.height <= ANTIALIASING_SIZE;
 }
 
-bool PixelMap::DoTranslation(TransInfos &infos)
+SkSamplingOptions ToSkSamplingOption(const AntiAliasingOption &option)
+{
+    switch (option) {
+        case AntiAliasingOption::NONE: return SkSamplingOptions(SkFilterMode::kNearest, SkMipmapMode::kNone);
+        case AntiAliasingOption::LOW: return SkSamplingOptions(SkFilterMode::kLinear, SkMipmapMode::kNone);
+        case AntiAliasingOption::MEDIUM: return SkSamplingOptions(SkFilterMode::kLinear, SkMipmapMode::kLinear);
+        case AntiAliasingOption::HIGH: return SkSamplingOptions(SkCubicResampler { 1 / 3.0f, 1 / 3.0f });
+        default: return SkSamplingOptions(SkFilterMode::kNearest, SkMipmapMode::kNone);
+    }
+}
+
+bool PixelMap::DoTranslation(TransInfos &infos, const AntiAliasingOption &option)
 {
     ImageInfo imageInfo;
     GetImageInfo(imageInfo);
@@ -2298,11 +2369,11 @@ bool PixelMap::DoTranslation(TransInfos &infos)
     }
     canvas.concat(infos.matrix);
     auto skimage = SkImage::MakeFromBitmap(src.bitmap);
-    if (ImageSystemProperties::GetAntiAliasingEnabled() && IsSupportAntiAliasing(imageInfo)) {
+    if (ImageSystemProperties::GetAntiAliasingEnabled() && IsSupportAntiAliasing(imageInfo, option)) {
         canvas.drawImage(skimage, FLOAT_ZERO, FLOAT_ZERO,
             SkSamplingOptions(SkFilterMode::kLinear, SkMipmapMode::kLinear));
     } else {
-        canvas.drawImage(skimage, FLOAT_ZERO, FLOAT_ZERO);
+        canvas.drawImage(skimage, FLOAT_ZERO, FLOAT_ZERO, ToSkSamplingOption(option));
     }
 
     ToImageInfo(imageInfo, dst.info);
@@ -2322,6 +2393,15 @@ void PixelMap::scale(float xAxis, float yAxis)
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos)) {
+        HiLog::Error(LABEL, "scale falied");
+    }
+}
+
+void PixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
+{
+    TransInfos infos;
+    infos.matrix.setScale(xAxis, yAxis);
+    if (!DoTranslation(infos, option)) {
         HiLog::Error(LABEL, "scale falied");
     }
 }
