@@ -20,7 +20,7 @@
  * @brief Provides native APIs for encoding image data
  *
  * @Syscap SystemCapability.Multimedia.Image
- * @since 10
+ * @since 11
  * @version 5.0
  */
 
@@ -30,7 +30,7 @@
  * @brief Declares APIs for encoding image data into buffer or file.
  * Need link <b>libimage_packerndk.z.so</b>
  *
- * @since 10
+ * @since 11
  * @version 5.0
  */
 
@@ -48,7 +48,7 @@ struct ImagePackerNative_;
 /**
  * @brief Defines an image packer object at the native layer for the image packer interface.
  *
- * @since 10
+ * @since 11
  * @version 5.0
  */
 typedef struct ImagePackerNative_ ImagePackerNative;
@@ -56,7 +56,7 @@ typedef struct ImagePackerNative_ ImagePackerNative;
 /**
  * @brief Defines the image packing options.
  *
- * @since 10
+ * @since 11
  * @version 5.0
  */
 struct OhosImagePackerOpts {
@@ -72,11 +72,11 @@ struct OhosImagePackerOpts {
  * @param env Indicates a pointer to the JavaScript Native Interface (JNI) environment.
  * @param res Indicates a pointer to the <b>ImagePacker</b> object created at the JavaScript native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal NAPI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
  * @see {@link ImagePackerNative}
  *
  * @Syscap SystemCapability.Multimedia.Image
- * @since 10
+ * @since 11
  * @version 5.0
  */
 int32_t OH_ImagePacker_Create(napi_env env, napi_value *res);
@@ -90,7 +90,7 @@ int32_t OH_ImagePacker_Create(napi_env env, napi_value *res);
  * @return Returns an {@link ImagePackerNative} pointer object if the operation is successful
  * returns a null pointer otherwise.
  * @see ImagePackerNative, OH_ImagePacker_Release
- * @since 10
+ * @since 11
  * @version 5.0
  */
 ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
@@ -104,11 +104,14 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @param outData Indicates the pointer to the encoded data.
  * @param size Indicates the pointer to the {@link OhosImageComponent} object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
  * @see ImageNative, OhosImageComponent
- * @since 10
+ * @since 11
  * @version 5.0
  */
 int32_t OH_ImagePacker_PackToData(ImagePackerNative* native, napi_value source,
@@ -122,11 +125,14 @@ int32_t OH_ImagePacker_PackToData(ImagePackerNative* native, napi_value source,
  * @param opts Indicates the encoding {@link OhosImagePackerOpts} .
  * @param fd Indicates the a writable file descriptor.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
  * @see ImageNative, OhosImageComponent
- * @since 10
+ * @since 11
  * @version 5.0
  */
 int32_t OH_ImagePacker_PackToFile(ImagePackerNative* native, napi_value source,
@@ -141,11 +147,8 @@ int32_t OH_ImagePacker_PackToFile(ImagePackerNative* native, napi_value source,
  *
  * @param native Indicates the pointer to an {@link ImageNative} object at the native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
  * @see ImageNative, OH_Image_InitImageNative
- * @since 10
+ * @since 11
  * @version 5.0
  */
 int32_t OH_ImagePacker_Release(ImagePackerNative* native);

@@ -41,7 +41,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Create, TestSize.Level3)
     napi_env env = nullptr;
     napi_value* packer = nullptr;
     int32_t ret = OH_ImagePacker_Create(env, packer);
-    ASSERT_EQ(ret, IMAGE_RESULT_BAD_PARAMETER);
+    ASSERT_EQ(ret, IMAGE_RESULT_INVALID_PARAMETER);
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_Create end";
 }
 
