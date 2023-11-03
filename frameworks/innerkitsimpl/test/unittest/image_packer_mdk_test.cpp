@@ -61,21 +61,21 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
 }
 
 /**
- * @tc.name: OH_ImagePacker_PackToBuffer
- * @tc.desc: test OH_ImagePacker_PackToBuffer
+ * @tc.name: OH_ImagePacker_PackToData
+ * @tc.desc: test OH_ImagePacker_PackToData
  * @tc.type: FUNC
  */
-HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToBuffer, TestSize.Level3)
+HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToData, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToBuffer start";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToData start";
     ImagePackerNative* native = nullptr;
     napi_value source = nullptr;
     struct OhosImagePackerOpts opts;
-    uint8_t* outBuffer = nullptr;
+    uint8_t* outData = nullptr;
     size_t size = TEST_SIZE;
-    int32_t ret = OH_ImagePacker_PackToBuffer(native, source, &opts, outBuffer, &size);
+    int32_t ret = OH_ImagePacker_PackToData(native, source, &opts, outData, &size);
     ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
-    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToBuffer end";
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToData end";
 }
 
 /**
