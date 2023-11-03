@@ -16,9 +16,9 @@
 #ifndef HWE_OSDEP_H
 #define HWE_OSDEP_H
 
-#include "hwe_type.h"
 #include <stdlib.h>
 #include <limits.h>
+#include "hwe_type.h"
 #if defined(_WIN32)
 #include <process.h>
 #include <windows.h>
@@ -104,7 +104,7 @@ typedef struct HWE_Pthread {
     void *(*func)(void *arg);
     void *arg;
     void *ret;
-    HW_B8 isInit;
+    signed char isInit;
 } HWE_Pthread;
 typedef struct HWE_Win32ThreadControl {
     HWE_PthreadMutex staticMutex;
@@ -116,44 +116,44 @@ typedef struct HWE_Win32ThreadControl {
 typedef struct HWE_Win32Cond {
     HWE_PthreadMutex mtxBroadcast;
     HWE_PthreadMutex mtxWaiterCount;
-    volatile HW_S32 waiterCount;
+    volatile int32_t waiterCount;
     HANDLE semaphore;
     HANDLE waitersDone;
-    volatile HW_S32 isBroadcast;
+    volatile int32_t isBroadcast;
 } HWE_Win32Cond;
 
-HW_S32 HWE_PthreadMutexInit(HWE_PthreadMutex *mutex);
-HW_S32 HWE_PthreadMutexLock(HWE_PthreadMutex *mutex);
-HW_S32 HWE_PthreadMutexUnLock(HWE_PthreadMutex *mutex);
-HW_S32 HWE_PthreadMutexDestroy(HWE_PthreadMutex *mutex);
-HW_S32 HWE_PthreadCondInit(HWE_PthreadCond *cond);
-HW_S32 HWE_PthreadCondDestroy(HWE_PthreadCond *cond);
-HW_S32 HWE_PthreadCondWait(HWE_PthreadCond *cond, HWE_PthreadMutex *mutex);
-HW_S32 HWE_PthreadCondSignal(HWE_PthreadCond *cond);
-HW_S32 HWE_PthreadCondBroadcast(HWE_PthreadCond *cond);
-HW_S32 HWE_PthreadCreate(HWE_Pthread *thread, void *(*func)(void *), void *arg);
-HW_S32 HWE_PthreadJoin(HWE_Pthread thread);
+int32_t HWE_PthreadMutexInit(HWE_PthreadMutex *mutex);
+int32_t HWE_PthreadMutexLock(HWE_PthreadMutex *mutex);
+int32_t HWE_PthreadMutexUnLock(HWE_PthreadMutex *mutex);
+int32_t HWE_PthreadMutexDestroy(HWE_PthreadMutex *mutex);
+int32_t HWE_PthreadCondInit(HWE_PthreadCond *cond);
+int32_t HWE_PthreadCondDestroy(HWE_PthreadCond *cond);
+int32_t HWE_PthreadCondWait(HWE_PthreadCond *cond, HWE_PthreadMutex *mutex);
+int32_t HWE_PthreadCondSignal(HWE_PthreadCond *cond);
+int32_t HWE_PthreadCondBroadcast(HWE_PthreadCond *cond);
+int32_t HWE_PthreadCreate(HWE_Pthread *thread, int32_t *(*func)(int32_t *), void *arg);
+int32_t HWE_PthreadJoin(HWE_Pthread thread);
 #else
 typedef struct HWE_PthreadMutexType {
-    HW_B8 isInit;
+    signed char isInit;
     pthread_mutex_t mutex;
 } HWE_PthreadMutex;
 
 typedef struct HWE_PthreadCondType {
-    HW_B8 isInit;
+    signed char isInit;
     pthread_cond_t cond;
 } HWE_PthreadCond;
 
 typedef struct HWE_PthreadType {
-    HW_B8 isInit;
+    signed char isInit;
     pthread_t thread;
 } HWE_Pthread;
 
 // detect cpu simd capibility
 
-static HWE_INLINE HW_S32 HWE_PthreadMutexInit(HWE_PthreadMutex *mutex)
+static HWE_INLINE int32_t HWE_PthreadMutexInit(HWE_PthreadMutex *mutex)
 {
-    HW_S32 ret = pthread_mutex_init(&mutex->mutex, NULL);
+    int32_t ret = pthread_mutex_init(&mutex->mutex, NULL);
     mutex->isInit = (ret == 0) ? TRUE : FALSE;
     if (mutex->isInit) {
         RecordInitMutexCount();
@@ -161,17 +161,17 @@ static HWE_INLINE HW_S32 HWE_PthreadMutexInit(HWE_PthreadMutex *mutex)
     return ret;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadMutexLock(HWE_PthreadMutex *mutex)
+static HWE_INLINE int32_t HWE_PthreadMutexLock(HWE_PthreadMutex *mutex)
 {
     return mutex->isInit ? pthread_mutex_lock(&mutex->mutex) : -1;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadMutexUnLock(HWE_PthreadMutex *mutex)
+static HWE_INLINE int32_t HWE_PthreadMutexUnLock(HWE_PthreadMutex *mutex)
 {
     return mutex->isInit ? pthread_mutex_unlock(&mutex->mutex) : -1;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadMutexDestroy(HWE_PthreadMutex *mutex)
+static HWE_INLINE int32_t HWE_PthreadMutexDestroy(HWE_PthreadMutex *mutex)
 {
     if (mutex->isInit) {
         mutex->isInit = 0;
@@ -182,9 +182,9 @@ static HWE_INLINE HW_S32 HWE_PthreadMutexDestroy(HWE_PthreadMutex *mutex)
     }
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadCondInit(HWE_PthreadCond *cond)
+static HWE_INLINE int32_t HWE_PthreadCondInit(HWE_PthreadCond *cond)
 {
-    HW_S32 ret = pthread_cond_init(&cond->cond, NULL);
+    int32_t ret = pthread_cond_init(&cond->cond, NULL);
     cond->isInit = (ret == 0) ? TRUE : FALSE;
     if (cond->isInit) {
         RecordInitCondCount();
@@ -192,7 +192,7 @@ static HWE_INLINE HW_S32 HWE_PthreadCondInit(HWE_PthreadCond *cond)
     return ret;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadCondDestroy(HWE_PthreadCond *cond)
+static HWE_INLINE int32_t HWE_PthreadCondDestroy(HWE_PthreadCond *cond)
 {
     if (cond->isInit) {
         cond->isInit = 0;
@@ -203,24 +203,24 @@ static HWE_INLINE HW_S32 HWE_PthreadCondDestroy(HWE_PthreadCond *cond)
     }
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadCondWait(HWE_PthreadCond *cond, HWE_PthreadMutex *mutex)
+static HWE_INLINE int32_t HWE_PthreadCondWait(HWE_PthreadCond *cond, HWE_PthreadMutex *mutex)
 {
     return (cond->isInit && mutex->isInit) ? pthread_cond_wait(&cond->cond, &mutex->mutex) : -1;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadCondSignal(HWE_PthreadCond *cond)
+static HWE_INLINE int32_t HWE_PthreadCondSignal(HWE_PthreadCond *cond)
 {
     return cond->isInit ? pthread_cond_signal(&cond->cond) : -1;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadCondBroadcast(HWE_PthreadCond *cond)
+static HWE_INLINE int32_t HWE_PthreadCondBroadcast(HWE_PthreadCond *cond)
 {
     return cond->isInit ? pthread_cond_broadcast(&cond->cond) : -1;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadCreate(HWE_Pthread *thread, void *(*func)(void *), void *arg)
+static HWE_INLINE int32_t HWE_PthreadCreate(HWE_Pthread *thread, int32_t *(*func)(int32_t *), void *arg)
 {
-    HW_S32 ret = pthread_create(&thread->thread, NULL, func, arg);
+    int32_t ret = pthread_create(&thread->thread, NULL, func, arg);
     thread->isInit = (ret == 0) ? TRUE : FALSE;
     if (thread->isInit) {
         RecordInitThreadCount();
@@ -228,7 +228,7 @@ static HWE_INLINE HW_S32 HWE_PthreadCreate(HWE_Pthread *thread, void *(*func)(vo
     return ret;
 }
 
-static HWE_INLINE HW_S32 HWE_PthreadJoin(HWE_Pthread thread)
+static HWE_INLINE int32_t HWE_PthreadJoin(HWE_Pthread thread)
 {
     if (thread.isInit) {
         thread.isInit = 0;
@@ -241,8 +241,8 @@ static HWE_INLINE HW_S32 HWE_PthreadJoin(HWE_Pthread thread)
 
 #endif
 
-HW_S32 HWE_SetThreadAffinityMask(const HWE_Pthread *thread, HW_U32 cpuNum, const HW_U32 *cpuIdxArray);
-HW_S32 HWE_SetThreadPriority(const HWE_Pthread *thread, HW_S32 schedPriority);
+int32_t HWE_SetThreadAffinityMask(const HWE_Pthread *thread, uint32_t cpuNum, const uint32_t *cpuIdxArray);
+int32_t HWE_SetThreadPriority(const HWE_Pthread *thread, int32_t schedPriority);
 
 static HWE_INLINE void *HWE_Malloc(size_t size)
 {
@@ -269,20 +269,20 @@ static HWE_INLINE void HWE_Free(void *p)
 }
 
 #ifdef _WIN32
-static HWE_INLINE HW_U64 HWE_GetCurrentTime(void)
+static HWE_INLINE uint64_t HWE_GetCurrentTime(void)
 {
     clock_t time = clock();
-    return (HW_U64)time;
+    return (uint64_t)time;
 }
 #else
 #define TIME_FACTOR 1000000
-static HWE_INLINE HW_U64 HWE_GetCurrentTime(void)
+static HWE_INLINE uint64_t HWE_GetCurrentTime(void)
 {
-    HW_U64 time;
+    uint64_t time;
     struct timeval t;
     gettimeofday(&t, NULL);
 
-    time = (HW_U64)t.tv_sec * TIME_FACTOR + (HW_U64)t.tv_usec;
+    time = (uint64_t)t.tv_sec * TIME_FACTOR + (uint64_t)t.tv_usec;
     return time;
 }
 #endif

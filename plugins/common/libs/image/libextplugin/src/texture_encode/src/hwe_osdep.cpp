@@ -22,13 +22,15 @@
 #define ID_AA64PFR0_ADVSIMD_BIT 20
 #define MVFR1_ADVSIMD_BIT 8
 
+namespace OHOS {
+namespace ImagePlugin {
 // detect cpu simd capibility
 HWE_KernelType HWE_DetectSimdCapibility(void)
 {
     HWE_KernelType ret = KERNEL_TYPE_C;
 #if HWE_ARM_AARCH64
-    HW_U64 regval = 0;
-    HW_U64 advSimd;
+    uint64_t regval = 0;
+    uint64_t advSimd;
 
     asm volatile("mrs %0, ID_AA64PFR0_EL1" : "=r"(regval));
     advSimd = (regval >> ID_AA64PFR0_ADVSIMD_BIT) & 0xf; // 0xf: bitmask
@@ -39,8 +41,8 @@ HWE_KernelType HWE_DetectSimdCapibility(void)
     }
 #elif HWE_ARM_AARCH32
 #if !HWE_IANDROID_ARM
-    HW_U32 regval = 0;
-    HW_U32 advSimd;
+    uint32_t regval = 0;
+    uint32_t advSimd;
 
     asm volatile("mrs %0, MVFR1" : "=r"(regval));
     advSimd = (regval >> MVFR1_ADVSIMD_BIT) & 0xfff; // 0xff: bitmask
@@ -62,11 +64,11 @@ HWE_KernelType HWE_DetectSimdCapibility(void)
 
 #ifdef _WIN32
 static HWE_Win32ThreadControl g_threadPool;
-HW_S32 HWE_PthreadMutexInit(HWE_PthreadMutex *mutex)
+int32_t HWE_PthreadMutexInit(HWE_PthreadMutex *mutex)
 {
     return !InitializeCriticalSectionAndSpinCount(mutex, HWE_SPIN_COUNT);
 }
-HW_S32 HWE_PthreadMutexLock(HWE_PthreadMutex *mutex)
+int32_t HWE_PthreadMutexLock(HWE_PthreadMutex *mutex)
 {
     static HWE_PthreadMutex init = HWE_PTHREAD_MUTEX_INITIALIZER;
     if (!memcmp(mutex, &init, sizeof(HWE_PthreadMutex))) {
@@ -75,17 +77,17 @@ HW_S32 HWE_PthreadMutexLock(HWE_PthreadMutex *mutex)
     EnterCriticalSection(mutex);
     return 0;
 }
-HW_S32 HWE_PthreadMutexUnLock(HWE_PthreadMutex *mutex)
+int32_t HWE_PthreadMutexUnLock(HWE_PthreadMutex *mutex)
 {
     LeaveCriticalSection(mutex);
     return 0;
 }
-HW_S32 HWE_PthreadMutexDestroy(HWE_PthreadMutex *mutex)
+int32_t HWE_PthreadMutexDestroy(HWE_PthreadMutex *mutex)
 {
     LeaveCriticalSection(mutex);
     return 0;
 }
-HW_S32 HWE_PthreadCondInit(HWE_PthreadCond *cond)
+int32_t HWE_PthreadCondInit(HWE_PthreadCond *cond)
 {
     HWE_Win32Cond *win32Cond = NULL;
     if (g_threadPool.condInit) {
@@ -113,7 +115,7 @@ HW_S32 HWE_PthreadCondInit(HWE_PthreadCond *cond)
     }
     return 0;
 }
-HW_S32 HWE_PthreadCondDestroy(HWE_PthreadCond *cond)
+int32_t HWE_PthreadCondDestroy(HWE_PthreadCond *cond)
 {
     HWE_Win32Cond *win32Cond = NULL;
     if (g_threadPool.condInit) {
@@ -127,10 +129,10 @@ HW_S32 HWE_PthreadCondDestroy(HWE_PthreadCond *cond)
     free(win32Cond);
     return 0;
 }
-HW_S32 HWE_PthreadCondWait(HWE_PthreadCond *cond, HWE_PthreadMutex *mutex)
+int32_t HWE_PthreadCondWait(HWE_PthreadCond *cond, HWE_PthreadMutex *mutex)
 {
     HWE_Win32Cond *win32Cond = NULL;
-    HW_S32 iLastWaiter;
+    int32_t iLastWaiter;
     if (g_threadPool.condWait) {
         return !g_threadPool.condWait(cond, mutex, INFINITE);
     }
@@ -151,10 +153,10 @@ HW_S32 HWE_PthreadCondWait(HWE_PthreadCond *cond, HWE_PthreadMutex *mutex)
     }
     return HWE_PthreadMutexLock(mutex);
 }
-HW_S32 HWE_PthreadCondSignal(HWE_PthreadCond *cond)
+int32_t HWE_PthreadCondSignal(HWE_PthreadCond *cond)
 {
     HWE_Win32Cond *win32Cond = NULL;
-    HW_S32 haveWaiter;
+    int32_t haveWaiter;
     if (g_threadPool.condSignal) {
         g_threadPool.condSignal(cond);
         return 0;
@@ -170,10 +172,10 @@ HW_S32 HWE_PthreadCondSignal(HWE_PthreadCond *cond)
     }
     return HWE_PthreadMutexUnLock(&win32Cond->mtxBroadcast);
 }
-HW_S32 HWE_PthreadCondBroadcast(HWE_PthreadCond *cond)
+int32_t HWE_PthreadCondBroadcast(HWE_PthreadCond *cond)
 {
     HWE_Win32Cond *win32Cond = NULL;
-    HW_S32 haveWaiter = 0;
+    int32_t haveWaiter = 0;
     if (g_threadPool.condBroadcast) {
         g_threadPool.condBroadcast(cond);
         return 0;
@@ -201,7 +203,7 @@ static unsigned __stdcall HWE_Win32ThreadWorker(void *arg)
     enc->ret = enc->func(enc->arg);
     return 0;
 }
-HW_S32 HWE_PthreadCreate(HWE_Pthread *thread, void *(*func)(void *), void *arg)
+int32_t HWE_PthreadCreate(HWE_Pthread *thread, int32_t *(*func)(int32_t *), void *arg)
 {
     thread->func = func;
     thread->arg = arg;
@@ -209,7 +211,7 @@ HW_S32 HWE_PthreadCreate(HWE_Pthread *thread, void *(*func)(void *), void *arg)
     thread->isInit = !!thread->handle;
     return (!thread->handle);
 }
-HW_S32 HWE_PthreadJoin(HWE_Pthread thread)
+int32_t HWE_PthreadJoin(HWE_Pthread thread)
 {
     if (thread.isInit == 1) {
         DWORD pRet = WaitForSingleObject(thread.handle, INFINITE);
@@ -222,7 +224,7 @@ HW_S32 HWE_PthreadJoin(HWE_Pthread thread)
 }
 #endif
 #if !HWE_IANDROID_ARM
-HW_S32 HWE_SetThreadAffinityMask(const HWE_Pthread *thread, HW_U32 cpuNum, const HW_U32 *cpuIdxArray)
+int32_t HWE_SetThreadAffinityMask(const HWE_Pthread *thread, uint32_t cpuNum, const uint32_t *cpuIdxArray)
 {
     if (cpuNum == 0) {
         return 0;
@@ -233,15 +235,15 @@ HW_S32 HWE_SetThreadAffinityMask(const HWE_Pthread *thread, HW_U32 cpuNum, const
         if (memset_s((void *)&threadAffinityMask, sizeof(DWORD_PTR), 0, sizeof(DWORD_PTR)) != 0) {
             return -1;
         }
-        for (HW_U32 idx = 0; idx < cpuNum; idx++) {
+        for (uint32_t idx = 0; idx < cpuNum; idx++) {
             threadAffinityMask |= (1 << cpuIdxArray[idx]);
         }
-        HW_S32 ret = SetThreadAffinityMask(thread->handle, threadAffinityMask);
+        int32_t ret = SetThreadAffinityMask(thread->handle, threadAffinityMask);
         return (ret == 0);
 #elif defined(__GNUC__)
         cpu_set_t threadAffinityMask;
         CPU_ZERO(&threadAffinityMask);
-        for (HW_U32 idx = 0; idx < cpuNum; idx++) {
+        for (uint32_t idx = 0; idx < cpuNum; idx++) {
             CPU_SET(cpuIdxArray[idx], &threadAffinityMask);
         }
 #ifdef ANDROID
@@ -257,7 +259,7 @@ HW_S32 HWE_SetThreadAffinityMask(const HWE_Pthread *thread, HW_U32 cpuNum, const
     }
 }
 
-HW_S32 HWE_SetThreadPriority(const HWE_Pthread *thread, HW_S32 schedPriority)
+int32_t HWE_SetThreadPriority(const HWE_Pthread *thread, int32_t schedPriority)
 {
     if (thread->isInit) {
 #if defined(_WIN32)
@@ -278,3 +280,5 @@ HW_S32 HWE_SetThreadPriority(const HWE_Pthread *thread, HW_S32 schedPriority)
     }
 }
 #endif
+} // namespace ImagePlugin
+} // namespace OHOS

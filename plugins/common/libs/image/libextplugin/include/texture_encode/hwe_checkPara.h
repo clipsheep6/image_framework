@@ -18,5 +18,9 @@
 #include "common.h"
 #include "texture_encoder.h"
 
+namespace OHOS {
+namespace ImagePlugin {
 bool CheckValidParam(TextureEncodeOptions *encodeParams);
+} // namespace ImagePlugin
+} // namespace OHOS
 #endif // CHECKPARA_H

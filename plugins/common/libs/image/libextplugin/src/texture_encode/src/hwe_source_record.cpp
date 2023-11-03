@@ -14,23 +14,24 @@
  */
 
 #include <cstdio.h>
-#include "hwe_source_record.h"
 #include "hwe_osdep.h"
+#include "hwe_source_record.h"
 
-
+namespace OHOS {
+namespace ImagePlugin {
 static HWE_PthreadMutex g_mutex;
 
-static HW_S32 g_mallocMemCount = 0;
-static HW_S32 g_freeMemCount = 0;
+static int32_t g_mallocMemCount = 0;
+static int32_t g_freeMemCount = 0;
 
-static HW_S32 g_initMutexCount = 0;
-static HW_S32 g_destoryMutexCount = 0;
+static int32_t g_initMutexCount = 0;
+static int32_t g_destoryMutexCount = 0;
 
-static HW_S32 g_initCondCount = 0;
-static HW_S32 g_destoryCondCount = 0;
+static int32_t g_initCondCount = 0;
+static int32_t g_destoryCondCount = 0;
 
-static HW_S32 g_initThreadCount = 0;
-static HW_S32 g_destoryThreadCount = 0;
+static int32_t g_initThreadCount = 0;
+static int32_t g_destoryThreadCount = 0;
 
 void RecordMallocMemCount()
 {
@@ -101,3 +102,5 @@ void DestroyResourceInfo()
     printf("Cond Info: init %d destroy %d\n", g_initCondCount, g_destoryCondCount);
     printf("Thread Info: init %d destroy %d\n", g_initThreadCount, g_destoryThreadCount);
 }
+} // namespace ImagePlugin
+} // namespace OHOS

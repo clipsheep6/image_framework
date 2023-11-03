@@ -15,6 +15,9 @@
 
 #include "common.h"
 #define LOG_SHUT_OFF_MASK 0x00000080
+
+namespace OHOS {
+namespace ImagePlugin {
 HWE_LogLevel g_userSetLogLevel = HWE_LOG_ERROR;
 void HWE_Log(const char *fileName, int line, HWE_LogLevel level, const char *msg, ...)
 {
@@ -41,7 +44,15 @@ void HWE_Log(const char *fileName, int line, HWE_LogLevel level, const char *msg
     }
     va_list arg;
     va_start(arg, msg);
-    fprintf(stderr, "HWE [%s]: %s %d: ", type, fileName, line);
-    vfprintf(stderr, (const char *)msg, arg);
+    int32_t ret = fprintf(stderr, "HWE [%s]: %s %d: ", type, fileName, line);
+    if (ret < 0) {
+        return;
+    }
+    ret = vfprintf(stderr, (const char *)msg, arg);
+    if (ret < 0) {
+        return;
+    }
     va_end(arg);
 }
+} // namespace ImagePlugin
+} // namespace OHOS

@@ -14,10 +14,13 @@
  */
 
 #include "hwe_memoryManager.h"
-HWE_ReturnVal HWE_InitMemoryManager(HWE_HANDLE *memoryHandle, const void *outHandle, HWE_MallocCallback mallocFunc,
+
+namespace OHOS {
+namespace ImagePlugin {
+HWE_ReturnVal HWE_InitMemoryManager(HWE_HANDLE *memoryHandle, const int32_t *outHandle, HWE_MallocCallback mallocFunc,
     HWE_FreeCallback freeFunc)
 {
-    HW_S32 ret;
+    int32_t ret;
     MemoryManager *memoryManager = (MemoryManager *)HWE_Malloc(sizeof(MemoryManager));
     HWE_RETURN_IF_NULL(memoryManager, "memoryManager malloc failed!\n");
     *memoryHandle = memoryManager;
@@ -56,8 +59,8 @@ HWE_ReturnVal HWE_FreeMemory(HWE_HANDLE memoryHandle)
 {
     HWE_RETURN_IF_NULL(memoryHandle, "memoryHandle is NULL!\n");
     MemoryManager *memoryManager = (MemoryManager *)memoryHandle;
-    HW_U64 i;
-    HW_S32 ret;
+    uint64_t i;
+    int32_t ret;
     for (i = 0; i < memoryManager->usedCount; i++) {
         if (memoryManager->memoryInfoArray[i].isUsed != TRUE) {
             continue;
@@ -119,3 +122,5 @@ void *HWE_MemAlloc(HWE_HANDLE memoryHandle, size_t size)
     HWE_PthreadMutexUnLock(&memoryManager->mutex);
     return p;
 }
+} // namespace ImagePlugin
+} // namespace OHOS

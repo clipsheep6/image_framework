@@ -17,6 +17,9 @@
 #define MEMORYMANAGER_H
 #include "common.h"
 #include "hwe_osdep.h"
+
+namespace OHOS {
+namespace ImagePlugin {
 #define HWE_LOGE(msg, ...)                                              \
     do {                                                                \
         HWE_Log(HWE_FILE, HWE_LINE, HWE_LOG_ERROR, msg, ##__VA_ARGS__); \
@@ -69,7 +72,7 @@
         }                                     \
     } while (0)
 
-void *HWE_MemAlloc(HWE_HANDLE memoryHandle, size_t size);
+int32_t *HWE_MemAlloc(HWE_HANDLE memoryHandle, size_t size);
 
 #define HWE_RETURN_IF_MALLOCZERO(ret, handle, pointer, size, type, name) \
     do {                                                                 \
@@ -114,28 +117,30 @@ void *HWE_MemAlloc(HWE_HANDLE memoryHandle, size_t size);
 
 #define MAX_MEMORY_NUM 0xfffff
 
-typedef void (*HWE_FreeCallback)(const void *outHandle, void *addr);
-typedef void *(*HWE_MallocCallback)(const void *outHandle, size_t len);
+typedef uint32_t (*HWE_FreeCallback)(const int32_t *outHandle, void *addr);
+typedef uint32_t *(*HWE_MallocCallback)(const int32_t *outHandle, size_t len);
 
 typedef struct MemoryInfo {
-    HW_U64 idx;
-    HW_B8 isUsed;
+    uint64_t idx;
+    signed char isUsed;
     size_t memSize;
     void *memAddr;
 } MemoryInfo;
 typedef struct MemoryManager {
-    HW_U64 maxMemoryNumber;
-    HW_U64 usedCount;
-    HW_U64 freeCount;
+    uint64_t maxMemoryNumber;
+    uint64_t usedCount;
+    uint64_t freeCount;
     HWE_PthreadMutex mutex;
     MemoryInfo memoryInfoArray[MAX_MEMORY_NUM];
-    const void *outHandle;
+    const int32_t *outHandle;
     HWE_MallocCallback mallocCallback;
     HWE_FreeCallback freeCallback;
     size_t bytesMalloc;
 } MemoryManager;
 
-HWE_ReturnVal HWE_InitMemoryManager(HWE_HANDLE *memoryHandle, const void *outHandle, HWE_MallocCallback mallocFunc,
+HWE_ReturnVal HWE_InitMemoryManager(HWE_HANDLE *memoryHandle, const int32_t *outHandle, HWE_MallocCallback mallocFunc,
     HWE_FreeCallback freeFunc);
 HWE_ReturnVal HWE_FreeMemory(HWE_HANDLE memoryHandle);
+} // namespace ImagePlugin
+} // namespace OHOS
 #endif // MEMORYMANAGER_H

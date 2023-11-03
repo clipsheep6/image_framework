@@ -24,7 +24,7 @@
 #include "securectype.h"
 #include "securec.h"
 #define MAX_CHAR_LEN (256)
-#define HWE_HANDLE void *
+#define HWE_HANDLE int32_t *
 #ifndef DFX_FILE
 #define DFX_FILE (strrchr(__FILE__, '/') ? (strrchr(__FILE__, '/') + 1) : __FILE__)
 #endif
@@ -32,13 +32,15 @@
 #define DFX_LINE __LINE__
 
 #define GET_TIME 0
-const char g_version[MAX_CHAR_LEN] = "Texture Encoder(MIT Video Engineering Department) DEBUG v1.0";
+constexpr char g_version[MAX_CHAR_LEN] = "Texture Encoder(MIT Video Engineering Department) DEBUG v1.0";
 
 #define CLAMP3(x, xmin, xmax) \
     (((int)(x)) > ((int)(xmax)) ? ((int)(xmax)) : (((int)(x)) < ((int)(xmin)) ? ((int)(xmin)) : ((int)(x))))
 #define MIN2(a, b) ((a) < (b) ? (a) : (b))
 #define MAX2(a, b) ((a) > (b) ? (a) : (b))
 
+namespace OHOS {
+namespace ImagePlugin {
 typedef union UNION_TYPE {
     int32_t i32;
     uint32_t u32;
@@ -66,13 +68,13 @@ typedef enum HWE_ReturnVal {
 #define HWE_FUNC __FUNCTION__
 void HWE_Log(const char *fileName, int line, HWE_LogLevel level.const char *msg, ...);
 
-#define HWE_LOGE(msg, ...)                                             \
-    do {                                                               \
+#define HWE_LOGE(msg, ...)                                              \
+    do {                                                                \
         HWE_Log(HWE_FILE, HWE_LINE, HWE_LOG_ERROR, msg, ##__VA_ARGS__); \
     } while (0)
 
-#define HWE_LOGW(msg, ...)                                             \
-    do {                                                               \
+#define HWE_LOGW(msg, ...)                                                \
+    do {                                                                  \
         HWE_Log(HWE_FILE, HWE_LINE, HWE_LOG_WARNING, msg, ##__VA_ARGS__); \
     } while (0)
 
@@ -81,9 +83,9 @@ void HWE_Log(const char *fileName, int line, HWE_LogLevel level.const char *msg,
         HWE_Log(HWE_FILE, HWE_LINE, HWE_LOG_INFO, msg, ##__VA_ARGS__); \
     } while (0)
 
-#define HWE_LOGD(msg, ...)                                             \
-    do {                                                               \
-        HWE_Log(HWE_FILE, HWE_LINE, HWE_LOG_DEBUG, msg, ##__VA_ARGS__);\
+#define HWE_LOGD(msg, ...)                                              \
+    do {                                                                \
+        HWE_Log(HWE_FILE, HWE_LINE, HWE_LOG_DEBUG, msg, ##__VA_ARGS__); \
     } while (0)
 
 #define HWE_RETURN_IF_CHECK(ret, exp, msg) \
@@ -104,8 +106,8 @@ void HWE_Log(const char *fileName, int line, HWE_LogLevel level.const char *msg,
 
 #define HWE_RETURN_IF_NULL(pointer, msg) \
     do {                                 \
-        if ((pointer) == NULL) {         \ 
-            HWE_LOGE(msg);               \ 
+        if ((pointer) == NULL) {         \
+            HWE_LOGE(msg);               \
             return HWE_RET_FAILED;       \
         }                                \
     } while (0)
@@ -117,4 +119,6 @@ void HWE_Log(const char *fileName, int line, HWE_LogLevel level.const char *msg,
             goto FAILED;                  \
         }                                 \
     } while (0)
+} // namespace ImagePlugin
+} // namespace OHOS
 #endif

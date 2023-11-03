@@ -17,18 +17,18 @@
 #define HWE_LIST_H
 
 // generic node function pointer type for queue
-typedef void *(*HWE_GenericFunc)(void *funcArg);
+typedef int32_t *(*HWE_GenericFunc)(int32_t *funcArg);
 
 // generic node struct type
 typedef struct HWE_NodeType {
-    void *element;             //next data pointer
-    struct HWE_NodeType *next; //next node pointer
+    void *element;             // next data pointer
+    struct HWE_NodeType *next; // next node pointer
 } HWE_Node;
 
 // job node struct type
 typedef struct HWE_JobNodeType {
-    HWE_GenericFunc func;         //job node function
-    void *funcArg;                // the argument of job node function
+    HWE_GenericFunc func;         // job node function
+    int32_t *funcArg;             // the argument of job node function
     struct HWE_JobNodeType *next; // next job node pointer
 } HWE_JobNode;
 
@@ -39,7 +39,7 @@ typedef struct HWE_JobNodeType {
 #define HWE_LIST_FREE_ALL(head, tail, nodeType) \
     do {                                        \
         while (head) {                          \
-            nodeType *tmpNode = (head);         \
+            (nodeType) *tmpNode = (head);       \
             if ((tmpNode)->next) {              \
                 (head) = tmpNode->next;         \
             } else {                            \

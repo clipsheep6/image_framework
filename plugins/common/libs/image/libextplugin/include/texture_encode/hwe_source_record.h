@@ -16,16 +16,19 @@
 #ifndef HWE_SOURCE_RECORD_H
 #define HWE_SOURCE_RECORD_H
 
+namespace OHOS {
+namespace ImagePlugin {
+void RecordMallocMemCount(void);
+void RecordFreeMemCount(void);
+void RecordInitMutexCount(void);
+void RecordDestoryMutexCount(void);
+void RecordInitCondCount(void);
+void RecordDestoryCondCount(void);
+void RecordInitThreadCount(void);
+void RecordDestoryThreadCount(void);
 
-void RecordMallocMemCount();
-void RecordFreeMemCount();
-void RecordInitMutexCount();
-void RecordDestoryMutexCount();
-void RecordInitCondCount();
-void RecordDestoryCondCount();
-void RecordInitThreadCount();
-void RecordDestoryThreadCount();
-
-void InitResourceInfo();
-void DestroyResourceInfo();
+void InitResourceInfo(void);
+void DestroyResourceInfo(void);
 #endif
+} // namespace ImagePlugin
+} // namespace OHOS

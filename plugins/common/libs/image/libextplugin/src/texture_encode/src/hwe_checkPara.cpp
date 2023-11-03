@@ -14,12 +14,13 @@
  */
 
 #include "hwe_checkPara.h"
-
+constexpr int32_t LOG_SHUT_OFF_MASK = 0x00000080;
+namespace OHOS {
+namespace ImagePlugin {
 static void LogDefault(const int8_t *fileName, uint32_t line, uint32_t uiChannelID, LogLevel eLevel,
     const int8_t *pszFmt, va_list arg)
 {
-    const char *pszPrefix;
-    pszPrefix = NULL;
+    const char *pszPrefix = NULL;
     switch (eLevel) {
         case LOG_ERROR:
             pszPrefix = "error";
@@ -37,11 +38,15 @@ static void LogDefault(const int8_t *fileName, uint32_t line, uint32_t uiChannel
             pszPrefix = "unknown";
             break;
     }
-    fprintf(stderr, "[%s\t]: %d %s %d: ", pszPrefix, uiChannelID, fileName, line);
-    vfprintf(stderr, (const char *)pszFmt, arg);
+    int32_t ret = fprintf(stderr, "[%s\t]: %d %s %d: ", pszPrefix, uiChannelID, fileName, line);
+    if (ret < 0) {
+        return;
+    }
+    ret = vfprintf(stderr, (const char *)pszFmt, arg);
+    if (ret < 0) {
+        return;
+    }
 }
-
-#define LOG_SHUT_OFF_MASK 0x00000080
 
 void DFX_ParamLog(const int8_t *fileName, uint32_t line, int32_t level, const char *msg, ...)
 {
@@ -58,22 +63,24 @@ void DFX_ParamLog(const int8_t *fileName, uint32_t line, int32_t level, const ch
 }
 
 #define CHECK_PARAM_VALID_CONDITION(expression, val, msg)                          \
-    do {                                                                           \  
+    do {                                                                           \
         if ((expression)) {                                                        \
             DFX_ParamLog((const int8_t *)DFX_FILE, DFX_LINE, LOG_ERROR, msg, val); \
-            goto fail;                                                             \  
+            goto fail;                                                             \
         }                                                                          \
     } while (0)
 
-#define CHECK_PARAM_VALID(val, minValue, maxValue, msg)                                               \
-    do {                                                                                              \  
-        if ((val) > (maxValue) || (val) < (minValue)) {                                                         \
-            DFX_ParamLog((const int8_t *)DFX_FILE, DFX_LINE, LOG_ERROR, msg, val, minValue, maxValue);\
-            goto fail;                                                                                \  
-        }                                                                                             \
+#define CHECK_PARAM_VALID(val, minValue, maxValue, msg)                                                \
+    do {                                                                                               \
+        if ((val) > (maxValue) || (val) < (minValue)) {                                                \
+            DFX_ParamLog((const int8_t *)DFX_FILE, DFX_LINE, LOG_ERROR, msg, val, minValue, maxValue); \
+            goto fail;                                                                                 \
+        }                                                                                              \
     } while (0)
 
 bool CheckValidParam(TextureEncodeOptions *param)
 {
     return true;
 }
+} // namespace ImagePlugin
+} // namespace OHOS

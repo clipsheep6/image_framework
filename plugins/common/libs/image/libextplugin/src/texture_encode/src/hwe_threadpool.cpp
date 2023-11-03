@@ -14,10 +14,12 @@
  */
 
 #include "hwe_threadpool.h"
-#include <stdio.h>
+#include <cstdio>
 
+namespace OHOS {
+namespace ImagePlugin {
 // worker thread function for thread pool, always run until exit condition is met
-static void *HWE_ThreadPoolWorkerFunc(void *pool)
+static int32_t *HWE_ThreadPoolWorkerFunc(int32_t *pool)
 {
     if (!pool) {
         return nullptr;
@@ -97,7 +99,7 @@ static void HWE_DestroyThreads(HWE_ThreadPool *pool)
     HWE_PthreadMutexUnLock(&jobQ->lock);
     HWE_PthreadCondBroadcast(&jobQ->notEmpty);
 
-    HW_S32 i;
+    int32_t i;
     for (i = 0; i < pool->threadCount; i++) {
         HWE_PthreadJoin(pool->pthreads[i]);
     }
@@ -106,7 +108,7 @@ static void HWE_DestroyThreads(HWE_ThreadPool *pool)
 }
 
 
-HWE_ThreadPool *HWE_CreateThreadPool(HW_S32 threadCount, HWE_ThreadPoolParam *threadParam)
+HWE_ThreadPool *HWE_CreateThreadPool(int32_t threadCount, HWE_ThreadPoolParam *threadParam)
 {
     if (threadCount <= 0) {
         return nullptr;
@@ -140,8 +142,8 @@ HWE_ThreadPool *HWE_CreateThreadPool(HW_S32 threadCount, HWE_ThreadPoolParam *th
     HWE_PthreadCondInit(&jobQ->empty);
     HWE_PthreadCondInit(&jobQ->notBusy);
 
-    for (HW_S32 i = 0; i < threadCount; i++) {
-        HW_S32 ret = HWE_PthreadCreate(&(pool->pthreads[i]), HWE_ThreadPoolWorkerFunc, (void *)pool);
+    for (int32_t i = 0; i < threadCount; i++) {
+        int32_t ret = HWE_PthreadCreate(&(pool->pthreads[i]), HWE_ThreadPoolWorkerFunc, (void *)pool);
         if (ret) {
             HWE_DestroyThreadPool(pool);
             return nullptr;
@@ -160,7 +162,7 @@ HWE_ThreadPool *HWE_CreateThreadPool(HW_S32 threadCount, HWE_ThreadPoolParam *th
 }
 
 
-void HWE_ThreadPoolPushJob(HWE_ThreadPool *pool, HWE_ThreadFunc func, void *funcArg)
+void HWE_ThreadPoolPushJob(HWE_ThreadPool *pool, HWE_ThreadFunc func, int32_t *funcArg)
 {
     if ((!pool) || (!func)) {
         return;
@@ -231,3 +233,5 @@ void HWE_DestroyThreadPool(HWE_ThreadPool *pool)
     HWE_Free(pool);
     return;
 }
+} // namespace ImagePlugin
+} // namespace OHOS
