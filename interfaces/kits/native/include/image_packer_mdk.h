@@ -96,12 +96,12 @@ int32_t OH_ImagePacker_Create(napi_env env, napi_value *res);
 ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
 
 /**
- * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the buffer with required format
+ * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the data with required format
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
  * @param source Indicates an encoding source, a JS pixel map object or a JS image source object .
  * @param opts Indicates the encoding {@link OhosImagePackerOpts} .
- * @param outBuffer Indicates the pointer to the encoded data.
+ * @param outData Indicates the pointer to the encoded data.
  * @param size Indicates the pointer to the {@link OhosImageComponent} object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
@@ -111,8 +111,8 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @since 10
  * @version 5.0
  */
-int32_t OH_ImagePacker_PackToBuffer(ImagePackerNative* native, napi_value source,
-    struct OhosImagePackerOpts* opts, uint8_t* outBuffer, size_t* size);
+int32_t OH_ImagePacker_PackToData(ImagePackerNative* native, napi_value source,
+    struct OhosImagePackerOpts* opts, uint8_t* outData, size_t* size);
 
 /**
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the a file with fd with required format

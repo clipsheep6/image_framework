@@ -109,8 +109,8 @@ static int32_t DoStartPacking(std::shared_ptr<ImagePacker> &packer, struct Image
     PackOption option;
     option.format = args->inOpts->format;
     option.quality = args->inOpts->quality;
-    if (args->outBuffer != nullptr && args->bufferSize != nullptr && *(args->bufferSize) != SIZE_ZERO) {
-        return packer->StartPacking(args->outBuffer, *(args->bufferSize), option);
+    if (args->outData != nullptr && args->dataSize != nullptr && *(args->dataSize) != SIZE_ZERO) {
+        return packer->StartPacking(args->outData, *(args->dataSize), option);
     } else if (args->inNum0 > INVALID_FD) {
         return packer->StartPacking(args->inNum0, option);
     }
@@ -173,18 +173,18 @@ static int32_t DoNativePacking(struct ImagePackerArgs* args)
     }
     int64_t packedSize = SIZE_ZERO;
     res = nativeImagePacker->FinalizePacking(packedSize);
-    if (args->bufferSize != nullptr) {
-        *args->bufferSize = packedSize;
+    if (args->dataSize != nullptr) {
+        *args->dataSize = packedSize;
     }
     return res;
 }
-static int32_t ImagePackerNapiPackToBuffer(struct ImagePackerArgs* args)
+static int32_t ImagePackerNapiPackToData(struct ImagePackerArgs* args)
 {
     if (args == nullptr || args->inEnv == nullptr ||
         args->inNapi == nullptr || args->inVal == nullptr ||
-        args->inOpts == nullptr || args->outBuffer == nullptr ||
-        args->bufferSize == nullptr || *(args->bufferSize) == SIZE_ZERO) {
-        HiLog::Error(LABEL, "ImagePackerNapiPackToBuffer bad parameter");
+        args->inOpts == nullptr || args->outData == nullptr ||
+        args->dataSize == nullptr || *(args->dataSize) == SIZE_ZERO) {
+        HiLog::Error(LABEL, "ImagePackerNapiPackToData bad parameter");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     return DoNativePacking(args);
@@ -203,7 +203,7 @@ static int32_t ImagePackerNapiPackToFile(struct ImagePackerArgs* args)
 
 static const std::map<int32_t, ImagePackerNativeFunc> g_CtxFunctions = {
     {ENV_FUNC_IMAGEPACKER_CREATE, ImagePackerNapiCreate},
-    {CTX_FUNC_IMAGEPACKER_PACKTOBUFFER, ImagePackerNapiPackToBuffer},
+    {CTX_FUNC_IMAGEPACKER_PACKTODATA, ImagePackerNapiPackToData},
     {CTX_FUNC_IMAGEPACKER_PACKTOFILE, ImagePackerNapiPackToFile},
 };
 
