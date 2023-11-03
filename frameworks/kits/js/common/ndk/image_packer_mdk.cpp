@@ -53,7 +53,7 @@ int32_t OH_ImagePacker_PackToData(ImagePackerNative* native, napi_value source,
     struct OhosImagePackerOpts* opts, uint8_t* outData, size_t* size)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_INVALID_PARAMETER;
     }
     ImagePackerArgs args;
     args.inEnv = native->env;
@@ -70,7 +70,7 @@ int32_t OH_ImagePacker_PackToFile(ImagePackerNative* native, napi_value source,
     struct OhosImagePackerOpts* opts, int fd)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_INVALID_PARAMETER;
     }
     ImagePackerArgs args;
     args.inEnv = native->env;
