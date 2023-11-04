@@ -32,6 +32,7 @@ public:
     uint32_t StartEncode(OutputDataStream &outputStream, PlEncodeOptions &option) override;
     uint32_t AddImage(Media::PixelMap &pixelMap) override;
     uint32_t FinalizeEncode() override;
+    uint32_t ASTCEncode();
 
 private:
     DISALLOW_COPY_AND_MOVE(ExtEncoder);
