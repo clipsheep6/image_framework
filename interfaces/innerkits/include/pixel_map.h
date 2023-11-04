@@ -128,6 +128,7 @@ public:
     NATIVEEXPORT virtual void *GetFd() const;
     NATIVEEXPORT virtual void SetFreePixelMapProc(CustomFreePixelMap func);
     NATIVEEXPORT virtual void SetTransformered(bool isTransformered);
+    static void *AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId);
     NATIVEEXPORT void SetPixelMapError(uint32_t code, std::string info)
     {
         errorCode = code;
@@ -260,7 +261,6 @@ private:
                           const uint32_t &stride, const Rect &region);
     void ReleaseSharedMemory(void *addr, void *context, uint32_t size);
     static void ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataSize, void **buffer);
-    static void *AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId);
     bool WriteInfoToParcel(Parcel &parcel) const;
     uint32_t SetRowDataSizeForImageInfo(ImageInfo info);
     void SetEditable(bool editable)

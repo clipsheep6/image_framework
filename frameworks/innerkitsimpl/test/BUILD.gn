@@ -319,6 +319,7 @@ ohos_unittest("imagecolorspacetest") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
+    "//foundation/multimedia/image_framework/interfaces/innerkits/astc",
     "//foundation/multimedia/image_framework/plugins/manager/include",
     "//foundation/multimedia/utils/include",
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
@@ -336,6 +337,7 @@ ohos_unittest("imagecolorspacetest") {
   deps = [
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "//foundation/multimedia/image_framework/interfaces/innerkits/astc:astc_util",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]

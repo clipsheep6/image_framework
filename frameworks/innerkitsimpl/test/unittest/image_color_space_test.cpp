@@ -29,6 +29,8 @@
 #include "media_errors.h"
 #include "pixel_map.h"
 #include "image_source_util.h"
+#include "pixel_astc.h"
+#include "astc_utils.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -41,6 +43,10 @@ static const std::string IMAGE_INPUT_JPEG_INCLUDE_ICC_PATH = "/data/local/tmp/im
 static const std::string IMAGE_OUTPUT_JPEG_INCLUDE_ICC_PATH = "/data/test/test_jpeg_include_icc_profile.jpg";
 static const std::string IMAGE_INPUT_JPEG_NOT_INCLUDE_ICC_PATH = "/data/local/tmp/image/test.jpg";
 static const std::string IMAGE_OUTPUT_JPEG_NOT_INCLUDE_ICC_PATH = "/data/test/test_jpeg_no_include_icc_profile.jpg";
+static const std::string IMAGE_INPUT_ASTC_PATH = "/data/local/tmp/image/astc_input.astc";
+static const std::string IMAGE_INPUT_ASTC_PATH2 = "/data/local/tmp/image/astc_input2.astc";
+static const std::string IMAGE_OUTPUT_ASTCTOJPG_PATH = "/data/test/test_file.jpg";
+static const std::string IMAGE_OUTPUT_ASTCTOJPG_PATH = "/data/test/test_file2.jpg";
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL_TEST = {
     LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageColorSpaceTest"
@@ -260,6 +266,63 @@ HWTEST_F(ImageColorSpaceTest, JpegColorSpaceEncode002, TestSize.Level3)
     OHOS::ColorManager::ColorSpace grColorSpaceTwo = pixelMapTwo->InnerGetGrColorSpace();
     EXPECT_EQ(grColorSpaceTwo.ToSkColorSpace(), nullptr);
 #endif
+}
+
+/**
+ * @tc.name: astcToPixelmapTest1
+ * @tc.desc: pixelAstc to pixelmap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageColorSpaceTest, astcToPixelmapTest1, TestSize.Level3)
+{
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+        ImageSource::CreateImageSource(IMAGE_INPUT_ASTC_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelAstc = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelAstc.get(), nullptr);
+
+    auto pixelmap = AstcUtils::CreatePixelMapFromASTC(std::move(pixelAstc), errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelmap.get(), nullptr);
+    if (pixelmap != nullptr) {
+        int64_t packSize = OHOS::ImageSourceUtil::PackImage(IMAGE_OUTPUT_ASTCTOJPG_PATH,
+                           std::make_unique<Media::PixelMap>(*(pixelmap.get())));
+        ASSERT_NE(packSize, 0);
+    } else {
+        HiLog::Debug(LABEL_TEST, "CreatePixelmapFromASTC failed");
+    }
+}
+
+/**
+ * @tc.name: astcToPixelmapTest2
+ * @tc.desc: pixelAstc to pixelmap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageColorSpaceTest, astcToPixelmapTest2, TestSize.Level3)
+{
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+        ImageSource::CreateImageSource(IMAGE_INPUT_ASTC_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    auto pixelmap = AstcUtils::CreatePixelMapFromASTC(std::move(imageSource), errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelmap.get(), nullptr);
+    if (pixelmap != nullptr) {
+        int64_t packSize = OHOS::ImageSourceUtil::PackImage(IMAGE_OUTPUT_ASTCTOJPG_PATH2,
+                           std::make_unique<Media::PixelMap>(*(pixelmap.get())));
+        ASSERT_NE(packSize, 0);
+    } else {
+        HiLog::Debug(LABEL_TEST, "CreatePixelmapFromASTC by ImageSource failed");
+    }
 }
 } // namespace Multimedia
 } // namespace OHOS
