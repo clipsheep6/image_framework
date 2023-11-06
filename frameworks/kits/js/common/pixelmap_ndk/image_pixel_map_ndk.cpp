@@ -14,18 +14,14 @@
  */
 
 #include "image_pixel_map_mdk.h"
-
-#include "common_utils.h"
 #include "image_pixel_map_napi_kits.h"
+#include "native_pixel_map.h"
+#include "common_utils.h"
 
 using namespace OHOS::Media;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct NativePixelMap_ {
-    PixelMapNapi* napi = nullptr;
-};
 
 MIDK_EXPORT
 NativePixelMap* OH_PixelMap_InitNativePixelMap(napi_env env, napi_value source)

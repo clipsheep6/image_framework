@@ -23,6 +23,7 @@ ohos_shared_library("pixelmap_ndk") {
   }
   include_dirs = [
     "include",
+    "native",
     "//foundation/arkui/napi/interfaces/inner_api",
     "//foundation/arkui/napi/interfaces/kits",
     "//third_party/node/src",
