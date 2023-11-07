@@ -19,12 +19,42 @@
 #include <vector>
 
 #include "abs_image_encoder.h"
+#include "astcenc.h"
 #include "hilog/log.h"
 #include "log_tags.h"
 #include "plugin_class_base.h"
 
 namespace OHOS {
 namespace ImagePlugin {
+typedef struct TextureEncodeOptionsType {
+    int32_t width_;
+    int32_t height_;
+    uint8_t blockX_;
+    uint8_t blockY_;
+} TextureEncodeOptions;
+
+struct astc_header {
+    uint8_t magic[4];
+    uint8_t block_x;
+    uint8_t block_y;
+    uint8_t block_z;
+    uint8_t dim_x[3];
+    uint8_t dim_y[3];
+    uint8_t dim_z[3];
+};
+
+typedef struct AstcEncoderInfo {
+    astc_header head;
+    astcenc_config config;
+    astcenc_profile profile;
+    astcenc_context* codec_context;
+    astcenc_image image_;
+    astcenc_swizzle swizzle_;
+    uint8_t* data_out_;
+    size_t data_len_;
+    astcenc_error error_;
+} AstcEncoder;
+
 class ExtEncoder : public AbsImageEncoder, public OHOS::MultimediaPlugin::PluginClassBase {
 public:
     ExtEncoder();
@@ -32,6 +62,7 @@ public:
     uint32_t StartEncode(OutputDataStream &outputStream, PlEncodeOptions &option) override;
     uint32_t AddImage(Media::PixelMap &pixelMap) override;
     uint32_t FinalizeEncode() override;
+    uint32_t ASTCEncode();
 
 private:
     DISALLOW_COPY_AND_MOVE(ExtEncoder);
