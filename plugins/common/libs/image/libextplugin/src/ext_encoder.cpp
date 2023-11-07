@@ -31,6 +31,11 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
+#include "astcenc.h"
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <chrono>
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -39,6 +44,10 @@ using namespace Media;
 namespace {
     constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "ExtEncoder"};
 }
+
+#define TEXTURE_HEAD_BYTES (16)
+static const uint32_t ASTC_MAGIC_ID = 0x5CA1AB13;
+
 static const std::map<SkEncodedImageFormat, std::string> FORMAT_NAME = {
     {SkEncodedImageFormat::kBMP, "image/bmp"},
     {SkEncodedImageFormat::kGIF, "image/gif"},
@@ -137,10 +146,18 @@ static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
     return res;
 }
 
+bool IsAstc(const std::string &format)
+{
+    return format.find("image/astc") == 0;
+}
+
 uint32_t ExtEncoder::FinalizeEncode()
 {
     if (pixelmap_ == nullptr || output_ == nullptr) {
         return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (IsAstc(opts_.format)) {
+        return ASTCEncoder();
     }
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
@@ -163,6 +180,121 @@ uint32_t ExtEncoder::FinalizeEncode()
         HiLog::Error(LABEL, "ExtEncoder::FinalizeEncode encode failed");
         return ERR_IMAGE_ENCODE_FAILED;
     }
+    return SUCCESS;
+}
+
+// test ASTCEncoder
+void GenAstcHeader(astc_header &hdr, astcenc_image img, TextureEncodeOptions *encodeParams)
+{
+    hdr.magic[0] = ASTC_MAGIC_ID & 0xFF;
+    hdr.magic[1] = (ASTC_MAGIC_ID >> 8) & 0xFF;
+    hdr.magic[2] = (ASTC_MAGIC_ID >> 16) & 0xFF;
+    hdr.magic[3] = (ASTC_MAGIC_ID >> 24) & 0xFF;
+
+    hdr.block_x = static_cast<uint8_t>(encodeParams->blockX_);
+    hdr.block_y = static_cast<uint8_t>(encodeParams->blockY_);
+    hdr.block_z = 1;
+
+    hdr.dim_x[0] = img.dim_x & 0xFF;
+    hdr.dim_x[1] = (img.dim_x >> 8) & 0xFF;
+    hdr.dim_x[2] = (img.dim_x >> 16) & 0xFF;
+
+    hdr.dim_y[0] = img.dim_x & 0xFF;
+    hdr.dim_y[1] = (img.dim_x >> 8) & 0xFF;
+    hdr.dim_y[2] = (img.dim_x >> 16) & 0xFF;
+
+    hdr.dim_z[0] = img.dim_x & 0xFF;
+    hdr.dim_z[1] = (img.dim_x >> 8) & 0xFF;
+    hdr.dim_z[2] = (img.dim_x >> 16) & 0xFF;
+}
+
+int InitAstcencConfig(astcenc_profile profile, TextureEncodeOptions *option, astcenc_config& config)
+{
+    unsigned int block_x = option->blockX_;
+    unsigned int block_y = option->blockY_;
+    unsigned int block_z = 1;
+
+    float quality = ASTCENC_PRE_FAST;
+    unsigned int flags = 0;
+    astcenc_error status = astcenc_config_init(profile, block_x, block_y,
+        block_z, quality, flags, &config);
+    if (status == ASTCENC_ERR_BAD_BLOCK_SIZE)
+    {
+        HiLog::Debug(LABEL_TEST, "ERROR: block size is invalid");
+        return 1;
+    }
+    else if (status == ASTCENC_ERR_BAD_CPU_FLOAT)
+    {
+        HiLog::Debug(LABEL_TEST, "ERROR: astcenc must not be compiled with fast-math");
+        return 1;
+    }
+    else if (status != ASTCENC_SUCCESS)
+    {
+        HiLog::Debug(LABEL_TEST, "ERROR: config failed");
+        return 1;
+    }
+    return 0;
+}
+
+void extractDimensions(std::string &format, TextureEncodeOptions &param)
+{
+    std::size_t slashPos = format.find('/');
+    if (slashPos != std::string::npos) {
+        std::string dimensions = format.substr(slashPos + 1);
+        std::size_t starPos = dimensions.find('*');
+        if (starPos != std::string::npos) {
+            std::string widthStr = dimensions.substr(0, starPos);
+            std::string heightStr = dimensions.substr(starPos + 1);
+
+            param.blockX_ = static_cast<uint8_t>(std::stoi(widthStr));
+            param.blockY_ = static_cast<uint8_t>(std::stoi(heightStr));
+        }
+    }
+}
+
+uint32_t ExtEncoder::ASTCEncoder()
+{
+    ImageInfo imageInfo;
+    pixelmap_->GetImageInfo(imageInfo);
+    TextureEncodeOptions param;
+    param.width_ = imageInfo.size.width;
+    param.height_ = imageInfo.size.height;
+    extractDimensions(opts_.format, param);
+
+    size_t requestSize;
+    output_->GetCapicity(requestSize);
+    uint8_t *inRGBA = (uint8_t*)malloc(requestSize);
+    pixelmap_->readPixels(requestSize, inRGBA);
+
+
+    // int fileSize = pixelmap_->GetByteCount();
+    // uint8_t *inRGBA = (uint8_t*)malloc(fileSize);
+    // pixelmap_->readPixels(fileSize, inRGBA);
+
+    AstcEncoder work;
+    InitAstcencConfig(work.profile, &param, work.config);
+    astcenc_context_alloc(&work.config, 1, &work.codec_context);
+    work.swizzle_ = {ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A};
+    work.image_.dim_x = param.width_;
+    work.image_.dim_y = param.height_;
+    work.image_.dim_z = 1;
+    work.image_.data_type = ASTCENC_TYPE_U8;
+    work.image_.data = (void **)malloc(sizeof(void*) * work.image_.dim_z);
+    GenAstcHeader(work.head, work.image_, &param);
+
+    work.image_.data[0] = inRGBA;
+    int outSize = ((param.width_ + param.blockX_ - 1) / param.blockX_) *
+        ((param.height_ + param.blockY_ -1) / param.blockY_) * TEXTURE_HEAD_BYTES + TEXTURE_HEAD_BYTES;
+
+    memcpy_s(output_->GetAddr(), sizeof(astc_header), &work.head, sizeof(astc_header));
+    work.data_out_ = output_->GetAddr() + TEXTURE_HEAD_BYTES;
+    work.data_len_ = outSize - TEXTURE_HEAD_BYTES;
+    work.error_ = astcenc_compress_image(work.codec_context, &work.image_, &work.swizzle_, work.data_out_, work.data_len_, 0);
+    if (ASTCENC_SUCCESS != work.error_) {
+        HiLog::Error(LABEL_TEST, "astc compress failed");
+        return ERROR;
+    }
+    output_->SetOffSet(outSize);
     return SUCCESS;
 }
 } // namespace ImagePlugin
