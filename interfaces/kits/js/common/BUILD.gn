@@ -241,7 +241,7 @@ if (use_clang_ios) {
       "c_utils:utils",
       "graphic_2d:color_manager",
       "graphic_2d:color_space_object_convertor",
-      "graphic_2d:surface",
+      "graphic_surface:surface",
       "hichecker:libhichecker",
       "hitrace:hitrace_meter",
       "ipc:ipc_napi_common",
