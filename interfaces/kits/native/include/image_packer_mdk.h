@@ -21,7 +21,7 @@
  *
  * The encoding image data module part of image module.
  * It used to pack pixel data infomation into a target like data or file.
- * 
+ *
  * @since 11
  * @version 4.1
  */
