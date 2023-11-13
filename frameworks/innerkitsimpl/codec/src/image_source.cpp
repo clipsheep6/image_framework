@@ -38,6 +38,8 @@
 #include "post_proc.h"
 #include "securec.h"
 #include "source_stream.h"
+#include "texture_type.h"
+#include "astc_codec.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -120,6 +122,8 @@ static const uint8_t NUM_4 = 4;
 static const uint8_t NUM_6 = 6;
 static const uint8_t NUM_8 = 8;
 static const uint8_t NUM_16 = 16;
+static const uint8_t NUM_48 = 48;
+static const uint8_t NUM_52 = 52;
 static const int DMA_SIZE = 512;
 static const uint32_t ASTC_MAGIC_ID = 0x5CA1AB13;
 static const size_t ASTC_HEADER_SIZE = 16;
@@ -1968,7 +1972,7 @@ bool ImageSource::IsASTC(const uint8_t *fileData, size_t fileSize)
     return magicVal == ASTC_MAGIC_ID;
 }
 
-bool ImageSource::GetImageInfoForASTC(ImageInfo& imageInfo)
+bool ImageSource::GetImageInfoForASTC(ImageInfo& imageInfo, int32_t& pixelmapBytes)
 {
     ASTCInfo astcInfo;
     if (!GetASTCInfo(sourceStreamPtr_->GetDataPtr(), sourceStreamPtr_->GetStreamSize(), astcInfo)) {
@@ -1979,21 +1983,61 @@ bool ImageSource::GetImageInfoForASTC(ImageInfo& imageInfo)
     switch (astcInfo.blockFootprint.width) {
         case NUM_4: {
             imageInfo.pixelFormat = PixelFormat::ASTC_4x4;
+            pixelmapBytes = std::ceil(imageInfo.size.width / 4.0f) * std::ceil(imageInfo.size.height / 4.0f) * NUM_16;
             break;
         }
         case NUM_6: {
             imageInfo.pixelFormat = PixelFormat::ASTC_6x6;
+            pixelmapBytes = std::ceil(imageInfo.size.width / 6.0f) * std::ceil(imageInfo.size.height / 6.0f) * NUM_16;
             break;
         }
         case NUM_8: {
             imageInfo.pixelFormat = PixelFormat::ASTC_8x8;
+            pixelmapBytes = std::ceil(imageInfo.size.width / 8.0f) * std::ceil(imageInfo.size.height / 8.0f) * NUM_16;
             break;
         }
         default:
             IMAGE_LOGE("[ImageSource]GetImageInfoForASTC pixelFormat is unknown.");
             imageInfo.pixelFormat = PixelFormat::UNKNOWN;
+            pixelmapBytes = 0;
     }
     return true;
+}
+
+uint32_t ImageSource::SetColorSpaceForASTC(size_t fileSize, PixelAstc &pixelAstc)
+{
+    if (sourceStreamPtr_ == nullptr) {
+        IMAGE_LOGE("[ImageSource] astc image data failed.");
+        return ERROR;
+    }
+    uint8_t* inputDataAddr = sourceStreamPtr_->GetDataPtr() + fileSize;
+    if (inputDataAddr == nullptr) {
+        IMAGE_LOGE("[ImageSource] get astc image colorspace failed.");
+        return ERROR;
+    }
+    Uint32ToUint8 ReadData_csName;
+    for (int i = 0; i < NUM_4; i++) {
+        *(ReadData_csName.u + i) = *(inputDataAddr + i);
+    }
+    FloatToUint8_t ReadData_Matrix;
+    for (int i = 0; i < NUM_48; i ++) {
+        *(ReadData_Matrix.u + i) = *(inputDataAddr + i + NUM_4);
+    }
+    ColorManager::Matrix3x3 toXYZ;
+    int32_t num = 0;
+    for (int32_t i = 0; i < NUM_3; ++i) {
+        for (int32_t j = 0; j < NUM_3; ++j) {
+            toXYZ[i][j] = ReadData_Matrix.f[num++];
+        }
+    }
+    std::array<float, DIMES_2> whitePoint;
+    whitePoint[0] = ReadData_Matrix.f[num++];
+    whitePoint[1] = ReadData_Matrix.f[num++];
+    float gamma = ReadData_Matrix.f[num];
+
+    OHOS::ColorManager::ColorSpace grColorSpace(toXYZ, whitePoint, gamma);
+    pixelAstc.InnerSetColorSpaceForAstc(grColorSpace);
+    return SUCCESS;
 }
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
@@ -2008,7 +2052,8 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
     unique_ptr<PixelAstc> pixelAstc = make_unique<PixelAstc>();
 
     ImageInfo info;
-    if (!GetImageInfoForASTC(info)) {
+    int32_t pixelmapBytes = 0;
+    if (!GetImageInfoForASTC(info, pixelmapBytes)) {
         IMAGE_LOGE("[ImageSource] get astc image info failed.");
         return nullptr;
     }
@@ -2019,6 +2064,15 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
     }
     pixelAstc->SetEditable(false);
     size_t fileSize = sourceStreamPtr_->GetStreamSize();
+
+    if (fileSize - pixelmapBytes - NUM_16 == NUM_52) {
+        fileSize -= NUM_52;
+        if (SetColorSpaceForASTC(fileSize, *(pixelAstc.get())) != SUCCESS) {
+            IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
+            return nullptr;
+        }
+    }
+
     if (sourceStreamPtr_->GetStreamType() == ImagePlugin::FILE_STREAM_TYPE) {
         void *fdBuffer = new int32_t();
         *static_cast<int32_t *>(fdBuffer) = static_cast<FileSourceStream *>(sourceStreamPtr_.get())->GetMMapFd();

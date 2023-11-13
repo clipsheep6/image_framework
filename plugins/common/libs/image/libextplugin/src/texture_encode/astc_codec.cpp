@@ -33,9 +33,12 @@ constexpr uint8_t ASTC_MASK = 0xFF;
 constexpr uint8_t ASTC_NUM_1 = 1;
 constexpr uint8_t ASTC_NUM_2 = 2;
 constexpr uint8_t ASTC_NUM_3 = 3;
+constexpr uint8_t ASTC_NUM_4 = 4;
 constexpr uint8_t ASTC_NUM_8 = 8;
 constexpr uint8_t ASTC_NUM_16 = 16;
 constexpr uint8_t ASTC_NUM_24 = 24;
+constexpr uint8_t ASTC_NUM_48 = 48;
+constexpr uint8_t ASTC_NUM_52 = 52;
 static const uint32_t ASTC_MAGIC_ID = 0x5CA1AB13;
 
 uint32_t AstcCodec::SetAstcEncode(OutputDataStream* outputStream, PlEncodeOptions &option, Media::PixelMap* pixelMap)
@@ -123,10 +126,46 @@ void extractDimensions(std::string &format, TextureEncodeOptions &param)
     }
 }
 
+uint32_t AstcCodec::SetColorSpace(int32_t outSize)
+{
+    OHOS::ColorManager::ColorSpace cs = astcPixelMap_->InnerGetGrColorSpace();
+    ColorManager::ColorSpaceName colorSpaceName = cs.GetColorSpaceName();
+    ColorManager::Matrix3x3 toXYZ = cs.GetRGBToXYZ();
+    std::array<float, DIMES_2> whitePoint = cs.GetWhitePoint();
+    float transferFuncg = cs.GetGamma();
+
+    uint8_t* outColorSpaceAddr = astcOutput_->GetAddr() + outSize;
+    if (outColorSpaceAddr == nullptr) {
+        HiLog::Error(LABEL, "ERROR: get outputStream failed");
+        return ERROR;
+    }
+    Uint32ToUint8 csNameData;
+    csNameData.csName = colorSpaceName;
+    for (int i = 0; i < ASTC_NUM_4; i++) {
+        *(outColorSpaceAddr + i) = *(csNameData.u + i);
+    }
+    FloatToUint8_t FData;
+    int32_t num = 0;
+    for (int32_t i = 0; i < ASTC_NUM_3; ++i) {
+        for (int32_t j = 0; j < ASTC_NUM_3; ++j) {
+            FData.f[num++] = toXYZ[i][j];
+        }
+    }
+    FData.f[num++] = whitePoint[0];
+    FData.f[num++] = whitePoint[1];
+    FData.f[num] = transferFuncg;
+
+    for (int i = 0; i < ASTC_NUM_48; i++) {
+        *(outColorSpaceAddr + i + ASTC_NUM_4) = *(FData.u + i);
+    }
+    return SUCCESS;
+}
+
 uint32_t AstcCodec::ASTCEncode()
 {
     ImageInfo imageInfo;
     astcPixelMap_->GetImageInfo(imageInfo);
+    
     TextureEncodeOptions param;
     param.width_ = imageInfo.size.width;
     param.height_ = imageInfo.size.height;
@@ -150,7 +189,7 @@ uint32_t AstcCodec::ASTCEncode()
     }
 
     work.image_.data[0] = static_cast<uint8_t *>(astcPixelMap_->GetWritablePixels());
-    int outSize = ((param.width_ + param.blockX_ - 1) / param.blockX_) *
+    int32_t outSize = ((param.width_ + param.blockX_ - 1) / param.blockX_) *
         ((param.height_ + param.blockY_ -1) / param.blockY_) * TEXTURE_HEAD_BYTES + TEXTURE_HEAD_BYTES;
 
     errno_t ret = memcpy_s(astcOutput_->GetAddr(), sizeof(astc_header), &work.head, sizeof(astc_header));
@@ -166,7 +205,13 @@ uint32_t AstcCodec::ASTCEncode()
         HiLog::Error(LABEL, "astc compress failed");
         return ERROR;
     }
-    astcOutput_->SetOffset(outSize);
+
+    if (SetColorSpace(outSize) != SUCCESS) {
+        HiLog::Error(LABEL, "astc set colorSpace failed");
+        return ERROR;
+    }
+    
+    astcOutput_->SetOffset(outSize + ASTC_NUM_52);
     return SUCCESS;
 }
 } // namespace ImagePlugin
