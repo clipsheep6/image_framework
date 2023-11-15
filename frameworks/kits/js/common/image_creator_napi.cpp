@@ -920,5 +920,41 @@ void ImageCreatorNapi::release()
         isRelease = true;
     }
 }
+int32_t ImageCreatorNapi::CreateImageCreatorJsObject(napi_env env, struct ImageCreatorNapiArgs args,
+    napi_value* res)
+{
+    if (env == nullptr || res == nullptr) {
+        IMAGE_ERR("CreateImageCreatorJsObject invalid parameter");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    napi_value constructor = nullptr;
+    if (napi_get_reference_value(env, sConstructor_, &constructor) != napi_ok) {
+        IMAGE_ERR("napi_get_reference_value failed");
+        return ERR_IMAGE_INIT_ABNORMAL;
+    }
+    auto native = ImageCreator::CreateImageCreator(args.width, args.height, args.format, args.capicity);
+    if (native == nullptr) {
+        IMAGE_ERR("CreateImageCreator failed");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (napi_new_instance(env, constructor, 0, nullptr, res) != napi_ok) {
+        IMAGE_ERR("New instance could not be obtained");
+        return ERR_IMAGE_INIT_ABNORMAL;
+    }
+
+    std::unique_ptr<ImageCreatorNapi> napi = nullptr;
+    if (napi_unwrap(env, *res, reinterpret_cast<void**>(&napi)) != napi_ok || napi == nullptr) {
+        IMAGE_ERR("unwrap native point failed");
+        return ERR_IMAGE_INIT_ABNORMAL;
+    }
+    napi->imageCreator_ = native;
+    napi.release();
+    return SUCCESS;
+}
+
+std::shared_ptr<ImageCreator> ImageCreatorNapi::GetNative(ImageCreatorNapi &napi)
+{
+    return napi.imageCreator_;
+}
 }  // namespace Media
 }  // namespace OHOS

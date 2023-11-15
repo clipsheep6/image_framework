@@ -1,0 +1,26 @@
+[
+    {
+        "name": "OH_Image_Creator_Create"
+    },
+    {
+        "name": "OH_Image_Creator_InitNative"
+    },
+    {
+        "name": "OH_Image_Creator_Dequeue"
+    },
+    {
+        "name": "OH_Image_Creator_Queue"
+    },
+    {
+        "name": "OH_Image_Creator_On"
+    },
+    {
+        "name": "OH_Image_Creator_GetCapacity"
+    },
+    {
+        "name": "OH_Image_Creator_GetFormat"
+    },
+    {
+        "name": "OH_Image_Creator_Release"
+    }
+]
