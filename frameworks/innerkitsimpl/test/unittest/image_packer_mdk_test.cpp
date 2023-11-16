@@ -41,7 +41,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Create, TestSize.Level3)
     napi_env env = nullptr;
     napi_value* packer = nullptr;
     int32_t ret = OH_ImagePacker_Create(env, packer);
-    ASSERT_EQ(ret, IMAGE_RESULT_INVALID_PARAMETER);
+    ASSERT_EQ(ret, IMAGE_RESULT_BAD_PARAMETER);
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_Create end";
 }
 
@@ -55,7 +55,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_InitNative start";
     napi_env env = nullptr;
     napi_value packer = nullptr;
-    ImagePackerNative*  ret = OH_ImagePacker_InitNative(env, packer);
+    ImagePacker_Native*  ret = OH_ImagePacker_InitNative(env, packer);
     ASSERT_EQ(ret, nullptr);
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_InitNative end";
 }
@@ -68,9 +68,9 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_InitNative, TestSize.Level3)
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToData, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToData start";
-    ImagePackerNative* native = nullptr;
+    ImagePacker_Native* native = nullptr;
     napi_value source = nullptr;
-    struct OhosImagePackerOpts opts;
+    ImagePacker_Opts opts;
     uint8_t* outData = nullptr;
     size_t size = TEST_SIZE;
     int32_t ret = OH_ImagePacker_PackToData(native, source, &opts, outData, &size);
@@ -86,9 +86,9 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToData, TestSize.Level3)
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToFile, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToFile start";
-    ImagePackerNative* native = nullptr;
+    ImagePacker_Native* native = nullptr;
     napi_value source = nullptr;
-    struct OhosImagePackerOpts opts;
+    ImagePacker_Opts opts;
     int fd = TEST_FD;
     int32_t ret = OH_ImagePacker_PackToFile(native, source, &opts, fd);
     ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
@@ -103,7 +103,7 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToFile, TestSize.Level3)
 HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_Release, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_Release start";
-    ImagePackerNative* native = nullptr;
+    ImagePacker_Native* native = nullptr;
     int32_t ret = OH_ImagePacker_Release(native);
     ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
     GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_Release end";

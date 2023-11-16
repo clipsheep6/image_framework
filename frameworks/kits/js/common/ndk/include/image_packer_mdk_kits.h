@@ -31,7 +31,7 @@ struct ImagePackerArgs {
     ImagePackerNapi* inNapi;
     int32_t inNum0 = -1;
     napi_value inVal;
-    struct OhosImagePackerOpts* inOpts;
+    ImagePacker_Opts* inOpts;
     uint8_t* outData;
     size_t* dataSize;
     napi_value* outVal;

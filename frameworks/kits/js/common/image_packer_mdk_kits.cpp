@@ -79,12 +79,12 @@ static int32_t ImagePackerNapiCreate(struct ImagePackerArgs* args)
 {
     if (args == nullptr || args->inEnv == nullptr || args->outVal == nullptr) {
         HiLog::Error(LABEL, "ImagePackerNapiCreate bad parameter");
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     *(args->outVal) = ImagePackerNapi::CreateImagePacker(args->inEnv, nullptr);
     if (*(args->outVal) == nullptr) {
         HiLog::Error(LABEL, "ImageSourceNapiCreate native create failed");
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     HiLog::Debug(LABEL, "ImagePackerNapiCreate success");
     return IMAGE_RESULT_SUCCESS;
@@ -103,7 +103,7 @@ static std::shared_ptr<ImageSource> GetNativeImageSouce(napi_env env, napi_value
 static int32_t DoStartPacking(std::shared_ptr<ImagePacker> &packer, struct ImagePackerArgs* args)
 {
     if (args == nullptr || args->inOpts == nullptr) {
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
 
     PackOption option;
@@ -115,14 +115,14 @@ static int32_t DoStartPacking(std::shared_ptr<ImagePacker> &packer, struct Image
         return packer->StartPacking(args->inNum0, option);
     }
     HiLog::Error(LABEL, "DoNativePacking StartPacking failed");
-    return IMAGE_RESULT_INVALID_PARAMETER;
+    return IMAGE_RESULT_BAD_PARAMETER;
 }
 
 static int32_t DoAddImage(std::shared_ptr<ImagePacker> &packer,
     PackingSourceType type, struct ImagePackerArgs* args)
 {
     if (args == nullptr || args->inOpts == nullptr) {
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
 
     if (type == PackingSourceType::TYPE_IMAGE_SOURCE) {
@@ -131,7 +131,7 @@ static int32_t DoAddImage(std::shared_ptr<ImagePacker> &packer,
             return packer->AddImage(*image);
         } else {
             HiLog::Error(LABEL, "DoNativePacking get image source native failed");
-            return IMAGE_RESULT_INVALID_PARAMETER;
+            return IMAGE_RESULT_BAD_PARAMETER;
         }
     } else if (type == PackingSourceType::TYPE_PIXEL_MAP) {
         auto pixel = PixelMapNapi::GetPixelMap(args->inEnv, args->inVal);
@@ -139,27 +139,27 @@ static int32_t DoAddImage(std::shared_ptr<ImagePacker> &packer,
             return packer->AddImage(*pixel);
         } else {
             HiLog::Error(LABEL, "DoNativePacking get pixelmap native failed");
-            return IMAGE_RESULT_INVALID_PARAMETER;
+            return IMAGE_RESULT_BAD_PARAMETER;
         }
     }
     HiLog::Error(LABEL, "DoNativePacking unsupport packing source type %{public}d", type);
-    return IMAGE_RESULT_INVALID_PARAMETER;
+    return IMAGE_RESULT_BAD_PARAMETER;
 }
 
 static int32_t DoNativePacking(struct ImagePackerArgs* args)
 {
     if (args == nullptr || args->inOpts == nullptr || args->inVal == nullptr) {
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
 
     auto type = ParserPackingArgumentType(args->inEnv, args->inVal);
     if (type == PackingSourceType::TYPE_INVALID) {
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     auto nativeImagePacker = ImagePackerNapi::GetNative(args->inNapi);
     if (nativeImagePacker == nullptr) {
         HiLog::Error(LABEL, "DoNativePacking get native failed");
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     int32_t res = DoStartPacking(nativeImagePacker, args);
     if (res != IMAGE_RESULT_SUCCESS) {
@@ -185,7 +185,7 @@ static int32_t ImagePackerNapiPackToData(struct ImagePackerArgs* args)
         args->inOpts == nullptr || args->outData == nullptr ||
         args->dataSize == nullptr || *(args->dataSize) == SIZE_ZERO) {
         HiLog::Error(LABEL, "ImagePackerNapiPackToData bad parameter");
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     return DoNativePacking(args);
 }
@@ -196,7 +196,7 @@ static int32_t ImagePackerNapiPackToFile(struct ImagePackerArgs* args)
         args->inNapi == nullptr || args->inVal == nullptr ||
         args->inOpts == nullptr || args->inNum0 <= INVALID_FD) {
         HiLog::Error(LABEL, "ImagePackerNapiPackToFile bad parameter");
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     return DoNativePacking(args);
 }
@@ -212,7 +212,7 @@ int32_t ImagePackerNativeCall(int32_t mode, struct ImagePackerArgs* args)
 {
     auto funcSearch = g_CtxFunctions.find(mode);
     if (funcSearch == g_CtxFunctions.end()) {
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     return funcSearch->second(args);
 }

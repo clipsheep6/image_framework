@@ -22,7 +22,7 @@ using namespace OHOS::Media;
 #ifdef __cplusplus
 extern "C" {
 #endif
-struct ImagePackerNative_ {
+struct ImagePacker_Native_ {
     ImagePackerNapi* napi = nullptr;
     napi_env env = nullptr;
 };
@@ -37,9 +37,9 @@ int32_t OH_ImagePacker_Create(napi_env env, napi_value *res)
 }
 
 MIDK_EXPORT
-ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer)
+ImagePacker_Native* OH_ImagePacker_InitNative(napi_env env, napi_value packer)
 {
-    std::unique_ptr<ImagePackerNative> result = std::make_unique<ImagePackerNative>();
+    std::unique_ptr<ImagePacker_Native> result = std::make_unique<ImagePacker_Native>();
     result->napi = ImagePackerNapi_Unwrap(env, packer);
     if (result->napi == nullptr) {
         return nullptr;
@@ -49,11 +49,11 @@ ImagePackerNative* OH_ImagePacker_InitNative(napi_env env, napi_value packer)
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_PackToData(ImagePackerNative* native, napi_value source,
-    struct OhosImagePackerOpts* opts, uint8_t* outData, size_t* size)
+int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
+    ImagePacker_Opts* opts, uint8_t* outData, size_t* size)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImagePackerArgs args;
     args.inEnv = native->env;
@@ -66,11 +66,11 @@ int32_t OH_ImagePacker_PackToData(ImagePackerNative* native, napi_value source,
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_PackToFile(ImagePackerNative* native, napi_value source,
-    struct OhosImagePackerOpts* opts, int fd)
+int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
+    ImagePacker_Opts* opts, int fd)
 {
     if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
-        return IMAGE_RESULT_INVALID_PARAMETER;
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImagePackerArgs args;
     args.inEnv = native->env;
@@ -82,7 +82,7 @@ int32_t OH_ImagePacker_PackToFile(ImagePackerNative* native, napi_value source,
 }
 
 MIDK_EXPORT
-int32_t OH_ImagePacker_Release(ImagePackerNative* native)
+int32_t OH_ImagePacker_Release(ImagePacker_Native* native)
 {
     if (native != nullptr) {
         delete native;
