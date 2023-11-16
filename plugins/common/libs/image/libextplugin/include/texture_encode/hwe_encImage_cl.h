@@ -24,13 +24,14 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/syscall.h>
-#include "hitrace_meter.h"
 #include <iostream>
+#include "hitrace_meter.h"
+
 
 #define USE_OPENCL_WRAPPER
-#include "opencl_wrapper.h"
 #include <fstream>
 #include <string>
+#include "opencl_wrapper.h"
 
 #define TEXTURE_HEAD_BYTES (16)
 #define MAGIC_FILE_CONSTANT (0x5CA1AB13)
@@ -49,7 +50,7 @@ size_t FileIOGetSize(FILE *fileIn);
 int32_t TidAffinityBindToCpu(unsigned int cpuID) ;
 
 class ImageCompressor {
-public :
+public:
     static std ::shared_ptr<ImageCompressor> GetInstance();
     static const int32_t releaseTimeMs = TIMEUS_UNIT;
     
@@ -58,7 +59,7 @@ public :
     bool TextureEncodeCL(uint8_t *data, int32_t stride, int32_t width, int32_t height, uint8_t *buffer);
     std::function<void()> ScheduleReleaseTask();
     void ReleaseResource();
-private :
+private:
     static std::shared_ptr<ImageCompressor> instance_;
     static std::mutex instanceMutex_;
     size_t sourceSize;
@@ -76,7 +77,7 @@ private :
 
     char* ReadSourceCode(const char* fileName);
     cl_program LoadShader(cl_context context);
-    void GenAstcHeader(uint8_t *buffer,uint8_t blockX,uint8_t blockY, uint32_t dimX, uint32_t dimY);
+    void GenAstcHeader(uint8_t *buffer, uint8_t blockX, uint8_t blockY, uint32_t dimX, uint32_t dimY);
 
     int32_t partitions_[PATITION_MODE_NUMS] = {
         2, 5, 9, 14, 16, 17, 20, 24, 25, 28, 36, 39, 43, 48, 49, 50, 51, 53, 55, 61, 72, 78, 107, 113, 116, 149, 156,
@@ -90,7 +91,7 @@ private :
 };
     void InitPartition();
     bool InitPartitionInfo(PartInfo *partInfo, int32_t partIndex, int32_t partCount);
-    std:: vector<PartInfo> parts_;
+    std::vector<PartInfo> parts_;
     std::string compileOption_;
 
     std::mutex recordsMutex_;
