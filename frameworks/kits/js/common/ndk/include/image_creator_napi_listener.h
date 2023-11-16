@@ -33,7 +33,7 @@ public:
             callBack();
         }
     }
-    OH_Image_Creator_On_Callback callBack = nullptr;
+    OH_ImageCreator_On_Callback callBack = nullptr;
 };
 } // namespace Media
 } // namespace OHOS

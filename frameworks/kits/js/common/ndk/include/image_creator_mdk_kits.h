@@ -31,8 +31,8 @@ struct ImageCreatorArgs {
     napi_env env;
     ImageCreatorNapi *napi;
     napi_value inVal;
-    struct OhosImageCreatorInfo inInfo;
-    OH_Image_Creator_On_Callback callback;
+    struct OhosImageCreatorOpts inOpts;
+    OH_ImageCreator_On_Callback callback;
     napi_value* outVal;
     int32_t* outNum;
 };

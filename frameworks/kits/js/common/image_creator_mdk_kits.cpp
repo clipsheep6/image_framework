@@ -87,10 +87,10 @@ static int32_t ImageCreatorNapiCreate(struct ImageCreatorArgs* args)
     }
 
     ImageCreatorNapiArgs napiArgs;
-    napiArgs.width = args->inInfo.width;
-    napiArgs.height = args->inInfo.height;
-    napiArgs.format = args->inInfo.format;
-    napiArgs.capicity = args->inInfo.capicity;
+    napiArgs.width = args->inOpts.width;
+    napiArgs.height = args->inOpts.height;
+    napiArgs.format = args->inOpts.format;
+    napiArgs.capicity = args->inOpts.capicity;
     return ImageCreatorNapi::CreateImageCreatorJsObject(args->env, napiArgs, args->outVal);
 }
 

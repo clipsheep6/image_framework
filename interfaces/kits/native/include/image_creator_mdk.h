@@ -19,6 +19,9 @@
  *
  * @brief Provides APIs for obtaining image data transfer to the native layer.
  *
+ * The channel for transmitting raw image data module part of image module.
+ * It provided a queue used to transmit raw image data from application layer
+ * to native layer components
  * 
  * @since 11
  * @version 4.1
@@ -29,6 +32,19 @@
  *
  * @brief Declares the APIs for obtaining image data transfer to the native layer.
  * 
+ * The image creator module used to obtain a image buffer and transmist raw image data
+ * via buffer to native layer components.
+ *
+ * The following steps are recommended for this process:
+ * Create an image creator object by calling OH_ImageCreator_Create function.
+ * And then covert the image creator object to ImageCreatorNative by OH_ImageCreator_InitNative.
+ * Next obtaining a image object by OH_ImageCreator_Dequeue and fill it with raw image data.
+ * Queueing the obtained image object by OH_ImageCreator_Queue and the native layer components can
+ * get the raw image data by graphic private inner apis
+ * We can register an event listener OH_ImageCreator_On_Callback by OH_ImageCreator_On listener any
+ * image data has been used.
+ * Finally, release the ImagePakcerNative by OH_ImageCreator_Release.
+ *
  * @library libimagendk.z.so
  * @library libimage_creator_ndk.z.so
  * @syscap SystemCapability.Multimedia.Image
@@ -46,16 +62,10 @@
 extern "C" {
 #endif
 
-/**
- * @brief Defines an <b>ImageCreator</b> object at the native layer.
- *
- * @since 11
- * @version 4.1
- */
 struct ImageCreatorNative_;
 
 /**
- * @brief Defines the data type name of a native image creator.
+ * @brief Defines an image creator object at the native layer for the image creator interface.
  *
  * @since 11
  * @version 4.1
@@ -63,161 +73,126 @@ struct ImageCreatorNative_;
 typedef struct ImageCreatorNative_ ImageCreatorNative;
 
 /**
- * @brief Defines the callbacks for images at the native layer.
+ * @brief Defines the callbacks for image creator at the native layer.
  *
  * @since 11
  * @version 4.1
  */
-typedef void (*OH_Image_Creator_On_Callback)(void);
+typedef void (*OH_ImageCreator_On_Callback)(void);
 
 /**
- * @brief Defines the information about an image creator.
+ * @brief Defines the image creator options.
  *
  * @since 11
  * @version 4.1
  */
-struct OhosImageCreatorInfo {
-    /* Default width of the image received by the consumer, in pixels. */
+struct OhosImageCreatorOpts {
+    /** Default width of the image creator, in pixels. */
     int32_t width;
-    /* Default height of the image received by the consumer, in pixels. */
+    /** Default height of the image creator, in pixels. */
     int32_t height;
-    /* Image format {@link OHOS_IMAGE_FORMAT_JPEG} created by using the creator. */
+    /** Image format created by using the creator. */
     int32_t format;
-    /* Maximum number of images that can be cached. */
+    /** Maximum number of images that can be cached. */
     int32_t capicity;
 };
 
 /**
  * @brief Creates an <b>ImageCreator</b> object at the application layer.
  *
- * @param env Indicates the NAPI environment pointer.
- * @param info Indicates the options for setting the <b>ImageCreator</b> object.
- * @param res Indicates the pointer to the <b>ImageCreator</b> object obtained.
+ * @param env Indicates a pointer to the JavaScript Native Interface (JNI) environment.
+ * @param opts Indicates the encoding {@link OhosImageCreatorOpts}.
+ * @param res Indicates a pointer to the <b>ImageCreator</b> object created at the JavaScript native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_GET_PARAMETER_FAILED - if Failed to obtain parameters for surface.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_CREATE_SURFACE_FAILED - if create surface failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_GRALLOC_BUFFER_FAILED - if surface gralloc buffer failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_GET_SURFACE_FAILED - if get sufrace failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_MEDIA_RTSP_SURFACE_UNSUPPORT - if media rtsp surface not support.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_UNSUPPORT - if image type unsupported.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_MEDIA_DATA_UNSUPPORT - if media type unsupported.
+ * returns {@link IRNdkErrCode} ERR_IMAGE_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} ERR_IMAGE_INIT_ABNORMAL - if environment init abnormal.
  * @since 11
  * @version 4.1
  */
-int32_t OH_Image_Creator_Create(napi_env env, struct OhosImageCreatorInfo info, napi_value* res);
+int32_t OH_ImageCreator_Create(napi_env env, struct OhosImageCreatorOpts opts, napi_value* res);
 
 /**
  * @brief Initializes an {@link ImageCreatorNative} object at the native layer
  * through an <b>ImageCreator</b> object at the application layer.
  *
- * @param env Indicates the NAPI environment pointer.
- * @param source Indicates an <b>ImageCreator</b> object.
+ * @param env Indicates a pointer to the JavaScript Native Interface (JNI) environment.
+ * @param source Indicates a JavaScript native API <b>ImageCreator</b> object.
  * @return Returns the pointer to the {@link ImageCreatorNative} object obtained if the operation is successful;
  * returns a null pointer otherwise.
- * @see {@link OH_Image_Creator_Release}
+ * @see {@link OH_ImageCreator_Release}
  * @since 11
  * @version 4.1
  */
-ImageCreatorNative* OH_Image_Creator_InitNative(napi_env env, napi_value source);
+ImageCreatorNative* OH_ImageCreator_InitNative(napi_env env, napi_value source);
 
 /**
- * @brief Obtains the creator ID through an {@link ImageCreatorNative} object.
+ * @brief Obtains an image object from queue through an {@link ImageCreatorNative} object.
  *
  * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
- * @param id Indicates the pointer to the buffer that stores the ID string obtained.
- * @param len Indicates the size of the buffer.
+ * @param image Indicates the pointer to the buffer that stores image object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_GET_PARAMETER_FAILED - if Failed to obtain parameters for surface.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_CREATE_SURFACE_FAILED - if create sufrace failed.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_GET_SURFACE_FAILED - if get sufrace failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_UNSUPPORT - if image type unsupported.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_MEDIA_DATA_UNSUPPORT - if media type unsupported.
- * @see ImageCreatorNative
+ * @see {@link OH_ImageCreator_Queue}
  * @since 11
  * @version 4.1
  */
-int32_t OH_Image_Creator_Dequeue(const ImageCreatorNative* native, napi_value* image);
+int32_t OH_ImageCreator_Dequeue(const ImageCreatorNative* native, napi_value* image);
 
 /**
- * @brief Obtains the latest image through an {@link ImageCreatorNative} object.
+ * @brief Queues an image object into queue through an {@link ImageCreatorNative} object.
  *
  * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
- * @param image Indicates the pointer to an <b>Image</b> object at the application layer.
+ * @param image Indicates image object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_GET_PARAMETER_FAILED - if Failed to obtain parameters for surface.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_CREATE_SURFACE_FAILED - if create surface failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_GRALLOC_BUFFER_FAILED - if surface gralloc buffer failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_GET_SURFACE_FAILED - if get sufrace failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_MEDIA_RTSP_SURFACE_UNSUPPORT - if media rtsp surface not support.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_UNSUPPORT - if image type unsupported.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_REQUEST_BUFFER_FAILED - if request Buffer failed.
- * @see ImageCreatorNative
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_MEDIA_DATA_UNSUPPORT - if invalid parameter.
+ * @see {@link OH_ImageCreator_Dequeue}
  * @since 11
  * @version 4.1
  */
-int32_t OH_Image_Creator_Queue(const ImageCreatorNative* native, napi_value image);
+int32_t OH_ImageCreator_Queue(const ImageCreatorNative* native, napi_value image);
 
 /**
- * @brief Registers an {@link OH_Image_Creator_On_Callback} callback event.
+ * @brief Registers an {@link OH_ImageCreator_On_Callback} callback event.
  *
- * This callback event is triggered whenever a new image is received.
+ * This callback event is triggered whenever an image is release by consumer release surface.
  *
  * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
- * @param callback Indicates the {@link OH_Image_Creator_On_Callback} callback event to register.
+ * @param callback Indicates the {@link OH_ImageCreator_On_Callback} callback event to register.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_GET_SURFACE_FAILED - if get sufrace failed.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_UNSUPPORT - if image type unsupported.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_REGISTER_LISTENER_FAILED - if Failed to register listener.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_REGISTER_BUFFER_FAILED - if Failed to register buffer.
- * @see ImageCreatorNative
  * @since 11
  * @version 4.1
  */
-int32_t OH_Image_Creator_On(const ImageCreatorNative* native, OH_Image_Creator_On_Callback callback);
+int32_t OH_ImageCreator_On(const ImageCreatorNative* native, OH_ImageCreator_On_Callback callback);
 
 /**
- * @brief Obtains the capacity of the image creator through an {@link ImageCreatorNative} object.
+ * @brief Gets the capacity of the image creator through an {@link ImageCreatorNative} object.
  *
  * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
  * @param capacity Indicates the pointer to the capacity obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_UNSUPPORT - if image type unsupported.
- * @see ImageCreatorNative, OhosImageSize
+ * @see {@link OH_ImageCreator_Create}
  * @since 11
  * @version 4.1
  */
-int32_t OH_Image_Creator_GetCapacity(const ImageCreatorNative* native, int32_t* capacity);
+int32_t OH_ImageCreator_GetCapacity(const ImageCreatorNative* native, int32_t* capacity);
 
 /**
- * @brief Obtains the format of the image creator through an {@link ImageCreatorNative} object.
+ * @brief Gets the format of the image creator through an {@link ImageCreatorNative} object.
  *
  * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
  * @param format Indicates the pointer to the format obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_UNSUPPORT - if image type unsupported.
- * @see ImageCreatorNative
-
+ * @see {@link OH_ImageCreator_Create}
  * @since 11
  * @version 4.1
  */
-int32_t OH_Image_Creator_GetFormat(const ImageCreatorNative* native, int32_t* format);
+int32_t OH_ImageCreator_GetFormat(const ImageCreatorNative* native, int32_t* format);
 
 /**
  * @brief Releases an {@link ImageCreatorNative} object at the native layer.
@@ -226,16 +201,11 @@ int32_t OH_Image_Creator_GetFormat(const ImageCreatorNative* native, int32_t* fo
  *
  * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
- * 
- * @see {@link OH_Image_Creator_InitNative}
- * @see ImageCreatorNative
+ * @see {@link OH_ImageCreator_InitNative}
  * @since 11
  * @version 4.1
  */
-int32_t OH_Image_Creator_Release(ImageCreatorNative* native);
+int32_t OH_ImageCreator_Release(ImageCreatorNative* native);
 #ifdef __cplusplus
 };
 #endif
