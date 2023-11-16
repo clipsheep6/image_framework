@@ -23,38 +23,67 @@
 #include "hilog/log.h"
 #include "log_tags.h"
 
-#define BIT_SHIFT_8BITS (8)
-#define BIT_SHIFT_16BITS (16)
-#define BIT_SHIFT_24BITS (24)
-#define BYTES_MASK (0xFF)
+constexpr uint8_t BIT_SHIFT_8BITS = 8;
+constexpr uint8_t BIT_SHIFT_16BITS = 16;
+constexpr uint8_t BIT_SHIFT_24BITS = 24;
+constexpr uint8_t BYTES_MASK = 0xFF;
 
-#define HALF_BYTES_MASK (0xF)
+constexpr uint8_t HALF_BYTES_MASK = 0xF;
 
-#define MAGIC_LENTH (4)
-#define XYZ_BYTES (3)
+constexpr uint8_t MAGIC_LENTH = 4;
+constexpr uint8_t XYZ_BYTES = 3;
 
-#define GLOBAL_WH_NUM_CL (2)
+constexpr uint8_t GLOBAL_WH_NUM_CL = 2;
 
-#define HASH_MAGIC_SEED_BIT (15)
-#define HASH_MAGIC_SEED (0xEEDE0891)
-#define HASH_SEED_1 (5)
-#define HASH_SEED_2 (16)
-#define HASH_SEED_3 (7)
-#define HASH_SEED_4 (3)
-#define HASH_SEED_5 (6)
-#define HASH_SEED_6 (17)
-#define STRIDE_RGBA_LOG2 (2)
+constexpr uint8_t HASH_MAGIC_SEED_BIT = 15;
+constexpr uint8_t HASH_MAGIC_SEED = 0xEEDE0891;
+constexpr uint8_t HASH_SEED_1 = 5;
+constexpr uint8_t HASH_SEED_2 = 16;
+constexpr uint8_t HASH_SEED_3 = 7;
+constexpr uint8_t HASH_SEED_4 = 3;
+constexpr uint8_t HASH_SEED_5 = 6;
+constexpr uint8_t HASH_SEED_6 = 17;
+constexpr uint8_t STRIDE_RGBA_LOG2 = 2;
+
+constexpr uint8_t SEED_MAGIC_NUM_01 = 4;
+constexpr uint8_t SEED_MAGIC_NUM_02 = 12;
+constexpr uint8_t SEED_MAGIC_NUM_03 = 20;
+constexpr uint8_t SEED_MAGIC_NUM_04 = 28;
+constexpr uint8_t SEED_MAGIC_NUM_05 = 18;
+constexpr uint8_t SEED_MAGIC_NUM_06 = 22;
+constexpr uint8_t SEED_MAGIC_NUM_07 = 26;
+constexpr uint8_t SEED_MAGIC_NUM_08 = 30;
+constexpr uint8_t SEED_MAGIC_NUM_09 = 2;
+
+constexpr uint8_t SEED_MAGIC_2 = 2;
+constexpr uint8_t SEED_MAGIC_3 = 3;
+constexpr uint8_t SEED_MAGIC_4 = 4;
+constexpr uint8_t SEED_MAGIC_5 = 5;
+constexpr uint8_t SEED_MAGIC_6 = 6;
+constexpr uint8_t SEED_MAGIC_7 = 7;
+constexpr uint8_t SEED_MAGIC_8 = 8;
+constexpr uint8_t SEED_MAGIC_9 = 9;
+constexpr uint8_t SEED_MAGIC_10 = 10;
+constexpr uint8_t SEED_MAGIC_11 = 11;
+constexpr uint8_t SEED_MAGIC_14 = 14;
+constexpr uint8_t MASK_4TH_BIT = 0x10;
+constexpr uint8_t MASK_LOW7BIT = 0x3F;
+constexpr uint8_t PARTITION_COUNT_1 = 1;
+constexpr uint8_t PARTITION_COUNT_2 = 2;
+constexpr uint8_t PARTITION_COUNT_3 = 3;
+constexpr uint8_t PARTITION_COUNT_4 = 4;
+constexpr uint8_t SEED_NUM = 12;
 
 namespace OHOS {
 namespace Media {
 using namespace OHOS::HiviewDFX;
 namespace {
-constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE,LOG_TAG_DOMAIN_ID_PLUGIN,"ExtEncoder"};
+constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "ExtEncoder"};
 }
 
 const char *g_programSource = R"(
 #define DIM 4
-#define BLOCK_SIZE 16 // DIM * DIM 
+#define BLOCK_SIZE 16 // DIM * DIM
 #define X_GRIDS 4
 #define Y_GRIDS 4
 #define SMALL_VALUE 0.00001f
@@ -96,14 +125,14 @@ const char *g_programSource = R"(
 #define PARTITION_COUNT 2
 
 
-typedef struct{
+typedef struct {
     int partid;
     uint bitmaps[2];
 } PartInfo;
 
 int get_part(PartInfo* part_info, int i)
 {
-    if(i >= 32){
+    if (i >= 32) {
         return 0;    
     }
     return (int)(((*part_info).bitmaps[1]>>i)&0x1u);
@@ -127,7 +156,7 @@ __constant short scramble_table[12 * WEIGHT_QUANTIZE_NUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 2, 4, 6, 8, 9, 7, 5, 3, 1,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 4, 8 ,2, 6, 10, 11, 7, 3 ,9, 5, 1,
+    0, 4, 8 ,2, 6, 10, 11, 7, 3 , 9, 5, 1,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -223,7 +252,7 @@ __constant int bits_trits_quints_table[QUANT_MAX * 3] = {
 };
 
 __constant short integer_from_quints[125] = {
-    0, 1, 2, 3, 4, 8, 9, 10, 11, 12 ,16, 17, 18, 19, 20, 24, 25, 26, 27, 28, 5, 13 ,21, 29, 6,
+    0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26, 27, 28, 5, 13, 21, 29, 6,
     32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 37, 45, 53,
     61, 14,
     64, 65, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 83, 84, 88, 89, 90, 91, 92, 69, 77, 85,
@@ -364,7 +393,7 @@ __constant short color_quant_tables[21 * 256] = {
     6, 6, 6, 6, 6, 6, 6, 6, 6, 10, 10, 10, 10, 10, 10, 10,
     10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
-    11, 11, 11, 11, 11, 11, 11, 7, 7, 7, 7, 7 ,7, 7, 7, 7,
+    11, 11, 11, 11, 11, 11, 11, 7, 7, 7, 7, 7,7, 7, 7, 7,
     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     3, 3, 3, 3, 3, 3, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
@@ -464,7 +493,7 @@ __constant short color_quant_tables[21 * 256] = {
     8, 8, 8, 8, 24, 24, 24, 24, 24, 24, 40, 40, 40, 40, 40, 10,
     10, 10, 10, 10, 26, 26, 26, 26, 26, 26, 42, 42, 42, 42, 42, 12,
     12, 12, 12, 12, 12, 28, 28, 28, 28, 28, 44, 44, 44, 44, 44, 14,
-    14, 14, 14, 14 ,14, 30, 30, 30, 30, 30, 46, 46, 46, 46, 46, 46,
+    14, 14, 14, 14, 14, 30, 30, 30, 30, 30, 46, 46, 46, 46, 46, 46,
     47, 47, 47, 47, 47, 47, 31, 31, 31, 31, 31, 15, 15, 15, 15, 15,
     15, 45, 45, 45, 45, 45, 29, 29, 29, 29, 29, 13, 13, 13, 13, 13,
     13, 43, 43, 43, 43, 43, 27, 27, 27, 27, 27, 27, 11, 11, 11, 11,
@@ -663,12 +692,12 @@ __constant short color_unquant_tables[21][256] = {
         2, 253, 10, 245, 18, 237, 26, 229, 35, 220, 43, 212, 51, 204, 59, 196,
         67, 188, 75, 180, 83, 172, 91, 164, 99, 156, 107, 148, 115, 140, 123, 132,
         5, 250, 13, 242, 21, 234, 29, 226, 37, 218, 45, 210, 53, 202, 61, 194,
-        70, 185, 78, 177, 86, 169, 94, 161 ,102, 153, 110, 145, 118, 137, 126, 129 
+        70, 185, 78, 177, 86, 169, 94, 161 , 102, 153, 110, 145, 118, 137, 126, 129 
     },
     { // 128
         0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30,
         32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62,
-        64, 66, 68, 70, 72, 74, 76 ,78, 80, 82, 84, 86, 88, 90, 92, 94,
+        64, 66, 68, 70, 72, 74, 76 , 78, 80, 82, 84, 86, 88, 90, 92, 94,
         96, 98, 100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124, 126,
         129, 131, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159,
         161, 163, 165, 167, 169, 171, 173, 175, 177, 179, 181, 183, 185, 187, 189, 191,
@@ -722,7 +751,6 @@ __constant short color_unquant_tables[21][256] = {
     }
 };
 
-
 void swap(float4* lhs, float4* rhs)
 {
     float4 tmp = *lhs;
@@ -730,34 +758,32 @@ void swap(float4* lhs, float4* rhs)
     *rhs = tmp;
 }
 
-void find_min_max(float4* texels, float4 pt_mean, float4 vec_k, float4* e0, float4* e1,bool has_alpha)
+void find_min_max(float4* texels, float4 pt_mean, float4 vec_k, float4* e0, float4* e1, bool has_alpha)
 {
     float a = 1e31f;
     float b = -1e31f;
-    for(int i=0; i<BLOCK_SIZE; ++i)
-    {
+    for (int i = 0; i < BLOCK_SIZE; ++i) {
         float t = dot(texels[i] - pt_mean, vec_k);
-        a = min(a,t);
-        b = max(b,t);
+        a = min(a, t);
+        b = max(b, t);
     }
 
     *e0 = clamp(vec_k *a + pt_mean, 0.0f, 255.0f);
-    *e1 = clamp(vec_k* b + pt_mean, 0.0f, 255.0f );
+    *e1 = clamp(vec_k * b + pt_mean, 0.0f, 255.0f );
     // if the direction_vector ends up pointing from light to dark, FLIP IT!
     //this will make the endpoint the darkest one;
     float4 e0u = round(*e0);
     float4 e1u = round(*e1);
-    if(e0u.x + e0u.y + e0u.z > e1u.x + e1u.y + e1u.z  )
-    {
-        swap(e0,e1);
+    if (e0u.x + e0u.y + e0u.z > e1u.x + e1u.y + e1u.z) {
+        swap(e0, e1);
     }
     if (!has_alpha) {
-    (*e0).w = 255.0f;
-    (*e1).w = 255.0f;   
+        (*e0).w = 255.0f;
+        (*e1).w = 255.0f;
     }
 }
 
-void max_accumulation_pixel_direction(float4* texels, float4 pt_mean,float4* e0, float4* e1,bool has_alpha)
+void max_accumulation_pixel_direction(float4* texels, float4 pt_mean, float4* e0, float4* e1, bool has_alpha)
 {
     int i=0;
     
@@ -765,8 +791,7 @@ void max_accumulation_pixel_direction(float4* texels, float4 pt_mean,float4* e0,
     float4 sum_g = (float4)(0);
     float4 sum_b = (float4)(0);
     float4 sum_a = (float4)(0);
-    for(i=0; i < BLOCK_SIZE; ++i)
-    {
+    for (i = 0; i < BLOCK_SIZE; ++i) {
         float4 dt = texels[i] - pt_mean;
         sum_r += (dt.x > 0.0f) ? dt : (float4)(0);
         sum_g += (dt.y > 0.0f) ? dt : (float4)(0);
@@ -781,20 +806,17 @@ void max_accumulation_pixel_direction(float4* texels, float4 pt_mean,float4* e0,
     float maxdot = dot_r;
     float4 vec_k = sum_r;
 
-    if (dot_g > maxdot)
-    {
+    if (dot_g > maxdot) {
         vec_k = sum_g;
         maxdot = dot_g;
-    } 
+    }
  
-    if (dot_b > maxdot)
-    {
+    if (dot_b > maxdot) {
         vec_k = sum_b;
         maxdot = dot_b;
-    } 
+    }
    
-    if (has_alpha && dot_a > maxdot)
-    {
+    if (has_alpha && dot_a > maxdot) {
         vec_k = sum_a;
         maxdot = dot_a;
     }
@@ -803,12 +825,12 @@ void max_accumulation_pixel_direction(float4* texels, float4 pt_mean,float4* e0,
     float lenk = length(vec_k);
     vec_k = (lenk < SMALL_VALUE) ? vec_k : normalize(vec_k);
      
-    find_min_max(texels,pt_mean, vec_k, e0, e1,has_alpha);
-} 
-void encode_color_normal(short quant_level, float4 e0,float4 e1,short* endpoint_quantized)
+    find_min_max(texels, pt_mean, vec_k, e0, e1, has_alpha);
+}
+void encode_color_normal(short quant_level, float4 e0, float4 e1, short* endpoint_quantized)
 {
-    int4 e0q = (int4)((int)(round(e0.x)), (int)(round(e0.y)),(int)(round(e0.z)),(int)(round(e0.w)));    
-    int4 e1q = (int4)((int)(round(e1.x)), (int)(round(e1.y)),(int)(round(e1.z)),(int)(round(e1.w)));
+    int4 e0q = (int4)((int)(round(e0.x)), (int)(round(e0.y)), (int)(round(e0.z)), (int)(round(e0.w)));   
+    int4 e1q = (int4)((int)(round(e1.x)), (int)(round(e1.y)), (int)(round(e1.z)), (int)(round(e1.w)));
     
     endpoint_quantized[0] = color_quant_tables[quant_level * 256 + e0q.x];
     endpoint_quantized[1] = color_quant_tables[quant_level * 256 + e1q.x];
@@ -836,16 +858,16 @@ void decode_color(short quant_level, short endpoint_quantized[8], float4* e0, fl
 short quantize_weight(uint weight_range, float weight)
 {
     short q = (short)(round(weight* (float)(weight_range)));
-    return clamp(q, (short)(0),(short)(weight_range));
+    return clamp(q, (short)(0), (short)(weight_range));
 }
 
 float unquantize_weight(uint weight_range, uint qw)
 {
     float w = 1.0f * (float)(qw) / (float)(weight_range);
-    return clamp(w,0.0f,1.0f);
+    return clamp(w, 0.0f, .0f);
 }
 
-float4 samp_texel(float4 texels[BLOCK_SIZE], uint4 index,float4 coff)
+float4 samp_texel(float4 texels[BLOCK_SIZE], uint4 index, float4 coff)
 {
     float4 sum = texels[index.x] * coff.x;
     sum += texels[index.y] * coff.y;
@@ -854,38 +876,34 @@ float4 samp_texel(float4 texels[BLOCK_SIZE], uint4 index,float4 coff)
     return sum;
 }
 
-void calculate_normal_weights_2plane(float4* texels, 
-    float4 ep0, float4 ep1, int component_plane2,float* projw)
+void calculate_normal_weights_2plane(float4* texels,
+    float4 ep0, float4 ep1, int component_plane2, float* projw)
 {
     int i=0;
     float4 vec_k = ep1-ep0;
     if (length(vec_k) < SMALL_VALUE)
     {
-        for (i=0; i< 2 * X_GRIDS * Y_GRIDS; ++i)
-        {
+        for (i=0; i< 2 * X_GRIDS * Y_GRIDS; ++i) {
             projw[i] = 0.0f;
         }
-    }
-    else
-    {
+    } else {
         float minw = 1e31f;
         float maxw = -1e31f;
         float minwp = 1e31f;
         float maxwp = -1e31f;
-        if(component_plane2 == 0) {
+        if (component_plane2 == 0) {
             vec_k = normalize((float4)(0, vec_k.y, vec_k.z, vec_k.w));
-        } else if (component_plane2 == 1){
+        } else if (component_plane2 == 1) {
             vec_k = normalize((float4)(vec_k.x, 0, vec_k.z, vec_k.w));
-        } else if (component_plane2 == 2){
-            vec_k = normalize((float4)(vec_k.x,vec_k.y , 0, vec_k.w));
-        } else if (component_plane2 == 3){
-            vec_k = normalize((float4)(vec_k.x,vec_k.y , vec_k.z, 0));
+        } else if (component_plane2 == 2) {
+            vec_k = normalize((float4)(vec_k.x, vec_k.y , 0, vec_k.w));
+        } else if (component_plane2 == 3) {
+            vec_k = normalize((float4)(vec_k.x, vec_k.y , vec_k.z, 0));
         }
-        for (i = 0; i < BLOCK_SIZE; ++i) 
-        {
+        for (i = 0; i < BLOCK_SIZE; ++i) {
             float4 texel = texels[i];
             float w = dot(vec_k, texel - ep0);
-            minw  = min(w,minw);
+            minw  = min(w, minw);
             maxw = max(w, maxw);
             projw[2*i] = w;
              
@@ -893,47 +911,42 @@ void calculate_normal_weights_2plane(float4* texels,
             if (component_plane2 == 1) {
                 wp = texel.y - ep0.y;
             } else if (component_plane2 == 2) {
-               wp = texel.z - ep0.z;   
-           } else if (component_plane2 == 3) {
-               wp = texel.w - ep0.w; 
-          }
-          minwp = min(wp,minwp);
-          maxwp = max(wp,maxwp);
-          projw[2*i+1] = wp;
-          }
-          float invlen = maxw - minw;
-          float invlenp = maxwp - minwp;
-          invlen = max(SMALL_VALUE,invlen);
-          invlen = 1.0f /invlen;
-          invlenp = max(SMALL_VALUE,invlenp);
-          invlenp = 1.0f / invlenp;
-          for (i=0 ;i<X_GRIDS * Y_GRIDS; ++i)                      
-          {
-              projw[2*i] = (projw[2*i] - minw) * invlen;
-              projw[2*i+1] = (projw[2*i+1] - minwp) * invlenp;
-          }
+                wp = texel.z - ep0.z;
+            } else if (component_plane2 == 3) {
+                wp = texel.w - ep0.w;
+            }
+            minwp = min(wp, minwp);
+            maxwp = max(wp, maxwp);
+            projw[2*i+1] = wp;
+            }
+            float invlen = maxw - minw;
+            float invlenp = maxwp - minwp;
+            invlen = max(SMALL_VALUE, invlen);
+            invlen = 1.0f / invlen;
+            invlenp = max(SMALL_VALUE, invlenp);
+            invlenp = 1.0f / invlenp;
+            for (i = 0; i < X_GRIDS * Y_GRIDS; ++i) {
+                projw[2 * i] = (projw[2 * i] - minw) * invlen;
+                projw[2 * i + 1] = (projw[2 * i + 1] - minwp) * invlenp;
+            }
+        }
     }
 }
 void calculate_normal_weights(int part, PartInfo* part_info, float4* texels, float4 ep0, float4 ep1, float* projw)
 {
     int i=0;
     float4 vec_k = ep1 - ep0;
-    if (length(vec_k) < SMALL_VALUE && !part_info)
-    {
-        for (i=0; i<X_GRIDS * Y_GRIDS; ++i)
-            {
-                projw[i] = 0.0f;
-            }
-    }
-    else 
-    {
+    if (length(vec_k) < SMALL_VALUE && !part_info) {
+        for (i = 0; i < X_GRIDS * Y_GRIDS; ++i) {
+            projw[i] = 0.0f;
+        }
+    } else {
         vec_k = normalize(vec_k);
         float minw = 1e31f;
         float maxw = -1e31f;
-        for (i=0; i < BLOCK_SIZE; ++i)
-        {
-            if(!part_info){
-                float w = dot(vec_k,texels[i] - ep0);
+        for (i = 0; i < BLOCK_SIZE; ++i) {
+            if (!part_info) {
+                float w = dot(vec_k, texels[i] - ep0);
                 minw = min(w, minw);
                 maxw = max(w, maxw);
                 projw[i] = w;
@@ -947,29 +960,28 @@ void calculate_normal_weights(int part, PartInfo* part_info, float4* texels, flo
                 }
             }
         }
+    }
     float invlen = maxw - minw;
     invlen = max(SMALL_VALUE, invlen );
     invlen = 1.0f / invlen;
-     for (i=0 ;i<X_GRIDS * Y_GRIDS; ++i)                     
-          {
-              if (!part_info) {
-                projw[i] = (projw[i] - minw) * invlen;   
-              } else {
-                  int cur_part = get_part(part_info, i);
-                  if(cur_part  == part) {
-                      projw[i] = (projw[i] - minw) * invlen; 
-                  }
-              } 
-          }
-      }
+    for (i=0 ;i<X_GRIDS * Y_GRIDS; ++i) {
+        if (!part_info) {
+            projw[i] = (projw[i] - minw) * invlen;   
+            } else {
+                int cur_part = get_part(part_info, i);
+                if (cur_part  == part) {
+                    projw[i] = (projw[i] - minw) * invlen;
+                }
+            }
+        }
+    }
 }
  
 void quantize_weights_rgb(float projw[2 * X_GRIDS * Y_GRIDS], uint weight_range, short* weights)
 {
-    for (int i = 0;i < 2 * X_GRIDS * Y_GRIDS; ++i) 
-    {
+    for (int i = 0; i < 2 * X_GRIDS * Y_GRIDS; ++i) {
         weights[i] = quantize_weight(weight_range, projw[i]);
-    }         
+    }
 }
 
 void calculate_quantized_weights_2plane(float4* texels,
@@ -987,16 +999,15 @@ int component_plane2)
  
 void quantize_weights(float projw[X_GRIDS * Y_GRIDS], uint weight_range, short* weights)
 {
-    for (int i = 0;i < X_GRIDS * Y_GRIDS; ++i) 
-    {
+    for (int i = 0; i < X_GRIDS * Y_GRIDS; ++i) {
         weights[i] = quantize_weight(weight_range, projw[i]);
-    }         
+    }
 }
  
-void calculate_quantized_weights(float4* texels, uint weight_range, float4 ep0, float4 ep1, short* weights) 
+void calculate_quantized_weights(float4* texels, uint weight_range, float4 ep0, float4 ep1, short* weights)
 {
     float projw[X_GRIDS * Y_GRIDS];
-    calculate_normal_weights(0,NULL, texels, ep0, ep1,projw);
+    calculate_normal_weights(0, NULL, texels, ep0, ep1, projw);
     quantize_weights(projw, weight_range, weights);
 }
 
@@ -1007,21 +1018,21 @@ void orbits8_ptr(uint4* outputs, uint* bitoffset, uint number, uint bitcount)
     uint nidx = newpos >>5;
     uint uidx = *bitoffset >>5;
     uint bit_idx = *bitoffset & 31u;
-    if( uidx == 0){
-        (*outputs).x | = (number <<bit_idx);
-        (*outputs).y | = (nidx >uidx) ? (number >>(32u - bit_idx)) :0u;
+    if ( uidx == 0) {
+        (*outputs).x | = (number << bit_idx);
+        (*outputs).y | = (nidx >uidx) ? (number >> (32u - bit_idx)) : 0u;
     } else if (uidx == 1) {
-        (*outputs).y | = (number <<bit_idx);
-        (*outputs).z | = (nidx >uidx) ? (number >>(32u - bit_idx)) :0u;
-    } else if (uidx == 2){
-        (*outputs).z | = (number <<bit_idx);
-        (*outputs).w | = (nidx >uidx) ? (number >>(32u - bit_idx)) :0u;
-    } else if (uidx == 3){
+        (*outputs).y | = (number << bit_idx);
+        (*outputs).z | = (nidx >uidx) ? (number >> (32u - bit_idx)) : 0u;
+    } else if (uidx == 2) {
+        (*outputs).z | = (number << bit_idx);
+        (*outputs).w | = (nidx >uidx) ? (number >> (32u - bit_idx)) : 0u;
+    } else if (uidx == 3) {
     }
     *bitoffset = newpos;
 }
 
-void split_high_low(uint n,uint i, int* high, uint* low)
+void split_high_low(uint n, uint i, int* high, uint* low)
 {
     uint low_mask = (1u << i) - 1u;
     *low = n & low_mask;
@@ -1042,51 +1053,51 @@ uint4* outputs, uint* outpos)
 {
     int t0, t1, t2, t3, t4;
     uint m0, m1, m2, m3, m4;
-    split_high_low(b0,bitcount, &t0, &m0);
-    split_high_low(b1,bitcount, &t1, &m1);
-    split_high_low(b2,bitcount, &t2, &m2);
-    split_high_low(b3,bitcount, &t3, &m3);
-    split_high_low(b4,bitcount, &t4, &m4);  
+    split_high_low(b0, bitcount, &t0, &m0);
+    split_high_low(b1 ,bitcount, &t1, &m1);
+    split_high_low(b2, bitcount, &t2, &m2);
+    split_high_low(b3, bitcount, &t3, &m3);
+    split_high_low(b4, bitcount, &t4, &m4);
 
     ushort packhigh = (ushort)(integer_from_trits[t4 * 81 + t3 * 27 + t2 * 9 + t1* 3 + t0]);
     orbits8_ptr(outputs, outpos, m0, bitcount);
-    orbits8_ptr(outputs, outpos,packhigh & 3u, 2u);
+    orbits8_ptr(outputs, outpos, packhigh & 3u, 2u);
     
     orbits8_ptr(outputs, outpos, m1, bitcount);
-    orbits8_ptr(outputs, outpos,(packhigh >> 2) & 3u, 2u);
+    orbits8_ptr(outputs, outpos, (packhigh >> 2) & 3u, 2u);
 
     orbits8_ptr(outputs, outpos, m2, bitcount);
-    orbits8_ptr(outputs, outpos,(packhigh >> 4) & 1u, 1u);
+    orbits8_ptr(outputs, outpos, (packhigh >> 4) & 1u, 1u);
 
     orbits8_ptr(outputs, outpos, m3, bitcount);
-    orbits8_ptr(outputs, outpos,(packhigh >> 5) & 3u, 2u);
+    orbits8_ptr(outputs, outpos, (packhigh >> 5) & 3u, 2u);
 
     orbits8_ptr(outputs, outpos, m4, bitcount);
-    orbits8_ptr(outputs, outpos,(packhigh >> 7) & 1u, 1u);
+    orbits8_ptr(outputs, outpos, (packhigh >> 7) & 1u, 1u);
 }
 
-void encode_quints(uint bitcount, uint b0, uint b1, uint b2, uint4* outputs, uint* outpos) 
+void encode_quints(uint bitcount, uint b0, uint b1, uint b2, uint4* outputs, uint* outpos)
 {
     int q0, q1, q2;
-    uint m0, m1,m2;
+    uint m0, m1, m2;
 
-    split_high_low(b0,bitcount, &q0, &m0);
-    split_high_low(b1,bitcount, &q1, &m1);
-    split_high_low(b2,bitcount, &q2, &m2);
+    split_high_low(b0, bitcount, &q0, &m0);
+    split_high_low(b1, bitcount, &q1, &m1);
+    split_high_low(b2, bitcount, &q2, &m2);
 
     ushort packhigh = (ushort)(integer_from_quints[q2 * 25 + q1 * 5 + q0]);
 
     orbits8_ptr(outputs, outpos, m0, bitcount);
-    orbits8_ptr(outputs, outpos,packhigh & 7u, 3u);
+    orbits8_ptr(outputs, outpos, packhigh & 7u, 3u);
 
     orbits8_ptr(outputs, outpos, m1, bitcount);
-    orbits8_ptr(outputs, outpos,(packhigh >> 3) & 3u, 2u);
+    orbits8_ptr(outputs, outpos, (packhigh >> 3) & 3u, 2u);
 
     orbits8_ptr(outputs, outpos, m2, bitcount);
-    orbits8_ptr(outputs, outpos,(packhigh >> 5) & 3u, 2u);
+    orbits8_ptr(outputs, outpos, (packhigh >> 5) & 3u, 2u);
 }
 
-void bise_endpoints(short numbers[8], int range, uint4* outputs,bool has_alpha, uint* bitpos)
+void bise_endpoints(short numbers[8], int range, uint4* outputs, bool has_alpha, uint* bitpos)
 {
     uint bits = (uint)(bits_trits_quints_table[range * 3 + 0]);
     uint trits = (uint)(bits_trits_quints_table[range * 3 + 1]);
@@ -1094,23 +1105,17 @@ void bise_endpoints(short numbers[8], int range, uint4* outputs,bool has_alpha, 
 
     uint count  = has_alpha ? 8u : 6u;
 
-    if(trits == 1u)
-    {
-        encode_trits(bits, numbers[0], numbers[1], numbers[2],numbers[3],numbers[4], outputs, bitpos);
-        encode_trits(bits, numbers[5], numbers[6], numbers[7],0u, 0u, outputs, bitpos);
+    if (trits == 1u) {
+        encode_trits(bits, numbers[0], numbers[1], numbers[2], numbers[3], numbers[4], outputs, bitpos);
+        encode_trits(bits, numbers[5], numbers[6], numbers[7], 0u, 0u, outputs, bitpos);
         *bitpos = ((8u + 5u * bits) * count + 4u) / 5u;
-    }
-    else if (quints == 1u)
-    {
+    } else if (quints == 1u) {
         encode_quints(bits, numbers[0], numbers[1], numbers[2], outputs, bitpos);
         encode_quints(bits, numbers[3], numbers[4], numbers[5], outputs, bitpos);
         encode_quints(bits, numbers[6], numbers[7], 0u, outputs, bitpos);
         *bitpos = ((7u + 3u * bits) * count + 2u) / 3u;
-    }
-    else
-    {
-        for(uint i = 0u; i < count; ++i)
-        {
+    } else {
+        for (uint i = 0u; i < count; ++i) {
             orbits8_ptr(outputs, bitpos, numbers[i], bits);
         }
     }
@@ -1123,29 +1128,23 @@ void bise_weights(short numbers[16], int range, uint4* outputs)
     uint trits = (uint)(bits_trits_quints_table[range * 3 + 1]);
     uint quints = (uint)(bits_trits_quints_table[range * 3 + 2]);
 
-    if(trits == 1u)
-    {
-        encode_trits(bits,numbers[0], numbers[1], numbers[2],numbers[3],numbers[4], outputs, &bitpos);
-        encode_trits(bits,numbers[5], numbers[6], numbers[7],numbers[8],numbers[9], outputs, &bitpos);
-        encode_trits(bits,numbers[10], numbers[11], numbers[12],numbers[13],numbers[14], outputs, &bitpos);
-        encode_trits(bits,numbers[15], 0u, 0u, 0u, 0u,outputs, &bitpos);
-        bitpos = ((8u + 5u * bits) * 16u + 4u ) / 5u;
-    }
-    else if(quints == 1u)
-    {
-        encode_quints(bits,numbers[0], numbers[1], numbers[2], outputs, &bitpos);
-        encode_quints(bits,numbers[3], numbers[4], numbers[5], outputs, &bitpos);
-        encode_quints(bits,numbers[6], numbers[7], numbers[8], outputs, &bitpos);
-        encode_quints(bits,numbers[9], numbers[10], numbers[11], outputs, &bitpos);
-        encode_quints(bits,numbers[12], numbers[13], numbers[14], outputs, &bitpos);
-        encode_quints(bits,numbers[15], 0u, 0u, outputs, &bitpos);
-        bitpos = ((7u + 3u * bits) * 16u + 2u ) / 3u;   
-    }
-    else 
-    {
-        for(int i=0; i < 16; ++i)
-        {
-            orbits8_ptr(outputs, &bitpos, numbers[i], bits);    
+    if (trits == 1u) {
+        encode_trits(bits, numbers[0], numbers[1], numbers[2], numbers[3], numbers[4], outputs, &bitpos);
+        encode_trits(bits, numbers[5], numbers[6], numbers[7],numbers[8], numbers[9], outputs, &bitpos);
+        encode_trits(bits, numbers[10], numbers[11], numbers[12], numbers[13], numbers[14], outputs, &bitpos);
+        encode_trits(bits, numbers[15], 0u, 0u, 0u, 0u, outputs, &bitpos);
+        bitpos = ((8u + 5u * bits) * 16u + 4u) / 5u;
+    } else if (quints == 1u) {
+        encode_quints(bits, numbers[0], numbers[1], numbers[2], outputs, &bitpos);
+        encode_quints(bits, numbers[3], numbers[4], numbers[5], outputs, &bitpos);
+        encode_quints(bits, numbers[6], numbers[7], numbers[8], outputs, &bitpos);
+        encode_quints(bits, numbers[9], numbers[10], numbers[11], outputs, &bitpos);
+        encode_quints(bits, numbers[12], numbers[13], numbers[14], outputs, &bitpos);
+        encode_quints(bits, numbers[15], 0u, 0u, outputs, &bitpos);
+        bitpos = ((7u + 3u * bits) * 16u + 2u) / 3u;   
+    } else {
+        for (int i = 0; i < 16; ++i) {
+            orbits8_ptr(outputs, &bitpos, numbers[i], bits);
         }
     }
 }
@@ -1153,24 +1152,21 @@ void bise_weights(short numbers[16], int range, uint4* outputs)
 uint bise_weights_2plane(short numbers[32], int range, uint4* outputs)
 {
     uint bitpos = 0u;
+
     uint bits = (uint)(bits_trits_quints_table[range * 3 + 0]);
     uint trits = (uint)(bits_trits_quints_table[range * 3 + 1]);
     uint quints = (uint)(bits_trits_quints_table[range * 3 + 2]);
 
-    if(trits == 1u)
-    {
-        encode_trits(bits,numbers[0], numbers[1], numbers[2], numbers[3], numbers[4], outputs, &bitpos);
-        encode_trits(bits,numbers[5], numbers[6], numbers[7], numbers[8], numbers[9], outputs, &bitpos);
-        encode_trits(bits,numbers[10], numbers[11], numbers[12], numbers[13], numbers[14], outputs, &bitpos);
-        encode_trits(bits,numbers[15], numbers[16], numbers[17], numbers[18], numbers[19], outputs, &bitpos);
-        encode_trits(bits,numbers[20], numbers[21], numbers[22], numbers[23], numbers[24], outputs, &bitpos);
-        encode_trits(bits,numbers[25], numbers[26], numbers[27], numbers[28], numbers[29], outputs, &bitpos);
-        encode_trits(bits,numbers[30], numbers[31], 0u,0u,0u, outputs, &bitpos);
-        bitpos = ((8u + 5u * bits) * 32u + 4u ) / 5u;
-        
-    }
-    else if(quints == 1u)
-    {
+    if (trits == 1u) {
+        encode_trits(bits, numbers[0], numbers[1], numbers[2], numbers[3], numbers[4], outputs, &bitpos);
+        encode_trits(bits, numbers[5], numbers[6], numbers[7], numbers[8], numbers[9], outputs, &bitpos);
+        encode_trits(bits, numbers[10], numbers[11], numbers[12], numbers[13], numbers[14], outputs, &bitpos);
+        encode_trits(bits, numbers[15], numbers[16], numbers[17], numbers[18], numbers[19], outputs, &bitpos);
+        encode_trits(bits, numbers[20], numbers[21], numbers[22], numbers[23], numbers[24], outputs, &bitpos);
+        encode_trits(bits, numbers[25], numbers[26], numbers[27], numbers[28], numbers[29], outputs, &bitpos);
+        encode_trits(bits, numbers[30], numbers[31], 0u, 0u, 0u, outputs, &bitpos);
+        bitpos = ((8u + 5u * bits) * 32u + 4u) / 5u;    
+    } else if (quints == 1u) {
         encode_quints(bits, numbers[0], numbers[1], numbers[2], outputs, &bitpos);
         encode_quints(bits, numbers[3], numbers[4], numbers[5], outputs, &bitpos);
         encode_quints(bits, numbers[6], numbers[7], numbers[8], outputs, &bitpos);
@@ -1182,20 +1178,17 @@ uint bise_weights_2plane(short numbers[32], int range, uint4* outputs)
         encode_quints(bits, numbers[24], numbers[25], numbers[26], outputs, &bitpos);
         encode_quints(bits, numbers[27], numbers[28], numbers[29], outputs, &bitpos);
         encode_quints(bits, numbers[30], numbers[31], 0u, outputs, &bitpos);
-        bitpos = ((7u + 3u * bits) * 32u + 2u ) / 3u;    
-    }
-    else
-    {
-        for(int i = 0; i < 32; ++i)
-        {
-            orbits8_ptr(outputs,&bitpos, numbers[i], bits);    
+        bitpos = ((7u + 3u * bits) * 32u + 2u) / 3u;    
+    } else {
+        for (int i = 0; i < 32; ++i) {
+            orbits8_ptr(outputs, &bitpos, numbers[i], bits);    
         }
     }
     return bitpos;
 }
 
 uint4 assemble_block(uint blockmode, uint color_endpoint_mode,
-uint partition_count,uint partition_index, uint4 ep_ise, uint4 wt_ise)
+uint partition_count, uint partition_index, uint4 ep_ise, uint4 wt_ise)
 {
     uint4 phy_blk = (uint4)(0, 0, 0, 0);
     phy_blk.w |= reverse_byte(wt_ise.x & 0xFFu) << 24;
@@ -1215,8 +1208,7 @@ uint partition_count,uint partition_index, uint4 ep_ise, uint4 wt_ise)
 
     phy_blk.x = blockmode;
 
-    if(partition_count > 1u)
-    {
+    if (partition_count > 1u) {
         uint endpoint_offset = 29u;
         uint cem_bits = 6u;
         uint bitpos = 11u;
@@ -1237,7 +1229,7 @@ uint partition_count,uint partition_index, uint4 ep_ise, uint4 wt_ise)
         phy_blk.z |= ((ep_ise.y >> 15) & 0x1FFFFu);
     }
 
-    return phy_blk;    
+    return phy_blk;
 }
 
 uint assemble_blockmode(uint weight_quantmethod, bool is_dual_plane)
@@ -1259,13 +1251,13 @@ uint assemble_blockmode(uint weight_quantmethod, bool is_dual_plane)
     return blockmode;
 }
 
-uint4 endpoint_ise(float4* ep0, float4* ep1,short endpoint_quantmethod,bool has_alpha)
+uint4 endpoint_ise(float4* ep0, float4* ep1, short endpoint_quantmethod, bool has_alpha)  
 {
     short ep_quantized[8];
     encode_color_normal(endpoint_quantmethod, *ep0, *ep1, ep_quantized);
     decode_color(endpoint_quantmethod, ep_quantized, ep0, ep1);
 
-    if(!has_alpha){
+    if (!has_alpha) {
         ep_quantized[6] = 0;
         ep_quantized[7] = 0;
     }
@@ -1276,20 +1268,19 @@ uint4 endpoint_ise(float4* ep0, float4* ep1,short endpoint_quantmethod,bool has_
     return ep_ise;
 }
 
-float4 cal_texel(short weight, float4 ep0, float4 ep1){
+float4 cal_texel(short weight, float4 ep0, float4 ep1) {
     short weight0 = 64 -  weight;
     return (ep0 * weight0 + ep1 * weight) / 64.0f;
 }
 
 uint4 weight_ise_2plane(float4* texels, uint weight_range, float4 ep0,
-    float4 ep1, short weight_quantmethod,int component_plane2, float* errval)
+    float4 ep1, short weight_quantmethod, int component_plane2, float* errval)
 {
     int i = 0;
     short wt_quantized[2 * X_GRIDS * Y_GRIDS];
     calculate_quantized_weights_2plane(texels, weight_range, ep0, ep1, wt_quantized, component_plane2);
     float sum_err = 0.0f;
-    for(i = 0; i < 2 * X_GRIDS * Y_GRIDS; ++i)
-    {
+    for (i = 0; i < 2 * X_GRIDS * Y_GRIDS; ++i) {
         short w = weight_quantmethod * WEIGHT_QUANTIZE_NUM + wt_quantized[i];
         wt_quantized[i] = scramble_table[w];
         bool odd = (i % 2 == 1);
@@ -1300,51 +1291,50 @@ uint4 weight_ise_2plane(float4* texels, uint weight_range, float4 ep0,
             short wt1 = weight_unquant[w];
             float4 new_texel = cal_texel(wt, ep0, ep1);
             float4 tex = cal_texel(wt1, ep0, ep1);
-            if(component_plane2 == 0) {
+            if (component_plane2 == 0) {
                 new_texel.x = tex.x;
-            } else if(component_plane2 == 1) {
+            } else if (component_plane2 == 1) {
                 new_texel.y = tex.y;
-            } else if(component_plane2 == 2) {
+            } else if (component_plane2 == 2) {
                 new_texel.z = tex.z;
-            } else if(component_plane2 == 3) {
+            } else if (component_plane2 == 3) {
                 new_texel.w = tex.w;
             }
             float4 curTexel = texels[i >> 2];
             float4 diff = new_texel - curTexel;
-            sum_err += dot(diff,diff);
+            sum_err += dot(diff, diff);
         }
     }
     *errval = sum_err;
 
     uint4 wt_ise = (uint4)(0);
-    uint bitpos = bise_weights_2plane(wt_quantized, (int)(weight_quantmethod),&wt_ise);
+    uint bitpos = bise_weights_2plane(wt_quantized, (int)(weight_quantmethod), &wt_ise);
     component_plane2 = ((component_plane2 >> 1) & 0x3) | ((component_plane2 << 1) & 0x3);
     orbits8_ptr(&wt_ise, &bitpos, (uint)(component_plane2), 2u);
     return wt_ise;
 }
-uint4 weight_ise(float4* texels,uint weight_range, float4 ep0, float4 ep1,short weight_quantmethod, float* errval)
+uint4 weight_ise(float4* texels, uint weight_range, float4 ep0, float4 ep1, short weight_quantmethod, float* errval)
 {
     int i = 0;
     short wt_quantized[X_GRIDS * Y_GRIDS];
     calculate_quantized_weights(texels, weight_range, ep0, ep1, wt_quantized);
 
     float sum_err = 0.0f;
-    for(i = 0; i < X_GRIDS * Y_GRIDS; ++i)
-    {
+    for (i = 0; i < X_GRIDS * Y_GRIDS; ++i) {
         short w = weight_quantmethod * WEIGHT_QUANTIZE_NUM + wt_quantized[i];
         wt_quantized[i] = scramble_table[w];
         w = weight_quantmethod * WEIGHT_QUANTIZE_NUM +  wt_quantized[i];
         short wt = weight_unquant[w];
         float4 new_texel = cal_texel(wt, ep0, ep1);
         float4 diff = new_texel - texels[i];
-        sum_err += dot(diff,diff);
+        sum_err += dot(diff, diff);
     }
     *errval = sum_err;
     uint4 wt_ise = (uint4)(0);
     bise_weights(wt_quantized, (int)(weight_quantmethod), &wt_ise);
     return wt_ise;
 }
-uint hash52(uint inp){
+uint hash52(uint inp) {
     inp ^= inp >> 15;
 
     inp *= 0xEEDE0891u;
@@ -1352,9 +1342,9 @@ uint hash52(uint inp){
     inp += inp << 16;
     inp ^= (inp >> 7) & 0x1FFFFFFu;
     inp ^= (inp >> 3) & 0x1FFFFFFFu;
-    inp ^= inp << 6; 
+    inp ^= inp << 6;
     inp ^= (inp >> 17) & 0x7FFFu;
-    return inp;   
+    return inp;
 }
 __constant float cluster_cutoffs[9] = {
     0.626220f, 0.932770f, 0.275454f,
@@ -1365,7 +1355,7 @@ __constant float cluster_cutoffs[9] = {
 float try_encode(float4* texels, float4 texels_mean, bool has_alpha, int dual_plane_component,
 uint4* ep_ise, uint4* wt_ise, short3* best_blockmode) {
     float errval;
-    if(has_alpha) {
+    if (has_alpha) {
         *best_blockmode = (short3)(QUANT_6, QUANT_256, 6);
     } else {
         *best_blockmode = (short3)(QUANT_12, QUANT_256, 12);
@@ -1374,11 +1364,11 @@ uint4* ep_ise, uint4* wt_ise, short3* best_blockmode) {
     short endpoint_quantmethod = (*best_blockmode).y;
     short weight_range = (*best_blockmode).z;
 
-    float4 ep0,ep1;
+    float4 ep0, ep1;
     max_accumulation_pixel_direction(texels, texels_mean, &ep0, &ep1, has_alpha);
 
     *ep_ise = endpoint_ise(&ep0, &ep1, endpoint_quantmethod, has_alpha);
-    *wt_ise = weight_ise(texels, weight_range - 1u,ep0, ep1, weight_quantmethod, &errval);
+    *wt_ise = weight_ise(texels, weight_range - 1u, ep0, ep1, weight_quantmethod, &errval);
         return errval;
 }
 
@@ -1395,19 +1385,18 @@ uint4 encode_block(float4* texels, float4 texels_mean,
     uint4 ep_ise, wt_ise, tmp_ep_ise, tmp_wt_ise;
     short3 best_blockmode, tmp_best_blockmode;
     float threshhold = 10000.0f;
-    errval = try_encode(texels,texels_mean,
-        has_alpha, 0 ,&ep_ise, &wt_ise, &best_blockmode);
+    errval = try_encode(texels, texels_mean,
+        has_alpha, 0 , &ep_ise, &wt_ise, &best_blockmode);
 
-    uint blockmode = assemble_blockmode(best_blockmode.x,is_dual_plane);
+    uint blockmode = assemble_blockmode(best_blockmode.x, is_dual_plane);
     uint color_endpoint_mode;
-    if(has_alpha) {
+    if (has_alpha) {
         color_endpoint_mode = CEM_LDR_RGBA_DIRECT;
     } else {
-        color_endpoint_mode = CEM_LDR_RGB_DIRECT;        
+        color_endpoint_mode = CEM_LDR_RGB_DIRECT;    
     }
     errs[blockID] = (uint)(errval);
-    return assemble_block(blockmode, color_endpoint_mode, (uint)(part_count), (uint)(part_index), ep_ise,wt_ise);
-         
+    return assemble_block(blockmode, color_endpoint_mode, (uint)(part_count), (uint)(part_index), ep_ise, wt_ise);        
 }
 
 kernel void astc(read_only image2d_t inputImage, __global uint4* astc_arr,
@@ -1415,7 +1404,7 @@ kernel void astc(read_only image2d_t inputImage, __global uint4* astc_arr,
     int uWidth = get_global_size(0);
     int uHeight = get_global_size(1);
     const int2 local_id = (int2) (get_local_id(0), get_local_id(1));
-    if(local_id.x == 0 && local_id.y == 0){
+    if (local_id.x == 0 && local_id.y == 0) {
         const int2 pos = (int2)(get_global_id(0), get_global_id(1));
         const int2 group = (int2)(get_group_id(0), get_group_id(1));
         int BlockNumX = (uWidth + DIM - 1)/DIM;
@@ -1424,20 +1413,20 @@ kernel void astc(read_only image2d_t inputImage, __global uint4* astc_arr,
         int BlockID = group.y * BlockNumX + group.x;
         float4 texels[BLOCK_SIZE];
         float4 texel_mean = (float4)(0);
-        for(int i = 0; i < DIM; ++i){
-            for(int j = 0; j < DIM; ++j){
-                int2 pixelPos = pos + (int2)(j,i);
-                if(pixelPos.x > uWidth || pixelPos.y > uHeight){
-                    texels[i*DIM + j] = (float4)(255.0f);
+        for (int i = 0; i < DIM; ++i) {
+            for (int j = 0; j < DIM; ++j) {
+                int2 pixelPos = pos + (int2)(j, i);
+                if (pixelPos.x > uWidth || pixelPos.y > uHeight) {
+                    texels[i * DIM + j] = (float4)(255.0f);
                     continue;
                 }
                 float4 texel = read_imagef(inputImage, pixelPos);
-                texels[i*DIM + j] = texel * 255.0f;
+                texels[i * DIM + j] = texel * 255.0f;
                 texel_mean += texel * 255.0f;
             }
         }
         texel_mean = texel_mean / (float)(BLOCK_SIZE);
-        astc_arr[BlockID] = encode_block(texels,texel_mean,BlockID,global_parts,errs);    
+        astc_arr[BlockID] = encode_block(texels, texel_mean, BlockID, global_parts, errs);    
     }
 }
 )";
@@ -1445,12 +1434,23 @@ kernel void astc(read_only image2d_t inputImage, __global uint4* astc_arr,
 size_t FileIOGetSize(FILE *fileIn)
 {
     size_t ret = 0;
-    if(!fileIn){
+    int fseek() 
+    if (!fileIn) {
         return 0;
     }
-    fseek(fileIn, 0, SEEK_END);
+    ret = fseek(fileIn, 0, SEEK_END);
+    if (ret != 0) {
+        HiLog::Error(LABEL, "fseek offset failed !");
+        printf("fseek offset failed !\n");
+        return ret;
+    }
     ret = ftell(fileIn);
-    fseek(fileIn, 0, SEEK_SET);
+    ret = fseek(fileIn, 0, SEEK_SET);
+    if (ret != 0) {
+        HiLog::Error(LABEL, "fseek offset failed !");
+        printf("fseek offset failed !\n");
+        return ret;
+    }
     return ret;
 }
 
@@ -1461,14 +1461,14 @@ static int GetCores()
 int32_t TidAffinityBindToCpu(unsigned int cpuID)
 {
     int cores = GetCores();
-    if(static_cast<int>(cpuID) >= cores) {
-        printf("your set cpuID[%d] is beyond the cores[%d],exit...", cpuID, cores);
+    if (static_cast<int>(cpuID) >= cores) {
+        printf("your set cpuID[%u] is beyond the cores[%d],exit...", cpuID, cores);
         return -1;
     }
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(cpuID, &mask);
-    if(sched_setaffinity(getpid(),sizeof(mask), &mask) == -1){
+    if (sched_setaffinity(getpid(), sizeof(mask), &mask) == -1) {
         printf("counld not get thread affinity !\n");
         return -1;
     }
@@ -1479,9 +1479,9 @@ std::shared_ptr<ImageCompressor> ImageCompressor::instance_ = nullptr;
 std::mutex ImageCompressor::instanceMutex_;
 std::shared_ptr<ImageCompressor> ImageCompressor::GetInstance()
 {
-    if(instance_ == nullptr){
+    if (instance_ == nullptr) {
         std::lock_guard<std::mutex> lock(instanceMutex_);
-        if(instance_ == nullptr){
+        if (instance_ == nullptr) {
             instance_.reset(new ImageCompressor());
             instance_->Init();
         }
@@ -1491,10 +1491,10 @@ std::shared_ptr<ImageCompressor> ImageCompressor::GetInstance()
 void ImageCompressor::Init()
 {
     switch_  = true;
-    if (switch_){
+    if (switch_) {
         clOk_ = OHOS::InitOpenCL();
-        if(!clOk_){
-            HiLog::Error(LABEL,"mxs InitOpenCL error !");
+        if (!clOk_) {
+            HiLog::Error(LABEL, "mxs InitOpenCL error !");
             printf("mxs InitOpenCL error !\n");
         }
         InitPartition();
@@ -1505,7 +1505,7 @@ bool ImageCompressor::CanCompress()
 #ifdef UPLOAD_GPU_DISABLED
     return false;
 #else
-    if(switch_ && clOk_){
+    if (switch_ && clOk_) {
         return true;
     }
     return false;
@@ -1519,7 +1519,7 @@ cl_program ImageCompressor::LoadShader(cl_context context)
     cl_program p = clCreateProgramWithSource(context, 1, &g_programSource, &sourceSize, &err);
     if (err || (!p)) {
         HiLog::Error(LABEL, "mxs clCreateProgramWithSource error !");
-        printf("clCreateProgramWithSource error %d \n",err);
+        printf("clCreateProgramWithSource error %d \n", err);
         return nullptr;
     }
     return p;
@@ -1532,7 +1532,7 @@ char *ImageCompressor::ReadSourceCode(const char *fileName)
     std::fstream f(fileName, (std::fstream::in | std::fstream::binary));
     if (f.is_open()) {
         size_t sizeFile;
-        f.seekg(0,std::fstream::end);
+        f.seekg(0, std::fstream::end);
         size = sizeFile = static_cast<size_t>(f.tellg());
         f.seekg(0, std::fstream::beg);
 
@@ -1552,16 +1552,16 @@ char *ImageCompressor::ReadSourceCode(const char *fileName)
 }
 bool ImageCompressor::CreateKernel()
 {
-    if (!context_ || !kernel_){
+    if (!context_ || !kernel_) {
         cl_int err;
         cl_platform_id platform_id;
         cl_device_id device_id;
-        clGetPlatformIDs(1,&platform_id, NULL);
+        clGetPlatformIDs(1, &platform_id, NULL);
         if (!platform_id) {
             HiLog::Error(LABEL, "mxs clGetPlatformIDs err! \n");
             return false;
         }
-        clGetDeviceIDs(platform_id,CL_DEVICE_TYPE_GPU, 1, &device_id,NULL);
+        clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, NULL);
         if (!device_id) {
             HiLog::Error(LABEL, "mxs clGetDeviceIDs error! \n");
             return false;
@@ -1578,14 +1578,14 @@ bool ImageCompressor::CreateKernel()
         if (!program) {
             HiLog::Error(LABEL, "mxs LoadShaderBin error ! \n");
         }
-        clBuildProgram(program, 1, &device_id, compileOption_.c_str(),NULL,NULL);
+        clBuildProgram(program, 1, &device_id, compileOption_.c_str(), NULL, NULL);
         kernel_ = clCreateKernel(program, "astc", &err);
         if (!kernel_) {
             HiLog::Error(LABEL, "mxs clCreateKernel error %{public}d !", err);
         }
         clReleaseProgram(program);
     }
-    if (!context_ || !kernel_ || !queue_){
+    if (!context_ || !kernel_ || !queue_) {
         ReleaseResource();
         HiLog::Error(LABEL, "build opencl program failed \n");
         clOk_ = false;
@@ -1603,7 +1603,7 @@ void ImageCompressor::ReleaseResource()
     queue_ = NULL;
     clReleaseContext(context_);
     context_ = NULL;
-    instance_ = nullptr;   
+    instance_ = nullptr;
 }
 
 void ImageCompressor::GenAstcHeader(uint8_t *buffer, uint8_t blockX, uint8_t blockY, uint32_t dimX, uint32_t dimY)
@@ -1617,14 +1617,14 @@ void ImageCompressor::GenAstcHeader(uint8_t *buffer, uint8_t blockX, uint8_t blo
     *headInfo++ = static_cast<uint8_t>(blockY);
     *headInfo++ = 1;
     *headInfo++ = dimX & BYTES_MASK;
-    *headInfo++ = (dimX >> BIT_SHIFT_8BITS )& BYTES_MASK;
-    *headInfo++ = (dimX >> BIT_SHIFT_16BITS )& BYTES_MASK;
+    *headInfo++ = (dimX >> BIT_SHIFT_8BITS)& BYTES_MASK;
+    *headInfo++ = (dimX >> BIT_SHIFT_16BITS)& BYTES_MASK;
     *headInfo++ = dimY & BYTES_MASK;
-    *headInfo++ = (dimY >> BIT_SHIFT_8BITS )& BYTES_MASK;
-    *headInfo++ = (dimY >> BIT_SHIFT_16BITS )& BYTES_MASK;
+    *headInfo++ = (dimY >> BIT_SHIFT_8BITS)& BYTES_MASK;
+    *headInfo++ = (dimY >> BIT_SHIFT_16BITS)& BYTES_MASK;
     *headInfo++ = 1 & BYTES_MASK;
-    *headInfo++ = (1 >> BIT_SHIFT_8BITS ) & BYTES_MASK;
-    *headInfo++ = (1 >> BIT_SHIFT_16BITS ) & BYTES_MASK;
+    *headInfo++ = (1 >> BIT_SHIFT_8BITS) & BYTES_MASK;
+    *headInfo++ = (1 >> BIT_SHIFT_16BITS) & BYTES_MASK;
 }
 
 bool ImageCompressor::TextureEncodeCL(uint8_t *data, int32_t strideIn, int32_t width, int32_t height, uint8_t *buffer)
@@ -1654,27 +1654,27 @@ bool ImageCompressor::TextureEncodeCL(uint8_t *data, int32_t strideIn, int32_t w
 
     cl_image_format image_format = { CL_RGBA, CL_UNORM_INT8 };
     cl_image_desc desc = { CL_MEM_OBJECT_IMAGE2D, stride, height };
-    cl_mem inputImage = 
+    cl_mem inputImage =
         clCreateImage(context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &image_format, &desc, data, &err);
     cl_mem astcResult = clCreateBuffer(context_, CL_MEM_ALLOC_HOST_PTR, astc_size, NULL, &err);
-    cl_mem partInfos = 
+    cl_mem partInfos =
         clCreateBuffer(context_, CL_MEM_COPY_HOST_PTR,sizeof(PartInfo) * parts_.size(), &parts_[0], &err);
     
-    uint32_t *blockErrs = new uint32_t[numBlocks]{ 0 };
-    cl_mem clErrs = clCreateBuffer(context_,CL_MEM_USE_HOST_PTR, sizeof(uint32_t) * numBlocks, blockErrs, &err);
+    uint32_t *blockErrs = new uint32_t[numBlocks]{0};
+    cl_mem clErrs = clCreateBuffer(context_, CL_MEM_USE_HOST_PTR, sizeof(uint32_t) * numBlocks, blockErrs, &err);
 
     int32_t kernelId = 0;
-    err |= clSetKernelArg(kernel_, kernelId++ ,sizeof(cl_mem), &inputImage);
-    err |= clSetKernelArg(kernel_, kernelId++ ,sizeof(cl_mem), &astcResult);
-    err |= clSetKernelArg(kernel_, kernelId++ ,sizeof(cl_mem), &partInfos);
-    err |= clSetKernelArg(kernel_, kernelId++ ,sizeof(cl_mem), &clErrs);
+    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &inputImage);
+    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &astcResult);
+    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &partInfos);
+    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &clErrs);
 
     err = clEnqueueNDRangeKernel(queue_, kernel_, GLOBAL_WH_NUM_CL, NULL, global, local, 0, NULL, NULL);
 
     clFinish(queue_);
 
-    uint32_t max_val = 0,sum_val = 0;
-    err = clEnqueueReadBuffer(queue_, clErrs, CL_TRUE, 0, sizeof(uint32_t) * numBlocks, blockErrs, 0, NULL,NULL);
+    uint32_t max_val = 0, sum_val = 0;
+    err = clEnqueueReadBuffer(queue_, clErrs, CL_TRUE, 0, sizeof(uint32_t) * numBlocks, blockErrs, 0, NULL, NULL);
     for (int32_t i = 0; i < numBlocks; i++) {
         sum_val += blockErrs[i];
         max_val = fmax(max_val, blockErrs[i]);
@@ -1685,7 +1685,7 @@ bool ImageCompressor::TextureEncodeCL(uint8_t *data, int32_t strideIn, int32_t w
     clReleaseMemObject(clErrs);
     delete[] blockErrs;
     
-    clEnqueueReadBuffer(queue_, astcResult, CL_TRUE, 0, astc_size, buffer + TEXTURE_HEAD_BYTES, 0, NULL,NULL);
+    clEnqueueReadBuffer(queue_, astcResult, CL_TRUE, 0, astc_size, buffer + TEXTURE_HEAD_BYTES, 0, NULL, NULL);
     clReleaseMemObject(astcResult);
 
     return true;
@@ -1701,7 +1701,7 @@ std::function<void()> ImageCompressor::ScheduleReleaseTask()
 
                 std::ofstream saveFile(recordsPath_);
                 if (!saveFile.is_open()) {
-                    return ;
+                    return;
                 } 
                 std::lock_guard<std::mutex> mLock(recordsMutex_);
                 for (auto s : failedRecords_) {
@@ -1714,9 +1714,6 @@ std::function<void()> ImageCompressor::ScheduleReleaseTask()
     return task;
 }
 
-
-
-
 static uint32_t Hash52(uint32_t seed)
 {
     seed ^= seed >> HASH_MAGIC_SEED_BIT;
@@ -1727,37 +1724,8 @@ static uint32_t Hash52(uint32_t seed)
     seed ^= seed >> HASH_SEED_4;
     seed ^= seed << HASH_SEED_5;
     seed ^= seed >> HASH_SEED_6;
-    return seed;    
+    return seed;
 }
-
-#define SEED_MAGIC_NUM_01 (4)
-#define SEED_MAGIC_NUM_02 (12)
-#define SEED_MAGIC_NUM_03 (20)
-#define SEED_MAGIC_NUM_04 (28)
-#define SEED_MAGIC_NUM_05 (18)
-#define SEED_MAGIC_NUM_06 (22)
-#define SEED_MAGIC_NUM_07 (26)
-#define SEED_MAGIC_NUM_08 (30)
-#define SEED_MAGIC_NUM_09 (2)
-
-#define SEED_MAGIC_2 (2)
-#define SEED_MAGIC_3 (3)
-#define SEED_MAGIC_4 (4)
-#define SEED_MAGIC_5 (5)
-#define SEED_MAGIC_6 (6)
-#define SEED_MAGIC_7 (7)
-#define SEED_MAGIC_8 (8)
-#define SEED_MAGIC_9 (9)
-#define SEED_MAGIC_10 (10)
-#define SEED_MAGIC_11 (11)
-#define SEED_MAGIC_14 (14)
-#define MASK_4TH_BIT (0x10)
-#define MASK_LOW7BIT (0x3F)
-#define PARTITION_COUNT_1 (1)
-#define PARTITION_COUNT_2 (2)
-#define PARTITION_COUNT_3 (3)
-#define PARTITION_COUNT_4 (4)
-#define SEED_NUM (12)
 
 static void CalSeedNum(uint8_t seedn[SEED_NUM], uint32_t num)
 {
@@ -1775,7 +1743,7 @@ static void CalSeedNum(uint8_t seedn[SEED_NUM], uint32_t num)
     *seed++ = (num >> SEED_MAGIC_NUM_07) & HALF_BYTES_MASK;
     *seed++ = ((num >> SEED_MAGIC_NUM_08) | (num << SEED_MAGIC_NUM_09)) & HALF_BYTES_MASK;
 
-    for (int i=0; i < SEED_NUM; i++) {
+    for (int i = 0; i < SEED_NUM; i++) {
         seedn[i] *= seedn[i];
     }
 }
@@ -1792,7 +1760,7 @@ uint8_t CalPartition(int32_t partitionCount, int32_t a, int32_t b, int32_t c, in
     }
     if (partitionCount <= PARTITION_COUNT_2) {
         c = 0;
-    } 
+    }
     if (partitionCount <= PARTITION_COUNT_1) {
         b = 0;
     }
@@ -1815,7 +1783,7 @@ static uint8_t SelectPartition(int32_t seed, int32_t x, int32_t y, int32_t parti
         x <<= 1;
         y <<= 1;
     }
-    seed += (partitionCount - 1) <<10;
+    seed += (partitionCount - 1) << SEED_MAGIC_10;
     uint32_t num = Hash52(seed);
     uint8_t seedn[SEED_NUM];
     CalSeedNum(seedn, num);
@@ -1847,7 +1815,7 @@ bool ImageCompressor::InitPartitionInfo(PartInfo *partInfos, int32_t part_index,
 {
     int32_t texIdx = 0;
     int32_t counts[PARTITION_COUNT_4] = {0};
-    for (int32_t y = 0; y <DIM; y++){
+    for (int32_t y = 0; y < DIM; y++) {
         for (int32_t x = 0; x < DIM; x++) {
             int32_t part = SelectPartition(part_index, x, y, part_count, true);
             partInfos->bitmaps[part] |= 1u << texIdx;
