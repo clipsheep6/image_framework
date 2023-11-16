@@ -124,7 +124,6 @@ const char *g_programSource = R"(
 #define MAX_PARTITION_COUNT 4
 #define PARTITION_COUNT 2
 
-
 typedef struct {
     int partid;
     uint bitmaps[2];
@@ -133,7 +132,7 @@ typedef struct {
 int get_part(PartInfo* part_info, int i)
 {
     if (i >= 32) {
-        return 0;    
+        return 0;
     }
     return (int)(((*part_info).bitmaps[1]>>i)&0x1u);
 }
@@ -156,7 +155,7 @@ __constant short scramble_table[12 * WEIGHT_QUANTIZE_NUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 2, 4, 6, 8, 9, 7, 5, 3, 1,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 4, 8 ,2, 6, 10, 11, 7, 3 , 9, 5, 1,
+    0, 4, 8 ,2, 6, 10, 11, 7, 3, 9, 5, 1,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -393,7 +392,7 @@ __constant short color_quant_tables[21 * 256] = {
     6, 6, 6, 6, 6, 6, 6, 6, 6, 10, 10, 10, 10, 10, 10, 10,
     10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
-    11, 11, 11, 11, 11, 11, 11, 7, 7, 7, 7, 7,7, 7, 7, 7,
+    11, 11, 11, 11, 11, 11, 11, 7, 7, 7, 7, 7, 7, 7, 7, 7,
     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     3, 3, 3, 3, 3, 3, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
@@ -692,18 +691,17 @@ __constant short color_unquant_tables[21][256] = {
         2, 253, 10, 245, 18, 237, 26, 229, 35, 220, 43, 212, 51, 204, 59, 196,
         67, 188, 75, 180, 83, 172, 91, 164, 99, 156, 107, 148, 115, 140, 123, 132,
         5, 250, 13, 242, 21, 234, 29, 226, 37, 218, 45, 210, 53, 202, 61, 194,
-        70, 185, 78, 177, 86, 169, 94, 161 , 102, 153, 110, 145, 118, 137, 126, 129 
+        70, 185, 78, 177, 86, 169, 94, 161, 102, 153, 110, 145, 118, 137, 126, 129
     },
     { // 128
         0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30,
         32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62,
-        64, 66, 68, 70, 72, 74, 76 , 78, 80, 82, 84, 86, 88, 90, 92, 94,
+        64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94,
         96, 98, 100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124, 126,
         129, 131, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159,
         161, 163, 165, 167, 169, 171, 173, 175, 177, 179, 181, 183, 185, 187, 189, 191,
         193, 195, 197, 199, 201, 203, 205, 207, 209, 211, 213, 215, 217, 219, 221, 223,
         225, 227, 229, 231, 233, 235, 237, 239, 241, 243, 245, 247, 249, 251, 253, 255
-
     },
     { // 160
         0, 255, 8, 247, 16, 239, 24, 231, 32, 223, 40, 215, 48, 207, 56, 199,
@@ -769,7 +767,7 @@ void find_min_max(float4* texels, float4 pt_mean, float4 vec_k, float4* e0, floa
     }
 
     *e0 = clamp(vec_k *a + pt_mean, 0.0f, 255.0f);
-    *e1 = clamp(vec_k * b + pt_mean, 0.0f, 255.0f );
+    *e1 = clamp(vec_k * b + pt_mean, 0.0f, 255.0f);
     // if the direction_vector ends up pointing from light to dark, FLIP IT!
     //this will make the endpoint the darkest one;
     float4 e0u = round(*e0);
@@ -829,7 +827,7 @@ void max_accumulation_pixel_direction(float4* texels, float4 pt_mean, float4* e0
 }
 void encode_color_normal(short quant_level, float4 e0, float4 e1, short* endpoint_quantized)
 {
-    int4 e0q = (int4)((int)(round(e0.x)), (int)(round(e0.y)), (int)(round(e0.z)), (int)(round(e0.w)));   
+    int4 e0q = (int4)((int)(round(e0.x)), (int)(round(e0.y)), (int)(round(e0.z)), (int)(round(e0.w))); 
     int4 e1q = (int4)((int)(round(e1.x)), (int)(round(e1.y)), (int)(round(e1.z)), (int)(round(e1.w)));
     
     endpoint_quantized[0] = color_quant_tables[quant_level * 256 + e0q.x];
@@ -896,9 +894,9 @@ void calculate_normal_weights_2plane(float4* texels,
         } else if (component_plane2 == 1) {
             vec_k = normalize((float4)(vec_k.x, 0, vec_k.z, vec_k.w));
         } else if (component_plane2 == 2) {
-            vec_k = normalize((float4)(vec_k.x, vec_k.y , 0, vec_k.w));
+            vec_k = normalize((float4)(vec_k.x, vec_k.y, 0, vec_k.w));
         } else if (component_plane2 == 3) {
-            vec_k = normalize((float4)(vec_k.x, vec_k.y , vec_k.z, 0));
+            vec_k = normalize((float4)(vec_k.x, vec_k.y, vec_k.z, 0));
         }
         for (i = 0; i < BLOCK_SIZE; ++i) {
             float4 texel = texels[i];
@@ -962,11 +960,11 @@ void calculate_normal_weights(int part, PartInfo* part_info, float4* texels, flo
         }
     }
     float invlen = maxw - minw;
-    invlen = max(SMALL_VALUE, invlen );
+    invlen = max(SMALL_VALUE, invlen);
     invlen = 1.0f / invlen;
     for (i=0 ;i<X_GRIDS * Y_GRIDS; ++i) {
         if (!part_info) {
-            projw[i] = (projw[i] - minw) * invlen;   
+            projw[i] = (projw[i] - minw) * invlen;
             } else {
                 int cur_part = get_part(part_info, i);
                 if (cur_part  == part) {
@@ -1018,7 +1016,7 @@ void orbits8_ptr(uint4* outputs, uint* bitoffset, uint number, uint bitcount)
     uint nidx = newpos >>5;
     uint uidx = *bitoffset >>5;
     uint bit_idx = *bitoffset & 31u;
-    if ( uidx == 0) {
+    if (uidx == 0) {
         (*outputs).x | = (number << bit_idx);
         (*outputs).y | = (nidx >uidx) ? (number >> (32u - bit_idx)) : 0u;
     } else if (uidx == 1) {
@@ -1054,7 +1052,7 @@ uint4* outputs, uint* outpos)
     int t0, t1, t2, t3, t4;
     uint m0, m1, m2, m3, m4;
     split_high_low(b0, bitcount, &t0, &m0);
-    split_high_low(b1 ,bitcount, &t1, &m1);
+    split_high_low(b1, bitcount, &t1, &m1);
     split_high_low(b2, bitcount, &t2, &m2);
     split_high_low(b3, bitcount, &t3, &m3);
     split_high_low(b4, bitcount, &t4, &m4);
@@ -1130,7 +1128,7 @@ void bise_weights(short numbers[16], int range, uint4* outputs)
 
     if (trits == 1u) {
         encode_trits(bits, numbers[0], numbers[1], numbers[2], numbers[3], numbers[4], outputs, &bitpos);
-        encode_trits(bits, numbers[5], numbers[6], numbers[7],numbers[8], numbers[9], outputs, &bitpos);
+        encode_trits(bits, numbers[5], numbers[6], numbers[7], numbers[8], numbers[9], outputs, &bitpos);
         encode_trits(bits, numbers[10], numbers[11], numbers[12], numbers[13], numbers[14], outputs, &bitpos);
         encode_trits(bits, numbers[15], 0u, 0u, 0u, 0u, outputs, &bitpos);
         bitpos = ((8u + 5u * bits) * 16u + 4u) / 5u;
@@ -1141,7 +1139,7 @@ void bise_weights(short numbers[16], int range, uint4* outputs)
         encode_quints(bits, numbers[9], numbers[10], numbers[11], outputs, &bitpos);
         encode_quints(bits, numbers[12], numbers[13], numbers[14], outputs, &bitpos);
         encode_quints(bits, numbers[15], 0u, 0u, outputs, &bitpos);
-        bitpos = ((7u + 3u * bits) * 16u + 2u) / 3u;   
+        bitpos = ((7u + 3u * bits) * 16u + 2u) / 3u;
     } else {
         for (int i = 0; i < 16; ++i) {
             orbits8_ptr(outputs, &bitpos, numbers[i], bits);
@@ -1165,7 +1163,7 @@ uint bise_weights_2plane(short numbers[32], int range, uint4* outputs)
         encode_trits(bits, numbers[20], numbers[21], numbers[22], numbers[23], numbers[24], outputs, &bitpos);
         encode_trits(bits, numbers[25], numbers[26], numbers[27], numbers[28], numbers[29], outputs, &bitpos);
         encode_trits(bits, numbers[30], numbers[31], 0u, 0u, 0u, outputs, &bitpos);
-        bitpos = ((8u + 5u * bits) * 32u + 4u) / 5u;    
+        bitpos = ((8u + 5u * bits) * 32u + 4u) / 5u;
     } else if (quints == 1u) {
         encode_quints(bits, numbers[0], numbers[1], numbers[2], outputs, &bitpos);
         encode_quints(bits, numbers[3], numbers[4], numbers[5], outputs, &bitpos);
@@ -1178,10 +1176,10 @@ uint bise_weights_2plane(short numbers[32], int range, uint4* outputs)
         encode_quints(bits, numbers[24], numbers[25], numbers[26], outputs, &bitpos);
         encode_quints(bits, numbers[27], numbers[28], numbers[29], outputs, &bitpos);
         encode_quints(bits, numbers[30], numbers[31], 0u, outputs, &bitpos);
-        bitpos = ((7u + 3u * bits) * 32u + 2u) / 3u;    
+        bitpos = ((7u + 3u * bits) * 32u + 2u) / 3u;
     } else {
         for (int i = 0; i < 32; ++i) {
-            orbits8_ptr(outputs, &bitpos, numbers[i], bits);    
+            orbits8_ptr(outputs, &bitpos, numbers[i], bits);
         }
     }
     return bitpos;
@@ -1251,7 +1249,7 @@ uint assemble_blockmode(uint weight_quantmethod, bool is_dual_plane)
     return blockmode;
 }
 
-uint4 endpoint_ise(float4* ep0, float4* ep1, short endpoint_quantmethod, bool has_alpha)  
+uint4 endpoint_ise(float4* ep0, float4* ep1, short endpoint_quantmethod, bool has_alpha)
 {
     short ep_quantized[8];
     encode_color_normal(endpoint_quantmethod, *ep0, *ep1, ep_quantized);
@@ -1386,17 +1384,18 @@ uint4 encode_block(float4* texels, float4 texels_mean,
     short3 best_blockmode, tmp_best_blockmode;
     float threshhold = 10000.0f;
     errval = try_encode(texels, texels_mean,
-        has_alpha, 0 , &ep_ise, &wt_ise, &best_blockmode);
+        has_alpha, 0, &ep_ise, &wt_ise, &best_blockmode);
 
     uint blockmode = assemble_blockmode(best_blockmode.x, is_dual_plane);
     uint color_endpoint_mode;
     if (has_alpha) {
         color_endpoint_mode = CEM_LDR_RGBA_DIRECT;
     } else {
-        color_endpoint_mode = CEM_LDR_RGB_DIRECT;    
+        color_endpoint_mode = CEM_LDR_RGB_DIRECT;
     }
     errs[blockID] = (uint)(errval);
-    return assemble_block(blockmode, color_endpoint_mode, (uint)(part_count), (uint)(part_index), ep_ise, wt_ise);        
+    return
+        assemble_block(blockmode, color_endpoint_mode, (uint)(part_count), (uint)(part_index), ep_ise, wt_ise);
 }
 
 kernel void astc(read_only image2d_t inputImage, __global uint4* astc_arr,
@@ -1426,7 +1425,7 @@ kernel void astc(read_only image2d_t inputImage, __global uint4* astc_arr,
             }
         }
         texel_mean = texel_mean / (float)(BLOCK_SIZE);
-        astc_arr[BlockID] = encode_block(texels, texel_mean, BlockID, global_parts, errs);    
+        astc_arr[BlockID] = encode_block(texels, texel_mean, BlockID, global_parts, errs);
     }
 }
 )";
@@ -1434,7 +1433,6 @@ kernel void astc(read_only image2d_t inputImage, __global uint4* astc_arr,
 size_t FileIOGetSize(FILE *fileIn)
 {
     size_t ret = 0;
-    int fseek() 
     if (!fileIn) {
         return 0;
     }
@@ -1658,16 +1656,16 @@ bool ImageCompressor::TextureEncodeCL(uint8_t *data, int32_t strideIn, int32_t w
         clCreateImage(context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &image_format, &desc, data, &err);
     cl_mem astcResult = clCreateBuffer(context_, CL_MEM_ALLOC_HOST_PTR, astc_size, NULL, &err);
     cl_mem partInfos =
-        clCreateBuffer(context_, CL_MEM_COPY_HOST_PTR,sizeof(PartInfo) * parts_.size(), &parts_[0], &err);
+        clCreateBuffer(context_, CL_MEM_COPY_HOST_PTR, sizeof(PartInfo) * parts_.size(), &parts_[0], &err);
     
-    uint32_t *blockErrs = new uint32_t[numBlocks]{0};
+    uint32_t *blockErrs = new uint32_t[numBlocks] {0};
     cl_mem clErrs = clCreateBuffer(context_, CL_MEM_USE_HOST_PTR, sizeof(uint32_t) * numBlocks, blockErrs, &err);
 
     int32_t kernelId = 0;
-    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &inputImage);
-    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &astcResult);
-    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &partInfos);
-    err |= clSetKernelArg(kernel_, kernelId++ , sizeof(cl_mem), &clErrs);
+    err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &inputImage);
+    err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &astcResult);
+    err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &partInfos);
+    err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &clErrs);
 
     err = clEnqueueNDRangeKernel(queue_, kernel_, GLOBAL_WH_NUM_CL, NULL, global, local, 0, NULL, NULL);
 
@@ -1702,10 +1700,10 @@ std::function<void()> ImageCompressor::ScheduleReleaseTask()
                 std::ofstream saveFile(recordsPath_);
                 if (!saveFile.is_open()) {
                     return;
-                } 
+                }
                 std::lock_guard<std::mutex> mLock(recordsMutex_);
                 for (auto s : failedRecords_) {
-                    saveFile <<s << "\n";
+                    saveFile << s << "\n";
                 }
                 saveFile.close();
             }
