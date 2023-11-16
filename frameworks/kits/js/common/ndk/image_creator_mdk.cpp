@@ -22,13 +22,13 @@ using namespace OHOS::Media;
 #ifdef __cplusplus
 extern "C" {
 #endif
-struct ImageCreatorNative_ {
+struct ImageCreator_Native_ {
     napi_env env = nullptr;
     ImageCreatorNapi* napi = nullptr;
 };
 
 MIDK_EXPORT
-int32_t OH_ImageCreator_Create(napi_env env, struct OhosImageCreatorOpts opts, napi_value* res)
+int32_t OH_ImageCreator_Create(napi_env env, ImageCreator_Opts opts, napi_value* res)
 {
     ImageCreatorArgs args;
     args.env = env;
@@ -41,7 +41,7 @@ int32_t OH_ImageCreator_Create(napi_env env, struct OhosImageCreatorOpts opts, n
 }
 
 MIDK_EXPORT
-ImageCreatorNative* OH_ImageCreator_InitNative(napi_env env, napi_value source)
+ImageCreator_Native* OH_ImageCreator_InitNative(napi_env env, napi_value source)
 {
     ImageCreatorArgs args;
     args.env = env;
@@ -50,14 +50,14 @@ ImageCreatorNative* OH_ImageCreator_InitNative(napi_env env, napi_value source)
     if (resCode != IMAGE_RESULT_SUCCESS || args.napi == nullptr) {
         return nullptr;
     }
-    std::unique_ptr<ImageCreatorNative> result = std::make_unique<ImageCreatorNative>();
+    std::unique_ptr<ImageCreator_Native> result = std::make_unique<ImageCreator_Native>();
     result->napi = args.napi;
     result->env = env;
     return result.release();
 }
 
 MIDK_EXPORT
-int32_t OH_ImageCreator_Dequeue(const ImageCreatorNative* native, napi_value* image)
+int32_t OH_ImageCreator_Dequeue(const ImageCreator_Native* native, napi_value* image)
 {
     if (native == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
@@ -70,7 +70,7 @@ int32_t OH_ImageCreator_Dequeue(const ImageCreatorNative* native, napi_value* im
 }
 
 MIDK_EXPORT
-int32_t OH_ImageCreator_Queue(const ImageCreatorNative* native, napi_value image)
+int32_t OH_ImageCreator_Queue(const ImageCreator_Native* native, napi_value image)
 {
     if (native == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
@@ -83,7 +83,7 @@ int32_t OH_ImageCreator_Queue(const ImageCreatorNative* native, napi_value image
 }
 
 MIDK_EXPORT
-int32_t OH_ImageCreator_On(const ImageCreatorNative* native, OH_ImageCreator_On_Callback callback)
+int32_t OH_ImageCreator_On(const ImageCreator_Native* native, OH_ImageCreator_On_Callback callback)
 {
     if (native == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
@@ -96,7 +96,7 @@ int32_t OH_ImageCreator_On(const ImageCreatorNative* native, OH_ImageCreator_On_
 }
 
 MIDK_EXPORT
-int32_t OH_ImageCreator_GetCapacity(const ImageCreatorNative* native, int32_t* capacity)
+int32_t OH_ImageCreator_GetCapacity(const ImageCreator_Native* native, int32_t* capacity)
 {
     if (native == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
@@ -109,7 +109,7 @@ int32_t OH_ImageCreator_GetCapacity(const ImageCreatorNative* native, int32_t* c
 }
 
 MIDK_EXPORT
-int32_t OH_ImageCreator_GetFormat(const ImageCreatorNative* native, int32_t* format)
+int32_t OH_ImageCreator_GetFormat(const ImageCreator_Native* native, int32_t* format)
 {
     if (native == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
@@ -122,7 +122,7 @@ int32_t OH_ImageCreator_GetFormat(const ImageCreatorNative* native, int32_t* for
 }
 
 MIDK_EXPORT
-int32_t OH_ImageCreator_Release(ImageCreatorNative* native)
+int32_t OH_ImageCreator_Release(ImageCreator_Native* native)
 {
     if (native != nullptr) {
         delete native;

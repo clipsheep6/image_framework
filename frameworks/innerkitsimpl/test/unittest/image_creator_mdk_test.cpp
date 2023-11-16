@@ -42,7 +42,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_CreateTest, TestSize.Level3)
 
     napi_env env = nullptr;
     napi_value res = nullptr;
-    struct OhosImageCreatorOpts opts;
+    struct ImageCreator_Opts_ opts;
     opts.width = TEST_WIDTH;
     opts.height = TEST_HEIGHT;
     opts.capicity = TEST_CAPICITY;
@@ -64,7 +64,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_InitNativeTest, TestSize.Level3)
 
     napi_env env = nullptr;
     napi_value source = nullptr;
-    ImageCreatorNative* result = OH_ImageCreator_InitNative(env, source);
+    ImageCreator_Native* result = OH_ImageCreator_InitNative(env, source);
     ASSERT_EQ(result, nullptr);
 
     GTEST_LOG_(INFO) << "ImageCreatorMdkTest: OH_ImageCreator_InitNativeTest end";
@@ -79,7 +79,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_DequeueTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageCreatorMdkTest: OH_ImageCreator_DequeueTest start";
 
-    ImageCreatorNative* native = nullptr;
+    ImageCreator_Native* native = nullptr;
     napi_value image = nullptr;
     int32_t result = OH_ImageCreator_Dequeue(native, &image);
     ASSERT_NE(result, IMAGE_RESULT_SUCCESS);
@@ -96,7 +96,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_QueueTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageCreatorMdkTest: OH_ImageCreator_QueueTest start";
 
-    ImageCreatorNative* native = nullptr;
+    ImageCreator_Native* native = nullptr;
     napi_value image = nullptr;
     int32_t result = OH_ImageCreator_Queue(native, image);
     ASSERT_NE(result, IMAGE_RESULT_SUCCESS);
@@ -118,7 +118,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_OnTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageCreatorMdkTest: OH_ImageCreator_OnTest start";
 
-    ImageCreatorNative* native = nullptr;
+    ImageCreator_Native* native = nullptr;
     int32_t result = OH_ImageCreator_On(native, onTestEvent);
     ASSERT_NE(result, IMAGE_RESULT_SUCCESS);
 
@@ -134,7 +134,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_GetCapacityTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageCreatorMdkTest: OH_ImageCreator_GetCapacityTest start";
 
-    ImageCreatorNative* native = nullptr;
+    ImageCreator_Native* native = nullptr;
     int32_t capacity;
     int32_t result = OH_ImageCreator_GetCapacity(native, &capacity);
     ASSERT_NE(result, IMAGE_RESULT_SUCCESS);
@@ -151,7 +151,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_GetFormatTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageCreatorMdkTest: OH_ImageCreator_GetFormatTest start";
 
-    ImageCreatorNative* native = nullptr;
+    ImageCreator_Native* native = nullptr;
     int32_t format;
     int32_t result = OH_ImageCreator_GetFormat(native, &format);
     ASSERT_NE(result, IMAGE_RESULT_SUCCESS);
@@ -168,7 +168,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_ReleaseTest, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageCreatorMdkTest: OH_ImageCreator_ReleaseTest start";
 
-    ImageCreatorNative* native = nullptr;
+    ImageCreator_Native* native = nullptr;
     int32_t result = OH_ImageCreator_Release(native);
     ASSERT_EQ(result, IMAGE_RESULT_SUCCESS);
 

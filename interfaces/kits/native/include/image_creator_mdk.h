@@ -37,7 +37,7 @@
  *
  * The following steps are recommended for this process:
  * Create an image creator object by calling OH_ImageCreator_Create function.
- * And then covert the image creator object to ImageCreatorNative by OH_ImageCreator_InitNative.
+ * And then covert the image creator object to ImageCreator_Native by OH_ImageCreator_InitNative.
  * Next obtaining a image object by OH_ImageCreator_Dequeue and fill it with raw image data.
  * Queueing the obtained image object by OH_ImageCreator_Queue and the native layer components can
  * get the raw image data by graphic private inner apis
@@ -62,7 +62,7 @@
 extern "C" {
 #endif
 
-struct ImageCreatorNative_;
+struct ImageCreator_Native_;
 
 /**
  * @brief Defines an image creator object at the native layer for the image creator interface.
@@ -70,7 +70,7 @@ struct ImageCreatorNative_;
  * @since 11
  * @version 4.1
  */
-typedef struct ImageCreatorNative_ ImageCreatorNative;
+typedef struct ImageCreator_Native_ ImageCreator_Native;
 
 /**
  * @brief Defines the callbacks for image creator at the native layer.
@@ -86,7 +86,7 @@ typedef void (*OH_ImageCreator_On_Callback)(void);
  * @since 11
  * @version 4.1
  */
-struct OhosImageCreatorOpts {
+struct ImageCreator_Opts_ {
     /** Default width of the image creator, in pixels. */
     int32_t width;
     /** Default height of the image creator, in pixels. */
@@ -98,10 +98,18 @@ struct OhosImageCreatorOpts {
 };
 
 /**
+ * @brief Defines alias of image creator options.
+ *
+ * @since 11
+ * @version 4.1
+ */
+typedef struct ImageCreator_Opts_ ImageCreator_Opts;
+
+/**
  * @brief Creates an <b>ImageCreator</b> object at the application layer.
  *
  * @param env Indicates a pointer to the JavaScript Native Interface (JNI) environment.
- * @param opts Indicates the encoding {@link OhosImageCreatorOpts}.
+ * @param opts Indicates the encoding {@link ImageCreator_Opts}.
  * @param res Indicates a pointer to the <b>ImageCreator</b> object created at the JavaScript native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * returns {@link IRNdkErrCode} ERR_IMAGE_INVALID_PARAMETER - if invalid parameter.
@@ -109,26 +117,26 @@ struct OhosImageCreatorOpts {
  * @since 11
  * @version 4.1
  */
-int32_t OH_ImageCreator_Create(napi_env env, struct OhosImageCreatorOpts opts, napi_value* res);
+int32_t OH_ImageCreator_Create(napi_env env, ImageCreator_Opts opts, napi_value* res);
 
 /**
- * @brief Initializes an {@link ImageCreatorNative} object at the native layer
+ * @brief Initializes an {@link ImageCreator_Native} object at the native layer
  * through an <b>ImageCreator</b> object at the application layer.
  *
  * @param env Indicates a pointer to the JavaScript Native Interface (JNI) environment.
  * @param source Indicates a JavaScript native API <b>ImageCreator</b> object.
- * @return Returns the pointer to the {@link ImageCreatorNative} object obtained if the operation is successful;
+ * @return Returns the pointer to the {@link ImageCreator_Native} object obtained if the operation is successful;
  * returns a null pointer otherwise.
  * @see {@link OH_ImageCreator_Release}
  * @since 11
  * @version 4.1
  */
-ImageCreatorNative* OH_ImageCreator_InitNative(napi_env env, napi_value source);
+ImageCreator_Native* OH_ImageCreator_InitNative(napi_env env, napi_value source);
 
 /**
- * @brief Obtains an image object from queue through an {@link ImageCreatorNative} object.
+ * @brief Obtains an image object from queue through an {@link ImageCreator_Native} object.
  *
- * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
+ * @param native Indicates the pointer to an {@link ImageCreator_Native} object at the native layer.
  * @param image Indicates the pointer to the buffer that stores image object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
@@ -138,12 +146,12 @@ ImageCreatorNative* OH_ImageCreator_InitNative(napi_env env, napi_value source);
  * @since 11
  * @version 4.1
  */
-int32_t OH_ImageCreator_Dequeue(const ImageCreatorNative* native, napi_value* image);
+int32_t OH_ImageCreator_Dequeue(const ImageCreator_Native* native, napi_value* image);
 
 /**
- * @brief Queues an image object into queue through an {@link ImageCreatorNative} object.
+ * @brief Queues an image object into queue through an {@link ImageCreator_Native} object.
  *
- * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
+ * @param native Indicates the pointer to an {@link ImageCreator_Native} object at the native layer.
  * @param image Indicates image object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
@@ -152,26 +160,26 @@ int32_t OH_ImageCreator_Dequeue(const ImageCreatorNative* native, napi_value* im
  * @since 11
  * @version 4.1
  */
-int32_t OH_ImageCreator_Queue(const ImageCreatorNative* native, napi_value image);
+int32_t OH_ImageCreator_Queue(const ImageCreator_Native* native, napi_value image);
 
 /**
  * @brief Registers an {@link OH_ImageCreator_On_Callback} callback event.
  *
  * This callback event is triggered whenever an image is release by consumer release surface.
  *
- * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
+ * @param native Indicates the pointer to an {@link ImageCreator_Native} object at the native layer.
  * @param callback Indicates the {@link OH_ImageCreator_On_Callback} callback event to register.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
  * @since 11
  * @version 4.1
  */
-int32_t OH_ImageCreator_On(const ImageCreatorNative* native, OH_ImageCreator_On_Callback callback);
+int32_t OH_ImageCreator_On(const ImageCreator_Native* native, OH_ImageCreator_On_Callback callback);
 
 /**
- * @brief Gets the capacity of the image creator through an {@link ImageCreatorNative} object.
+ * @brief Gets the capacity of the image creator through an {@link ImageCreator_Native} object.
  *
- * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
+ * @param native Indicates the pointer to an {@link ImageCreator_Native} object at the native layer.
  * @param capacity Indicates the pointer to the capacity obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
@@ -179,12 +187,12 @@ int32_t OH_ImageCreator_On(const ImageCreatorNative* native, OH_ImageCreator_On_
  * @since 11
  * @version 4.1
  */
-int32_t OH_ImageCreator_GetCapacity(const ImageCreatorNative* native, int32_t* capacity);
+int32_t OH_ImageCreator_GetCapacity(const ImageCreator_Native* native, int32_t* capacity);
 
 /**
- * @brief Gets the format of the image creator through an {@link ImageCreatorNative} object.
+ * @brief Gets the format of the image creator through an {@link ImageCreator_Native} object.
  *
- * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
+ * @param native Indicates the pointer to an {@link ImageCreator_Native} object at the native layer.
  * @param format Indicates the pointer to the format obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
@@ -192,20 +200,20 @@ int32_t OH_ImageCreator_GetCapacity(const ImageCreatorNative* native, int32_t* c
  * @since 11
  * @version 4.1
  */
-int32_t OH_ImageCreator_GetFormat(const ImageCreatorNative* native, int32_t* format);
+int32_t OH_ImageCreator_GetFormat(const ImageCreator_Native* native, int32_t* format);
 
 /**
- * @brief Releases an {@link ImageCreatorNative} object at the native layer.
+ * @brief Releases an {@link ImageCreator_Native} object at the native layer.
  *
  * This API is not used to release an <b>ImageCreator</b> object at the application layer.
  *
- * @param native Indicates the pointer to an {@link ImageCreatorNative} object at the native layer.
+ * @param native Indicates the pointer to an {@link ImageCreator_Native} object at the native layer.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
  * @see {@link OH_ImageCreator_InitNative}
  * @since 11
  * @version 4.1
  */
-int32_t OH_ImageCreator_Release(ImageCreatorNative* native);
+int32_t OH_ImageCreator_Release(ImageCreator_Native* native);
 #ifdef __cplusplus
 };
 #endif
