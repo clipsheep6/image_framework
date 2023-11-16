@@ -914,11 +914,13 @@ ohos_unittest("ndktest") {
     "//third_party/node/src",
   ]
   sources = [
+    "unittest/image_creator_mdk_test.cpp",
     "unittest/image_ndk_test.cpp",
     "unittest/ndk_test.cpp",
   ]
 
   deps = [
+    "$image_subsystem/frameworks/kits/js/common/ndk:image_creator_ndk",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_ndk",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_receiver_ndk",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_source_ndk",

@@ -59,6 +59,9 @@ ImageCreatorNative* OH_ImageCreator_InitNative(napi_env env, napi_value source)
 MIDK_EXPORT
 int32_t OH_ImageCreator_Dequeue(const ImageCreatorNative* native, napi_value* image)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
     ImageCreatorArgs args;
     args.env = native->env;
     args.napi = native->napi;
@@ -69,6 +72,9 @@ int32_t OH_ImageCreator_Dequeue(const ImageCreatorNative* native, napi_value* im
 MIDK_EXPORT
 int32_t OH_ImageCreator_Queue(const ImageCreatorNative* native, napi_value image)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
     ImageCreatorArgs args;
     args.env = native->env;
     args.napi = native->napi;
@@ -79,6 +85,9 @@ int32_t OH_ImageCreator_Queue(const ImageCreatorNative* native, napi_value image
 MIDK_EXPORT
 int32_t OH_ImageCreator_On(const ImageCreatorNative* native, OH_ImageCreator_On_Callback callback)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
     ImageCreatorArgs args;
     args.env = native->env;
     args.napi = native->napi;
@@ -89,6 +98,9 @@ int32_t OH_ImageCreator_On(const ImageCreatorNative* native, OH_ImageCreator_On_
 MIDK_EXPORT
 int32_t OH_ImageCreator_GetCapacity(const ImageCreatorNative* native, int32_t* capacity)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
     ImageCreatorArgs args;
     args.env = native->env;
     args.napi = native->napi;
@@ -99,6 +111,9 @@ int32_t OH_ImageCreator_GetCapacity(const ImageCreatorNative* native, int32_t* c
 MIDK_EXPORT
 int32_t OH_ImageCreator_GetFormat(const ImageCreatorNative* native, int32_t* format)
 {
+    if (native == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
     ImageCreatorArgs args;
     args.env = native->env;
     args.napi = native->napi;

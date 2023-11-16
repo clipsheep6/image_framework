@@ -15,6 +15,7 @@
 
 #include <gtest/gtest.h>
 #include "pixel_map_napi.h"
+#include "image_creator_napi.h"
 #include "image_packer_napi.h"
 #include "image_source_napi.h"
 
@@ -262,6 +263,41 @@ HWTEST_F(NapiTest, NapiTest0015, TestSize.Level3)
     ASSERT_EQ(resource.buffer, nullptr);
 
     GTEST_LOG_(INFO) << "NapiTest: NapiTest0015 end";
+}
+
+/**
+ * @tc.name: NapiTest0016
+ * @tc.desc: ImageCreatorNapi::CreateImageCreatorJsObject
+ * @tc.type: FUNC
+ */
+HWTEST_F(NapiTest, NapiTest0016, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0016 start";
+
+    napi_env env = nullptr;
+    napi_value res = nullptr;
+    struct ImageCreatorNapiArgs args;
+    int32_t result = ImageCreatorNapi::CreateImageCreatorJsObject(env, args, &res);
+    ASSERT_NE(result, SUCCESS);
+
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0016 end";
+}
+
+
+/**
+ * @tc.name: NapiTest0017
+ * @tc.desc: ImageCreatorNapi::CreateImageCreatorJsObject
+ * @tc.type: FUNC
+ */
+HWTEST_F(NapiTest, NapiTest0017, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0017 start";
+
+    ImageCreatorNapi napi;
+    auto native = ImageCreatorNapi::GetNative(napi);
+    ASSERT_EQ(native, nullptr);
+
+    GTEST_LOG_(INFO) << "NapiTest: NapiTest0017 end";
 }
 }
 }
