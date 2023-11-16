@@ -155,7 +155,7 @@ __constant short scramble_table[12 * WEIGHT_QUANTIZE_NUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 2, 4, 6, 8, 9, 7, 5, 3, 1,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 4, 8 ,2, 6, 10, 11, 7, 3, 9, 5, 1,
+    0, 4, 8, 2, 6, 10, 11, 7, 3, 9, 5, 1,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -827,7 +827,7 @@ void max_accumulation_pixel_direction(float4* texels, float4 pt_mean, float4* e0
 }
 void encode_color_normal(short quant_level, float4 e0, float4 e1, short* endpoint_quantized)
 {
-    int4 e0q = (int4)((int)(round(e0.x)), (int)(round(e0.y)), (int)(round(e0.z)), (int)(round(e0.w))); 
+    int4 e0q = (int4)((int)(round(e0.x)), (int)(round(e0.y)), (int)(round(e0.z)), (int)(round(e0.w)));
     int4 e1q = (int4)((int)(round(e1.x)), (int)(round(e1.y)), (int)(round(e1.z)), (int)(round(e1.w)));
     
     endpoint_quantized[0] = color_quant_tables[quant_level * 256 + e0q.x];
