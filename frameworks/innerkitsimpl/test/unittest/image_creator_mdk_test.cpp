@@ -33,7 +33,7 @@ public:
 
 /**
  * @tc.name: OH_ImageCreator_CreateTest
- * @tc.desc: OH_ImageCreator_Create api test 
+ * @tc.desc: OH_ImageCreator_Create api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_CreateTest, TestSize.Level3)
@@ -55,7 +55,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_CreateTest, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImageCreator_InitNativeTest
- * @tc.desc: OH_ImageCreator_InitNative api test 
+ * @tc.desc: OH_ImageCreator_InitNative api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_InitNativeTest, TestSize.Level3)
@@ -72,7 +72,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_InitNativeTest, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImageCreator_DequeueTest
- * @tc.desc: OH_ImageCreator_Dequeue api test 
+ * @tc.desc: OH_ImageCreator_Dequeue api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_DequeueTest, TestSize.Level3)
@@ -89,7 +89,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_DequeueTest, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImageCreator_QueueTest
- * @tc.desc: OH_ImageCreator_Queue api test 
+ * @tc.desc: OH_ImageCreator_Queue api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_QueueTest, TestSize.Level3)
@@ -111,7 +111,7 @@ static void onTestEvent()
 
 /**
  * @tc.name: OH_ImageCreator_OnTest
- * @tc.desc: OH_ImageCreator_On api test 
+ * @tc.desc: OH_ImageCreator_On api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_OnTest, TestSize.Level3)
@@ -127,7 +127,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_OnTest, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImageCreator_GetCapacityTest
- * @tc.desc: OH_ImageCreator_GetCapacity api test 
+ * @tc.desc: OH_ImageCreator_GetCapacity api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_GetCapacityTest, TestSize.Level3)
@@ -144,7 +144,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_GetCapacityTest, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImageCreator_GetFormatTest
- * @tc.desc: OH_ImageCreator_GetFormat api test 
+ * @tc.desc: OH_ImageCreator_GetFormat api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_GetFormatTest, TestSize.Level3)
@@ -161,7 +161,7 @@ HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_GetFormatTest, TestSize.Level3)
 
 /**
  * @tc.name: OH_ImageCreator_ReleaseTest
- * @tc.desc: OH_ImageCreator_Release api test 
+ * @tc.desc: OH_ImageCreator_Release api test
  * @tc.type: FUNC
  */
 HWTEST_F(ImageCreatorMdkTest, OH_ImageCreator_ReleaseTest, TestSize.Level3)

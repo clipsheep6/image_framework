@@ -22,7 +22,7 @@
  * The channel for transmitting raw image data module part of image module.
  * It provided a queue used to transmit raw image data from application layer
  * to native layer components
- * 
+ *
  * @since 11
  * @version 4.1
  */
@@ -31,7 +31,7 @@
  * @file image_creator_mdk.h
  *
  * @brief Declares the APIs for obtaining image data transfer to the native layer.
- * 
+ *
  * The image creator module used to obtain a image buffer and transmist raw image data
  * via buffer to native layer components.
  *
