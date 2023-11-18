@@ -1,0 +1,17 @@
+[
+    {
+        "name": "OH_ImagePacker_Create"
+    },
+    {
+        "name": "OH_ImagePacker_InitNative"
+    },
+    {
+        "name": "OH_ImagePacker_PackToData"
+    },
+    {
+        "name": "OH_ImagePacker_PackToFile"
+    },
+    {
+        "name": "OH_ImagePacker_Release"
+    }
+]
