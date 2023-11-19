@@ -15,6 +15,7 @@
 
 #include "image_utils.h"
 #include <sys/stat.h>
+#include <cerrno>
 #include <climits>
 #include <cmath>
 #include <cstdint>
@@ -71,7 +72,7 @@ bool ImageUtils::GetFileSize(const string &pathName, size_t &size)
     struct stat statbuf;
     int ret = stat(pathName.c_str(), &statbuf);
     if (ret != 0) {
-        IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d.", ret);
+        IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d, errno:%{public}d.", ret, errno);
         return false;
     }
     size = statbuf.st_size;
@@ -88,7 +89,7 @@ bool ImageUtils::GetFileSize(const int fd, size_t &size)
 
     int ret = fstat(fd, &statbuf);
     if (ret != 0) {
-        IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d.", ret);
+        IMAGE_LOGE("[ImageUtil]get the file size failed, ret:%{public}d, errno:%{public}d.", ret, errno);
         return false;
     }
     size = statbuf.st_size;
