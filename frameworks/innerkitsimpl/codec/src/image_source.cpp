@@ -1960,7 +1960,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t &errorCode)
 bool ImageSource::IsASTC(const uint8_t *fileData, size_t fileSize)
 {
     if (fileData == nullptr || fileSize < ASTC_HEADER_SIZE) {
-        IMAGE_LOGE("[ImageSource]IsASTC fileData incorrect.");
+        IMAGE_LOGE("[ImageSource]IsASTC fileData incorrect, file size is %{public}zu.", fileSize);
         return false;
     }
     unsigned int magicVal = static_cast<unsigned int>(fileData[0]) + (static_cast<unsigned int>(fileData[1]) << 8) +
@@ -2021,7 +2021,10 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
     size_t fileSize = sourceStreamPtr_->GetStreamSize();
     if (sourceStreamPtr_->GetStreamType() == ImagePlugin::FILE_STREAM_TYPE) {
         void *fdBuffer = new int32_t();
-        *static_cast<int32_t *>(fdBuffer) = static_cast<FileSourceStream *>(sourceStreamPtr_.get())->GetMMapFd();
+        if (!static_cast<FileSourceStream *>(sourceStreamPtr_.get())->GetMMapFd(*static_cast<int32_t *>(fdBuffer))) {
+            IMAGE_LOGE("[ImageSource] get mmap fd failed.");
+            return nullptr;
+        }
         pixelAstc->SetPixelsAddr(sourceStreamPtr_->GetDataPtr(), fdBuffer, fileSize,
             AllocatorType::SHARE_MEM_ALLOC, nullptr);
     } else if (sourceStreamPtr_->GetStreamType() == ImagePlugin::BUFFER_SOURCE_TYPE) {
@@ -2057,7 +2060,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
 bool ImageSource::GetASTCInfo(const uint8_t *fileData, size_t fileSize, ASTCInfo& astcInfo)
 {
     if (fileData == nullptr || fileSize < ASTC_HEADER_SIZE) {
-        IMAGE_LOGE("[ImageSource]GetASTCInfo fileData incorrect.");
+        IMAGE_LOGE("[ImageSource]GetASTCInfo fileData incorrect, file size is %{public}zu.", fileSize);
         return false;
     }
     astcInfo.size.width = static_cast<unsigned int>(fileData[ASTC_HEADER_DIM_X]) +
