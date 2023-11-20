@@ -91,6 +91,7 @@ private:
     void release();
     static thread_local napi_ref sConstructor_;
     static std::shared_ptr<PixelMap> sPixelMap_;
+    static napi_ref colorMatrixRef_;
 
     napi_env env_ = nullptr;
     std::shared_ptr<PixelMap> nativePixelMap_;

@@ -54,6 +54,7 @@ std::shared_ptr<PixelMap> PixelMapNapi::sPixelMap_ = nullptr;
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 NAPI_MessageSequence* napi_messageSequence = nullptr;
 #endif
+napi_ref PixelMapNapi::colorMatrixRef_ = nullptr;
 
 struct PositionArea {
     void* pixels;
@@ -87,6 +88,34 @@ struct PixelMapAsyncContext {
     std::shared_ptr<OHOS::ColorManager::ColorSpace> colorSpace;
 #endif
     PixelColorMatrix colorMatrix;
+};
+
+static std::vector<float> sColorMatrixGray = {
+    0.213, 0.715, 0.072, 0, 0,
+    0.213, 0.715, 0.072, 0, 0,
+    0.213, 0.715, 0.072, 0, 0,
+    0, 0, 0, 1, 0
+};
+
+static std::vector<float> sColorMatrixInvert = {
+    -1.0, 0, 0, 0, 1,
+    0, -1.0, 0, 0, 1,
+    0, 0, -1.0, 0, 1,
+    0, 0, 0, 1, 0
+};
+
+static std::vector<float> sColorMatrixIncrease = {
+    1.5, 0, 0, 0, -0.25,
+    0, 1.5, 0, 0, -0.25,
+    0, 0, 1.5, 0, -0.25,
+    0, 0, 0, 1, 0
+};
+
+static std::vector<float> sColorMatrixDecrease = {
+    0.6065, 0.3575, 0.036, 0, 0,
+    0.1065, 0.8575, 0.036, 0, 0,
+    0.1065, 0.3575, 0.536, 0, 0,
+    0, 0, 0, 1, 0
 };
 
 static PixelFormat ParsePixlForamt(int32_t val)
@@ -327,6 +356,53 @@ static napi_value DoInitAfter(napi_env env,
     return exports;
 }
 
+static napi_value CreateMatrixArray(napi_env env, std::vector<float> matrix)
+{
+    napi_value result = nullptr;
+    size_t i = NUM_0;
+    if (napi_create_array(env, &result) != napi_ok) {
+        HiLog::Error(LABEL, "CreateStaticMatrixObject is Failed!");
+        return nullptr;
+    }
+    for (auto val : matrix) {
+        napi_value nVal = nullptr;
+        napi_create_double(env, val, &nVal);
+        napi_set_element(env, result, i, nVal);
+        i++;
+    }
+    return result;
+}
+
+static napi_value CreateStaticMatrixObject(napi_env env, napi_ref* ref)
+{
+    napi_value result = nullptr;
+    napi_value udfVal;
+    int32_t refCount = NUM_1;
+    napi_get_undefined(env, &udfVal);
+    if (napi_create_object(env, &result) != napi_ok) {
+        HiLog::Error(LABEL, "CreateStaticMatrixObject is Failed!");
+        return udfVal;
+    }
+    auto grayMatrix = CreateMatrixArray(env, sColorMatrixGray);
+    if (grayMatrix != nullptr) {
+        napi_set_named_property(env, result, "GRAY", grayMatrix);
+    }
+    auto invertMatrix = CreateMatrixArray(env, sColorMatrixInvert);
+    if (invertMatrix != nullptr) {
+        napi_set_named_property(env, result, "INVERT", invertMatrix);
+    }
+    auto increaseMatrix = CreateMatrixArray(env, sColorMatrixIncrease);
+    if (increaseMatrix != nullptr) {
+        napi_set_named_property(env, result, "INCREASE", increaseMatrix);
+    }
+    auto decreaseMatrix = CreateMatrixArray(env, sColorMatrixDecrease);
+    if (decreaseMatrix != nullptr) {
+        napi_set_named_property(env, result, "DECREASE", decreaseMatrix);
+    }
+    napi_create_reference(env, result, refCount, ref);
+    return result;
+}
+
 napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
@@ -362,6 +438,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMap", CreatePixelMap),
         DECLARE_NAPI_STATIC_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_STATIC_FUNCTION(CREATE_PIXEL_MAP_FROM_PARCEL.c_str(), CreatePixelMapFromParcel),
+        DECLARE_NAPI_PROPERTY("ColorMatrix", CreateStaticMatrixObject(env, &colorMatrixRef_)),
     };
 
     napi_value constructor = nullptr;
