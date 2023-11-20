@@ -2616,7 +2616,7 @@ static uint32_t ApplyColorMatrixPrepareRes(struct ApplyColorMatrixContext &c)
     c.tmpPixel = make_unique<uint8_t[]>(c.pixelCount);
     if (c.tmpPixel == nullptr) {
         HiLog::Error(LABEL, "Failed to alloc cache memory");
-        return ERR_IMAGE_ALLOC_MEMORY_FAILED;
+        return ERR_IMAGE_MALLOC_ABNORMAL;
     }
     memcpy_s(c.tmpPixel.get(), c.pixelCount, c.srcPixel, c.pixelCount);
     SkImageInfo info = ToSkImageInfo(c.imageInfo, c.skColorSpace);
