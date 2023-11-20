@@ -1827,5 +1827,44 @@ HWTEST_F(ImagePixelMapTest, TlvEncode001, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "ImagePixelMapTest: TlvEncode001 end";
 }
+
+static constexpr uint32_t PIXEL_MAP_TEST_PIXEL = 0xFF994422;
+static constexpr float F_ZERO = 0;
+static constexpr float PIXEL_MAP_TEST_PIXEL_MUL = 0.5f;
+static constexpr float PIXEL_MAP_TEST_PIXEL_ALPHA_MUL = 1.0f;
+static constexpr float PIXEL_MAP_TEST_PIXEL_ADD = 1.0f/255.0f;
+static constexpr uint32_t PIXEL_MAP_TEST_TARGET_PIXEL = 0xFF12234E;
+static constexpr int32_t INT32_ZERO = 0;
+/**
+* @tc.name: ApplyColorMatrix001
+* @tc.desc: test ApplyColorMatrix
+* @tc.type: FUNC
+*/
+HWTEST_F(ImagePixelMapTest, ApplyColorMatrix001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ApplyColorMatrix001 start";
+    const uint32_t dataLength = PIXEL_MAP_TEST_WIDTH * PIXEL_MAP_TEST_HEIGHT;
+    vector<uint32_t> data(dataLength, PIXEL_MAP_TEST_PIXEL);
+    InitializationOptions opts;
+    opts.pixelFormat = OHOS::Media::PixelFormat::RGBA_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.size.width = PIXEL_MAP_TEST_WIDTH;
+    opts.size.height = PIXEL_MAP_TEST_HEIGHT;
+
+    auto pixelmap = PixelMap::Create(data.data(), dataLength, opts);
+    PixelColorMatrix colorMatrix {
+        .val = {
+            PIXEL_MAP_TEST_PIXEL_MUL, F_ZERO, F_ZERO, F_ZERO, PIXEL_MAP_TEST_PIXEL_ADD,
+            F_ZERO, PIXEL_MAP_TEST_PIXEL_MUL, F_ZERO, F_ZERO, PIXEL_MAP_TEST_PIXEL_ADD,
+            F_ZERO, F_ZERO, PIXEL_MAP_TEST_PIXEL_MUL, F_ZERO, PIXEL_MAP_TEST_PIXEL_ADD,
+            F_ZERO, F_ZERO, F_ZERO, PIXEL_MAP_TEST_PIXEL_ALPHA_MUL, F_ZERO
+        }
+    };
+    pixelmap->ApplyColorMatrix(colorMatrix);
+
+    auto pixelZero = pixelmap->GetPixel32(INT32_ZERO, INT32_ZERO);
+    EXPECT_EQ(*pixelZero, PIXEL_MAP_TEST_TARGET_PIXEL);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ApplyColorMatrix001 end";
+}
 } // namespace Multimedia
 } // namespace OHOS
