@@ -78,7 +78,7 @@ struct PixelColorMatrix {
     static constexpr uint8_t MATRIX_SIZE = 20;
     static constexpr uint8_t ROW_SIZE = 4;
     static constexpr uint8_t COL_SIZE = 5;
-    float val[MATRIX_SIZE];
+    float val[MATRIX_SIZE] = {0};
 };
 
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
