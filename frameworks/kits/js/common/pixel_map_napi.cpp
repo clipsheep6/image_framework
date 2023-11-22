@@ -16,6 +16,7 @@
 #include "pixel_map_napi.h"
 #include "media_errors.h"
 #include "hilog/log.h"
+#include "log_tags.h"
 #include "image_napi_utils.h"
 #include "image_pixel_map_napi.h"
 #include "image_trace.h"
@@ -30,7 +31,7 @@
 
 using OHOS::HiviewDFX::HiLog;
 namespace {
-    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "PixelMapNapi"};
+    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_PIXEL_MAP_NAPI, "PixelMapNapi"};
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
     constexpr uint32_t NUM_2 = 2;
@@ -51,6 +52,7 @@ static const std::string CLASS_NAME = "PixelMap";
 
 thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
 std::shared_ptr<PixelMap> PixelMapNapi::sPixelMap_ = nullptr;
+std::shared_ptr<PixelMap> attachPixelMap_ = nullptr;
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 NAPI_MessageSequence* napi_messageSequence = nullptr;
 #endif
@@ -478,7 +480,7 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_GetImageInf
 extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_AccessPixels(napi_env env, napi_value value,
     uint8_t** addrPtr)
 {
-    HiLog::Debug(LABEL, "AccessPixels IN");
+    HiLog::Info(LABEL, "AccessPixels IN");
 
     PixelMapNapi *pixmapNapi = nullptr;
     napi_unwrap(env, value, reinterpret_cast<void**>(&pixmapNapi));
@@ -517,7 +519,7 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_AccessPixel
 
 extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_UnAccessPixels(napi_env env, napi_value value)
 {
-    HiLog::Debug(LABEL, "UnAccessPixels IN");
+    HiLog::Info(LABEL, "UnAccessPixels IN");
 
     PixelMapNapi *pixmapNapi = nullptr;
     napi_unwrap(env, value, reinterpret_cast<void**>(&pixmapNapi));
@@ -529,6 +531,49 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_UnAccessPix
     pixmapNapi->UnlockPixelMap();
 
     return OHOS_IMAGE_RESULT_SUCCESS;
+}
+
+inline void *DetachPixelMapFunc(napi_env env, void *value, void *)
+{
+    HiLog::Debug(LABEL, "DetachPixelMapFunc in");
+    auto pixelNapi = reinterpret_cast<PixelMapNapi*>(value);
+    pixelNapi->setPixelNapiEditable(false);
+    return value;
+}
+
+napi_value AttachPixelMapFunc(napi_env env, void *value, void *)
+{
+    if (value == nullptr) {
+        HiLog::Error(LABEL, "attach value is nullptr");
+        return nullptr;
+    }
+    auto pixelNapi = reinterpret_cast<PixelMapNapi*>(value);
+
+    napi_value result = nullptr;
+    napi_value constructor = nullptr;
+    napi_status status;
+
+    napi_value globalValue;
+    napi_get_global(env, &globalValue);
+    napi_value func;
+    napi_get_named_property(env, globalValue, "requireNapi", &func);
+
+    napi_value imageInfo;
+    napi_create_string_utf8(env, "multimedia.image", NAPI_AUTO_LENGTH, &imageInfo);
+    napi_value funcArgv[1] = { imageInfo };
+    napi_value returnValue;
+    napi_call_function(env, globalValue, func, 1, funcArgv, &returnValue);
+
+    status = napi_get_named_property(env, globalValue, CLASS_NAME.c_str(), &constructor);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "napi_get_named_property error"));
+    
+    attachPixelMap_ = pixelNapi->GetPixelNapiInner();
+    HiLog::Info(LABEL, "AttachPixelMapFunc in id:%{public}d", attachPixelMap_->GetUniqueId());
+    status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+    if (!IMG_IS_OK(status)) {
+        HiLog::Error(LABEL, "AttachPixelMapFunc napi_get_referencce_value failed");
+    }
+    return result;
 }
 
 napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
@@ -549,7 +594,10 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
     IMG_NAPI_CHECK_RET(IMG_NOT_NULL(pPixelMapNapi), undefineVar);
 
     pPixelMapNapi->env_ = env;
-    pPixelMapNapi->nativePixelMap_ = sPixelMap_;
+    pPixelMapNapi->nativePixelMap_ = attachPixelMap_ == nullptr ? sPixelMap_ : attachPixelMap_;
+
+    napi_coerce_to_native_binding_object(
+        env, thisVar, DetachPixelMapFunc, AttachPixelMapFunc, pPixelMapNapi.get(), nullptr);
 
     status = napi_wrap(env, thisVar, reinterpret_cast<void*>(pPixelMapNapi.get()),
         PixelMapNapi::Destructor, nullptr, nullptr);
@@ -1032,6 +1080,9 @@ napi_value PixelMapNapi::WritePixels(napi_env env, napi_callback_info info)
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
         nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
 
+    IMG_NAPI_CHECK_RET_D(asyncContext->nConstructor->GetPixelNapiEditable(),
+        nullptr, HiLog::Error(LABEL, "pixelmap has crossed threads . WritePixels failed"));
+
     asyncContext->rPixelMap = asyncContext->nConstructor->nativePixelMap_;
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPixelMap),
@@ -1087,6 +1138,9 @@ napi_value PixelMapNapi::WriteBufferToPixels(napi_env env, napi_callback_info in
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
         nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
+    
+    IMG_NAPI_CHECK_RET_D(asyncContext->nConstructor->GetPixelNapiEditable(),
+        nullptr, HiLog::Error(LABEL, "pixelmap has crossed threads . WritePixels failed"));
 
     asyncContext->rPixelMap = asyncContext->nConstructor->nativePixelMap_;
 
@@ -1362,6 +1416,8 @@ napi_value PixelMapNapi::CreateAlphaPixelmap(napi_env env, napi_callback_info in
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
         nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(asyncContext->nConstructor->GetPixelNapiEditable(),
+        nullptr, HiLog::Error(LABEL, "pixelmap has crossed threads . WritePixels failed"));
     asyncContext->rPixelMap = asyncContext->nConstructor->nativePixelMap_;
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPixelMap),
         nullptr, HiLog::Error(LABEL, "empty native pixelmap"));
@@ -1529,6 +1585,8 @@ static bool prepareNapiEnv(napi_env env, napi_callback_info info, struct NapiVal
         HiLog::Error(LABEL, "fail to unwrap context");
         return false;
     }
+    IMG_NAPI_CHECK_RET_D(nVal->context->nConstructor->GetPixelNapiEditable(),
+        false, HiLog::Error(LABEL, "pixelmap has crossed threads . WritePixels failed"));
     nVal->context->status = SUCCESS;
     return true;
 }
