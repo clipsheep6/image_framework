@@ -14,6 +14,8 @@
  */
 
 #include "astc_codec.h"
+#include "image_compressor.h"
+#include "image_system_properties.h"
 #include "securec.h"
 #include "texture_type.h"
 #include "media_errors.h"
@@ -31,7 +33,7 @@ namespace {
 constexpr uint8_t TEXTURE_HEAD_BYTES = 16;
 constexpr uint8_t ASTC_MASK = 0xFF;
 constexpr uint8_t ASTC_NUM_8 = 8;
-constexpr uint8_t ASTC_NUM_16 = 16;
+constexpr uint8_t ASTC_HEADER_SIZE = 16;
 constexpr uint8_t ASTC_NUM_24 = 24;
 static const uint32_t ASTC_MAGIC_ID = 0x5CA1AB13;
 
@@ -48,29 +50,29 @@ uint32_t AstcCodec::SetAstcEncode(OutputDataStream* outputStream, PlEncodeOption
 }
 
 // test ASTCEncoder
-uint32_t GenAstcHeader(uint8_t *header, astcenc_image img, TextureEncodeOptions *encodeParams)
+uint32_t GenAstcHeader(uint8_t *header, astcenc_image img, TextureEncodeOptions *encodeParams, size_t size)
 {
-    if ((encodeParams == nullptr) || (header == nullptr)) {
-        HiLog::Error(LABEL, "header is nullptr or encodeParams is nullptr");
+    if ((encodeParams == nullptr) || (header == nullptr) || size < ASTC_HEADER_SIZE) {
+        HiLog::Error(LABEL, "header is nullptr or encodeParams is nullptr or header_size is error");
         return ERROR;
     }
     uint8_t *tmp = header;
     *tmp++ = ASTC_MAGIC_ID & ASTC_MASK;
     *tmp++ = (ASTC_MAGIC_ID >> ASTC_NUM_8) & ASTC_MASK;
-    *tmp++ = (ASTC_MAGIC_ID >> ASTC_NUM_16) & ASTC_MASK;
+    *tmp++ = (ASTC_MAGIC_ID >> ASTC_HEADER_SIZE) & ASTC_MASK;
     *tmp++ = (ASTC_MAGIC_ID >> ASTC_NUM_24) & ASTC_MASK;
     *tmp++ = static_cast<uint8_t>(encodeParams->blockX_);
     *tmp++ = static_cast<uint8_t>(encodeParams->blockY_);
     *tmp++ = 1;
     *tmp++ = img.dim_x & ASTC_MASK;
     *tmp++ = (img.dim_x >> ASTC_NUM_8) & ASTC_MASK;
-    *tmp++ = (img.dim_x >> ASTC_NUM_16) & ASTC_MASK;
+    *tmp++ = (img.dim_x >> ASTC_HEADER_SIZE) & ASTC_MASK;
     *tmp++ = img.dim_y & ASTC_MASK;
     *tmp++ = (img.dim_y >> ASTC_NUM_8) & ASTC_MASK;
-    *tmp++ = (img.dim_y >> ASTC_NUM_16) & ASTC_MASK;
+    *tmp++ = (img.dim_y >> ASTC_HEADER_SIZE) & ASTC_MASK;
     *tmp++ = img.dim_z & ASTC_MASK;
     *tmp++ = (img.dim_z >> ASTC_NUM_8) & ASTC_MASK;
-    *tmp++ = (img.dim_z >> ASTC_NUM_16) & ASTC_MASK;
+    *tmp++ = (img.dim_z >> ASTC_HEADER_SIZE) & ASTC_MASK;
     return SUCCESS;
 }
 
@@ -239,45 +241,63 @@ uint32_t AstcCodec::ASTCEncode()
     param.height_ = imageInfo.size.height;
     param.stride_ = astcPixelMap_->GetRowStride() >> RGBA_BYTES_PIXEL_LOG2;
     bool enableQualityCheck = false; // astcOpts_.enableQualityCheck
-    AstcEncoder work;
+    bool isHardWareEncodeSuccess = false;
     extractDimensions(astcOpts_.format, param);
     int blocksNum = ((param.width_ + param.blockX_ - 1) / param.blockX_) *
         ((param.height_ + param.blockY_ - 1) / param.blockY_);
     int outSize = blocksNum * TEXTURE_HEAD_BYTES + TEXTURE_HEAD_BYTES;
-    if (!InitMem(&work, param, enableQualityCheck, blocksNum)) {
-        FreeMem(&work);
-        return ERROR;
+
+    if (ImageSystemProperties::GetAstcHardWareEncodeEnabled()) {
+        std::shared_ptr<ImageCompressor> instance = ImageCompressor::GetInstance();
+        if (!(instance -> CreateKernel())) {
+            HiLog::Error(LABEL, "Create kernel error !");
+        } else {
+            if (instance->TextureEncodeCL(static_cast<uint8_t *>(astcPixelMap_->GetWritablePixels()),
+                astcPixelMap_->GetRowStride(), param.width_, param.height_, astcOutput_->GetAddr())) {
+                isHardWareEncodeSuccess = true;
+            }
+        }
+        instance->ReleaseResource();
     }
-    if (InitAstcencConfig(&work, &param) != SUCCESS) {
-        HiLog::Error(LABEL, "astc InitAstcencConfig failed");
-        FreeMem(&work);
-        return ERROR;
-    }
-    work.image_.data[0] = static_cast<uint8_t *>(astcPixelMap_->GetWritablePixels());
-    work.data_out_ = astcOutput_->GetAddr();
-    if (GenAstcHeader(work.data_out_, work.image_, &param) != SUCCESS) {
-        HiLog::Error(LABEL, "astc GenAstcHeader failed");
-        FreeMem(&work);
-        return ERROR;
-    }
-    work.error_ = astcenc_compress_image(work.codec_context, &work.image_, &work.swizzle_,
-        work.data_out_ + TEXTURE_HEAD_BYTES, outSize - TEXTURE_HEAD_BYTES,
+    if (!isHardWareEncodeSuccess) {
+        AstcEncoder work;
+        if (!InitMem(&work, param, enableQualityCheck, blocksNum)) {
+            FreeMem(&work);
+            return ERROR;
+        }
+        if (InitAstcencConfig(&work, &param) != SUCCESS) {
+            HiLog::Error(LABEL, "astc InitAstcencConfig failed");
+            FreeMem(&work);
+            return ERROR;
+        }
+        work.image_.data[0] = static_cast<uint8_t *>(astcPixelMap_->GetWritablePixels());
+        work.data_out_ = astcOutput_->GetAddr();
+        size_t size;
+        astcOutput_->GetCapicity(size);
+        if (GenAstcHeader(work.data_out_, work.image_, &param, size) != SUCCESS) {
+            HiLog::Error(LABEL, "astc GenAstcHeader failed");
+            FreeMem(&work);
+            return ERROR;
+        }
+        work.error_ = astcenc_compress_image(work.codec_context, &work.image_, &work.swizzle_,
+            work.data_out_ + TEXTURE_HEAD_BYTES, outSize - TEXTURE_HEAD_BYTES,
 #if QUALITY_CONTROL
-        work.calQualityEnable, work.mse,
+            work.calQualityEnable, work.mse,
 #endif
-        0);
+            0);
 #if QUALITY_CONTROL
-    if ((ASTCENC_SUCCESS != work.error_) ||
-        (work.calQualityEnable && !CheckQuality(work.mse, blocksNum, param.blockX_ * param.blockY_))) {
+        if ((ASTCENC_SUCCESS != work.error_) ||
+            (work.calQualityEnable && !CheckQuality(work.mse, blocksNum, param.blockX_ * param.blockY_))) {
 #else
-    if (ASTCENC_SUCCESS != work.error_) {
+        if (ASTCENC_SUCCESS != work.error_) {
 #endif
-        HiLog::Error(LABEL, "astc compress failed");
+            HiLog::Error(LABEL, "astc compress failed");
+            FreeMem(&work);
+            return ERROR;
+        }
         FreeMem(&work);
-        return ERROR;
     }
     astcOutput_->SetOffset(outSize);
-    FreeMem(&work);
     return SUCCESS;
 }
 } // namespace ImagePlugin
