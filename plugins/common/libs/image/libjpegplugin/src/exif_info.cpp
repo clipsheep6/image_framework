@@ -656,7 +656,7 @@ uint32_t EXIFInfo::CheckPathValid( const std::string &path) {
 
 uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, const int fd)
 {
-    uint32_t checkFdResult = CheckFdValid(path);
+    uint32_t checkFdResult = CheckFdValid(fd);
     if(checkFdResult != Media::SUCCESS) {
         return checkFdResult;
     }
@@ -664,7 +664,7 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     FILE *file = fdopen(localFd, "wb+");
     // read jpeg file to buff
     unsigned long fileLength = GetFileSize(file);
-    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength))
+    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     // Set current position to begin of file.
     (void)fseek(file, 0L, 0);
     ExifData *ptrExifData = nullptr;
