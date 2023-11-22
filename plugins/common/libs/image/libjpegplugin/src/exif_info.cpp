@@ -877,7 +877,6 @@ uint32_t EXIFInfo::CheckDataValid(const ExifTag &tag, const std::string &value,
 
 uint32_t EXIFInfo::ReleaseDataBuffer(unsigned char *tempBuf, ExifData *ptrExifData,
                                      unsigned char* exifDataBuf) {
-    HiLog::Error(LABEL, "There is not enough space for writing JPEG image data!");
     free(tempBuf);
     tempBuf = nullptr;
     exif_data_unref(ptrExifData);
