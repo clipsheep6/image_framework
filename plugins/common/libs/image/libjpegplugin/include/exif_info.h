@@ -140,7 +140,7 @@ private:
     void GetAreaFromExifEntries(const int &privacyType,
                                 const std::vector<DirectoryEntry> &entryArray,
                                 std::vector<std::pair<uint32_t, uint32_t>> &ranges);
-    uint32_t CheckPathValid( const std::string &path);
+    uint32_t CheckPathValid(const std::string &path);
     uint32_t CheckFdValid(const int fd);
     uint32_t CheckDataValid(const ExifTag &tag, const std::string &value,
                             unsigned char *data, uint32_t size);
@@ -179,7 +179,7 @@ private:
     bool CreateGpsTimeStampExifEntry(ExifData *data, const std::string &value,
                                       ExifByteOrder order, ExifEntry **ptrEntry) ;
     bool CreateImageDescriptionExifEntry(ExifData *data, const std::string &value,
-                                      ExifByteOrder order,ExifEntry **ptrEntry) ;
+                                      ExifByteOrder order, ExifEntry **ptrEntry) ;
     bool CreateImageLengthExifEntry(ExifData *data, const std::string &value,
                                      ExifByteOrder order, ExifEntry **ptrEntry) ;
     bool CreateImageWidthExifEntry(ExifData *data, const std::string &value,

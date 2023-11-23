@@ -715,7 +715,8 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     return Media::SUCCESS;
 }
 
-uint32_t EXIFInfo::CheckFdValid(const int fd) {
+uint32_t EXIFInfo::CheckFdValid(const int fd)
+{
     const int localFd = dup(fd);
     FILE *file = fdopen(localFd, "wb+");
     if (file == nullptr) {
@@ -1650,7 +1651,7 @@ bool EXIFInfo::CreateIsoSpeedExifEntry(ExifData *data, const std::string &value,
     return true;
 }
 bool EXIFInfo::CreateIsoSpeedRatingsExifEntry(ExifData *data, const std::string &value,
-                                               ExifByteOrder order, ExifEntry **ptrEntry)
+                                              ExifByteOrder order, ExifEntry **ptrEntry)
 {
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_ISO_SPEED_RATINGS);
     if ((*ptrEntry) == nullptr) {
@@ -1790,8 +1791,8 @@ bool EXIFInfo::CreateStandardOutputSensitivityExifEntry(ExifData *data, const st
         return false;
     }
     return true;
-
 }
+
 bool EXIFInfo::CreateUserCommentExifEntry(ExifData *data, const std::string &value,
                                           ExifByteOrder order, ExifEntry **ptrEntry)
 {
