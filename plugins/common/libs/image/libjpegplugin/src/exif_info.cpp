@@ -732,7 +732,7 @@ uint32_t EXIFInfo::CheckFdValid(const int fd)
         return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
     }
 
-    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
+    std::string fileBuf = static_cast<std::string>(malloc(fileLength));
     if (fileBuf == nullptr) {
         HiLog::Error(LABEL, "Allocate buf for %{public}d failed.", localFd);
         (void)fclose(file);
@@ -847,7 +847,7 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value,
 }
 
 uint32_t EXIFInfo::CheckDataValid(const ExifTag &tag, const std::string &value,
-                                  unsigned char *data, uint32_t size)
+                                  std::string data, uint32_t size)
 {
     if (data == nullptr) {
         HiLog::Error(LABEL, "buffer is nullptr.");
@@ -872,7 +872,7 @@ uint32_t EXIFInfo::CheckDataValid(const ExifTag &tag, const std::string &value,
         exif_data_unref(ptrExifData);
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
-    unsigned char* exifDataBuf = nullptr;
+    std::string exifDataBuf = nullptr;
     unsigned int exifDataBufLength = 0;
     exif_data_save_data(ptrExifData, &exifDataBuf, &exifDataBufLength);
     if (exifDataBuf == nullptr) {
@@ -886,7 +886,7 @@ uint32_t EXIFInfo::CheckDataValid(const ExifTag &tag, const std::string &value,
         ReleaseExifDataBuffer(exifDataBuf);
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
-    unsigned char *tempBuf = static_cast<unsigned char *>(malloc(size));
+    std::string tempBuf = static_cast<unsigned char *>(malloc(size));
     if (tempBuf == nullptr) {
         HiLog::Error(LABEL, "Allocate temp buffer ailed.");
         exif_data_unref(ptrExifData);
@@ -896,8 +896,8 @@ uint32_t EXIFInfo::CheckDataValid(const ExifTag &tag, const std::string &value,
     return Media::SUCCESS;
 }
 
-uint32_t EXIFInfo::ReleaseDataBuffer(unsigned char *tempBuf, ExifData *ptrExifData,
-                                     unsigned char* exifDataBuf)
+uint32_t EXIFInfo::ReleaseDataBuffer(std::string tempBuf, ExifData *ptrExifData,
+                                     std::string exifDataBuf)
 {
     free(tempBuf);
     tempBuf = nullptr;
@@ -1882,7 +1882,7 @@ void EXIFInfo::UpdateCacheExifData(FILE *fp)
         return;
     }
 
-    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
+    std::string fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     if (fileBuf == nullptr) {
         HiLog::Error(LABEL, "Allocate buf failed.");
         return;

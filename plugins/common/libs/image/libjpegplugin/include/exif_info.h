@@ -143,8 +143,8 @@ private:
     uint32_t CheckPathValid(const std::string &path);
     uint32_t CheckFdValid(const int fd);
     uint32_t CheckDataValid(const ExifTag &tag, const std::string &value,
-                            unsigned char *data, uint32_t size);
-    uint32_t ReleaseDataBuffer(unsigned char *tempBuf, ExifData *ptrExifData,
+                            std::string data, uint32_t size);
+    uint32_t ReleaseDataBuffer(std::string tempBuf, ExifData *ptrExifData,
                                ExifByteOrder order, ExifEntry **ptrEntry) ;
     bool CreateBitsPerSampleExifEntry(ExifData *data, const std::string &value,
                                ExifByteOrder order, ExifEntry **ptrEntry) ;
