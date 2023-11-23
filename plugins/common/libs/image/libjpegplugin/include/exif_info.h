@@ -147,73 +147,73 @@ private:
     uint32_t ReleaseDataBuffer(unsigned char *tempBuf, ExifData *ptrExifData,
                                unsigned char *exifDataBuf);
     bool CreateBitsPerSampleExifEntry(ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry);
+                                      ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateCompressedBitsPerPixelExifEntry(ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry);
+                                               ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateDateTimeExifEntry(ExifData *data, const std::string &value,
-                                  ExifByteOrder order, ExifEntry **ptrEntry);
+                                 ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateDateTimeOriginalExifEntry(ExifData *data, const std::string &value,
-                                  ExifByteOrder order, ExifEntry **ptrEntry);
+                                         ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateExposureBiasValueExifEntry(ExifData *data, const std::string &value,
-                                   ExifByteOrder order, ExifEntry **ptrEntry);
+                                          ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateExposureTimeExifEntry(ExifData *data, const std::string &value,
-                                  ExifByteOrder order, ExifEntry **ptrEntry);
+                                     ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateFlashExifEntry(ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry);
+                              ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateFNumberExifEntry(ExifData *data, const std::string &value,
-                                 ExifByteOrder order, ExifEntry **ptrEntry);
+                                ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateFocalLengthExifEntry(ExifData *data, const std::string &value,
-                                 ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateFocalLengthIn35MmExifEntry(ExifData *data, const std::string &value,
-                                   ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateGpsDateStampExifEntry(ExifData *data, const std::string &value,
-                                      ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateGpsLatitudeExifEntry(ExifData *data, const std::string &value,
-                                     ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateGpsLatitudeRefExifEntry(ExifData *data, const std::string &value,
-                                        ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateGpsLongitudeExifEntry(ExifData *data, const std::string &value,
-                                      ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateGpsLongitudeRefExifEntry(ExifData *data, const std::string &value,
-                                         ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateGpsTimeStampExifEntry(ExifData *data, const std::string &value,
-                                      ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateImageDescriptionExifEntry(ExifData *data, const std::string &value,
-                                      ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateImageLengthExifEntry(ExifData *data, const std::string &value,
-                                     ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateImageWidthExifEntry(ExifData *data, const std::string &value,
                                     ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateIsoSpeedExifEntry(ExifData *data, const std::string &value,
-                                  ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateIsoSpeedRatingsExifEntry(ExifData *data, const std::string &value,
-                                         ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateLightSourceExifEntry(ExifData *data, const std::string &value,
-                                     ExifByteOrder order,  ExifEntry **ptrEntry);
-    bool CreateMakeExifEntry(ExifData *data, const std::string &value,
-                              ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateMeteringModeExifEntry(ExifData *data, const std::string &value,
-                              ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateModelExifEntry(ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateOrientationExifEntry(ExifData *data, const std::string &value,
+    bool CreateFocalLengthIn35MmExifEntry(ExifData *data, const std::string &value,
+                                          ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateGpsDateStampExifEntry(ExifData *data, const std::string &value,
                                      ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreatePixelXDimensionExifEntry(ExifData *data, const std::string &value,
+    bool CreateGpsLatitudeExifEntry(ExifData *data, const std::string &value,
+                                    ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateGpsLatitudeRefExifEntry(ExifData *data, const std::string &value,
+                                       ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateGpsLongitudeExifEntry(ExifData *data, const std::string &value,
+                                     ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateGpsLongitudeRefExifEntry(ExifData *data, const std::string &value,
+                                        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateGpsTimeStampExifEntry(ExifData *data, const std::string &value,
+                                     ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateImageDescriptionExifEntry(ExifData *data, const std::string &value,
                                          ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreatePixelYDimensionExifEntry(ExifData *data, const std::string &value,
-                                         ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateRecommendedExposureIndexExifEntry(ExifData *data, const std::string &value,
-                                                  ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateSceneTypeExifEntry(ExifData *data, const std::string &value,
+    bool CreateImageLengthExifEntry(ExifData *data, const std::string &value,
+                                    ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateImageWidthExifEntry(ExifData *data, const std::string &value,
                                    ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateSensitivityTypeExifEntry(ExifData *data, const std::string &value,
-                                         ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateStandardOutputSensitivityExifEntry(ExifData *data, const std::string &value,
-                                                   ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateUserCommentExifEntry(ExifData *data, const std::string &value,
+    bool CreateIsoSpeedExifEntry(ExifData *data, const std::string &value,
+                                 ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateIsoSpeedRatingsExifEntry(ExifData *data, const std::string &value,
+                                        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateLightSourceExifEntry(ExifData *data, const std::string &value,
+                                    ExifByteOrder order,  ExifEntry **ptrEntry);
+    bool CreateMakeExifEntry(ExifData *data, const std::string &value,
+                             ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateMeteringModeExifEntry(ExifData *data, const std::string &value,
                                      ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateModelExifEntry(ExifData *data, const std::string &value,
+                              ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateOrientationExifEntry(ExifData *data, const std::string &value,
+                                    ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreatePixelXDimensionExifEntry(ExifData *data, const std::string &value,
+                                        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreatePixelYDimensionExifEntry(ExifData *data, const std::string &value,
+                                        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateRecommendedExposureIndexExifEntry(ExifData *data, const std::string &value,
+                                                 ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateSceneTypeExifEntry(ExifData *data, const std::string &value,
+                                  ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateSensitivityTypeExifEntry(ExifData *data, const std::string &value,
+                                        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateStandardOutputSensitivityExifEntry(ExifData *data, const std::string &value,
+                                                  ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateUserCommentExifEntry(ExifData *data, const std::string &value,
+                                    ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateWhiteBalanceExifEntry(ExifData *data, const std::string &value,
-                                      ExifByteOrder order, ExifEntry **ptrEntry);
+                                     ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateApertureValueExifEntry(ExifData *data, const std::string &value,
                                       ExifByteOrder order, ExifEntry **ptrEntry);
 
