@@ -573,7 +573,7 @@ void EXIFInfo::SetExifTagValuesEx(const ExifTag &tag, const std::string &value)
 uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, const std::string &path)
 {
     uint32_t checkPathResult = CheckPathValid(path);
-    if(checkPathResult != Media::SUCCESS) {
+    if (checkPathResult != Media::SUCCESS) {
         return checkPathResult;
     }
     FILE *file = fopen(path.c_str(), "rb");
@@ -583,6 +583,11 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     }
     // read jpeg file to buff
     unsigned long fileLength = GetFileSize(file);
+    if (fileLength == 0 || fileLength > MAX_FILE_SIZE) {
+        HiLog::Error(LABEL, "Get file size failed.");
+        (void)fclose(file);
+        return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
+    }
     unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     ExifData *ptrExifData = nullptr;
     bool isNewExifData = false;
@@ -622,7 +627,8 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     return Media::SUCCESS;
 }
 
-uint32_t EXIFInfo::CheckPathValid( const std::string &path) {
+uint32_t EXIFInfo::CheckPathValid(const std::string &path)
+{
     FILE *file = fopen(path.c_str(), "rb");
     if (file == nullptr) {
         HiLog::Error(LABEL, "Error creating file %{public}s", path.c_str());
@@ -659,7 +665,7 @@ uint32_t EXIFInfo::CheckPathValid( const std::string &path) {
 uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, const int fd)
 {
     uint32_t checkFdResult = CheckFdValid(fd);
-    if(checkFdResult != Media::SUCCESS) {
+    if (checkFdResult != Media::SUCCESS) {
         return checkFdResult;
     }
     const int localFd = dup(fd);
@@ -759,7 +765,7 @@ void ReleaseExifDataBuffer(unsigned char* exifDataBuf)
 uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value,
     unsigned char *data, uint32_t size)
 {
-    uint32_t checkDataResult = CheckDataValid(tag, value, data ,size);
+    uint32_t checkDataResult = CheckDataValid(tag, value, data, size);
     if (checkDataResult != Media::SUCCESS) {
         return checkDataResult;
     }
@@ -1300,8 +1306,6 @@ bool EXIFInfo::CreateImageWidthExifEntry(ExifData *data, const std::string &valu
     return true;
 }
 
-
-
 bool EXIFInfo::CreateCompressedBitsPerPixelExifEntry(ExifData *data, const std::string &value,
                                                      ExifByteOrder order, ExifEntry **ptrEntry)
 {
@@ -1645,7 +1649,7 @@ bool EXIFInfo::CreateIsoSpeedExifEntry(ExifData *data, const std::string &value,
     ExifIntValueByFormat((*ptrEntry)->data, order, (*ptrEntry)->format, atoi(value.c_str()));
     return true;
 }
-bool EXIFInfo::CreateIsoSpeedRatingsExifEntry( ExifData *data, const std::string &value,
+bool EXIFInfo::CreateIsoSpeedRatingsExifEntry(ExifData *data, const std::string &value,
                                                ExifByteOrder order, ExifEntry **ptrEntry)
 {
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_ISO_SPEED_RATINGS);
@@ -1723,7 +1727,7 @@ bool EXIFInfo::CreatePixelXDimensionExifEntry(ExifData *data, const std::string 
     return true;
 }
 bool EXIFInfo::CreatePixelYDimensionExifEntry(ExifData *data, const std::string &value,
-                                               ExifByteOrder order, ExifEntry **ptrEntry)
+                                              ExifByteOrder order, ExifEntry **ptrEntry)
 {
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_PIXEL_Y_DIMENSION);
     if ((*ptrEntry) == nullptr) {
@@ -1803,7 +1807,6 @@ bool EXIFInfo::CreateUserCommentExifEntry(ExifData *data, const std::string &val
     }
     return true;
 }
-
 
 bool EXIFInfo::WriteExifDataToFile(ExifData *data, unsigned int orginExifDataLength, unsigned long fileLength,
     unsigned char *buf, FILE *fp)
