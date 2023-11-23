@@ -577,6 +577,10 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
         return checkPathResult;
     }
     FILE *file = fopen(path.c_str(), "rb");
+    if (file == nullptr) {
+        HiLog::Error(LABEL, "Error creating file %{public}s", path.c_str());
+        return Media::ERR_MEDIA_IO_ABNORMAL;
+    }
     // read jpeg file to buff
     unsigned long fileLength = GetFileSize(file);
     unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
@@ -624,7 +628,6 @@ uint32_t EXIFInfo::CheckPathValid( const std::string &path) {
         HiLog::Error(LABEL, "Error creating file %{public}s", path.c_str());
         return Media::ERR_MEDIA_IO_ABNORMAL;
     }
-
     // read jpeg file to buff
     unsigned long fileLength = GetFileSize(file);
     if (fileLength == 0 || fileLength > MAX_FILE_SIZE) {
@@ -632,7 +635,6 @@ uint32_t EXIFInfo::CheckPathValid( const std::string &path) {
         (void)fclose(file);
         return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
     }
-
     unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     if (fileBuf == nullptr) {
         HiLog::Error(LABEL, "Allocate buf for %{public}s failed.", path.c_str());
@@ -664,6 +666,11 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value, 
     FILE *file = fdopen(localFd, "wb+");
     // read jpeg file to buff
     unsigned long fileLength = GetFileSize(file);
+    if (fileLength == 0 || fileLength > MAX_FILE_SIZE) {
+        HiLog::Error(LABEL, "Get file size failed.");
+        (void)fclose(file);
+        return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
+    }
     unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
     // Set current position to begin of file.
     (void)fseek(file, 0L, 0);
@@ -753,7 +760,7 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value,
     unsigned char *data, uint32_t size)
 {
     uint32_t checkDataResult = CheckDataValid(tag, value, data ,size);
-    if(checkDataResult != Media::SUCCESS) {
+    if (checkDataResult != Media::SUCCESS) {
         return checkDataResult;
     }
     ExifData *ptrExifData = nullptr;
@@ -771,12 +778,18 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value,
     unsigned char* exifDataBuf = nullptr;
     unsigned int exifDataBufLength = 0;
     exif_data_save_data(ptrExifData, &exifDataBuf, &exifDataBufLength);
+    if (size == 0 || size > MAX_FILE_SIZE) {
+        HiLog::Error(LABEL, "Buffer size is out of range.");
+        exif_data_unref(ptrExifData);
+        ReleaseExifDataBuffer(exifDataBuf);
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
     unsigned char *tempBuf = static_cast<unsigned char *>(malloc(size));
     // Write EXIF header to buffer
     uint32_t index = 0;
     if (sizeof(exifHeader) >= size) {
         HiLog::Error(LABEL, "There is not enough space for EXIF header!");
-        return ReleaseDataBuffer(tempBuf,ptrExifData,exifDataBuf);
+        return ReleaseDataBuffer(tempBuf, ptrExifData, exifDataBuf);
     }
     for (size_t i = 0; i < sizeof(exifHeader); i++) {
         tempBuf[index] = exifHeader[i];
@@ -786,21 +799,21 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value,
     unsigned char highBit = static_cast<unsigned char>((exifDataBufLength + LENGTH_OFFSET_2) >> MOVE_OFFSET_8);
     if (index >= size) {
         HiLog::Error(LABEL, "There is not enough space for writing EXIF block length!");
-        return ReleaseDataBuffer(tempBuf,ptrExifData,exifDataBuf);
+        return ReleaseDataBuffer(tempBuf, ptrExifData, exifDataBuf);
     }
     tempBuf[index] = highBit;
     index += 1;
     unsigned char lowBit = static_cast<unsigned char>((exifDataBufLength + LENGTH_OFFSET_2) & 0xff);
     if (index >= size) {
         HiLog::Error(LABEL, "There is not enough space for writing EXIF block length!");
-        return ReleaseDataBuffer(tempBuf,ptrExifData,exifDataBuf);
+        return ReleaseDataBuffer(tempBuf, ptrExifData, exifDataBuf);
     }
     tempBuf[index] = lowBit;
     index += 1;
     // Write EXIF data block
     if ((index +  exifDataBufLength) >= size) {
         HiLog::Error(LABEL, "There is not enough space for writing EXIF data block!");
-        return ReleaseDataBuffer(tempBuf,ptrExifData,exifDataBuf);
+        return ReleaseDataBuffer(tempBuf, ptrExifData, exifDataBuf);
     }
     for (unsigned int i = 0; i < exifDataBufLength; i++) {
         tempBuf[index] = exifDataBuf[i];
@@ -809,7 +822,7 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value,
     // Write JPEG image data, skipping the non-EXIF header
     if ((index + size - orginExifDataLength - sizeof(exifHeader) - MOVE_OFFSET_8) > size) {
         HiLog::Error(LABEL, "There is not enough space for writing JPEG image data!");
-        return ReleaseDataBuffer(tempBuf,ptrExifData,exifDataBuf);
+        return ReleaseDataBuffer(tempBuf, ptrExifData, exifDataBuf);
     }
     for (unsigned int i = 0; i < (size - orginExifDataLength - sizeof(exifHeader)); i++) {
         tempBuf[index] = data[orginExifDataLength + sizeof(exifHeader) + i];
@@ -827,7 +840,8 @@ uint32_t EXIFInfo::ModifyExifData(const ExifTag &tag, const std::string &value,
 }
 
 uint32_t EXIFInfo::CheckDataValid(const ExifTag &tag, const std::string &value,
-                                  unsigned char *data, uint32_t size) {
+                                  unsigned char *data, uint32_t size)
+{
     if (data == nullptr) {
         HiLog::Error(LABEL, "buffer is nullptr.");
         return Media::ERR_IMAGE_SOURCE_DATA;
@@ -876,7 +890,8 @@ uint32_t EXIFInfo::CheckDataValid(const ExifTag &tag, const std::string &value,
 }
 
 uint32_t EXIFInfo::ReleaseDataBuffer(unsigned char *tempBuf, ExifData *ptrExifData,
-                                     unsigned char* exifDataBuf) {
+                                     unsigned char* exifDataBuf)
+{
     free(tempBuf);
     tempBuf = nullptr;
     exif_data_unref(ptrExifData);
@@ -1115,120 +1130,110 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
 {
     switch (tag) {
         case EXIF_TAG_BITS_PER_SAMPLE: {
-            return CreateBitsPerSampleExifEntry(data, value, order,ptrEntry);
+            return CreateBitsPerSampleExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_ORIENTATION: {
-            return CreateOrientationExifEntry(data, value, order,ptrEntry);
+            return CreateOrientationExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_IMAGE_LENGTH: {
-            return CreateImageLengthExifEntry(data, value, order,ptrEntry);
+            return CreateImageLengthExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_IMAGE_WIDTH: {
-            return CreateImageWidthExifEntry(data, value, order,ptrEntry);
+            return CreateImageWidthExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_COMPRESSED_BITS_PER_PIXEL: {
-            return CreateCompressedBitsPerPixelExifEntry(data, value, order,ptrEntry);
+            return CreateCompressedBitsPerPixelExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_GPS_LATITUDE: {
-            return CreateGpsLatitudeExifEntry(data, value, order,ptrEntry);
+            return CreateGpsLatitudeExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_GPS_LONGITUDE: {
-            return CreateGpsLongitudeExifEntry(data, value, order,ptrEntry);
+            return CreateGpsLongitudeExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_GPS_LATITUDE_REF: {
-            return CreateGpsLatitudeRefExifEntry(data, value, order,ptrEntry);
+            return CreateGpsLatitudeRefExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_GPS_LONGITUDE_REF: {
-            return CreateGpsLongitudeRefExifEntry(data, value, order,ptrEntry);
+            return CreateGpsLongitudeRefExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_WHITE_BALANCE: {
-            return CreateWhiteBalanceExifEntry(data, value, order,ptrEntry);
+            return CreateWhiteBalanceExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM: {
-            return CreateFocalLengthIn35MmExifEntry(data, value, order,ptrEntry);
+            return CreateFocalLengthIn35MmExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_FLASH: {
-            return CreateFlashExifEntry(data, value, order,ptrEntry);
+            return CreateFlashExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_APERTURE_VALUE: {
-            return CreateApertureValueExifEntry(data, value, order,ptrEntry);
+            return CreateApertureValueExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_DATE_TIME_ORIGINAL: {
-            return CreateDateTimeOriginalExifEntry(data, value, order,ptrEntry);
+            return CreateDateTimeOriginalExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_DATE_TIME: {
-            return CreateDateTimeExifEntry(data, value, order,ptrEntry);
+            return CreateDateTimeExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_EXPOSURE_BIAS_VALUE: {
-            return CreateExposureBiasValueExifEntry(data, value, order,ptrEntry);
+            return CreateExposureBiasValueExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_EXPOSURE_TIME: {
-            return CreateExposureTimeExifEntry(data, value, order,ptrEntry);
+            return CreateExposureTimeExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_FNUMBER: {
-            return CreateFNumberExifEntry(data, value, order,ptrEntry);
+            return CreateFNumberExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_FOCAL_LENGTH: {
-            return CreateFocalLengthExifEntry(data, value, order,ptrEntry);
+            return CreateFocalLengthExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_GPS_TIME_STAMP: {
-            return CreateGpsTimeStampExifEntry(data, value, order,ptrEntry);
+            return CreateGpsTimeStampExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_GPS_DATE_STAMP: {
-            return CreateGpsDateStampExifEntry(data, value, order,ptrEntry);
+            return CreateGpsDateStampExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_IMAGE_DESCRIPTION: {
-            return CreateImageDescriptionExifEntry(data, value, order,ptrEntry);
+            return CreateImageDescriptionExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_ISO_SPEED_RATINGS: {
-            return CreateIsoSpeedRatingsExifEntry(data, value, order,ptrEntry);
+            return CreateIsoSpeedRatingsExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_ISO_SPEED: {
-            return CreateIsoSpeedExifEntry(data, value, order,ptrEntry);
+            return CreateIsoSpeedExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_LIGHT_SOURCE: {
-            return CreateLightSourceExifEntry(data, value, order,ptrEntry);
+            return CreateLightSourceExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_MAKE: {
-            return CreateMeteringModeExifEntry(data, value, order,ptrEntry);
+            return CreateMeteringModeExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_METERING_MODE: {
-            return CreateMeteringModeExifEntry(data, value, order,ptrEntry);
+            return CreateMeteringModeExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_MODEL: {
-            return CreateModelExifEntry(data, value, order,ptrEntry);
+            return CreateModelExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_PIXEL_X_DIMENSION: {
-            return CreatePixelXDimensionExifEntry(data, value, order,ptrEntry);
+            return CreatePixelXDimensionExifEntry(data, value, order, ptrEntry);
         }
-
         case EXIF_TAG_PIXEL_Y_DIMENSION: {
-            return CreatePixelYDimensionExifEntry(data, value, order,ptrEntry);
+            return CreatePixelYDimensionExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX: {
-            return CreateRecommendedExposureIndexExifEntry(data, value, order,ptrEntry);
+            return CreateRecommendedExposureIndexExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_SCENE_TYPE: {
-            return CreateSceneTypeExifEntry(data, value, order,ptrEntry);
+            return CreateSceneTypeExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_SENSITIVITY_TYPE: {
-            return CreateSensitivityTypeExifEntry(data, value, order,ptrEntry);
+            return CreateSensitivityTypeExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY: {
-            return CreateStandardOutputSensitivityExifEntry(data, value, order,ptrEntry);
+            return CreateStandardOutputSensitivityExifEntry(data, value, order, ptrEntry);
         }
         case EXIF_TAG_USER_COMMENT: {
-            return CreateUserCommentExifEntry(data, value, order,ptrEntry);
+            return CreateUserCommentExifEntry(data, value, order, ptrEntry);
         }
-
         default:
             break;
     }
@@ -1236,8 +1241,9 @@ bool EXIFInfo::CreateExifEntry(const ExifTag &tag, ExifData *data, const std::st
 }
 
 
-bool EXIFInfo::CreateBitsPerSampleExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateBitsPerSampleExifEntry(ExifData *data, const std::string &value,
+                                            ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_0, EXIF_TAG_BITS_PER_SAMPLE);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get exif entry failed.");
@@ -1258,8 +1264,9 @@ bool EXIFInfo::CreateBitsPerSampleExifEntry( ExifData *data, const std::string &
     return false;
 }
 
-bool EXIFInfo::CreateOrientationExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateOrientationExifEntry(ExifData *data, const std::string &value,
+                                          ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_0, EXIF_TAG_ORIENTATION);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get exif entry failed.");
@@ -1269,8 +1276,9 @@ bool EXIFInfo::CreateOrientationExifEntry( ExifData *data, const std::string &va
     return true;
 }
 
-bool EXIFInfo::CreateImageLengthExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateImageLengthExifEntry(ExifData *data, const std::string &value,
+                                          ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_0, EXIF_TAG_IMAGE_LENGTH);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get exif entry failed.");
@@ -1280,8 +1288,9 @@ bool EXIFInfo::CreateImageLengthExifEntry( ExifData *data, const std::string &va
     return true;
 }
 
-bool EXIFInfo::CreateImageWidthExifEntry( ExifData *data, const std::string &value,
-                              ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateImageWidthExifEntry(ExifData *data, const std::string &value,
+                                         ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_0, EXIF_TAG_IMAGE_WIDTH);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get exif entry failed.");
@@ -1293,8 +1302,9 @@ bool EXIFInfo::CreateImageWidthExifEntry( ExifData *data, const std::string &val
 
 
 
-bool EXIFInfo::CreateCompressedBitsPerPixelExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateCompressedBitsPerPixelExifEntry(ExifData *data, const std::string &value,
+                                                     ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_COMPRESSED_BITS_PER_PIXEL);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get exif entry failed.");
@@ -1309,8 +1319,9 @@ bool EXIFInfo::CreateCompressedBitsPerPixelExifEntry( ExifData *data, const std:
     return true;
 }
 
-bool EXIFInfo::CreateGpsLatitudeExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateGpsLatitudeExifEntry(ExifData *data, const std::string &value,
+                                          ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> latVec;
     SplitStr(value, ",", latVec);
     if (latVec.size() != CONSTANT_2) {
@@ -1331,8 +1342,9 @@ bool EXIFInfo::CreateGpsLatitudeExifEntry( ExifData *data, const std::string &va
     return true;
 }
 
-bool EXIFInfo::CreateGpsLongitudeExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateGpsLongitudeExifEntry(ExifData *data, const std::string &value,
+                                           ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> longVec;
     SplitStr(value, ",", longVec);
     if (longVec.size() != CONSTANT_2) {
@@ -1353,8 +1365,9 @@ bool EXIFInfo::CreateGpsLongitudeExifEntry( ExifData *data, const std::string &v
     return true;
 }
 
-bool EXIFInfo::CreateGpsLatitudeRefExifEntry( ExifData *data, const std::string &value,
-                                  ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateGpsLatitudeRefExifEntry(ExifData *data, const std::string &value,
+                                             ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_LATITUDE_REF,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr) {
@@ -1368,8 +1381,9 @@ bool EXIFInfo::CreateGpsLatitudeRefExifEntry( ExifData *data, const std::string 
     return true;
 }
 
-bool EXIFInfo::CreateGpsLongitudeRefExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateGpsLongitudeRefExifEntry(ExifData *data, const std::string &value,
+                                              ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_LONGITUDE_REF,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr || (*ptrEntry)->size < value.length()) {
@@ -1383,8 +1397,9 @@ bool EXIFInfo::CreateGpsLongitudeRefExifEntry( ExifData *data, const std::string
     return true;
 }
 
-bool EXIFInfo::CreateWhiteBalanceExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateWhiteBalanceExifEntry(ExifData *data, const std::string &value,
+                                           ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_WHITE_BALANCE);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get white balance exif entry failed.");
@@ -1394,8 +1409,9 @@ bool EXIFInfo::CreateWhiteBalanceExifEntry( ExifData *data, const std::string &v
     return true;
 }
 
-bool EXIFInfo::CreateFocalLengthIn35MmExifEntry( ExifData *data, const std::string &value,
-                                 ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateFocalLengthIn35MmExifEntry(ExifData *data, const std::string &value,
+                                                ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get focal length in 35 film exif entry failed.");
@@ -1405,8 +1421,9 @@ bool EXIFInfo::CreateFocalLengthIn35MmExifEntry( ExifData *data, const std::stri
     return true;
 }
 
-bool EXIFInfo::CreateFlashExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateFlashExifEntry(ExifData *data, const std::string &value,
+                                    ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_FLASH);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get flash exif entry failed.");
@@ -1416,8 +1433,9 @@ bool EXIFInfo::CreateFlashExifEntry( ExifData *data, const std::string &value,
     return true;
 }
 
-bool EXIFInfo::CreateApertureValueExifEntry( ExifData *data, const std::string &value,
-                             ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateApertureValueExifEntry(ExifData *data, const std::string &value,
+                                            ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> longVec;
     SplitStr(value, "/", longVec);
     if (longVec.size() != CONSTANT_2) {
@@ -1438,8 +1456,9 @@ bool EXIFInfo::CreateApertureValueExifEntry( ExifData *data, const std::string &
     return true;
 }
 
-bool EXIFInfo::CreateDateTimeOriginalExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateDateTimeOriginalExifEntry(ExifData *data, const std::string &value,
+                                               ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_DATE_TIME_ORIGINAL,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr) {
@@ -1453,8 +1472,9 @@ bool EXIFInfo::CreateDateTimeOriginalExifEntry( ExifData *data, const std::strin
     return true;
 }
 
-bool EXIFInfo::CreateDateTimeExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateDateTimeExifEntry(ExifData *data, const std::string &value,
+                                       ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_0, EXIF_TAG_DATE_TIME,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr) {
@@ -1468,8 +1488,9 @@ bool EXIFInfo::CreateDateTimeExifEntry( ExifData *data, const std::string &value
     return true;
 }
 
-bool EXIFInfo::CreateExposureBiasValueExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateExposureBiasValueExifEntry(ExifData *data, const std::string &value,
+                                                ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> longVec;
     SplitStr(value, "/", longVec);
     if (longVec.size() != CONSTANT_2) {
@@ -1490,8 +1511,9 @@ bool EXIFInfo::CreateExposureBiasValueExifEntry( ExifData *data, const std::stri
     return true;
 }
 
-bool EXIFInfo::CreateExposureTimeExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateExposureTimeExifEntry(ExifData *data, const std::string &value,
+                                           ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> longVec;
     SplitStr(value, "/", longVec);
     if (longVec.size() != CONSTANT_2) {
@@ -1511,8 +1533,9 @@ bool EXIFInfo::CreateExposureTimeExifEntry( ExifData *data, const std::string &v
     exif_set_rational((*ptrEntry)->data, order, longRational);
     return true;
 }
-bool EXIFInfo::CreateFNumberExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateFNumberExifEntry(ExifData *data, const std::string &value,
+                                      ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> longVec;
     SplitStr(value, "/", longVec);
     if (longVec.size() != CONSTANT_2) {
@@ -1533,8 +1556,9 @@ bool EXIFInfo::CreateFNumberExifEntry( ExifData *data, const std::string &value,
     return true;
 }
 
-bool EXIFInfo::CreateFocalLengthExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateFocalLengthExifEntry(ExifData *data, const std::string &value,
+                                          ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> longVec;
     SplitStr(value, "/", longVec);
     if (longVec.size() != CONSTANT_2) {
@@ -1555,8 +1579,9 @@ bool EXIFInfo::CreateFocalLengthExifEntry( ExifData *data, const std::string &va
     return true;
 }
 
-bool EXIFInfo::CreateGpsTimeStampExifEntry( ExifData *data, const std::string &value,
-                                            ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateGpsTimeStampExifEntry(ExifData *data, const std::string &value,
+                                           ExifByteOrder order, ExifEntry **ptrEntry)
+{
     std::vector<std::string> longVec;
     SplitStr(value, ":", longVec);
     if (longVec.size() != CONSTANT_3) {
@@ -1577,7 +1602,9 @@ bool EXIFInfo::CreateGpsTimeStampExifEntry( ExifData *data, const std::string &v
     return true;
 }
 
-bool EXIFInfo::CreateGpsDateStampExifEntry( ExifData *data, const std::string &value,ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateGpsDateStampExifEntry(ExifData *data, const std::string &value,
+                                           ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_DATE_STAMP,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr) {
@@ -1591,8 +1618,9 @@ bool EXIFInfo::CreateGpsDateStampExifEntry( ExifData *data, const std::string &v
     return true;
 }
 
-bool EXIFInfo::CreateImageDescriptionExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateImageDescriptionExifEntry(ExifData *data, const std::string &value,
+                                               ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_0, EXIF_TAG_IMAGE_DESCRIPTION,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr) {
@@ -1606,8 +1634,9 @@ bool EXIFInfo::CreateImageDescriptionExifEntry( ExifData *data, const std::strin
     return true;
 }
 
-bool EXIFInfo::CreateIsoSpeedExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateIsoSpeedExifEntry(ExifData *data, const std::string &value,
+                                       ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_ISO_SPEED);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get ISO  speed  exif entry failed.");
@@ -1617,7 +1646,8 @@ bool EXIFInfo::CreateIsoSpeedExifEntry( ExifData *data, const std::string &value
     return true;
 }
 bool EXIFInfo::CreateIsoSpeedRatingsExifEntry( ExifData *data, const std::string &value,
-                                               ExifByteOrder order, ExifEntry **ptrEntry){
+                                               ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_ISO_SPEED_RATINGS);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get ISO speed ratings exif entry failed.");
@@ -1626,8 +1656,9 @@ bool EXIFInfo::CreateIsoSpeedRatingsExifEntry( ExifData *data, const std::string
     ExifIntValueByFormat((*ptrEntry)->data, order, (*ptrEntry)->format, atoi(value.c_str()));
     return true;
 }
-bool EXIFInfo::CreateMakeExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateMakeExifEntry(ExifData *data, const std::string &value,
+                                   ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_0, EXIF_TAG_MAKE,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr) {
@@ -1641,8 +1672,9 @@ bool EXIFInfo::CreateMakeExifEntry( ExifData *data, const std::string &value,
     return true;
 }
 
-bool EXIFInfo::CreateMeteringModeExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateMeteringModeExifEntry(ExifData *data, const std::string &value,
+                                           ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_METERING_MODE);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get metering mode exif entry failed.");
@@ -1651,8 +1683,9 @@ bool EXIFInfo::CreateMeteringModeExifEntry( ExifData *data, const std::string &v
     ExifIntValueByFormat((*ptrEntry)->data, order, (*ptrEntry)->format, atoi(value.c_str()));
     return true;
 }
-bool EXIFInfo::CreateLightSourceExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateLightSourceExifEntry(ExifData *data, const std::string &value,
+                                          ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_LIGHT_SOURCE);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get light source exif entry failed.");
@@ -1662,7 +1695,9 @@ bool EXIFInfo::CreateLightSourceExifEntry( ExifData *data, const std::string &va
     return true;
 }
 
-bool EXIFInfo::CreateModelExifEntry( ExifData *data, const std::string &value,ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateModelExifEntry(ExifData *data, const std::string &value,
+                                    ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_0, EXIF_TAG_MODEL,
                               value.length(), EXIF_FORMAT_ASCII);
     if ((*ptrEntry) == nullptr) {
@@ -1676,7 +1711,9 @@ bool EXIFInfo::CreateModelExifEntry( ExifData *data, const std::string &value,Ex
     return true;
 }
 
-bool EXIFInfo::CreatePixelXDimensionExifEntry( ExifData *data, const std::string &value,ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreatePixelXDimensionExifEntry(ExifData *data, const std::string &value,
+                                              ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_PIXEL_X_DIMENSION);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get pixel X-dimension exif entry failed.");
@@ -1685,8 +1722,9 @@ bool EXIFInfo::CreatePixelXDimensionExifEntry( ExifData *data, const std::string
     ExifIntValueByFormat((*ptrEntry)->data, order, (*ptrEntry)->format, atoi(value.c_str()));
     return true;
 }
-bool EXIFInfo::CreatePixelYDimensionExifEntry( ExifData *data, const std::string &value,
-                                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreatePixelYDimensionExifEntry(ExifData *data, const std::string &value,
+                                               ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_PIXEL_Y_DIMENSION);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get pixel Y-dimension exif entry failed.");
@@ -1696,8 +1734,9 @@ bool EXIFInfo::CreatePixelYDimensionExifEntry( ExifData *data, const std::string
     return true;
 }
 
-bool EXIFInfo::CreateRecommendedExposureIndexExifEntry( ExifData *data, const std::string &value,
-                                                        ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateRecommendedExposureIndexExifEntry(ExifData *data, const std::string &value,
+                                                       ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get recommended exposure index exif entry failed.");
@@ -1707,8 +1746,9 @@ bool EXIFInfo::CreateRecommendedExposureIndexExifEntry( ExifData *data, const st
     return true;
 }
 
-
-bool EXIFInfo::CreateSceneTypeExifEntry( ExifData *data, const std::string &value,ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateSceneTypeExifEntry(ExifData *data, const std::string &value,
+                                        ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_SCENE_TYPE,
                               value.length(), EXIF_FORMAT_UNDEFINED);
     if ((*ptrEntry) == nullptr) {
@@ -1721,8 +1761,9 @@ bool EXIFInfo::CreateSceneTypeExifEntry( ExifData *data, const std::string &valu
     }
     return true;
 }
-bool EXIFInfo::CreateSensitivityTypeExifEntry( ExifData *data, const std::string &value,
-                                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateSensitivityTypeExifEntry(ExifData *data, const std::string &value,
+                                              ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = InitExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_SENSITIVITY_TYPE);
     if ((*ptrEntry) == nullptr) {
         HiLog::Error(LABEL, "Get sensitive type exif entry failed.");
@@ -1731,8 +1772,9 @@ bool EXIFInfo::CreateSensitivityTypeExifEntry( ExifData *data, const std::string
     ExifIntValueByFormat((*ptrEntry)->data, order, (*ptrEntry)->format, atoi(value.c_str()));
     return true;
 }
-bool EXIFInfo::CreateStandardOutputSensitivityExifEntry( ExifData *data, const std::string &value,
-                                ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateStandardOutputSensitivityExifEntry(ExifData *data, const std::string &value,
+                                                        ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY,
                               value.length(), EXIF_FORMAT_LONG);
     if ((*ptrEntry) == nullptr) {
@@ -1746,8 +1788,9 @@ bool EXIFInfo::CreateStandardOutputSensitivityExifEntry( ExifData *data, const s
     return true;
 
 }
-bool EXIFInfo::CreateUserCommentExifEntry( ExifData *data, const std::string &value,
-                               ExifByteOrder order, ExifEntry **ptrEntry){
+bool EXIFInfo::CreateUserCommentExifEntry(ExifData *data, const std::string &value,
+                                          ExifByteOrder order, ExifEntry **ptrEntry)
+{
     *ptrEntry = CreateExifTag(data, EXIF_IFD_EXIF, EXIF_TAG_USER_COMMENT,
                               value.length(), EXIF_FORMAT_UNDEFINED);
     if ((*ptrEntry) == nullptr) {
