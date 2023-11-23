@@ -214,6 +214,8 @@ private:
                                      ExifByteOrder order, ExifEntry **ptrEntry);
     bool CreateWhiteBalanceExifEntry(ExifData *data, const std::string &value,
                                       ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateApertureValueExifEntry(ExifData *data, const std::string &value,
+                                      ExifByteOrder order, ExifEntry **ptrEntry);
 
 private:
     ExifIfd imageFileDirectory_;
