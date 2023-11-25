@@ -71,6 +71,7 @@ struct PixelMapAsyncContext {
     napi_async_work work;
     napi_deferred deferred;
     napi_ref callbackRef;
+    napi_ref error = nullptr;
     uint32_t status;
     PixelMapNapi *nConstructor;
     void* colorsBuffer;
@@ -257,6 +258,9 @@ static void CommonCallbackRoutine(napi_env env, PixelMapAsyncContext* &asyncCont
     }
     if (asyncContext->status == SUCCESS) {
         result[NUM_1] = valueParam;
+    } else if (asyncContext->error != nullptr) {
+        napi_get_reference_value(env, asyncContext->error, &result[NUM_0]);
+        napi_delete_reference(env, asyncContext->error);
     } else {
         napi_create_uint32(env, asyncContext->status, &result[NUM_0]);
     }
@@ -287,6 +291,15 @@ STATIC_COMPLETE_FUNC(EmptyResult)
 
     auto context = static_cast<PixelMapAsyncContext*>(data);
 
+    CommonCallbackRoutine(env, context, result);
+}
+
+STATIC_COMPLETE_FUNC(GeneralError)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    auto context = static_cast<ImagePackerAsyncContext*>(data);
+    context->status = ERR_RESOURCE_UNAVAILABLE;
     CommonCallbackRoutine(env, context, result);
 }
 
@@ -948,6 +961,14 @@ napi_value PixelMapNapi::GetIsEditable(napi_env env, napi_callback_info info)
     return result;
 }
 
+static void BuildContextError(napi_env env, napi_ref &error, const std::string errMsg)
+{
+    HiLog::Error(LABEL, errMsg);
+    napi_value tmpError;
+    ImageNapiUtils::CreateErrorObj(env, tmpError, ERR_RESOURCE_UNAVAILABLE, errMsg);
+    napi_create_reference(env, tmpError, NUM_1, &(error));
+}
+
 napi_value PixelMapNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info info)
 {
     ImageTrace imageTrace("PixelMapNapi::ReadPixelsToBuffer");
@@ -970,7 +991,6 @@ napi_value PixelMapNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info inf
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
         nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
-
     asyncContext->rPixelMap = asyncContext->nConstructor->nativePixelMap_;
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPixelMap),
@@ -991,6 +1011,11 @@ napi_value PixelMapNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info inf
         napi_get_undefined(env, &result);
     }
 
+    IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->nConstructor->GetPixelNapiEditable(),
+        BuildContextError(env, asyncContext->error, "pixelmap has crossed threads . ReadPixelsToBuffer failed"),
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "ReadPixelsToBufferGeneralError", 
+        [](napi_env env, void *data) {}, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result); 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "ReadPixelsToBuffer",
         [](napi_env env, void *data)
         {
@@ -1045,6 +1070,11 @@ napi_value PixelMapNapi::ReadPixels(napi_env env, napi_callback_info info)
         napi_get_undefined(env, &result);
     }
 
+    IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->nConstructor->GetPixelNapiEditable(),
+        BuildContextError(env, asyncContext->error, "pixelmap has crossed threads . ReadPixels failed"),
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "ReadPixelsGeneralError", 
+        [](napi_env env, void *data) {}, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result); 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "ReadPixels",
         [](napi_env env, void *data)
         {
@@ -1080,9 +1110,6 @@ napi_value PixelMapNapi::WritePixels(napi_env env, napi_callback_info info)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
         nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
-    IMG_NAPI_CHECK_RET_D(asyncContext->nConstructor->GetPixelNapiEditable(),
-        nullptr, HiLog::Error(LABEL, "pixelmap has crossed threads . WritePixels failed"));
-
     asyncContext->rPixelMap = asyncContext->nConstructor->nativePixelMap_;
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPixelMap),
@@ -1100,7 +1127,11 @@ napi_value PixelMapNapi::WritePixels(napi_env env, napi_callback_info info)
     } else {
         napi_get_undefined(env, &result);
     }
-
+    IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->nConstructor->GetPixelNapiEditable(),
+        BuildContextError(env, asyncContext->error, "pixelmap has crossed threads . WritePixels failed"),
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "WritePixelsGeneralError", 
+        [](napi_env env, void *data) {}, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result); 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "WritePixels",
         [](napi_env env, void *data)
         {
@@ -1138,9 +1169,6 @@ napi_value PixelMapNapi::WriteBufferToPixels(napi_env env, napi_callback_info in
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
         nullptr, HiLog::Error(LABEL, "fail to unwrap context"));
-    IMG_NAPI_CHECK_RET_D(asyncContext->nConstructor->GetPixelNapiEditable(),
-        nullptr, HiLog::Error(LABEL, "pixelmap has crossed threads . WritePixels failed"));
-
     asyncContext->rPixelMap = asyncContext->nConstructor->nativePixelMap_;
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPixelMap),
@@ -1160,7 +1188,11 @@ napi_value PixelMapNapi::WriteBufferToPixels(napi_env env, napi_callback_info in
     } else {
         napi_get_undefined(env, &result);
     }
-
+    IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->nConstructor->GetPixelNapiEditable(),
+        BuildContextError(env, asyncContext->error, "pixelmap has crossed threads . WriteBufferToPixels failed"),
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "WriteBufferToPixelsGeneralError", 
+        [](napi_env env, void *data) {}, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result); 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "WriteBufferToPixels",
         [](napi_env env, void *data)
         {
@@ -1238,6 +1270,11 @@ napi_value PixelMapNapi::GetImageInfo(napi_env env, napi_callback_info info)
     } else {
         napi_get_undefined(env, &result);
     }
+    IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->nConstructor->GetPixelNapiEditable(),
+        BuildContextError(env, asyncContext->error, "pixelmap has crossed threads . GetImageInfo failed"),
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "GetImageInfoGeneralError", 
+        [](napi_env env, void *data) {}, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result); 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "GetImageInfo",
         [](napi_env env, void *data)
         {
@@ -1269,6 +1306,11 @@ napi_value PixelMapNapi::GetBytesNumberPerRow(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . GetBytesNumberPerRow failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . GetBytesNumberPerRow failed")); 
+
     if (pixelMapNapi->nativePixelMap_ != nullptr) {
         uint32_t rowBytes = pixelMapNapi->nativePixelMap_->GetRowBytes();
         status = napi_create_int32(env, rowBytes, &result);
@@ -1301,6 +1343,11 @@ napi_value PixelMapNapi::GetPixelBytesNumber(napi_env env, napi_callback_info in
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . GetPixelBytesNumber failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . GetPixelBytesNumber failed")); 
+
     if (pixelMapNapi->nativePixelMap_ != nullptr) {
         uint32_t byteCount = pixelMapNapi->nativePixelMap_->GetByteCount();
         status = napi_create_int32(env, byteCount, &result);
@@ -1332,6 +1379,11 @@ napi_value PixelMapNapi::IsSupportAlpha(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . IsSupportAlpha failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . IsSupportAlpha failed")); 
+
     if (pixelMapNapi->nativePixelMap_ != nullptr) {
         AlphaType alphaType = pixelMapNapi->nativePixelMap_->GetAlphaType();
         bool isSupportAlpha = !(alphaType == AlphaType::IMAGE_ALPHA_TYPE_OPAQUE);
@@ -1369,6 +1421,10 @@ napi_value PixelMapNapi::SetAlphaAble(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . SetAlphaAble failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . SetAlphaAble failed")); 
 
     if (pixelMapNapi->nativePixelMap_ != nullptr) {
         AlphaType alphaType = pixelMapNapi->nativePixelMap_->GetAlphaType();
@@ -1428,6 +1484,11 @@ napi_value PixelMapNapi::CreateAlphaPixelmap(napi_env env, napi_callback_info in
     } else {
         napi_get_undefined(env, &result);
     }
+    IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->nConstructor->GetPixelNapiEditable(),
+        BuildContextError(env, asyncContext->error, "pixelmap has crossed threads . CreateAlphaPixelmap failed"),
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, "CreateAlphaPixelmapGeneralError", 
+        [](napi_env env, void *data) {}, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result); 
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "CreateAlphaPixelmap",
         [](napi_env env, void *data)
         {
@@ -1461,6 +1522,11 @@ napi_value PixelMapNapi::GetDensity(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . GetDensity failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . GetDensity failed")); 
+
     if (pixelMapNapi->nativePixelMap_ != nullptr) {
         uint32_t baseDensity = pixelMapNapi->nativePixelMap_->GetBaseDensity();
         status = napi_create_int32(env, baseDensity, &result);
@@ -1498,6 +1564,11 @@ napi_value PixelMapNapi::SetDensity(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, HiLog::Error(LABEL, "fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . SetDensity failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . SetDensity failed")); 
+
     if (pixelMapNapi->nativePixelMap_ != nullptr) {
         ImageInfo imageinfo;
         pixelMapNapi->nativePixelMap_->GetImageInfo(imageinfo);
@@ -1541,7 +1612,6 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
     } else {
         napi_get_undefined(env, &result);
     }
-
     if (asyncContext->nConstructor->IsLockPixelMap()) {
         asyncContext->status = ERROR;
     } else {
@@ -1584,8 +1654,6 @@ static bool prepareNapiEnv(napi_env env, napi_callback_info info, struct NapiVal
         HiLog::Error(LABEL, "fail to unwrap context");
         return false;
     }
-    IMG_NAPI_CHECK_RET_D(nVal->context->nConstructor->GetPixelNapiEditable(),
-        false, HiLog::Error(LABEL, "pixelmap has crossed threads . WritePixels failed"));
     nVal->context->status = SUCCESS;
     return true;
 }
@@ -1620,6 +1688,11 @@ napi_value PixelMapNapi::SetAlpha(napi_env env, napi_callback_info info)
     if (!prepareNapiEnv(env, info, &nVal)) {
         return nVal.result;
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . SetAlpha failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . SetAlpha failed")); 
+
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
 
     if (nVal.argc != NUM_1 && nVal.argc != NUM_2) {
@@ -1687,6 +1760,10 @@ napi_value PixelMapNapi::Scale(napi_env env, napi_callback_info info)
     if (!prepareNapiEnv(env, info, &nVal)) {
         return nVal.result;
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . Scale failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . Scale failed")); 
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
 
     if (nVal.argc != NUM_2 && nVal.argc != NUM_3) {
@@ -1756,6 +1833,10 @@ napi_value PixelMapNapi::Translate(napi_env env, napi_callback_info info)
     if (!prepareNapiEnv(env, info, &nVal)) {
         return nVal.result;
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . Translate failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . Translate failed")); 
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
 
     if (nVal.argc != NUM_2 && nVal.argc != NUM_3) {
@@ -1825,6 +1906,10 @@ napi_value PixelMapNapi::Rotate(napi_env env, napi_callback_info info)
     if (!prepareNapiEnv(env, info, &nVal)) {
         return nVal.result;
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . Rotate failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . Rotate failed")); 
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
 
     if (nVal.argc != NUM_1 && nVal.argc != NUM_2) {
@@ -1890,6 +1975,10 @@ napi_value PixelMapNapi::Flip(napi_env env, napi_callback_info info)
     if (!prepareNapiEnv(env, info, &nVal)) {
         return nVal.result;
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . Flip failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . Flip failed")); 
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
 
     if (nVal.argc != NUM_2 && nVal.argc != NUM_3) {
@@ -1958,6 +2047,10 @@ napi_value PixelMapNapi::Crop(napi_env env, napi_callback_info info)
     if (!prepareNapiEnv(env, info, &nVal)) {
         return nVal.result;
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . Crop failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . Crop failed")); 
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
 
     if (nVal.argc != NUM_1 && nVal.argc != NUM_2) {
@@ -2008,6 +2101,10 @@ napi_value PixelMapNapi::GetColorSpace(napi_env env, napi_callback_info info)
         return ImageNapiUtils::ThrowExceptionError(
             env, ERR_IMAGE_INVALID_PARAMETER, "Invalid args count");
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . GetColorSpace failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . GetColorSpace failed")); 
 #ifdef IMAGE_COLORSPACE_FLAG
     if (nVal.context->nConstructor->nativePixelMap_ == nullptr) {
         return ImageNapiUtils::ThrowExceptionError(
@@ -2043,6 +2140,10 @@ napi_value PixelMapNapi::SetColorSpace(napi_env env, napi_callback_info info)
         return ImageNapiUtils::ThrowExceptionError(
             env, ERR_IMAGE_INVALID_PARAMETER, "Invalid args count");
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . SetColorSpace failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . SetColorSpace failed")); 
 #ifdef IMAGE_COLORSPACE_FLAG
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     nVal.context->colorSpace = ColorManager::GetColorSpaceByJSObject(env, nVal.argv[NUM_0]);
@@ -2077,6 +2178,10 @@ napi_value PixelMapNapi::Marshalling(napi_env env, napi_callback_info info)
         return ImageNapiUtils::ThrowExceptionError(
             env, ERR_IMAGE_INVALID_PARAMETER, "Invalid args count");
     }
+    IMG_NAPI_CHECK_RET_D(nVal.context->nConstructor->nativePixelMap_->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . Marshalling failed"),
+        HiLog::Error(LABEL, "Pixelmap has crossed threads . Marshalling failed")); 
     NAPI_MessageSequence *napiSequence = nullptr;
     napi_get_cb_info(env, info, &nVal.argc, nVal.argv, nullptr, nullptr);
     napi_unwrap(env, nVal.argv[0], reinterpret_cast<void**>(&napiSequence));

@@ -93,6 +93,7 @@ private:
     static napi_value GetColorSpace(napi_env env, napi_callback_info info);
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
+    static void BuildContextError(napi_env env, napi_ref &error, const std::string errMsg);
 
     void release();
     static thread_local napi_ref sConstructor_;
