@@ -19,6 +19,7 @@
 #include "image_napi_utils.h"
 #include "image_pixel_map_napi.h"
 #include "image_trace.h"
+#include "log_tags.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
 #include "js_runtime_utils.h"
@@ -29,7 +30,7 @@
 
 using OHOS::HiviewDFX::HiLog;
 namespace {
-    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "PixelMapNapi"};
+    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "PixelMapNapi"};
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
     constexpr uint32_t NUM_2 = 2;
@@ -349,6 +350,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("crop", Crop),
         DECLARE_NAPI_FUNCTION("getColorSpace", GetColorSpace),
         DECLARE_NAPI_FUNCTION("setColorSpace", SetColorSpace),
+        DECLARE_NAPI_FUNCTION("applyColorSpace", ApplyColorSpace),
         DECLARE_NAPI_FUNCTION("marshalling", Marshalling),
         DECLARE_NAPI_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_GETTER("isEditable", GetIsEditable),
@@ -900,7 +902,7 @@ napi_value PixelMapNapi::GetIsEditable(napi_env env, napi_callback_info info)
 
 napi_value PixelMapNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "ReadPixelsToBuffer");
+    ImageTrace imageTrace("PixelMapNapi::ReadPixelsToBuffer");
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -952,7 +954,6 @@ napi_value PixelMapNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info inf
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
@@ -1067,7 +1068,7 @@ napi_value PixelMapNapi::WritePixels(napi_env env, napi_callback_info info)
 
 napi_value PixelMapNapi::WriteBufferToPixels(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "WriteBufferToPixels");
+    ImageTrace imageTrace("PixelMapNapi::WriteBufferToPixels");
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1118,7 +1119,6 @@ napi_value PixelMapNapi::WriteBufferToPixels(napi_env env, napi_callback_info in
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
@@ -1200,7 +1200,7 @@ napi_value PixelMapNapi::GetImageInfo(napi_env env, napi_callback_info info)
 
 napi_value PixelMapNapi::GetBytesNumberPerRow(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "GetBytesNumberPerRow");
+    ImageTrace imageTrace("PixelMapNapi::GetBytesNumberPerRow");
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1227,13 +1227,12 @@ napi_value PixelMapNapi::GetBytesNumberPerRow(napi_env env, napi_callback_info i
         HiLog::Error(LABEL, "native pixelmap is nullptr!");
     }
     pixelMapNapi.release();
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
 napi_value PixelMapNapi::GetPixelBytesNumber(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "GetPixelBytesNumber");
+    ImageTrace imageTrace("PixelMapNapi::GetPixelBytesNumber");
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1260,7 +1259,6 @@ napi_value PixelMapNapi::GetPixelBytesNumber(napi_env env, napi_callback_info in
         HiLog::Error(LABEL, "native pixelmap is nullptr!");
     }
     pixelMapNapi.release();
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
@@ -2037,6 +2035,85 @@ napi_value PixelMapNapi::Marshalling(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     return result;
 #endif
+}
+
+static void ApplyColorSpaceExec(napi_env env, PixelMapAsyncContext* context)
+{
+    if (context == nullptr) {
+        HiLog::Error(LABEL, "Null context");
+        return;
+    }
+    if (context->status != SUCCESS) {
+        HiLog::Debug(LABEL, "ApplyColorSpace has failed. do nothing");
+        return;
+    }
+    if (context->rPixelMap == nullptr || context->colorSpace == nullptr) {
+        context->status = ERR_IMAGE_INIT_ABNORMAL;
+        HiLog::Error(LABEL, "ApplyColorSpace Null native ref");
+        return;
+    }
+    context->status = context->rPixelMap->ApplyColorSpace(*(context->colorSpace));
+}
+
+static void ParseColorSpaceVal(napi_env env, napi_value val, PixelMapAsyncContext* context)
+{
+    if (context == nullptr) {
+        HiLog::Error(LABEL, "Null context");
+        return;
+    }
+
+#ifdef IMAGE_COLORSPACE_FLAG
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    context->colorSpace = ColorManager::GetColorSpaceByJSObject(env, val);
+#endif
+    if (context->colorSpace == nullptr) {
+        context->status = ERR_IMAGE_INVALID_PARAMETER;
+    }
+#else
+    Val.context->status = ERR_IMAGE_DATA_UNSUPPORT;
+#endif
+}
+
+napi_value PixelMapNapi::ApplyColorSpace(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    nVal.argc = NUM_2;
+    napi_value argValue[NUM_2] = {0};
+    nVal.argv = argValue;
+    HiLog::Debug(LABEL, "ApplyColorSpace IN");
+    if (!prepareNapiEnv(env, info, &nVal)) {
+        return nVal.result;
+    }
+    nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
+
+    if (nVal.argc != NUM_1 && nVal.argc != NUM_2) {
+        HiLog::Error(LABEL, "Invalid args count");
+        nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
+    } else {
+        ParseColorSpaceVal(env, nVal.argv[NUM_0], nVal.context.get());
+    }
+    if (nVal.argc >= NUM_1 && ImageNapiUtils::getType(env, nVal.argv[nVal.argc - 1]) == napi_function) {
+        napi_create_reference(env, nVal.argv[nVal.argc - 1], nVal.refCount, &(nVal.context->callbackRef));
+    }
+
+    if (nVal.context->callbackRef == nullptr) {
+        napi_create_promise(env, &(nVal.context->deferred), &(nVal.result));
+    }
+    napi_value _resource = nullptr;
+    napi_create_string_utf8(env, "ApplyColorSpace", NAPI_AUTO_LENGTH, &_resource);
+    nVal.status = napi_create_async_work(env, nullptr, _resource, [](napi_env env, void *data)
+        {
+            auto context = static_cast<PixelMapAsyncContext*>(data);
+            ApplyColorSpaceExec(env, context);
+        }, EmptyResultComplete, static_cast<void*>(nVal.context.get()), &(nVal.context->work));
+
+    if (nVal.status == napi_ok) {
+        nVal.status = napi_queue_async_work(env, nVal.context->work);
+        if (nVal.status == napi_ok) {
+            nVal.context.release();
+        }
+    }
+    return nVal.result;
 }
 
 void PixelMapNapi::release()

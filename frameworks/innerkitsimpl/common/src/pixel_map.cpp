@@ -78,8 +78,12 @@ static const uint8_t NUM_6 = 6;
 static const uint8_t NUM_7 = 7;
 
 constexpr int32_t ANTIALIASING_SIZE = 350;
+
+std::atomic<uint32_t> PixelMap::currentId = 0;
+
 PixelMap::~PixelMap()
 {
+    HiLog::Debug(LABEL, "PixelMap::~PixelMap");
     FreePixelMap();
 }
 
@@ -165,7 +169,7 @@ void PixelMap::SetTransformered(bool isTransformered)
 void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type, CustomFreePixelMap func)
 {
     if (data_ != nullptr) {
-        HiLog::Error(LABEL, "SetPixelsAddr error ");
+        HiLog::Info(LABEL, "SetPixelsAddr release the existed data first");
         FreePixelMap();
     }
     if (type == AllocatorType::SHARE_MEM_ALLOC && context == nullptr) {
@@ -721,7 +725,7 @@ uint32_t PixelMap::SetRowDataSizeForImageInfo(ImageInfo info)
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
         if (allocatorType_ == AllocatorType::DMA_ALLOC) {
             if (context_ == nullptr) {
-                HiLog::Error(LABEL, "set imageInfo context_ null");
+                HiLog::Error(LABEL, "set imageInfo failed, context_ is null");
                 return ERR_IMAGE_DATA_ABNORMAL;
             }
             SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(context_);
@@ -960,6 +964,16 @@ int32_t PixelMap::GetHeight()
     return imageInfo_.size.height;
 }
 
+void PixelMap::GetTransformData(TransformData &transformData)
+{
+    transformData = transformData_;
+}
+
+void PixelMap::SetTransformData(TransformData transformData)
+{
+    transformData_ = transformData;
+}
+
 int32_t PixelMap::GetBaseDensity()
 {
     return imageInfo_.baseDensity;
@@ -1019,12 +1033,12 @@ bool PixelMap::IsSameImage(const PixelMap &other)
     if (imageInfo_.size.width != other.imageInfo_.size.width ||
         imageInfo_.size.height != other.imageInfo_.size.height ||
         imageInfo_.pixelFormat != other.imageInfo_.pixelFormat || imageInfo_.alphaType != other.imageInfo_.alphaType) {
-        HiLog::Error(LABEL, "IsSameImage imageInfo check not OK.");
+        HiLog::Info(LABEL, "IsSameImage imageInfo is not same");
         return false;
     }
     uint64_t size = static_cast<uint64_t>(rowDataSize_) * imageInfo_.size.height;
     if (memcmp(data_, other.data_, size) != 0) {
-        HiLog::Error(LABEL, "IsSameImage mmemcmp check not OK.");
+        HiLog::Info(LABEL, "IsSameImage memcmp is not same");
         return false;
     }
     return true;
@@ -1032,7 +1046,7 @@ bool PixelMap::IsSameImage(const PixelMap &other)
 
 uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "ReadPixels by bufferSize");
+    ImageTrace imageTrace("ReadPixels by bufferSize");
     if (dst == nullptr) {
         HiLog::Error(LABEL, "read pixels by buffer input dst address is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
@@ -1056,7 +1070,6 @@ uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
         }
         dst += rowDataSize_; // Move the destination buffer pointer to the next row
     }
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return SUCCESS;
 }
 
@@ -1281,7 +1294,7 @@ uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize
 
 uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "WritePixels");
+    ImageTrace imageTrace("WritePixels");
     if (source == nullptr || bufferSize < static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "write pixels by buffer source is nullptr or size(%{public}llu) < pixelSize(%{public}u).",
                      static_cast<unsigned long long>(bufferSize), pixelsSize_);
@@ -1308,7 +1321,6 @@ uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize
             return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
         }
     }
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return SUCCESS;
 }
 
@@ -1609,6 +1621,57 @@ bool PixelMap::WriteInfoToParcel(Parcel &parcel) const
     return true;
 }
 
+bool PixelMap::WriteTransformDataToParcel(Parcel &parcel) const
+{
+    if (isAstc_) {
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.scaleX))) {
+            HiLog::Error(LABEL, "write scaleX:[%{public}f] to parcel failed.", transformData_.scaleX);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.scaleY))) {
+            HiLog::Error(LABEL, "write scaleY:[%{public}f] to parcel failed.", transformData_.scaleY);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.rotateD))) {
+            HiLog::Error(LABEL, "write rotateD:[%{public}f] to parcel failed.", transformData_.rotateD);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.cropLeft))) {
+            HiLog::Error(LABEL, "write cropLeft:[%{public}f] to parcel failed.", transformData_.cropLeft);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.cropTop))) {
+            HiLog::Error(LABEL, "write cropTop:[%{public}f] to parcel failed.", transformData_.cropTop);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.cropWidth))) {
+            HiLog::Error(LABEL, "write cropWidth:[%{public}f] to parcel failed.", transformData_.cropWidth);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.cropHeight))) {
+            HiLog::Error(LABEL, "write cropHeight:[%{public}f] to parcel failed.", transformData_.cropHeight);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.translateX))) {
+            HiLog::Error(LABEL, "write translateX:[%{public}f] to parcel failed.", transformData_.translateX);
+            return false;
+        }
+        if (!parcel.WriteFloat(static_cast<float>(transformData_.translateY))) {
+            HiLog::Error(LABEL, "write translateY:[%{public}f] to parcel failed.", transformData_.translateY);
+            return false;
+        }
+        if (!parcel.WriteBool(static_cast<bool>(transformData_.flipX))) {
+            HiLog::Error(LABEL, "write astc transformData_.flipX to parcel failed.");
+            return false;
+        }
+        if (!parcel.WriteBool(static_cast<bool>(transformData_.flipY))) {
+            HiLog::Error(LABEL, "write astc transformData_.flipY to parcel failed.");
+            return false;
+        }
+    }
+    return true;
+}
+
 bool PixelMap::Marshalling(Parcel &parcel) const
 {
     int32_t PIXEL_MAP_INFO_MAX_LENGTH = 128;
@@ -1664,6 +1727,11 @@ bool PixelMap::Marshalling(Parcel &parcel) const
         return false;
     }
 #endif
+    
+    if (!WriteTransformDataToParcel(parcel)) {
+        HiLog::Error(LABEL, "write transformData to parcel failed.");
+        return false;
+    }
     return true;
 }
 
@@ -1680,6 +1748,26 @@ bool PixelMap::ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo)
     imgInfo.alphaType = static_cast<AlphaType>(parcel.ReadInt32());
     HiLog::Debug(LABEL, "read pixel map alphaType:[%{public}d] to parcel.", imgInfo.alphaType);
     imgInfo.baseDensity = parcel.ReadInt32();
+    return true;
+}
+
+bool PixelMap::ReadTransformData(Parcel &parcel, PixelMap *pixelMap)
+{
+    if (pixelMap->IsAstc()) {
+        TransformData transformData;
+        transformData.scaleX = parcel.ReadFloat();
+        transformData.scaleY = parcel.ReadFloat();
+        transformData.rotateD = parcel.ReadFloat();
+        transformData.cropLeft = parcel.ReadFloat();
+        transformData.cropTop = parcel.ReadFloat();
+        transformData.cropWidth = parcel.ReadFloat();
+        transformData.cropHeight = parcel.ReadFloat();
+        transformData.translateX = parcel.ReadFloat();
+        transformData.translateY = parcel.ReadFloat();
+        transformData.flipX = parcel.ReadBool();
+        transformData.flipY = parcel.ReadBool();
+        pixelMap->SetTransformData(transformData);
+    }
     return true;
 }
 
@@ -1803,6 +1891,11 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
         return nullptr;
     }
     pixelMap->SetPixelsAddr(base, context, bufferSize, allocType, nullptr);
+    if (!pixelMap->ReadTransformData(parcel, pixelMap)) {
+        HiLog::Error(LABEL, "read transformData fail");
+        delete pixelMap;
+        return nullptr;
+    }
     return pixelMap;
 }
 
@@ -2515,6 +2608,58 @@ uint32_t PixelMap::crop(const Rect &rect)
         }
         return *grColorSpace_;
     }
+
+static bool isSameColorSpace(const OHOS::ColorManager::ColorSpace &src,
+    const OHOS::ColorManager::ColorSpace &dst)
+{
+    auto skSrc = src.ToSkColorSpace();
+    auto skDst = dst.ToSkColorSpace();
+    return SkColorSpace::Equals(skSrc.get(), skDst.get());
+}
+
+uint32_t PixelMap::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
+{
+    if (grColorSpace_ != nullptr && isSameColorSpace(*grColorSpace_, grColorSpace)) {
+        return SUCCESS;
+    }
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+    // Build sk source infomation
+    SkTransInfo src;
+    src.info = ToSkImageInfo(imageInfo, ToSkColorSpace(this));
+    uint64_t rowStride = src.info.minRowBytes();
+    uint8_t* srcData = data_;
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (GetAllocatorType() == AllocatorType::DMA_ALLOC && GetFd() != nullptr) {
+        SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(GetFd());
+        rowStride = sbBuffer->GetStride();
+    }
+    srcData = static_cast<uint8_t *>(GetWritablePixels());
+#endif
+    src.bitmap.installPixels(src.info, srcData, rowStride);
+    // Build sk target infomation
+    SkTransInfo dst;
+    dst.info = ToSkImageInfo(imageInfo, grColorSpace.ToSkColorSpace());
+    MemoryData memoryData = {nullptr, dst.info.computeMinByteSize(),
+        "Trans ImageData", {dst.info.width(), dst.info.height()}};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        HiLog::Error(LABEL, "applyColorSpace CreateMemory failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+    // Transfor pixels by readPixels
+    if (!src.bitmap.readPixels(dst.info, m->data.data, rowStride, 0, 0)) {
+        m->Release();
+        HiLog::Error(LABEL, "ReadPixels failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+    // Restore target infomation into pixelmap
+    ToImageInfo(imageInfo, dst.info);
+    grColorSpace_ = std::make_shared<OHOS::ColorManager::ColorSpace>(dst.info.refColorSpace());
+    SetPixelsAddr(m->data.data, m->extend.data, m->data.size, m->GetType(), nullptr);
+    SetImageInfo(imageInfo, true);
+    return SUCCESS;
+}
 #endif
 } // namespace Media
 } // namespace OHOS

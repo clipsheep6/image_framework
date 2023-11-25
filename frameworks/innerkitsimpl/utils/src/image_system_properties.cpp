@@ -22,9 +22,6 @@
 #include <parameters.h>
 #endif
 
-#include "hilog/log_cpp.h"
-#include "image_log.h"
-
 extern "C" {
 extern char* __progname;
 }
@@ -66,6 +63,15 @@ bool ImageSystemProperties::GetAntiAliasingEnabled()
         system::GetParameter("const.product.devicetype", "pc") == "pc" ||
         system::GetParameter("const.product.devicetype", "pc") == "tablet";
     return isDeviceSupportsAA && system::GetBoolParameter("persist.multimedia.image.AntiAliasing.enabled", true);
+#else
+    return false;
+#endif
+}
+
+bool ImageSystemProperties::GetHardWareDecodeEnabled()
+{
+#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+    return system::GetBoolParameter("persist.multimedia.image.hardwaredecode.enabled", false);
 #else
     return false;
 #endif

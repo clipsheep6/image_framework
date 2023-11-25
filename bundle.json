@@ -23,6 +23,7 @@
       "adapted_system_type": [ "standard" ],
       "rom": "10000KB",
       "ram": "10000KB",
+      "hisysevent_config": [ "//foundation/multimedia/image_framework/hisysevent.yaml" ],
       "deps": {
         "components": [
           "c_utils",
@@ -154,6 +155,15 @@
               ]
             },
             "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_creator_ndk"
+          },
+          {
+            "header": {
+              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/",
+              "header_files": [
+                "image_packer_mdk.h"
+              ]
+            },
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_packer_ndk"          
           }
         ],
         "test": [

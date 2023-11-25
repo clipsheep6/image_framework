@@ -17,14 +17,18 @@
 #include <fcntl.h>
 #include "hilog/log.h"
 #include "image_napi_utils.h"
+#include "log_tags.h"
 #include "media_errors.h"
 #include "string_ex.h"
 #include "image_trace.h"
 #include "hitrace_meter.h"
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#include "color_space_object_convertor.h"
+#endif
 
 using OHOS::HiviewDFX::HiLog;
 namespace {
-    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "ImageSourceNapi"};
+    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageSourceNapi"};
     constexpr int INVALID_FD = -1;
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
@@ -593,6 +597,33 @@ static PixelFormat ParsePixlForamt(int32_t val)
     return PixelFormat::UNKNOWN;
 }
 
+static bool ParseColorSpaceInfo(napi_env env, napi_value colorSpace, ColorSpaceInfo &colorSpaceInfo)
+{
+    if (env == nullptr || colorSpace == nullptr) {
+        HiLog::Error(LABEL, "Invalid args");
+        return false;
+    }
+    auto grColorSpacePtr = OHOS::ColorManager::GetColorSpaceByJSObject(env, colorSpace);
+    if (grColorSpacePtr == nullptr) {
+        HiLog::Error(LABEL, "Get colorspace by JS object failed");
+        return false;
+    }
+    auto skColorSpace = grColorSpacePtr->ToSkColorSpace();
+    if (skColorSpace == nullptr) {
+        HiLog::Error(LABEL, "To skcolorspace failed");
+        return false;
+    }
+    skcms_Matrix3x3 skMatrix;
+    skColorSpace->toXYZD50(&skMatrix);
+    for (int i = 0; i < ColorSpaceInfo::XYZ_SIZE; ++i) {
+        for (int j = 0; j < ColorSpaceInfo::XYZ_SIZE; ++j) {
+            colorSpaceInfo.xyz[i][j] = skMatrix.vals[i][j];
+        }
+    }
+    skColorSpace->transferFn(colorSpaceInfo.transferFn);
+    return true;
+}
+
 static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* opts, std::string &error)
 {
     uint32_t tmpNumber = 0;
@@ -624,6 +655,14 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
         HiLog::Debug(LABEL, "SVGResize percentage %{public}x", opts->SVGOpts.SVGResize.resizePercentage);
     } else {
         HiLog::Debug(LABEL, "no SVGResize percentage");
+    }
+    napi_value nDesiredColorSpace = nullptr;
+    if (napi_get_named_property(env, root, "desiredColorSpace", &nDesiredColorSpace) == napi_ok &&
+        ParseColorSpaceInfo(env, nDesiredColorSpace, opts->desiredColorSpaceInfo)) {
+        opts->desiredColorSpaceInfo.isValidColorSpace = true;
+        HiLog::Debug(LABEL, "desiredColorSpace parse finished");
+    } else {
+        HiLog::Debug(LABEL, "no desiredColorSpace");
     }
     return true;
 }
@@ -940,7 +979,7 @@ napi_value ImageSourceNapi::CreateIncrementalSource(napi_env env, napi_callback_
 
 napi_value ImageSourceNapi::GetImageInfo(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "GetImageInfo");
+    ImageTrace imageTrace("ImageSourceNapi::GetImageInfo");
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -994,7 +1033,6 @@ napi_value ImageSourceNapi::GetImageInfo(napi_env env, napi_callback_info info)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
@@ -1245,13 +1283,13 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContext(napi_env env, napi
         nullptr, HiLog::Error(LABEL, "empty native rImageSource"));
 
     if (argCount < NUM_1 || argCount > NUM_3) {
-        HiLog::Error(LABEL, "argCount missmatch");
+        HiLog::Error(LABEL, "argCount mismatch");
         return nullptr;
     }
     if (ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_string) {
         context->keyStr = GetStringArgument(env, argValue[NUM_0]);
     } else {
-        HiLog::Error(LABEL, "arg 0 type missmatch");
+        HiLog::Error(LABEL, "arg 0 type mismatch");
         return nullptr;
     }
     if (argCount == NUM_2 || argCount == NUM_3) {
@@ -1351,19 +1389,19 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env 
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, context->rImageSource),
         nullptr, HiLog::Error(LABEL, "empty native rImageSource"));
     if (argCount < NUM_1 || argCount > NUM_4) {
-        HiLog::Error(LABEL, "argCount missmatch");
+        HiLog::Error(LABEL, "argCount mismatch");
         return nullptr;
     }
     if (ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_string) {
         context->keyStr = GetStringArgument(env, argValue[NUM_0]);
     } else {
-        HiLog::Error(LABEL, "arg 0 type missmatch");
+        HiLog::Error(LABEL, "arg 0 type mismatch");
         return nullptr;
     }
     if (ImageNapiUtils::getType(env, argValue[NUM_1]) == napi_string) {
         context->valueStr = GetStringArgument(env, argValue[NUM_1]);
     } else {
-        HiLog::Error(LABEL, "arg 1 type missmatch");
+        HiLog::Error(LABEL, "arg 1 type mismatch");
         return nullptr;
     }
     if (argCount == NUM_3 || argCount == NUM_4) {
@@ -1434,7 +1472,7 @@ napi_value ImageSourceNapi::ModifyImageProperty(napi_env env, napi_callback_info
 
 napi_value ImageSourceNapi::GetImageProperty(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "GetImageProperty");
+    ImageTrace imageTrace("ImageSourceNapi::GetImageProperty");
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1464,7 +1502,6 @@ napi_value ImageSourceNapi::GetImageProperty(napi_env env, napi_callback_info in
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
@@ -1544,7 +1581,7 @@ napi_value ImageSourceNapi::UpdateData(napi_env env, napi_callback_info info)
         nullptr, HiLog::Error(LABEL, "empty native rImageSource"));
     HiLog::Debug(LABEL, "UpdateData argCount %{public}zu", argCount);
     if (argCount > NUM_0 && isNapiTypedArray(env, argValue[NUM_0])) {
-        HiLog::Error(LABEL, "UpdateData napi_get_arraybuffer_info ");
+        HiLog::Info(LABEL, "UpdateData napi_get_arraybuffer_info ");
         napi_typedarray_type type;
         napi_value arraybuffer;
         size_t offset;
@@ -1680,7 +1717,7 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForList(napi_env en
         nullptr, HiLog::Error(LABEL, "empty native rImageSource"));
 
     if (argCount > NUM_2) {
-        HiLog::Error(LABEL, "argCount missmatch");
+        HiLog::Error(LABEL, "argCount mismatch");
         return nullptr;
     }
 
@@ -1789,7 +1826,7 @@ STATIC_COMPLETE_FUNC(CreatePixelMapList)
 
 napi_value ImageSourceNapi::CreatePixelMapList(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "CreatePixelMapList");
+    ImageTrace imageTrace("ImageSourceNapi::CreatePixelMapList");
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
@@ -1812,7 +1849,6 @@ napi_value ImageSourceNapi::CreatePixelMapList(napi_env env, napi_callback_info 
         CreatePixelMapListComplete, asyncContext, asyncContext->work, napi_qos_user_initiated);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "fail to create async work"));
 
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
@@ -1876,7 +1912,7 @@ STATIC_COMPLETE_FUNC(GetDelayTime)
 
 napi_value ImageSourceNapi::GetDelayTime(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "GetDelayTime");
+    ImageTrace imageTrace("ImageSourceNapi::GetDelayTime");
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
@@ -1897,7 +1933,6 @@ napi_value ImageSourceNapi::GetDelayTime(napi_env env, napi_callback_info info)
         GetDelayTimeComplete, asyncContext, asyncContext->work);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "fail to create async work"));
 
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
@@ -1954,7 +1989,7 @@ STATIC_COMPLETE_FUNC(GetFrameCount)
 
 napi_value ImageSourceNapi::GetFrameCount(napi_env env, napi_callback_info info)
 {
-    StartTrace(HITRACE_TAG_ZIMAGE, "GetFrameCount");
+    ImageTrace imageTrace("ImageSourceNapi::GetFrameCount");
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
@@ -1975,7 +2010,6 @@ napi_value ImageSourceNapi::GetFrameCount(napi_env env, napi_callback_info info)
         GetFrameCountComplete, asyncContext, asyncContext->work);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "fail to create async work"));
 
-    FinishTrace(HITRACE_TAG_ZIMAGE);
     return result;
 }
 
