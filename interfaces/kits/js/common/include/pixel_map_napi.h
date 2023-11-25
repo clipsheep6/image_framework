@@ -38,6 +38,14 @@ public:
     {
         return nativePixelMap_;
     }
+    void setPixelNapiEditable(bool isEditable)
+    {
+        isPixelNapiEditable = isEditable;
+    }
+    bool GetPixelNapiEditable()
+    {
+        return isPixelNapiEditable;
+    }
 
     bool IsLockPixelMap();
     bool LockPixelMap();
@@ -85,6 +93,7 @@ private:
     static napi_value GetColorSpace(napi_env env, napi_callback_info info);
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
+    static void BuildContextError(napi_env env, napi_ref &error, const std::string errMsg);
     static napi_value ApplyColorSpace(napi_env env, napi_callback_info info);
 
     void release();
@@ -95,6 +104,7 @@ private:
     std::shared_ptr<PixelMap> nativePixelMap_;
     int32_t lockCount = 0;
     bool isRelease = false;
+    bool isPixelNapiEditable = true;
 };
 } // namespace Media
 } // namespace OHOS
