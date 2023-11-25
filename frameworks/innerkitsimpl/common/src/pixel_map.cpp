@@ -2620,18 +2620,18 @@ static uint32_t ApplyColorMatrixPrepareRes(struct ApplyColorMatrixContext &c)
     }
     memcpy_s(c.tmpPixel.get(), c.pixelCount, c.srcPixel, c.pixelCount);
     SkImageInfo info = ToSkImageInfo(c.imageInfo, c.skColorSpace);
-    if(!c.srcBitmap.installPixels(info, c.tmpPixel.get(), info.minRowBytes())) {
+    if (!c.srcBitmap.installPixels(info, c.tmpPixel.get(), info.minRowBytes())) {
         HiLog::Error(LABEL, "Failed to install src pixels");
         return ERR_IMAGE_DATA_ABNORMAL;
     }
     c.srcSkImage = SkImage::MakeFromBitmap(c.srcBitmap);
-    if(c.srcSkImage == nullptr) {
+    if (c.srcSkImage == nullptr) {
         HiLog::Error(LABEL, "Failed to make skimage");
         return ERR_IMAGE_DATA_ABNORMAL;
     }
 
     // Build sk target infomation
-    if(!c.dstBitmap.installPixels(info, c.srcPixel, info.minRowBytes())) {
+    if (!c.dstBitmap.installPixels(info, c.srcPixel, info.minRowBytes())) {
         HiLog::Error(LABEL, "Failed to install dst pixels");
         return ERR_IMAGE_DATA_ABNORMAL;
     }

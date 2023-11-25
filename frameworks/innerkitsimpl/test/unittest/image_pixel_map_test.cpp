@@ -1828,7 +1828,7 @@ HWTEST_F(ImagePixelMapTest, TlvEncode001, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePixelMapTest: TlvEncode001 end";
 }
 
-static constexpr uint32_t PIXEL_MAP_TEST_PIXEL = 0xFF994422;
+static constexpr uint32_t PIXEL_MAP_APPLY_TEST_PIXEL = 0xFF994422;
 static constexpr float F_ZERO = 0;
 static constexpr float PIXEL_MAP_TEST_PIXEL_MUL = 0.5f;
 static constexpr float PIXEL_MAP_TEST_PIXEL_ALPHA_MUL = 1.0f;
@@ -1844,7 +1844,7 @@ HWTEST_F(ImagePixelMapTest, ApplyColorMatrix001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ApplyColorMatrix001 start";
     const uint32_t dataLength = PIXEL_MAP_TEST_WIDTH * PIXEL_MAP_TEST_HEIGHT;
-    vector<uint32_t> data(dataLength, PIXEL_MAP_TEST_PIXEL);
+    vector<uint32_t> data(dataLength, PIXEL_MAP_APPLY_TEST_PIXEL);
     InitializationOptions opts;
     opts.pixelFormat = OHOS::Media::PixelFormat::RGBA_8888;
     opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
