@@ -246,6 +246,11 @@ static inline float Max(float a, float b)
 bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
 {
     if (info_.isEmpty() && !DecodeHeader()) {
+        HiLog::Error(LABEL, "DecodeHeader failed in GetScaledSize!");
+        return false;
+    }
+    if (info_.isEmpty()) {
+        HiLog::Error(LABEL, "empty image info in GetScaledSize!");
         return false;
     }
     float finalScale = scale;
@@ -265,6 +270,11 @@ bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
 
 bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) {
     if (info_.isEmpty() && !DecodeHeader()) {
+        HiLog::Error(LABEL, "DecodeHeader failed in GetHardwareScaledSize!");
+        return false;
+    }
+    if (info_.isEmpty()) {
+        HiLog::Error(LABEL, "empty image info in GetHardwareScaledSize!");
         return false;
     }
     float finalScale = scale;
@@ -379,6 +389,20 @@ static inline bool IsValidCrop(const PlRect &crop, SkImageInfo &info, SkIRect &o
     return true;
 }
 
+static sk_sp<SkColorSpace> getDesiredColorSpace(SkImageInfo &srcInfo, const PixelDecodeOptions &opts)
+{
+    if (!opts.plDesiredColorSpace.isValidColorSpace) {
+        return srcInfo.refColorSpace();
+    }
+    auto xyzSize = PlColorSpaceInfo::XYZ_SIZE * PlColorSpaceInfo::XYZ_SIZE * sizeof(float);
+    skcms_Matrix3x3 skXYZ;
+    memcpy_s(&skXYZ, xyzSize, opts.plDesiredColorSpace.xyz, xyzSize);
+    auto transferFnSize = PlColorSpaceInfo::TRANSFER_FN_SIZE * sizeof(float);
+    skcms_TransferFunction skTransferFun;
+    memcpy_s(&skTransferFun, transferFnSize, opts.plDesiredColorSpace.transferFn, transferFnSize);
+    return SkColorSpace::MakeRGB(skTransferFun, skXYZ);
+}
+
 uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info)
 {
     if (!CheckIndexValied(index)) {
@@ -408,10 +432,11 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         dstHeight = opts.desiredSize.height;
     }
     if (IsLowDownScale(opts.desiredSize, info_) && GetScaledSize(dstWidth, dstHeight, scale)) {
-        dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha, info_.refColorSpace());
+        dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha,
+            getDesiredColorSpace(info_, opts));
     } else {
         dstInfo_ = SkImageInfo::Make(info_.width(), info_.height(),
-            desireColor, desireAlpha, info_.refColorSpace());
+            desireColor, desireAlpha, getDesiredColorSpace(info_, opts));
     }
     if (ImageUtils::CheckMulOverflow(dstInfo_.width(), dstInfo_.height(), dstInfo_.bytesPerPixel())) {
         HiLog::Error(LABEL, "SetDecodeOptions failed, width:%{public}d, height:%{public}d is too large",
@@ -501,9 +526,6 @@ bool ExtDecoder::ResetCodec()
 #ifdef JPEG_HW_DECODE_ENABLE
 uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 {
-    if (!ImageSystemProperties::GetHardWareDecodeEnabled()) {
-        return ERROR;
-    }
     if (HardWareDecode(context) == SUCCESS) {
         HiLog::Info(LABEL, "hardware decode success.");
         return SUCCESS;
@@ -516,8 +538,7 @@ uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
 #ifdef JPEG_HW_DECODE_ENABLE
-    if (codec_->getEncodedFormat() == SkEncodedImageFormat::kJPEG &&
-            DoHardWareDecode(context) == SUCCESS) {
+    if (IsSupportHardwareDecode() && DoHardWareDecode(context) == SUCCESS) {
         return SUCCESS;
     }
 #endif
@@ -614,17 +635,15 @@ void ExtDecoder::ReleaseOutputBuffer(DecodeContext &context, Media::AllocatorTyp
 
 uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
 {
-    JpegHardwareDecoder hwDecoder;
     // check if the hwDstInfo is equal to the dstInfo
     if (hwDstInfo_.width() != dstInfo_.width() || hwDstInfo_.height() != dstInfo_.height()) {
+        HiLog::Info(LABEL, "hwDstInfo(%{public}d, %{public}d) != dstInfo(%{public}d, %{public}d)",
+                    hwDstInfo_.width(), hwDstInfo_.height(), dstInfo_.width(), dstInfo_.height());
         return ERROR;
     }
+    JpegHardwareDecoder hwDecoder;
     orgImgSize_.width = info_.width();
     orgImgSize_.height = info_.height();
-    if (!hwDecoder.IsHardwareDecodeSupported("image/jpeg", orgImgSize_)) {
-        HiLog::Error(LABEL, "hardware decode unsupported.");
-        return ERROR;
-    }
 
     if (!CheckContext(dstInfo_)) {
         HiLog::Error(LABEL, "hardware decode not support this decode option.");
@@ -826,7 +845,8 @@ SkColorType ExtDecoder::ConvertToColorType(PlPixelFormat format, PlPixelFormat &
 #ifdef IMAGE_COLORSPACE_FLAG
 OHOS::ColorManager::ColorSpace ExtDecoder::getGrColorSpace()
 {
-    return OHOS::ColorManager::ColorSpace(info_.refColorSpace());
+    auto skColorSpace = dstInfo_.isEmpty() ? info_.refColorSpace() : dstInfo_.refColorSpace();
+    return OHOS::ColorManager::ColorSpace(skColorSpace);
 }
 
 bool ExtDecoder::IsSupportICCProfile()
