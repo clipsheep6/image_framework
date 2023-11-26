@@ -1400,6 +1400,17 @@ bool PixelMap::WritePixels(const uint32_t &color)
     return true;
 }
 
+bool PixelMap::IsStrideAlignment()
+{
+    HiLog::Error(LABEL, "IsStrideAlignment error ");
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        HiLog::Error(LABEL, "SetPixelsAddr error allocatorType_ %{public}d ", allocatorType_);
+        return true;
+    }
+    return false;
+    HiLog::Error(LABEL, "IsStrideAlignment error ");
+}
+
 AllocatorType PixelMap::GetAllocatorType()
 {
     return allocatorType_;
