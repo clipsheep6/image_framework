@@ -57,6 +57,7 @@ std::shared_ptr<PixelMap> attachPixelMap_ = nullptr;
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 NAPI_MessageSequence* napi_messageSequence = nullptr;
 #endif
+napi_ref PixelMapNapi::colorMatrixRef_ = nullptr;
 
 struct PositionArea {
     void* pixels;
@@ -90,6 +91,35 @@ struct PixelMapAsyncContext {
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     std::shared_ptr<OHOS::ColorManager::ColorSpace> colorSpace;
 #endif
+    PixelColorMatrix colorMatrix;
+};
+
+static std::vector<float> sColorMatrixGray = {
+    0.213, 0.715, 0.072, 0, 0,
+    0.213, 0.715, 0.072, 0, 0,
+    0.213, 0.715, 0.072, 0, 0,
+    0, 0, 0, 1, 0
+};
+
+static std::vector<float> sColorMatrixInvert = {
+    -1.0, 0, 0, 0, 1,
+    0, -1.0, 0, 0, 1,
+    0, 0, -1.0, 0, 1,
+    0, 0, 0, 1, 0
+};
+
+static std::vector<float> sColorMatrixIncrease = {
+    1.5, 0, 0, 0, -0.25,
+    0, 1.5, 0, 0, -0.25,
+    0, 0, 1.5, 0, -0.25,
+    0, 0, 0, 1, 0
+};
+
+static std::vector<float> sColorMatrixDecrease = {
+    0.6065, 0.3575, 0.036, 0, 0,
+    0.1065, 0.8575, 0.036, 0, 0,
+    0.1065, 0.3575, 0.536, 0, 0,
+    0, 0, 0, 1, 0
 };
 
 static PixelFormat ParsePixlForamt(int32_t val)
@@ -342,6 +372,53 @@ static napi_value DoInitAfter(napi_env env,
     return exports;
 }
 
+static napi_value CreateMatrixArray(napi_env env, std::vector<float> matrix)
+{
+    napi_value result = nullptr;
+    size_t i = NUM_0;
+    if (napi_create_array(env, &result) != napi_ok) {
+        HiLog::Error(LABEL, "CreateStaticMatrixObject is Failed!");
+        return nullptr;
+    }
+    for (auto val : matrix) {
+        napi_value nVal = nullptr;
+        napi_create_double(env, val, &nVal);
+        napi_set_element(env, result, i, nVal);
+        i++;
+    }
+    return result;
+}
+
+static napi_value CreateStaticMatrixObject(napi_env env, napi_ref* ref)
+{
+    napi_value result = nullptr;
+    napi_value udfVal;
+    int32_t refCount = NUM_1;
+    napi_get_undefined(env, &udfVal);
+    if (napi_create_object(env, &result) != napi_ok) {
+        HiLog::Error(LABEL, "CreateStaticMatrixObject is Failed!");
+        return udfVal;
+    }
+    auto grayMatrix = CreateMatrixArray(env, sColorMatrixGray);
+    if (grayMatrix != nullptr) {
+        napi_set_named_property(env, result, "GRAY", grayMatrix);
+    }
+    auto invertMatrix = CreateMatrixArray(env, sColorMatrixInvert);
+    if (invertMatrix != nullptr) {
+        napi_set_named_property(env, result, "INVERT", invertMatrix);
+    }
+    auto increaseMatrix = CreateMatrixArray(env, sColorMatrixIncrease);
+    if (increaseMatrix != nullptr) {
+        napi_set_named_property(env, result, "INCREASE", increaseMatrix);
+    }
+    auto decreaseMatrix = CreateMatrixArray(env, sColorMatrixDecrease);
+    if (decreaseMatrix != nullptr) {
+        napi_set_named_property(env, result, "DECREASE", decreaseMatrix);
+    }
+    napi_create_reference(env, result, refCount, ref);
+    return result;
+}
+
 napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
@@ -369,6 +446,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("applyColorSpace", ApplyColorSpace),
         DECLARE_NAPI_FUNCTION("marshalling", Marshalling),
         DECLARE_NAPI_FUNCTION("unmarshalling", Unmarshalling),
+        DECLARE_NAPI_FUNCTION("applyColorMatrix", ApplyColorMatrix),
         DECLARE_NAPI_GETTER("isEditable", GetIsEditable),
     };
 
@@ -376,6 +454,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMap", CreatePixelMap),
         DECLARE_NAPI_STATIC_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_STATIC_FUNCTION(CREATE_PIXEL_MAP_FROM_PARCEL.c_str(), CreatePixelMapFromParcel),
+        DECLARE_NAPI_PROPERTY("ColorMatrix", CreateStaticMatrixObject(env, &colorMatrixRef_)),
     };
 
     napi_value constructor = nullptr;
@@ -2200,6 +2279,100 @@ napi_value PixelMapNapi::Marshalling(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     return result;
 #endif
+}
+static uint32_t ParseColorMatrix(napi_env env, napi_value val, PixelColorMatrix &colorMatrix)
+{
+    bool isArray = false;
+    napi_is_array(env, val, &isArray);
+    if (!isArray) {
+        HiLog::Error(LABEL, "Parse color matrix is not an array");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    uint32_t len = 0;
+    if (napi_get_array_length(env, val, &len) != napi_ok ||
+        len != PixelColorMatrix::MATRIX_SIZE) {
+        HiLog::Error(LABEL, "Parse color matrix napi_get_array_length failed %{public}u", len);
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    HiLog::Error(LABEL, "Parse color matrix len %{public}u", len);
+
+    for (size_t i = 0; i < len; i++) {
+        double itemVal;
+        napi_value item;
+        napi_get_element(env, val, i, &item);
+        if (napi_get_value_double(env, item, &itemVal) != napi_ok) {
+            HiLog::Error(LABEL, "Parse format in item failed %{public}zu", i);
+            return ERR_IMAGE_INVALID_PARAMETER;
+        }
+        colorMatrix.val[i] = static_cast<float>(itemVal);
+        HiLog::Debug(LABEL, "color matrix [%{public}zu] = %{public}f.", i, colorMatrix.val[i]);
+    }
+    return SUCCESS;
+}
+
+static void ApplyColorMatrixExec(napi_env env, PixelMapAsyncContext* context)
+{
+    if (context == nullptr) {
+        HiLog::Error(LABEL, "ApplyColorMatrix Null context");
+        return;
+    }
+    if (context->status != SUCCESS) {
+        HiLog::Error(LABEL, "ApplyColorMatrix has failed. do nothing");
+        return;
+    }
+    if (context->rPixelMap == nullptr) {
+        context->status = ERR_IMAGE_INIT_ABNORMAL;
+        HiLog::Error(LABEL, "Null native ref");
+        return;
+    }
+    context->status = context->rPixelMap->ApplyColorMatrix(context->colorMatrix);
+}
+
+napi_value PixelMapNapi::ApplyColorMatrix(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    nVal.argc = NUM_2;
+    napi_value argValue[NUM_2] = {0};
+    nVal.argv = argValue;
+    HiLog::Debug(LABEL, "ApplyColorMatrix IN");
+    if (!prepareNapiEnv(env, info, &nVal)) {
+        return nVal.result;
+    }
+    nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
+
+    if (nVal.argc != NUM_1 && nVal.argc != NUM_2) {
+        HiLog::Error(LABEL, "ApplyColorMatrix Invalid args count");
+        nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
+    } else {
+        nVal.context->status = ParseColorMatrix(env, nVal.argv[NUM_0], nVal.context->colorMatrix);
+        if (nVal.context->status != SUCCESS) {
+            HiLog::Error(LABEL, "Color matrix mismatch");
+            nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
+        }
+    }
+    if (nVal.argc >= 1 && ImageNapiUtils::getType(env, nVal.argv[nVal.argc - 1]) == napi_function) {
+        napi_create_reference(env, nVal.argv[nVal.argc - 1], nVal.refCount, &(nVal.context->callbackRef));
+    }
+
+    if (nVal.context->callbackRef == nullptr) {
+        napi_create_promise(env, &(nVal.context->deferred), &(nVal.result));
+    }
+    napi_value _resource = nullptr;
+    napi_create_string_utf8(env, "ApplyColorMatrix", NAPI_AUTO_LENGTH, &_resource);
+    nVal.status = napi_create_async_work(env, nullptr, _resource,
+        [](napi_env env, void *data)
+        {
+            ApplyColorMatrixExec(env, static_cast<PixelMapAsyncContext*>(data));
+        }, EmptyResultComplete, static_cast<void*>(nVal.context.get()), &(nVal.context->work));
+
+    if (nVal.status == napi_ok) {
+        nVal.status = napi_queue_async_work(env, nVal.context->work);
+        if (nVal.status == napi_ok) {
+            nVal.context.release();
+        }
+    }
+    return nVal.result;
 }
 
 static void ApplyColorSpaceExec(napi_env env, PixelMapAsyncContext* context)

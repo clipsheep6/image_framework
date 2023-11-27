@@ -94,10 +94,12 @@ private:
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value ApplyColorSpace(napi_env env, napi_callback_info info);
+    static napi_value ApplyColorMatrix(napi_env env, napi_callback_info info);
 
     void release();
     static thread_local napi_ref sConstructor_;
     static std::shared_ptr<PixelMap> sPixelMap_;
+    static napi_ref colorMatrixRef_;
 
     napi_env env_ = nullptr;
     std::shared_ptr<PixelMap> nativePixelMap_;

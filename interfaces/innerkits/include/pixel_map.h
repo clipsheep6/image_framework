@@ -74,6 +74,13 @@ typedef struct PixelMapError {
     std::string errorInfo = "";
 } PIXEL_MAP_ERR;
 
+struct PixelColorMatrix {
+    static constexpr uint8_t MATRIX_SIZE = 20;
+    static constexpr uint8_t ROW_SIZE = 4;
+    static constexpr uint8_t COL_SIZE = 5;
+    float val[MATRIX_SIZE] = {0};
+};
+
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
 public:
     static std::atomic<uint32_t> currentId;
@@ -202,6 +209,7 @@ public:
     NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error);
     NATIVEEXPORT virtual bool EncodeTlv(std::vector<uint8_t> &buff) const;
     NATIVEEXPORT static PixelMap *DecodeTlv(std::vector<uint8_t> &buff);
+    NATIVEEXPORT uint32_t ApplyColorMatrix(const PixelColorMatrix &matrix);
 
 #ifdef IMAGE_COLORSPACE_FLAG
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----begin----

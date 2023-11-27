@@ -24,6 +24,7 @@
 #include "memory_manager.h"
 #include "include/core/SkBitmap.h"
 #include "include/core/SkCanvas.h"
+#include "include/core/SkColorFilter.h"
 #include "include/core/SkImage.h"
 #include "hilog/log.h"
 #include "hitrace_meter.h"
@@ -77,6 +78,7 @@ static const uint8_t NUM_3 = 3;
 static const uint8_t NUM_5 = 5;
 static const uint8_t NUM_6 = 6;
 static const uint8_t NUM_7 = 7;
+static const size_t SIZE_ZERO = 0;
 
 constexpr int32_t ANTIALIASING_SIZE = 350;
 
@@ -2644,6 +2646,80 @@ uint32_t PixelMap::crop(const Rect &rect)
 #endif
     SetPixelsAddr(m->data.data, m->extend.data, m->data.size, m->GetType(), nullptr);
     SetImageInfo(imageInfo, true);
+    return SUCCESS;
+}
+
+struct ApplyColorMatrixContext {
+    uint32_t pixelCount;
+    uint8_t* srcPixel;
+    ImageInfo imageInfo;
+    sk_sp<SkColorSpace> skColorSpace;
+    std::unique_ptr<uint8_t []> tmpPixel;
+    sk_sp<SkImage> srcSkImage;
+    SkBitmap srcBitmap;
+    SkBitmap dstBitmap;
+};
+
+static uint32_t ApplyColorMatrixPrepareRes(struct ApplyColorMatrixContext &c)
+{
+    // Build sk source infomation
+    if (c.pixelCount == SIZE_ZERO || c.srcPixel == nullptr) {
+        HiLog::Error(LABEL, "Pixel is empty");
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
+    c.tmpPixel = make_unique<uint8_t[]>(c.pixelCount);
+    if (c.tmpPixel == nullptr) {
+        HiLog::Error(LABEL, "Failed to alloc cache memory");
+        return ERR_IMAGE_MALLOC_ABNORMAL;
+    }
+    memcpy_s(c.tmpPixel.get(), c.pixelCount, c.srcPixel, c.pixelCount);
+    SkImageInfo info = ToSkImageInfo(c.imageInfo, c.skColorSpace);
+    if (!c.srcBitmap.installPixels(info, c.tmpPixel.get(), info.minRowBytes())) {
+        HiLog::Error(LABEL, "Failed to install src pixels");
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
+    c.srcSkImage = SkImage::MakeFromBitmap(c.srcBitmap);
+    if (c.srcSkImage == nullptr) {
+        HiLog::Error(LABEL, "Failed to make skimage");
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
+
+    // Build sk target infomation
+    if (!c.dstBitmap.installPixels(info, c.srcPixel, info.minRowBytes())) {
+        HiLog::Error(LABEL, "Failed to install dst pixels");
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
+    return SUCCESS;
+}
+
+uint32_t PixelMap::ApplyColorMatrix(const PixelColorMatrix &matrix)
+{
+    auto skColorMatrix = SkColorFilters::Matrix(matrix.val);
+    if (skColorMatrix == nullptr) {
+        HiLog::Error(LABEL, "Create skcolormatrix failed");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    struct ApplyColorMatrixContext context;
+    context.pixelCount = pixelsSize_;
+    context.skColorSpace = ToSkColorSpace(this);
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    context.srcPixel = static_cast<uint8_t*>(GetWritablePixels());
+#else
+    context.srcPixel = data_;
+#endif
+
+    GetImageInfo(context.imageInfo);
+    auto res = ApplyColorMatrixPrepareRes(context);
+    if (res != SUCCESS) {
+        return res;
+    }
+
+    SkCanvas canvas(context.dstBitmap);
+    SkPaint paint;
+    paint.setColorFilter(skColorMatrix);
+    auto options = SkSamplingOptions(SkFilterMode::kNearest, SkMipmapMode::kNone);
+    canvas.drawImage(context.srcSkImage, FLOAT_ZERO, FLOAT_ZERO, options, &paint);
     return SUCCESS;
 }
 
