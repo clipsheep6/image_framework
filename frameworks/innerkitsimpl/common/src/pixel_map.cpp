@@ -2009,7 +2009,7 @@ void PixelMap::WriteData(std::vector<uint8_t> &buff, const uint8_t *data, int32_
     }
 }
 
-uint8_t *PixelMap::ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor)
+uint8_t *PixelMap::ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor, ImageInfo &info, int32_t rowBytes, int32_t rowStride)
 {
     if (size <= 0) {
         HiLog::Error(LABEL, "pixel map tlv read data fail: invalid size[%{public}d]", size);
@@ -2024,8 +2024,14 @@ uint8_t *PixelMap::ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &c
         HiLog::Error(LABEL, "pixel map tlv read data fail: malloc memory size[%{public}d]", size);
         return nullptr;
     }
-    for (int32_t offset = 0; offset < size; offset++) {
-        *(data + offset) = buff[cursor++];
+
+    for (int32_t offset = 0; offset < info.size.height; ++offset) {
+        errno_t ret = memcpy_s(data, rowBytes, (&buff) + offset * rowStride, rowBytes);
+        if (ret != 0) {
+            HiLog::Error(LABEL, "copy Data fail");
+            return nullptr;
+        }
+        data = data + rowBytes;
     }
     return data;
 }
@@ -2050,6 +2056,12 @@ bool PixelMap::EncodeTlv(std::vector<uint8_t> &buff) const
     WriteUint8(buff, TLV_IMAGE_BASEDENSITY);
     WriteVarint(buff, GetVarintLen(imageInfo_.baseDensity));
     WriteVarint(buff, imageInfo_.baseDensity);
+    WriteUint8(buff, TLV_IMAGE_ROWBYTES);
+    WriteVarint(buff, GetVarintLen(rowDataSize_));
+    WriteVarint(buff, rowDataSize_);
+    WriteUint8(buff, TLV_IMAGE_ROWSTRIDE);
+    WriteVarint(buff, GetVarintLen(rowStride_));
+    WriteVarint(buff, rowStride_);
     WriteUint8(buff, TLV_IMAGE_ALLOCATORTYPE);
     AllocatorType tmpAllocatorType = AllocatorType::HEAP_ALLOC;
     WriteVarint(buff, GetVarintLen(static_cast<int32_t>(tmpAllocatorType)));
@@ -2069,7 +2081,7 @@ bool PixelMap::EncodeTlv(std::vector<uint8_t> &buff) const
     return true;
 }
 
-void PixelMap::ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data)
+void PixelMap::ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t rowBytes, int32_t rowStride, int32_t &type, int32_t &size, uint8_t **data)
 {
     int cursor = 0;
     for (uint8_t tag = ReadUint8(buff, cursor); tag != TLV_END; tag = ReadUint8(buff, cursor)) {
@@ -2097,13 +2109,19 @@ void PixelMap::ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t 
             case TLV_IMAGE_BASEDENSITY:
                 info.baseDensity = ReadVarint(buff, cursor);
                 break;
+            case TLV_IMAGE_ROWBYTES:
+                rowBytes = ReadVarint(buff, cursor);
+                break;
+            case TLV_IMAGE_ROWSTRIDE:
+                rowStride = ReadVarint(buff, cursor);
+                break;
             case TLV_IMAGE_ALLOCATORTYPE:
                 type = ReadVarint(buff, cursor);
                 HiLog::Info(LABEL, "pixel alloctype: %{public}d", type);
                 break;
             case TLV_IMAGE_DATA:
                 size = len;
-                *data = ReadData(buff, size, cursor);
+                *data = ReadData(buff, size, cursor, info, rowBytes, rowStride);
                 break;
             default:
                 cursor += len; // skip unknown tag
@@ -2122,9 +2140,11 @@ PixelMap *PixelMap::DecodeTlv(std::vector<uint8_t> &buff)
     }
     ImageInfo imageInfo;
     int32_t dataSize = 0;
+    int32_t rowBytes = 0;
+    int32_t rowStride = 0;
     uint8_t *data = nullptr;
     int32_t allocType = static_cast<int32_t>(AllocatorType::DEFAULT);
-    ReadTlvAttr(buff, imageInfo, allocType, dataSize, &data);
+    ReadTlvAttr(buff, imageInfo, rowBytes, rowStride, allocType, dataSize, &data);
     if (data == nullptr) {
         delete pixelMap;
         HiLog::Error(LABEL, "pixel map tlv decode fail: no data");
