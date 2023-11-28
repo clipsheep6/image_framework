@@ -375,5 +375,21 @@ HWTEST_F(NdkTest, OH_GetImageInfoTest, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "NdkTest: OH_GetImageInfoTest end";
 }
+
+/**
+ * @tc.name: OH_PixelMap_GetColorSpaceTest
+ * @tc.desc: OH_PixelMap_GetColorSpace
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMap_GetColorSpaceTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMap_GetColorSpaceTest start";
+    const NativePixelMap *p = nullptr;
+    napi_value value;
+    int32_t res = OH_PixelMap_GetColorSpace(p, &value);
+    ASSERT_EQ(res, IMAGE_RESULT_INVALID_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMap_GetColorSpaceTest end";
+}
 }
 }

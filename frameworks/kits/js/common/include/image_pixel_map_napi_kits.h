@@ -41,6 +41,7 @@ struct PixelMapNapiArgs {
     int32_t* outNum;
     OhosPixelMapInfos *outInfo;
     void** outAddr;
+    napi_env env;
 };
 
 using PixelMapNapiArgs = struct PixelMapNapiArgs;
@@ -62,6 +63,7 @@ enum {
     CTX_FUNC_GET_IMAGE_INFO,
     CTX_FUNC_ACCESS_PIXELS,
     CTX_FUNC_UNACCESS_PIXELS,
+    CTX_FUNC_GET_COLOR_SPACE,
 };
 
 PixelMapNapi* PixelMapNapi_Unwrap(napi_env env, napi_value value);

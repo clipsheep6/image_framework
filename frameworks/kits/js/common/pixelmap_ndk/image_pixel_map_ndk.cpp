@@ -25,6 +25,7 @@ extern "C" {
 
 struct NativePixelMap_ {
     OHOS::Media::PixelMapNapi* napi = nullptr;
+    napi_env env = nullptr;
 };
 
 MIDK_EXPORT
@@ -36,6 +37,7 @@ NativePixelMap* OH_PixelMap_InitNativePixelMap(napi_env env, napi_value source)
     }
     std::unique_ptr<NativePixelMap> result = std::make_unique<NativePixelMap>();
     result->napi = napi;
+    result->env = env;
     return result.release();
 }
 
@@ -235,6 +237,19 @@ int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native)
     PixelMapNapiArgs args;
     return PixelMapNapiNativeCtxCall(CTX_FUNC_UNACCESS_PIXELS, native->napi, &args);
 }
+
+MIDK_EXPORT
+int32_t OH_PixelMap_GetColorSpace(const NativePixelMap* native, napi_value* colorSpace)
+{
+    if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
+    PixelMapNapiArgs args;
+    args.env = native->env;
+    args.outValue = colorSpace;
+    return PixelMapNapiNativeCtxCall(CTX_FUNC_GET_COLOR_SPACE, native->napi, &args);
+}
+
 #ifdef __cplusplus
 };
 #endif

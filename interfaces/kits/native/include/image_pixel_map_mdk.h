@@ -607,6 +607,20 @@ int32_t OH_PixelMap_AccessPixels(const NativePixelMap* native, void** addr);
  */
 int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native);
 
+
+/**
+ * @brief Get color space of a <b>PixelMap</b>.
+ *
+ * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
+ * @param colorSpace Indicates the pointer to the JS color space object.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_DATA_UNSUPPORT - if colorspace unsupport.
+ * @since 11
+ * @version 4.1
+ */
+int32_t OH_PixelMap_GetColorSpace(const NativePixelMap* native, napi_value* colorSpace);
+
 #ifdef __cplusplus
 };
 #endif

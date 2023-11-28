@@ -19,6 +19,9 @@
 #include <set>
 #include "pixel_map_napi.h"
 #include "pngpriv.h"
+#if IMAGE_COLORSPACE_FLAG
+#include "color_space_object_convertor.h"
+#endif
 
 namespace {
     constexpr uint32_t NUM_0 = 0;
@@ -358,6 +361,26 @@ static int32_t PixelMapNapiUnAccessPixels(PixelMapNapi* native, PixelMapNapiArgs
     }
 }
 
+static int32_t PixelMapNapiGetColorSpace(PixelMapNapi* native, PixelMapNapiArgs* args)
+{
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
+    if (pixelmap == nullptr || args->env == nullptr) {
+        return error != IMAGE_RESULT_SUCCESS ? error : IMAGE_RESULT_INVALID_PARAMETER;
+    }
+#ifdef IMAGE_COLORSPACE_FLAG
+    auto grCS = pixelmap->InnerGetGrColorSpacePtr();
+    if (grCS == nullptr) {
+        return IMAGE_RESULT_DATA_UNSUPPORT;
+    }
+    auto resultValue = ColorManager::CreateJsColorSpaceObject(args->env, grCS);
+    *(args->outValue) = reinterpret_cast<napi_value>(resultValue);
+#else
+    return IMAGE_RESULT_DATA_UNSUPPORT;
+#endif
+    return IMAGE_RESULT_SUCCESS;
+}
+
 static const std::map<int32_t, PixelMapNapiEnvFunc> g_EnvFunctions = {
     {ENV_FUNC_CREATE, PixelMapNapiCreate},
     {ENV_FUNC_CREATE_ALPHA, PixelMapNapiCreateAlpha},
@@ -378,6 +401,7 @@ static const std::map<int32_t, PixelMapNapiCtxFunc> g_CtxFunctions = {
     {CTX_FUNC_GET_IMAGE_INFO, PixelMapNapiGetImageInfo},
     {CTX_FUNC_ACCESS_PIXELS, PixelMapNapiAccessPixels},
     {CTX_FUNC_UNACCESS_PIXELS, PixelMapNapiUnAccessPixels},
+    {CTX_FUNC_GET_COLOR_SPACE, PixelMapNapiGetColorSpace},
 };
 
 MIDK_EXPORT
