@@ -52,7 +52,8 @@
           "skia",
           "zlib",
           "astc-encoder",
-          "opencl-headers"
+          "opencl-headers",
+          "spirv-cross"
         ]
       },
       "build": {
