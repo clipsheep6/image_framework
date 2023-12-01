@@ -3959,5 +3959,32 @@ HWTEST_F(ImageSourceJpegTest, ModifyImagePropertyBufferTest008, TestSize.Level3)
     ASSERT_EQ(res, ERR_IMAGE_DECODE_EXIF_UNSUPPORT);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: ModifyImagePropertyBufferTest008 end";
 }
+
+/**
+ * @tc.name: GetAstcInfoTest001
+ * @tc.desc: Test GetAstcInfoTest001(streamptr,streamsize,astcinfo)
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceJpegTest, GetAstcInfoTest001, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg data and jpeg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetAstcInfoTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+        ImageSource::CreateImageSource(IMAGE_INPUT_EXIF_JPEG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    const int fd = open("/data/local/tmp/image/test.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    std::unique_ptr<FileSourceStream> fileSourceStream = FileSourceStream::CreateSourceStream(fd, SIZE_T, FILE_SIZE);
+    ASSERT_NE(fileSourceStream, nullptr);
+    ASTCInfo astcinfo;
+    bool ret = imageSource->GetASTCInfo(fileSourceStream->GetDataPtr,fileSourceStream->GetStreamSize,astcinfo);
+    ASSERT_NE(ret, true);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetAstcInfoTest001 end";
+}
 } // namespace Multimedia
 } // namespace OHOS

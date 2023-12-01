@@ -1827,5 +1827,42 @@ HWTEST_F(ImagePixelMapTest, TlvEncode001, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "ImagePixelMapTest: TlvEncode001 end";
 }
+
+/**
+ * @tc.name: ImagePixelMap008
+ * @tc.desc: RGB_888 pixel format pixel map operation
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePixelMapTest, TransformData001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: TransformData001 start";
+    /**
+     * @tc.steps: step1. Set image info and alloc pixel map memory.
+     * @tc.expected: step1. The pixel map info is correct.
+     */
+    int8_t bytesPerPixel = 3;
+    int8_t rowDataSize = PIXEL_MAP_TEST_WIDTH * bytesPerPixel;
+    ImageInfo info;
+    info.size.width = PIXEL_MAP_TEST_WIDTH;
+    info.size.height = PIXEL_MAP_TEST_HEIGHT;
+    info.pixelFormat = PixelFormat::RGB_888;
+    info.colorSpace = ColorSpace::SRGB;
+    PixelMap pixelMap;
+    pixelMap.SetImageInfo(info);
+    uint32_t bufferSize = rowDataSize * PIXEL_MAP_TEST_HEIGHT;
+    void *buffer = malloc(bufferSize);
+    EXPECT_NE(buffer, nullptr);
+    pixelMap.SetPixelsAddr(buffer, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
+    uint8_t *data = const_cast<uint8_t *>(pixelMap.GetPixels());
+    TransformData transformDate = {1.5, 1.5, 0, -1, -1, -1, -1, 0, 0, false, false};
+    pixelMap.SetTransformData(transformDate);
+    TransformData transformDate2;
+    pixelMap.GetTransformData(transformDate2);
+    EXPECT_EQ(transformDate2.scaleX, transformDate.scaleX);
+    EXPECT_EQ(transformDate2.scaleY, transformDate.scaleY);
+    EXPECT_EQ(transformDate2.flipX, transformDate.flipX);
+    EXPECT_EQ(transformDate2.flipY, transformDate.flipY);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: TransformData001 end";
+}
 } // namespace Multimedia
 } // namespace OHOS
