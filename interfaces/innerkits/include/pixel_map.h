@@ -267,8 +267,10 @@ private:
     static constexpr uint8_t TLV_IMAGE_COLORSPACE = 0x04;
     static constexpr uint8_t TLV_IMAGE_ALPHATYPE = 0x05;
     static constexpr uint8_t TLV_IMAGE_BASEDENSITY = 0x06;
-    static constexpr uint8_t TLV_IMAGE_ALLOCATORTYPE = 0x07;
-    static constexpr uint8_t TLV_IMAGE_DATA = 0x08;
+    static constexpr uint8_t TLV_IMAGE_ROWBYTES = 0x07;
+    static constexpr uint8_t TLV_IMAGE_ROWSTRIDE = 0x08;
+    static constexpr uint8_t TLV_IMAGE_ALLOCATORTYPE = 0x09;
+    static constexpr uint8_t TLV_IMAGE_DATA = 0x0A;
     static constexpr size_t MAX_IMAGEDATA_SIZE = 128 * 1024 * 1024; // 128M
     static constexpr size_t MIN_IMAGEDATA_SIZE = 32 * 1024;         // 32k
     friend class ImageSource;
@@ -337,8 +339,8 @@ private:
     void WriteVarint(std::vector<uint8_t> &buff, int32_t value) const;
     static int32_t ReadVarint(std::vector<uint8_t> &buff, int32_t &cursor);
     void WriteData(std::vector<uint8_t> &buff, const uint8_t *data, int32_t size) const;
-    static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor);
-    static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
+    static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor, ImageInfo &info, int32_t rowBytes, int32_t rowStride);
+    static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t rowBytes, int32_t rowStride, int32_t &type, int32_t &size, uint8_t **data);
     bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
 
