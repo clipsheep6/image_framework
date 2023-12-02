@@ -1042,5 +1042,52 @@ HWTEST_F(ImageSourceTest, GetImageInfoForASTC, TestSize.Level3)
     ASSERT_NE(ret, true);
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImageInfoForASTC end";
 }
+
+/**
+ * @tc.name: GetFrameCount001
+ * @tc.desc: test GetFrameCount
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetFrameCount001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetFrameCount001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    ASSERT_NE(imageSource->GetFrameCount(), 1);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetFrameCount001 end";
+}
+
+/**
+ * @tc.name: CreatePixelMapList001
+ * @tc.desc: test CreatePixelMapList
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreatePixelMapList001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapList001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    uint32_t index = 1;
+    const DecodeOptions opt;
+    imageSource->CreatePixelMapList(opt, errorCode);
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapList001 end";
+}
+
+/**
+ * @tc.name: GetDelayTime001
+ * @tc.desc: test GetDelayTime
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetDelayTime001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetDelayTime001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    imageSource->GetDelayTime(errorCode);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetDelayTime001 end";
+}
 } // namespace Multimedia
 } // namespace OHOS
