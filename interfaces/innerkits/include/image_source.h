@@ -41,6 +41,7 @@ namespace OHOS {
 namespace ImagePlugin {
 class AbsImageFormatAgent;
 class AbsImageDecoder;
+struct DataStreamBuffer;
 struct PixelDecodeOptions;
 struct PlImageInfo;
 } // namespace ImagePlugin
@@ -129,6 +130,11 @@ struct PixelMapAddrInfos {
     CustomFreePixelMap func;
 };
 
+struct ASTCInfo {
+    Size size;
+    Size blockFootprint;
+};
+
 class SourceStream;
 
 class ImageSource {
@@ -143,8 +149,15 @@ public:
                                                                        const SourceOptions &opts, uint32_t &errorCode);
     NATIVEEXPORT static std::unique_ptr<ImageSource> CreateImageSource(const int fd, const SourceOptions &opts,
                                                        uint32_t &errorCode);
+    NATIVEEXPORT static std::unique_ptr<ImageSource> CreateImageSource(
+        const int fd, int32_t offset, int32_t length, const SourceOptions &opts, uint32_t &errorCode);
     NATIVEEXPORT static std::unique_ptr<ImageSource> CreateIncrementalImageSource(const IncrementalSourceOptions &opts,
                                                                                   uint32_t &errorCode);
+    NATIVEEXPORT static bool IsASTC(const uint8_t *fileData, size_t fileSize);
+
+    NATIVEEXPORT static bool GetASTCInfo(const uint8_t *fileData, size_t fileSize, ASTCInfo& astcInfo);
+
+    NATIVEEXPORT static bool IsSupportGenAstc();
 
     NATIVEEXPORT std::unique_ptr<PixelMap> CreatePixelMap(const DecodeOptions &opts, uint32_t &errorCode)
     {
@@ -199,6 +212,7 @@ private:
     using IncrementalRecordMap = std::map<PixelMap *, IncrementalDecodingContext>;
     ImageSource(std::unique_ptr<SourceStream> &&stream, const SourceOptions &opts);
     uint32_t CheckEncodedFormat(ImagePlugin::AbsImageFormatAgent &agent);
+    uint32_t GetData(ImagePlugin::DataStreamBuffer &outData, size_t size);
     static FormatAgentMap InitClass();
     uint32_t GetEncodedFormat(const std::string &formatHint, std::string &format);
     uint32_t DecodeImageInfo(uint32_t index, ImageStatusMap::iterator &iter);
@@ -235,8 +249,10 @@ private:
     static std::unique_ptr<SourceStream> DecodeBase64(const uint8_t *data, uint32_t size);
     static std::unique_ptr<SourceStream> DecodeBase64(const std::string &data);
     bool IsSpecialYUV();
+    bool GetImageInfoForASTC(ImageInfo& imageInfo);
     bool ConvertYUV420ToRGBA(uint8_t *data, uint32_t size, bool isSupportOdd, bool isAddUV, uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapForYUV(uint32_t &errorCode);
+    std::unique_ptr<PixelMap> CreatePixelMapForASTC(uint32_t &errorCode);
     uint32_t GetFormatExtended(std::string &format);
     static std::unique_ptr<ImageSource> DoImageSourceCreate(
         std::function<std::unique_ptr<SourceStream>(void)> stream,
@@ -245,6 +261,7 @@ private:
                                                      uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
+    void DumpInputData(const std::string& fileSuffix = "dat");
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
@@ -270,6 +287,7 @@ private:
     bool isIncrementalCompleted_ = false;
     bool hasDesiredSizeOptions = false;
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
+    bool isAstc_ = false;
 };
 } // namespace Media
 } // namespace OHOS

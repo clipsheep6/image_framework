@@ -15,6 +15,13 @@ import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 
 ohos_executable("jpeg_hw_decoder_demo") {
+  if (!use_clang_android && !use_clang_ios) {
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+  }
   install_enable = false
   subsystem_name = "multimedia"
   part_name = "image_framework"
@@ -50,9 +57,9 @@ ohos_executable("jpeg_hw_decoder_demo") {
     "drivers_interface_display:display_composer_idl_headers",
     "drivers_interface_display:libdisplay_buffer_hdi_impl",
     "drivers_interface_display:libdisplay_composer_hdi_impl",
-    "graphic_chipsetsdk:buffer_handle",
     "hdf_core:libhdf_utils",
     "hdf_core:libhdi",
+    "hilog:libhilog",
     "ipc:ipc_single",
   ]
 }

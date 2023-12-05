@@ -93,6 +93,9 @@ enum class PlPixelFormat {
     NV21 = 8,
     NV12 = 9,
     CMYK = 10,
+    ASTC_4X4 = 11,
+    ASTC_6X6 = 12,
+    ASTC_8X8 = 13,
 };
 
 enum class PlAlphaType : int32_t {
@@ -127,6 +130,14 @@ struct PlFillColor {
 struct PlSVGResize {
     bool isValidPercentage = false;
     uint32_t resizePercentage = 100;
+};
+
+struct PlColorSpaceInfo {
+    static constexpr uint8_t XYZ_SIZE = 3;
+    static constexpr uint8_t TRANSFER_FN_SIZE = 7;
+    bool isValidColorSpace = false;
+    float xyz[XYZ_SIZE][XYZ_SIZE] = {{0}};
+    float transferFn[TRANSFER_FN_SIZE] = {0};
 };
 
 struct PlImageInfo {

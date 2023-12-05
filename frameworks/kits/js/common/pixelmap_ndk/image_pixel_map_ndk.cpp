@@ -14,9 +14,9 @@
  */
 
 #include "image_pixel_map_mdk.h"
-
-#include "common_utils.h"
 #include "image_pixel_map_napi_kits.h"
+#include "native_pixel_map.h"
+#include "common_utils.h"
 
 using namespace OHOS::Media;
 #ifdef __cplusplus
@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 struct NativePixelMap_ {
-    PixelMapNapi* napi = nullptr;
+    OHOS::Media::PixelMapNapi* napi = nullptr;
 };
 
 MIDK_EXPORT
@@ -235,7 +235,15 @@ int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native)
     PixelMapNapiArgs args;
     return PixelMapNapiNativeCtxCall(CTX_FUNC_UNACCESS_PIXELS, native->napi, &args);
 }
-
 #ifdef __cplusplus
 };
 #endif
+
+namespace OHOS {
+namespace Media {
+PixelMapNapi *OH_PixelMapNative_GetPixelMapNapi(struct NativePixelMap_ *nativePixelMap)
+{
+    return nativePixelMap == nullptr ? nullptr : nativePixelMap->napi;
+}
+}
+}

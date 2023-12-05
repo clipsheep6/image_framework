@@ -22,9 +22,6 @@
 #include <parameters.h>
 #endif
 
-#include "hilog/log_cpp.h"
-#include "image_log.h"
-
 extern "C" {
 extern char* __progname;
 }
@@ -53,13 +50,6 @@ bool ImageSystemProperties::GetDmaEnabled()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
     static bool isPhone = system::GetParameter("const.product.devicetype", "pc") == "phone";
-    bool isFeatureSupported = false;
-    if (isPhone) {
-        if (strncmp(__progname, "mos.photo", strlen("mos.photo")) == 0 ||
-            strncmp(__progname, "myapplication", strlen("myapplication")) == 0) {
-            isFeatureSupported = true;
-        }
-    }
     return system::GetBoolParameter("persist.multimedia.image.dma.enabled", true) && isPhone;
 #else
     return false;
@@ -73,6 +63,38 @@ bool ImageSystemProperties::GetAntiAliasingEnabled()
         system::GetParameter("const.product.devicetype", "pc") == "pc" ||
         system::GetParameter("const.product.devicetype", "pc") == "tablet";
     return isDeviceSupportsAA && system::GetBoolParameter("persist.multimedia.image.AntiAliasing.enabled", true);
+#else
+    return false;
+#endif
+}
+
+bool ImageSystemProperties::GetDumpImageEnabled()
+{
+    return system::GetBoolParameter("persist.multimedia.image.dumpimage.enabled", false);
+}
+
+bool ImageSystemProperties::GetHardWareDecodeEnabled()
+{
+#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+    return system::GetBoolParameter("persist.multimedia.image.hardwaredecode.enabled", false);
+#else
+    return false;
+#endif
+}
+
+bool ImageSystemProperties::GetAstcHardWareEncodeEnabled()
+{
+#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+    return system::GetBoolParameter("persist.multimedia.image.AstcHardWareEncode.enabled", false);
+#else
+    return false;
+#endif
+}
+
+bool ImageSystemProperties::GetMediaLibraryAstcEnabled()
+{
+#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+    return system::GetBoolParameter("persist.multimedia.image.GenAstc.enabled", false);
 #else
     return false;
 #endif

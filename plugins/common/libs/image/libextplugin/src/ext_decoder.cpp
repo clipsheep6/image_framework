@@ -19,6 +19,8 @@
 
 #include "ext_pixel_convert.h"
 #include "hilog/log.h"
+#include "hisysevent.h"
+#include "image_system_properties.h"
 #include "image_utils.h"
 #include "log_tags.h"
 #include "media_errors.h"
@@ -37,13 +39,20 @@ namespace {
     constexpr static size_t SIZE_ZERO = 0;
     constexpr static uint32_t DEFAULT_SAMPLE_SIZE = 1;
     constexpr static uint32_t NO_EXIF_TAG = 1;
+    constexpr static int HARDWARE_MIN_DIM = 512;
+    constexpr static int HARDWARE_MAX_DIM = 8192;
+    constexpr static float HALF = 0.5;
+    constexpr static float QUARTER = 0.25;
+    constexpr static float ONE_EIGHTH = 0.125;
 }
 
 namespace OHOS {
 namespace ImagePlugin {
 using namespace Media;
+using namespace OHOS::HDI::Base;
 using namespace OHOS::HiviewDFX;
 using namespace std;
+const static string DEFAULT_EXIF_VALUE = "default_exif_value";
 const static string CODEC_INITED_KEY = "CodecInited";
 const static string ENCODED_FORMAT_KEY = "EncodedFormat";
 const static string SUPPORT_SCALE_KEY = "SupportScale";
@@ -52,6 +61,28 @@ const static string EXT_SHAREMEM_NAME = "EXT RawData";
 const static string TAG_ORIENTATION_STRING = "Orientation";
 const static string TAG_ORIENTATION_INT = "OrientationInt";
 const static string GIF_IMAGE_DELAY_TIME = "GIFDelayTime";
+const static std::string HW_MNOTE_TAG_HEADER = "HwMnote";
+const static std::string HW_MNOTE_CAPTURE_MODE = "HwMnoteCaptureMode";
+const static std::string HW_MNOTE_PHYSICAL_APERTURE = "HwMnotePhysicalAperture";
+const static std::string HW_MNOTE_TAG_ROLL_ANGLE = "HwMnoteRollAngle";
+const static std::string HW_MNOTE_TAG_PITCH_ANGLE = "HwMnotePitchAngle";
+const static std::string HW_MNOTE_TAG_SCENE_FOOD_CONF = "HwMnoteSceneFoodConf";
+const static std::string HW_MNOTE_TAG_SCENE_STAGE_CONF = "HwMnoteSceneStageConf";
+const static std::string HW_MNOTE_TAG_SCENE_BLUE_SKY_CONF = "HwMnoteSceneBlueSkyConf";
+const static std::string HW_MNOTE_TAG_SCENE_GREEN_PLANT_CONF = "HwMnoteSceneGreenPlantConf";
+const static std::string HW_MNOTE_TAG_SCENE_BEACH_CONF = "HwMnoteSceneBeachConf";
+const static std::string HW_MNOTE_TAG_SCENE_SNOW_CONF = "HwMnoteSceneSnowConf";
+const static std::string HW_MNOTE_TAG_SCENE_SUNSET_CONF = "HwMnoteSceneSunsetConf";
+const static std::string HW_MNOTE_TAG_SCENE_FLOWERS_CONF = "HwMnoteSceneFlowersConf";
+const static std::string HW_MNOTE_TAG_SCENE_NIGHT_CONF = "HwMnoteSceneNightConf";
+const static std::string HW_MNOTE_TAG_SCENE_TEXT_CONF = "HwMnoteSceneTextConf";
+const static std::string HW_MNOTE_TAG_FACE_COUNT = "HwMnoteFaceCount";
+const static std::string HW_MNOTE_TAG_FOCUS_MODE = "HwMnoteFocusMode";
+// SUCCESS is existed in both OHOS::HiviewDFX and OHOS::Media
+#define SUCCESS OHOS::Media::SUCCESS
+const static std::string DEFAULT_PACKAGE_NAME = "entry";
+const static std::string DEFAULT_VERSION_ID = "1";
+const static std::string UNKNOWN_IMAGE = "unknown";
 
 struct ColorTypeOutput {
     PlPixelFormat outFormat;
@@ -139,7 +170,7 @@ static uint32_t DmaMemAlloc(DecodeContext &context, uint64_t count, SkImageInfo 
         .width = dstInfo.width(),
         .height = dstInfo.height(),
         .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
-        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // hardware decode only support rgba8888
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
         .timeout = 0,
         .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
@@ -221,11 +252,16 @@ static inline float Max(float a, float b)
 bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
 {
     if (info_.isEmpty() && !DecodeHeader()) {
+        HiLog::Error(LABEL, "DecodeHeader failed in GetScaledSize!");
+        return false;
+    }
+    if (info_.isEmpty()) {
+        HiLog::Error(LABEL, "empty image info in GetScaledSize!");
         return false;
     }
     float finalScale = scale;
     if (scale == ZERO) {
-        finalScale = Max(static_cast<float>(dWidth)/info_.width(),
+        finalScale = Max(static_cast<float>(dWidth) / info_.width(),
             static_cast<float>(dHeight) / info_.height());
     }
     auto scaledDimension = codec_->getScaledDimensions(finalScale);
@@ -235,6 +271,43 @@ bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
     HiLog::Debug(LABEL, "IsSupportScaleOnDecode info [%{public}d x %{public}d]", info_.width(), info_.height());
     HiLog::Debug(LABEL, "IsSupportScaleOnDecode [%{public}d x %{public}d]", dWidth, dHeight);
     HiLog::Debug(LABEL, "IsSupportScaleOnDecode [%{public}f]", scale);
+    return true;
+}
+
+bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) {
+    if (info_.isEmpty() && !DecodeHeader()) {
+        HiLog::Error(LABEL, "DecodeHeader failed in GetHardwareScaledSize!");
+        return false;
+    }
+    if (info_.isEmpty()) {
+        HiLog::Error(LABEL, "empty image info in GetHardwareScaledSize!");
+        return false;
+    }
+    float finalScale = scale;
+    int oriWidth = info_.width();
+    int oriHeight = info_.height();
+    if (scale == ZERO) {
+        finalScale = Max(static_cast<float>(dWidth) / oriWidth,
+                         static_cast<float>(dHeight) / oriHeight);
+    }
+    // calculate sample size and dst size for hardware decode
+    if (finalScale > HALF) {
+        sampleSize_ = 1;
+        dWidth = oriWidth;
+        dHeight = oriHeight;
+    } else if (finalScale > QUARTER) {
+        sampleSize_ = 2;
+        dWidth = oriWidth * HALF;
+        dHeight = oriHeight * HALF;
+    } else if (finalScale > ONE_EIGHTH) {
+        sampleSize_ = 4;
+        dWidth = oriWidth * QUARTER;
+        dHeight = oriHeight * QUARTER;
+    } else {
+        sampleSize_ = 8;
+        dWidth = oriWidth * ONE_EIGHTH;
+        dHeight = oriHeight * ONE_EIGHTH;
+    }
     return true;
 }
 
@@ -290,7 +363,7 @@ uint32_t ExtDecoder::GetImageSize(uint32_t index, PlSize &size)
         HiLog::Error(LABEL, "Invalid index:%{public}u, range:%{public}d", index, frameCount_);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-    HiLog::Error(LABEL, "GetImageSize index:%{public}u, range:%{public}d", index, frameCount_);
+    HiLog::Debug(LABEL, "GetImageSize index:%{public}u, range:%{public}d", index, frameCount_);
     // Info has been get in check process, or empty on get failed.
     if (info_.isEmpty()) {
         HiLog::Error(LABEL, "GetImageSize failed, decode header failed.");
@@ -303,8 +376,8 @@ uint32_t ExtDecoder::GetImageSize(uint32_t index, PlSize &size)
 
 static inline bool IsLowDownScale(const PlSize &size, SkImageInfo &info)
 {
-    return size.width <static_cast<uint32_t>(info.width()) &&
-        size.height <static_cast<uint32_t>(info.height());
+    return size.width < static_cast<uint32_t>(info.width()) &&
+        size.height < static_cast<uint32_t>(info.height());
 }
 
 static inline bool IsValidCrop(const PlRect &crop, SkImageInfo &info, SkIRect &out)
@@ -320,6 +393,20 @@ static inline bool IsValidCrop(const PlRect &crop, SkImageInfo &info, SkIRect &o
         out.fBottom = info.height();
     }
     return true;
+}
+
+static sk_sp<SkColorSpace> getDesiredColorSpace(SkImageInfo &srcInfo, const PixelDecodeOptions &opts)
+{
+    if (!opts.plDesiredColorSpace.isValidColorSpace) {
+        return srcInfo.refColorSpace();
+    }
+    auto xyzSize = PlColorSpaceInfo::XYZ_SIZE * PlColorSpaceInfo::XYZ_SIZE * sizeof(float);
+    skcms_Matrix3x3 skXYZ;
+    memcpy_s(&skXYZ, xyzSize, opts.plDesiredColorSpace.xyz, xyzSize);
+    auto transferFnSize = PlColorSpaceInfo::TRANSFER_FN_SIZE * sizeof(float);
+    skcms_TransferFunction skTransferFun;
+    memcpy_s(&skTransferFun, transferFnSize, opts.plDesiredColorSpace.transferFn, transferFnSize);
+    return SkColorSpace::MakeRGB(skTransferFun, skXYZ);
 }
 
 uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &opts, PlImageInfo &info)
@@ -338,11 +425,24 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     int dstWidth = opts.desiredSize.width;
     int dstHeight = opts.desiredSize.height;
     float scale = ZERO;
+    if (IsSupportHardwareDecode()) {
+        // get dstInfo for hardware decode
+        if (IsLowDownScale(opts.desiredSize, info_) && GetHardwareScaledSize(dstWidth, dstHeight, scale)) {
+            hwDstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha, info_.refColorSpace());
+        } else {
+            hwDstInfo_ = SkImageInfo::Make(info_.width(), info_.height(),
+                                           desireColor, desireAlpha, info_.refColorSpace());
+        }
+        // restore dstWidth and dstHeight
+        dstWidth = opts.desiredSize.width;
+        dstHeight = opts.desiredSize.height;
+    }
     if (IsLowDownScale(opts.desiredSize, info_) && GetScaledSize(dstWidth, dstHeight, scale)) {
-        dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha, info_.refColorSpace());
+        dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha,
+            getDesiredColorSpace(info_, opts));
     } else {
         dstInfo_ = SkImageInfo::Make(info_.width(), info_.height(),
-            desireColor, desireAlpha, info_.refColorSpace());
+            desireColor, desireAlpha, getDesiredColorSpace(info_, opts));
     }
     if (ImageUtils::CheckMulOverflow(dstInfo_.width(), dstInfo_.height(), dstInfo_.bytesPerPixel())) {
         HiLog::Error(LABEL, "SetDecodeOptions failed, width:%{public}d, height:%{public}d is too large",
@@ -429,8 +529,25 @@ bool ExtDecoder::ResetCodec()
     return ExtDecoder::CheckCodec();
 }
 
+#ifdef JPEG_HW_DECODE_ENABLE
+uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
+{
+    if (HardWareDecode(context) == SUCCESS) {
+        HiLog::Info(LABEL, "hardware decode success.");
+        return SUCCESS;
+    }
+    HiLog::Warn(LABEL, "jpeg hardware decode failed, turn to software decode");
+    return ERROR;
+}
+#endif
+
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
+#ifdef JPEG_HW_DECODE_ENABLE
+    if (IsSupportHardwareDecode() && DoHardWareDecode(context) == SUCCESS) {
+        return SUCCESS;
+    }
+#endif
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
@@ -460,6 +577,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         rowStride = sbBuffer->GetStride();
     }
     SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+    ReportImageType(skEncodeFormat);
     HiLog::Debug(LABEL, "decode format %{public}d", skEncodeFormat);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
         return GifDecode(index, context, rowStride);
@@ -480,6 +598,132 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     }
     return SUCCESS;
 }
+
+static std::string GetFormatStr(SkEncodedImageFormat format)
+{
+    switch (format) {
+        case SkEncodedImageFormat::kBMP:
+            return "bmp";
+        case SkEncodedImageFormat::kGIF:
+            return "gif";
+        case SkEncodedImageFormat::kICO:
+            return "ico";
+        case SkEncodedImageFormat::kJPEG:
+            return "jpeg";
+        case SkEncodedImageFormat::kPNG:
+            return "png";
+        case SkEncodedImageFormat::kWBMP:
+            return "wbmp";
+        case SkEncodedImageFormat::kWEBP:
+            return "webp";
+        case SkEncodedImageFormat::kPKM:
+            return "pkm";
+        case SkEncodedImageFormat::kKTX:
+            return "ktx";
+        case SkEncodedImageFormat::kASTC:
+            return "astc";
+        case SkEncodedImageFormat::kDNG:
+            return "dng";
+        case SkEncodedImageFormat::kHEIF:
+            return "heif";
+        case SkEncodedImageFormat::kAVIF:
+            return "avif";
+        default:
+            return UNKNOWN_IMAGE;
+    }
+}
+
+void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
+{
+    HiLog::Debug(LABEL, "ExtDecoder::ReportImageType format %{public}d start", skEncodeFormat);
+    static constexpr char IMAGE_FWK_UE[] = "IMAGE_FWK_UE";
+    int32_t ret = HiSysEventWrite(
+            IMAGE_FWK_UE,
+            "DECODED_IMAGE_TYPE_STATISTICS",
+            HiSysEvent::EventType::STATISTIC,
+            "PNAMEID", DEFAULT_PACKAGE_NAME,
+            "PVERSIONID", DEFAULT_VERSION_ID,
+            "IMAGE_TYPE", GetFormatStr(skEncodeFormat)
+    );
+    if (SUCCESS != ret) {
+        HiLog::Debug(LABEL, "ExtDecoder::ReportImageType failed, ret = %{public}d", ret);
+        return;
+    }
+    HiLog::Debug(LABEL, "ExtDecoder::ReportImageType format %{public}d success", skEncodeFormat);
+}
+#ifdef JPEG_HW_DECODE_ENABLE
+uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
+{
+    uint64_t byteCount = static_cast<uint64_t>(dstInfo_.height()) * dstInfo_.width() * dstInfo_.bytesPerPixel();
+    uint32_t ret = DmaMemAlloc(context, byteCount, info_);
+    if (ret != SUCCESS) {
+        HiLog::Error(LABEL, "Alloc OutputBuffer failed, ret=%{public}d", ret);
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    BufferHandle *handle = (static_cast<SurfaceBuffer*>(context.pixelsBuffer.context))->GetBufferHandle();
+    if (outputColorFmt_ == PIXEL_FMT_RGBA_8888) {
+        outputBufferSize_.width = static_cast<uint32_t>(handle->stride) / NUM_4;
+    } else {
+        outputBufferSize_.width = static_cast<uint32_t>(handle->stride);
+    }
+    outputBufferSize_.height = static_cast<uint32_t>(handle->height);
+    outputBuffer_.buffer = new NativeBuffer(handle);
+    outputBuffer_.fenceFd = -1;
+    return SUCCESS;
+}
+
+bool CheckContext(const SkImageInfo &dstInfo)
+{
+    if (dstInfo.colorType() != kRGBA_8888_SkColorType) {
+        HiLog::Error(LABEL, "hardware decode only support rgba_8888 format");
+        return false;
+    }
+    return true;
+}
+
+void ExtDecoder::ReleaseOutputBuffer(DecodeContext &context, Media::AllocatorType allocatorType)
+{
+    ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer*>(context.pixelsBuffer.context));
+    context.pixelsBuffer.buffer = nullptr;
+    context.allocatorType = allocatorType;
+    context.freeFunc = nullptr;
+    context.pixelsBuffer.bufferSize = 0;
+    context.pixelsBuffer.context = nullptr;
+    outputBuffer_.buffer = nullptr;
+}
+
+uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
+{
+    // check if the hwDstInfo is equal to the dstInfo
+    if (hwDstInfo_.width() != dstInfo_.width() || hwDstInfo_.height() != dstInfo_.height()) {
+        HiLog::Info(LABEL, "hwDstInfo(%{public}d, %{public}d) != dstInfo(%{public}d, %{public}d)",
+                    hwDstInfo_.width(), hwDstInfo_.height(), dstInfo_.width(), dstInfo_.height());
+        return ERROR;
+    }
+    JpegHardwareDecoder hwDecoder;
+    orgImgSize_.width = info_.width();
+    orgImgSize_.height = info_.height();
+
+    if (!CheckContext(dstInfo_)) {
+        HiLog::Error(LABEL, "hardware decode not support this decode option.");
+        return ERROR;
+    }
+
+    Media::AllocatorType tmpAllocatorType = context.allocatorType;
+    uint32_t ret = AllocOutputBuffer(context);
+    if (ret != SUCCESS) {
+        HiLog::Error(LABEL, "Decode failed, Alloc OutputBuffer failed, ret=%{public}d", ret);
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    ret = hwDecoder.Decode(codec_.get(), stream_, orgImgSize_, sampleSize_, outputBuffer_);
+    if (ret != SUCCESS) {
+        HiLog::Error(LABEL, "failed to do jpeg hardware decode, err=%{public}d", ret);
+        ReleaseOutputBuffer(context, tmpAllocatorType);
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    return SUCCESS;
+}
+#endif
 
 uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride)
 {
@@ -660,7 +904,8 @@ SkColorType ExtDecoder::ConvertToColorType(PlPixelFormat format, PlPixelFormat &
 #ifdef IMAGE_COLORSPACE_FLAG
 OHOS::ColorManager::ColorSpace ExtDecoder::getGrColorSpace()
 {
-    return OHOS::ColorManager::ColorSpace(info_.refColorSpace());
+    auto skColorSpace = dstInfo_.isEmpty() ? info_.refColorSpace() : dstInfo_.refColorSpace();
+    return OHOS::ColorManager::ColorSpace(skColorSpace);
 }
 
 bool ExtDecoder::IsSupportICCProfile()
@@ -794,9 +1039,26 @@ uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &k
         return res;
     }
     // Need exif property following
+    if (key.find(HW_MNOTE_TAG_HEADER) != std::string::npos) {
+        res = GetMakerImagePropertyString(key, value);
+        if (value.length() == 0) {
+            value = DEFAULT_EXIF_VALUE;
+            HiLog::Error(LABEL, "[GetImagePropertyString]The image does not contain the %{public}s  tag ", key.c_str());
+        }
+        return res;
+    }
     res = exifInfo_.GetExifData(key, value);
     HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, value:%{public}s", value.c_str());
     return res;
+}
+
+uint32_t ExtDecoder::GetMakerImagePropertyString(const std::string &key, std::string &value)
+{
+    if (exifInfo_.makerInfoTagValueMap.find(key) != exifInfo_.makerInfoTagValueMap.end()) {
+        value = exifInfo_.makerInfoTagValueMap[key];
+        return SUCCESS;
+    }
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
 }
 
 uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
@@ -842,7 +1104,7 @@ uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair
         HiLog::Debug(LABEL, "[GetFilterArea]: get app1 area size");
         appSize += APP1_SIZE_H_OFF;
         auto ret = exifInfo_.GetFilterArea(buffer, (appSize < size) ? appSize : size, privacyType, ranges);
-        if (ret != Media::SUCCESS) {
+        if (ret != SUCCESS) {
             HiLog::Error(LABEL, "[GetFilterArea]: failed to get area %{public}d", ret);
         }
         return ret;
@@ -856,6 +1118,20 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
     }
     num = frameCount_;
     return SUCCESS;
+}
+
+bool ExtDecoder::IsSupportHardwareDecode() {
+    if (info_.isEmpty() && !DecodeHeader()) {
+        return false;
+    }
+    if (!(ImageSystemProperties::GetHardWareDecodeEnabled()
+        && codec_->getEncodedFormat() == SkEncodedImageFormat::kJPEG)) {
+        return false;
+    }
+    int width = info_.width();
+    int height = info_.height();
+    return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
+        && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
 }
 } // namespace ImagePlugin
 } // namespace OHOS

@@ -16,6 +16,7 @@
 #include "image_pixel_map_napi_kits.h"
 
 #include <map>
+#include <set>
 #include "pixel_map_napi.h"
 #include "pngpriv.h"
 
@@ -47,12 +48,15 @@ static bool isUndefine(napi_env env, napi_value value)
     napi_typeof(env, value, &res);
     return (res == napi_undefined);
 }
-static PixelMap* GetPixelMap(PixelMapNapi* napi)
+
+static std::shared_ptr<PixelMap> GetPixelMap(PixelMapNapi* napi, PixelMapNapiArgs* args,
+    int32_t error)
 {
-    if (napi == nullptr || napi->GetPixelMap() == nullptr) {
+    if (napi == nullptr || napi->GetPixelNapiInner() == nullptr) {
+        error = IMAGE_RESULT_DATA_ABNORMAL;
         return nullptr;
     }
-    return napi->GetPixelMap()->get();
+    return napi->GetPixelNapiInner();
 }
 
 static PixelFormat ParsePixelForamt(int32_t val)
@@ -84,12 +88,12 @@ static ScaleMode ParseScaleMode(int32_t val)
 static int32_t PixelMapNapiCreate(napi_env env, PixelMapNapiArgs* args)
 {
     if (args == nullptr || args->outValue == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_INVALID_PARAMETER;
     }
     napi_value undefinedValue = nullptr;
     if ((!makeUndefined(env, &undefinedValue)) || args->inBuffer == nullptr || args->bufferLen <= NUM_0) {
         *(args->outValue) = undefinedValue;
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_GET_DATA_ABNORMAL;
     }
 
     *(args->outValue) = undefinedValue;
@@ -101,9 +105,14 @@ static int32_t PixelMapNapiCreate(napi_env env, PixelMapNapiArgs* args)
     info.size.height = args->createOptions.height;
     info.size.width = args->createOptions.width;
 
-    auto pixelmap = PixelMap::Create(static_cast<uint32_t*>(args->inBuffer), args->bufferLen, info);
+    BUILD_PARAM pam;
+    pam.offset_ = 0;
+    pam.stride_ = info.size.width;
+    pam.flag_ = false;
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = PixelMap::Create(static_cast<uint32_t*>(args->inBuffer), args->bufferLen, pam, info, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error;
     }
 
     *(args->outValue) = PixelMapNapi::CreatePixelMap(env, std::move(pixelmap));
@@ -113,12 +122,12 @@ static int32_t PixelMapNapiCreate(napi_env env, PixelMapNapiArgs* args)
 static int32_t PixelMapNapiCreateAlpha(napi_env env, PixelMapNapiArgs* args)
 {
     if (args == nullptr || args->outValue == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_INVALID_PARAMETER;
     }
     napi_value undefinedValue = nullptr;
     if ((!makeUndefined(env, &undefinedValue)) || args->inValue == nullptr) {
         *(args->outValue) = undefinedValue;
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_GET_DATA_ABNORMAL;
     }
     *(args->outValue) = undefinedValue;
 
@@ -129,28 +138,29 @@ static int32_t PixelMapNapiCreateAlpha(napi_env env, PixelMapNapiArgs* args)
 
     InitializationOptions opts;
     opts.pixelFormat = PixelFormat::ALPHA_8;
-    auto alphaPixelMap = PixelMap::Create(*pixelmap, opts);
+    Rect rect;
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto alphaPixelMap = PixelMap::Create(*pixelmap, rect, opts, error);
     if (alphaPixelMap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error;
     }
 
     *(args->outValue) = PixelMapNapi::CreatePixelMap(env, std::move(alphaPixelMap));
     return isUndefine(env, *(args->outValue))?IMAGE_RESULT_BAD_PARAMETER:IMAGE_RESULT_SUCCESS;
 }
 
-static PixelMap* CheckAndGetPixelMap(PixelMapNapi* native, const PixelMapNapiArgs* args)
+static std::shared_ptr<PixelMap> CheckAndGetPixelMap(PixelMapNapi* native, PixelMapNapiArgs* args,
+    int32_t error)
 {
-    if (args == nullptr) {
-        return nullptr;
-    }
-    return GetPixelMap(native);
+    return args == nullptr ? nullptr : GetPixelMap(native, args, error);
 }
 
 static int32_t PixelMapNapiGetRowBytes(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
     *(args->outNum) = pixelmap->GetRowBytes();
     return IMAGE_RESULT_SUCCESS;
@@ -158,9 +168,10 @@ static int32_t PixelMapNapiGetRowBytes(PixelMapNapi* native, PixelMapNapiArgs* a
 
 static int32_t PixelMapNapiIsEditable(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     *(args->outNum) = pixelmap->IsEditable();
@@ -169,9 +180,10 @@ static int32_t PixelMapNapiIsEditable(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiIsSupportAlpha(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     *(args->outNum) = pixelmap->GetAlphaType() != AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
@@ -180,9 +192,10 @@ static int32_t PixelMapNapiIsSupportAlpha(PixelMapNapi* native, PixelMapNapiArgs
 
 static int32_t PixelMapNapiSetAlphaAble(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     auto alphaType = pixelmap->GetAlphaType();
@@ -199,9 +212,10 @@ static int32_t PixelMapNapiSetAlphaAble(PixelMapNapi* native, PixelMapNapiArgs* 
 
 static int32_t PixelMapNapiGetDensity(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     *(args->outNum) = pixelmap->GetBaseDensity();
@@ -210,9 +224,10 @@ static int32_t PixelMapNapiGetDensity(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiSetDensity(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     ImageInfo imageinfo;
@@ -220,7 +235,7 @@ static int32_t PixelMapNapiSetDensity(PixelMapNapi* native, PixelMapNapiArgs* ar
     if (imageinfo.baseDensity != args->inNum0) {
         imageinfo.baseDensity = args->inNum0;
         if (pixelmap->SetImageInfo(imageinfo, true) != IMAGE_RESULT_SUCCESS) {
-            return IMAGE_RESULT_BAD_PARAMETER;
+            return IMAGE_RESULT_INDEX_INVALID;
         }
     }
     return IMAGE_RESULT_SUCCESS;
@@ -228,9 +243,10 @@ static int32_t PixelMapNapiSetDensity(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiSetOpacity(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     if (pixelmap->SetAlpha(args->inFloat0) != IMAGE_RESULT_SUCCESS) {
@@ -241,52 +257,58 @@ static int32_t PixelMapNapiSetOpacity(PixelMapNapi* native, PixelMapNapiArgs* ar
 
 static int32_t PixelMapNapiScale(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
+
     pixelmap->scale(args->inFloat0, args->inFloat1);
-    return IMAGE_RESULT_SUCCESS;
+    return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }
 
 static int32_t PixelMapNapiTranslate(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     pixelmap->translate(args->inFloat0, args->inFloat1);
-    return IMAGE_RESULT_SUCCESS;
+    return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }
 
 static int32_t PixelMapNapiRotate(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     pixelmap->rotate(args->inFloat0);
-    return IMAGE_RESULT_SUCCESS;
+    return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }
 
 static int32_t PixelMapNapiFlip(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     pixelmap->flip((args->inNum0 == NUM_1), (args->inNum1 == NUM_1));
-    return IMAGE_RESULT_SUCCESS;
+    return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }
 
 static int32_t PixelMapNapiCrop(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
     Rect region;
     region.left = args->inNum0;
@@ -294,42 +316,46 @@ static int32_t PixelMapNapiCrop(PixelMapNapi* native, PixelMapNapiArgs* args)
     region.width = args->inNum2;
     region.height = args->inNum3;
     pixelmap->crop(region);
-    return IMAGE_RESULT_SUCCESS;
+    return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }
 
 static int32_t PixelMapNapiGetImageInfo(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr || args->outInfo == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     ImageInfo srcInfo;
     pixelmap->GetImageInfo(srcInfo);
     args->outInfo->width = srcInfo.size.width;
     args->outInfo->height = srcInfo.size.height;
-    args->outInfo->rowSize = pixelmap->GetRowBytes();
+    args->outInfo->rowSize = pixelmap->GetRowStride();
     args->outInfo->pixelFormat = static_cast<int32_t>(srcInfo.pixelFormat);
-    return IMAGE_RESULT_SUCCESS;
+    return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }
 
 static int32_t PixelMapNapiAccessPixels(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
-    auto pixelmap = CheckAndGetPixelMap(native, args);
+    int32_t error = IMAGE_RESULT_SUCCESS;
+    auto pixelmap = CheckAndGetPixelMap(native, args, error);
     if (pixelmap == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return error != 0 ? error : IMAGE_RESULT_INVALID_PARAMETER;
     }
     native->LockPixelMap();
     *(args->outAddr) = static_cast<uint8_t*>(pixelmap->GetWritablePixels());
-    return IMAGE_RESULT_SUCCESS;
+    return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }
 
 static int32_t PixelMapNapiUnAccessPixels(PixelMapNapi* native, PixelMapNapiArgs* args)
 {
     if (native != nullptr) {
         native->UnlockPixelMap();
+        return IMAGE_RESULT_SUCCESS;
+    } else {
+        return IMAGE_RESULT_INVALID_PARAMETER;
     }
-    return IMAGE_RESULT_SUCCESS;
 }
 
 static const std::map<int32_t, PixelMapNapiEnvFunc> g_EnvFunctions = {
@@ -359,7 +385,7 @@ int32_t PixelMapNapiNativeEnvCall(int32_t mode, napi_env env, PixelMapNapiArgs* 
 {
     auto funcSearch = g_EnvFunctions.find(mode);
     if (funcSearch == g_EnvFunctions.end()) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
     }
     return funcSearch->second(env, args);
 }
@@ -369,7 +395,7 @@ int32_t PixelMapNapiNativeCtxCall(int32_t mode, PixelMapNapi* native, PixelMapNa
 {
     auto funcSearch = g_CtxFunctions.find(mode);
     if (funcSearch == g_CtxFunctions.end()) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
     }
     return funcSearch->second(native, args);
 }

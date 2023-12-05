@@ -23,6 +23,10 @@ public:
     static bool GetSurfaceBufferEnabled();
     static bool GetDmaEnabled();
     static bool GetAntiAliasingEnabled();
+    static bool GetDumpImageEnabled();
+    static bool GetHardWareDecodeEnabled();
+    static bool GetAstcHardWareEncodeEnabled();
+    static bool GetMediaLibraryAstcEnabled();
 private:
     ImageSystemProperties() = default;
 };

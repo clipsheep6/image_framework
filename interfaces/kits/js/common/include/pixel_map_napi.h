@@ -34,6 +34,19 @@ public:
     static napi_value CreatePixelMap(napi_env env, std::shared_ptr<PixelMap> pixelmap);
     static std::shared_ptr<PixelMap> GetPixelMap(napi_env env, napi_value pixelmap);
     std::shared_ptr<PixelMap>* GetPixelMap();
+    std::shared_ptr<PixelMap> GetPixelNapiInner()
+    {
+        return nativePixelMap_;
+    }
+    void setPixelNapiEditable(bool isEditable)
+    {
+        isPixelNapiEditable = isEditable;
+    }
+    bool GetPixelNapiEditable()
+    {
+        return isPixelNapiEditable;
+    }
+
     bool IsLockPixelMap();
     bool LockPixelMap();
     void UnlockPixelMap();
@@ -50,6 +63,9 @@ private:
     static void CreatePixelMapComplete(napi_env env, napi_status status, void *data);
     static napi_value Unmarshalling(napi_env env, napi_callback_info info);
     static void UnmarshallingComplete(napi_env env, napi_status status, void *data);
+    static napi_value CreatePixelMapFromParcel(napi_env env, napi_callback_info info);
+    static napi_value ThrowExceptionError(napi_env env,
+        const std::string &tag, const std::uint32_t &code, const std::string &info);
 
     // methods
     static napi_value ReadPixelsToBuffer(napi_env env, napi_callback_info info);
@@ -77,6 +93,7 @@ private:
     static napi_value GetColorSpace(napi_env env, napi_callback_info info);
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
+    static napi_value ApplyColorSpace(napi_env env, napi_callback_info info);
 
     void release();
     static thread_local napi_ref sConstructor_;
@@ -84,9 +101,9 @@ private:
 
     napi_env env_ = nullptr;
     std::shared_ptr<PixelMap> nativePixelMap_;
-    std::shared_ptr<PixelMap> nativeInner_;
     int32_t lockCount = 0;
     bool isRelease = false;
+    bool isPixelNapiEditable = true;
 };
 } // namespace Media
 } // namespace OHOS

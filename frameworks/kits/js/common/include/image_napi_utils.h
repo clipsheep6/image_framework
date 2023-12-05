@@ -33,6 +33,19 @@ do \
     } \
 } while (0)
 
+#define IMG_NAPI_CHECK_BUILD_ERROR(x, build, res, result) \
+do \
+{ \
+    if (!(x)) \
+    { \
+        build; \
+        { \
+            res; \
+        } \
+        return (result); \
+    } \
+} while (0)
+
 #define IMG_NAPI_CHECK_RET(x, res) \
 do \
 { \
@@ -63,6 +76,21 @@ do \
             (complete), static_cast<void*>((aContext).get()), &(work)); \
     if ((status) == napi_ok) { \
         (status) = napi_queue_async_work((env), (work)); \
+        if ((status) == napi_ok) { \
+            (aContext).release(); \
+        } \
+    } \
+} while (0)
+
+#define IMG_CREATE_CREATE_ASYNC_WORK_WITH_QOS(env, status, workName, exec, complete, aContext, work, qos) \
+do \
+{ \
+    napi_value _resource = nullptr; \
+    napi_create_string_utf8((env), (workName), NAPI_AUTO_LENGTH, &_resource); \
+    (status) = napi_create_async_work(env, nullptr, _resource, (exec), \
+            (complete), static_cast<void*>((aContext).get()), &(work)); \
+    if ((status) == napi_ok) { \
+        (status) = napi_queue_async_work_with_qos((env), (work), (qos)); \
         if ((status) == napi_ok) { \
             (aContext).release(); \
         } \

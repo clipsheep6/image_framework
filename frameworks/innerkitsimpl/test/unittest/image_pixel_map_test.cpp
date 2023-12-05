@@ -476,6 +476,7 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap009, TestSize.Level3)
     EXPECT_EQ(newPixelMap, nullptr);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap009 end";
 }
+
 /**
 * @tc.name: ImagePixelMap010
 * @tc.desc: test WriteToParcel
@@ -513,8 +514,24 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap011, TestSize.Level3)
     EXPECT_EQ(pixelmap1->GetWidth(), pixelmap2->GetWidth());
     EXPECT_EQ(pixelmap1->GetPixelFormat(), pixelmap2->GetPixelFormat());
     EXPECT_EQ(pixelmap1->GetColorSpace(), pixelmap2->GetColorSpace());
+
+    Parcel data2;
+    pixelmap2->Marshalling(data2);
+    PIXEL_MAP_ERR err;
+    PixelMap *pixelmap3 = PixelMap::Unmarshalling(data2, err);
+    EXPECT_EQ(pixelmap2->GetHeight(), pixelmap3->GetHeight());
+    EXPECT_EQ(pixelmap2->GetWidth(), pixelmap3->GetWidth());
+    EXPECT_EQ(pixelmap2->GetPixelFormat(), pixelmap3->GetPixelFormat());
+    EXPECT_EQ(pixelmap2->GetColorSpace(), pixelmap3->GetColorSpace());
+
+    uint32_t code = 10; // test num.
+    pixelmap3->SetPixelMapError(code, "error");
+    EXPECT_EQ(code, pixelmap3->errorCode);
+    EXPECT_EQ("error", pixelmap3->errorInfo);
+
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap011 end";
 }
+
 /**
  * @tc.name: ImagePixelMap012
  * @tc.desc: create pixelmap with color,colorlength,offset,width and initialization options
@@ -1234,8 +1251,124 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap039, TestSize.Level3)
         OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::SRGB);
     pixelMap.InnerSetColorSpace(grColorSpace);
     OHOS::ColorManager::ColorSpace outColorSpace = pixelMap.InnerGetGrColorSpace();
-    EXPECT_EQ(outColorSpace, grColorSpace);
+    EXPECT_TRUE(SkColorSpace::Equals(
+        outColorSpace.ToSkColorSpace().get(), grColorSpace.ToSkColorSpace().get()));
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap039 InnerSetColorSpace end";
+}
+
+static constexpr uint32_t PIXEL_MAP_TEST_PIXEL = 0xFF994422;
+static constexpr uint32_t PIXEL_MAP_TEST_DISPLAY_P3_PIXEL = 0xFF2B498E;
+static constexpr uint32_t PIXEL_MAP_TEST_ADOBE_RGB_PIXEL = 0xFF294686;
+static constexpr uint32_t PIXEL_MAP_TEST_DCI_P3_PIXEL = 0xFF3D5A9D;
+static constexpr uint32_t PIXEL_MAP_TEST_BT2020_PIXEL = 0xFF1C3E74;
+static constexpr int32_t POINT_ZERO = 0;
+
+/**
+* @tc.name: ImagePixelMap040
+* @tc.desc: test ApplyColorSpace DISPLAY_P3
+* @tc.type: FUNC
+*/
+HWTEST_F(ImagePixelMapTest, ImagePixelMap040, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap040 ApplyColorSpace start";
+    const uint32_t dataLength = PIXEL_MAP_TEST_WIDTH * PIXEL_MAP_TEST_HEIGHT;
+    vector<uint32_t> data(dataLength, PIXEL_MAP_TEST_PIXEL);
+    InitializationOptions opts;
+    opts.pixelFormat = OHOS::Media::PixelFormat::RGBA_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.size.width = PIXEL_MAP_TEST_WIDTH;
+    opts.size.height = PIXEL_MAP_TEST_HEIGHT;
+
+    auto pixelmap = PixelMap::Create(data.data(), dataLength, opts);
+    auto grColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::SRGB);
+    pixelmap->InnerSetColorSpace(grColorSpace);
+    auto applyGrColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::DISPLAY_P3);
+    pixelmap->ApplyColorSpace(applyGrColorSpace);
+
+    auto pixelZero = pixelmap->GetPixel32(POINT_ZERO, POINT_ZERO);
+    EXPECT_EQ(*pixelZero, PIXEL_MAP_TEST_DISPLAY_P3_PIXEL);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap040 ApplyColorSpace end";
+}
+
+/**
+* @tc.name: ImagePixelMap041
+* @tc.desc: test ApplyColorSpace ADOBE_RGB
+* @tc.type: FUNC
+*/
+HWTEST_F(ImagePixelMapTest, ImagePixelMap041, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap040 ApplyColorSpace start";
+    const uint32_t dataLength = PIXEL_MAP_TEST_WIDTH * PIXEL_MAP_TEST_HEIGHT;
+    vector<uint32_t> data(dataLength, PIXEL_MAP_TEST_PIXEL);
+    InitializationOptions opts;
+    opts.pixelFormat = OHOS::Media::PixelFormat::RGBA_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.size.width = PIXEL_MAP_TEST_WIDTH;
+    opts.size.height = PIXEL_MAP_TEST_HEIGHT;
+
+    auto pixelmap = PixelMap::Create(data.data(), dataLength, opts);
+    auto grColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::SRGB);
+    pixelmap->InnerSetColorSpace(grColorSpace);
+    auto applyGrColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::ADOBE_RGB);
+    pixelmap->ApplyColorSpace(applyGrColorSpace);
+
+    auto pixelZero = pixelmap->GetPixel32(POINT_ZERO, POINT_ZERO);
+    EXPECT_EQ(*pixelZero, PIXEL_MAP_TEST_ADOBE_RGB_PIXEL);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap041 ApplyColorSpace end";
+}
+
+/**
+* @tc.name: ImagePixelMap042
+* @tc.desc: test ApplyColorSpace DCI_P3
+* @tc.type: FUNC
+*/
+HWTEST_F(ImagePixelMapTest, ImagePixelMap042, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap042 ApplyColorSpace start";
+    const uint32_t dataLength = PIXEL_MAP_TEST_WIDTH * PIXEL_MAP_TEST_HEIGHT;
+    vector<uint32_t> data(dataLength, PIXEL_MAP_TEST_PIXEL);
+    InitializationOptions opts;
+    opts.pixelFormat = OHOS::Media::PixelFormat::RGBA_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.size.width = PIXEL_MAP_TEST_WIDTH;
+    opts.size.height = PIXEL_MAP_TEST_HEIGHT;
+
+    auto pixelmap = PixelMap::Create(data.data(), dataLength, opts);
+    auto grColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::SRGB);
+    pixelmap->InnerSetColorSpace(grColorSpace);
+    auto applyGrColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::DCI_P3);
+    pixelmap->ApplyColorSpace(applyGrColorSpace);
+
+    auto pixelZero = pixelmap->GetPixel32(POINT_ZERO, POINT_ZERO);
+    EXPECT_EQ(*pixelZero, PIXEL_MAP_TEST_DCI_P3_PIXEL);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap042 ApplyColorSpace end";
+}
+
+/**
+* @tc.name: ImagePixelMap043
+* @tc.desc: test ApplyColorSpace Rec.2020
+* @tc.type: FUNC
+*/
+HWTEST_F(ImagePixelMapTest, ImagePixelMap043, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap043 ApplyColorSpace start";
+    const uint32_t dataLength = PIXEL_MAP_TEST_WIDTH * PIXEL_MAP_TEST_HEIGHT;
+    vector<uint32_t> data(dataLength, PIXEL_MAP_TEST_PIXEL);
+    InitializationOptions opts;
+    opts.pixelFormat = OHOS::Media::PixelFormat::RGBA_8888;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    opts.size.width = PIXEL_MAP_TEST_WIDTH;
+    opts.size.height = PIXEL_MAP_TEST_HEIGHT;
+
+    auto pixelmap = PixelMap::Create(data.data(), dataLength, opts);
+    auto grColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::SRGB);
+    pixelmap->InnerSetColorSpace(grColorSpace);
+    auto applyGrColorSpace = OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::BT2020);
+    pixelmap->ApplyColorSpace(applyGrColorSpace);
+
+    auto pixelZero = pixelmap->GetPixel32(POINT_ZERO, POINT_ZERO);
+    EXPECT_EQ(*pixelZero, PIXEL_MAP_TEST_BT2020_PIXEL);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap043 ApplyColorSpace end";
 }
 #endif
 

@@ -28,6 +28,9 @@ class FileSourceStream : public SourceStream {
 public:
     static std::unique_ptr<FileSourceStream> CreateSourceStream(const std::string &pathName);
     static std::unique_ptr<FileSourceStream> CreateSourceStream(const int fd);
+    static std::unique_ptr<FileSourceStream> CreateSourceStream(
+        const int fd, int32_t offset, int32_t size);
+    FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original);
     ~FileSourceStream() override;
 
     bool Read(uint32_t desiredSize, ImagePlugin::DataStreamBuffer &outData) override;
@@ -40,10 +43,10 @@ public:
     uint8_t *GetDataPtr() override;
     uint32_t GetStreamType() override;
     ImagePlugin::OutputDataStream* ToOutputDataStream() override;
+    int GetMMapFd();
 
 private:
     DISALLOW_COPY_AND_MOVE(FileSourceStream);
-    FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original);
     bool GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_t bufferSize, uint32_t &readSize);
     bool GetData(uint32_t desiredSize, ImagePlugin::DataStreamBuffer &outData);
     void ResetReadBuffer();
@@ -53,6 +56,8 @@ private:
     size_t fileOriginalOffset_ = 0;
     uint8_t *readBuffer_ = nullptr;
     uint8_t *fileData_ = nullptr;
+    int mmapFd_ = -1;
+    bool mmapFdPassedOn_ = false;
 };
 } // namespace Media
 } // namespace OHOS

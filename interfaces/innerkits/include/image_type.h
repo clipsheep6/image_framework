@@ -108,6 +108,9 @@ enum class PixelFormat : int32_t {
     NV21 = 8,  // Each pixel is sorted on 3/2 bytes.
     NV12 = 9,
     CMYK = 10,
+    ASTC_4x4 = 11,
+    ASTC_6x6 = 12,
+    ASTC_8x8 = 13,
 };
 
 enum class AlphaType : int32_t {
@@ -170,6 +173,14 @@ struct SVGDecodeOptions {
     SVGResize SVGResize;
 };
 
+struct ColorSpaceInfo {
+    static constexpr uint8_t XYZ_SIZE = 3;
+    static constexpr uint8_t TRANSFER_FN_SIZE = 7;
+    bool isValidColorSpace = false;
+    float xyz[XYZ_SIZE][XYZ_SIZE] = {{0}};
+    float transferFn[TRANSFER_FN_SIZE] = {0};
+};
+
 struct DecodeOptions {
     int32_t fitDensity = 0;
     Rect CropRect;
@@ -183,13 +194,14 @@ struct DecodeOptions {
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
     AllocatorType allocatorType = AllocatorType::HEAP_ALLOC;
 #else
-    AllocatorType allocatorType = AllocatorType::SHARE_MEM_ALLOC;
+    AllocatorType allocatorType = AllocatorType::DEFAULT;
 #endif
     ColorSpace desiredColorSpace = ColorSpace::SRGB;
     bool allowPartialImage = true;
     bool editable = false;
     MemoryUsagePreference preference = MemoryUsagePreference::DEFAULT;
     SVGDecodeOptions SVGOpts;
+    ColorSpaceInfo desiredColorSpaceInfo;
 };
 
 enum class ScaleMode : int32_t {
@@ -198,6 +210,13 @@ enum class ScaleMode : int32_t {
 };
 
 enum class IncrementalMode { FULL_DATA = 0, INCREMENTAL_DATA = 1 };
+
+enum class AntiAliasingOption : int32_t {
+    NONE = 0,
+    LOW = 1,
+    MEDIUM = 2,
+    HIGH = 3,
+};
 } // namespace Media
 } // namespace OHOS
 
