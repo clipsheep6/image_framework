@@ -21,6 +21,8 @@ import("$image_subsystem/plugins/cross/image_native_ios.gni")
 config("image_external_config") {
   include_dirs = [
     "include",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin/include",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin/include/texture_encode",
     "//utils/system/safwk/native/include",
     "//foundation/ability/ability_runtime/interfaces/inner_api/runtime/include/",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/include",
@@ -49,6 +51,7 @@ config("image_external_config") {
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//drivers/peripheral/display/interfaces/include",
     "//drivers/peripheral/base",
+    "//third_party/astc-encoder/Source",
   ]
 
   include_dirs += [
@@ -204,6 +207,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+        "//third_party/astc-encoder:astc_encoder_shared",
       ]
       deps += skia_platform
 
@@ -339,6 +343,7 @@ ohos_static_library("image_static") {
       "//foundation/graphic/graphic_2d:libsurface",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+      "//third_party/astc-encoder:astc_encoder_shared",
     ]
 
     if (DUAL_ADAPTER) {
