@@ -35,6 +35,7 @@ config("image_external_config") {
     "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin",
+    "${image_subsystem}/plugins/common/libs/image/libpngplugin/include",
     "//foundation/multimedia/image_framework/plugins/manager/include",
     "//foundation/multimedia/image_framework/plugins/manager/include/image",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
@@ -54,6 +55,7 @@ config("image_external_config") {
   include_dirs += [
     "//foundation/multimedia/image_framework/plugins/manager/include/pluginbase",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/include",
+    "${image_subsystem}/plugins/common/libs/image/libpngplugin/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/include",
     "$skia_root/skia",
@@ -137,6 +139,7 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
+      "${image_subsystem}/plugins/common/libs/image/libpngplugin/src/png_ninepatch_res.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",

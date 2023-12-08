@@ -164,6 +164,8 @@ ohos_shared_library("extplugin") {
     }
   }
   sources = [
+    "${image_subsystem}/frameworks/innerkitsimpl/common/src/nine_chunk_reader.cpp",
+    "${image_subsystem}/plugins/common/libs/image/libpngplugin/src/png_ninepatch_res.cpp",
     "src/ext_decoder.cpp",
     "src/ext_encoder.cpp",
     "src/ext_pixel_convert.cpp",

@@ -784,8 +784,9 @@ bool ExtDecoder::CheckCodec()
         HiLog::Error(LABEL, "create codec: input stream size is zero.");
         return false;
     }
-    codec_ = SkCodec::MakeFromStream(make_unique<ExtStream>(stream_));
-    if (codec_ == nullptr) {
+    SkCodec::Result result;
+    codec_ = SkCodec::MakeFromStream(make_unique<ExtStream>(stream_), &result, &nineChunkReader_);
+    if ((codec_ == nullptr) || (result != SkCodec::kSuccess)) {
         HiLog::Error(LABEL, "create codec from stream failed");
         return false;
     }
@@ -1118,6 +1119,20 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
     }
     num = frameCount_;
     return SUCCESS;
+}
+
+bool ExtDecoder::IsSupportNine() {
+    if ((nineChunkReader_.nineData_ != nullptr) && (nineChunkReader_.nineLength_ != 0)) {
+        return true;
+    }
+    return false;
+}
+
+NinePatchContext ExtDecoder::getNinePng() {
+    NinePatchContext ninePatchContext;
+    ninePatchContext.ninePatch = nineChunkReader_.nineData_;
+    ninePatchContext.patchSize = nineChunkReader_.nineLength_;
+    return ninePatchContext;
 }
 
 bool ExtDecoder::IsSupportHardwareDecode() {

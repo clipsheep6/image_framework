@@ -2772,5 +2772,17 @@ uint32_t PixelMap::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
     return SUCCESS;
 }
 #endif
+void PixelMap::InnerSetNinePngRes(const NinePngRes &ninePngRes)
+{
+    ninePngRes_ = std::make_shared<NinePngRes>(ninePngRes);
+}
+
+NinePngRes PixelMap::InnerGetNinePngRes()
+{
+    if (ninePngRes_ == nullptr) {
+        ninePngRes_ = std::make_shared<NinePngRes>(NinePngRes());
+    }
+    return *ninePngRes_;
+}
 } // namespace Media
 } // namespace OHOS
