@@ -794,7 +794,7 @@ void PixelMapNapi::CreatePixelMapFromSurfaceComplete(napi_env env, napi_status s
     auto context = static_cast<PixelMapAsyncContext*>(data);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
-        sPixelMap_ = context->rPixelMap;
+        // sPixelMap_ = context->rPixelMap;
         status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
     }
 
