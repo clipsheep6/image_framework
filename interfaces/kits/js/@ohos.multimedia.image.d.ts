@@ -1169,6 +1169,8 @@ declare namespace image {
          
     /**
      * The number of byte per row.
+     *
+     * @type { number }
      * @syscap SystemCapability.Multimedia.Image.Core
      * @since 11
      */
@@ -2621,10 +2623,11 @@ declare namespace image {
      */
     setColorSpace(colorSpace: colorSpaceManager.ColorSpaceManager): void;
 
-    /**
+     /**
      * Is it stride Alignment
      *
-     * @returns { boolean } If it is a string alignment, return true; otherwise, return false.
+     * @type { boolean }
+     * @readonly
      * @syscap SystemCapability.Multimedia.Image.Core
      * @since 11
      */
