@@ -34,6 +34,7 @@
 #include "image_source.h"
 #include "buffer_source_stream.h"
 #include "file_source_stream.h"
+#include "memory_manager.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -41,6 +42,7 @@ using namespace OHOS::HiviewDFX;
 namespace OHOS {
 namespace Media {
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
+static const std::string IMAGE_INPUT_ICO_PATH = "/data/local/tmp/image/test.ico";
 
 class ImageSourceTest : public testing::Test {
 public:
@@ -256,6 +258,25 @@ HWTEST_F(ImageSourceTest, CreatePixelMapEx002, TestSize.Level3)
     const DecodeOptions opt;
     imageSource->CreatePixelMapEx(index, opt, errorCode);
     GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapEx002 end";
+}
+
+/**
+ * @tc.name: CreatePixelMapEx003
+ * @tc.desc: test CreatePixelMapEx of ico picture resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreatePixelMapEx003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapEx003 start";
+    uint32_t res = 0;
+    SourceOptions sourceOpts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_ICO_PATH, sourceOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+    uint32_t index = 1;
+    const DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> crepixelmapex = imageSource->CreatePixelMapEx(index, decodeOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapEx003 end";
 }
 
 /**
@@ -619,7 +640,7 @@ HWTEST_F(ImageSourceTest, GetImagePropertyString001, TestSize.Level3)
     std::string key = "";
     std::string value;
     uint32_t ret = imageSource->GetImagePropertyString(index, key, value);
-    ASSERT_NE(ret, 0);
+    ASSERT_NE(ret, SUCCESS);
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImagePropertyString001 end";
 }
 
@@ -661,7 +682,7 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty001, TestSize.Level3)
     std::string key = "";
     std::string path = "";
     uint32_t ret = imageSource->ModifyImageProperty(index, key, value, path);
-    ASSERT_NE(ret, 0);
+    ASSERT_NE(ret, SUCCESS);
     GTEST_LOG_(INFO) << "ImageSourceTest: ModifyImageProperty001 end";
 }
 
@@ -684,7 +705,7 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty002, TestSize.Level3)
     std::string key;
     int fd = open("/data/receiver/Receiver_buffer7.jpg", std::fstream::binary | std::fstream::in);
     uint32_t ret = imageSource->ModifyImageProperty(index, key, value, fd);
-    ASSERT_NE(ret, 0);
+    ASSERT_NE(ret, SUCCESS);
 
     GTEST_LOG_(INFO) << "ImageSourceTest: ModifyImageProperty002 end";
 }
@@ -708,7 +729,7 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty003, TestSize.Level3)
 
     std::string key;
     uint32_t ret = imageSource->ModifyImageProperty(index, key, value, data, size);
-    ASSERT_NE(ret, 0);
+    ASSERT_NE(ret, SUCCESS);
 
     GTEST_LOG_(INFO) << "ImageSourceTest: ModifyImageProperty003 end";
 }
@@ -798,7 +819,7 @@ HWTEST_F(ImageSourceTest, GetFilterArea001, TestSize.Level3)
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(std::move(fs), opts, errorCode);
     std::vector<std::pair<uint32_t, uint32_t>> ranges;
     uint32_t ret = imageSource->GetFilterArea(filterType, ranges);
-    ASSERT_NE(ret, 0);
+    ASSERT_NE(ret, SUCCESS);
 
     GTEST_LOG_(INFO) << "ImageSourceTest: GetFilterArea001 end";
 }
@@ -997,6 +1018,23 @@ HWTEST_F(ImageSourceTest, CreateImageSource0016, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource0016 end";
 }
 
+/**
+ * @tc.name: CreateImageSource017
+ * @tc.desc: test CreateImageSource of ico picture resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreateImageSource017, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource017 start";
+
+    uint32_t res = 0;
+    const SourceOptions sourceOpts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_ICO_PATH, sourceOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource017 end";
+}
+
 #ifdef IMAGE_PURGEABLE_PIXELMAP
 /**
  * @tc.name: CreateImageSource0011
@@ -1030,17 +1068,200 @@ HWTEST_F(ImageSourceTest, GetImageInfoForASTC, TestSize.Level3)
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     auto ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_NE(ret, true);
+    ASSERT_EQ(ret, true);
     astcInfo.blockFootprint.width = 6;
     ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_NE(ret, true);
+    ASSERT_EQ(ret, true);
     astcInfo.blockFootprint.width = 8;
     ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_NE(ret, true);
+    ASSERT_EQ(ret, true);
     astcInfo.blockFootprint.width = 2;
     ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_NE(ret, true);
+    ASSERT_EQ(ret, true);
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImageInfoForASTC end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test GetSourceDecodingState****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetSourceDecodingState, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetSourceDecodingState start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    bool isAcquiredImageNum = true;
+    imageSource->decodeState_ = SourceDecodingState::SOURCE_ERROR;
+    auto ret = imageSource->DecodeSourceInfo(isAcquiredImageNum);
+    ASSERT_EQ(ret, ERR_IMAGE_SOURCE_DATA);
+    imageSource->decodeState_ = SourceDecodingState::UNKNOWN_FORMAT;
+    ret = imageSource->DecodeSourceInfo(isAcquiredImageNum);
+    ASSERT_EQ(ret, ERR_IMAGE_UNKNOWN_FORMAT);
+    imageSource->decodeState_ = SourceDecodingState::UNSUPPORTED_FORMAT;
+    ret = imageSource->DecodeSourceInfo(isAcquiredImageNum);
+    ASSERT_EQ(ret, ERR_IMAGE_PLUGIN_CREATE_FAILED);
+    imageSource->decodeState_ = SourceDecodingState::FILE_INFO_ERROR;
+    ret = imageSource->DecodeSourceInfo(isAcquiredImageNum);
+    ASSERT_EQ(ret, ERR_IMAGE_DECODE_FAILED);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetSourceDecodingState end";
+}
+
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test GetData****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetData001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetData001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    ImagePlugin::DataStreamBuffer outData;
+    size_t size = 0;
+    imageSource->sourceStreamPtr_ = nullptr;
+    auto ret = imageSource->GetData(outData, size);
+    ASSERT_EQ(ret, ERR_IMAGE_INVALID_PARAMETER);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetData001 end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test GetData****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetData002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetData002 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    ImagePlugin::DataStreamBuffer outData;
+    size_t size = 0;
+    auto ret = imageSource->GetData(outData, size);
+    ASSERT_EQ(ret, ERR_IMAGE_SOURCE_DATA);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetData002 end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test GetFormatExtended****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetFormatExtended, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetFormatExtended001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    string format = "";
+    auto ret = imageSource->GetFormatExtended(format);
+    ASSERT_NE(ret, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetFormatExtended001 end";
+}
+
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test DecodeSourceInfo****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, DecodeSourceInfo, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: DecodeSourceInfo001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    bool  isAcquiredImageNum = false;
+    imageSource->decodeState_ = SourceDecodingState::FILE_INFO_DECODED;
+    auto ret = imageSource->DecodeSourceInfo(isAcquiredImageNum);
+    ASSERT_EQ(ret, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageSourceTest: DecodeImageInfo001 end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test DecodeSourceInfo****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, DecodeSourceInfo002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: DecodeSourceInfo002 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    bool  isAcquiredImageNum = false;
+    imageSource->decodeState_ = SourceDecodingState::FORMAT_RECOGNIZED;
+    SourceInfo sourceInfo;
+    sourceInfo.encodedFormat = "image/astc";
+    auto ret = imageSource->DecodeSourceInfo(isAcquiredImageNum);
+    ASSERT_NE(ret, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageSourceTest: DecodeImageInfo002 end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test InitMainDecoder****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, InitMainDecoder, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: InitMainDecoder start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    auto ret = imageSource->InitMainDecoder();
+    ASSERT_NE(ret, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageSourceTest: InitMainDecoder end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test AddIncrementalContextteDecoder****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, AddIncrementalContext, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: AddIncrementalContext start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    PixelMap pixelMap;
+    ImageSource::IncrementalRecordMap::iterator iterator;
+    auto ret = imageSource->AddIncrementalContext(pixelMap, iterator);
+    ASSERT_NE(ret, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageSourceTest: AddIncrementalContext end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test ImageSizeChange****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, ImageSizeChange, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageSizeChange start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t desiredWidth = 0;
+    int32_t desiredHeight = 0;
+    bool ret = imageSource->ImageSizeChange(width, height, desiredHeight, desiredWidth);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageSizeChange end";
+}
+/**
+ * @tc.name: CreateImageSource0015
+ * @tc.desc: test IsASTC****
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, IsASTC, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: IsASTC start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    const uint8_t *fileData = nullptr;
+    size_t fileSize = 10;
+    bool ret = imageSource->IsASTC(fileData, fileSize);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "ImageSourceTest: IsASTC end";
 }
 } // namespace Multimedia
 } // namespace OHOS

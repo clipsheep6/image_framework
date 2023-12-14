@@ -17,7 +17,9 @@
 #define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_TEXTURE_ENCODE_TEXTURE_TYPE_H
 
 #include "astcenc.h"
-
+#ifndef QUALITY_CONTROL
+#define QUALITY_CONTROL (1)
+#endif
 namespace OHOS {
 namespace ImagePlugin {
 typedef struct TextureEncodeOptionsType {
@@ -36,7 +38,7 @@ typedef struct AstcEncoderInfo {
     astcenc_swizzle swizzle_;
     uint8_t* data_out_;
     astcenc_error error_;
-#if QUALITY_CONTROL
+#if defined(QUALITY_CONTROL) && (QUALITY_CONTROL == 1)
     bool calQualityEnable;
     int32_t *mse[RGBA_COM + 1];
 #endif

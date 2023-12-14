@@ -392,7 +392,7 @@ static void FreeContextBuffer(const Media::CustomFreePixelMap &func,
     AllocatorType allocType, PlImageBuffer &buffer)
 {
     if (func != nullptr) {
-        func(buffer.buffer, buffer.context, buffer.dataSize);
+        func(buffer.buffer, buffer.context, buffer.bufferSize);
         return;
     }
 
@@ -400,7 +400,7 @@ static void FreeContextBuffer(const Media::CustomFreePixelMap &func,
     if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
         int *fd = static_cast<int *>(buffer.context);
         if (buffer.buffer != nullptr) {
-            ::munmap(buffer.buffer, buffer.dataSize);
+            ::munmap(buffer.buffer, buffer.bufferSize);
         }
         if (fd != nullptr) {
             ::close(*fd);
@@ -469,6 +469,23 @@ bool IsSupportDma(const DecodeOptions &opts, const ImageInfo &info, bool hasDesi
 #endif
 }
 
+DecodeContext InitDecodeContext(const DecodeOptions &opts, const ImageInfo &info,
+    const MemoryUsagePreference &preference, bool hasDesiredSizeOptions)
+{
+    DecodeContext context;
+    if (opts.allocatorType != AllocatorType::DEFAULT) {
+        context.allocatorType = opts.allocatorType;
+    } else {
+        if (preference == MemoryUsagePreference::DEFAULT && IsSupportDma(opts, info, hasDesiredSizeOptions)) {
+            HiLog::Debug(LABEL, "[ImageSource] allocatorType is DMA_ALLOC");
+            context.allocatorType = AllocatorType::DMA_ALLOC;
+        } else {
+            context.allocatorType = AllocatorType::SHARE_MEM_ALLOC;
+        }
+    }
+    return context;
+}
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     const DecodeOptions &opts, uint32_t &errorCode)
 {
@@ -493,12 +510,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         return nullptr;
     }
     NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    DecodeContext context;
-    context.allocatorType = opts_.allocatorType;
-    if (preference_ == MemoryUsagePreference::DEFAULT && IsSupportDma(opts_, info, hasDesiredSizeOptions)) {
-        HiLog::Debug(LABEL, "[ImageSource] allocatorType is DMA_ALLOC");
-        context.allocatorType = AllocatorType::DMA_ALLOC;
-    }
+    DecodeContext context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
 
     errorCode = mainDecoder_->Decode(index, context);
     if (context.ifPartialOutput) {
@@ -1180,6 +1192,12 @@ uint32_t ImageSource::GetFormatExtended(string &format)
         format = sourceInfo_.encodedFormat;
         return SUCCESS;
     }
+
+    if (sourceStreamPtr_ == nullptr) {
+        HiLog::Error(LABEL, "[ImageSource]sourceStreamPtr_ is null");
+        return ERR_MEDIA_NULL_POINTER;
+    }
+
     auto imageType = sourceStreamPtr_->Tell();
     uint32_t errorCode = ERR_IMAGE_DECODE_ABNORMAL;
     auto codec = DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *sourceStreamPtr_,
@@ -1190,6 +1208,10 @@ uint32_t ImageSource::GetFormatExtended(string &format)
     }
     const static string EXT_ENCODED_FORMAT_KEY = "EncodedFormat";
     auto decoderPtr = unique_ptr<AbsImageDecoder>(codec);
+    if (decoderPtr == nullptr) {
+        HiLog::Error(LABEL, "[ImageSource]decoderPtr null");
+        return ERR_MEDIA_NULL_POINTER;
+    }
     ProgDecodeContext context;
     if (IsIncrementalSource() &&
         decoderPtr->PromoteIncrementalDecode(UINT32_MAX, context) == ERR_IMAGE_DATA_UNSUPPORT) {
@@ -2152,29 +2174,19 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
 
 void ImageSource::DumpInputData(const std::string& fileSuffix)
 {
-    if (sourceStreamPtr_ == nullptr) {
-        HiLog::Info(LABEL, "ImageSource::DumpInputData failed, streamPtr is null");
+    if (!ImageSystemProperties::GetDumpImageEnabled()) {
+        return;
     }
 
-    std::string fileFormat;
-    for (auto& it : formatAgentMap_) {
-        if (SUCCESS == CheckEncodedFormat(*(it.second))) {
-            fileFormat = it.first;
-            break;
-        }
+    if (sourceStreamPtr_ == nullptr) {
+        HiLog::Info(LABEL, "ImageSource::DumpInputData failed, streamPtr is null");
+        return;
     }
 
     uint8_t* data = sourceStreamPtr_->GetDataPtr();
     size_t size = sourceStreamPtr_->GetStreamSize();
 
-    if (fileFormat.empty()) {
-        ImageUtils::DumpDataIfDumpEnabled(reinterpret_cast<const char*>(data), size, fileSuffix);
-    } else {
-        // fileFormat is like "image/jpeg", "image/png"...
-        std::string formatPrefix = "image/";
-        ImageUtils::DumpDataIfDumpEnabled(reinterpret_cast<const char*>(data), size,
-            fileFormat.substr(formatPrefix.size()));
-    }
+    ImageUtils::DumpDataIfDumpEnabled(reinterpret_cast<const char*>(data), size, fileSuffix);
 }
 
 #ifdef IMAGE_PURGEABLE_PIXELMAP
@@ -2183,5 +2195,10 @@ size_t ImageSource::GetSourceSize() const
     return sourceStreamPtr_ ? sourceStreamPtr_->GetStreamSize() : 0;
 }
 #endif
+
+bool ImageSource::IsSupportGenAstc()
+{
+    return ImageSystemProperties::GetMediaLibraryAstcEnabled();
+}
 } // namespace Media
 } // namespace OHOS

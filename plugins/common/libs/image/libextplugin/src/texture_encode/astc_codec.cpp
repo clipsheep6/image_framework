@@ -121,7 +121,7 @@ void extractDimensions(std::string &format, TextureEncodeOptions &param)
     }
 }
 
-#if QUALITY_CONTROL
+#if defined(QUALITY_CONTROL) && (QUALITY_CONTROL == 1)
 constexpr double MAX_PSNR = 99.9;
 constexpr double MAX_VALUE = 255;
 constexpr double THRESHOLD_R = 30.0;
@@ -151,14 +151,14 @@ bool CheckQuality(int32_t *mseIn[RGBA_COM], int blockNum, int blockXYZ)
             psnr[i] = MAX_PSNR;
             continue;
         }
-        double mseRgb = (double) mseTotal[i] / (blockNum * blockXYZ);
-        psnr[i] = LOG_BASE * log((double)(MAX_VALUE * MAX_VALUE) / mseRgb) / log(LOG_BASE);
+        double mseRgb = static_cast<double>(mseTotal[i] / (blockNum * blockXYZ));
+        psnr[i] = LOG_BASE * log(static_cast<double>(MAX_VALUE * MAX_VALUE) / mseRgb) / log(LOG_BASE);
     }
     if (mseTotal[RGBA_COM] == 0) {
         psnr[RGBA_COM] = MAX_PSNR;
     } else {
-        double mseRgb = (double) mseTotal[RGBA_COM] / (blockNum * blockXYZ * (RGBA_COM - 1));
-        psnr[RGBA_COM] = LOG_BASE * log((double)(MAX_VALUE * MAX_VALUE) / mseRgb) / log(LOG_BASE);
+        double mseRgb = static_cast<double>(mseTotal[RGBA_COM] / (blockNum * blockXYZ * (RGBA_COM - 1)));
+        psnr[RGBA_COM] = LOG_BASE * log(static_cast<double>(MAX_VALUE * MAX_VALUE) / mseRgb) / log(LOG_BASE);
     }
     HiLog::Debug(LABEL, "astc psnr r%{public}f g%{public}f b%{public}f a%{public}f rgb%{public}f",
         psnr[R_COM], psnr[G_COM], psnr[B_COM], psnr[A_COM],
@@ -174,7 +174,7 @@ static void FreeMem(AstcEncoder *work)
     if (!work) {
         return;
     }
-#if QUALITY_CONTROL
+#if defined(QUALITY_CONTROL) && (QUALITY_CONTROL == 1)
     if (work->calQualityEnable) {
         for (int i = R_COM; i < RGBA_COM; i++) {
             if (work->mse[i]) {
@@ -208,10 +208,8 @@ static bool InitMem(AstcEncoder *work, TextureEncodeOptions param, bool enableQu
     work->codec_context = nullptr;
     work->image_.data = nullptr;
     work->profile = ASTCENC_PRF_LDR_SRGB;
-#if QUALITY_CONTROL
+#if defined(QUALITY_CONTROL) && (QUALITY_CONTROL == 1)
     work->mse[R_COM] = work->mse[G_COM] = work->mse[B_COM] = work->mse[RGBA_COM] = nullptr;
-#endif
-#if QUALITY_CONTROL
     work->calQualityEnable = enableQualityCheck;
     if (work->calQualityEnable) {
         for (int i = R_COM; i < RGBA_COM; i++) {
@@ -256,11 +254,11 @@ uint32_t AstcCodec::AstcSoftwareEncode(TextureEncodeOptions &param, bool enableQ
     }
     work.error_ = astcenc_compress_image(work.codec_context, &work.image_, &work.swizzle_,
         work.data_out_ + TEXTURE_HEAD_BYTES, outSize - TEXTURE_HEAD_BYTES,
-#if QUALITY_CONTROL
+#if defined(QUALITY_CONTROL) && (QUALITY_CONTROL == 1)
         work.calQualityEnable, work.mse,
 #endif
         0);
-#if QUALITY_CONTROL
+#if defined(QUALITY_CONTROL) && (QUALITY_CONTROL == 1)
     if ((ASTCENC_SUCCESS != work.error_) ||
         (work.calQualityEnable && !CheckQuality(work.mse, blocksNum, param.blockX_ * param.blockY_))) {
 #else

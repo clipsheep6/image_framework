@@ -280,8 +280,6 @@ private:
     static bool RGB888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
     static bool CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t offset, int32_t stride,
         const InitializationOptions &opts);
-    static bool CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t offset, int32_t stride,
-        const InitializationOptions &opts, int &error);
     static void UpdatePixelsAlpha(const AlphaType &alphaType, const PixelFormat &pixelFormat, uint8_t *dstPixels,
                                   PixelMap dstPixelMap);
     static void InitDstImageInfo(const InitializationOptions &opts, const ImageInfo &srcImageInfo,
@@ -289,8 +287,6 @@ private:
     static bool CopyPixMapToDst(PixelMap &source, void* &dstPixels, int &fd, uint32_t bufferSize);
     static bool CopyPixelMap(PixelMap &source, PixelMap &dstPixelMap, int32_t &error);
     static bool CopyPixelMap(PixelMap &source, PixelMap &dstPixelMap);
-    static bool SourceCropAndConvert(PixelMap &source, const ImageInfo &srcImageInfo, const ImageInfo &dstImageInfo,
-        const Rect &srcRect, PixelMap &dstPixelMap, int &error);
     static bool SourceCropAndConvert(PixelMap &source, const ImageInfo &srcImageInfo, const ImageInfo &dstImageInfo,
         const Rect &srcRect, PixelMap &dstPixelMap);
     static bool IsSameSize(const Size &src, const Size &dst);
@@ -340,7 +336,8 @@ private:
     uint8_t GetVarintLen(int32_t value) const;
     void WriteVarint(std::vector<uint8_t> &buff, int32_t value) const;
     static int32_t ReadVarint(std::vector<uint8_t> &buff, int32_t &cursor);
-    void WriteData(std::vector<uint8_t> &buff, const uint8_t *data, int32_t size) const;
+    void WriteData(std::vector<uint8_t> &buff, const uint8_t *data,
+        const int32_t &height, const int32_t &rowDataSize, const int32_t &rowStride) const;
     static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor);
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
     bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
