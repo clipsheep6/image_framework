@@ -22,9 +22,7 @@
 #include "string_ex.h"
 #include "image_trace.h"
 #include "hitrace_meter.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
-#endif
 
 using OHOS::HiviewDFX::HiLog;
 namespace {
@@ -612,9 +610,9 @@ static bool ParseColorSpaceInfo(napi_env env, napi_value colorSpace, ColorSpaceI
     if (skColorSpace == nullptr) {
         HiLog::Error(LABEL, "To skcolorspace failed");
         return false;
-    }
     skcms_Matrix3x3 skMatrix;
     skColorSpace->toXYZD50(&skMatrix);
+    }
     for (int i = 0; i < ColorSpaceInfo::XYZ_SIZE; ++i) {
         for (int j = 0; j < ColorSpaceInfo::XYZ_SIZE; ++j) {
             colorSpaceInfo.xyz[i][j] = skMatrix.vals[i][j];
