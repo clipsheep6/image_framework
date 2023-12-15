@@ -237,6 +237,7 @@ if (use_clang_ios) {
         "$image_subsystem/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
         "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
         "$image_subsystem/interfaces/innerkits:image_native",
+        "$image_subsystem/frameworks/innerkitsimpl/egl_image:egl_image",
       ]
     }
 
