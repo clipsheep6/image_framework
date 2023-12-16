@@ -193,7 +193,7 @@ bool CheckConvertParmas(const ImageInfo &src, const ImageInfo &dst)
         src.alphaType == dst.alphaType;
 }
 
-bool CheckPixelmap(std::unique_ptr<PixelMap> &pixelMap, ImageInfo &imageInfo)
+bool g_CheckPixelmap(std::unique_ptr<PixelMap> &pixelMap, ImageInfo &imageInfo)
 {
     if (pixelMap->SetImageInfo(imageInfo) != SUCCESS) {
         HiLog::Error(LABEL, "set image info fail");
@@ -270,7 +270,7 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
         (opts.alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN) ? AlphaType::IMAGE_ALPHA_TYPE_PREMUL : opts.alphaType;
     dstAlphaType = ImageUtils::GetValidAlphaTypeByFormat(dstAlphaType, dstPixelFormat);
     ImageInfo dstImageInfo = MakeImageInfo(opts.size.width, opts.size.height, dstPixelFormat, dstAlphaType);
-    if (!CheckPixelmap(dstPixelMap, dstImageInfo)) {
+    if (!g_CheckPixelmap(dstPixelMap, dstImageInfo)) {
         HiLog::Error(LABEL, "check pixelMap pointer fail");
         errorCode = IMAGE_RESULT_DATA_ABNORMAL;
         return nullptr;
@@ -2287,20 +2287,20 @@ static float ProcessPremulF16Pixel(float mulPixel, float alpha, const float perc
 
 static void SetF16PixelAlpha(uint8_t *pixel, const float percent, bool isPixelPremul)
 {
-    float A = HalfTranslate(pixel + RGBA_F16_A_OFFSET);
+    float a = HalfTranslate(pixel + RGBA_F16_A_OFFSET);
     if (isPixelPremul) {
-        float R = HalfTranslate(pixel + RGBA_F16_R_OFFSET);
-        float G = HalfTranslate(pixel + RGBA_F16_G_OFFSET);
-        float B = HalfTranslate(pixel + RGBA_F16_B_OFFSET);
-        R = ProcessPremulF16Pixel(R, A, percent);
-        G = ProcessPremulF16Pixel(G, A, percent);
-        B = ProcessPremulF16Pixel(B, A, percent);
-        HalfTranslate(R, pixel + RGBA_F16_R_OFFSET);
-        HalfTranslate(G, pixel + RGBA_F16_G_OFFSET);
-        HalfTranslate(B, pixel + RGBA_F16_B_OFFSET);
+        float r = HalfTranslate(pixel + RGBA_F16_R_OFFSET);
+        float g = HalfTranslate(pixel + RGBA_F16_G_OFFSET);
+        float b = HalfTranslate(pixel + RGBA_F16_B_OFFSET);
+        r = ProcessPremulF16Pixel(r, a, percent);
+        g = ProcessPremulF16Pixel(g, a, percent);
+        b = ProcessPremulF16Pixel(b, a, percent);
+        HalfTranslate(r, pixel + RGBA_F16_R_OFFSET);
+        HalfTranslate(g, pixel + RGBA_F16_G_OFFSET);
+        HalfTranslate(b, pixel + RGBA_F16_B_OFFSET);
     }
-    A = percent * MAX_HALF;
-    HalfTranslate(A, pixel + RGBA_F16_A_OFFSET);
+    a = percent * MAX_HALF;
+    HalfTranslate(a, pixel + RGBA_F16_A_OFFSET);
 }
 
 static constexpr uint8_t U_ZERO = 0;
