@@ -18,6 +18,7 @@
 
 #include "image_mdk.h"
 #include "image_mdk_kits.h"
+#include "image_pixel_map_napi.h"
 #include "image_receiver_mdk.h"
 #include "image_receiver_mdk_kits.h"
 #include "image_source_mdk.h"
@@ -62,7 +63,7 @@ HWTEST_F(ImageNdkTest, OH_Image_SizeTest, TestSize.Level3)
     const ImageNative* native = nullptr;
     struct OhosImageSize* size = nullptr;
     int32_t result = OH_Image_Size(native, size);
-    ASSERT_EQ(result, UNSUCCESS);
+    ASSERT_EQ(result, IMAGE_RESULT_JNI_ENV_ABNORMAL);
 
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_SizeTest end";
 }
@@ -78,7 +79,7 @@ HWTEST_F(ImageNdkTest, OH_Image_FormatTest, TestSize.Level3)
     const ImageNative* native = nullptr;
     int32_t* format = nullptr;
     int32_t result = OH_Image_Format(native, format);
-    ASSERT_EQ(result, UNSUCCESS);
+    ASSERT_EQ(result, IMAGE_RESULT_JNI_ENV_ABNORMAL);
 
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_FormatTest end";
 }
@@ -95,7 +96,7 @@ HWTEST_F(ImageNdkTest, OH_Image_GetComponentTest, TestSize.Level3)
     int32_t componentType = 0;
     struct OhosImageComponent* componentNative = nullptr;
     int32_t result = OH_Image_GetComponent(native, componentType, componentNative);
-    ASSERT_EQ(result, UNSUCCESS);
+    ASSERT_EQ(result, IMAGE_RESULT_JNI_ENV_ABNORMAL);
 
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_GetComponentTest end";
 }

@@ -152,6 +152,16 @@
             "header": {
               "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/",
               "header_files": [
+                "image_mdk_common.h",
+                "image_creator_mdk.h"
+              ]
+            },
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_creator_ndk"
+          },
+          {
+            "header": {
+              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/",
+              "header_files": [
                 "image_packer_mdk.h"
               ]
             },

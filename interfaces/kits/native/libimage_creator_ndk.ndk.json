@@ -1,0 +1,34 @@
+[
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_Create"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_InitNative"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_Dequeue"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_Queue"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_On"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_GetCapacity"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_GetFormat"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageCreator_Release"
+    }
+]

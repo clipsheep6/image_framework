@@ -35,13 +35,19 @@
 #include "image_receiver_napi.h"
 #include "image_receiver.h"
 
-
 namespace OHOS {
 namespace Media {
 struct ImageCreatorCommonArgs;
 struct ImageCreatorAsyncContext;
 using Contextc = ImageCreatorAsyncContext* ;
 using CompleteCreatorCallback = void (*)(napi_env env, napi_status status, Contextc context);
+struct ImageCreatorNapiArgs {
+    int32_t width;
+    int32_t height;
+    int32_t format;
+    int32_t capicity;
+};
+
 class ImageCreatorNapi {
 public:
     ImageCreatorNapi();
@@ -50,6 +56,9 @@ public:
     static void DoCallBack(std::shared_ptr<ImageCreatorAsyncContext> context,
                            std::string name,
                            CompleteCreatorCallback callBack);
+    static int32_t CreateImageCreatorJsObject(napi_env env,
+        struct ImageCreatorNapiArgs args, napi_value* res);
+    static std::shared_ptr<ImageCreator> GetNative(ImageCreatorNapi &napi);
     void NativeRelease();
 #ifdef IMAGE_DEBUG_FLAG
     bool isCallBackTest = false;
