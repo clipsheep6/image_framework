@@ -3982,7 +3982,7 @@ HWTEST_F(ImageSourceJpegTest, GetAstcInfoTest001, TestSize.Level3)
     std::unique_ptr<FileSourceStream> fileSourceStream = FileSourceStream::CreateSourceStream(fd, SIZE_T, FILE_SIZE);
     ASSERT_NE(fileSourceStream, nullptr);
     ASTCInfo astcinfo;
-    bool ret = imageSource->GetASTCInfo(fileSourceStream->GetDataPtr,fileSourceStream->GetStreamSize,astcinfo);
+    bool ret = imageSource->GetASTCInfo(fileSourceStream->GetDataPtr, fileSourceStream->GetStreamSize, astcinfo);
     ASSERT_NE(ret, true);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetAstcInfoTest001 end";
 }
