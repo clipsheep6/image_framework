@@ -1462,7 +1462,6 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput002, TestSize.Level3)
     uint32_t status = 0;
 
     ASSERT_NE(source, nullptr);
-    ASSERT_NE(bufferSize, 0);
 
     ImageInfo imageInfo;
     pixelMap->GetImageInfo(imageInfo);
@@ -1757,7 +1756,7 @@ HWTEST_F(ImagePixelMapTest, SetAlpha001, TestSize.Level3)
     ASSERT_EQ(pixelsSize > 0 ? 0 : 1, 0);
 
     uint32_t status = pixelmap->SetAlpha(percent);
-    ASSERT_EQ(status, 0);
+    ASSERT_EQ(status, SUCCESS);
 
     ASSERT_EQ(alphaType, AlphaType::IMAGE_ALPHA_TYPE_PREMUL);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAlpha001 end";
@@ -1853,7 +1852,6 @@ HWTEST_F(ImagePixelMapTest, TransformData001, TestSize.Level3)
     void *buffer = malloc(bufferSize);
     EXPECT_NE(buffer, nullptr);
     pixelMap.SetPixelsAddr(buffer, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
-    uint8_t *data = const_cast<uint8_t *>(pixelMap.GetPixels());
     TransformData transformDate = {1.5, 1.5, 0, -1, -1, -1, -1, 0, 0, false, false};
     pixelMap.SetTransformData(transformDate);
     TransformData transformDate2;

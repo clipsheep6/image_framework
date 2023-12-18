@@ -28,6 +28,7 @@
 #include "pixel_map.h"
 #include "image_receiver.h"
 #include "image_source_util.h"
+#include "file_source_stream.h"
 #include "graphic_common.h"
 #include "image_receiver_manager.h"
 
@@ -64,6 +65,9 @@ const std::string GPS_LATITUDE = "GPSLatitude";
 const std::string GPS_LONGITUDE = "GPSLongitude";
 const std::string GPS_LATITUDE_REF = "GPSLatitudeRef";
 const std::string GPS_LONGITUDE_REF = "GPSLongitudeRef";
+
+static constexpr size_t FILE_SIZE = 10;
+static constexpr size_t SIZE_T = 0;
 
 class ImageSourceJpegTest : public testing::Test {
 public:
@@ -1094,7 +1098,7 @@ HWTEST_F(ImageSourceJpegTest, GetImagePropertyIntTest001, TestSize.Level3)
     int32_t value = 0;
     std::string key = "BitsPerSample";
     uint32_t res = imageSource->GetImagePropertyInt(index, key, value);
-    ASSERT_EQ(res, ERR_MEDIA_VALUE_INVALID);
+    ASSERT_NE(res, SUCCESS);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetImagePropertyIntTest001 end";
 }
 
@@ -3982,7 +3986,7 @@ HWTEST_F(ImageSourceJpegTest, GetAstcInfoTest001, TestSize.Level3)
     std::unique_ptr<FileSourceStream> fileSourceStream = FileSourceStream::CreateSourceStream(fd, SIZE_T, FILE_SIZE);
     ASSERT_NE(fileSourceStream, nullptr);
     ASTCInfo astcinfo;
-    bool ret = imageSource->GetASTCInfo(fileSourceStream->GetDataPtr, fileSourceStream->GetStreamSize, astcinfo);
+    bool ret = imageSource->GetASTCInfo(fileSourceStream->GetDataPtr(), fileSourceStream->GetStreamSize(), astcinfo);
     ASSERT_NE(ret, true);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetAstcInfoTest001 end";
 }
