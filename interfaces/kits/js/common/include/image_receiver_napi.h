@@ -123,6 +123,9 @@ class ImageReceiverAvaliableListener : public SurfaceBufferAvaliableListener {
 public:
     ~ImageReceiverAvaliableListener()
     {
+        if (context && context->env && context->callbackRef) {
+            napi_delete_reference(context->env, context->callbackRef);
+        }
         context = nullptr;
         callBack = nullptr;
     }
