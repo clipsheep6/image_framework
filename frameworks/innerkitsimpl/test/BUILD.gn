@@ -1107,6 +1107,54 @@ ohos_unittest("pixelastctest") {
   resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
 }
 
+ohos_unittest("textureencodetest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/include",
+    "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/include/texture_encode",
+    "${image_subsystem}/interfaces/innerkits/include",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
+    "${graphic_subsystem}/interfaces/inner_api/surface",
+    "${image_subsystem}/../../../drivers/peripheral/base/",
+    "${image_subsystem}/../../../drivers/peripheral/display/interfaces/include/",
+    "${image_subsystem}/../../../third_party/skia/",
+    "${image_subsystem}/../../../third_party/skia/include/codec/",
+    "${image_subsystem}/../../../third_party/skia/include/core/",
+    "${image_subsystem}/../../../third_party/libjpeg-turbo/",
+    "//third_party/astc-encoder/Source",
+    "//third_party/skia",
+    "//third_party/skia/include/codec",
+    "//third_party/skia/include/core",
+    "//third_party/libjpeg-turbo",
+    "${image_subsystem}/../../../drivers/peripheral/base",
+    "${image_subsystem}/../../../drivers/peripheral/display/interfaces/include",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest",
+  ]
+  sources = [
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/plugin_texture_encode_test.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/unittest/image_source_util.cpp",
+  ]
+
+  deps = [
+    "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin:exifhelper",
+    "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin:extplugin",
+    "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin:textureEncoderCL",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/interfaces/innerkits:image_native",
+    "${image_subsystem}/plugins/manager:pluginmanager",
+    "//third_party/astc-encoder:astc_encoder_shared",
+    "//third_party/opencl-headers:libcl",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "graphic_2d:color_manager",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+  ]
+}
+
 ################################################
 group("unittest") {
   testonly = true
@@ -1140,6 +1188,7 @@ group("unittest") {
     ":streamtest",
     ":transformtest",
     ":webpplugintest",
+    ":textureencodetest",
   ]
 
   if (enable_jpeg_hw_decode) {
