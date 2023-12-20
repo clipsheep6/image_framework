@@ -91,3 +91,37 @@ ohos_shared_library("image_packer_ndk") {
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }
+
+ohos_shared_library("opencv_ndk") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  sources = [ "opencv/opencv_native.cpp" ]
+  include_dirs = [
+    "../include",
+    "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include",
+    "$THIRD_DIR/opencv/build",
+    "$THIRD_DIR/opencv/include",
+    "$THIRD_DIR/opencv/modules/core/include/",
+    "$THIRD_DIR/opencv/modules/imgcodecs/include/",
+    "$THIRD_DIR/opencv/modules/imgproc/include/",
+  ]
+
+  include_dirs += [
+      "../../../../../interfaces/innerkits/include/"
+  ]
+
+  deps = [ "$THIRD_DIR/opencv:opencv" ]
+  external_deps = [ "c_utils:utils" ]
+#   external_deps = [
+#     "c_utils:utils",
+#     "hilog:libhilog",
+#   ]
+
+  innerapi_tags = [ "ndk" ]
+  subsystem_name = "multimedia"
+  part_name = "image_framework"
+}

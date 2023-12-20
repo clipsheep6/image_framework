@@ -72,3 +72,13 @@ ohos_ndk_headers("image_packer_ndk_header") {
   dest_dir = "$ndk_headers_out_dir/multimedia/image_framework"
   sources = [ "./include/image_packer_mdk.h" ]
 }
+
+ohos_ndk_library("libopencv_ndk") {
+  ndk_description_file = "./libopencv_ndk.ndk.json"
+  output_name = "opencv_ndk"
+}
+
+ohos_ndk_headers("open_ndk_header") {
+  dest_dir = "$ndk_headers_out_dir/multimedia/image_framework"
+  sources = [ "./include/opencv_native.h" ]
+}

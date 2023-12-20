@@ -1,0 +1,102 @@
+[
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Erode"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Dilate"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_MorphologyEx"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Resize"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_WarpAffine"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_WarpPerspective"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Remap"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_GetRotationMatrix2D"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_GetPerspectiveTransform"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Sobel"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Threshold"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_CvtColor"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Blur"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_FillPoly"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_AdaptiveThreshold"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_FindContours"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_BoxFilter"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_BorderInterpolate"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_CountNonZero"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_CopyMakeBorder"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Split"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Merge"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_MinMaxLoc"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_Normalize"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_CV_MixChannels"
+    }
+]
