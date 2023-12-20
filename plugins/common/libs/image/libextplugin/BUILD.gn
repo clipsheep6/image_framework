@@ -132,14 +132,14 @@ ohos_shared_library("textureEncoderCL") {
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
-      "//third_party/bounds_checking_function:libsec_static",
-      "//third_party/opencl-icd-loader:libopencl",
+      "//third_party/bounds_checking_function:libsec_static"
     ]
     external_deps = [
       "c_utils:utils",
       "graphic_2d:color_manager",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
+      "opencl-icd-loader:libopencl"
     ]
   }
   cflags = [
@@ -227,8 +227,7 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
-      "//third_party/astc-encoder:astc_encoder_shared",
-      "//third_party/opencl-icd-loader:libopencl",
+      "//third_party/astc-encoder:astc_encoder_shared"
     ]
     deps += skia_platform
 
@@ -237,6 +236,7 @@ ohos_shared_library("extplugin") {
       "graphic_2d:color_manager",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
+      "opencl-icd-loader:libopencl"
     ]
 
     if (enable_jpeg_hw_decode) {
