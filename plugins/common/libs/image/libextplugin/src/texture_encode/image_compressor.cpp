@@ -1289,10 +1289,10 @@ void ImageCompressor::Init()
     kernel_ = nullptr;
     switch_ = true;
     if (switch_) {
-        clOk_ = OHOS::InitOpenCL();
-        if (!clOk_) {
-            HiLog::Error(LABEL, "InitOpenCL error !");
-        }
+        //clOk_ = OHOS::InitOpenCL();
+        //if (!clOk_) {
+        //    HiLog::Error(LABEL, "InitOpenCL error !");
+        //}
         InitPartition();
     }
 }

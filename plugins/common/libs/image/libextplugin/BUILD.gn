@@ -133,7 +133,7 @@ ohos_shared_library("textureEncoderCL") {
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
       "//third_party/bounds_checking_function:libsec_static",
-      "//third_party/opencl-headers:libcl",
+      "//third_party/opencl-icd-loader:libopencl",
     ]
     external_deps = [
       "c_utils:utils",
@@ -228,7 +228,7 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
       "//third_party/astc-encoder:astc_encoder_shared",
-      "//third_party/opencl-headers:libcl",
+      "//third_party/opencl-icd-loader:libopencl",
     ]
     deps += skia_platform
 

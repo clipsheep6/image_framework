@@ -52,7 +52,7 @@
           "skia",
           "zlib",
           "astc-encoder",
-          "opencl-headers"
+          "opencl-icd-loader"
         ]
       },
       "build": {
