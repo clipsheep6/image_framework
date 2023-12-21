@@ -69,7 +69,7 @@ if (use_clang_ios) {
   }
 } else {
   ohos_shared_library("pluginmanager") {
-    if (!use_clang_android) {
+    if (!use_clang_android && !use_mingw_win && !use_clang_linux) {
       sanitize = {
         cfi = true
         cfi_cross_dso = true
@@ -116,8 +116,15 @@ if (use_clang_ios) {
 
     if (use_mingw_win) {
       defines = image_decode_windows_defines
-      include_dirs += [ "$image_subsystem/mock/native/include/log" ]
+      include_dirs += [
+        "$image_subsystem/mock/native/include/log",
+        "$image_subsystem/mock/native/include",
+      ]
       deps = [ "$image_subsystem/mock/native:log_mock_static" ]
+      sources += [
+        "//foundation/multimedia/image_framework/mock/native/src/directory_ex.cpp",
+        "//foundation/multimedia/image_framework/mock/native/src/rwlock.cpp",
+      ]
     } else if (use_clang_mac) {
       defines = image_decode_mac_defines
       include_dirs += [
@@ -131,6 +138,16 @@ if (use_clang_ios) {
     } else if (use_clang_android) {
       include_dirs += [ "//commonlibrary/c_utils/base/include" ]
       cflags -= [ "-DIMAGE_COLORSPACE_FLAG" ]
+
+      deps = [
+        "//commonlibrary/c_utils/base:utils",
+        "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      ]
+    } else if (use_clang_linux) {
+      defines = image_decode_linux_defines
+      include_dirs += [ "//commonlibrary/c_utils/base/include" ]
+
+      ldflags = [ "-Wl,-Bsymbolic" ]
 
       deps = [
         "//commonlibrary/c_utils/base:utils",

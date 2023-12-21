@@ -16,12 +16,21 @@
 #ifndef PLUGIN_ERRORS_H
 #define PLUGIN_ERRORS_H
 
+#ifndef _WIN32
 #include "errors.h"
+#endif
 #include "modules.h"
 
 namespace OHOS {
 namespace MultimediaPlugin {
+#ifdef _WIN32
+constexpr uint32_t SUBSYS_MULTIMEDIA = 30;
+constexpr uint32_t SUBSYSTEM_BIT_NUM = 21;
+constexpr uint32_t MODULE_BIT_NUM = 16;
+constexpr uint32_t BASE_PLUGIN_ERR_OFFSET = (SUBSYS_MULTIMEDIA << SUBSYSTEM_BIT_NUM) | (0 << MODULE_BIT_NUM);
+#else
 constexpr uint32_t BASE_PLUGIN_ERR_OFFSET = ErrCodeOffset(SUBSYS_MULTIMEDIA, MODULE_PLUGIN);
+#endif
 
 constexpr uint32_t SUCCESS = 0;                                           // Operation succeed
 constexpr uint32_t ERR_GENERAL = BASE_PLUGIN_ERR_OFFSET;                  // General error

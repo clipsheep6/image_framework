@@ -52,7 +52,7 @@ bool AllocShareBuffer(DecodeContext &context, uint64_t byteCount)
             static_cast<unsigned long long>(byteCount));
         return false;
     }
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM) && !defined(_LINUX_)
     uint32_t id = context.pixelmapUniqueId_;
     std::string name = "SVG RawData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(id);
     int fd = AshmemCreate(name.c_str(), byteCount);

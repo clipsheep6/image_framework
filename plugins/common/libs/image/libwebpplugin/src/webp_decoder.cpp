@@ -386,7 +386,7 @@ void WebpDecoder::Reset()
 
 static bool SharedMemoryCreate(DecodeContext &context, const uint32_t &byteCount)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM) || defined(_LINUX_)
     HiLog::Error(LABEL, "Unsupport dma mem alloc");
     return false;
 #else

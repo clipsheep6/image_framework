@@ -19,6 +19,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <memory>
+#include <mutex>
 #include "nocopyable.h"
 #include "plugin_errors.h"
 #include "plugin_export.h"

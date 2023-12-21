@@ -206,7 +206,7 @@ uint32_t PngDecoder::Decode(uint32_t index, DecodeContext &context)
     return ret;
 }
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM) && !defined(_LINUX_)
 bool AllocBufferForShareType(DecodeContext &context, uint64_t byteCount)
 {
     if (byteCount == 0) {
@@ -356,7 +356,7 @@ uint8_t *PngDecoder::AllocOutputBuffer(DecodeContext &context)
 {
     if (context.pixelsBuffer.buffer == nullptr) {
         uint64_t byteCount = static_cast<uint64_t>(pngImageInfo_.rowDataSize) * pngImageInfo_.height;
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM) && !defined(_LINUX_)
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
             if (!AllocBufferForShareType(context, byteCount)) {
                 HiLog::Error(LABEL, "alloc output buffer for SHARE_MEM_ALLOC error.");

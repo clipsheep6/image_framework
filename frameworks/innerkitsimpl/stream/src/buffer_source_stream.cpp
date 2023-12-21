@@ -21,6 +21,10 @@
 #ifndef _WIN32
 #include "securec.h"
 #else
+/* success */
+#ifndef EOK
+#define EOK (0)
+#endif
 #include "memory.h"
 #endif
 #include "buffer_packer_stream.h"
