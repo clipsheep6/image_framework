@@ -406,6 +406,171 @@ const std::vector<std::string> META_DATA = {
         }
     )"
 };
+
+#ifdef STATIC_PLUGIN
+const std::vector<std::string> META_DATA_DEFAULT = {
+    R"(
+        {
+          "packageName":"LibExtPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libextplugin",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::ExtDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/extended"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::ExtEncoder",
+              "services": [
+                {
+                  "interfaceID":3,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/extended"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibRawPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"librawplugin",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::RawDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/x-raw"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibSvgPlugin",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libsvgplugin",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::SvgDecoder",
+              "services": [
+                {
+                  "interfaceID":2,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/svg+xml"
+                }
+              ]
+            }
+          ]
+        }
+    )",
+    R"(
+        {
+          "packageName":"LibImageFormatAgent",
+          "version":"1.0.0.0",
+          "targetVersion":"1.0.0.0",
+          "libraryPath":"libimageformatagent",
+          "classes": [
+            {
+              "className":"OHOS::ImagePlugin::WebpFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/webp"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::SvgFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/svg+xml"
+                }
+              ]
+            },
+            {
+              "className":"OHOS::ImagePlugin::RawFormatAgent",
+              "services": [
+                {
+                  "interfaceID":1,
+                  "serviceType":0
+                }
+              ],
+              "priority":100,
+              "capabilities": [
+                {
+                  "name":"encodeFormat",
+                  "type":"string",
+                  "value": "image/x-raw"
+                }
+              ]
+            }
+          ]
+        }
+    )"
+};
+#endif
+
 } // namespace MultimediaPlugin
 } // namespace OHOS
 

@@ -22,14 +22,16 @@
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
 #endif
+#ifndef ASTC_UNSUPPORT
 #include "astc_codec.h"
+#endif
 #include "ext_pixel_convert.h"
 #include "ext_wstream.h"
 #include "image_type_converter.h"
 #include "image_utils.h"
 #include "media_errors.h"
 #include "string_ex.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 #include "surface_buffer.h"
 #endif
 
@@ -129,8 +131,10 @@ static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
 
     uint64_t rowStride = skInfo.minRowBytes64();
     if (pixelMap->GetAllocatorType() == Media::AllocatorType::DMA_ALLOC) {
+#if !defined(IOS_PLATFORM) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
         rowStride = sbBuffer->GetStride();
+#endif
     }
     if (!bitmap.installPixels(skInfo, pixels, rowStride)) {
         HiLog::Error(LABEL, "ExtEncoder::BuildSkBitmap to skbitmap failed");
@@ -150,9 +154,13 @@ uint32_t ExtEncoder::FinalizeEncode()
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     if (IsAstc(opts_.format)) {
+#ifndef ASTC_UNSUPPORT
         AstcCodec astcEncoder;
         astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);
         return astcEncoder.ASTCEncode();
+#else
+        return ERR_IMAGE_DATA_UNSUPPORT;
+#endif
     }
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {

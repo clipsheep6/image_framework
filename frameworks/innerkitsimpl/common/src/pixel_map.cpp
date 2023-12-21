@@ -16,6 +16,7 @@
 #include "pixel_map.h"
 #include <iostream>
 #include <unistd.h>
+#include <string.h>
 
 #include "image_system_properties.h"
 #include "image_trace.h"
@@ -32,12 +33,15 @@
 #include "pixel_convert_adapter.h"
 #include "pixel_map_utils.h"
 #include "post_proc.h"
+#if !defined(_WIN32)
 #include "parcel.h"
+#endif
 #include "pubdef.h"
 #include "image_mdk_common.h"
 
 #ifndef _WIN32
 #include "securec.h"
+#include <sys/mman.h>
 #else
 #include "memory.h"
 #endif
@@ -46,7 +50,7 @@
 #include "purgeable_resource_manager.h"
 #endif
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 #include <sys/mman.h>
 #include "ashmem.h"
 #include "buffer_handle_parcel.h"
@@ -128,7 +132,7 @@ void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
             break;
         }
         case AllocatorType::DMA_ALLOC: {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
             ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer*>(context_));
             data_ = nullptr;
             context_ = nullptr;
@@ -322,7 +326,7 @@ void PixelMap::ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataS
 
 void *PixelMap::AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId)
 {
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     std::string name = "PixelMap RawData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(uniqueId);
     fd = AshmemCreate(name.c_str(), bufferSize);
     if (fd < 0) {
@@ -544,9 +548,13 @@ bool PixelMap::SourceCropAndConvert(PixelMap &source, const ImageInfo &srcImageI
         return false;
     }
 
+#ifdef _WIN32
+    memset(dstPixels, 0, bufferSize);
+#else
     if (memset_s(dstPixels, bufferSize, 0, bufferSize) != EOK) {
         HiLog::Error(LABEL, "dstPixels memset_s failed.");
     }
+#endif
     Position srcPosition { srcRect.left, srcRect.top };
     if (!PixelConvertAdapter::ReadPixelsConvert(source.GetPixels(), srcPosition, source.GetRowStride(), srcImageInfo,
         dstPixels, dstPixelMap.GetRowStride(), dstImageInfo)) {
@@ -775,7 +783,7 @@ uint32_t PixelMap::SetRowDataSizeForImageInfo(ImageInfo info)
     } else if (info.pixelFormat == PixelFormat::ASTC_8x8) {
         rowDataSize_ = pixelBytes_ * (((info.size.width + NUM_7) >> NUM_3) << NUM_3);
     } else {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
         if (allocatorType_ == AllocatorType::DMA_ALLOC) {
             if (context_ == nullptr) {
                 HiLog::Error(LABEL, "set imageInfo failed, context_ is null");
@@ -1101,7 +1109,9 @@ bool PixelMap::IsSameImage(const PixelMap &other)
 
 uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("ReadPixels by bufferSize");
+#endif
     if (dst == nullptr) {
         HiLog::Error(LABEL, "read pixels by buffer input dst address is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
@@ -1349,7 +1359,9 @@ uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize
 
 uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("WritePixels");
+#endif
     if (source == nullptr || bufferSize < static_cast<uint64_t>(pixelsSize_)) {
         HiLog::Error(LABEL, "write pixels by buffer source is nullptr or size(%{public}llu) < pixelSize(%{public}u).",
                      static_cast<unsigned long long>(bufferSize), pixelsSize_);
@@ -1425,7 +1437,7 @@ void *PixelMap::GetFd() const
 
 void PixelMap::ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size)
 {
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
         if (context != nullptr) {
             int *fd = static_cast<int *>(context);
@@ -1458,6 +1470,7 @@ void PixelMap::ReleaseMemory(AllocatorType allocType, void *addr, void *context,
 #endif
 }
 
+#if !defined(_WIN32) && !defined(_APPLE)
 bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
 {
     const uint8_t *data = data_;
@@ -1475,7 +1488,7 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
     if (size <= MIN_IMAGEDATA_SIZE) {
         return parcel.WriteUnpadBuffer(data, size);
     }
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     uint32_t id = GetUniqueId();
     std::string name = "Parcel ImageData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(id);
     int fd = AshmemCreate(name.c_str(), size);
@@ -1609,7 +1622,7 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 
 bool PixelMap::WriteFileDescriptor(Parcel &parcel, int fd)
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     if (fd < 0) {
         return false;
     }
@@ -1626,7 +1639,7 @@ bool PixelMap::WriteFileDescriptor(Parcel &parcel, int fd)
 
 int PixelMap::ReadFileDescriptor(Parcel &parcel)
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     sptr<IPCFileDescriptor> descriptor = parcel.ReadObject<IPCFileDescriptor>();
     if (descriptor == nullptr) {
         return -1;
@@ -1799,11 +1812,13 @@ bool PixelMap::Marshalling(Parcel &parcel) const
             return false;
         }
     } else if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
         if (!parcel.WriteInt32(bufferSize)) {
             return false;
         }
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context_);
         sbBuffer->WriteToMessageParcel(static_cast<MessageParcel&>(parcel));
+#endif
     } else {
         if (!WriteImageData(parcel, bufferSize)) {
             HiLog::Error(LABEL, "write pixel map buffer to parcel failed.");
@@ -1956,6 +1971,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
         *static_cast<int32_t *>(context) = fd;
         base = static_cast<uint8_t *>(ptr);
     } else if (allocType == AllocatorType::DMA_ALLOC) {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
         sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
         surfaceBuffer->ReadFromMessageParcel(static_cast<MessageParcel&>(parcel));
         uint8_t* virAddr = static_cast<uint8_t*>(surfaceBuffer->GetVirAddr());
@@ -1963,6 +1979,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
         ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
         base = virAddr;
         context = nativeBuffer;
+#endif
     } else {
         base = ReadImageData(parcel, bufferSize);
         if (base == nullptr) {
@@ -2007,6 +2024,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
     }
     return pixelMap;
 }
+#endif
 
 void PixelMap::WriteUint8(std::vector<uint8_t> &buff, uint8_t value) const
 {
@@ -2461,7 +2479,7 @@ static inline int FloatToInt(float a)
     return static_cast<int>(a + HALF);
 }
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 static void GenSrcTransInfo(SkTransInfo &srcInfo, ImageInfo &imageInfo, PixelMap* pixelmap,
     sk_sp<SkColorSpace> colorSpace)
 {
@@ -2510,7 +2528,7 @@ static bool GendstTransInfo(SkTransInfo &srcInfo, SkTransInfo &dstInfo, SkMatrix
         return false;
     }
     memoryInfo.memory = std::move(dstMemory);
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     uint64_t rowStride = dstInfo.info.minRowBytes();
     if (memoryInfo.allocType == AllocatorType::DMA_ALLOC) {
         if (memoryInfo.memory->extend.data == nullptr) {
@@ -2561,7 +2579,7 @@ bool PixelMap::DoTranslation(TransInfos &infos, const AntiAliasingOption &option
     }
 
     SkTransInfo src;
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     GenSrcTransInfo(src, imageInfo, this, ToSkColorSpace(this));
 #else
     GenSrcTransInfo(src, imageInfo, data_, ToSkColorSpace(this));
@@ -2603,7 +2621,9 @@ bool PixelMap::DoTranslation(TransInfos &infos, const AntiAliasingOption &option
 
 void PixelMap::scale(float xAxis, float yAxis)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("PixelMap scale");
+#endif
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2613,7 +2633,9 @@ void PixelMap::scale(float xAxis, float yAxis)
 
 void PixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("PixelMap scale");
+#endif
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos, option)) {
@@ -2623,7 +2645,9 @@ void PixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
 
 bool PixelMap::resize(float xAxis, float yAxis)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("PixelMap resize");
+#endif
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2635,7 +2659,9 @@ bool PixelMap::resize(float xAxis, float yAxis)
 
 void PixelMap::translate(float xAxis, float yAxis)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("PixelMap translate");
+#endif
     TransInfos infos;
     infos.matrix.setTranslate(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2645,7 +2671,9 @@ void PixelMap::translate(float xAxis, float yAxis)
 
 void PixelMap::rotate(float degrees)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("PixelMap rotate");
+#endif
     TransInfos infos;
     infos.matrix.setRotate(degrees);
     if (!DoTranslation(infos)) {
@@ -2655,7 +2683,9 @@ void PixelMap::rotate(float degrees)
 
 void PixelMap::flip(bool xAxis, bool yAxis)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("PixelMap flip");
+#endif
     if (xAxis == false && yAxis == false) {
         return;
     }
@@ -2664,12 +2694,14 @@ void PixelMap::flip(bool xAxis, bool yAxis)
 
 uint32_t PixelMap::crop(const Rect &rect)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("PixelMap crop");
+#endif
     ImageInfo imageInfo;
     GetImageInfo(imageInfo);
 
     SkTransInfo src;
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     GenSrcTransInfo(src, imageInfo, this, ToSkColorSpace(this));
 #else
     GenSrcTransInfo(src, imageInfo, data_, ToSkColorSpace(this));
@@ -2695,7 +2727,7 @@ uint32_t PixelMap::crop(const Rect &rect)
         return ERR_IMAGE_CROP;
     }
     uint64_t rowStride = dst.info.minRowBytes();
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (m->extend.data == nullptr) {
             HiLog::Error(LABEL, "GendstTransInfo get surfacebuffer failed");
@@ -2759,7 +2791,7 @@ uint32_t PixelMap::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
     src.info = ToSkImageInfo(imageInfo, ToSkColorSpace(this));
     uint64_t rowStride = src.info.minRowBytes();
     uint8_t* srcData = data_;
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     if (GetAllocatorType() == AllocatorType::DMA_ALLOC && GetFd() != nullptr) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(GetFd());
         rowStride = sbBuffer->GetStride();

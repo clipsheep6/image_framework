@@ -51,6 +51,8 @@ config("image_external_config") {
     "//drivers/peripheral/base",
     "$skia_root/skia/third_party/externals/libjpeg-turbo",
     "$ipc_subsystem/communication/ipc/ipc/native/src/napi_common/include",
+    "//third_party/json/single_include/nlohmann",
+    "//base/startup/init/interfaces/innerkits/include/syspara",
   ]
 
   include_dirs += [
@@ -68,8 +70,10 @@ config("image_external_config") {
   ]
 
   if (use_mingw_win) {
-    include_dirs +=
-        [ "//foundation/multimedia/image_framework/mock/native/include" ]
+    include_dirs += [
+      "//foundation/multimedia/image_framework/mock/native/include",
+      "//commonlibrary/c_utils/base/include",
+    ]
   } else if (use_clang_mac) {
     include_dirs += [
       "//foundation/multimedia/image_framework/mock/native/include",
@@ -149,6 +153,75 @@ if (use_clang_ios) {
     ]
 
     #relative_install_dir = "module/multimedia"
+    subsystem_name = "multimedia"
+    part_name = "image_framework"
+  }
+} else if (use_clang_linux || use_mingw_win || use_clang_mac) {
+  ohos_shared_library("image_napi") {
+    public_configs = [ ":image_external_config" ]
+    include_dirs = [
+      "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+      "//foundation/multimedia/image_framework/interfaces/innerkits/include",
+      "//foundation/graphic/graphic_2d/utils/color_manager/export",
+      "//third_party/skia",
+    ]
+
+    sources = [
+      "$image_subsystem/frameworks/kits/js/common/native_module_ohos_image.cpp",
+      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_napi_utils.cpp",
+      "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp",
+      "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixel_map_napi.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_source_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/buffer_packer_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_type_converter.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_system_properties.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/scan_line_filter.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/matrix.cpp",
+      "//foundation/multimedia/image_framework/mock/native/src/directory_ex.cpp",
+    ]
+
+    cflags = [
+      "-DIMAGE_DEBUG_FLAG",
+    ]
+
+    deps = [
+      "//third_party/skia:skia_ohos",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+    ]
+
+    external_deps = [
+      "c_utils:utils",
+      "hilog:libhilog",
+      "napi:ace_napi",
+    ]
+
+    if (use_mingw_win) {
+      external_deps -= [ "c_utils:utils" ]
+      defines = image_decode_windows_defines
+    } else if (use_clang_mac) {
+      external_deps -= [ "c_utils:utils" ]
+      defines = image_decode_mac_defines
+    } else {
+      deps += [ "//third_party/bounds_checking_function:libsec_static" ]
+      defines = image_decode_linux_defines
+    }
+
+    output_name = "libimage"
+    relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
     part_name = "image_framework"
   }

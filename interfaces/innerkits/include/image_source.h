@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <functional>
 
 #include "decode_listener.h"
 #include "image_type.h"
@@ -139,7 +140,7 @@ class SourceStream;
 
 class ImageSource {
 public:
-    ~ImageSource();
+    NATIVEEXPORT ~ImageSource();
     NATIVEEXPORT static uint32_t GetSupportedFormats(std::set<std::string> &formats);
     NATIVEEXPORT static std::unique_ptr<ImageSource> CreateImageSource(std::unique_ptr<std::istream> is,
                                                                        const SourceOptions &opts, uint32_t &errorCode);
@@ -159,12 +160,14 @@ public:
 
     NATIVEEXPORT static bool IsSupportGenAstc();
 
-    NATIVEEXPORT std::unique_ptr<PixelMap> CreatePixelMap(const DecodeOptions &opts, uint32_t &errorCode)
-    {
-        return CreatePixelMapEx(0, opts, errorCode);
-    }
     NATIVEEXPORT std::unique_ptr<PixelMap> CreatePixelMapEx(uint32_t index, const DecodeOptions &opts,
                                                             uint32_t &errorCode);
+
+    NATIVEEXPORT std::unique_ptr<PixelMap> CreatePixelMap(const DecodeOptions &opts, uint32_t &errorCode);
+    // {
+    //     return CreatePixelMapEx(0, opts, errorCode);
+    // }
+
     NATIVEEXPORT std::unique_ptr<PixelMap> CreatePixelMap(uint32_t index, const DecodeOptions &opts,
                                                           uint32_t &errorCode);
     NATIVEEXPORT std::unique_ptr<IncrementalPixelMap> CreateIncrementalPixelMap(uint32_t index,
@@ -172,12 +175,12 @@ public:
                                                                                 uint32_t &errorCode);
     // for incremental source.
     NATIVEEXPORT uint32_t UpdateData(const uint8_t *data, uint32_t size, bool isCompleted);
-    // for obtaining basic image information without decoding image data.
-    NATIVEEXPORT uint32_t GetImageInfo(ImageInfo &imageInfo)
-    {
-        return GetImageInfo(0, imageInfo);
-    }
     NATIVEEXPORT uint32_t GetImageInfo(uint32_t index, ImageInfo &imageInfo);
+    // for obtaining basic image information without decoding image data.
+    NATIVEEXPORT uint32_t GetImageInfo(ImageInfo &imageInfo);
+    // {
+    //     return GetImageInfo(0, imageInfo);
+    // }
     NATIVEEXPORT const SourceInfo &GetSourceInfo(uint32_t &errorCode);
     NATIVEEXPORT void RegisterListener(PeerListener *listener);
     NATIVEEXPORT void UnRegisterListener(PeerListener *listener);

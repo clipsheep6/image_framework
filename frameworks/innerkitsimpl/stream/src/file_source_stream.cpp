@@ -16,6 +16,8 @@
 #include "file_source_stream.h"
 
 #include <unistd.h>
+#include <limits.h>
+#include <stdlib.h>
 
 #include "directory_ex.h"
 #include "file_packer_stream.h"
@@ -24,7 +26,7 @@
 #include "log_tags.h"
 #include "media_errors.h"
 
-#if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 #include <sys/mman.h>
 #define SUPPORT_MMAP
 #endif
@@ -277,6 +279,7 @@ size_t FileSourceStream::GetStreamSize()
     return fileSize_ - fileOriginalOffset_;
 }
 
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
 static bool DupFd(FILE *f, int &res)
 {
     res = fileno(f);
@@ -291,6 +294,7 @@ static bool DupFd(FILE *f, int &res)
     }
     return true;
 }
+#endif
 
 uint8_t *FileSourceStream::GetDataPtr()
 {
@@ -333,12 +337,16 @@ void FileSourceStream::ResetReadBuffer()
 
 OutputDataStream* FileSourceStream::ToOutputDataStream()
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     int dupFd = -1;
     if (DupFd(filePtr_, dupFd)) {
         HiLog::Error(LABEL, "[FileSourceStream] ToOutputDataStream fd failed");
         return nullptr;
     }
     return new (std::nothrow) FilePackerStream(dupFd);
+#else
+    return nullptr;
+#endif
 }
 
 int FileSourceStream::GetMMapFd()

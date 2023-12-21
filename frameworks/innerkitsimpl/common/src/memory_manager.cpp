@@ -21,10 +21,11 @@
 #include "image_utils.h"
 #include "log_tags.h"
 #include "media_errors.h"
+#ifndef _WIN32
 #include "securec.h"
-
-#if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
 #include <sys/mman.h>
+#endif
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 #include "ashmem.h"
 #include "surface_buffer.h"
 #define SUPPORT_SHARED_MEMORY
@@ -34,8 +35,10 @@ namespace OHOS {
 namespace Media {
 using namespace OHOS::HiviewDFX;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "MemoryManager" };
+#ifdef SUPPORT_SHARED_MEMORY
 static const size_t SIZE_ZERO = 0;
 static const int LINUX_SUCCESS = 0;
+#endif
 // Define pixel map malloc max size 600MB
 constexpr int32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
 
@@ -74,7 +77,7 @@ uint32_t HeapMemory::Release()
 #endif
     return SUCCESS;
 }
-
+#ifdef SUPPORT_SHARED_MEMORY
 static inline void ReleaseSharedMemory(int* fdPtr, uint8_t* ptr = nullptr, size_t size = SIZE_ZERO)
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
@@ -86,6 +89,7 @@ static inline void ReleaseSharedMemory(int* fdPtr, uint8_t* ptr = nullptr, size_
     }
 #endif
 }
+#endif
 
 uint32_t SharedMemory::Create()
 {
@@ -144,7 +148,7 @@ uint32_t SharedMemory::Release()
 
 uint32_t DmaMemory::Create()
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM) || defined(_LINUX_)
     HiLog::Error(LABEL, "Unsupport dma mem alloc");
     return ERR_IMAGE_DATA_UNSUPPORT;
 #else
@@ -179,7 +183,7 @@ uint32_t DmaMemory::Create()
 
 uint32_t DmaMemory::Release()
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM) || defined(_LINUX_)
     HiLog::Error(LABEL, "Unsupport dma mem release");
     return ERR_IMAGE_DATA_UNSUPPORT;
 #else

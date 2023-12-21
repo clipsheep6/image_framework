@@ -21,10 +21,18 @@
 
 #include "SkCodec.h"
 #include "abs_image_decoder.h"
+#ifdef JPEG_HW_DECODE_ENABLE
 #include "display_type.h"
+#endif
 #include "ext_stream.h"
+
+#ifndef STATIC_PLUGIN
 #include "exif_info.h"
+#endif
+
+#ifdef JPEG_HW_DECODE_ENABLE
 #include "hardware/jpeg_hw_decoder.h"
+#endif
 #include "nocopyable.h"
 #include "plugin_class_base.h"
 
@@ -71,10 +79,13 @@ private:
     bool DecodeHeader();
     bool IsSupportScaleOnDecode();
     bool GetScaledSize(int &dWidth, int &dHeight, float &scale);
+#ifdef JPEG_HW_DECODE_ENABLE
+    bool GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale);
+    bool IsSupportHardwareDecode();
+#endif
     bool GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale);
     bool IsSupportCropOnDecode();
     bool IsSupportCropOnDecode(SkIRect &target);
-    bool IsSupportHardwareDecode();
     bool ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType);
     bool ConvertInfoToColorType(SkColorType &format, PlPixelFormat &outputFormat);
     bool GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res);
@@ -93,10 +104,13 @@ private:
     SkCodec::Options dstOptions_;
     SkIRect dstSubset_;
     int32_t frameCount_ = 0;
+#ifndef STATIC_PLUGIN
     EXIFInfo exifInfo_;
+#endif
     uint8_t *gifCache_ = nullptr;
     uint32_t gifCacheIndex_ = 0;
 
+#ifdef JPEG_HW_DECODE_ENABLE
     // hardware
     OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer outputBuffer_;
     SkImageInfo hwDstInfo_;
@@ -106,6 +120,7 @@ private:
     uint32_t sampleSize_ = 1;
     static constexpr uint32_t ALIGN_8 = 8;
     static constexpr uint32_t ALIGN_16 = 16;
+#endif
 };
 } // namespace ImagePlugin
 } // namespace OHOS

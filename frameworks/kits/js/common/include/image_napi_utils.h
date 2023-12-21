@@ -130,6 +130,13 @@ do { \
 #define IMAGE_LINE_OUT(fmt, ...)
 #endif
 
+
+#ifndef _WIN32
+#define IMAGE_FORCE_EXPORT __attribute__((visibility("default")))
+#else
+#define IMAGE_FORCE_EXPORT __declspec(dllexport)
+#endif
+
 namespace OHOS {
 namespace Media {
 class ImageNapiUtils {

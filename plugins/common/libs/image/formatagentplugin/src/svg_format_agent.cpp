@@ -19,7 +19,7 @@
 #include "log_tags.h"
 #include "plugin_service.h"
 #include "sched.h"
-#include "string"
+#include <cstring>
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -54,8 +54,7 @@ bool SvgFormatAgent::CheckFormat(const void *headerData, uint32_t dataSize)
         HiLog::Error(LABEL, "read head size:[%{public}u] less than header size:[%{public}u].", dataSize, SVG_STAMP_LEN);
         return false;
     }
-
-    if (memcmp(SVG_STAMP, headerData, SVG_STAMP_LEN) != 0) {
+    if (::memcmp(SVG_STAMP, headerData, SVG_STAMP_LEN) != 0) {
         HiLog::Info(LABEL, "header stamp mismatch.");
         return false;
     }

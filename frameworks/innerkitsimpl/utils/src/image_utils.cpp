@@ -24,8 +24,8 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
-#include "__config"
 #include "hilog/log.h"
 #include "log_tags.h"
 #include "ios"
@@ -41,8 +41,9 @@
 #include "hitrace_meter.h"
 #include "image_system_properties.h"
 #include "pixel_map.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
 #include "surface_buffer.h"
+#include "__config"
 #else
 #include "refbase.h"
 #endif
@@ -324,7 +325,9 @@ static void ReversePixels(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteC
 
 void ImageUtils::BGRAToARGB(uint8_t* srcPixels, uint8_t* dstPixels, uint32_t byteCount)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("BGRAToARGB");
+#endif
     ReversePixels(srcPixels, dstPixels, byteCount);
 }
 
@@ -339,8 +342,10 @@ int32_t ImageUtils::SurfaceBuffer_Reference(void* buffer)
         HiLog::Error(LABEL, "parameter error, please check input parameter");
         return ERR_SURFACEBUFFER_REFERENCE_FAILED;
     }
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     OHOS::RefBase *ref = reinterpret_cast<OHOS::RefBase *>(buffer);
     ref->IncStrongRef(ref);
+#endif
     return SUCCESS;
 }
 
@@ -350,8 +355,10 @@ int32_t ImageUtils::SurfaceBuffer_Unreference(void* buffer)
         HiLog::Error(LABEL, "parameter error, please check input parameter");
         return ERR_SURFACEBUFFER_UNREFERENCE_FAILED;
     }
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     OHOS::RefBase *ref = reinterpret_cast<OHOS::RefBase *>(buffer);
     ref->DecStrongRef(ref);
+#endif
     return SUCCESS;
 }
 

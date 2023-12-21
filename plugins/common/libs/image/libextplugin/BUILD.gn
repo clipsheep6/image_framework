@@ -15,9 +15,9 @@ import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 third_party_dir = "/third_party"
 third_party_root = "/${third_party_dir}"
-if (use_mingw_win || use_clang_mac) {
-  graphic_root = "/${image_sep_f}${image_oundation}/${graphic_multimedia}"
-}
+#if (use_clang_mac) {
+#  graphic_root = "/${image_sep_f}${image_oundation}/${graphic_multimedia}"
+#}
 
 ohos_static_library("exifhelper") {
   if (!use_clang_android && !use_clang_ios) {
@@ -71,26 +71,56 @@ config("third_part_includes") {
 config("win_config") {
   if (use_mingw_win) {
     defines = image_decode_windows_defines
+    if (!defined(include_dirs)) {
+      include_dirs = []
+    }
     include_dirs += [
       "${image_subsystem}/mock/native/include",
       "${image_subsystem}/mock/native/include/secure",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/codec",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config/win",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/core",
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+      "//commonlibrary/c_utils/base/include",
     ]
+
+    if (defined(asdk_dir)) {
+      include_dirs += [
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/codec",
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config",
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config/win",
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/core",
+      ]
+    }
   }
 }
 config("mac_config") {
   if (use_clang_mac) {
     defines = image_decode_mac_defines
+    if (!defined(include_dirs)) {
+      include_dirs = []
+    }
     include_dirs += [
       "${image_subsystem}/mock/native/include",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/codec",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/core",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config/mac",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config",
       "${third_party_root}/bounds_checking_function/include",
+    ]
+    if (defined(asdk_dir)) {
+      include_dirs += [
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/codec",
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/core",
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config/mac",
+        "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config",
+      ]
+    }
+  }
+}
+config("linux_config") {
+  if (use_clang_linux) {
+    defines = image_decode_linux_defines
+    if (!defined(include_dirs)) {
+      include_dirs = []
+    }
+    include_dirs += [
+      "${image_subsystem}/mock/native/include",
+      "${image_subsystem}/mock/native/include/secure",
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     ]
   }
 }
@@ -157,7 +187,7 @@ ohos_shared_library("textureEncoderCL") {
 }
 
 ohos_shared_library("extplugin") {
-  if (!use_clang_android && !use_clang_ios) {
+  if (!use_clang_android && !use_clang_ios && !use_mingw_win && !use_clang_linux) {
     sanitize = {
       cfi = true
       cfi_cross_dso = true
@@ -171,8 +201,12 @@ ohos_shared_library("extplugin") {
     "src/ext_stream.cpp",
     "src/ext_wstream.cpp",
     "src/plugin_export.cpp",
-    "src/texture_encode/astc_codec.cpp",
   ]
+
+  if (!use_mingw_win && !use_clang_linux && !use_clang_mac) {
+    sources += [ "src/texture_encode/astc_codec.cpp" ]
+  }
+
   if (enable_jpeg_hw_decode) {
     sources += [ "src/hardware/jpeg_hw_decoder.cpp" ]
   }
@@ -200,24 +234,71 @@ ohos_shared_library("extplugin") {
     "//third_party/libjpeg-turbo",
     "${image_subsystem}/../../../drivers/peripheral/base",
     "${image_subsystem}/../../../drivers/peripheral/display/interfaces/include",
+    "${graphic_subsystem}/utils/color_manager/export",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//commonlibrary/c_utils/base/include",
   ]
+
+  defines = [ "IMAGE_COLORSPACE_FLAG" ]
   if (use_mingw_win) {
     configs += [ ":win_config" ]
-    deps = [
-      "${graphic_root}/ide/libs/skia:skia",
-      "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils_static",
-      "${image_subsystem}/mock/native:log_mock_static",
-      "${image_subsystem}/plugins/manager:pluginmanager_static",
+    sources += [
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_type_converter.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_system_properties.cpp",
+      "//foundation/multimedia/image_framework/mock/native/src/string_ex.cpp",
     ]
-    deps += skia_core
+    defines += [ "STATIC_PLUGIN", "ASTC_UNSUPPORT" ]
+    defines -= [ "IMAGE_COLORSPACE_FLAG" ]
+    deps = [
+      "//third_party/skia:skia_ohos",
+      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+    ]
+    external_deps = [
+      # "c_utils:utils",
+      "hilog:libhilog",
+    ]
   } else if (use_clang_mac) {
     configs += [ ":mac_config" ]
+    sources += [
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_type_converter.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_system_properties.cpp",
+      "//foundation/multimedia/image_framework/mock/native/src/string_ex.cpp",
+    ]
+    defines += [ "STATIC_PLUGIN", "ASTC_UNSUPPORT" ]
+    defines -= [ "IMAGE_COLORSPACE_FLAG" ]
     deps = [
-      "${graphic_root}/ide/libs/skia:skia",
-      "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils_static",
-      "${image_subsystem}/mock/native:log_mock_static",
-      "${image_subsystem}/plugins/manager:pluginmanager_static",
-      "${third_party_root}/bounds_checking_function:libsec_static",
+      "//third_party/skia:skia_ohos",
+      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+    ]
+    external_deps = [
+      # "c_utils:utils",
+      "hilog:libhilog",
+    ]
+#    deps = [
+      # "${graphic_root}/ide/libs/skia:skia",
+#      "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils_static",
+#      "${image_subsystem}/mock/native:log_mock_static",
+#      "${image_subsystem}/plugins/manager:pluginmanager_static",
+#      "${third_party_root}/bounds_checking_function:libsec_static",
+#   ]
+  } else if (use_clang_linux) {
+    configs += [ ":linux_config" ]
+    sources += [
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_type_converter.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_system_properties.cpp",
+    ]
+    defines += [ "STATIC_PLUGIN", "ASTC_UNSUPPORT" ]
+    defines -= [ "IMAGE_COLORSPACE_FLAG" ]
+    deps = [
+      "//third_party/skia:skia_ohos",
+      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+    ]
+    external_deps = [
+      "c_utils:utils",
+      "hilog:libhilog",
     ]
   } else {
     include_dirs += [ "${commonlibrary_subsystem}/base/include" ]
@@ -251,13 +332,10 @@ ohos_shared_library("extplugin") {
         "hdf_core:libhdi",
         "ipc:ipc_single",
       ]
-      defines = [ "JPEG_HW_DECODE_ENABLE" ]
+      defines += [ "JPEG_HW_DECODE_ENABLE" ]
     }
   }
-  cflags = [
-    "-DIMAGE_COLORSPACE_FLAG",
-    "-O3",
-  ]
+  cflags = [ "-O3" ]
   cflags_cc = [ "-O3" ]
   subsystem_name = "multimedia"
   part_name = "image_framework"

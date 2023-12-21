@@ -38,7 +38,9 @@ uint32_t PluginFw::Register(const vector<string> &canonicalPaths)
     HiLog::Debug(LABEL, "plugin register.");
     // Use the read-write lock to mutually exclusive write plugin information and read plugin information operations,
     // where Register() plays the write role.
+#if !defined(_WIN32) && !defined(_LINUX_)
     UniqueWriteGuard<RWLock> lk(DelayedRefSingleton<PluginInfoLock>::GetInstance().rwLock_);
+#endif
     return pluginMgr_.Register(canonicalPaths);
 }
 
@@ -46,7 +48,9 @@ PluginClassBase *PluginFw::CreateObject(uint16_t interfaceID, const string &clas
 {
     // Use the read-write lock to mutually exclusive write plugin information and read plugin information operations,
     // where CreateObject() plays the read role.
+#if !defined(_WIN32) && !defined(_LINUX_)
     UniqueReadGuard<RWLock> lk(DelayedRefSingleton<PluginInfoLock>::GetInstance().rwLock_);
+#endif
     return implClassMgr_.CreateObject(interfaceID, className, errorCode);
 }
 
@@ -56,7 +60,9 @@ PluginClassBase *PluginFw::CreateObject(uint16_t interfaceID, uint16_t serviceTy
 {
     // Use the read-write lock to mutually exclusive write plugin information and read plugin information operations,
     // where CreateObject() plays the read role.
+#if !defined(_WIN32) && !defined(_LINUX_)
     UniqueReadGuard<RWLock> lk(DelayedRefSingleton<PluginInfoLock>::GetInstance().rwLock_);
+#endif
     return implClassMgr_.CreateObject(interfaceID, serviceType, capabilities, priorityScheme, errorCode);
 }
 
@@ -66,7 +72,9 @@ uint32_t PluginFw::PluginFwGetClassInfo(uint16_t interfaceID, uint16_t serviceTy
 {
     // Use the read-write lock to mutually exclusive write plugin information and read plugin information operations,
     // where GetClassInfo() plays the read role.
+#if !defined(_WIN32) && !defined(_LINUX_)
     UniqueReadGuard<RWLock> lk(DelayedRefSingleton<PluginInfoLock>::GetInstance().rwLock_);
+#endif
     return implClassMgr_.ImplClassMgrGetClassInfo(interfaceID, serviceType, capabilities, classesInfo);
 }
 

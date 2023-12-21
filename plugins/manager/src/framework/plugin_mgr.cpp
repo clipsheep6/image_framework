@@ -66,6 +66,18 @@ uint32_t PluginMgr::Register(const vector<string> &canonicalPaths)
         }
     }
 
+#ifdef STATIC_PLUGIN
+    if (!pathTraversed) {
+        const vector<string> &metadata = OHOS::MultimediaPlugin::META_DATA_DEFAULT;
+        for (size_t i = 0; i < metadata.size(); i++) {
+            uint32_t errorCode = RegisterPlugin(metadata[i]);
+            if (errorCode != SUCCESS) {
+                return errorCode;
+            }
+        }
+        return SUCCESS;
+    }
+#endif
     if (!pathTraversed) {
         return errorCode;
     }

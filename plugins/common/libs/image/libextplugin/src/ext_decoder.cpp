@@ -19,14 +19,16 @@
 
 #include "ext_pixel_convert.h"
 #include "hilog/log.h"
-#include "hisysevent.h"
 #include "image_system_properties.h"
 #include "image_utils.h"
 #include "log_tags.h"
 #include "media_errors.h"
+#if !defined(_WIN32)
 #include "securec.h"
+#endif
 #include "string_ex.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
+#include "hisysevent.h"
 #include "surface_buffer.h"
 #endif
 
@@ -39,17 +41,21 @@ namespace {
     constexpr static size_t SIZE_ZERO = 0;
     constexpr static uint32_t DEFAULT_SAMPLE_SIZE = 1;
     constexpr static uint32_t NO_EXIF_TAG = 1;
+#ifdef JPEG_HW_DECODE_ENABLE
     constexpr static int HARDWARE_MIN_DIM = 512;
     constexpr static int HARDWARE_MAX_DIM = 8192;
     constexpr static float HALF = 0.5;
     constexpr static float QUARTER = 0.25;
     constexpr static float ONE_EIGHTH = 0.125;
+#endif
 }
 
 namespace OHOS {
 namespace ImagePlugin {
 using namespace Media;
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 using namespace OHOS::HDI::Base;
+#endif
 using namespace OHOS::HiviewDFX;
 using namespace std;
 const static string DEFAULT_EXIF_VALUE = "default_exif_value";
@@ -83,6 +89,11 @@ const static std::string HW_MNOTE_TAG_FOCUS_MODE = "HwMnoteFocusMode";
 const static std::string DEFAULT_PACKAGE_NAME = "entry";
 const static std::string DEFAULT_VERSION_ID = "1";
 const static std::string UNKNOWN_IMAGE = "unknown";
+
+
+#ifndef EOK
+#define EOK (0)
+#endif
 
 struct ColorTypeOutput {
     PlPixelFormat outFormat;
@@ -131,7 +142,7 @@ static void SetDecodeContextBuffer(DecodeContext &context,
 
 static uint32_t ShareMemAlloc(DecodeContext &context, uint64_t count)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM) || defined(_LINUX_)
     HiLog::Error(LABEL, "Unsupport share mem alloc");
     return ERR_IMAGE_DATA_UNSUPPORT;
 #else
@@ -161,7 +172,7 @@ static uint32_t ShareMemAlloc(DecodeContext &context, uint64_t count)
 
 static uint32_t DmaMemAlloc(DecodeContext &context, uint64_t count, SkImageInfo &dstInfo)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM) || defined(_LINUX_)
     HiLog::Error(LABEL, "Unsupport dma mem alloc");
     return ERR_IMAGE_DATA_UNSUPPORT;
 #else
@@ -202,14 +213,14 @@ static uint32_t HeapMemAlloc(DecodeContext &context, uint64_t count)
     }
     auto out = static_cast<uint8_t *>(malloc(count));
 #ifdef _WIN32
-    if (memset_s(out, ZERO, count) != EOK) {
+    memset(out, ZERO, count);
 #else
     if (memset_s(out, count, ZERO, count) != EOK) {
-#endif
         HiLog::Error(LABEL, "Decode failed, memset buffer failed");
         free(out);
         return ERR_IMAGE_DECODE_FAILED;
     }
+#endif
     SetDecodeContextBuffer(context, AllocatorType::HEAP_ALLOC, out, count, nullptr);
     return SUCCESS;
 }
@@ -274,6 +285,7 @@ bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
     return true;
 }
 
+#ifdef JPEG_HW_DECODE_ENABLE
 bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) {
     if (info_.isEmpty() && !DecodeHeader()) {
         HiLog::Error(LABEL, "DecodeHeader failed in GetHardwareScaledSize!");
@@ -310,6 +322,7 @@ bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) 
     }
     return true;
 }
+#endif
 
 bool ExtDecoder::IsSupportScaleOnDecode()
 {
@@ -424,7 +437,10 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     // SK only support low down scale
     int dstWidth = opts.desiredSize.width;
     int dstHeight = opts.desiredSize.height;
+    HiLog::Error(LABEL, "ExtDecoder::SetDecodeOptions, width:%{public}d, height:%{public}d is too large",
+                     dstWidth, dstHeight);
     float scale = ZERO;
+#ifdef JPEG_HW_DECODE_ENABLE
     if (IsSupportHardwareDecode()) {
         // get dstInfo for hardware decode
         if (IsLowDownScale(opts.desiredSize, info_) && GetHardwareScaledSize(dstWidth, dstHeight, scale)) {
@@ -437,6 +453,7 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         dstWidth = opts.desiredSize.width;
         dstHeight = opts.desiredSize.height;
     }
+#endif
     if (IsLowDownScale(opts.desiredSize, info_) && GetScaledSize(dstWidth, dstHeight, scale)) {
         dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha,
             getDesiredColorSpace(info_, opts));
@@ -572,10 +589,12 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     dstOptions_.fFrameIndex = index;
     DebugInfo(info_, dstInfo_, dstOptions_);
     uint64_t rowStride = dstInfo_.minRowBytes64();
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     if (context.allocatorType == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
         rowStride = sbBuffer->GetStride();
     }
+#endif
     SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
     ReportImageType(skEncodeFormat);
     HiLog::Debug(LABEL, "decode format %{public}d", skEncodeFormat);
@@ -599,6 +618,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     return SUCCESS;
 }
 
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 static std::string GetFormatStr(SkEncodedImageFormat format)
 {
     switch (format) {
@@ -632,9 +652,11 @@ static std::string GetFormatStr(SkEncodedImageFormat format)
             return UNKNOWN_IMAGE;
     }
 }
+#endif
 
 void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
 {
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     HiLog::Debug(LABEL, "ExtDecoder::ReportImageType format %{public}d start", skEncodeFormat);
     static constexpr char IMAGE_FWK_UE[] = "IMAGE_FWK_UE";
     int32_t ret = HiSysEventWrite(
@@ -650,6 +672,7 @@ void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
         return;
     }
     HiLog::Debug(LABEL, "ExtDecoder::ReportImageType format %{public}d success", skEncodeFormat);
+#endif
 }
 #ifdef JPEG_HW_DECODE_ENABLE
 uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
@@ -937,6 +960,7 @@ static uint32_t ProcessWithStreamData(InputDataStream *input,
     return process(input->GetDataPtr(), inputSize);
 }
 
+#ifndef STATIC_PLUGIN
 static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
 {
     if (info.IsExifDataParsed()) {
@@ -951,6 +975,7 @@ static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
     }
     return code == SUCCESS;
 }
+#endif
 
 bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res)
 {
@@ -967,11 +992,16 @@ bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32
         res = Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         return true;
     }
+#ifndef STATIC_PLUGIN
     auto result = ParseExifData(stream_, exifInfo_);
     if (!result) {
         res = Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     return result;
+#else
+    res = Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    return true;
+#endif
 }
 
 static uint32_t GetDelayTime(SkCodec * codec, uint32_t index, int32_t &value)
@@ -1004,6 +1034,8 @@ uint32_t ExtDecoder::GetImagePropertyInt(uint32_t index, const std::string &key,
     if (res == Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
         return res;
     }
+
+#ifndef STATIC_PLUGIN
     // Need exif property following
     if (IsSameTextStr(key, TAG_ORIENTATION_STRING)) {
         std::string strValue;
@@ -1014,6 +1046,7 @@ uint32_t ExtDecoder::GetImagePropertyInt(uint32_t index, const std::string &key,
         value = atoi(strValue.c_str());
         return res;
     }
+#endif
     HiLog::Error(LABEL, "[GetImagePropertyInt] The key:%{public}s is not supported int32_t", key.c_str());
     return Media::ERR_MEDIA_VALUE_INVALID;
 }
@@ -1047,42 +1080,60 @@ uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &k
         }
         return res;
     }
+#ifndef STATIC_PLUGIN
     res = exifInfo_.GetExifData(key, value);
+#else
+    res = Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+#endif
     HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, value:%{public}s", value.c_str());
     return res;
 }
 
 uint32_t ExtDecoder::GetMakerImagePropertyString(const std::string &key, std::string &value)
 {
+#ifndef STATIC_PLUGIN
     if (exifInfo_.makerInfoTagValueMap.find(key) != exifInfo_.makerInfoTagValueMap.end()) {
         value = exifInfo_.makerInfoTagValueMap[key];
         return SUCCESS;
     }
+#endif
     return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
 }
 
 uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const std::string &path)
 {
+#ifndef STATIC_PLUGIN
     HiLog::Debug(LABEL, "[ModifyImageProperty] with path:%{public}s, key:%{public}s, value:%{public}s",
         path.c_str(), key.c_str(), value.c_str());
     return exifInfo_.ModifyExifData(key, value, path);
+#else
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+#endif
 }
 
 uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const int fd)
 {
+#ifndef STATIC_PLUGIN
     HiLog::Debug(LABEL, "[ModifyImageProperty] with fd:%{public}d, key:%{public}s, value:%{public}s",
         fd, key.c_str(), value.c_str());
     return exifInfo_.ModifyExifData(key, value, fd);
+#else
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+#endif
 }
 
 uint32_t ExtDecoder::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, uint8_t *data, uint32_t size)
 {
+#ifndef STATIC_PLUGIN
     HiLog::Debug(LABEL, "[ModifyImageProperty] with key:%{public}s, value:%{public}s",
         key.c_str(), value.c_str());
     return exifInfo_.ModifyExifData(key, value, data, size);
+#else
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+#endif
 }
 
 uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges)
@@ -1103,11 +1154,15 @@ uint32_t ExtDecoder::GetFilterArea(const int &privacyType, std::vector<std::pair
         size_t appSize = (static_cast<size_t>(buffer[APP1_SIZE_H_OFF]) << U8_SHIFT) | buffer[APP1_SIZE_L_OFF];
         HiLog::Debug(LABEL, "[GetFilterArea]: get app1 area size");
         appSize += APP1_SIZE_H_OFF;
+#ifndef STATIC_PLUGIN
         auto ret = exifInfo_.GetFilterArea(buffer, (appSize < size) ? appSize : size, privacyType, ranges);
         if (ret != SUCCESS) {
             HiLog::Error(LABEL, "[GetFilterArea]: failed to get area %{public}d", ret);
         }
         return ret;
+#else
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+#endif
     });
 }
 
@@ -1119,8 +1174,9 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
     num = frameCount_;
     return SUCCESS;
 }
-
+#ifdef JPEG_HW_DECODE_ENABLE
 bool ExtDecoder::IsSupportHardwareDecode() {
+
     if (info_.isEmpty() && !DecodeHeader()) {
         return false;
     }
@@ -1133,5 +1189,6 @@ bool ExtDecoder::IsSupportHardwareDecode() {
     return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
         && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
 }
+#endif
 } // namespace ImagePlugin
 } // namespace OHOS

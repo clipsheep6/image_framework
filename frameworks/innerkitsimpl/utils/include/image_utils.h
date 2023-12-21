@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <string>
+#include <memory>
 #include "image_type.h"
 #include "iosfwd"
 

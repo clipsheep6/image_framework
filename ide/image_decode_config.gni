@@ -15,19 +15,27 @@ import("//build/ohos_var.gni")
 
 # source code for Windows.
 use_mingw_win = "${current_os}_${current_cpu}" == "mingw_x86_64"
-use_clang_mac = "${current_os}_${current_cpu}" == "mac_x64"
+use_clang_mac = "${current_os}_${current_cpu}" == "mac_x64" ||
+                "${current_os}_${current_cpu}" == "mac_arm64"
 use_clang_ios = current_os == "ios" || current_os == "tvos"
 use_clang_android = current_os == "android"
+use_clang_linux = "${current_os}_${current_cpu}" == "linux_x64"
 
 # Toolchain
 windows_buildtool = "//build/toolchain/mingw:mingw_x86_64"
-mac_buildtool = "//build/toolchain/mac:clang_x64"
+
+if ("${current_os}_${current_cpu}" == "mac_arm64") {
+  mac_buildtool = "//build/toolchain/mac:clang_arm64"
+} else if ("${current_os}_${current_cpu}" == "mac_x64") {
+  mac_buildtool = "//build/toolchain/mac:clang_x64"
+}
 
 # Defines
 image_decode_windows_defines = [ "_WIN32" ]
 image_decode_mac_defines = [ "_APPLE" ]
 image_decode_ios_defines = [ "IOS_PLATFORM" ]
 image_decode_android_defines = [ "A_PLATFORM" ]
+image_decode_linux_defines = [ "_LINUX_" ]
 image_sep_f = "/f"
 image_sep_p = "/p"
 image_oundation = "oundation"

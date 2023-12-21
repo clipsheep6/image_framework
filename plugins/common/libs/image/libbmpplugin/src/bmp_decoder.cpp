@@ -108,7 +108,7 @@ uint32_t BmpDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
 
 uint32_t BmpDecoder::SetShareMemBuffer(uint64_t byteCount, DecodeContext &context)
 {
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM) && !defined(_LINUX_)
     uint32_t id = context.pixelmapUniqueId_;
     std::string name = "BMP RawData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(id);
     int fd = AshmemCreate(name.c_str(), byteCount);

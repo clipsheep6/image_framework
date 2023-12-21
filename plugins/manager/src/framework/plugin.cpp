@@ -185,6 +185,16 @@ const string &Plugin::GetPackageName() const
 }
 
 // ------------------------------- private method -------------------------------
+#if defined(_WIN32) || defined(_APPLE)
+static int EndWith(string src, string target)
+{
+    if (src.rfind(target) == -1) {
+		return false;
+	}
+    return src.rfind(target) == (src.length() - target.length());
+}
+#endif
+
 uint32_t Plugin::ResolveLibrary()
 {
     std::string pluginStartSymbol = "PluginExternalStart";
@@ -192,7 +202,11 @@ uint32_t Plugin::ResolveLibrary()
     std::string pluginCreateSymbol = "PluginExternalCreate";
 
 #ifdef _WIN32
-    hDll = platformAdp_.AdpLoadLibrary(libraryPath_);
+    std::string name = libraryPath_;
+    if (!EndWith(name, ".dll")) {
+        name += ".dll";
+    }
+    hDll = platformAdp_.AdpLoadLibrary(name);
     if (hDll == NULL) {
         HiLog::Error(LABEL, "failed to load library.");
         return ERR_GENERAL;
@@ -208,6 +222,30 @@ uint32_t Plugin::ResolveLibrary()
     }
 
     return SUCCESS;
+#elif defined(_APPLE)
+    std::string name = libraryPath_;
+    if (!EndWith(name, ".dylib")) {
+        name += ".dylib";
+    }
+    HiLog::Debug(LABEL, "parse class num: %{public}s.", name.c_str());
+
+    handle_ = platformAdp_.LoadLibrary(name);
+    if (handle_ == nullptr) {
+        HiLog::Error(LABEL, "failed to load dy library.");
+        return ERR_GENERAL;
+    }
+
+    startFunc_ = (PluginStartFunc)platformAdp_.GetSymAddress(handle_, pluginStartSymbol);
+    stopFunc_ = (PluginStopFunc)platformAdp_.GetSymAddress(handle_, pluginStopSymbol);
+    createFunc_ = (PluginCreateFunc)platformAdp_.GetSymAddress(handle_, pluginCreateSymbol);
+    if (startFunc_ == nullptr || stopFunc_ == nullptr || createFunc_ == nullptr) {
+        HiLog::Error(LABEL, "failed to get export symbol for the plugin.");
+        FreeLibrary();
+        return ERR_GENERAL;
+    }
+
+    return SUCCESS;
+
 #elif defined(A_PLATFORM) || defined(IOS_PLATFORM)
     startFunc_ = PluginExternalStart;
     stopFunc_ = PluginExternalStop;

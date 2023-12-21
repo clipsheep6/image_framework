@@ -16,7 +16,8 @@
 #include "image_napi_utils.h"
 #include <securec.h>
 #include <unistd.h>
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && defined(HICHECKER_ENABLE)
+#include <string.h>
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && defined(HICHECKER_ENABLE) && !defined(_WIN32) && !defined(_LINUX_)
 #include "hichecker.h"
 #endif
 
@@ -180,7 +181,7 @@ bool ImageNapiUtils::ParseImageCreatorReceiverArgs(napi_env env, size_t argc,
 
 void ImageNapiUtils::HicheckerReport()
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && defined(HICHECKER_ENABLE)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_) && defined(HICHECKER_ENABLE)
     uint32_t pid = getpid();
     uint32_t tid = gettid();
     std::string cautionMsg = "Trigger: pid = " + std::to_string(pid) + ", tid = " + std::to_string(tid);

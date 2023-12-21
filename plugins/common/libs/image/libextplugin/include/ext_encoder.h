@@ -22,6 +22,7 @@
 #include "hilog/log.h"
 #include "log_tags.h"
 #include "plugin_class_base.h"
+#include "nocopyable.h"
 
 namespace OHOS {
 namespace ImagePlugin {

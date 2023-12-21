@@ -19,9 +19,11 @@
 #include "napi/native_node_api.h"
 #include "image_source_napi.h"
 #include "pixel_map_napi.h"
+#if !defined(_WIN32) && !defined(_LINUX_)
 #include "image_packer_napi.h"
+#endif
 
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
 #include "image_receiver_napi.h"
 #include "image_creator_napi.h"
 #include "image_napi.h"

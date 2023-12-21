@@ -61,6 +61,14 @@ ohos_shared_library("imageformatagent") {
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
     ]
+  } else if (use_clang_linux) {
+    defines = image_decode_linux_defines
+    include_dirs +=
+        [ "//foundation/multimedia/image_framework/mock/native/include" ]
+    deps = [
+      "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+      "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
+    ]
   } else {
     include_dirs += [ "//commonlibrary/c_utils/base/include" ]
     deps = [

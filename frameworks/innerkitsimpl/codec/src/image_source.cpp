@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <vector>
 #include <cstring>
+#include <limits.h>
 #include "buffer_source_stream.h"
 #if !defined(_WIN32) && !defined(_APPLE)
 #include "hitrace_meter.h"
@@ -36,7 +37,10 @@
 #include "pixel_map.h"
 #include "plugin_server.h"
 #include "post_proc.h"
+#if !defined(_WIN32)
+#include <sys/mman.h>
 #include "securec.h"
+#endif
 #include "source_stream.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
@@ -172,7 +176,9 @@ unique_ptr<ImageSource> ImageSource::DoImageSourceCreate(
     std::function<unique_ptr<SourceStream>(void)> stream,
     const SourceOptions &opts, uint32_t &errorCode, const string traceName)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace(traceName);
+#endif
     HiLog::Debug(LABEL, "[ImageSource]DoImageSourceCreate IN.");
     errorCode = ERR_IMAGE_SOURCE_DATA;
     auto streamPtr = stream();
@@ -396,7 +402,7 @@ static void FreeContextBuffer(const Media::CustomFreePixelMap &func,
         return;
     }
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
     if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
         int *fd = static_cast<int *>(buffer.context);
         if (buffer.buffer != nullptr) {
@@ -480,7 +486,11 @@ DecodeContext InitDecodeContext(const DecodeOptions &opts, const ImageInfo &info
             HiLog::Debug(LABEL, "[ImageSource] allocatorType is DMA_ALLOC");
             context.allocatorType = AllocatorType::DMA_ALLOC;
         } else {
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+            context.allocatorType = AllocatorType::HEAP_ALLOC;
+#else
             context.allocatorType = AllocatorType::SHARE_MEM_ALLOC;
+#endif
         }
     }
     return context;
@@ -489,7 +499,9 @@ DecodeContext InitDecodeContext(const DecodeOptions &opts, const ImageInfo &info
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     const DecodeOptions &opts, uint32_t &errorCode)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("CreatePixelMapExtended");
+#endif
     opts_ = opts;
     ImageInfo info;
     errorCode = GetImageInfo(FIRST_FRAME, info);
@@ -891,7 +903,9 @@ DecodeEvent ImageSource::GetDecodeEvent()
 
 uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("GetImageInfo by index");
+#endif
     uint32_t ret = SUCCESS;
     std::unique_lock<std::mutex> guard(decodingMutex_);
     auto iter = GetValidImageStatus(index, ret);
@@ -2028,7 +2042,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
 }
 #else
 {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
     ImageTrace imageTrace("CreatePixelMapForASTC");
+#endif
     unique_ptr<PixelAstc> pixelAstc = make_unique<PixelAstc>();
 
     ImageInfo info;
@@ -2050,6 +2066,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
         pixelAstc->SetPixelsAddr(sourceStreamPtr_->GetDataPtr(), fdBuffer, fileSize,
             AllocatorType::SHARE_MEM_ALLOC, nullptr);
     } else if (sourceStreamPtr_->GetStreamType() == ImagePlugin::BUFFER_SOURCE_TYPE) {
+#if !defined(_WIN32) && !defined(_LINUX_) && !defined(_APPLE)
         int fd = AshmemCreate("CreatePixelMapForASTC Data", fileSize);
         if (fd < 0) {
             HiLog::Error(LABEL, "[ImageSource]CreatePixelMapForASTC AshmemCreate fd < 0.");
@@ -2072,6 +2089,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
         *static_cast<int32_t*>(fdPtr) = fd;
         pixelAstc->SetPixelsAddr(data, fdPtr, fileSize, Media::AllocatorType::SHARE_MEM_ALLOC, nullptr);
         memcpy_s(data, fileSize, sourceStreamPtr_->GetDataPtr(), fileSize);
+#endif
     }
     pixelAstc->SetAstc(true);
     return pixelAstc;
@@ -2119,6 +2137,41 @@ unique_ptr<vector<unique_ptr<PixelMap>>> ImageSource::CreatePixelMapList(const D
 
     return pixelMaps;
 }
+
+#if defined(_WIN32) || defined(_LINUX_) || defined(_APPLE)
+static inline bool StrToInt(const string& str, int& value)
+{
+    if (str.empty() || (!isdigit(str.front()) && (str.front() != '-'))) {
+        return false;
+    }
+
+    char* end = nullptr;
+    errno = 0;
+    auto addr = str.c_str();
+    auto result = strtol(addr, &end, 10); /* 10 means decimal */
+    if ((end == addr) || (end[0] != '\0') || (errno == ERANGE) ||
+            (result > INT_MAX) || (result < INT_MIN)) {
+        return false;
+    }
+    value = static_cast<int>(result);
+    return true;
+}
+
+static inline bool IsNumericStr(const string& str)
+{
+    if (str.empty()) {
+        return false;
+    }
+
+    for (const auto& c : str) {
+        if (!isdigit(c)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+#endif
 
 unique_ptr<vector<int32_t>> ImageSource::GetDelayTime(uint32_t &errorCode)
 {
@@ -2199,6 +2252,15 @@ size_t ImageSource::GetSourceSize() const
 bool ImageSource::IsSupportGenAstc()
 {
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
+}
+std::unique_ptr<PixelMap> ImageSource::CreatePixelMap(const DecodeOptions &opts, uint32_t &errorCode)
+{
+    return CreatePixelMapEx(0, opts, errorCode);
+}
+
+uint32_t ImageSource::GetImageInfo(ImageInfo &imageInfo)
+{
+    return GetImageInfo(0, imageInfo);
 }
 } // namespace Media
 } // namespace OHOS

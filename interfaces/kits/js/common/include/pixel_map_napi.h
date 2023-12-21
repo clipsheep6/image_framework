@@ -16,15 +16,16 @@
 #ifndef INTERFACES_KITS_JS_COMMON_INCLUDE_PIXEL_MAP_NAPI_H
 #define INTERFACES_KITS_JS_COMMON_INCLUDE_PIXEL_MAP_NAPI_H
 
-#include "pixel_map.h"
-#include "image_type.h"
-#include "image_source.h"
+#include <map>
+#include "foundation/multimedia/image_framework/interfaces/innerkits/include/pixel_map.h"
+#include "foundation/multimedia/image_framework/interfaces/innerkits/include/image_type.h"
+#include "foundation/multimedia/image_framework/interfaces/innerkits/include/image_source.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace Media {
-class PixelMapNapi {
+class NATIVEEXPORT PixelMapNapi {
 public:
     PixelMapNapi();
     ~PixelMapNapi();
@@ -103,7 +104,7 @@ private:
     static napi_value ApplyColorSpace(napi_env env, napi_callback_info info);
 
     void release();
-    static thread_local napi_ref sConstructor_;
+    static napi_ref sConstructor_;
     napi_env env_ = nullptr;
     std::shared_ptr<PixelMap> nativePixelMap_;
     int32_t lockCount = 0;

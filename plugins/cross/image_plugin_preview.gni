@@ -1,0 +1,95 @@
+# Copyright (C) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#import("//build/ohos.gni")
+#import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+#import("//third_party/flutter/flutter_config.gni")
+
+image_plugin_cflags = [
+  "-DSTATIC_PLUGIN",
+  "-DASTC_UNSUPPORT",
+]
+
+image_plugin_sources = [
+  #utils
+  # "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_type_converter.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_system_properties.cpp",
+  "//foundation/multimedia/image_framework/mock/native/src/string_ex.cpp",
+
+  # # formatagent
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/raw_format_agent.cpp",
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/svg_format_agent.cpp",
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/src/webp_format_agent.cpp",
+
+  # # extplugin
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/ext_decoder.cpp",
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/ext_encoder.cpp",
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/ext_pixel_convert.cpp",
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/ext_stream.cpp",
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/ext_wstream.cpp",
+
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/astc_codec.cpp",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/astc_utils.cpp",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/hwe_checkPara.cpp",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/hwe_memoryManager.cpp",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/hwe_osdep.cpp",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/hwe_source_record.cpp",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/hwe_threadpool.cpp",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/src/texture_encode/image_compressor.cpp",
+]
+
+image_plugin_include_dirs = [
+  "//commonlibrary/c_utils/base/include",
+  "//base/startup/init/interfaces/innerkits/include/syspara",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
+  "//foundation/multimedia/image_framework/mock/native/include",
+
+  # formatagent
+  "//foundation/multimedia/image_framework/plugins/manager/include/image",
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/formatagentplugin/include",
+
+  # raw
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/librawplugin/include",
+
+  # svg
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/include",
+
+  # extplugin
+  "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/include",
+  # "//foundation/multimedia/image_framework/plugins/common/libs/image/libextplugin/include/texture_encode",
+
+  # skia
+  "$skia_root/skia",
+  "$skia_root/skia/include/core",
+  "$skia_root/skia/include/codec",
+  "$skia_root/skia/third_party/externals/libjpeg-turbo",
+  "$skia_root/skia/third_party/skcms",
+
+  # color space
+  "//foundation/graphic/graphic_2d/utils/color_manager/export",
+]
+
+image_plugin_deps = [
+  # "//foundation/graphic/graphic_2d/utils/color_manager:color_manager",
+  # "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils_static",
+]
+
+
+image_plugin_external_deps = [
+  # "graphic_2d:color_manager",
+]
+
+image_plugin_deps += skia_skcms
+image_plugin_deps += skia_platform

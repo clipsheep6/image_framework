@@ -28,12 +28,21 @@
 #ifndef _WIN32
 #include "securec.h"
 #else
+/* success */
+#ifndef EOK
+#define EOK (0)
+#endif
 #include "memory.h"
 #endif
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 #include <sys/mman.h>
 #include "ashmem.h"
+#include "surface_buffer.h"
+#endif
+
+#if defined(_LINUX_)
+#include <sys/mman.h>
 #include "surface_buffer.h"
 #endif
 
@@ -429,12 +438,7 @@ bool PostProc::AllocHeapBuffer(uint64_t bufferSize, uint8_t **buffer)
         return false;
     }
 #ifdef _WIN32
-    errno_t backRet = memset_s(*buffer, 0, bufferSize);
-    if (backRet != EOK) {
-        HiLog::Error(LABEL, "[PostProc]memset convertData fail, errorCode = %{public}d", backRet);
-        ReleaseBuffer(AllocatorType::HEAP_ALLOC, 0, 0, buffer);
-        return false;
-    }
+    memset(*buffer, 0, bufferSize);
     return true;
 #else
     errno_t errRet = memset_s(*buffer, bufferSize, 0, bufferSize);
@@ -449,7 +453,7 @@ bool PostProc::AllocHeapBuffer(uint64_t bufferSize, uint8_t **buffer)
 
 uint8_t *PostProc::AllocSharedMemory(const Size &size, const uint64_t bufferSize, int &fd, uint32_t uniqueId)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(A_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(A_PLATFORM) || defined(_LINUX_)
         return nullptr;
 #else
     std::string name = "Parcel RawData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(uniqueId);

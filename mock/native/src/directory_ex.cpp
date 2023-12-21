@@ -15,6 +15,7 @@
 
 
 #include "directory_ex.h"
+#include <string.h>
 #include <dirent.h>
 #include <iostream>
 #include <sys/stat.h>
