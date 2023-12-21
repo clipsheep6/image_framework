@@ -164,6 +164,9 @@ ohos_shared_library("extplugin") {
       debug = false
     }
   }
+  if (sanitize.cfi && target_cpu == "arm") {
+    ldflags = [ "-Wl,--no-merge-exidx-entries" ]
+  }
   sources = [
     "src/ext_decoder.cpp",
     "src/ext_encoder.cpp",
