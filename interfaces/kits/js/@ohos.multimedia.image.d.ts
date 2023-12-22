@@ -2598,6 +2598,7 @@ declare namespace image {
      * @throws { BusinessError } 62980103 - If the image data unsupport.
      * @throws { BusinessError } 62980115 - If the image parameter invalid.
      * @syscap SystemCapability.Multimedia.Image.Core
+     * @crossplatform
      * @since 10
      */
     getColorSpace(): colorSpaceManager.ColorSpaceManager;
@@ -2633,6 +2634,7 @@ declare namespace image {
      * @throws { BusinessError } 62980111 - If the operation invalid.
      * @throws { BusinessError } 62980115 - If the image parameter invalid.
      * @syscap SystemCapability.Multimedia.Image.Core
+     * @crossplatform
      * @since 10
      */
     setColorSpace(colorSpace: colorSpaceManager.ColorSpaceManager): void;
