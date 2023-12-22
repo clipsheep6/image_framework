@@ -20,7 +20,7 @@
 
 namespace OHOS {
 namespace Media {
-class ImageTrace {
+class __attribute__((visibility("default"))) ImageTrace {
 public:
     explicit ImageTrace(const std::string &title);
     explicit ImageTrace(const char *fmt, ...);
