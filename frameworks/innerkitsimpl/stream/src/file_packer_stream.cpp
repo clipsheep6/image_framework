@@ -69,10 +69,8 @@ FilePackerStream::FilePackerStream(const int fd)
 }
 FilePackerStream::~FilePackerStream()
 {
-    if (file_ != nullptr) {
-        fclose(file_);
-        file_ = nullptr;
-    }
+    fileRelease();
+}
 }
 
 bool FilePackerStream::Write(const uint8_t *buffer, uint32_t size)
@@ -87,8 +85,7 @@ bool FilePackerStream::Write(const uint8_t *buffer, uint32_t size)
     }
     if (fwrite(buffer, sizeof(uint8_t), size, file_) != size) {
         HiLog::Error(LABEL, "write %{public}u bytes failed.", size);
-        fclose(file_);
-        file_ = nullptr;
+        fileRelease();
         return false;
     }
     return true;
@@ -104,6 +101,16 @@ void FilePackerStream::Flush()
 int64_t FilePackerStream::BytesWritten()
 {
     return (file_ != nullptr) ? ftell(file_) : 0;
+}
+
+void FilePackerStream::fileRelease()
+{
+    if (file_ != nullptr) {
+        if (autoFileClose_) {
+            fclose(file_);
+        }
+        file_ = nullptr;
+    }
 }
 } // namespace Media
 } // namespace OHOS

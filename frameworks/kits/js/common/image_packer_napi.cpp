@@ -673,7 +673,7 @@ STATIC_EXEC_FUNC(PackToFile)
         return;
     }
 
-    auto startRes = context->rImagePacker->StartPacking(context->fd, context->packOption);
+    auto startRes = context->rImagePacker->StartPacking(context->fd, context->packOption, false);
     if (startRes != SUCCESS) {
         context->status = ERROR;
         BuildMsgOnError(context, startRes == SUCCESS, "Start packing failed", startRes);

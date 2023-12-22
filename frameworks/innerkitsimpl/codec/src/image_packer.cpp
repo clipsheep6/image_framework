@@ -108,7 +108,7 @@ uint32_t ImagePacker::StartPacking(uint8_t *outputData, uint32_t maxSize, const 
     return StartPackingImpl(option);
 }
 
-uint32_t ImagePacker::StartPacking(const std::string &filePath, const PackOption &option)
+uint32_t ImagePacker::StartPacking(const std::string &filePath, const PackOption &option, bool autoFileClose)
 {
     ImageTrace imageTrace("ImagePacker::StartPacking by filePath");
     if (!IsPackOptionValid(option)) {
@@ -122,11 +122,12 @@ uint32_t ImagePacker::StartPacking(const std::string &filePath, const PackOption
         return ERR_IMAGE_DATA_ABNORMAL;
     }
     FreeOldPackerStream();
+    stream->setAutoFileClose(autoFileClose);
     packerStream_ = std::unique_ptr<FilePackerStream>(stream);
     return StartPackingImpl(option);
 }
 
-uint32_t ImagePacker::StartPacking(const int &fd, const PackOption &option)
+uint32_t ImagePacker::StartPacking(const int &fd, const PackOption &option, bool autoFileClose)
 {
     ImageTrace imageTrace("ImagePacker::StartPacking by fd");
     if (!IsPackOptionValid(option)) {
@@ -140,6 +141,7 @@ uint32_t ImagePacker::StartPacking(const int &fd, const PackOption &option)
         return ERR_IMAGE_DATA_ABNORMAL;
     }
     FreeOldPackerStream();
+    stream->setAutoFileClose(autoFileClose);
     packerStream_ = std::unique_ptr<FilePackerStream>(stream);
     return StartPackingImpl(option);
 }

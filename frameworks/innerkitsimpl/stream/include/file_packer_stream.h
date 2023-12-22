@@ -30,10 +30,17 @@ public:
     bool Write(const uint8_t *buffer, uint32_t size) override;
     void Flush() override;
     int64_t BytesWritten() override;
+    void setAutoFileClose(bool autoFileClose)
+    {
+        autoFileClose_ = autoFileClose;
+    }
 
 private:
     DISALLOW_COPY(FilePackerStream);
+    void fileRelease();
+
     FILE *file_ = nullptr;
+    bool autoFileClose_ = true;
 };
 } // namespace Media
 } // namespace OHOS
