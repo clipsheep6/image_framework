@@ -36,7 +36,7 @@ ohos_static_library("exifhelper") {
     "${image_subsystem}/interfaces/innerkits/include",
     "${third_party_root}/libexif",
   ]
-  deps = [ "${third_party_root}/libexif:libexif" ]
+  deps = [ "//third_party/libexif:libexif" ]
   external_deps = [
     "c_utils:utils",
     "graphic_2d:surface",
