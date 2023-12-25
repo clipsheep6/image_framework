@@ -18,7 +18,6 @@
 #include <cmath>
 #include <securec.h>
 
-#include "abs_image_encoder.h"
 #include "hilog/log.h"
 #include "log_tags.h"
 
@@ -33,10 +32,6 @@ constexpr uint8_t BIT_SHIFT_24BITS = 24;
 constexpr uint8_t BYTES_MASK = 0xFF;
 constexpr uint8_t STRIDE_RGBA_LOG2 = 2;
 constexpr uint8_t GLOBAL_WH_NUM_CL = 2;
-constexpr uint8_t PARTITION_COUNT_1 = 1;
-constexpr uint8_t PARTITION_COUNT_2 = 2;
-constexpr uint8_t PARTITION_COUNT_3 = 3;
-constexpr uint8_t PARTITION_COUNT_4 = 4;
 }
 
 const char *g_programSource = R"(
@@ -1206,8 +1201,7 @@ float TryEncode(float4* texels, float4 texelsMean, uint4* epIse, uint4* wtIse, s
     return errval;
 }
 
-uint4 EncodeBlock(float4* texels, float4 texelsMean,
-    int blockID, __global PartInfo* globalParts, __global uint* errs)
+uint4 EncodeBlock(float4* texels, float4 texelsMean, int blockID, __global uint* errs)
 {
     bool hasAlpha = true;
     bool isDualPlane = false;
@@ -1246,8 +1240,7 @@ void GotTexelFromImage(read_only image2d_t inputImage, float4 texels[BLOCK_SIZE]
     }
 }
 
-kernel void AstcCl(read_only image2d_t inputImage, __global uint4* astcArr,
-    __global PartInfo* globalParts, __global uint* errs) {
+kernel void AstcCl(read_only image2d_t inputImage, __global uint4* astcArr, __global uint* errs) {
     int width = get_global_size(INT_ZERO);
     int height = get_global_size(INT_ONE);
     const int2 local_id = (int2)(get_local_id(INT_ZERO), get_local_id(INT_ONE));
@@ -1260,7 +1253,7 @@ kernel void AstcCl(read_only image2d_t inputImage, __global uint4* astcArr,
         float4 texelMean = (float4)(FLOAT_ZERO);
         GotTexelFromImage(inputImage, texels, width, height, &texelMean);
         texelMean = texelMean / ((float)(BLOCK_SIZE));
-        astcArr[blockID] = EncodeBlock(texels, texelMean, blockID, globalParts, errs);
+        astcArr[blockID] = EncodeBlock(texels, texelMean, blockID, errs);
     }
 }
 )";
@@ -1293,17 +1286,7 @@ void ImageCompressor::Init()
         if (!clOk_) {
             HiLog::Error(LABEL, "InitOpenCL error !");
         }
-        InitPartition();
     }
-}
-
-bool ImageCompressor::CanCompress()
-{
-#ifdef UPLOAD_GPU_DISABLED
-    return false;
-#else
-    return switch_ && clOk_;
-#endif
 }
 
 cl_program ImageCompressor::LoadShader(cl_context context)
@@ -1351,7 +1334,7 @@ bool ImageCompressor::CreateKernel()
         cl_device_id deviceID;
         clGetPlatformIDs(1, &platformID, NULL); // 1 platform
         if (!platformID) {
-            HiLog::Error(LABEL, "clGetPlatformIDs err!");
+            HiLog::Error(LABEL, "clGetPlatformIDs error!");
             return false;
         }
         clGetDeviceIDs(platformID, CL_DEVICE_TYPE_GPU, 1, &deviceID, NULL); // 1 device
@@ -1400,10 +1383,6 @@ void ImageCompressor::ReleaseResource()
 
 void ImageCompressor::GenAstcHeader(uint8_t *buffer, uint8_t blockX, uint8_t blockY, uint32_t dimX, uint32_t dimY)
 {
-    if (buffer == nullptr) {
-        HiLog::Error(LABEL, "GenAstcHeader buffer is null");
-        return;
-    }
     uint8_t *headInfo = buffer;
     *headInfo++ = MAGIC_FILE_CONSTANT & BYTES_MASK;
     *headInfo++ = (MAGIC_FILE_CONSTANT >> BIT_SHIFT_8BITS) & BYTES_MASK;
@@ -1454,8 +1433,6 @@ bool ImageCompressor::TextureEncodeCL(uint8_t *data, int32_t strideIn, int32_t w
     cl_mem inputImage =
         clCreateImage(context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imageFormat, &desc, data, &err);
     cl_mem astcResult = clCreateBuffer(context_, CL_MEM_ALLOC_HOST_PTR, astcSize, NULL, &err);
-    cl_mem partInfos =
-        clCreateBuffer(context_, CL_MEM_COPY_HOST_PTR, sizeof(PartInfo) * parts_.size(), &parts_[INT32_ZERO], &err);
     uint32_t *blockErrs = new uint32_t[numBlocks] {0}; // initialize to 0
     if (!blockErrs) {
         HiLog::Error(LABEL, "TextureEncodeCL blockErrs new failed");
@@ -1465,69 +1442,20 @@ bool ImageCompressor::TextureEncodeCL(uint8_t *data, int32_t strideIn, int32_t w
     int32_t kernelId = INT32_ZERO;
     err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &inputImage);
     err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &astcResult);
-    err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &partInfos);
     err |= clSetKernelArg(kernel_, kernelId++, sizeof(cl_mem), &clErrs);
     err = clEnqueueNDRangeKernel(queue_, kernel_, GLOBAL_WH_NUM_CL, NULL, global, local, 0, NULL, NULL); // 0 wait
     clFinish(queue_);
     uint32_t maxVal = 0;
     uint32_t sumVal = 0;
+    err = clEnqueueReadBuffer(queue_, clErrs, CL_TRUE, 0, sizeof(uint32_t) * numBlocks, blockErrs, 0, NULL, NULL);
     GetMaxAndSumVal(numBlocks, blockErrs, maxVal, sumVal);
     clReleaseMemObject(inputImage);
-    clReleaseMemObject(partInfos);
     clReleaseMemObject(clErrs);
     delete[] blockErrs;
     clEnqueueReadBuffer(queue_, astcResult, CL_TRUE,
         READ_OFFSET, astcSize, buffer + TEXTURE_HEAD_BYTES, 0, NULL, NULL);
     clReleaseMemObject(astcResult);
     return true;
-}
-
-bool ImageCompressor::InitPartitionInfo(PartInfo *partInfos, int32_t partIndex, int32_t partCount)
-{
-    if (partInfos == nullptr) {
-        HiLog::Error(LABEL, "InitPartitionInfo partInfos is nullptr");
-        return false;
-    }
-    int32_t texIdx = INT32_ZERO;
-    int32_t counts[PARTITION_COUNT_4] = {0, 0, 0, 0};
-    for (int32_t y = INT32_ZERO; y < DIM; y++) {
-        for (int32_t x = INT32_ZERO; x < DIM; x++) {
-            int32_t part = AstcUtils::SelectPartition(partIndex, x, y, partCount, true);
-            partInfos->bitmaps[part] |= 1u << texIdx; // 1u flag current position
-            counts[part]++;
-            texIdx++;
-        }
-    }
-    int32_t realPartCount = INT32_ZERO;
-    if (counts[INT32_ZERO] == INT32_ZERO) {
-        realPartCount = INT32_ZERO;
-    } else if (counts[PARTITION_COUNT_1] == INT32_ZERO) {
-        realPartCount = PARTITION_COUNT_1;
-    } else if (counts[PARTITION_COUNT_2] == INT32_ZERO) {
-        realPartCount = PARTITION_COUNT_2;
-    } else if (counts[PARTITION_COUNT_3] == INT32_ZERO) {
-        realPartCount = PARTITION_COUNT_3;
-    } else {
-        realPartCount = PARTITION_COUNT_4;
-    }
-    if (realPartCount == partCount) {
-        return true;
-    }
-    return false;
-}
-
-void ImageCompressor::InitPartition()
-{
-    parts_.clear();
-    int32_t arrSize = sizeof(partitions_) / sizeof(partitions_[INT32_ZERO]);
-    for (int32_t i = INT32_ZERO; i < arrSize; i++) {
-        PartInfo p = {};
-        if (InitPartitionInfo(&p, partitions_[i], PARTITION_COUNT_2)) {
-            p.partid = partitions_[i];
-            parts_.push_back(p);
-        }
-    }
-    compileOption_ = "-D PARTITION_SERACH_MAX=" + std::to_string(parts_.size());
 }
 } // namespace Media
 } // namespace OHOS

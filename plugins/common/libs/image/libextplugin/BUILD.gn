@@ -104,23 +104,17 @@ ohos_shared_library("textureEncoderCL") {
       blocklist = "./cfi_blocklist.txt"
     }
   }
-  sources = [
-    "src/texture_encode/astc_utils.cpp",
-    "src/texture_encode/image_compressor.cpp",
-  ]
+  sources = [ "src/texture_encode/image_compressor.cpp" ]
   configs = [
     ":plugins_includes",
-    ":skia_includes",
     ":third_part_includes",
   ]
   include_dirs = [
     "include",
     "include/texture_encode",
-    "${image_subsystem}/plugins/manager/include/image",
     "${third_party_root}/bounds_checking_function/include",
     "${image_subsystem}/interfaces/innerkits/include",
     "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
-    "${graphic_subsystem}/interfaces/inner_api/surface",
   ]
   if (use_mingw_win) {
     configs += [ ":win_config" ]
@@ -130,14 +124,12 @@ ohos_shared_library("textureEncoderCL") {
     include_dirs += [ "${commonlibrary_subsystem}/base/include" ]
     deps = [
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
-      "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
       "//third_party/bounds_checking_function:libsec_static",
       "//third_party/opencl-headers:libcl",
     ]
     external_deps = [
       "c_utils:utils",
-      "graphic_2d:color_manager",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
     ]
