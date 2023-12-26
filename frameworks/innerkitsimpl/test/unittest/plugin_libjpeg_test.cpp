@@ -1474,7 +1474,7 @@ HWTEST_F(PluginLibJpegTest, SetYuv420spExtraConfigTest001, TestSize.Level3)
     auto jpegEncoder = std::make_shared<JpegEncoder>();
     jpegEncoder->encodeInfo_.comp_info = (jpeg_component_info *)malloc(sizeof(jpeg_component_info)*3);
     jpegEncoder->SetYuv420spExtraConfig();
-    ASSERT_EQ(jpegEncoder->encodeInfo_comp_info[INDEX_TWO].v_samp_factor, SAMPLE_FACTOR_ONE);
+    ASSERT_EQ(jpegEncoder->encodeInfo_.comp_info[INDEX_TWO].v_samp_factor, SAMPLE_FACTOR_ONE);
     free(jpegEncoder->encodeInfo_.comp_info);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: SetYuv420spExtraConfigTest001 end";
 }
