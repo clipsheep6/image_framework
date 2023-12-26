@@ -52,6 +52,7 @@
           "skia",
           "zlib",
           "astc-encoder",
+          "opencv",
           "opencl-headers"
         ]
       },
@@ -156,6 +157,15 @@
               ]
             },
             "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_packer_ndk"          
+          },
+          {
+            "header": {
+              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/",
+              "header_files": [
+                "opencv_native.h"
+              ]
+            },
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:opencv_ndk"
           }
         ],
         "test": [
