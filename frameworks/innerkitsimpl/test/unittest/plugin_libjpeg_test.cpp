@@ -1448,7 +1448,7 @@ HWTEST_F(PluginLibJpegTest, GetEncoderFormatTest002, TestSize.Level3)
     GTEST_LOG_(INFO) << "PluginLibJpegTest: GetEncoderFormatTest002 start";
     auto jpegEncoder = std::make_shared<JpegEncoder>();
     int32_t componentsNum;
-    J_COLOR_SPACE result = jpegEncoder->GetEncoderFormat(PixelFormat::RGBA_F16, componentsNum);
+    J_COLOR_SPACE result = jpegEncoder->GetEncodeFormat(PixelFormat::RGBA_F16, componentsNum);
     ASSERT_EQ(result, JCS_EXT_RGBA);
     result = jpegEncoder->GetEncodeFormat(PixelFormat::ARGB_8888, componentsNum);
     ASSERT_EQ(result, JCS_EXT_ARGB);
@@ -1472,10 +1472,10 @@ HWTEST_F(PluginLibJpegTest, SetYuv420spExtraConfigTest001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "PluginLibJpegTest: SetYuv420spExtraConfigTest001 start";
     auto jpegEncoder = std::make_shared<JpegEncoder>();
-    jpegEncoder->encoderInfo_.comp_info = (jpeg_component_info *)malloc(sizeof(jpeg_component_info)*3);
+    jpegEncoder->encodeInfo_.comp_info = (jpeg_component_info *)malloc(sizeof(jpeg_component_info)*3);
     jpegEncoder->SetYuv420spExtraConfig();
-    ASSERT_EQ(jpegEncoder->encoderInfo_comp_info[INDEX_TWO].v_samp_factor, SAMPLE_FACTOR_ONE);
-    free(jpegEncoder->encoderInfo_.comp_info);
+    ASSERT_EQ(jpegEncoder->encodeInfo_comp_info[INDEX_TWO].v_samp_factor, SAMPLE_FACTOR_ONE);
+    free(jpegEncoder->encodeInfo_.comp_info);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: SetYuv420spExtraConfigTest001 end";
 }
 } // namespace Multimedia
