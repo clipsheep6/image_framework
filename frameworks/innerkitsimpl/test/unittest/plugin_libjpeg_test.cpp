@@ -1478,5 +1478,32 @@ HWTEST_F(PluginLibJpegTest, SetYuv420spExtraConfigTest001, TestSize.Level3)
     free(jpegEncoder->encodeInfo_.comp_info);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: SetYuv420spExtraConfigTest001 end";
 }
+
+/**
+ * @tc.name: DeinterweaveTest001
+ * @tc.desc: Deinterweave
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, DeinterweaveTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: DeinterweaveTest001 start";
+    auto jpegEncoder = std::make_shared<JpegEncoder>();
+    auto PixelFormat = std::make_shared<PixelFormat>();
+    uint8_t *uvPlane = new uint8_t;
+    uint8_t *uvPlane = new uint8_t;
+    uint8_t *uPlane = new uint8_t;
+    uint32_t curRow = 1;
+    uint32_t width = 8;
+    uint32_t height = 19;
+    auto *pixelMap = new Media::PixelMap;
+    const auto &pixelMaps = pixelMap;
+    jpegEncoder->AddImage(*pixelMaps);
+    jpegEncoder->Deinterweave(uvPlane, uPlane, vPlane, curRow, width, height);
+    delete uvPlane;
+    delete vPlane;
+    delete uPlane;
+    delete pixelMap;
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: DeinterweaveTest001 end";
+}
 } // namespace Multimedia
 } // namespace OHOS
