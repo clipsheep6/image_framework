@@ -40,7 +40,8 @@
           "drivers_interface_codec",
           "drivers_interface_display",
           "hdf_core",
-          "memmgr_plugin"
+          "memmgr_plugin",
+          "opencl-icd-loader"
         ],
         "third_party": [
           "flutter",
@@ -52,7 +53,7 @@
           "skia",
           "zlib",
           "astc-encoder",
-          "opencl-headers"
+          "opencl-icd-loader"
         ]
       },
       "build": {

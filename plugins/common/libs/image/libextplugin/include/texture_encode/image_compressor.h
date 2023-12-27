@@ -28,8 +28,8 @@
 #include <unistd.h>
 #include "astc_utils.h"
 
-#define USE_OPENCL_WRAPPER
-#include "opencl_wrapper.h"
+#define CL_TARGET_OPENCL_VERSION 300
+#include <CL/cl.h>
 
 namespace OHOS {
 namespace Media {
