@@ -1,0 +1,15 @@
+src:*plugins/common/libs/image/libextplugin/src/ext_decoder.cpp
+src:*plugins/common/libs/image/libextplugin/src/ext_encoder.cpp
+src:*plugins/common/libs/image/libextplugin/src/ext_pixel_convert.cpp
+src:*plugins/common/libs/image/libextplugin/src/ext_stream.cpp
+src:*plugins/common/libs/image/libextplugin/src/ext_wstream.cpp
+src:*plugins/common/libs/image/libextplugin/src/plugin_export.cpp
+src:*plugins/common/libs/image/libextplugin/src/hardware/jpeg_hw_decoder.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/astc_codec.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/astc_utils.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/hwe_checkPara.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/hwe_memoryManager.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/hwe_osdep.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/hwe_source_record.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/hwe_threadpool.cpp
+src:*plugins/common/libs/image/libextplugin/src/texture_encode/image_compressor.cpp
