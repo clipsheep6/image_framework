@@ -231,6 +231,7 @@ bool PixelConvertAdapter::ReadPixelsConvert(const void *srcPixels, const Positio
 bool PixelConvertAdapter::EraseBitmap(const void *srcPixels, uint32_t srcRowBytes, const ImageInfo &srcInfo,
                                       uint32_t color)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     if (srcPixels == nullptr) {
         HiLog::Error(LABEL, "srcPixels is null.");
         return false;
@@ -249,6 +250,7 @@ bool PixelConvertAdapter::EraseBitmap(const void *srcPixels, uint32_t srcRowByte
     paint.setBlendMode(SkBlendMode::kSrc);
     SkCanvas canvas(srcBitmap);
     canvas.drawPaint(paint);
+#endif
     return true;
 }
 } // namespace Media

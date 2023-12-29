@@ -14,7 +14,9 @@
  */
 
 #include "gst_plugin_fw.h"
+#if !defined(_WIN32) && !defined(_LINUX_)
 #include "__mutex_base"
+#endif
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
 #include "log_tags.h"

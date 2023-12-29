@@ -20,8 +20,9 @@
 #include "image_napi_utils.h"
 #include "image_pixel_map_napi.h"
 #include "image_trace.h"
+#include "image_source.h"
 #include "log_tags.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
 #include "color_space_object_convertor.h"
 #include "js_runtime_utils.h"
 #include "napi_message_sequence.h"
@@ -52,8 +53,8 @@ static const std::map<std::string, std::set<uint32_t>> ETS_API_ERROR_CODE = {
 };
 static const std::string CLASS_NAME = "PixelMap";
 static const std::int32_t NEW_INSTANCE_ARGC = 1;
-thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+napi_ref PixelMapNapi::sConstructor_ = nullptr;
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
 NAPI_MessageSequence* napi_messageSequence = nullptr;
 #endif
 
@@ -86,7 +87,7 @@ struct PixelMapAsyncContext {
     double yArg = 0;
     bool xBarg = false;
     bool yBarg = false;
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
     std::shared_ptr<OHOS::ColorManager::ColorSpace> colorSpace;
 #endif
     std::string surfaceId;
@@ -919,9 +920,9 @@ napi_value PixelMapNapi::CreatePixelMap(napi_env env, std::shared_ptr<PixelMap> 
     return result;
 }
 
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
 STATIC_EXEC_FUNC(Unmarshalling)
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     auto context = static_cast<PixelMapAsyncContext*>(data);
 
     auto messageParcel = napi_messageSequence->GetMessageParcel();
@@ -935,8 +936,8 @@ STATIC_EXEC_FUNC(Unmarshalling)
     } else {
         context->status = ERROR;
     }
-#endif
 }
+#endif
 
 void PixelMapNapi::UnmarshallingComplete(napi_env env, napi_status status, void *data)
 {
@@ -962,7 +963,7 @@ void PixelMapNapi::UnmarshallingComplete(napi_env env, napi_status status, void 
 
 napi_value PixelMapNapi::Unmarshalling(napi_env env, napi_callback_info info)
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
     if (PixelMapNapi::GetConstructor() == nullptr) {
         napi_value exports = nullptr;
         napi_create_object(env, &exports);
@@ -1027,7 +1028,7 @@ napi_value PixelMapNapi::ThrowExceptionError(napi_env env,
 }
 
 napi_value PixelMapNapi::CreatePixelMapFromParcel(napi_env env, napi_callback_info info)
-#if defined(IOS_PLATFORM) || defined(A_PLATFORM)
+#if defined(IOS_PLATFORM) || defined(A_PLATFORM) || defined(_WIN32) || defined(_LINUX_)
 {
     napi_value result = nullptr;
     return result;
@@ -1140,7 +1141,9 @@ napi_value PixelMapNapi::GetIsStrideAlignment(napi_env env, napi_callback_info i
 
 napi_value PixelMapNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("PixelMapNapi::ReadPixelsToBuffer");
+#endif
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1317,7 +1320,9 @@ napi_value PixelMapNapi::WritePixels(napi_env env, napi_callback_info info)
 
 napi_value PixelMapNapi::WriteBufferToPixels(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("PixelMapNapi::WriteBufferToPixels");
+#endif
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1460,7 +1465,9 @@ napi_value PixelMapNapi::GetImageInfo(napi_env env, napi_callback_info info)
 
 napi_value PixelMapNapi::GetBytesNumberPerRow(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("PixelMapNapi::GetBytesNumberPerRow");
+#endif
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1497,7 +1504,9 @@ napi_value PixelMapNapi::GetBytesNumberPerRow(napi_env env, napi_callback_info i
 
 napi_value PixelMapNapi::GetPixelBytesNumber(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("PixelMapNapi::GetPixelBytesNumber");
+#endif
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -2289,8 +2298,10 @@ napi_value PixelMapNapi::GetColorSpace(napi_env env, napi_callback_info info)
         return ImageNapiUtils::ThrowExceptionError(
             env, ERR_IMAGE_DATA_UNSUPPORT, "No colorspace in pixelmap");
     }
+#if !defined(_WIN32) && !defined(_LINUX_)
     auto resultValue = ColorManager::CreateJsColorSpaceObject(env, grCS);
     nVal.result = reinterpret_cast<napi_value>(resultValue);
+#endif
 #else
     return ImageNapiUtils::ThrowExceptionError(
         env, ERR_INVALID_OPERATION, "Unsupported operation");
@@ -2319,14 +2330,14 @@ napi_value PixelMapNapi::SetColorSpace(napi_env env, napi_callback_info info)
         "Pixelmap has crossed threads . SetColorSpace failed"),
         HiLog::Error(LABEL, "Pixelmap has crossed threads . SetColorSpace failed"));
 #ifdef IMAGE_COLORSPACE_FLAG
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
     nVal.context->colorSpace = ColorManager::GetColorSpaceByJSObject(env, nVal.argv[NUM_0]);
-#endif
     if (nVal.context->colorSpace == nullptr) {
         return ImageNapiUtils::ThrowExceptionError(
             env, ERR_IMAGE_INVALID_PARAMETER, "ColorSpace mismatch");
     }
     nVal.context->nConstructor->nativePixelMap_->InnerSetColorSpace(*(nVal.context->colorSpace));
+#endif
 #else
     return ImageNapiUtils::ThrowExceptionError(
         env, ERR_INVALID_OPERATION, "Unsupported operation");
@@ -2336,7 +2347,7 @@ napi_value PixelMapNapi::SetColorSpace(napi_env env, napi_callback_info info)
 
 napi_value PixelMapNapi::Marshalling(napi_env env, napi_callback_info info)
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
     NapiValues nVal;
     nVal.argc = NUM_1;
     napi_value argValue[NUM_1] = {0};
@@ -2370,6 +2381,7 @@ napi_value PixelMapNapi::Marshalling(napi_env env, napi_callback_info info)
 
 static void ApplyColorSpaceExec(napi_env env, PixelMapAsyncContext* context)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     if (context == nullptr) {
         HiLog::Error(LABEL, "Null context");
         return;
@@ -2384,6 +2396,7 @@ static void ApplyColorSpaceExec(napi_env env, PixelMapAsyncContext* context)
         return;
     }
     context->status = context->rPixelMap->ApplyColorSpace(*(context->colorSpace));
+#endif
 }
 
 static void ParseColorSpaceVal(napi_env env, napi_value val, PixelMapAsyncContext* context)
@@ -2394,14 +2407,14 @@ static void ParseColorSpaceVal(napi_env env, napi_value val, PixelMapAsyncContex
     }
 
 #ifdef IMAGE_COLORSPACE_FLAG
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
     context->colorSpace = ColorManager::GetColorSpaceByJSObject(env, val);
-#endif
     if (context->colorSpace == nullptr) {
         context->status = ERR_IMAGE_INVALID_PARAMETER;
     }
+#endif
 #else
-    Val.context->status = ERR_IMAGE_DATA_UNSUPPORT;
+    context->status = ERR_IMAGE_DATA_UNSUPPORT;
 #endif
 }
 

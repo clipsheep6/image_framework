@@ -18,7 +18,9 @@
 #include <memory>
 #include <utility>
 #include <functional>
+#if !defined(_LINUX_)
 #include "__tree"
+#endif
 #include "cstdint"
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
@@ -30,6 +32,10 @@
 #ifndef _WIN32
 #include "securec.h"
 #else
+/* success */
+#ifndef EOK
+#define EOK (0)
+#endif
 #include "memory.h"
 #endif
 #include "set"

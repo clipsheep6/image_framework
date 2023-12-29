@@ -15,6 +15,7 @@
 
 #include "image_source_napi.h"
 #include <fcntl.h>
+#include <limits.h>
 #include "hilog/log.h"
 #include "image_napi_utils.h"
 #include "log_tags.h"
@@ -36,7 +37,9 @@ namespace {
     constexpr uint32_t NUM_3 = 3;
     constexpr uint32_t NUM_4 = 4;
     constexpr uint32_t NUM_5 = 5;
+#if !defined(_WIN32) && !defined(_LINUX_)
     constexpr uint32_t NUM_8 = 8;
+#endif
 }
 
 namespace OHOS {
@@ -645,6 +648,7 @@ static bool ParseColorSpaceInfo(napi_env env, napi_value colorSpace, ColorSpaceI
         HiLog::Error(LABEL, "Invalid args");
         return false;
     }
+#if !defined(_WIN32) && !defined(_LINUX_)
     auto grColorSpacePtr = OHOS::ColorManager::GetColorSpaceByJSObject(env, colorSpace);
     if (grColorSpacePtr == nullptr) {
         HiLog::Error(LABEL, "Get colorspace by JS object failed");
@@ -663,6 +667,7 @@ static bool ParseColorSpaceInfo(napi_env env, napi_value colorSpace, ColorSpaceI
         }
     }
     skColorSpace->transferFn(colorSpaceInfo.transferFn);
+#endif
     return true;
 }
 
@@ -1021,7 +1026,9 @@ napi_value ImageSourceNapi::CreateIncrementalSource(napi_env env, napi_callback_
 
 napi_value ImageSourceNapi::GetImageInfo(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("ImageSourceNapi::GetImageInfo");
+#endif
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1348,6 +1355,7 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContext(napi_env env, napi
 
 static bool CheckExifDataValue(const std::string &key, const std::string &value, std::string &errorInfo)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     if (IsSameTextStr(key, "BitsPerSample")) {
         std::vector<std::string> bitsVec;
         SplitStr(value, ",", bitsVec);
@@ -1404,6 +1412,7 @@ static bool CheckExifDataValue(const std::string &key, const std::string &value,
             return false;
         }
     }
+#endif
     return true;
 }
 
@@ -1488,10 +1497,13 @@ napi_value ImageSourceNapi::ModifyImageProperty(napi_env env, napi_callback_info
                 context->status = ERR_MEDIA_VALUE_INVALID;
                 return;
             }
+#if !defined(_WIN32) && !defined(_LINUX_)
             if (!IsSameTextStr(context->pathName, "")) {
                 context->status = context->rImageSource->ModifyImageProperty(context->index,
                     context->keyStr, context->valueStr, context->pathName);
-            } else if (context->fdIndex != -1) {
+            } else
+#endif
+            if (context->fdIndex != -1) {
                 context->status = context->rImageSource->ModifyImageProperty(context->index,
                     context->keyStr, context->valueStr, context->fdIndex);
             } else if (context->sourceBuffer != nullptr) {
@@ -1513,7 +1525,9 @@ napi_value ImageSourceNapi::ModifyImageProperty(napi_env env, napi_callback_info
 
 napi_value ImageSourceNapi::GetImageProperty(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("ImageSourceNapi::GetImageProperty");
+#endif
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
 
@@ -1867,7 +1881,9 @@ STATIC_COMPLETE_FUNC(CreatePixelMapList)
 
 napi_value ImageSourceNapi::CreatePixelMapList(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("ImageSourceNapi::CreatePixelMapList");
+#endif
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
@@ -1953,7 +1969,9 @@ STATIC_COMPLETE_FUNC(GetDelayTime)
 
 napi_value ImageSourceNapi::GetDelayTime(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("ImageSourceNapi::GetDelayTime");
+#endif
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
@@ -2030,7 +2048,9 @@ STATIC_COMPLETE_FUNC(GetFrameCount)
 
 napi_value ImageSourceNapi::GetFrameCount(napi_env env, napi_callback_info info)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     ImageTrace imageTrace("ImageSourceNapi::GetFrameCount");
+#endif
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {

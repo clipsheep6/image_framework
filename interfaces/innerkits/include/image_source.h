@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <functional>
 
 #include "decode_listener.h"
 #include "image_type.h"

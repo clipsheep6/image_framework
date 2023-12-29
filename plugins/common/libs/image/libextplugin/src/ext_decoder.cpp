@@ -131,7 +131,7 @@ static void SetDecodeContextBuffer(DecodeContext &context,
 
 static uint32_t ShareMemAlloc(DecodeContext &context, uint64_t count)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM) || defined(_LINUX_)
     HiLog::Error(LABEL, "Unsupport share mem alloc");
     return ERR_IMAGE_DATA_UNSUPPORT;
 #else

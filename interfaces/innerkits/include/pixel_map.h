@@ -20,11 +20,14 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <vector>
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
 #endif
 #include "image_type.h"
+#if !defined(_WIN32)
 #include "parcel.h"
+#endif
 #ifdef IMAGE_PURGEABLE_PIXELMAP
 #include "purgeable_mem_base.h"
 #include "purgeable_mem_builder.h"
@@ -80,7 +83,11 @@ typedef struct BuildParam {
     bool flag_ = true;
 } BUILD_PARAM;
 
-class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
+class PixelMap :
+#if !defined(_WIN32)
+    public Parcelable,
+#endif
+    public PIXEL_MAP_ERR {
 public:
     static std::atomic<uint32_t> currentId;
     PixelMap()
@@ -212,9 +219,11 @@ public:
         return uniqueId_;
     }
 
+#if !defined(_WIN32)
     NATIVEEXPORT virtual bool Marshalling(Parcel &data) const override;
     NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &data);
     NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error);
+#endif
     NATIVEEXPORT virtual bool EncodeTlv(std::vector<uint8_t> &buff) const;
     NATIVEEXPORT static PixelMap *DecodeTlv(std::vector<uint8_t> &buff);
 
@@ -299,11 +308,13 @@ private:
     void ReleaseSharedMemory(void *addr, void *context, uint32_t size);
     static void ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataSize, void **buffer);
     static void *AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId);
+#if !defined(_WIN32)
     bool WriteInfoToParcel(Parcel &parcel) const;
     bool WriteTransformDataToParcel(Parcel &parcel) const;
     bool ReadTransformData(Parcel &parcel, PixelMap *pixelMap);
     bool WriteAstcRealSizeToParcel(Parcel &parcel) const;
     bool ReadAstcRealSize(Parcel &parcel, PixelMap *pixelMap);
+#endif
     uint32_t SetRowDataSizeForImageInfo(ImageInfo info);
     void SetEditable(bool editable)
     {
@@ -326,12 +337,14 @@ private:
     }
 
     static void ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size);
+#if !defined(_WIN32)
     bool WriteImageData(Parcel &parcel, size_t size) const;
     static uint8_t *ReadImageData(Parcel &parcel, int32_t size);
     static int ReadFileDescriptor(Parcel &parcel);
     static bool WriteFileDescriptor(Parcel &parcel, int fd);
     bool ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo);
     bool WriteImageInfo(Parcel &parcel) const;
+#endif
     void WriteUint8(std::vector<uint8_t> &buff, uint8_t value) const;
     static uint8_t ReadUint8(std::vector<uint8_t> &buff, int32_t &cursor);
     uint8_t GetVarintLen(int32_t value) const;

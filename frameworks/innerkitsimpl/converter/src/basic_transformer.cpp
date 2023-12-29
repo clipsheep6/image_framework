@@ -22,11 +22,16 @@
 #include "pixel_map.h"
 #ifndef _WIN32
 #include "securec.h"
+#include <sys/mman.h>
 #else
+/* success */
+#ifndef EOK
+#define EOK (0)
+#endif
 #include "memory.h"
 #endif
 
-#if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_LINUX_)
 #include "ashmem.h"
 #include <sys/mman.h>
 #endif
@@ -185,12 +190,16 @@ uint32_t BasicTransformer::TransformPixmap(const PixmapInfo &inPixmap, PixmapInf
     outPixmap.imageInfo.alphaType = inPixmap.imageInfo.alphaType;
     outPixmap.imageInfo.baseDensity = inPixmap.imageInfo.baseDensity;
 
+#ifdef _WIN32
+    memset(outPixmap.data, COLOR_DEFAULT, bufferSize * sizeof(uint8_t));
+#else
     if (memset_s(outPixmap.data, bufferSize * sizeof(uint8_t), COLOR_DEFAULT, bufferSize * sizeof(uint8_t)) != EOK) {
         HiLog::Error(BASIC_TRANSFORMER_LABEL, "[BasicTransformer]apply heap memory failed.");
         ReleaseBuffer((allocate == nullptr) ? AllocatorType::HEAP_ALLOC : AllocatorType::SHARE_MEM_ALLOC,
             fd, bufferSize, outPixmap.data);
         return ERR_IMAGE_GENERAL_ERROR;
     }
+#endif
 
     if (!DrawPixelmap(inPixmap, pixelBytes, dstSize, outPixmap.data)) {
         HiLog::Error(BASIC_TRANSFORMER_LABEL, "[BasicTransformer] the matrix can not invert.");

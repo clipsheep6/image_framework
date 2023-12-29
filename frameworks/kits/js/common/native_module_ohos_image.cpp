@@ -28,13 +28,15 @@ namespace Media{
  */
 static napi_value Export(napi_env env, napi_value exports)
 {
+#if !defined(_WIN32) && !defined(_LINUX_)
     HiLog::Info(LABEL, "ImagePackerNapi CALL");
     ImagePackerNapi::Init(env, exports);
+#endif
     HiLog::Info(LABEL, "PixelMapNapi CALL");
     PixelMapNapi::Init(env, exports);
     HiLog::Info(LABEL, "ImageSourceNapi CALL");
     ImageSourceNapi::Init(env, exports);
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && !defined(_WIN32) && !defined(_LINUX_)
     HiLog::Info(LABEL, "ImageReceiverNapi CALL");
     ImageReceiverNapi::Init(env, exports);
     HiLog::Info(LABEL, "ImageCreatorNapi CALL");

@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
+#if !defined(_WIN32) && !defined(_LINUX_)
 #include "__config"
+#endif
 #include "iosfwd"
 #include "hilog/log.h"
 #include "hilog/log_cpp.h"
