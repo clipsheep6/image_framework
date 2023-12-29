@@ -17,6 +17,13 @@
 #define INTERFACES_INNERKITS_INCLUDE_IMAGE_TYPE_H_
 
 #include <cinttypes>
+#include <memory>
+
+namespace OHOS {
+namespace ColorManager {
+class ColorSpace;
+}
+}
 
 namespace OHOS {
 namespace Media {
@@ -174,14 +181,6 @@ struct SVGDecodeOptions {
     SVGResize SVGResize;
 };
 
-struct ColorSpaceInfo {
-    static constexpr uint8_t XYZ_SIZE = 3;
-    static constexpr uint8_t TRANSFER_FN_SIZE = 7;
-    bool isValidColorSpace = false;
-    float xyz[XYZ_SIZE][XYZ_SIZE] = {{0}};
-    float transferFn[TRANSFER_FN_SIZE] = {0};
-};
-
 struct DecodeOptions {
     int32_t fitDensity = 0;
     Rect CropRect;
@@ -202,7 +201,7 @@ struct DecodeOptions {
     bool editable = false;
     MemoryUsagePreference preference = MemoryUsagePreference::DEFAULT;
     SVGDecodeOptions SVGOpts;
-    ColorSpaceInfo desiredColorSpaceInfo;
+    std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
 };
 
 enum class ScaleMode : int32_t {
