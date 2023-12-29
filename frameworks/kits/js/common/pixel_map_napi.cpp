@@ -23,7 +23,6 @@
 #include "log_tags.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
-#include "js_runtime_utils.h"
 #include "napi_message_sequence.h"
 #endif
 #include "hitrace_meter.h"
