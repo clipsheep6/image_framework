@@ -247,9 +247,9 @@ public:
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----end-------
 #endif
 
-    NATIVEEXPORT void InnerSetNinePngRes(const NinePngRes &ninePngRes);
-    NATIVEEXPORT NinePngRes InnerGetNinePngRes();
-    NATIVEEXPORT std::shared_ptr<NinePngRes> InnerGetNinePngResPtr()
+    NATIVEEXPORT void SetNinePngResInner(const NinePngRes &ninePngRes);
+    NATIVEEXPORT NinePngRes GetNinePngResInner();
+    NATIVEEXPORT std::shared_ptr<NinePngRes> GetNinePngResInnerPtr()
     {
         return ninePngRes_;
     }

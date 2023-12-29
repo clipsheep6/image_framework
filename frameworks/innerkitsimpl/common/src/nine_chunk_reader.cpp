@@ -17,8 +17,8 @@
 #include "hilog/log.h"
 #include "log_tags.h"
 #include "memory.h"
-#include "png_ninepatch_res.h"
 #include "securec.h"
+#include "png_ninepatch_res.h"
 
 namespace OHOS {
 namespace Media {
@@ -48,7 +48,7 @@ bool NineChunkReader::readChunk(const char tag[], const void *data, size_t lengt
         errno_t err = memcpy_s(patchNew, patchSize, patch, patchSize);
         if (err != EOK) {
             HiviewDFX::HiLog::Error(LABEL, "memcpy failed. errno:%{public}d", err);
-            free(patchNew);
+            delete[] (patchNew);
             patchNew = nullptr;
             return false;
         }

@@ -554,7 +554,7 @@ static void GetValidCropRect(const Rect &src, ImagePlugin::PlImageInfo &plInfo, 
     }
 }
 
-const NinePngRes ChangeToNinePngRes(NinePatchInfo info)
+const NinePngRes ChangeToNinePngRes(const NinePatchInfo &info)
 {
     NinePngRes ninePngRes;
     ImagePlugin::PngNinePatchRes *patch =
@@ -623,7 +623,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
-    pixelMap->InnerSetNinePngRes(ChangeToNinePngRes(GetInfoFromNineContext()));
+    pixelMap->SetNinePngResInner(ChangeToNinePngRes(GetInfoFromNineContext()));
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
@@ -783,7 +783,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
-    pixelMap->InnerSetNinePngRes(ChangeToNinePngRes(GetInfoFromNineContext()));
+    pixelMap->SetNinePngResInner(ChangeToNinePngRes(GetInfoFromNineContext()));
     pixelMap->SetPixelsAddr(context.pixelsBuffer.buffer, context.pixelsBuffer.context, context.pixelsBuffer.bufferSize,
                             context.allocatorType, context.freeFunc);
     DecodeOptions procOpts;
