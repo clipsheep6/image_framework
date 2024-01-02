@@ -437,7 +437,18 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         dstWidth = opts.desiredSize.width;
         dstHeight = opts.desiredSize.height;
     }
-    if (IsLowDownScale(opts.desiredSize, info_) && GetScaledSize(dstWidth, dstHeight, scale)) {
+    if (!IsValidCrop(opts.CropRect, info_, dstSubset_)) {
+        HiLog::Error(LABEL,
+            "Invalid crop rect xy [%{public}d x %{public}d], wh [%{public}d x %{public}d]",
+            dstSubset_.left(), dstSubset_.top(), dstSubset_.width(), dstSubset_.height());
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (IsSupportCropOnDecode(dstSubset_)) {
+        dstOptions_.fSubset = &dstSubset_;
+    }
+
+    if ((dstSubset_.isEmpty() || dstOptions_.fSubset != nullptr) &&
+        IsLowDownScale(opts.desiredSize, info_) && GetScaledSize(dstWidth, dstHeight, scale)) {
         dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha,
             getDesiredColorSpace(info_, opts));
     } else {
@@ -450,16 +461,6 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     dstOptions_.fFrameIndex = index;
-
-    if (!IsValidCrop(opts.CropRect, info_, dstSubset_)) {
-        HiLog::Error(LABEL,
-            "Invalid crop rect xy [%{public}d x %{public}d], wh [%{public}d x %{public}d]",
-            dstSubset_.left(), dstSubset_.top(), dstSubset_.width(), dstSubset_.height());
-        return ERR_IMAGE_INVALID_PARAMETER;
-    }
-    if (IsSupportCropOnDecode(dstSubset_)) {
-        dstOptions_.fSubset = &dstSubset_;
-    }
 
     info.size.width = dstInfo_.width();
     info.size.height = dstInfo_.height();
