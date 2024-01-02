@@ -1914,13 +1914,6 @@ bool PixelMap::ReadPropertiesFromParcel(Parcel &parcel, ImageInfo &imgInfo,
         InnerSetColorSpace(grColorSpace);
     }
 
-    AllocatorType allocType = static_cast<AllocatorType>(parcel.ReadInt32());
-    int32_t csm = parcel.ReadInt32();
-    if (csm != ERR_MEDIA_INVALID_VALUE) {
-        OHOS::ColorManager::ColorSpaceName colorSpaceName = static_cast<OHOS::ColorManager::ColorSpaceName>(csm);
-        OHOS::ColorManager::ColorSpace grColorSpace = OHOS::ColorManager::ColorSpace(colorSpaceName);
-        pixelMap->InnerSetColorSpace(grColorSpace);
-    }
     int32_t rowDataSize = parcel.ReadInt32();
     bufferSize = parcel.ReadInt32();
     int32_t bytesPerPixel = ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
