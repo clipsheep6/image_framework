@@ -1693,6 +1693,14 @@ bool PixelMap::WriteInfoToParcel(Parcel &parcel) const
                      allocatorType_);
         return false;
     }
+
+    if (grColorSpace_ != nullptr) {
+        if (!parcel.WriteInt32(static_cast<int32_t>(grColorSpace_))) {
+            HiLog::Error(LABEL, "write pixel map one grColorSpace_:[%{public}d] to parcel failed",
+                grColorSpace_->GetColorSpaceName());
+            return false;
+        }
+    }
     return true;
 }
 
@@ -1910,6 +1918,17 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
     pixelMap->SetAstc(isAstc);
 
     AllocatorType allocType = static_cast<AllocatorType>(parcel.ReadInt32());
+
+    int32_t tmp = parcel.ReadInt32();
+    if (tmp != -1) {
+        OHOS::ColorManager::ColorSpaceName colorSpaceName = static_cast<OHOS::ColorManager::ColorSpaceName>(tmp);
+        HiLog::Error(LABEL, "unmarshalling get colorSpaceName %{public}d.", colorSpaceName);
+        OHOS::ColorManager::colorSpace grColorSpace = OHOS::ColorManager::colorSpace(colorSpaceName);
+        pixelMap->InnerSetColorSpace(grColorSpace);
+
+        OHOS::ColorManager::ColorSpaceName colorSpaceName2 = InnerGetColorSpace().GetColorSpaceName();
+        HiLog::Error(LABEL, "unmarshalling pixel map grColorSpce_2:[%{public}d].", colorSpaceName2);
+    }
     int32_t rowDataSize = parcel.ReadInt32();
     int32_t bufferSize = parcel.ReadInt32();
     int32_t bytesPerPixel = ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
