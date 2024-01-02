@@ -63,6 +63,7 @@ group("image_test_list") {
 config("media_config") {
   defines = []
   
+  # platform 
   if (current_cpu == "arm64" || current_cpu == "arm") {
     defines += [ "USE_NEON" ]
   }
