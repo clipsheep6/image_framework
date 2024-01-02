@@ -35,6 +35,7 @@
 #include "pixel_astc.h"
 #include "pixel_map.h"
 #include "plugin_server.h"
+#include "png_ninepatch_res.h"
 #include "post_proc.h"
 #include "securec.h"
 #include "source_stream.h"
@@ -555,6 +556,50 @@ static void GetValidCropRect(const Rect &src, ImagePlugin::PlImageInfo &plInfo, 
     }
 }
 
+const NinePngRes ChangeToNinePngRes(const NinePatchInfo &info)
+{
+    NinePngRes ninePngRes;
+    ImagePlugin::PngNinePatchRes *patch =
+        static_cast<ImagePlugin::PngNinePatchRes *>(info.ninePatch);
+    if ((patch == nullptr) || (info.patchSize <= 0)) {
+        HiLog::Error(LABEL, "[ImageSource]NinePngRes is nullptr.");
+        return ninePngRes;
+    }
+    ninePngRes.wasDeserialized = patch->wasDeserialized;
+    ninePngRes.numXDivs = patch->numXDivs;
+    ninePngRes.numYDivs = patch->numYDivs;
+    ninePngRes.numColors = patch->numColors;
+    ninePngRes.xDivsOffset = patch->xDivsOffset;
+    ninePngRes.yDivsOffset = patch->yDivsOffset;
+    ninePngRes.paddingLeft = patch->paddingLeft;
+    ninePngRes.paddingRight = patch->paddingRight;
+    ninePngRes.paddingTop = patch->paddingTop;
+    ninePngRes.paddingBottom = patch->paddingBottom;
+    ninePngRes.colorsOffset = patch->colorsOffset;
+    for (int i = 0; i < patch->numXDivs; i++) {
+        ninePngRes.xDivs.push_back(patch->GetXDivs()[i]);
+    }
+    for (int i = 0; i < patch->numYDivs; i++) {
+        ninePngRes.yDivs.push_back(patch->GetYDivs()[i]);
+    }
+    for (int i = 0; i < patch->numColors; i++) {
+        ninePngRes.colors.push_back(patch->GetColors()[i]);
+    }
+    return ninePngRes;
+}
+
+NinePatchInfo ImageSource::GetInfoFromNineContext()
+{
+    bool isNinePng = mainDecoder_->IsSupportNine();
+    NinePatchInfo info;
+    if (isNinePng) {
+        NinePatchContext ninePatchContext = mainDecoder_->getNinePng();
+        info.ninePatch = ninePatchContext.ninePatch;
+        info.patchSize = ninePatchContext.patchSize;
+    }
+    return info;
+}
+
 static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t wantDensity, Size &dstSize)
 {
     ImageInfo info;
@@ -580,6 +625,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
+    pixelMap->SetNinePngResInner(ChangeToNinePngRes(GetInfoFromNineContext()));
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
@@ -739,7 +785,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
-
+    pixelMap->SetNinePngResInner(ChangeToNinePngRes(GetInfoFromNineContext()));
     pixelMap->SetPixelsAddr(context.pixelsBuffer.buffer, context.pixelsBuffer.context, context.pixelsBuffer.bufferSize,
                             context.allocatorType, context.freeFunc);
     DecodeOptions procOpts;

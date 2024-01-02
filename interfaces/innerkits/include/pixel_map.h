@@ -58,6 +58,24 @@ struct InitializationOptions {
     bool editable = false;
     bool useSourceIfMatch = false;
 };
+
+struct NinePngRes {
+    int8_t wasDeserialized;
+    uint8_t numXDivs;
+    uint8_t numYDivs;
+    uint8_t numColors;
+    uint32_t xDivsOffset;
+    uint32_t yDivsOffset;
+    int32_t paddingLeft;
+    int32_t paddingRight;
+    int32_t paddingTop;
+    int32_t paddingBottom;
+    uint32_t colorsOffset;
+    std::vector<int32_t> xDivs;
+    std::vector<int32_t> yDivs;
+    std::vector<uint32_t> colors;
+};
+
 struct TransInfos;
 
 // Build ARGB_8888 pixel value
@@ -230,6 +248,13 @@ public:
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----end-------
 #endif
 
+    NATIVEEXPORT void SetNinePngResInner(const NinePngRes &ninePngRes);
+    NATIVEEXPORT NinePngRes GetNinePngResInner();
+    NATIVEEXPORT std::shared_ptr<NinePngRes> GetNinePngResInnerPtr()
+    {
+        return ninePngRes_;
+    }
+
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT bool IsPurgeable() const
     {
@@ -366,6 +391,7 @@ private:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
+    std::shared_ptr<NinePngRes> ninePngRes_ = nullptr;
 
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;

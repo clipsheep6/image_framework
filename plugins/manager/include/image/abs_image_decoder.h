@@ -194,6 +194,17 @@ public:
         return OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::NONE);
     }
 #endif
+    // get current source is support nine png or not.
+    virtual bool IsSupportNine()
+    {
+        return false;
+    }
+
+    // if current source support nine png. get context information by this method.
+    virtual NinePatchContext getNinePng()
+    {
+        return NinePatchContext();
+    }
 
     // define multiple subservices for this interface
     static constexpr uint16_t SERVICE_DEFAULT = 0;

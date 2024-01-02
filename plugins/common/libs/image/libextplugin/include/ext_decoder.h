@@ -25,6 +25,7 @@
 #include "ext_stream.h"
 #include "exif_info.h"
 #include "hardware/jpeg_hw_decoder.h"
+#include "nine_chunk_reader.h"
 #include "nocopyable.h"
 #include "plugin_class_base.h"
 
@@ -64,6 +65,8 @@ public:
     OHOS::ColorManager::ColorSpace getGrColorSpace() override;
     bool IsSupportICCProfile() override;
 #endif
+    bool IsSupportNine() override;
+    NinePatchContext getNinePng() override;
 
 private:
     bool CheckCodec();
@@ -96,6 +99,7 @@ private:
     EXIFInfo exifInfo_;
     uint8_t *gifCache_ = nullptr;
     uint32_t gifCacheIndex_ = 0;
+    Media::NineChunkReader nineChunkReader_;
 
     // hardware
     OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer outputBuffer_;
