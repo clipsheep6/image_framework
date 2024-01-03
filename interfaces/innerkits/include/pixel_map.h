@@ -217,7 +217,14 @@ public:
     NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error);
     NATIVEEXPORT virtual bool EncodeTlv(std::vector<uint8_t> &buff) const;
     NATIVEEXPORT static PixelMap *DecodeTlv(std::vector<uint8_t> &buff);
-
+    NATIVEEXPORT virtual void SetImageYuvInfo(YuvDataInfo &yuvinfo)
+    {
+        yuvDataInfo_ = yuvinfo;
+    }
+    NATIVEEXPORT virtual void GetImageYuvInfo(YuvDataInfo &yuvInfo) const
+    {
+        yuvInfo = yuvDataInfo_;
+    }
 #ifdef IMAGE_COLORSPACE_FLAG
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----begin----
     NATIVEEXPORT void InnerSetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
@@ -381,6 +388,7 @@ private:
 #else
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
+    YuvDataInfo yuvDataInfo_;
 };
 } // namespace Media
 } // namespace OHOS
