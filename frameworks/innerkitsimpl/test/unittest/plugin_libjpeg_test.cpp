@@ -28,6 +28,8 @@ namespace OHOS {
 namespace Media {
 static const std::string IMAGE_INPUT_NULL_JPEG_PATH = "/data/local/tmp/image/test_null.jpg";
 static const std::string IMAGE_INPUT_TXT_PATH = "/data/local/tmp/image/test.txt";
+constexpr uint8_t SAMPLE_FACTOR_ONE = 1;
+constexpr uint8_t INDEX_TWO = 2;
 class PluginLibJpegTest : public testing::Test {
 public:
     PluginLibJpegTest() {}
@@ -378,39 +380,6 @@ HWTEST_F(PluginLibJpegTest, exif_info016, TestSize.Level3)
     ret = exinfo.CheckExifEntryValid(EXIF_IFD_GPS, EXIF_TAG_GPS_LATITUDE);
     ASSERT_EQ(ret, true);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: CheckExifEntryValid end";
-}
-
-/**
- * @tc.name: exif_info018
- * @tc.desc: GetEncodeFormat
- * @tc.type: FUNC
- */
-HWTEST_F(PluginLibJpegTest, exif_info018, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "PluginLibJpegTest: GetEncodeFormat start";
-    auto jpegEncoder = std::make_shared<JpegEncoder>();
-    int32_t componentsNum;
-    jpegEncoder->GetEncodeFormat(PixelFormat::RGBA_F16, componentsNum);
-    ASSERT_EQ(componentsNum, 4);
-    jpegEncoder->GetEncodeFormat(PixelFormat::RGBA_8888, componentsNum);
-    ASSERT_EQ(componentsNum, 4);
-    jpegEncoder->GetEncodeFormat(PixelFormat::BGRA_8888, componentsNum);
-    ASSERT_EQ(componentsNum, 4);
-    jpegEncoder->GetEncodeFormat(PixelFormat::ARGB_8888, componentsNum);
-    ASSERT_EQ(componentsNum, 4);
-    jpegEncoder->GetEncodeFormat(PixelFormat::ALPHA_8, componentsNum);
-    ASSERT_EQ(componentsNum, 1);
-    jpegEncoder->GetEncodeFormat(PixelFormat::RGB_565, componentsNum);
-    ASSERT_EQ(componentsNum, 3);
-    jpegEncoder->GetEncodeFormat(PixelFormat::RGB_888, componentsNum);
-    ASSERT_EQ(componentsNum, 3);
-    jpegEncoder->GetEncodeFormat(PixelFormat::NV12, componentsNum);
-    ASSERT_EQ(componentsNum, 3);
-    jpegEncoder->GetEncodeFormat(PixelFormat::NV21, componentsNum);
-    ASSERT_EQ(componentsNum, 3);
-    jpegEncoder->GetEncodeFormat(PixelFormat::CMYK, componentsNum);
-    ASSERT_EQ(componentsNum, 4);
-    GTEST_LOG_(INFO) << "PluginLibJpegTest: GetEncodeFormat end";
 }
 
 /**
@@ -1618,6 +1587,161 @@ HWTEST_F(PluginLibJpegTest, ModifyExifData003, TestSize.Level3)
     ret = exinfo.ModifyExifData(name, value, data, size);
     ASSERT_EQ(ret, Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT);
     GTEST_LOG_(INFO) << "PluginLibJpegTest: ModifyExifData003 end";
+}
+
+/**
+ * @tc.name: GetEncoderFormatTest002
+ * @tc.desc: GetEncoderFormat
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, GetEncoderFormatTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: GetEncoderFormatTest002 start";
+    auto jpegEncoder = std::make_shared<JpegEncoder>();
+    int32_t componentsNum;
+    J_COLOR_SPACE result = jpegEncoder->GetEncodeFormat(PixelFormat::RGBA_F16, componentsNum);
+    ASSERT_EQ(result, JCS_EXT_RGBA);
+    result = jpegEncoder->GetEncodeFormat(PixelFormat::ARGB_8888, componentsNum);
+    ASSERT_EQ(result, JCS_EXT_ARGB);
+    result = jpegEncoder->GetEncodeFormat(PixelFormat::ALPHA_8, componentsNum);
+    ASSERT_EQ(result, JCS_GRAYSCALE);
+    result = jpegEncoder->GetEncodeFormat(PixelFormat::RGB_565, componentsNum);
+    ASSERT_EQ(result, JCS_RGB);
+    result = jpegEncoder->GetEncodeFormat(PixelFormat::NV12, componentsNum);
+    ASSERT_EQ(result, JCS_YCbCr);
+    result = jpegEncoder->GetEncodeFormat(PixelFormat::CMYK, componentsNum);
+    ASSERT_EQ(result, JCS_CMYK);
+    result = jpegEncoder->GetEncodeFormat(PixelFormat::UNKNOWN, componentsNum);
+    ASSERT_EQ(result, JCS_UNKNOWN);
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: GetEncoderFormatTest002 end";
+}
+
+/**
+ * @tc.name: SetYuv420spExtraConfigTest001
+ * @tc.desc: SetYuv420spExtraConfig
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, SetYuv420spExtraConfigTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: SetYuv420spExtraConfigTest001 start";
+    auto jpegEncoder = std::make_shared<JpegEncoder>();
+    jpegEncoder->encodeInfo_.comp_info = (jpeg_component_info *)malloc(sizeof(jpeg_component_info)*3);
+    jpegEncoder->SetYuv420spExtraConfig();
+    ASSERT_EQ(jpegEncoder->encodeInfo_.comp_info[INDEX_TWO].v_samp_factor, SAMPLE_FACTOR_ONE);
+    free(jpegEncoder->encodeInfo_.comp_info);
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: SetYuv420spExtraConfigTest001 end";
+}
+
+/**
+ * @tc.name: DeinterweaveTest001
+ * @tc.desc: Deinterweave
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, DeinterweaveTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: DeinterweaveTest001 start";
+    auto jpegEncoder = std::make_shared<JpegEncoder>();
+    auto pixelFormat = std::make_shared<PixelFormat>();
+    uint8_t *uvPlane = new uint8_t;
+    uint8_t *uPlane = new uint8_t;
+    uint8_t *vPlane = new uint8_t;
+    uint32_t curRow = 1;
+    uint32_t width = 8;
+    uint32_t height = 19;
+    auto *pixelMap = new Media::PixelMap;
+    const auto &pixelMaps = pixelMap;
+    jpegEncoder->AddImage(*pixelMaps);
+    jpegEncoder->Deinterweave(uvPlane, uPlane, vPlane, curRow, width, height);
+    delete uvPlane;
+    delete uPlane;
+    delete vPlane;
+    delete pixelMap;
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: DeinterweaveTest001 end";
+}
+
+/**
+ * @tc.name: WriteExifDataToFile002
+ * @tc.desc: WriteExifDataToFile
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, WriteExifDataToFile002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: WriteExifDataToFile002 start";
+    EXIFInfo exinfo;
+    ExifData *ptrExifData = nullptr;
+    FILE *file = fopen("/data/local/tmp/image/test_noexit.jpg", "w+");
+    ASSERT_NE(file, nullptr);
+    bool isNewExifData = false;
+    unsigned long fileLength = exinfo.GetFileSize(file);
+    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
+    exinfo.CreateExifData(fileBuf, fileLength, &ptrExifData, isNewExifData);
+    unsigned int orginExifDataLength = exinfo.GetOrginExifDataLength(isNewExifData, fileBuf);
+    bool ret = exinfo.WriteExifDataToFile(ptrExifData, orginExifDataLength, fileLength, fileBuf, file);
+    ASSERT_EQ(ret, false);
+    free(fileBuf);
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: WriteExifDataToFile002 end";
+}
+
+/**
+ * @tc.name: GetDataRangeFromDE001
+ * @tc.desc: GetDataRangeFromDE
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, GetDataRangeFromDE001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: GetDataRangeFromDE001 start";
+    EXIFInfo exinfo;
+    const uint8_t *buf = new uint8_t;
+    ByteOrderedBuffer byteOrderedBuffer(buf, 10);
+    int16_t entryCount = byteOrderedBuffer.ReadShort();
+    byteOrderedBuffer.GetDataRangeFromDE(EXIF_IFD_0, entryCount);
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: GetDataRangeFromDE001 end";
+}
+
+/**
+ * @tc.name: CreateExifTag001
+ * @tc.desc: CreateExifTag
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, CreateExifTag001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: CreateExifTag001 start";
+    EXIFInfo exinfo;
+    ExifEntry *ptrEntry = nullptr;
+    ExifData *data;
+    FILE *file = fopen("/data/local/tmp/image/test_noexit.jpg", "w+");
+    ASSERT_NE(file, nullptr);
+    unsigned long fileLength = exinfo.GetFileSize(file);
+    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
+    bool isNewExifData = false;
+    exinfo.CreateExifData(fileBuf, fileLength, &data, isNewExifData);
+    ptrEntry = exinfo.CreateExifTag(data, EXIF_IFD_GPS, EXIF_TAG_GPS_LATITUDE, 20, EXIF_FORMAT_RATIONAL);
+    ASSERT_NE(ptrEntry, nullptr);
+    free(fileBuf);
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: CreateExifTag001 end";
+}
+
+/**
+ * @tc.name: ParseExifData001
+ * @tc.desc: ParseExifData
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, ParseExifData001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: ParseExifData001 start";
+    EXIFInfo exinfo;
+    FILE *file = fopen("/data/local/tmp/image/test_noexit.jpg", "w+");
+    ASSERT_NE(file, nullptr);
+    unsigned long fileLength = exinfo.GetFileSize(file);
+    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
+    bool isNewExifData = false;
+    exinfo.CreateExifData(fileBuf, fileLength, &exinfo.exifData_, isNewExifData);
+    unsigned char buf = 'n';
+    unsigned len = 0;
+    int ret = exinfo.ParseExifData(&buf, len);
+    ASSERT_EQ(ret, 0);
+    free(fileBuf);
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: ParseExifData001 end";
 }
 } // namespace Multimedia
 } // namespace OHOS
