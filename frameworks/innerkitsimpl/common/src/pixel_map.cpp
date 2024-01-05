@@ -1707,7 +1707,7 @@ bool PixelMap::WritePropertiesToParcel(Parcel &parcel) const
     return true;
 }
 
-bool WriteMemInfoToParcel(Parcel &parcel, const int32_t &bufferSize) const
+bool PixelMap::WriteMemInfoToParcel(Parcel &parcel, const int32_t &bufferSize) const
 {
 #if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
     if (allocatorType_ == AllocatorType::SHARE_MEM_ALLOC) {
@@ -1829,7 +1829,7 @@ bool PixelMap::Marshalling(Parcel &parcel) const
         HiLog::Error(LABEL, "write info to parcel failed.");
         return false;
     }
-    if (!WriteMemInfoToParcel(Parcel, bufferSize)) {
+    if (!WriteMemInfoToParcel(parcel, bufferSize)) {
         HiLog::Error(LABEL, "write memory info to parcel failed.");
         return false;
     }
@@ -1914,13 +1914,6 @@ bool PixelMap::ReadPropertiesFromParcel(Parcel &parcel, ImageInfo &imgInfo,
         InnerSetColorSpace(grColorSpace);
     }
 
-    AllocatorType allocType = static_cast<AllocatorType>(parcel.ReadInt32());
-    int32_t csm = parcel.ReadInt32();
-    if (csm != ERR_MEDIA_INVALID_VALUE) {
-        OHOS::ColorManager::ColorSpaceName colorSpaceName = static_cast<OHOS::ColorManager::ColorSpaceName>(csm);
-        OHOS::ColorManager::ColorSpace grColorSpace = OHOS::ColorManager::ColorSpace(colorSpaceName);
-        pixelMap->InnerSetColorSpace(grColorSpace);
-    }
     int32_t rowDataSize = parcel.ReadInt32();
     bufferSize = parcel.ReadInt32();
     int32_t bytesPerPixel = ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
@@ -1939,7 +1932,7 @@ bool PixelMap::ReadPropertiesFromParcel(Parcel &parcel, ImageInfo &imgInfo,
 bool PixelMap::ReadMemInfoFromParcel(Parcel &parcel, PixelMemInfo &pixelMemInfo, PIXEL_MAP_ERR &error)
 {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
+    if (pixelMemInfo.allocatorType == AllocatorType::SHARE_MEM_ALLOC) {
         int fd = ReadFileDescriptor(parcel);
         if (fd < 0) {
             HiLog::Error(LABEL, "fd < 0");
@@ -1964,7 +1957,7 @@ bool PixelMap::ReadMemInfoFromParcel(Parcel &parcel, PixelMemInfo &pixelMemInfo,
         }
         *static_cast<int32_t *>(pixelMemInfo.context) = fd;
         pixelMemInfo.base = static_cast<uint8_t *>(ptr);
-    } else if (allocType == AllocatorType::DMA_ALLOC) {
+    } else if (pixelMemInfo.allocatorType == AllocatorType::DMA_ALLOC) {
         sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
         surfaceBuffer->ReadFromMessageParcel(static_cast<MessageParcel&>(parcel));
         void* nativeBuffer = surfaceBuffer.GetRefPtr();
@@ -2003,7 +1996,8 @@ bool PixelMap::UpdatePixelMapMemInfo(PixelMap *pixelMap, ImageInfo &imgInfo, con
         HiLog::Error(LABEL, "create pixel map from parcel failed, set image info error.");
         return false;
     }
-    pixelMap->SetPixelsAddr(pixelMemInfo.base, pixelMemInfo.context, pixelMemInfo.bufferSize, pixelMemInfo.allocatorType, nullptr);
+    pixelMap->SetPixelsAddr(pixelMemInfo.base, pixelMemInfo.context,
+                            pixelMemInfo.bufferSize, pixelMemInfo.allocatorType, nullptr);
     return true;
 }
 
@@ -2028,7 +2022,8 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
 
     ImageInfo imgInfo;
     PixelMemInfo pixelMemInfo;
-    if (!pixelMap->ReadPropertiesFromParcel(parcel, imgInfo, pixelMemInfo.allocatorType, pixelMemInfo.bufferSize, error)) {
+    if (!pixelMap->ReadPropertiesFromParcel(parcel, imgInfo, pixelMemInfo.allocatorType,
+                                            pixelMemInfo.bufferSize, error)) {
         HiLog::Error(LABEL, "read properties fail");
         delete pixelMap;
         return nullptr;
