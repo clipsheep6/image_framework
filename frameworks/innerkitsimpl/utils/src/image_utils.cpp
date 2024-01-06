@@ -139,6 +139,8 @@ int32_t ImageUtils::GetPixelBytes(const PixelFormat &pixelFormat)
         case PixelFormat::RGBA_F16:
             pixelBytes = RGBA_F16_BYTES;
             break;
+	case PixelFormat::YU12:
+        case PixelFormat::YV12:
         case PixelFormat::NV21:
         case PixelFormat::NV12:
             pixelBytes = NV21_BYTES;  // perl pixel 1.5 Bytes but return int so return 2
