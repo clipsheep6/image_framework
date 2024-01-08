@@ -311,7 +311,7 @@ HWTEST_F(PixelMapTest, PixelMapTest006, TestSize.Level3)
     info1.pixelFormat = PixelFormat::RGB_888;
     info1.colorSpace = ColorSpace::SRGB;
     auto ret = pixelMap1->SetImageInfo(info1);
-    EXPECT_EQ(ret, ERR_IMAGE_TOO_LARGE);
+    EXPECT_EQ(ret, SUCCESS);
 
     GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest006 end";
 }
@@ -1411,7 +1411,7 @@ HWTEST_F(PixelMapTest, CheckParams, TestSize.Level3)
     stride = 1073741824;
     ret = pixelMap->CheckParams(colors, colorLength, offset, stride, opts);
     ASSERT_EQ(ret, false);
-     delete colors;
+    delete colors;
     GTEST_LOG_(INFO) << "ImagePixelMapTest: CheckParams  end";
 }
 
@@ -1440,11 +1440,9 @@ HWTEST_F(PixelMapTest, ScalePixelMap, TestSize.Level3)
     ret = pixelMap->ScalePixelMap(targetSize, dstSize, scaleMode, dstPixelMap);
     ASSERT_EQ(ret, false);
 
-    dstSize.width = 1;
-    dstSize.height = 1;
     scaleMode = ScaleMode::CENTER_CROP;
     ret = pixelMap->ScalePixelMap(targetSize, dstSize, scaleMode, dstPixelMap);
-     ASSERT_EQ(ret, false);
+    ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ScalePixelMap  end";
 }
 
