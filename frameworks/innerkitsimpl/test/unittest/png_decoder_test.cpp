@@ -1810,7 +1810,7 @@ HWTEST_F(PngDecoderTest, DecodeHeader001, TestSize.Level3)
     auto mock = std::make_shared<MockInputDataStream>();
     pngDecoder->inputStreamPtr_ = mock.get();
     mock->returnValue_ = true;
-    pngDecoder->DecodeHeadFlag_ = true;
+    pngDecoder->decodeHeadFlag_ = true;
     pngDecoder->pngImageInfo_.width = 0;
     pngDecoder->pngImageInfo_.height = 0;
     uint32_t result = pngDecoder->DecodeHeader();
