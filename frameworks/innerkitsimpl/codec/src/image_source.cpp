@@ -16,8 +16,9 @@
 #include "image_source.h"
 
 #include <algorithm>
-#include <vector>
+#include <chrono>
 #include <cstring>
+#include <vector>
 #include "buffer_source_stream.h"
 #if !defined(_WIN32) && !defined(_APPLE)
 #include "hitrace_meter.h"
@@ -244,7 +245,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
             streamPtr = FileSourceStream::CreateSourceStream(pathName);
         }
         if (streamPtr == nullptr) {
-            HiLog::Error(LABEL, "[ImageSource]failed to create file path source stream.");
+            HiLog::Error(LABEL, "[ImageSource]failed to create file path source stream. pathName=%{public}s",
+                pathName.c_str());
         }
         return streamPtr;
         }, opts, errorCode, "CreateImageSource by path");
@@ -486,10 +488,17 @@ DecodeContext InitDecodeContext(const DecodeOptions &opts, const ImageInfo &info
     return context;
 }
 
+uint64_t ImageSource::GetNowTimeMicroSeconds()
+{
+    auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+}
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     const DecodeOptions &opts, uint32_t &errorCode)
 {
     ImageTrace imageTrace("CreatePixelMapExtended");
+    uint64_t decodeStartTime = GetNowTimeMicroSeconds();
     opts_ = opts;
     ImageInfo info;
     errorCode = GetImageInfo(FIRST_FRAME, info);
@@ -533,7 +542,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     if (!context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
     }
-    HiLog::Info(LABEL, "ImageSource::CreatePixelMapExtended success");
+    HiLog::Info(LABEL, "ImageSource::CreatePixelMapExtended success, desiredSize: (%{public}d, %{public}d),"
+        "imageSize: (%{public}d, %{public}d), cost %{public}lu us", opts.desiredSize.width, opts.desiredSize.height,
+        info.size.width, info.size.height, static_cast<unsigned long int>(GetNowTimeMicroSeconds() - decodeStartTime));
     return pixelMap;
 }
 
@@ -1136,7 +1147,7 @@ uint32_t ImageSource::GetData(ImagePlugin::DataStreamBuffer &outData, size_t siz
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     if (!sourceStreamPtr_->Peek(size, outData)) {
-        HiLog::Error(LABEL, "[ImageSource]stream peek the data fail.");
+        HiLog::Error(LABEL, "[ImageSource]stream peek the data fail, desiredSize:%{public}zu", size);
         return ERR_IMAGE_SOURCE_DATA;
     }
     if (outData.inputStreamBuffer == nullptr || outData.dataSize < size) {
@@ -1192,6 +1203,12 @@ uint32_t ImageSource::GetFormatExtended(string &format)
         format = sourceInfo_.encodedFormat;
         return SUCCESS;
     }
+
+    if (sourceStreamPtr_ == nullptr) {
+        HiLog::Error(LABEL, "[ImageSource]sourceStreamPtr_ is null");
+        return ERR_MEDIA_NULL_POINTER;
+    }
+
     auto imageType = sourceStreamPtr_->Tell();
     uint32_t errorCode = ERR_IMAGE_DECODE_ABNORMAL;
     auto codec = DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *sourceStreamPtr_,
@@ -1246,13 +1263,11 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
             HiLog::Error(LABEL, "[ImageSource]image source data error ERR_IMAGE_SOURCE_DATA_INCOMPLETE.");
         }
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+
     if (GetFormatExtended(format) == SUCCESS) {
         return SUCCESS;
     }
-#else
-    HiLog::Debug(LABEL, "[ImageSource]GetEncodedFormat by format agent plugin");
-#endif
+
     for (auto iter = formatAgentMap_.begin(); iter != formatAgentMap_.end(); ++iter) {
         string curFormat = iter->first;
         if (iter == hintIter || curFormat == InnerFormat::RAW_FORMAT) {
@@ -1548,19 +1563,6 @@ uint32_t ImageSource::UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin:
     return pixelMap.SetImageInfo(info, isReUsed);
 }
 
-static void CopyColorSpaceToPlugin(const ColorSpaceInfo &src, PlColorSpaceInfo &dst)
-{
-    dst.isValidColorSpace = src.isValidColorSpace;
-    for (int i = NUM_0; i < ColorSpaceInfo::XYZ_SIZE; i++) {
-        for (int j = NUM_0; j < ColorSpaceInfo::XYZ_SIZE; j++) {
-            dst.xyz[i][j] = src.xyz[i][j];
-        }
-    }
-    for (int k = NUM_0; k < ColorSpaceInfo::XYZ_SIZE; k++) {
-        dst.transferFn[k] = src.transferFn[k];
-    }
-}
-
 void ImageSource::CopyOptionsToPlugin(const DecodeOptions &opts, PixelDecodeOptions &plOpts)
 {
     plOpts.CropRect.left = opts.CropRect.left;
@@ -1586,10 +1588,7 @@ void ImageSource::CopyOptionsToPlugin(const DecodeOptions &opts, PixelDecodeOpti
         plOpts.plSVGResize.isValidPercentage = opts.SVGOpts.SVGResize.isValidPercentage;
         plOpts.plSVGResize.resizePercentage = opts.SVGOpts.SVGResize.resizePercentage;
     }
-
-    if (opts.desiredColorSpaceInfo.isValidColorSpace) {
-        CopyColorSpaceToPlugin(opts.desiredColorSpaceInfo, plOpts.plDesiredColorSpace);
-    }
+    plOpts.plDesiredColorSpace = opts.desiredColorSpaceInfo;
 }
 
 void ImageSource::CopyOptionsToProcOpts(const DecodeOptions &opts, DecodeOptions &procOpts, PixelMap &pixelMap)

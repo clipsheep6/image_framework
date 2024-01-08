@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_IMAGE_SOURCE_H_
-#define INTERFACES_INNERKITS_INCLUDE_IMAGE_SOURCE_H_
+#ifndef INTERFACES_INNERKITS_INCLUDE_IMAGE_SOURCE_H
+#define INTERFACES_INNERKITS_INCLUDE_IMAGE_SOURCE_H
 
 #include <cstdint>
 #include <iostream>
@@ -262,6 +262,7 @@ private:
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
+    static uint64_t GetNowTimeMicroSeconds();
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
@@ -292,4 +293,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif // INTERFACES_INNERKITS_INCLUDE_IMAGE_SOURCE_H_
+#endif // INTERFACES_INNERKITS_INCLUDE_IMAGE_SOURCE_H

@@ -63,6 +63,7 @@
             <option name="push" value="images/test.nrw -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test.svg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_large.svg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test.ico -> /data/local/tmp/image" src="res"/>
         </preparer>
     </target>
     <target name="imagecolorspacetest">
@@ -78,7 +79,7 @@
     </target>
     <target name="jpeg_hw_decoder_test">
         <preparer>
-            <option name="push" value="images/test_hw.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_hw1.jpg -> /data/local/tmp/image" src="res"/>
         </preparer>
     </target>
     <target name="test_imagesystemadapter_java_maple">
@@ -144,6 +145,11 @@
         </preparer>
     </target>
     <target name="interfacetest">
+        <preparer>
+            <option name="push" value="images/test.jpg -> /data/local/tmp/image" src="res"/>
+        </preparer>
+    </target>
+    <target name="textureencodetest">
         <preparer>
             <option name="push" value="images/test.jpg -> /data/local/tmp/image" src="res"/>
         </preparer>

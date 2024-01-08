@@ -28,6 +28,7 @@ typedef struct TextureEncodeOptionsType {
     uint8_t blockX_;
     uint8_t blockY_;
     int32_t stride_;
+    QualityProfile privateProfile_; // enum type defined in astc-encoder module: HIGH_QUALITY_PROFILE HIGH_SPEED_PROFILE
 } TextureEncodeOptions;
 
 typedef struct AstcEncoderInfo {
@@ -38,7 +39,7 @@ typedef struct AstcEncoderInfo {
     astcenc_swizzle swizzle_;
     uint8_t* data_out_;
     astcenc_error error_;
-#if QUALITY_CONTROL
+#if defined(QUALITY_CONTROL) && (QUALITY_CONTROL == 1)
     bool calQualityEnable;
     int32_t *mse[RGBA_COM + 1];
 #endif

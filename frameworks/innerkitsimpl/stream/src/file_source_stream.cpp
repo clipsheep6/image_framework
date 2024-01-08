@@ -51,7 +51,7 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &
 {
     string realPath;
     if (!PathToRealPath(pathName, realPath)) {
-        HiLog::Error(LABEL, "[FileSourceStream]input the file path exception.");
+        HiLog::Error(LABEL, "[FileSourceStream]input the file path exception, pathName=%{public}s", pathName.c_str());
         return nullptr;
     }
     size_t size = 0;
@@ -151,7 +151,7 @@ bool FileSourceStream::Peek(uint32_t desiredSize, DataStreamBuffer &outData)
         return false;
     }
     if (!GetData(desiredSize, outData)) {
-        HiLog::Info(LABEL, "[FileSourceStream]peek dataStreamBuffer fail.");
+        HiLog::Info(LABEL, "[FileSourceStream]peek dataStreamBuffer fail, desiredSize:%{public}zu", desiredSize);
         return false;
     }
     int ret = fseek(filePtr_, fileOffset_, SEEK_SET);

@@ -84,7 +84,7 @@ std::atomic<uint32_t> PixelMap::currentId = 0;
 
 PixelMap::~PixelMap()
 {
-    HiLog::Debug(LABEL, "PixelMap::~PixelMap");
+    HiLog::Debug(LABEL, "PixelMap::~PixelMap_id:%{public}d", GetUniqueId());
     FreePixelMap();
 }
 
@@ -247,7 +247,6 @@ static void MakePixelMap(void *dstPixels, int fd, std::unique_ptr<PixelMap> &dst
 unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLength, BUILD_PARAM &info,
     const InitializationOptions &opts, int &errorCode)
 {
-    HiLog::Debug(LABEL, "PixelMap::Create useCustomFormat enter");
     int offset = info.offset_;
     int32_t stride = info.stride_;
     bool useCustomFormat = info.flag_;
@@ -296,6 +295,7 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
     }
     dstPixelMap->SetEditable(opts.editable);
     MakePixelMap(dstPixels, fd, dstPixelMap);
+    ImageUtils::DumpPixelMapIfDumpEnabled(dstPixelMap);
     return dstPixelMap;
 }
 
@@ -519,6 +519,7 @@ unique_ptr<PixelMap> PixelMap::Create(PixelMap &source, const Rect &srcRect, con
         return nullptr;
     }
     dstPixelMap->SetEditable(opts.editable);
+    ImageUtils::DumpPixelMapIfDumpEnabled(dstPixelMap);
     return dstPixelMap;
 }
 
@@ -1402,6 +1403,17 @@ bool PixelMap::WritePixels(const uint32_t &color)
     return true;
 }
 
+bool PixelMap::IsStrideAlignment()
+{
+    HiLog::Error(LABEL, "IsStrideAlignment error ");
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        HiLog::Error(LABEL, "SetPixelsAddr error allocatorType_ %{public}d ", allocatorType_);
+        return true;
+    }
+    return false;
+    HiLog::Error(LABEL, "IsStrideAlignment error ");
+}
+
 AllocatorType PixelMap::GetAllocatorType()
 {
     return allocatorType_;
@@ -1416,12 +1428,16 @@ void PixelMap::ReleaseMemory(AllocatorType allocType, void *addr, void *context,
 {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
     if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
-        int *fd = static_cast<int *>(context);
-        if (addr != nullptr) {
-            ::munmap(addr, size);
-        }
-        if (fd != nullptr) {
-            ::close(*fd);
+        if (context != nullptr) {
+            int *fd = static_cast<int *>(context);
+            if (addr != nullptr) {
+                ::munmap(addr, size);
+            }
+            if (fd != nullptr) {
+                ::close(*fd);
+            }
+            context = nullptr;
+            addr = nullptr;
         }
     } else if (allocType == AllocatorType::HEAP_ALLOC) {
         if (addr != nullptr) {
@@ -1429,7 +1445,11 @@ void PixelMap::ReleaseMemory(AllocatorType allocType, void *addr, void *context,
             addr = nullptr;
         }
     } else if (allocType == AllocatorType::DMA_ALLOC) {
-        ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer*>(context));
+        if (context != nullptr) {
+            ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer*>(context));
+        }
+        context = nullptr;
+        addr = nullptr;
     }
 #else
     if (addr != nullptr) {
@@ -1673,6 +1693,12 @@ bool PixelMap::WriteInfoToParcel(Parcel &parcel) const
                      allocatorType_);
         return false;
     }
+
+    if (!parcel.WriteInt32(static_cast<int32_t>(grColorSpace_ ?
+            grColorSpace_->GetColorSpaceName() : ERR_MEDIA_INVALID_VALUE))) {
+        HiLog::Error(LABEL, "write pixel map grColorSpace to parcel failed.");
+        return false;
+    }
     return true;
 }
 
@@ -1890,6 +1916,12 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
     pixelMap->SetAstc(isAstc);
 
     AllocatorType allocType = static_cast<AllocatorType>(parcel.ReadInt32());
+    int32_t csm = parcel.ReadInt32();
+    if (csm != ERR_MEDIA_INVALID_VALUE) {
+        OHOS::ColorManager::ColorSpaceName colorSpaceName = static_cast<OHOS::ColorManager::ColorSpaceName>(csm);
+        OHOS::ColorManager::ColorSpace grColorSpace = OHOS::ColorManager::ColorSpace(colorSpaceName);
+        pixelMap->InnerSetColorSpace(grColorSpace);
+    }
     int32_t rowDataSize = parcel.ReadInt32();
     int32_t bufferSize = parcel.ReadInt32();
     int32_t bytesPerPixel = ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
@@ -1968,7 +2000,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
             pixelMap->freePixelMapProc_(base, context, bufferSize);
         }
         ReleaseMemory(allocType, base, context, bufferSize);
-        if (context != nullptr) {
+        if (allocType == AllocatorType::SHARE_MEM_ALLOC && context != nullptr) {
             delete static_cast<int32_t *>(context);
         }
         delete pixelMap;
@@ -2279,20 +2311,20 @@ static float ProcessPremulF16Pixel(float mulPixel, float alpha, const float perc
 
 static void SetF16PixelAlpha(uint8_t *pixel, const float percent, bool isPixelPremul)
 {
-    float A = HalfTranslate(pixel + RGBA_F16_A_OFFSET);
+    float a = HalfTranslate(pixel + RGBA_F16_A_OFFSET);
     if (isPixelPremul) {
-        float R = HalfTranslate(pixel + RGBA_F16_R_OFFSET);
-        float G = HalfTranslate(pixel + RGBA_F16_G_OFFSET);
-        float B = HalfTranslate(pixel + RGBA_F16_B_OFFSET);
-        R = ProcessPremulF16Pixel(R, A, percent);
-        G = ProcessPremulF16Pixel(G, A, percent);
-        B = ProcessPremulF16Pixel(B, A, percent);
-        HalfTranslate(R, pixel + RGBA_F16_R_OFFSET);
-        HalfTranslate(G, pixel + RGBA_F16_G_OFFSET);
-        HalfTranslate(B, pixel + RGBA_F16_B_OFFSET);
+        float r = HalfTranslate(pixel + RGBA_F16_R_OFFSET);
+        float g = HalfTranslate(pixel + RGBA_F16_G_OFFSET);
+        float b = HalfTranslate(pixel + RGBA_F16_B_OFFSET);
+        r = ProcessPremulF16Pixel(r, a, percent);
+        g = ProcessPremulF16Pixel(g, a, percent);
+        b = ProcessPremulF16Pixel(b, a, percent);
+        HalfTranslate(r, pixel + RGBA_F16_R_OFFSET);
+        HalfTranslate(g, pixel + RGBA_F16_G_OFFSET);
+        HalfTranslate(b, pixel + RGBA_F16_B_OFFSET);
     }
-    A = percent * MAX_HALF;
-    HalfTranslate(A, pixel + RGBA_F16_A_OFFSET);
+    a = percent * MAX_HALF;
+    HalfTranslate(a, pixel + RGBA_F16_A_OFFSET);
 }
 
 static constexpr uint8_t U_ZERO = 0;
@@ -2584,6 +2616,7 @@ bool PixelMap::DoTranslation(TransInfos &infos, const AntiAliasingOption &option
 
 void PixelMap::scale(float xAxis, float yAxis)
 {
+    ImageTrace imageTrace("PixelMap scale");
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2593,6 +2626,7 @@ void PixelMap::scale(float xAxis, float yAxis)
 
 void PixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
 {
+    ImageTrace imageTrace("PixelMap scale");
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos, option)) {
@@ -2602,6 +2636,7 @@ void PixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
 
 bool PixelMap::resize(float xAxis, float yAxis)
 {
+    ImageTrace imageTrace("PixelMap resize");
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2613,6 +2648,7 @@ bool PixelMap::resize(float xAxis, float yAxis)
 
 void PixelMap::translate(float xAxis, float yAxis)
 {
+    ImageTrace imageTrace("PixelMap translate");
     TransInfos infos;
     infos.matrix.setTranslate(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2622,6 +2658,7 @@ void PixelMap::translate(float xAxis, float yAxis)
 
 void PixelMap::rotate(float degrees)
 {
+    ImageTrace imageTrace("PixelMap rotate");
     TransInfos infos;
     infos.matrix.setRotate(degrees);
     if (!DoTranslation(infos)) {
@@ -2631,6 +2668,7 @@ void PixelMap::rotate(float degrees)
 
 void PixelMap::flip(bool xAxis, bool yAxis)
 {
+    ImageTrace imageTrace("PixelMap flip");
     if (xAxis == false && yAxis == false) {
         return;
     }
@@ -2639,6 +2677,7 @@ void PixelMap::flip(bool xAxis, bool yAxis)
 
 uint32_t PixelMap::crop(const Rect &rect)
 {
+    ImageTrace imageTrace("PixelMap crop");
     ImageInfo imageInfo;
     GetImageInfo(imageInfo);
 
@@ -2678,8 +2717,7 @@ uint32_t PixelMap::crop(const Rect &rect)
         rowStride = sbBuffer->GetStride();
     }
 #endif
-    if (!src.bitmap.readPixels(dst.info, m->data.data, rowStride,
-        dstIRect.fLeft, dstIRect.fTop)) {
+    if (!src.bitmap.readPixels(dst.info, m->data.data, rowStride, dstIRect.fLeft, dstIRect.fTop)) {
         HiLog::Error(LABEL, "ReadPixels failed");
         return ERR_IMAGE_CROP;
     }

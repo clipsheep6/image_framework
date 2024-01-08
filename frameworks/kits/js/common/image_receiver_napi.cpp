@@ -46,6 +46,7 @@ using SurfaceListener = SurfaceBufferAvaliableListener;
 const int ARGS0 = 0;
 const int ARGS1 = 1;
 const int ARGS2 = 2;
+const int ARGS3 = 3;
 const int ARGS4 = 4;
 const int PARAM0 = 0;
 const int PARAM1 = 1;
@@ -118,10 +119,7 @@ static void CommonCallbackRoutine(napi_env env, Context &context, const napi_val
 
 void ImageReceiverNapi::NativeRelease()
 {
-    if (imageReceiver_ != nullptr) {
-        imageReceiver_->~ImageReceiver();
-        imageReceiver_ = nullptr;
-    }
+    imageReceiver_ = nullptr;
 }
 
 ImageReceiver* ImageReceiverNapi::GetNative()
@@ -204,28 +202,13 @@ static bool parseImageReceiverArgs(napi_env env, napi_callback_info info,
         return false;
     }
 
-    if (args.argc != ARGS4) {
+    if (args.argc != ARGS3 && args.argc != ARGS4) {
         errMsg = "Invalid arg counts ";
         errMsg.append(std::to_string(args.argc));
         return false;
     }
 
-    for (size_t i = PARAM0; i < args.argc; i++) {
-        napi_valuetype argvType = ImageNapiUtils::getType(env, (args.argv)[i]);
-        if (argvType != napi_number) {
-            errMsg = "Invalid arg ";
-            errMsg.append(std::to_string(i)).append(" type ").append(std::to_string(argvType));
-            return false;
-        }
-
-        status = napi_get_value_int32(env, (args.argv)[i], &((args.args)[i]));
-        if (status != napi_ok) {
-            errMsg = "fail to get arg ";
-            errMsg.append(std::to_string(i)).append(" : ").append(std::to_string(status));
-            return false;
-        }
-    }
-    return true;
+    return ImageNapiUtils::ParseImageCreatorReceiverArgs(env, args.argc, args.argv, args.args, errMsg);
 }
 
 napi_value ImageReceiverNapi::Constructor(napi_env env, napi_callback_info info)
@@ -313,7 +296,8 @@ napi_value ImageReceiverNapi::CreateImageReceiverJsObject(napi_env env, struct I
 napi_value ImageReceiverNapi::JSCreateImageReceiver(napi_env env, napi_callback_info info)
 {
     napi_status status;
-    napi_value constructor = nullptr, result = nullptr;
+    napi_value constructor = nullptr;
+    napi_value result = nullptr;
     ImageReceiverInputArgs inputArgs;
     inputArgs.argc = ARGS4;
 
@@ -322,12 +306,11 @@ napi_value ImageReceiverNapi::JSCreateImageReceiver(napi_env env, napi_callback_
 
     std::string errMsg;
     if (!parseImageReceiverArgs(env, info, inputArgs, errMsg)) {
-        return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg), errMsg);
+        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, errMsg);
     }
 
     if (!checkFormat(inputArgs.args[PARAM2])) {
-        return ImageNapiUtils::ThrowExceptionError(env,
-            static_cast<int32_t>(napi_invalid_arg), "Invalid type");
+        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, "Invalid type");
     }
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
@@ -410,9 +393,8 @@ napi_value ImageReceiverNapi::JSCommonProcess(ImageReceiverCommonArgs &args)
         if (ic.context->constructor_ == nullptr) {
             return ic.result;
         }
-        ic.context->receiver_ = ic.context->constructor_->imageReceiver_;
 
-        IMG_NAPI_CHECK_RET_D(IMG_IS_READY(ic.status, ic.context->receiver_),
+        IMG_NAPI_CHECK_RET_D(IMG_IS_READY(ic.status, ic.context->constructor_->imageReceiver_),
             ic.result, IMAGE_ERR("empty native receiver"));
     }
     if (args.async != CallType::GETTER) {
@@ -444,7 +426,9 @@ napi_value ImageReceiverNapi::JSCommonProcess(ImageReceiverCommonArgs &args)
 
 static napi_value BuildJsSize(napi_env env, int32_t width, int32_t height)
 {
-    napi_value result = nullptr, sizeWith = nullptr, sizeHeight = nullptr;
+    napi_value result = nullptr;
+    napi_value sizeWith = nullptr;
+    napi_value sizeHeight = nullptr;
 
     napi_create_object(env, &result);
 
@@ -622,7 +606,7 @@ napi_value ImageReceiverNapi::JsTest(napi_env env, napi_callback_info info)
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
         ic.context->constructor_->isCallBackTest = true;
-        DoTest(ic.context->receiver_, PIXEL_FMT_RGBA_8888);
+        DoTest(ic.context->constructor_->imageReceiver_, PIXEL_FMT_RGBA_8888);
         return true;
     };
 
@@ -645,7 +629,7 @@ napi_value ImageReceiverNapi::JsCheckDeviceTest(napi_env env, napi_callback_info
         napi_create_string_utf8(args.env, DEVICE_ERRCODE.c_str(), NAPI_AUTO_LENGTH, &mess);
         ic.result = mess;
         if (args.async != CallType::GETTER) {
-            DoTest(ic.context->receiver_, PIXEL_FMT_RGBA_8888);
+            DoTest(ic.context->constructor_->imageReceiver_, PIXEL_FMT_RGBA_8888);
         }
         return true;
     };
@@ -664,7 +648,7 @@ napi_value ImageReceiverNapi::JsTestYUV(napi_env env, napi_callback_info info)
 
     args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
         ic.context->constructor_->isCallBackTest = true;
-        DoTest(ic.context->receiver_, PIXEL_FMT_YCBCR_422_SP);
+        DoTest(ic.context->constructor_->imageReceiver_, PIXEL_FMT_YCBCR_422_SP);
         return true;
     };
 
@@ -689,7 +673,7 @@ napi_value ImageReceiverNapi::JsGetReceivingSurfaceId(napi_env env, napi_callbac
         napi_value result = nullptr;
         napi_get_undefined(env, &result);
 
-        auto native = context->receiver_;
+        auto native = context->constructor_->imageReceiver_;
         if (native == nullptr) {
             IMAGE_ERR("Native instance is nullptr");
             context->status = ERR_IMAGE_INIT_ABNORMAL;

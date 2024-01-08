@@ -18,7 +18,6 @@
 #include <map>
 #include <set>
 #include "pixel_map_napi.h"
-#include "pngpriv.h"
 
 namespace {
     constexpr uint32_t NUM_0 = 0;
@@ -331,7 +330,7 @@ static int32_t PixelMapNapiGetImageInfo(PixelMapNapi* native, PixelMapNapiArgs* 
     pixelmap->GetImageInfo(srcInfo);
     args->outInfo->width = srcInfo.size.width;
     args->outInfo->height = srcInfo.size.height;
-    args->outInfo->rowSize = pixelmap->GetRowBytes();
+    args->outInfo->rowSize = pixelmap->GetRowStride();
     args->outInfo->pixelFormat = static_cast<int32_t>(srcInfo.pixelFormat);
     return pixelmap->errorCode == 0 ? IMAGE_RESULT_SUCCESS : pixelmap->errorCode;
 }

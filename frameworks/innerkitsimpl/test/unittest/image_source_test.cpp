@@ -42,6 +42,7 @@ using namespace OHOS::HiviewDFX;
 namespace OHOS {
 namespace Media {
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
+static const std::string IMAGE_INPUT_ICO_PATH = "/data/local/tmp/image/test.ico";
 
 class ImageSourceTest : public testing::Test {
 public:
@@ -257,6 +258,25 @@ HWTEST_F(ImageSourceTest, CreatePixelMapEx002, TestSize.Level3)
     const DecodeOptions opt;
     imageSource->CreatePixelMapEx(index, opt, errorCode);
     GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapEx002 end";
+}
+
+/**
+ * @tc.name: CreatePixelMapEx003
+ * @tc.desc: test CreatePixelMapEx of ico picture resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreatePixelMapEx003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapEx003 start";
+    uint32_t res = 0;
+    SourceOptions sourceOpts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_ICO_PATH, sourceOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+    uint32_t index = 1;
+    const DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> crepixelmapex = imageSource->CreatePixelMapEx(index, decodeOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapEx003 end";
 }
 
 /**
@@ -504,7 +524,6 @@ HWTEST_F(ImageSourceTest, GetDecodeEvent001, TestSize.Level3)
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(buffer, bufferSize, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
-    GTEST_LOG_(INFO) << "ImageSourceTest: GetDecodeEvent111 start";
     imageSource->GetDecodeEvent();
 
     GTEST_LOG_(INFO) << "ImageSourceTest: GetDecodeEvent001 end";
@@ -555,11 +574,11 @@ HWTEST_F(ImageSourceTest, IsIncrementalSource001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceTest: IsIncrementalSource001 start";
 
-    bool isIncrementalSource_ = false;
+    bool isIncrementalSource = false;
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
-    isIncrementalSource_ = imageSource->IsIncrementalSource();
+    isIncrementalSource = imageSource->IsIncrementalSource();
 
     GTEST_LOG_(INFO) << "ImageSourceTest: IsIncrementalSource001 end";
 }
@@ -724,7 +743,7 @@ HWTEST_F(ImageSourceTest, GetNinePatchInfo001, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: GetNinePatchInfo001 start";
 
     std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
-    fs->open("/data/local/tmp/image/test.jpg", std::fstream::binary | std::fstream::in);
+    fs->open("/data/local/tmp/image/test_exif.jpg", std::fstream::binary | std::fstream::in);
     bool isOpen = fs->is_open();
     ASSERT_EQ(isOpen, true);
     uint32_t errorCode = 0;
@@ -747,7 +766,7 @@ HWTEST_F(ImageSourceTest, SetMemoryUsagePreference001, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: SetMemoryUsagePreference001 start";
 
     std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
-    fs->open("/data/local/tmp/image/test.jpg", std::fstream::binary | std::fstream::in);
+    fs->open("/data/local/tmp/image/test_exif.jpg", std::fstream::binary | std::fstream::in);
     bool isOpen = fs->is_open();
     ASSERT_EQ(isOpen, true);
     uint32_t errorCode = 0;
@@ -769,7 +788,7 @@ HWTEST_F(ImageSourceTest, GetMemoryUsagePreference001, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: GetMemoryUsagePreference001 start";
 
     std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
-    fs->open("/data/local/tmp/image/test.jpg", std::fstream::binary | std::fstream::in);
+    fs->open("/data/local/tmp/image/test_exif.jpg", std::fstream::binary | std::fstream::in);
     bool isOpen = fs->is_open();
     ASSERT_EQ(isOpen, true);
     uint32_t errorCode = 0;
@@ -791,7 +810,7 @@ HWTEST_F(ImageSourceTest, GetFilterArea001, TestSize.Level3)
 
     int filterType = 0;
     std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
-    fs->open("/data/local/tmp/image/test.jpg", std::fstream::binary | std::fstream::in);
+    fs->open("/data/local/tmp/image/test_exif.jpg", std::fstream::binary | std::fstream::in);
     bool isOpen = fs->is_open();
     ASSERT_EQ(isOpen, true);
     uint32_t errorCode = 0;
@@ -832,7 +851,7 @@ HWTEST_F(ImageSourceTest, CreateImageSource002, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource002 start";
 
     std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
-    fs->open("/data/local/tmp/image/test.jpg", std::fstream::binary | std::fstream::in);
+    fs->open("/data/local/tmp/image/test_exif.jpg", std::fstream::binary | std::fstream::in);
     bool isOpen = fs->is_open();
     ASSERT_EQ(isOpen, true);
     uint32_t errorCode = 0;
@@ -918,7 +937,7 @@ HWTEST_F(ImageSourceTest, CreateImageSource0012, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource0012 start";
     uint32_t errorCode = 0;
     const SourceOptions opts;
-    const int fd = open("/data/local/tmp/image/test.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    const int fd = open("/data/local/tmp/image/test_exif.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     off_t fSize = lseek(fd, 0, SEEK_END);
     lseek(fd, 0, SEEK_SET);
     auto filePtr = ImageSource::CreateImageSource(fd, 0, fSize, opts, errorCode);
@@ -937,7 +956,7 @@ HWTEST_F(ImageSourceTest, CreateImageSource0013, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource0013 start";
     uint32_t errorCode = 0;
     const SourceOptions opts;
-    const int fd = open("/data/local/tmp/image/test.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    const int fd = open("/data/local/tmp/image/test_exif.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     auto filePtr = ImageSource::CreateImageSource(fd, 0, 0, opts, errorCode);
     ASSERT_NE(filePtr, nullptr);
     close(fd);
@@ -954,7 +973,7 @@ HWTEST_F(ImageSourceTest, CreateImageSource0014, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource0014 start";
     uint32_t errorCode = 0;
     const SourceOptions opts;
-    const int fd = open("/data/local/tmp/image/test.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    const int fd = open("/data/local/tmp/image/test_exif.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     off_t fSize = lseek(fd, 0, SEEK_END);
     lseek(fd, 0, SEEK_SET);
     const int offset = -1;
@@ -974,7 +993,7 @@ HWTEST_F(ImageSourceTest, CreateImageSource0015, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource0015 start";
     uint32_t errorCode = 0;
     const SourceOptions opts;
-    const int fd = open("/data/local/tmp/image/test.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    const int fd = open("/data/local/tmp/image/test_exif.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     const int fSize = 100;
     auto filePtr = ImageSource::CreateImageSource(fd, 0, fSize, opts, errorCode);
     ASSERT_NE(filePtr, nullptr);
@@ -996,6 +1015,23 @@ HWTEST_F(ImageSourceTest, CreateImageSource0016, TestSize.Level3)
     auto filePtr = ImageSource::CreateImageSource(fd, 0, 100, opts, errorCode);
     ASSERT_EQ(filePtr, nullptr);
     GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource0016 end";
+}
+
+/**
+ * @tc.name: CreateImageSource017
+ * @tc.desc: test CreateImageSource of ico picture resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreateImageSource017, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource017 start";
+
+    uint32_t res = 0;
+    const SourceOptions sourceOpts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_ICO_PATH, sourceOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreateImageSource017 end";
 }
 
 #ifdef IMAGE_PURGEABLE_PIXELMAP
