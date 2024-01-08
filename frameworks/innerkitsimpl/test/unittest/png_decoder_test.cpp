@@ -1791,6 +1791,7 @@ HWTEST_F(PngDecoderTest, PromoteIncrementalDecodeTest009, TestSize.Level3)
     pngDecoder->pngImageInfo_.rowDataSize = 0;
     pngDecoder->pngImageInfo_.height = 0;
     pngDecoder->state_ = PngDecodingState::IMAGE_DECODING;
+    context.decodeContext.pixelsBuffer.buffer = nullptr;
     context.decodeContext.allocatorType = Media::AllocatorType::SHARE_MEM_ALLOC;
     uint32_t result = pngDecoder->PromoteIncrementalDecode(0, context);
     ASSERT_EQ(result, ERR_IMAGE_MALLOC_ABNORMAL);
@@ -1809,6 +1810,7 @@ HWTEST_F(PngDecoderTest, DecodeHeader001, TestSize.Level3)
     auto mock = std::make_shared<MockInputDataStream>();
     pngDecoder->inputStreamPtr_ = mock.get();
     mock->returnValue_ = true;
+    pngDecoder->DecodeHeadFlag_ = true;
     pngDecoder->pngImageInfo_.width = 0;
     pngDecoder->pngImageInfo_.height = 0;
     uint32_t result = pngDecoder->DecodeHeader();
