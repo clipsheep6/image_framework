@@ -1459,23 +1459,8 @@ void PixelMap::ReleaseMemory(AllocatorType allocType, void *addr, void *context,
 #endif
 }
 
-bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
+bool PixelMap::WriteImageDataToParcel(Parcel &parcel, size_t size, const uint8_t *data) const
 {
-    const uint8_t *data = data_;
-    if (data == nullptr) {
-        HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
-        return false;
-    }
-    if (data == nullptr || size > MAX_IMAGEDATA_SIZE) {
-        return false;
-    }
-
-    if (!parcel.WriteInt32(size)) {
-        return false;
-    }
-    if (size <= MIN_IMAGEDATA_SIZE) {
-        return parcel.WriteUnpadBuffer(data, size);
-    }
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
     uint32_t id = GetUniqueId();
     std::string name = "Parcel ImageData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(id);
@@ -1520,6 +1505,62 @@ bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
     return true;
 }
 
+bool PixelMap::WriteImageData(Parcel &parcel, size_t size) const
+{
+    const uint8_t *data = data_;
+    if (data == nullptr) {
+        HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
+        return false;
+    }
+    if (data == nullptr || size > MAX_IMAGEDATA_SIZE) {
+        return false;
+    }
+
+    if (!parcel.WriteInt32(size)) {
+        return false;
+    }
+    if (size <= MIN_IMAGEDATA_SIZE) {
+        return parcel.WriteUnpadBuffer(data, size);
+    }
+    return WriteImageDataToParcel(parcel, size, data);
+}
+
+uint8_t *PixelMap::ReadImageDataFromParcel(Parcel &parcel, int32_t bufferSize, uint8_t *base)
+{
+    int fd = ReadFileDescriptor(parcel);
+    if (fd < 0) {
+        HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
+        return nullptr;
+    }
+    if (bufferSize <= 0 || bufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
+        return nullptr;
+    }
+
+    void *ptr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
+    if (ptr == MAP_FAILED) {
+        // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
+        HiLog::Error(LABEL, "ReadImageData map failed, errno:%{public}d", errno);
+        return nullptr;
+    }
+
+    base = static_cast<uint8_t *>(malloc(bufferSize));
+    if (base == nullptr) {
+        ::munmap(ptr, bufferSize);
+        HiLog::Error(LABEL, "alloc output pixel memory size:[%{public}d] error.", bufferSize);
+        return nullptr;
+    }
+    if (memcpy_s(base, bufferSize, ptr, bufferSize) != 0) {
+        ::munmap(ptr, bufferSize);
+        free(base);
+        base = nullptr;
+        HiLog::Error(LABEL, "memcpy pixel data size:[%{public}d] error.", bufferSize);
+        return nullptr;
+    }
+    ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, ptr, &fd, bufferSize);
+    return nullptr;
+}
+
 uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
 {
     uint8_t *base = nullptr;
@@ -1547,40 +1588,8 @@ uint8_t *PixelMap::ReadImageData(Parcel &parcel, int32_t bufferSize)
             HiLog::Error(LABEL, "memcpy pixel data size:[%{public}d] error.", bufferSize);
             return nullptr;
         }
-    } else {
-        int fd = ReadFileDescriptor(parcel);
-        if (fd < 0) {
-            HiLog::Error(LABEL, "read fd :[%{public}d] error", fd);
-            return nullptr;
-        }
-        if (bufferSize <= 0 || bufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-            HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
-            return nullptr;
-        }
-
-        void *ptr = ::mmap(nullptr, bufferSize, PROT_READ, MAP_SHARED, fd, 0);
-        if (ptr == MAP_FAILED) {
-            // do not close fd here. fd will be closed in FileDescriptor, ::close(fd)
-            HiLog::Error(LABEL, "ReadImageData map failed, errno:%{public}d", errno);
-            return nullptr;
-        }
-
-        base = static_cast<uint8_t *>(malloc(bufferSize));
-        if (base == nullptr) {
-            ::munmap(ptr, bufferSize);
-            HiLog::Error(LABEL, "alloc output pixel memory size:[%{public}d] error.", bufferSize);
-            return nullptr;
-        }
-        if (memcpy_s(base, bufferSize, ptr, bufferSize) != 0) {
-            ::munmap(ptr, bufferSize);
-            free(base);
-            base = nullptr;
-            HiLog::Error(LABEL, "memcpy pixel data size:[%{public}d] error.", bufferSize);
-            return nullptr;
-        }
-
-        ReleaseMemory(AllocatorType::SHARE_MEM_ALLOC, ptr, &fd, bufferSize);
-    }
+    } else
+        ReadImageDataFromParcel(parcel, bufferSize, base);
 #else
     if (bufferSize <= 0) {
         HiLog::Error(LABEL, "malloc parameter bufferSize:[%{public}d] error.", bufferSize);
@@ -2677,10 +2686,9 @@ void PixelMap::flip(bool xAxis, bool yAxis)
 
 uint32_t PixelMap::crop(const Rect &rect)
 {
-    ImageTrace imageTrace("PixelMap crop");
     ImageInfo imageInfo;
     GetImageInfo(imageInfo);
-
+    
     SkTransInfo src;
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     GenSrcTransInfo(src, imageInfo, this, ToSkColorSpace(this));
@@ -2713,8 +2721,7 @@ uint32_t PixelMap::crop(const Rect &rect)
         if (m->extend.data == nullptr) {
             HiLog::Error(LABEL, "GendstTransInfo get surfacebuffer failed");
         }
-        SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(m->extend.data);
-        rowStride = sbBuffer->GetStride();
+        rowStride = reinterpret_cast<SurfaceBuffer*>(m->extend.data)->GetStride();
     }
 #endif
     if (!src.bitmap.readPixels(dst.info, m->data.data, rowStride, dstIRect.fLeft, dstIRect.fTop)) {
