@@ -312,6 +312,7 @@ HWTEST_F(PixelMapTest, PixelMapTest006, TestSize.Level3)
     info1.colorSpace = ColorSpace::SRGB;
     auto ret = pixelMap1->SetImageInfo(info1);
     EXPECT_EQ(ret, SUCCESS);
+
     GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest006 end";
 }
 
@@ -1290,7 +1291,7 @@ HWTEST_F(PixelMapTest, IsStrideAlignmentTest, TestSize.Level3)
 
 /**
  * @tc.name: GetPurgeableMemPtr
- * @tc.desc: GetPixelFormatDetail***
+ * @tc.desc: GetPixelFormatDetail
  * @tc.type: FUNC
  */
 HWTEST_F(PixelMapTest, GetPixelFormatDetail, TestSize.Level3)
@@ -1338,7 +1339,7 @@ HWTEST_F(PixelMapTest, GetPixelFormatDetail, TestSize.Level3)
 /**
  * @tc.name: GetPurgeableMemPtr
  * @tc.desc: SetAlpha  GetNamedAlphaType
- * @tc.type: FUNC***
+ * @tc.type: FUNC
  */
 HWTEST_F(PixelMapTest, GetNamedAlphaType, TestSize.Level3)
 {
@@ -1356,7 +1357,7 @@ HWTEST_F(PixelMapTest, GetNamedAlphaType, TestSize.Level3)
 /**
  * @tc.name: GetPurgeableMemPtr
  * @tc.desc: SetAlpha  GetNamedPixelFormat
- * @tc.type: FUNC***
+ * @tc.type: FUNC
  */
 HWTEST_F(PixelMapTest, GetNamedPixelFormat001, TestSize.Level3)
 {
@@ -1376,7 +1377,7 @@ HWTEST_F(PixelMapTest, GetNamedPixelFormat001, TestSize.Level3)
 /**
  * @tc.name: GetPurgeableMemPtr
  * @tc.desc: SetAlpha  GetAlphaIndex
- * @tc.type: FUNC***
+ * @tc.type: FUNC
  */
 HWTEST_F(PixelMapTest, GetNamedPixelFormat002, TestSize.Level3)
 {
@@ -1394,7 +1395,7 @@ HWTEST_F(PixelMapTest, GetNamedPixelFormat002, TestSize.Level3)
 /**
  * @tc.name: GetPurgeableMemPtr
  * @tc.desc: ReadImageInfo
- * @tc.type: FUNC***
+ * @tc.type: FUNC
  */
 HWTEST_F(PixelMapTest, ReadImageInfo, TestSize.Level3)
 {
