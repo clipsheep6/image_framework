@@ -134,6 +134,39 @@ std::unique_ptr<PixelMap> PixelMapParcel::CreateFromParcel(OHOS::MessageParcel& 
     return pixelMap;
 }
 
+bool PixelMapParcel::WriteAllocatorTypeToParcel(PixelMap* pixelMap, OHOS::MessageParcel& data)
+{
+    int32_t bufferSize = pixelMap->GetByteCount();
+    if (!data.WriteInt32(static_cast<int32_t>(pixelMap->GetAllocatorType()))) {
+        HiLog::Error(LABEL, "write pixel map allocator type:[%{public}d] to parcel failed.",
+                     pixelMap->GetAllocatorType());
+        return false;
+    }
+    if (pixelMap->GetAllocatorType() == AllocatorType::SHARE_MEM_ALLOC) {
+#if !defined(_WIN32) && !defined(_APPLE)
+        int *fd = static_cast<int *>(pixelMap->GetFd());
+        if (*fd < 0) {
+            HiLog::Error(LABEL, "write pixel map failed, fd < 0.");
+            return false;
+        }
+        if (!data.WriteFileDescriptor(*fd)) {
+            HiLog::Error(LABEL, "write pixel map fd:[%{public}d] to parcel failed.", *fd);
+            return false;
+        }
+#endif
+    } else {
+        const uint8_t *addr = pixelMap->GetPixels();
+        if (addr == nullptr) {
+            HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
+            return false;
+        }
+        if (!data.WriteBuffer(addr, bufferSize)) {
+            HiLog::Error(LABEL, "write pixel map buffer to parcel failed.");
+            return false;
+        }
+    }
+}
+
 bool PixelMapParcel::WriteToParcel(PixelMap* pixelMap, OHOS::MessageParcel& data)
 {
     if (pixelMap == nullptr) {
@@ -173,34 +206,7 @@ bool PixelMapParcel::WriteToParcel(PixelMap* pixelMap, OHOS::MessageParcel& data
         HiLog::Error(LABEL, "write pixel map buffer size:[%{public}d] to parcel failed.", bufferSize);
         return false;
     }
-    if (!data.WriteInt32(static_cast<int32_t>(pixelMap->GetAllocatorType()))) {
-        HiLog::Error(LABEL, "write pixel map allocator type:[%{public}d] to parcel failed.",
-                     pixelMap->GetAllocatorType());
-        return false;
-    }
-    if (pixelMap->GetAllocatorType() == AllocatorType::SHARE_MEM_ALLOC) {
-#if !defined(_WIN32) && !defined(_APPLE)
-        int *fd = static_cast<int *>(pixelMap->GetFd());
-        if (*fd < 0) {
-            HiLog::Error(LABEL, "write pixel map failed, fd < 0.");
-            return false;
-        }
-        if (!data.WriteFileDescriptor(*fd)) {
-            HiLog::Error(LABEL, "write pixel map fd:[%{public}d] to parcel failed.", *fd);
-            return false;
-        }
-#endif
-    } else {
-        const uint8_t *addr = pixelMap->GetPixels();
-        if (addr == nullptr) {
-            HiLog::Error(LABEL, "write to parcel failed, pixel memory is null.");
-            return false;
-        }
-        if (!data.WriteBuffer(addr, bufferSize)) {
-            HiLog::Error(LABEL, "write pixel map buffer to parcel failed.");
-            return false;
-        }
-    }
+    WriteAllocatorTypeToParcel(pixelMap, data);
     return true;
 }
 }  // namespace Media

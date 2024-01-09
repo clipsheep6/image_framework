@@ -24,6 +24,7 @@ namespace Media {
 class PixelMapParcel {
 public:
     static std::unique_ptr<PixelMap> CreateFromParcel(OHOS::MessageParcel& data);
+    static bool WriteAllocatorTypeToParcel(PixelMap* pixelMap, OHOS::MessageParcel& data);
     static bool WriteToParcel(PixelMap* pixelMap, OHOS::MessageParcel& data);
 
 private:

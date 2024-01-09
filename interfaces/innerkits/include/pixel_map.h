@@ -326,6 +326,7 @@ private:
     }
 
     static void ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size);
+    bool PixelMap::isSupportPlatform(Parcel &parcel, size_t size) const;
     bool WriteImageData(Parcel &parcel, size_t size) const;
     static uint8_t *ReadImageData(Parcel &parcel, int32_t size);
     static int ReadFileDescriptor(Parcel &parcel);
