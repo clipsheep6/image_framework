@@ -56,7 +56,7 @@ thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 NAPI_MessageSequence* napi_messageSequence = nullptr;
 #endif
-
+static std::mutex pixelMapCrossThreadSynchronizer_;
 struct PositionArea {
     void* pixels;
     size_t size;
@@ -548,6 +548,18 @@ extern "C" __attribute__((visibility("default"))) int32_t OHOS_MEDIA_UnAccessPix
     return OHOS_IMAGE_RESULT_SUCCESS;
 }
 
+// Use with caution
+void PixelMapNapi::ReleaseNativePixelMap()
+{
+    HiLog::Info(LABEL, "ReleaseNativePixelMap in");
+    nativerPixelMap_ = nullptr;
+}
+
+class AgainstTransferGC {
+public:
+    std::shared_ptr<PixelMap> pixelMap = nullptr;
+}
+
 inline void *DetachPixelMapFunc(napi_env env, void *value, void *)
 {
     HiLog::Debug(LABEL, "DetachPixelMapFunc in");
@@ -557,7 +569,10 @@ inline void *DetachPixelMapFunc(napi_env env, void *value, void *)
     }
     auto pixelNapi = reinterpret_cast<PixelMapNapi*>(value);
     pixelNapi->setPixelNapiEditable(false);
-    return value;
+    AgainstTransferGC *data = new AgainstTransferGC();
+    data->pixelMap = pixelNapi->GetPixelNapiInner();
+    pixelNapi->ReleaseNativePixelMap();
+    return reinterpret_cast<void*>(data);
 }
 
 static napi_status NewPixelNapiInstance(napi_env &env, napi_value &constructor,
@@ -583,9 +598,23 @@ napi_value AttachPixelMapFunc(napi_env env, void *value, void *)
         HiLog::Error(LABEL, "attach value is nullptr");
         return nullptr;
     }
-    auto pixelNapi = reinterpret_cast<PixelMapNapi*>(value);
-
+    std::lock_guard<std::mutex> lock(pixelMapCrossThreadSynchronizer_);
     napi_value result = nullptr;
+    if (value == nullptr) {
+        HiLog::Error(LABEL, "attach value lock losed");
+        napi_get_undefined(env, &result);
+        return result;
+    }
+    AgainstTransferGC *data = reinterpret_cast<AgainstTransferGC*>(value);
+    std::shared_ptr<PixelMap> attachPixelMap = std::move(data->pixelMap);
+    delete data;
+    auto pixelNapi = reinterpret_cast<PixelMapNapi*>(value);
+    std::shared_ptr<PixelMap> attachPixelMap = pixelNapi->GetPixelNapiInner();
+    if (attachPixelMap == nullptr) {
+        HiLog::Error(LABEL, "AttachPixelMapFunc attachPixelMap is nullptr");
+        napi_get_undefined(env, &result);
+        return result;
+    }
     napi_value constructor = nullptr;
     napi_status status;
 
@@ -612,14 +641,6 @@ napi_value AttachPixelMapFunc(napi_env env, void *value, void *)
         IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, HiLog::Error(LABEL, "napi_get_named_property error"));
     }
 
-    std::shared_ptr<PixelMap> attachPixelMap = pixelNapi->GetPixelNapiInner();
-    if (attachPixelMap == nullptr) {
-        HiLog::Error(LABEL, "AttachPixelMapFunc attachPixelMap is nullptr");
-        napi_get_undefined(env, &result);
-        return result;
-    }
-    HiLog::Debug(LABEL, "AttachPixelMapFunc in napi_id:%{public}d, id:%{public}d",
-        pixelNapi->GetUniqueId(), attachPixelMap->GetUniqueId());
     status = NewPixelNapiInstance(env, constructor, attachPixelMap, result);
     if (!IMG_IS_OK(status)) {
         HiLog::Error(LABEL, "AttachPixelMapFunc napi_get_referencce_value failed");
@@ -670,6 +691,7 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
 void PixelMapNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
 {
     if (nativeObject != nullptr) {
+        std::lock_guard<std::mutex> lock(pixelMapCrossThreadSynchronizer_);
         HiLog::Debug(LABEL, "Destructor in napi_id:%{public}d",
             reinterpret_cast<PixelMapNapi*>(nativeObject)->GetUniqueId());
         delete reinterpret_cast<PixelMapNapi*>(nativeObject);
