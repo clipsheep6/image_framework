@@ -34,9 +34,9 @@ struct MemoryData {
 class AbsMemory {
 public:
     virtual ~AbsMemory() {};
-    virtual uint32_t Create();
-    virtual uint32_t Release();
-    virtual AllocatorType GetType();
+    virtual uint32_t Create() = 0;
+    virtual uint32_t Release() = 0;
+    virtual AllocatorType GetType() = 0;
     MemoryData data;
     MemoryData extend;
 };
