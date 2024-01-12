@@ -326,7 +326,9 @@ private:
     }
 
     static void ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size);
+    bool WriteImageDataToParcel(Parcel &parcel, size_t size, const uint8_t *data) const;
     bool WriteImageData(Parcel &parcel, size_t size) const;
+    static uint8_t *ReadImageDataFromParcel(Parcel &parcel, int32_t bufferSize, uint8_t *base);
     static uint8_t *ReadImageData(Parcel &parcel, int32_t size);
     static int ReadFileDescriptor(Parcel &parcel);
     static bool WriteFileDescriptor(Parcel &parcel, int fd);

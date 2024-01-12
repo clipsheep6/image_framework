@@ -23,7 +23,12 @@ namespace OHOS {
 namespace Media {
 class PixelMapParcel {
 public:
+    static std::unique_ptr<PixelMap> CopyDataToBase(OHOS::MessageParcel& data,
+                void *context, uint8_t *base, int32_t &bufferSize);
+    static std::unique_ptr<PixelMap> CopyAddrToBase(OHOS::MessageParcel& data,
+                uint8_t *base, int32_t &bufferSize);
     static std::unique_ptr<PixelMap> CreateFromParcel(OHOS::MessageParcel& data);
+    static bool WriteAllocatorTypeToParcel(PixelMap* pixelMap, OHOS::MessageParcel& data);
     static bool WriteToParcel(PixelMap* pixelMap, OHOS::MessageParcel& data);
 
 private:
