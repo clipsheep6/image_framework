@@ -116,6 +116,7 @@ const std::string HW_MNOTE_TAG_SCENE_NIGHT_CONF = "HwMnoteSceneNightConf";
 const std::string HW_MNOTE_TAG_SCENE_TEXT_CONF = "HwMnoteSceneTextConf";
 const std::string HW_MNOTE_TAG_FACE_COUNT = "HwMnoteFaceCount";
 const std::string HW_MNOTE_TAG_FOCUS_MODE = "HwMnoteFocusMode";
+const std::string GIF_IMAGE_DELAY_TIME = "GIFDelayTime";
 
 static const std::map<std::string, uint32_t> PROPERTY_INT = {
     {"Top-left", 0},
@@ -759,13 +760,27 @@ bool JpegDecoder::ParseExifData()
     }
     return true;
 }
+static bool CheckUnsupportedKey(const std::string name, const std::string &key, uint32_t &errorCode)
+{
+    if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
+        HiLog::Error(LABEL, "[%{public}s] this key is used to check the original format of raw image!", name.c_str());
+        errorCode = Media::ERR_MEDIA_VALUE_INVALID;
+        return false;
+    }
+    if (IsSameTextStr(key, GIF_IMAGE_DELAY_TIME)) {
+        HiLog::Error(LABEL, "[%{public}s] Should not get delay time in JPEG", name.c_str());
+        errorCode = Media::ERR_MEDIA_INVALID_PARAM;
+        return false;
+    }
+    return true;
+}
 
 uint32_t JpegDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     HiLog::Debug(LABEL, "[GetImagePropertyInt] enter jpeg plugin, key:%{public}s", key.c_str());
-    if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
-        HiLog::Error(LABEL, "[GetImagePropertyInt] this key is used to check the original format of raw image!");
-        return Media::ERR_MEDIA_VALUE_INVALID;
+    uint32_t errorCode = Media::ERR_MEDIA_VALUE_INVALID;
+    if (!CheckUnsupportedKey("GetImagePropertyInt", key, errorCode)) {
+        return errorCode;
     }
 
     if (!exifInfo_.IsExifDataParsed()) {
@@ -792,11 +807,11 @@ uint32_t JpegDecoder::GetImagePropertyInt(uint32_t index, const std::string &key
 uint32_t JpegDecoder::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
     HiLog::Debug(LABEL, "[GetImagePropertyString] enter jpeg plugin, key:%{public}s", key.c_str());
-    if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
-        HiLog::Error(LABEL,
-            "[GetImagePropertyString] this key is used to check the original format of raw image!");
-        return Media::ERR_MEDIA_VALUE_INVALID;
+    uint32_t errorCode = Media::ERR_MEDIA_VALUE_INVALID;
+    if (!CheckUnsupportedKey("GetImagePropertyString", key, errorCode)) {
+        return errorCode;
     }
+
     if (!exifInfo_.IsExifDataParsed()) {
         if (!ParseExifData()) {
             HiLog::Error(LABEL, "[GetImagePropertyString] Parse exif data failed!");
