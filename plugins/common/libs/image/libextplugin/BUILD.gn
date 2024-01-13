@@ -192,6 +192,7 @@ ohos_shared_library("extplugin") {
     "${image_subsystem}/../../../third_party/libjpeg-turbo/",
     "//third_party/astc-encoder/Source",
     "//third_party/skia",
+    "//third_party/spirv-cross",
     "//third_party/skia/include/codec",
     "//third_party/skia/include/core",
     "//third_party/libjpeg-turbo",
@@ -226,6 +227,7 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/plugins/manager:pluginmanager",
       "//third_party/astc-encoder:astc_encoder_shared",
       "//third_party/opencl-headers:libcl",
+      "//third_party/spirv-cross:spirv_cross_shared",
     ]
     deps += skia_platform
 
