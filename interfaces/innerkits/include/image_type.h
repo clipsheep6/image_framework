@@ -112,6 +112,8 @@ enum class PixelFormat : int32_t {
     ASTC_4x4 = 11,
     ASTC_6x6 = 12,
     ASTC_8x8 = 13,
+    YU12 = 14,
+    YV12 = 15,
 };
 
 enum class AlphaType : int32_t {
