@@ -1252,6 +1252,10 @@ static void GetImagePropertyComplete(napi_env env, napi_status status, ImageSour
         napi_create_string_utf8(env, context->valueStr.c_str(), context->valueStr.length(), &result[NUM_1]);
     } else if (context->status == ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
         ImageNapiUtils::CreateErrorObj(env, result[0], context->status, "Unsupport EXIF info key!");
+    } else if (context->defaultValueStr.length() > 0) {
+        context->status = SUCCESS;
+        napi_create_string_utf8(env, context->defaultValueStr.c_str(),
+            context->defaultValueStr.length(), &result[NUM_1]);
     } else {
         ImageNapiUtils::CreateErrorObj(env, result[0], context->status, "There is generic napi failure!");
     }
