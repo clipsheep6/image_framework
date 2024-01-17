@@ -51,7 +51,7 @@ namespace {
     constexpr static uint32_t DESC_SIGNATURE = 0x64657363;
     constexpr static size_t SIZE_1 = 1;
     constexpr static size_t SIZE_4 = 4;
-    constexpr static int HARDWARE_MIN_DIM = 512;
+    constexpr static int HARDWARE_MIN_DIM = 1024;
     constexpr static int HARDWARE_MAX_DIM = 8192;
     constexpr static float HALF = 0.5;
     constexpr static float QUARTER = 0.25;
@@ -552,10 +552,8 @@ bool ExtDecoder::ResetCodec()
 uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 {
     if (HardWareDecode(context) == SUCCESS) {
-        HiLog::Info(LABEL, "hardware decode success.");
         return SUCCESS;
     }
-    HiLog::Warn(LABEL, "jpeg hardware decode failed, turn to software decode");
     return ERROR;
 }
 #endif
@@ -724,7 +722,6 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
     orgImgSize_.height = info_.height();
 
     if (!CheckContext(dstInfo_)) {
-        HiLog::Error(LABEL, "hardware decode not support this decode option.");
         return ERROR;
     }
 
@@ -744,44 +741,62 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
 }
 #endif
 
-uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride)
-{
-    int dstHeight = dstInfo_.height();
-    int rowBytes = dstInfo_.minRowBytes64();
-    uint64_t byteCount = rowStride * dstHeight;
-    SkCodec::FrameInfo info {};
-    codec_->getFrameInfo(index, &info);
-    if (info.fRequiredFrame != SkCodec::kNoFrame && index == gifCacheIndex_ + 1 && gifCache_ != nullptr) {
-        // frame requires a previous frame as background layer
-        dstOptions_.fPriorFrame = info.fRequiredFrame;
-    } else {
-        dstOptions_.fPriorFrame = SkCodec::kNoFrame;
-    }
-    if (gifCache_ == nullptr) {
-        HiLog::Debug(LABEL, "malloc Gif cacahe memory");
-        gifCache_ = static_cast<uint8_t *>(calloc(byteCount, 1));
-    }
-    SkCodec::Result ret = codec_->getPixels(dstInfo_, gifCache_, rowStride, &dstOptions_);
-    if (ret != SkCodec::kSuccess && ResetCodec()) {
-        // Try again
-        ret = codec_->getPixels(dstInfo_, gifCache_, rowStride, &dstOptions_);
-    }
-    if (ret == SkCodec::kSuccess) {
-        gifCacheIndex_ = index;
-    }
+static uint32_t handleGifCache(uint8_t* src, uint8_t* dst, SkImageInfo& info, const uint64_t rowStride) {
+    int dstHeight = info.height();
+    uint8_t* srcRow = src;
+    uint8_t* dstRow = dst;
     for (int i = 0; i < dstHeight; i++) {
-        uint8_t* srcRow = gifCache_ + i * rowStride;
-        uint8_t* dstRow = static_cast<uint8_t *>(context.pixelsBuffer.buffer) + i * rowStride;
-        errno_t err = memcpy_s(dstRow, rowBytes, srcRow, rowBytes);
+        errno_t err = memcpy_s(dstRow, rowStride, srcRow, rowStride);
         if (err != EOK) {
-            HiLog::Error(LABEL, "memcpy failed. errno:%{public}d", err);
+            HiLog::Error(LABEL, "handle gif memcpy failed. errno:%{public}d", err);
             return ERR_IMAGE_DECODE_ABNORMAL;
         }
+        srcRow += rowStride;
+        dstRow += rowStride;
     }
+    return SUCCESS;
+}
 
+uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride)
+{
+    SkCodec::FrameInfo curInfo {};
+    codec_->getFrameInfo(index, &curInfo);
+    if (index == 0 || gifCache_ == nullptr) {
+        dstOptions_.fPriorFrame = SkCodec::kNoFrame;
+    } else {
+        int preIndex = index - 1;
+        SkCodec::FrameInfo preInfo {};
+        codec_->getFrameInfo(preIndex, &preInfo);
+        if (preInfo.fDisposalMethod == SkCodecAnimation::DisposalMethod::kRestorePrevious) {
+            dstOptions_.fPriorFrame = gifCacheIndex_;
+        } else {
+            dstOptions_.fPriorFrame = gifCacheIndex_ == preIndex ? preIndex : SkCodec::kNoFrame;
+        }
+    }
+    uint8_t* dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
+    if (curInfo.fDisposalMethod != SkCodecAnimation::DisposalMethod::kRestorePrevious) {
+        if (gifCache_ == nullptr) {
+            int dstHeight = dstInfo_.height();
+            uint64_t byteCount = rowStride * dstHeight;
+            gifCache_ = static_cast<uint8_t *>(calloc(byteCount, 1));
+        }
+        dstBuffer = gifCache_;
+    } else {
+        handleGifCache(gifCache_, dstBuffer, dstInfo_, rowStride);
+    }
+    SkCodec::Result ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_);
+    if (ret != SkCodec::kSuccess && ResetCodec()) {
+        // Try again
+        ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_);
+    }
     if (ret != SkCodec::kSuccess) {
         HiLog::Error(LABEL, "Gif decode failed, get pixels failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    if (curInfo.fDisposalMethod != SkCodecAnimation::DisposalMethod::kRestorePrevious) {
+        gifCacheIndex_ = index;
+        uint8_t* dst = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
+        return handleGifCache(dstBuffer, dst, dstInfo_, rowStride);
     }
     return SUCCESS;
 }
