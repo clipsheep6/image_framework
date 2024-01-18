@@ -846,6 +846,8 @@ uint32_t JpegDecoder::GetImagePropertyString(const std::string &key, std::string
         value = exifInfo_.sceneType_;
     } else if (IsSameTextStr(key, COMPRESSED_BITS_PER_PIXEL)) {
         value = exifInfo_.compressedBitsPerPixel_;
+    } else if (IsSameTextStr(key, USER_COMMENT)) {
+        value = exifInfo_.userComment_;
     } else if (IsSameTextStr(key, DATE_TIME)) {
         value = exifInfo_.dateTime_;
     } else if (IsSameTextStr(key, GPS_TIME_STAMP)) {
@@ -1003,6 +1005,8 @@ ExifTag JpegDecoder::getExifTagFromKey(const std::string &key)
         return EXIF_TAG_SCENE_TYPE;
     } else if (IsSameTextStr(key, COMPRESSED_BITS_PER_PIXEL)) {
         return EXIF_TAG_COMPRESSED_BITS_PER_PIXEL;
+    } else if (IsSameTextStr(key, USER_COMMENT)) {
+        return EXIF_TAG_USER_COMMENT;
     } else {
         return EXIF_TAG_PRINT_IMAGE_MATCHING;
     }
