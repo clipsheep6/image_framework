@@ -37,15 +37,28 @@
 #include "surface_buffer.h"
 #endif
 
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/core/utility.hpp"
+#include "memory_manager.h"
+
 namespace OHOS {
 namespace Media {
 using namespace std;
 using namespace OHOS::HiviewDFX;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "PostProc" };
 constexpr uint32_t NEED_NEXT = 1;
+constexpr int ERROR_FORMAT = 0;
 constexpr float EPSILON = 1e-6;
 constexpr uint8_t HALF = 2;
 constexpr float HALF_F = 2;
+
+static const map<PixelFormat, int> PIXEL_FPRMAT_MAP = {
+    { PixelFormat::ALPHA_8, CV_8UC1 }, { PixelFormat::RGB_565, CV_8UC2 },
+    { PixelFormat::RGB_888, CV_8UC3 }, { PixelFormat::RGBA_8888, CV_8UC4 },
+    { PixelFormat::ARGB_8888, CV_8UC4 }, { PixelFormat::BGRA_8888, CV_8UC4 },
+    { PixelFormat::RGBA_F16, CV_16FC4 },
+};
 
 uint32_t PostProc::DecodePostProc(const DecodeOptions &opts, PixelMap &pixelMap, FinalOutputStep finalOutputStep)
 {
@@ -680,6 +693,80 @@ void PostProc::SetScanlineCropAndConvert(const Rect &cropRect, ImageInfo &dstIma
         dstImageInfo.size = srcImageInfo.size;
     }
     scanlineFilter.SetSrcRegion(srcRect);
+}
+
+int GetCVFormat(const PixelFormat &format) {
+    if (format != PixelFormat::UNKNOWN) {
+        auto formatPair = PIXEL_FORMAT_MAP.find(format);
+        if (formatPair != PIXEL_FORMAT_MAP.end() && formatPair->second != 0) {
+            return formatPair->second;
+        }
+    }
+    return ERROR_FORMAT;
+}
+
+cv::InterpolationFlags GetInterpolation(const AntiAliasingOption &option)
+{
+    switch (option) {
+        case AntiAliasingOption::NONE:
+            return cv::InterpolationFlags::INTER_NEAREST;
+        case AntiAliasingOption::LOW:
+            return cv::InterpolationFlags::INTER_LINEAR;
+        case AntiAliasingOption::MEDIUM:
+            return cv::InterpolationFlags::INTER_CUBIC;
+        case AntiAliasingOption::HIGH:
+            return cv::InterpolationFlags::INTER_AREA;
+        case AntiAliasingOption::LANCZOS4:
+            return cv::InterpolationFlags::INTER_LANCZOS4;
+        case AntiAliasingOption::LINEAR_EXACT:
+            return cv::InterpolationFlags::INTER_NEAREST_EXACT;
+        default:
+            return cv::InterpolationFlags::INTER_NEAREST;
+    }
+}
+
+bool PostProc::ScalePixelMapEx(const Size &desiredSize, PixelMap &pixelMap, const AntiAliasingOption &option)
+{
+    ImageTrace imageTrace("PixelMap ScalePixelMapEx");
+    ImageInfo imgInfo;
+    pixelMap.GetImageInfo(imgInfo);
+    int32_t srcWidth = pixelMap.GetWidth();
+    int32_t srcHeight = pixelMap.GetHeight();
+    if (srcWidth <= 0 || srcHeight <= 0 || !pixelMap.GetWritablePixels()) {
+        HiLog::Error(LABEL, "pixelMap param is invalid, src width:%{public}d, height:%{public}d",srcWidth, srcHeight);
+        return false;
+    }
+    // TODO 格式转换函数
+    int cvFormat = GetCVFormat(imgInfo.pixelFormat);
+    if (cvFormat == ERROR_FORMAT) {
+        HiLog::Error(LABEL, "pixelMap format is invalid, format: %{public}d", imgInfo.pixelFormat);
+        return false;
+    }
+    cv::Mat src(srcWidth, srcHeight, cvFormat, pixelMap.GetWritablePixels(), pixelMap.GetRowStride());
+
+    // TODO 内存分配
+    // GetPixelBytes
+    uint32_t dstBufferSize = desiredSize.height * desiredSize.width * ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
+    MemoryData memoryData = {nullptr, dstBufferSize, "ScalePixelMapEx ImageData", desiredSize};
+    auto m = MemoryManager::CreateMemory(pixelMap.GetAllocatorType(), memoryData);
+    if (m == nullptr) {
+        HiLog::Error(LABEL, "ScalePixelMapEx CreateMemory failed");
+        return false;
+    }
+
+    size_t rowStride;
+    if (m->GetType() == AllocatorType::DMA_ALLOC) {
+        rowStride = reinterpret_cast<surfaceBuffer*>(m->extend.data)->GetStride();
+    } else {
+        rowStride = desiredSize.width * ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
+    }
+    cv::Mat dst(desiredSize.height, desiredSize.width, cvFormat, m->data.data, rowStride);
+    cv::Size dstSize(desiredSize.width, desiredSize.height);
+    cv::resize(src, dst, dstSize, 0, 0, GetInterpolation(option));
+    pixelMap.SetPixelsAddr(m->data.data, m->extend.data, dstBufferSize, m->GetType(), nullptr);
+    imgInfo.size = desiredSize;
+    pixelMap.SetImageInfo(imgInfo, true);
+    return true;
 }
 } // namespace Media
 } // namespace OHOS

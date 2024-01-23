@@ -62,6 +62,11 @@ config("image_external_config") {
     "$skia_root/skia/third_party/externals/libjpeg-turbo",
     "$skia_root/skia/third_party/skcms",
     "//third_party/libexif",
+    "//third_party/opencv/build",
+    "//third_party/opencv/include",
+    "//third_party/opencv/modules/core/include/",
+    "//third_party/opencv/modules/imgcodecs/include/",
+    "//third_party/opencv/modules/imgproc/include/",
   ]
 
   if (use_mingw_win) {
@@ -344,6 +349,7 @@ ohos_static_library("image_static") {
     } else {
       deps += [ "//third_party/libpng:libpng" ]
     }
+    deps += [ "//third_party/opencv:opencv" ]
     external_deps = [
       "c_utils:utils",
       "graphic_2d:color_manager",
