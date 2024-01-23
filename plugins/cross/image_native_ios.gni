@@ -233,6 +233,8 @@ image_native_ios_deps = [
 
   # raw
   "//third_party/skia/third_party/piex",
+  # opencv
+  "//third_party/opencv:opencv",
 ]
 
 image_native_ios_deps += skia_skcms

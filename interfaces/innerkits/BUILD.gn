@@ -62,6 +62,9 @@ config("image_external_config") {
     "$skia_root/skia/third_party/externals/libjpeg-turbo",
     "$skia_root/skia/third_party/skcms",
     "//third_party/libexif",
+    "//third_party/opencv/build",
+    "//third_party/opencv/include",
+    "//third_party/opencv/modules/imgproc/include/",
   ]
 
   if (use_mingw_win) {
@@ -204,6 +207,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+        "//third_party/opencv:opencv" ,
       ]
       deps += skia_platform
 

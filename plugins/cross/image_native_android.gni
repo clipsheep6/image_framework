@@ -240,6 +240,8 @@ image_native_android_deps = [
   # raw
   "//third_party/skia/third_party/piex",
 
+  # opencv
+  "//third_party/opencv:opencv",
   # formatagent
   # png
 ]
