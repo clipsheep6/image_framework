@@ -157,6 +157,7 @@ struct ImageInfo {
     ColorSpace colorSpace = ColorSpace::SRGB;
     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     int32_t baseDensity = 0;
+    int32_t stride = 1;
 };
 
 struct FillColor {
@@ -205,10 +206,12 @@ enum class ScaleMode : int32_t {
 enum class IncrementalMode { FULL_DATA = 0, INCREMENTAL_DATA = 1 };
 
 enum class AntiAliasingOption : int32_t {
-    NONE = 0,
-    LOW = 1,
-    MEDIUM = 2,
-    HIGH = 3,
+    NONE = 0, // INTER_NEAREST
+    LOW = 1, // INTER_LINEAR
+    MEDIUM = 2, // INTER_CUBIC
+    HIGH = 3, // INTER_AREA
+    LANCZOS4 = 4, // INTER_LANCZOS4
+    LINEAR_EXACT = 5, // INTER_LINEAR_EXACT
 };
 } // namespace Media
 } // namespace OHOS
