@@ -38,6 +38,8 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_MDK_H
 #include "napi/native_api.h"
 #include "image_mdk_common.h"
+#include "image_packer.h"
+#include "image_packer_mdk.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -214,6 +216,16 @@ int32_t OH_Image_GetComponent(const ImageNative* native,
  * @version 2.0
  */
 int32_t OH_Image_Release(ImageNative* native);
+
+
+int32_t OH_Image_CToJs_ImageData(napi_env env, napi_value tsArrayBuffer, uint8_t* outData, int64_t size);
+int32_t OH_Image_JsToC_ImagePacker(napi_env env, napi_value tsImagePacker, OHOS::Media::ImagePacker* imagePacker);
+int32_t OH_Image_JsToC_ImagePackerOpts(napi_env env, napi_value option, ImagePacker_Opts* options);
+int32_t OH_Image_JsToC_Int64_t(napi_env env, napi_value bufferSize, int64_t result);
+int32_t OH_Image_JsToC_PixelMap(napi_env env, napi_value tsPixelMap, OHOS::Media::PixelMap* pixelMap);
+int32_t OH_Image_JSToC_ImageSource(napi_env env, napi_value tsImageSource, OHOS::Media::ImageSource* imageSource);
+int32_t OH_Image_JsToC_Int(napi_env env, napi_value fd, int result);
+
 #ifdef __cplusplus
 };
 #endif

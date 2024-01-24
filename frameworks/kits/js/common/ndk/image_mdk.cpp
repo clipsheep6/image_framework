@@ -97,6 +97,79 @@ int32_t OH_Image_Release(ImageNative* native)
     return IMAGE_RESULT_SUCCESS;
 }
 
+MIDK_EXPORT
+int32_t OH_Image_CToJs_ImageData(napi_env env, napi_value tsArrayBuffer, uint8_t* outData, int64_t size)
+{
+    napi_status status;
+    size_t bufferSize = static_cast<size_t>(size);
+    status = napi_create_arraybuffer(env, bufferSize, (void**)&outData, &tsArrayBuffer);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_ImagePacker(napi_env env, napi_value tsImagePacker, OHOS::Media::ImagePacker* imagePacker)
+{
+    napi_status status;
+    status = napi_unwrap(env, tsImagePacker,  (void**)&imagePacker);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+} 
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_ImagePackerOpts(napi_env env, napi_value option, ImagePacker_Opts* options)
+{
+    napi_status status;
+    status = napi_unwrap(env, option, (void**)&options);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}   
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Int64_t(napi_env env, napi_value bufferSize, int64_t result)
+{
+    if (napi_get_value_int64(env, bufferSize, &result) != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_PixelMap(napi_env env, napi_value tsPixelMap, OHOS::Media::PixelMap* pixelMap)
+{
+    napi_status status;
+    status = napi_unwrap(env, tsPixelMap, (void**)&pixelMap);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS; 
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JSToC_ImageSource(napi_env env, napi_value tsImageSource, OHOS::Media::ImageSource* imageSource)
+{
+    napi_status status;
+    status = napi_unwrap(env, tsImageSource, (void**)&imageSource);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS; 
+}
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Int(napi_env env, napi_value fd, int result)
+{
+    if (napi_get_value_int32(env, fd, &result) != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
 #ifdef __cplusplus
 };
 #endif
