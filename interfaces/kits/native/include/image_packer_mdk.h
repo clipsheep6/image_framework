@@ -50,6 +50,7 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PACKER_MDK_H
 #include "napi/native_api.h"
 #include "image_mdk_common.h"
+#include "image_packer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -171,6 +172,19 @@ int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
  * @version 4.1
  */
 int32_t OH_ImagePacker_Release(ImagePacker_Native* native);
+
+
+int32_t OH_ImagePackerCapi_Create(std::shared_ptr<OHOS::Media::ImagePacker> imagePacker);
+int32_t OH_ImagePackerCapi_PackingFromImageSource(OHOS::Media::ImagePacker* imagePacker, ImagePacker_Opts* option, 
+    OHOS::Media::ImageSource* imageSource, uint8_t* outData, int64_t* size);
+int32_t OH_ImagePackerCapi_PackingFromPixelMap(OHOS::Media::ImagePacker* imagePacker, ImagePacker_Opts* option, 
+    OHOS::Media::PixelMap* pixelMap, uint8_t* outData, int64_t* size);
+int32_t OH_ImagePackerCapi_PackToFileFromImageSource(OHOS::Media::ImagePacker* imagePacker, ImagePacker_Opts* option, 
+    OHOS::Media::ImageSource* imageSource, int fd);
+int32_t OH_ImagePackerCapi_PackToFileFromPixelMap(OHOS::Media::ImagePacker* imagePacker, ImagePacker_Opts* option, 
+    OHOS::Media::PixelMap* pixelMap, int fd);
+int32_t OH_ImagePackerCapi_Release(OHOS::Media::ImagePacker* imagePacker);
+
 #ifdef __cplusplus
 };
 #endif

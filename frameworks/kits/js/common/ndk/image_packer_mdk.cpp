@@ -89,6 +89,131 @@ int32_t OH_ImagePacker_Release(ImagePacker_Native* native)
     }
     return IMAGE_RESULT_SUCCESS;
 }
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_Create(std::shared_ptr<ImagePacker> imagePacker)
+{
+    imagePacker = std::make_shared<ImagePacker>();
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackingFromImageSource(ImagePacker* imagePacker, ImagePacker_Opts* option, ImageSource* imageSource, uint8_t* outData, int64_t* size)
+{
+    if (imageSource == nullptr || option == nullptr || imagePacker == nullptr || outData != nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    int64_t packedSize = 0;
+    uint32_t ret = IMAGE_RESULT_SUCCESS;
+    PackOption outOption;
+    outOption.format = option->format;
+    outOption.quality = option->quality;
+    const int64_t DEFAULT_BUFFER_SIZE = 25 * 1024 * 1024;
+    int64_t bufferSize = (*size <= 0)?DEFAULT_BUFFER_SIZE:(*size);
+    outData = new uint8_t[bufferSize];
+    ret = imagePacker->StartPacking(outData, bufferSize, outOption);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    ret = imagePacker->AddImage(*imageSource);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    ret = imagePacker->FinalizePacking(packedSize);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    if (packedSize > 0 && (packedSize < bufferSize)) {
+        *size = packedSize;
+        return IMAGE_RESULT_SUCCESS;
+    } 
+    return IMAGE_RESULT_BAD_PARAMETER;
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackingFromPixelMap(ImagePacker* imagePacker, ImagePacker_Opts* option, PixelMap* pixelMap, uint8_t* outData, int64_t* size)
+{
+    if (pixelMap == nullptr || option == nullptr || imagePacker == nullptr || outData != nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    int64_t packedSize = 0;
+    uint32_t ret = IMAGE_RESULT_SUCCESS;
+    PackOption outOption;
+    outOption.format = option->format;
+    outOption.quality = option->quality;
+    const int64_t DEFAULT_BUFFER_SIZE = 25 * 1024 * 1024;
+    int64_t bufferSize = (*size <= 0)?DEFAULT_BUFFER_SIZE:(*size);
+    outData = new uint8_t[bufferSize];
+    ret = imagePacker->StartPacking(outData, bufferSize, outOption);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    ret = imagePacker->AddImage(*pixelMap);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    ret = imagePacker->FinalizePacking(packedSize);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    if (packedSize > 0 && (packedSize < bufferSize)) {
+        *size = packedSize;
+        return IMAGE_RESULT_SUCCESS;
+    }
+        return IMAGE_RESULT_BAD_PARAMETER;
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackToFileFromImageSource(ImagePacker* imagePacker, ImagePacker_Opts* option, ImageSource* imageSource, int fd)
+{
+    if (imageSource == nullptr || option == nullptr || imagePacker == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    int64_t packedSize = 0;
+    uint32_t ret = IMAGE_RESULT_SUCCESS;
+    PackOption outOption;
+    outOption.format = option->format;
+    outOption.quality = option->quality;
+    ret = imagePacker->StartPacking(fd, outOption);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    ret = imagePacker->AddImage(*imageSource);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    return imagePacker->FinalizePacking(packedSize);
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackToFileFromPixelMap(ImagePacker* imagePacker, ImagePacker_Opts* option, PixelMap* pixelMap, int fd)
+{
+    if (pixelMap == nullptr || option == nullptr || imagePacker == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    int64_t packedSize = 0;
+    uint32_t ret = IMAGE_RESULT_SUCCESS;
+    PackOption outOption;
+    outOption.format = option->format;
+    outOption.quality = option->quality;
+    ret = imagePacker->StartPacking(fd, outOption);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    ret = imagePacker->AddImage(*pixelMap);
+    if (ret != IMAGE_RESULT_SUCCESS) {
+        return ret;
+    }
+    return imagePacker->FinalizePacking(packedSize);
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_Release(ImagePacker* imagePacker)
+{
+    if (imagePacker != nullptr) {
+        delete imagePacker;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
 
 #ifdef __cplusplus
 };
