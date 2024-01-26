@@ -728,7 +728,12 @@ uint32_t JpegDecoder::StartDecompress(const PixelDecodeOptions &opts)
     srcMgr_.inputStream->Seek(streamPosition_);
     if (jpeg_start_decompress(&decodeInfo_) != TRUE) {
         streamPosition_ = srcMgr_.inputStream->Tell();
-        HiLog::Error(LABEL, "jpeg start decompress failed, invalid input.");
+        int32_t ret = jpeg_consume_input(&decodeInfo_);
+        if (ret == JPEG_SUSPENDED) {
+            HiLog::Debug(LABEL, "image input data incomplete, StartDecompress error:%{public}u.", ret);
+            return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
+        }
+        HiLog::Error(LABEL, "jpeg start decompress failed, invalid input. JPEG status %{public}d.", ret);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     streamPosition_ = srcMgr_.inputStream->Tell();
