@@ -112,7 +112,7 @@ static int32_t DoStartPacking(std::shared_ptr<ImagePacker> &packer, struct Image
     if (args->outData != nullptr && args->dataSize != nullptr && *(args->dataSize) != SIZE_ZERO) {
         return packer->StartPacking(args->outData, *(args->dataSize), option);
     } else if (args->inNum0 > INVALID_FD) {
-        return packer->StartPacking(args->inNum0, option);
+        return packer->StartPacking(args->inNum0, option, false);
     }
     HiLog::Error(LABEL, "DoNativePacking StartPacking failed");
     return IMAGE_RESULT_BAD_PARAMETER;
