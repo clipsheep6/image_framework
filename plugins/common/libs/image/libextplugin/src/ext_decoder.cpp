@@ -742,13 +742,16 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
 #endif
 
 static uint32_t handleGifCache(uint8_t* src, uint8_t* dst, SkImageInfo& info, const uint64_t rowStride) {
+    if (src == nullptr || dst == nullptr) {
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
     int dstHeight = info.height();
     uint8_t* srcRow = src;
     uint8_t* dstRow = dst;
     for (int i = 0; i < dstHeight; i++) {
         errno_t err = memcpy_s(dstRow, rowStride, srcRow, rowStride);
         if (err != EOK) {
-            HiLog::Error(LABEL, "handle gif memcpy failed. errno:%{public}d", err);
+            HiLog::Debug(LABEL, "handle gif memcpy failed. errno:%{public}d", err);
             return ERR_IMAGE_DECODE_ABNORMAL;
         }
         srcRow += rowStride;
@@ -781,7 +784,7 @@ uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uin
             gifCache_ = static_cast<uint8_t *>(calloc(byteCount, 1));
         }
         dstBuffer = gifCache_;
-    } else {
+    } else if (gifCache_ != nullptr) {
         handleGifCache(gifCache_, dstBuffer, dstInfo_, rowStride);
     }
     SkCodec::Result ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_);
