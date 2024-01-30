@@ -135,6 +135,11 @@ static const map<SkEncodedImageFormat, string> FORMAT_NAME = {
     { SkEncodedImageFormat::kHEIF, "image/heif" },
 };
 
+static const map<PlPixelFormat, JpegYUVFmt> PLPIXEL_FORMAT_JPEGYUVDECODEFORMAT_MAP = {
+    { PlPixelFormat::NV21, JpegYUVFmt::OutFmt_NV21 }, { PlPixelFormat::NV12, JpegYUVFmt::OutFmt_NV12 }
+};
+
+
 static void SetDecodeContextBuffer(DecodeContext &context,
     AllocatorType type, uint8_t* ptr, uint64_t count, void* fd)
 {
@@ -454,6 +459,15 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     }
     auto desireColor = ConvertToColorType(opts.desiredPixelFormat, info.pixelFormat);
     auto desireAlpha = ConvertToAlphaType(opts.desireAlphaType, info.alphaType);
+
+    if (codec_) {
+        SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+        if (skEncodeFormat == SkEncodedImageFormat::kJPEG && IsYUV420Format(opts.desiredPixelFormat)) {
+            info.pixelFormat = opts.desiredPixelFormat;
+            desiredSizeYUV_.width = std::abs((int)opts.desiredSize.width);
+            desiredSizeYUV_.height = std::abs((int)opts.desiredSize.height);
+        }
+    }
     // SK only support low down scale
     int dstWidth = opts.desiredSize.width;
     int dstHeight = opts.desiredSize.height;
@@ -543,6 +557,33 @@ uint32_t ExtDecoder::PreDecodeCheck(uint32_t index)
         return SUCCESS;
 }
 
+uint32_t ExtDecoder::PreDecodeCheckYUV(uint32_t index, PlPixelFormat desiredFormat)
+{
+    uint32_t ret = PreDecodeCheck(index);
+    if (ret != SUCCESS) {
+        return ret;
+    }
+    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+    if (skEncodeFormat != SkEncodedImageFormat::kJPEG) {
+        IMAGE_LOGE("PreDecodeCheckYUV, not support to create 420 data from not jpeg");
+        return ERR_IMAGE_DESIRED_PIXELFORMAT_UNSUPPORTED;
+    }
+    if (stream_ == nullptr) {
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    auto iter = PLPIXEL_FORMAT_JPEGYUVDECODEFORMAT_MAP.find(desiredFormat);
+    if (iter == PLPIXEL_FORMAT_JPEGYUVDECODEFORMAT_MAP.end()) {
+        IMAGE_LOGE("PreDecodeCheckYUV desiredFormat format not valid");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    uint32_t jpegBufferSize = stream_->GetStreamSize();
+    if (jpegBufferSize == 0) {
+        IMAGE_LOGE("PreDecodeCheckYUV jpegBufferSize 0");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    return SUCCESS;
+}
+
 bool ExtDecoder::ResetCodec()
 {
     codec_ = nullptr;
@@ -571,6 +612,11 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     if (res != SUCCESS) {
         return res;
     }
+    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+    bool isOutputYUV420Format = IsYUV420Format(context.pixelFormat);
+    if (isOutputYUV420Format && skEncodeFormat == SkEncodedImageFormat::kJPEG) {
+        return DecodeToYUV420(index, context);
+    }
     uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
     uint8_t *dstBuffer = nullptr;
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
@@ -595,7 +641,6 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
         rowStride = sbBuffer->GetStride();
     }
-    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
     ReportImageType(skEncodeFormat);
     IMAGE_LOGD("decode format %{public}d", skEncodeFormat);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
@@ -616,6 +661,90 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
             byteCount, dstInfo_.width() * dstInfo_.height());
     }
     return SUCCESS;
+}
+
+uint32_t ExtDecoder::ReadJpegData(uint8_t* jpegBuffer, uint32_t jpegBufferSize)
+{
+    if (stream_ == nullptr) {
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    if (jpegBuffer == nullptr || jpegBufferSize == 0) {
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
+    uint32_t savedPosition = stream_->Tell();
+    if (!stream_->Seek(0)) {
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
+    uint32_t readSize = 0;
+    bool result = stream_->Read(jpegBufferSize, jpegBuffer, jpegBufferSize, readSize);
+    if (!stream_->Seek(savedPosition)) {
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
+    if (!result || readSize != jpegBufferSize) {
+        IMAGE_LOGE("ReadJpegData read image data failed");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    return SUCCESS;
+}
+
+JpegYUVFmt ExtDecoder::GetJpegYUVOutFmt(PlPixelFormat desiredFormat)
+{
+    auto iter = PLPIXEL_FORMAT_JPEGYUVDECODEFORMAT_MAP.find(desiredFormat);
+    if (iter == PLPIXEL_FORMAT_JPEGYUVDECODEFORMAT_MAP.end()) {
+        return JpegYUVFmt::OutFmt_NV12;
+    } else {
+        return iter->second;
+    }
+}
+
+uint32_t ExtDecoder::DecodeToYUV420(uint32_t index, DecodeContext &context)
+{
+    uint32_t res = PreDecodeCheckYUV(index, context.pixelFormat);
+    if (res != SUCCESS) {
+        return res;
+    }
+    uint32_t jpegBufferSize = stream_->GetStreamSize();
+    if (jpegBufferSize == 0) {
+        IMAGE_LOGE("DecodeToYUV420 jpegBufferSize 0");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    uint8_t* jpegBuffer = NULL;
+    if (stream_->GetStreamType() == ImagePlugin::BUFFER_SOURCE_TYPE) {
+        jpegBuffer = stream_->GetDataPtr();
+    }
+    std::unique_ptr<uint8_t[]> jpegBufferPtr;
+    if (jpegBuffer == nullptr) {
+        jpegBufferPtr = std::make_unique<uint8_t[]>(jpegBufferSize);
+        jpegBuffer = jpegBufferPtr.get();
+        res = ReadJpegData(jpegBuffer, jpegBufferSize);
+        if (res != SUCCESS) {
+            return res;
+        }
+    }
+    JpegYUVFmt decodeOutFormat = GetJpegYUVOutFmt(context.pixelFormat);
+    PlSize jpgSize;
+    jpgSize.width = info_.width();
+    jpgSize.height = info_.height();
+    PlSize desiredSize = desiredSizeYUV_;
+    bool bRet = JpegDecoderYUV::GetScaledSize(jpgSize.width, jpgSize.height, desiredSize.width, desiredSize.height);
+    if (!bRet || desiredSize.width == 0 || desiredSize.height == 0) {
+        IMAGE_LOGE("DecodeToYUV420 GetScaledSize failed");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    uint64_t yuvBufferSize = JpegDecoderYUV::GetYUVOutSize(desiredSize.width, desiredSize.height);
+    res = SetContextPixelsBuffer(yuvBufferSize, context);
+    if (res != SUCCESS) {
+        return res;
+    }
+    uint8_t *yuvBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
+    std::unique_ptr<JpegDecoderYUV> jpegYuvDecoder_ = std::make_unique<JpegDecoderYUV>();
+    JpegDecoderYUVParameter para = {jpgSize.width, jpgSize.height, jpegBuffer, jpegBufferSize,
+        yuvBuffer, yuvBufferSize, decodeOutFormat, desiredSize.width, desiredSize.height};
+    int retDecode = jpegYuvDecoder_->DoDecode(context, para);
+    if (retDecode != JpegYUVDecodeError_Success) {
+        IMAGE_LOGE("DecodeToYUV420 DoDecode return %{public}d", retDecode);
+    }
+    return retDecode == JpegYUVDecodeError_Success ? SUCCESS : ERR_IMAGE_DECODE_FAILED;
 }
 
 static std::string GetFormatStr(SkEncodedImageFormat format)
@@ -1265,6 +1394,14 @@ bool ExtDecoder::IsSupportHardwareDecode() {
     int height = info_.height();
     return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
         && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
+}
+
+bool ExtDecoder::IsYUV420Format(PlPixelFormat format)
+{
+    if (format == PlPixelFormat::NV12 || format == PlPixelFormat::NV21) {
+                return true;
+    }
+    return false;
 }
 } // namespace ImagePlugin
 } // namespace OHOS
