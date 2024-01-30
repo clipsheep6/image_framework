@@ -1,0 +1,18 @@
+[
+    {
+        "first_introduced": "12",
+        "name": "OH_ImageConvert_Create"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_ImageConvert_YuvToRgb"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_ImageConvert_RgbToYuv"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_ImageConvert_Release"
+    }
+]

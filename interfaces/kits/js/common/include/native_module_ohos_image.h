@@ -24,6 +24,7 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "image_receiver_napi.h"
 #include "image_creator_napi.h"
+#include "image_format_convert_napi.h"
 #include "image_napi.h"
 #endif
 

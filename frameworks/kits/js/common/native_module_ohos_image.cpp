@@ -43,6 +43,8 @@ static napi_value Export(napi_env env, napi_value exports)
     ImageCreatorNapi::Init(env, exports);
     IMAGE_LOGD("ImageNapi CALL");
     ImageNapi::Init(env, exports);
+    HiLog::Info(LABEL, "ImageFormatConvertNapi CALL");
+    ImageFormatConvertNapi::Init(env, exports);
 #endif
     return exports;
 }
