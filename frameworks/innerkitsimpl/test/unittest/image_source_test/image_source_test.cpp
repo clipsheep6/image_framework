@@ -38,7 +38,6 @@
 
 using namespace testing::ext;
 using namespace OHOS::Media;
-using namespace OHOS::HiviewDFX;
 namespace OHOS {
 namespace Media {
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
@@ -48,6 +47,42 @@ class ImageSourceTest : public testing::Test {
 public:
     ImageSourceTest() {}
     ~ImageSourceTest() {}
+};
+
+class MockAbsImageFormatAgent : public ImagePlugin::AbsImageFormatAgent {
+public:
+    MockAbsImageFormatAgent() = default;
+    virtual ~MockAbsImageFormatAgent() {}
+
+    std::string GetFormatType() override
+    {
+        return returnString_;
+    }
+    uint32_t GetHeaderSize() override
+    {
+        return returnValue_;
+    }
+    bool CheckFormat(const void *headerData, uint32_t dataSize) override
+    {
+        return returnBool_;
+    }
+private:
+    std::string returnString_ = "";
+    uint32_t returnValue_ = 0;
+    bool returnBool_ = false;
+};
+
+class MockDecodeListener : public DecodeListener {
+public:
+    MockDecodeListener() = default;
+    ~MockDecodeListener() {}
+
+    void OnEvent(int event) override
+    {
+        returnVoid_ = event;
+    }
+private:
+    int returnVoid_;
 };
 
 /**
@@ -1509,6 +1544,483 @@ HWTEST_F(ImageSourceTest, CreatePixelMapForYUVTest001, TestSize.Level3)
     std::unique_ptr<PixelMap> ret = imageSource->CreatePixelMapForYUV(errorCode);
     ASSERT_EQ(ret, nullptr);
     GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMapForYUVTest001 end";
+}
+
+/**
+ * @tc.name: IsSupportGenAstcTest001
+ * @tc.desc: test IsSupportGenAstc
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, IsSupportGenAstcTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: IsSupportGenAstcTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    bool ret = imageSource->IsSupportGenAstc();
+    ASSERT_EQ(ret, true);
+    GTEST_LOG_(INFO) << "ImageSourceTest: IsSupportGenAstcTest001 end";
+}
+
+/**
+ * @tc.name: GetDelayTimeTest001
+ * @tc.desc: test GetDelayTime
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetDelayTimeTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetDelayTimeTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    auto ret = imageSource->GetDelayTime(errorCode);
+    ASSERT_EQ(ret, nullptr);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetDelayTimeTest001 end";
+}
+
+/**
+ * @tc.name: DecodeSourceInfoTest001
+ * @tc.desc: test DecodeSourceInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, DecodeSourceInfoTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: DecodeSourceInfoTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    bool isAcquiredImageNum = true;
+    imageSource->decodeState_ = SourceDecodingState::FORMAT_RECOGNIZED;
+    imageSource->sourceInfo_.encodedFormat = "image/astc";
+    uint32_t ret = imageSource->DecodeSourceInfo(isAcquiredImageNum);
+    ASSERT_EQ(ret, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageSourceTest: DecodeSourceInfoTest001 end";
+}
+
+/**
+ * @tc.name: OnSourceUnresolvedTest001
+ * @tc.desc: test OnSourceUnresolved
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, OnSourceUnresolvedTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: OnSourceUnresolvedTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    imageSource->isAstc_ = true;
+    uint32_t ret = imageSource->OnSourceUnresolved();
+    ASSERT_EQ(ret, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageSourceTest: OnSourceUnresolvedTest001 end";
+}
+
+/**
+ * @tc.name: GetFormatExtendedTest001
+ * @tc.desc: test GetFormatExtended
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, GetFormatExtendedTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetFormatExtendedTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    std::string format;
+    uint32_t result = SUCCESS;
+    imageSource->mainDecoder_ = std::unique_ptr<ImagePlugin::AbsImageDecoder>(imageSource->CreateDecoder(result));
+    uint32_t ret = imageSource->GetFormatExtended(format);
+    ASSERT_EQ(ret, SUCCESS);
+    imageSource->mainDecoder_ = nullptr;
+    imageSource->sourceStreamPtr_ = nullptr;
+    ret = imageSource->GetFormatExtended(format);
+    ASSERT_EQ(ret, ERR_MEDIA_NULL_POINTER);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetFormatExtendedTest001 end";
+}
+
+/**
+ * @tc.name: CheckFormatHintTest001
+ * @tc.desc: test CheckFormatHint
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CheckFormatHintTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CheckFormatHintTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    std::string formatHint = "a";
+    auto formatIter = imageSource->formatAgentMap_.begin();
+    uint32_t ret = imageSource->CheckFormatHint(formatHint, formatIter);
+    ASSERT_EQ(ret, ERROR);
+    MockAbsImageFormatAgent *mockAbsImageFormatAgent1 = new MockAbsImageFormatAgent;
+    MockAbsImageFormatAgent *mockAbsImageFormatAgent2 = new MockAbsImageFormatAgent;
+    imageSource->formatAgentMap_.insert(pair<std::string, ImagePlugin::AbsImageFormatAgent *>
+        ("a", mockAbsImageFormatAgent1));
+    imageSource->formatAgentMap_.insert(pair<std::string, ImagePlugin::AbsImageFormatAgent *>
+        ("b", mockAbsImageFormatAgent2));
+    imageSource->sourceStreamPtr_ = nullptr;
+    ret = imageSource->CheckFormatHint(formatHint, formatIter);
+    ASSERT_EQ(ret, ERR_IMAGE_INVALID_PARAMETER);
+    delete mockAbsImageFormatAgent1;
+    delete mockAbsImageFormatAgent2;
+    GTEST_LOG_(INFO) << "ImageSourceTest: CheckFormatHintTest001 end";
+}
+
+/**
+ * @tc.name: IsStreamCompletedTest001
+ * @tc.desc: test IsStreamCompleted
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, IsStreamCompletedTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: IsStreamCompletedTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    bool ret = imageSource->IsStreamCompleted();
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "ImageSourceTest: IsStreamCompletedTest001 end";
+}
+
+/**
+ * @tc.name: RemoveDecodeListenerTest002
+ * @tc.desc: test RemoveDecodeListener
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, RemoveDecodeListenerTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: RemoveDecodeListenerTest002 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    DecodeListener *listener = nullptr;
+    imageSource->RemoveDecodeListener(listener);
+    std::shared_ptr<MockDecodeListener> mockDecodeListener = std::make_shared<MockDecodeListener>();
+    imageSource->decodeListeners_.insert(mockDecodeListener.get());
+    imageSource->RemoveDecodeListener(mockDecodeListener.get());
+    ASSERT_EQ(imageSource->decodeListeners_.empty(), true);
+    GTEST_LOG_(INFO) << "ImageSourceTest: RemoveDecodeListenerTest002 end";
+}
+
+/**
+ * @tc.name: AddDecodeListenerTest002
+ * @tc.desc: test AddDecodeListener
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, AddDecodeListenerTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: AddDecodeListenerTest002 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    DecodeListener *listener = nullptr;
+    imageSource->AddDecodeListener(listener);
+    std::shared_ptr<MockDecodeListener> mockDecodeListener = std::make_shared<MockDecodeListener>();
+    imageSource->AddDecodeListener(mockDecodeListener.get());
+    ASSERT_EQ(imageSource->decodeListeners_.empty(), false);
+    GTEST_LOG_(INFO) << "ImageSourceTest: AddDecodeListenerTest002 end";
+}
+
+/**
+ * @tc.name: End2EndTest001
+ * @tc.desc: test CreateImageSource and CreatePixelMap of jpg resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t jpegWidth = 472;
+    int32_t jpegHeight = 226;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
+    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 400;
+    int32_t desiredHeight = 200;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest001 end";
+}
+
+/**
+ * @tc.name: End2EndTest002
+ * @tc.desc: test CreateImageSource and CreatePixelMap of png resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest002 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.png", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t pngWidth = 472;
+    int32_t pngHeight = 75;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(pngWidth, pixelMap->GetWidth());
+    ASSERT_EQ(pngHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 400;
+    int32_t desiredHeight = 200;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest002 end";
+}
+
+/**
+ * @tc.name: End2EndTest003
+ * @tc.desc: test CreateImageSource and CreatePixelMap of bmp resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest003 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.bmp", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t bmpWidth = 472;
+    int32_t bmpHeight = 75;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(bmpWidth, pixelMap->GetWidth());
+    ASSERT_EQ(bmpHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 400;
+    int32_t desiredHeight = 200;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest003 end";
+}
+
+/**
+ * @tc.name: End2EndTest004
+ * @tc.desc: test CreateImageSource and CreatePixelMap of ico resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest004, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest004 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.ico", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t icoWidth = 48;
+    int32_t icoHeight = 48;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(icoWidth, pixelMap->GetWidth());
+    ASSERT_EQ(icoHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 56;
+    int32_t desiredHeight = 56;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest004 end";
+}
+
+/**
+ * @tc.name: End2EndTest005
+ * @tc.desc: test CreateImageSource and CreatePixelMap of svg resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest005, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest005 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.svg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t desiredWidth = 56;
+    int32_t desiredHeight = 56;
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest005 end";
+}
+
+/**
+ * @tc.name: End2EndTest006
+ * @tc.desc: test CreateImageSource and CreatePixelMap of gif resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest006, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest006 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.gif", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t gifWidth = 198;
+    int32_t gifHeight = 202;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(gifWidth, pixelMap->GetWidth());
+    ASSERT_EQ(gifHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 150;
+    int32_t desiredHeight = 150;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest006 end";
+}
+
+/**
+ * @tc.name: End2EndTest007
+ * @tc.desc: test CreateImageSource and CreatePixelMap of webp resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest007, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest007 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.webp", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t webpWidth = 286;
+    int32_t webpHeight = 221;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(webpWidth, pixelMap->GetWidth());
+    ASSERT_EQ(webpHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 150;
+    int32_t desiredHeight = 150;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest007 end";
+}
+
+/**
+ * @tc.name: End2EndTest008
+ * @tc.desc: test CreateImageSource and CreatePixelMap of dng resource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest008, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest008 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.dng", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t webpWidth = 160;
+    int32_t webpHeight = 120;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(webpWidth, pixelMap->GetWidth());
+    ASSERT_EQ(webpHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 100;
+    int32_t desiredHeight = 100;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest008 end";
 }
 } // namespace Multimedia
 } // namespace OHOS
