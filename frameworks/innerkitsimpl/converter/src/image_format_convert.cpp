@@ -359,7 +359,7 @@ uint32_t ImageFormatConvert::ConvertImageFormat(std::unique_ptr<PixelMap> &destP
         return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
     }
 
-    if (MakeDestPixelMap(destPixelMap, destBuffer, bufferSize)) {
+    if (!MakeDestPixelMap(destPixelMap, destBuffer, bufferSize)) {
         --destBufferRefCnt_;
         HiLog::Error(LABEL, "create pixel map failed");
         return ERR_IMAGE_PIXELMAP_CREATE_FAILED;
