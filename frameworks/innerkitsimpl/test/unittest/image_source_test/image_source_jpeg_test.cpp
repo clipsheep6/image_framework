@@ -17,13 +17,12 @@
 #include <fstream>
 #include <fcntl.h>
 #include "directory_ex.h"
-#include "hilog/log.h"
+#include "image_log.h"
 #include "image_packer.h"
 #include "image_source.h"
 #include "image_type.h"
 #include "image_utils.h"
 #include "incremental_pixel_map.h"
-#include "log_tags.h"
 #include "media_errors.h"
 #include "pixel_map.h"
 #include "image_receiver.h"
@@ -32,16 +31,18 @@
 #include "graphic_common.h"
 #include "image_receiver_manager.h"
 
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "ImageSourceJpegTest"
+
 using namespace testing::ext;
 using namespace OHOS::Media;
-using namespace OHOS::HiviewDFX;
 using namespace OHOS::ImageSourceUtil;
 
 namespace OHOS {
 namespace Multimedia {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL_TEST = {
-    LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageSourceJpegTest"
-};
 static constexpr uint32_t DEFAULT_DELAY_UTIME = 10000;  // 10 ms.
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
 static const std::string IMAGE_INPUT_HW_JPEG_PATH = "/data/local/tmp/image/test_hw.jpg";
@@ -257,7 +258,7 @@ HWTEST_F(ImageSourceJpegTest, TC036, TestSize.Level3)
     decodeOpts.desiredSize.height = 400;
     decodeOpts.rotateDegrees = 90;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    HiLog::Debug(LABEL_TEST, "create pixel map error code=%{public}u.", errorCode);
+    IMAGE_LOGD("create pixel map error code=%{public}u.", errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
     EXPECT_EQ(200, pixelMap->GetWidth());
@@ -987,7 +988,7 @@ HWTEST_F(ImageSourceJpegTest, JpegImageDecode011, TestSize.Level3)
      */
     DecodeOptions decodeOpts;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, status);
-    HiLog::Debug(LABEL_TEST, "create pixel map ret=%{public}u.", status);
+    IMAGE_LOGD("create pixel map ret=%{public}u.", status);
     ASSERT_EQ(status, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
 
@@ -1042,7 +1043,7 @@ HWTEST_F(ImageSourceJpegTest, JpgImageCrop001, TestSize.Level3)
     decodeOpts.desiredSize.height = 400;
     decodeOpts.rotateDegrees = 90;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    HiLog::Debug(LABEL_TEST, "create pixel map error code=%{public}u.", errorCode);
+    IMAGE_LOGD("create pixel map error code=%{public}u.", errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
     EXPECT_EQ(200, pixelMap->GetWidth());
@@ -1073,7 +1074,7 @@ HWTEST_F(ImageSourceJpegTest, JpegImageHwDecode001, TestSize.Level3)
      */
     DecodeOptions decodeOpts;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    HiLog::Debug(LABEL_TEST, "create pixel map ret=%{public}u.", errorCode);
+    IMAGE_LOGD("create pixel map ret=%{public}u.", errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
     /**
@@ -1641,7 +1642,8 @@ HWTEST_F(ImageSourceJpegTest, GetImagePropertyStringTest0022, TestSize.Level3)
     uint32_t res = imageSource->ModifyImageProperty(index, key, value, IMAGE_INPUT_EXIF_JPEG_PATH);
     ASSERT_EQ(res, SUCCESS);
     res = imageSource->GetImagePropertyString(index, key, value);
-    ASSERT_EQ(res, SUCCESS);
+    //由于图片中没有PhotoMode这个exif信息。所以返回Media::ERR_MEDIA_VALUE_INVALID
+    ASSERT_EQ(res, Media::ERR_MEDIA_VALUE_INVALID);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetImagePropertyStringTest0022 end";
 }
 
@@ -1716,7 +1718,8 @@ HWTEST_F(ImageSourceJpegTest, GetImagePropertyStringTest0025, TestSize.Level3)
     uint32_t res = imageSource->ModifyImageProperty(index, key, value, IMAGE_INPUT_EXIF_JPEG_PATH);
     ASSERT_EQ(res, SUCCESS);
     res = imageSource->GetImagePropertyString(index, key, value);
-    ASSERT_EQ(res, SUCCESS);
+    //由于图片中没有RecommendedExposureIndex这个exif信息。所以返回Media::ERR_MEDIA_VALUE_INVALID
+    ASSERT_EQ(res, Media::ERR_MEDIA_VALUE_INVALID);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetImagePropertyStringTest0025 end";
 }
 
@@ -3222,9 +3225,10 @@ HWTEST_F(ImageSourceJpegTest, ModifyImagePropertyFdTest001, TestSize.Level3)
     CreateImageSourceFromFilePath(imageSource);
 
     uint32_t index = 0;
-    std::string value = "0";
+    std::string value = "9, 9, 9";
     std::string key = "BitsPerSample";
-    int fd = 0;
+    //要返回ERR_MEDIA_BUFFER_TOO_SMALL需要文件大小为空或者大小超过最大值，这里取空
+    int fd = open("/data/local/tmp/image/test_1111.jpg", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     uint32_t res = imageSource->ModifyImageProperty(index, key, value, fd);
     ASSERT_EQ(res, ERR_MEDIA_BUFFER_TOO_SMALL);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: ModifyImagePropertyFdTest001 end";

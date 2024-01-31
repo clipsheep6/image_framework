@@ -12,16 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cmath>
-#include "securec.h"
-#include "media_errors.h"
-#include "hilog/log.h"
-#include "log_tags.h"
+
 #include "image_compressor.h"
 
-using namespace OHOS::HiviewDFX;
-constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_PLUGIN, "ClAstcEnc" };
+#include <unistd.h>
+#include <fstream>
 
+#include "securec.h"
+#include "media_errors.h"
+#include "image_log.h"
+
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
+
+#undef LOG_TAG
+#define LOG_TAG "ClAstcEnc"
+
+namespace OHOS {
+namespace ImagePlugin {
+namespace AstcEncBasedCl {
 constexpr int MAX_WIDTH = 8192;
 constexpr int MAX_HEIGHT = 4096;
 constexpr int TEXTURE_HEAD_BYTES = 16;
@@ -35,6 +44,7 @@ constexpr uint8_t BYTES_MASK = 0xFF;
 constexpr uint8_t STRIDE_RGBA_LOG2 = 2;
 constexpr uint8_t GLOBAL_WH_NUM_CL = 2;
 constexpr size_t MAX_MALLOC_BYTES = 10000000; // max 10MB
+constexpr size_t WORK_GROUP_SIZE = 8;
 
 const char *g_programSource = R"(
 // Notice: the code from line 42 to line 1266 is openCL language
@@ -1227,13 +1237,17 @@ uint4 EncodeBlock(float4* texels, float4 texelsMean, int blockID, __global uint*
 void GotTexelFromImage(read_only image2d_t inputImage, float4 texels[BLOCK_SIZE],
     int width, int height, float4 *texelMean)
 {
-    const int2 pos = (int2)(get_global_id(INT_ZERO), get_global_id(INT_ONE));
-    for (int i = START_INDEX; i < DIM; ++i) {
-        for (int j = START_INDEX; j < DIM; ++j) {
+    int2 pos = (int2)(get_global_id(0), get_global_id(1));
+    pos.x *= DIM;
+    pos.y *= DIM;
+    for (int i = 0; i < DIM; ++i) {
+        for (int j = 0; j < DIM; ++j) {
             int2 pixelPos = pos + (int2)(j, i);
-            if (pixelPos.x > width || pixelPos.y > height) {
-                texels[i * DIM + j] = (float4)(PIXEL_MAX_VALUE);
-                continue;
+            if (pixelPos.x >= width) {
+                pixelPos.x = width - 1;
+            }
+            if (pixelPos.y >= height) {
+                pixelPos.y = height - 1;
             }
             float4 texel = read_imagef(inputImage, pixelPos);
             texels[i * DIM + j] = texel * PIXEL_MAX_VALUE;
@@ -1242,36 +1256,31 @@ void GotTexelFromImage(read_only image2d_t inputImage, float4 texels[BLOCK_SIZE]
     }
 }
 
-kernel void AstcCl(read_only image2d_t inputImage, __global uint4* astcArr, __global uint* errs)
+kernel void AstcCl(read_only image2d_t inputImage, __global uint4* astcArr, __global uint* errs,
+    int width, int height)
 {
-    int width = get_global_size(INT_ZERO);
-    int height = get_global_size(INT_ONE);
-    const int2 local_id = (int2)(get_local_id(INT_ZERO), get_local_id(INT_ONE));
-    if (local_id.x == INT_ZERO && local_id.y == INT_ZERO) {
-        int blockNumX = (width + DIM - INT_ONE) / DIM;
-        int blockNumY = (height + DIM - INT_ONE) / DIM;
-        const int2 group = (int2)(get_group_id(INT_ZERO), get_group_id(INT_ONE));
-        int blockID = group.y * blockNumX + group.x;
-        float4 texels[BLOCK_SIZE];
-        float4 texelMean = (float4)(FLOAT_ZERO);
-        GotTexelFromImage(inputImage, texels, width, height, &texelMean);
-        texelMean = texelMean / ((float)(BLOCK_SIZE));
-        astcArr[blockID] = EncodeBlock(texels, texelMean, blockID, errs);
-    }
+    const int2 globalSize = (int2)(get_global_size(0), get_global_size(1));
+    const int2 globalId = (int2)(get_global_id(0), get_global_id(1));
+    int blockID = globalId.y * globalSize.x + globalId.x;
+    float4 texels[BLOCK_SIZE];
+    float4 texelMean = 0;
+    GotTexelFromImage(inputImage, texels, width, height, &texelMean);
+    texelMean = texelMean / ((float)(BLOCK_SIZE));
+    astcArr[blockID] = EncodeBlock(texels, texelMean, blockID, errs);
 }
 )";
 
 CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClClose(ClAstcHandle *clAstcHandle)
 {
     if (clAstcHandle == nullptr) {
-        HiLog::Error(LABEL, "astc AstcClClose clAstcHandle is nullptr!");
+        IMAGE_LOGE("astc AstcClClose clAstcHandle is nullptr!");
         return CL_ASTC_ENC_FAILED;
     }
     cl_int clRet;
     if (clAstcHandle->kernel != nullptr) {
         clRet = clReleaseKernel(clAstcHandle->kernel);
         if (clRet != CL_SUCCESS) {
-            HiLog::Error(LABEL, "astc clReleaseKernel failed ret %{public}d!", clRet);
+            IMAGE_LOGE("astc clReleaseKernel failed ret %{public}d!", clRet);
             return CL_ASTC_ENC_FAILED;
         }
         clAstcHandle->kernel = nullptr;
@@ -1279,7 +1288,7 @@ CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClClose(ClAstcHandle *clAstcHandle)
     if (clAstcHandle->queue != nullptr) {
         clRet = clReleaseCommandQueue(clAstcHandle->queue);
         if (clRet != CL_SUCCESS) {
-            HiLog::Error(LABEL, "astc clReleaseCommandQueue failed ret %{public}d!", clRet);
+            IMAGE_LOGE("astc clReleaseCommandQueue failed ret %{public}d!", clRet);
             return CL_ASTC_ENC_FAILED;
         }
         clAstcHandle->queue = nullptr;
@@ -1287,7 +1296,7 @@ CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClClose(ClAstcHandle *clAstcHandle)
     if (clAstcHandle->context != nullptr) {
         clRet = clReleaseContext(clAstcHandle->context);
         if (clRet != CL_SUCCESS) {
-            HiLog::Error(LABEL, "astc clReleaseContext failed ret %{public}d!", clRet);
+            IMAGE_LOGE("astc clReleaseContext failed ret %{public}d!", clRet);
             return CL_ASTC_ENC_FAILED;
         }
         clAstcHandle->context = nullptr;
@@ -1298,52 +1307,51 @@ CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClClose(ClAstcHandle *clAstcHandle)
     }
     if (clAstcHandle != nullptr) {
         free(clAstcHandle);
-        clAstcHandle = nullptr;
     }
     return CL_ASTC_ENC_SUCCESS;
 }
 
-static bool CheckClBinIsExist(const std::string name)
+static bool CheckClBinIsExist(const std::string &name)
 {
     return (access(name.c_str(), F_OK) != -1); // -1 means that the file is  not exist
 }
 
-static CL_ASTC_STATUS SaveClBin(cl_program program, const std::string clBinPath)
+static CL_ASTC_STATUS SaveClBin(cl_program program, const std::string &clBinPath)
 {
     size_t programBinarySizes;
     cl_int clRet = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &programBinarySizes, NULL);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clGetProgramInfo CL_PROGRAM_BINARY_SIZES failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clGetProgramInfo CL_PROGRAM_BINARY_SIZES failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     if ((programBinarySizes == 0) || (programBinarySizes > MAX_MALLOC_BYTES)) {
-        HiLog::Error(LABEL, "astc clGetProgramInfo programBinarySizes %{public}zu too big!", programBinarySizes);
+        IMAGE_LOGE("astc clGetProgramInfo programBinarySizes %{public}zu too big!", programBinarySizes);
         return CL_ASTC_ENC_FAILED;
     }
-    uint8_t *programBinaries = (uint8_t *)malloc(programBinarySizes);
+    uint8_t *programBinaries = static_cast<uint8_t *>(malloc(programBinarySizes));
     if (programBinaries == nullptr) {
-        HiLog::Error(LABEL, "astc programBinaries malloc failed!");
+        IMAGE_LOGE("astc programBinaries malloc failed!");
         return CL_ASTC_ENC_FAILED;
     }
     clRet = clGetProgramInfo(program, CL_PROGRAM_BINARIES, programBinarySizes, &programBinaries, NULL);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clGetProgramInfo CL_PROGRAM_BINARIES failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clGetProgramInfo CL_PROGRAM_BINARIES failed ret %{public}d!", clRet);
         free(programBinaries);
         return CL_ASTC_ENC_FAILED;
     }
     FILE *fp = fopen(clBinPath.c_str(), "wb");
     if (fp == nullptr) {
-        HiLog::Error(LABEL, "astc create file: %{public}s failed!", clBinPath.c_str());
+        IMAGE_LOGE("astc create file: %{public}s failed!", clBinPath.c_str());
         free(programBinaries);
         return CL_ASTC_ENC_FAILED;
     }
     CL_ASTC_STATUS ret = CL_ASTC_ENC_SUCCESS;
     if (fwrite(programBinaries, 1, programBinarySizes, fp) != programBinarySizes) {
-        HiLog::Error(LABEL, "astc fwrite programBinaries file failed!");
+        IMAGE_LOGE("astc fwrite programBinaries file failed!");
         ret = CL_ASTC_ENC_FAILED;
     }
     if (fclose(fp) != 0) {
-        HiLog::Error(LABEL, "astc SaveClBin close file failed!");
+        IMAGE_LOGE("astc SaveClBin close file failed!");
         ret = CL_ASTC_ENC_FAILED;
     }
     fp = nullptr;
@@ -1353,20 +1361,20 @@ static CL_ASTC_STATUS SaveClBin(cl_program program, const std::string clBinPath)
 
 static CL_ASTC_STATUS BuildProgramAndCreateKernel(cl_program program, ClAstcHandle *clAstcHandle)
 {
-    cl_int clRet = clBuildProgram(program, 1, &clAstcHandle->deviceID, nullptr, nullptr, nullptr);
+    cl_int clRet = clBuildProgram(program, 1, &clAstcHandle->deviceID, "-cl-std=CL3.0", nullptr, nullptr);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clBuildProgram failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clBuildProgram failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     clAstcHandle->kernel = clCreateKernel(program, "AstcCl", &clRet);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clCreateKernel failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clCreateKernel failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     return CL_ASTC_ENC_SUCCESS;
 }
 
-static CL_ASTC_STATUS AstcClBuildProgram(ClAstcHandle *clAstcHandle, const std::string clBinPath)
+static CL_ASTC_STATUS AstcClBuildProgram(ClAstcHandle *clAstcHandle, const std::string &clBinPath)
 {
     cl_int clRet;
     cl_program program = nullptr;
@@ -1374,100 +1382,100 @@ static CL_ASTC_STATUS AstcClBuildProgram(ClAstcHandle *clAstcHandle, const std::
         size_t sourceSize = strlen(g_programSource) + 1; // '\0' occupies 1 bytes
         program = clCreateProgramWithSource(clAstcHandle->context, 1, &g_programSource, &sourceSize, &clRet);
         if (clRet != CL_SUCCESS) {
-            HiLog::Error(LABEL, "astc clCreateProgramWithSource failed ret %{public}d!", clRet);
+            IMAGE_LOGE("astc clCreateProgramWithSource failed ret %{public}d!", clRet);
             return CL_ASTC_ENC_FAILED;
         }
         if (BuildProgramAndCreateKernel(program, clAstcHandle) != CL_ASTC_ENC_SUCCESS) {
-            HiLog::Error(LABEL, "astc clCreateProgramWithSource failed ret %{public}d!", clRet);
+            IMAGE_LOGE("astc clCreateProgramWithSource failed ret %{public}d!", clRet);
             clReleaseProgram(program);
             return CL_ASTC_ENC_FAILED;
         }
         if (SaveClBin(program, clBinPath) != CL_ASTC_ENC_SUCCESS) {
-            HiLog::Info(LABEL, "astc SaveClBin failed!");
+            IMAGE_LOGI("astc SaveClBin failed!");
         }
     } else {
         std::ifstream contents{clBinPath};
         std::string binaryContent{std::istreambuf_iterator<char>{contents}, {}};
         size_t binSize = binaryContent.length();
         if ((binSize == 0) || (binSize > MAX_MALLOC_BYTES)) {
-            HiLog::Error(LABEL, "astc AstcClBuildProgram read CLbin file lenth error %{public}zu!", binSize);
+            IMAGE_LOGE("astc AstcClBuildProgram read CLbin file lenth error %{public}zu!", binSize);
             return CL_ASTC_ENC_FAILED;
         }
         const char *binary = static_cast<const char *>(binaryContent.c_str());
         program = clCreateProgramWithBinary(clAstcHandle->context, 1, &clAstcHandle->deviceID, &binSize,
             (const unsigned char **)&binary, nullptr, &clRet);
         if (clRet != CL_SUCCESS) {
-            HiLog::Error(LABEL, "astc clCreateProgramWithBinary failed ret %{public}d!", clRet);
+            IMAGE_LOGE("astc clCreateProgramWithBinary failed ret %{public}d!", clRet);
             return CL_ASTC_ENC_FAILED;
         }
         if (BuildProgramAndCreateKernel(program, clAstcHandle) != CL_ASTC_ENC_SUCCESS) {
-            HiLog::Error(LABEL, "astc BuildProgramAndCreateKernel with bin failed!");
+            IMAGE_LOGE("astc BuildProgramAndCreateKernel with bin failed!");
             clReleaseProgram(program);
             return CL_ASTC_ENC_FAILED;
         }
     }
     clRet = clReleaseProgram(program);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clReleaseProgram failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clReleaseProgram failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     return CL_ASTC_ENC_SUCCESS;
 }
 
-static CL_ASTC_STATUS AstcCreateClKernel(ClAstcHandle *clAstcHandle, const std::string clBinPath)
+static CL_ASTC_STATUS AstcCreateClKernel(ClAstcHandle *clAstcHandle, const std::string &clBinPath)
 {
     if (!OHOS::InitOpenCL()) {
-        HiLog::Error(LABEL, "astc InitOpenCL error!");
+        IMAGE_LOGE("astc InitOpenCL error!");
         return CL_ASTC_ENC_FAILED;
     }
     cl_int clRet;
     cl_platform_id platformID;
     clRet = clGetPlatformIDs(1, &platformID, NULL);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clGetPlatformIDs failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clGetPlatformIDs failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     clRet = clGetDeviceIDs(platformID, CL_DEVICE_TYPE_GPU, 1, &clAstcHandle->deviceID, NULL);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clGetDeviceIDs failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clGetDeviceIDs failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     clAstcHandle->context = clCreateContext(0, 1, &clAstcHandle->deviceID, NULL, NULL, &clRet);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clCreateContext failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clCreateContext failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR, 0};
     clAstcHandle->queue = clCreateCommandQueueWithProperties(clAstcHandle->context,
         clAstcHandle->deviceID, props, &clRet);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clCreateCommandQueueWithProperties failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clCreateCommandQueueWithProperties failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     if (AstcClBuildProgram(clAstcHandle, clBinPath) != CL_ASTC_ENC_SUCCESS) {
-        HiLog::Error(LABEL, "astc AstcClBuildProgram failed!");
+        IMAGE_LOGE("astc AstcClBuildProgram failed!");
         return CL_ASTC_ENC_FAILED;
     }
     return CL_ASTC_ENC_SUCCESS;
 }
 
-CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClCreate(ClAstcHandle **handle, const std::string clBinPath)
+CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClCreate(ClAstcHandle **handle, const std::string &clBinPath)
 {
-    ClAstcHandle *clAstcHandle = (ClAstcHandle *)calloc(1, sizeof(ClAstcHandle));
+    ClAstcHandle *clAstcHandle = static_cast<ClAstcHandle *>(calloc(1, sizeof(ClAstcHandle)));
     if (clAstcHandle == nullptr) {
-        HiLog::Error(LABEL, "astc AstcClCreate handle calloc failed!");
+        IMAGE_LOGE("astc AstcClCreate handle calloc failed!");
         return CL_ASTC_ENC_FAILED;
     }
     *handle = clAstcHandle;
     size_t numMaxBlocks = ((MAX_WIDTH + DIM - 1) / DIM) * ((MAX_HEIGHT + DIM - 1) / DIM);
-    clAstcHandle->encObj.blockErrs_ = (uint32_t *)malloc(numMaxBlocks * sizeof(uint32_t)); // 8MB mem Max
+    clAstcHandle->encObj.blockErrs_ = static_cast<uint32_t *>(malloc((numMaxBlocks * sizeof(uint32_t)))); // 8MB mem Max
     if (clAstcHandle->encObj.blockErrs_ == nullptr) {
-        HiLog::Error(LABEL, "astc blockErrs_ malloc failed!");
+        IMAGE_LOGE("astc blockErrs_ malloc failed!");
         AstcClClose(*handle);
         return CL_ASTC_ENC_FAILED;
     }
     if (AstcCreateClKernel(clAstcHandle, clBinPath) != CL_ASTC_ENC_SUCCESS) {
-        HiLog::Error(LABEL, "astc AstcCreateClKernel failed!");
+        IMAGE_LOGE("astc AstcCreateClKernel failed!");
         AstcClClose(*handle);
         return CL_ASTC_ENC_FAILED;
     }
@@ -1477,11 +1485,11 @@ CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClCreate(ClAstcHandle **handle, const s
 static CL_ASTC_STATUS AstcClEncImageCheckImageOption(const ClAstcImageOption *imageIn)
 {
     if ((imageIn->width <= 0) || (imageIn->height <= 0) || (imageIn->stride < imageIn->width)) {
-        HiLog::Error(LABEL, "astc AstcClEncImage width <= 0 or height <= 0 or stride < width!");
+        IMAGE_LOGE("astc AstcClEncImage width <= 0 or height <= 0 or stride < width!");
         return CL_ASTC_ENC_FAILED;
     }
     if ((imageIn->width > MAX_WIDTH) || (imageIn->height > MAX_HEIGHT)) {
-        HiLog::Error(LABEL, "astc AstcClEncImage width[%{public}d] \
+        IMAGE_LOGE("astc AstcClEncImage width[%{public}d] \
             need be [1, %{public}d] and height[%{public}d] need be [1, %{public}d]", \
             imageIn->width, MAX_WIDTH, imageIn->height, MAX_HEIGHT);
         return CL_ASTC_ENC_FAILED;
@@ -1493,7 +1501,7 @@ CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClFillImage(ClAstcImageOption *imageIn,
     int32_t width, int32_t height)
 {
     if (imageIn == nullptr) {
-        HiLog::Error(LABEL, "astc AstcClFillImage imageIn is  nullptr!");
+        IMAGE_LOGE("astc AstcClFillImage imageIn is  nullptr!");
         return CL_ASTC_ENC_FAILED;
     }
     imageIn->data = data;
@@ -1501,7 +1509,7 @@ CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClFillImage(ClAstcImageOption *imageIn,
     imageIn->width = width;
     imageIn->height = height;
     if (AstcClEncImageCheckImageOption(imageIn)) {
-        HiLog::Error(LABEL, "astc AstcClEncImageCheckImageOption failed!");
+        IMAGE_LOGE("astc AstcClEncImageCheckImageOption failed!");
         return CL_ASTC_ENC_FAILED;
     }
     return CL_ASTC_ENC_SUCCESS;
@@ -1535,21 +1543,21 @@ static void ReleaseClAstcObj(ClAstcObjEnc *obj)
         if (obj->inputImage != nullptr) {
             clRet = clReleaseMemObject(obj->inputImage);
             if (clRet != CL_SUCCESS) {
-                HiLog::Error(LABEL, "astc inputImage release failed ret %{public}d!", clRet);
+                IMAGE_LOGE("astc inputImage release failed ret %{public}d!", clRet);
             }
             obj->inputImage = nullptr;
         }
         if (obj->astcResult != nullptr) {
             clRet = clReleaseMemObject(obj->astcResult);
             if (clRet != CL_SUCCESS) {
-                HiLog::Error(LABEL, "astc astcResult release failed ret %{public}d!", clRet);
+                IMAGE_LOGE("astc astcResult release failed ret %{public}d!", clRet);
             }
             obj->astcResult = nullptr;
         }
         if (obj->errBuffer != nullptr) {
             clRet = clReleaseMemObject(obj->errBuffer);
             if (clRet != CL_SUCCESS) {
-                HiLog::Error(LABEL, "astc errBuffer release failed ret %{public}d!", clRet);
+                IMAGE_LOGE("astc errBuffer release failed ret %{public}d!", clRet);
             }
             obj->errBuffer = nullptr;
         }
@@ -1577,7 +1585,7 @@ static CL_ASTC_STATUS ClCreateBufferAndImage(const ClAstcImageOption *imageIn,
     size_t blockErrBytes = sizeof(uint32_t) * numBlocks;
     encObj->astcSize = numBlocks * TEXTURE_BLOCK_BYTES;
     if ((blockErrs == nullptr) || (memset_s(blockErrs, blockErrBytes, 0, blockErrBytes))) {
-        HiLog::Error(LABEL, "astc blockErrs is nullptr or memset failed!");
+        IMAGE_LOGE("astc blockErrs is nullptr or memset failed!");
         return CL_ASTC_ENC_FAILED;
     }
     cl_image_format imageFormat = { CL_RGBA, CL_UNORM_INT8 };
@@ -1586,18 +1594,49 @@ static CL_ASTC_STATUS ClCreateBufferAndImage(const ClAstcImageOption *imageIn,
     encObj->inputImage = clCreateImage(clAstcHandle->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imageFormat,
         &desc, data, &clRet);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clCreateImage failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clCreateImage failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     encObj->astcResult = clCreateBuffer(clAstcHandle->context,
         CL_MEM_ALLOC_HOST_PTR, encObj->astcSize, NULL, &clRet);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clCreateBuffer astcResult failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clCreateBuffer astcResult failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     encObj->errBuffer = clCreateBuffer(clAstcHandle->context, CL_MEM_USE_HOST_PTR, blockErrBytes, blockErrs, &clRet);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clCreateBuffer errBuffer failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clCreateBuffer errBuffer failed ret %{public}d!", clRet);
+        return CL_ASTC_ENC_FAILED;
+    }
+    return CL_ASTC_ENC_SUCCESS;
+}
+
+static CL_ASTC_STATUS ClKernelArgSet(ClAstcHandle *clAstcHandle, ClAstcObjEnc *encObj, int width, int height)
+{
+    int32_t kernelId = 0;
+    cl_int clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(cl_mem), &encObj->inputImage);
+    if (clRet != CL_SUCCESS) {
+        IMAGE_LOGE("astc clSetKernelArg inputImage failed ret %{public}d!", clRet);
+        return CL_ASTC_ENC_FAILED;
+    }
+    clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(cl_mem), &encObj->astcResult);
+    if (clRet != CL_SUCCESS) {
+        IMAGE_LOGE("astc clSetKernelArg astcResult failed ret %{public}d!", clRet);
+        return CL_ASTC_ENC_FAILED;
+    }
+    clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(cl_mem), &encObj->errBuffer);
+    if (clRet != CL_SUCCESS) {
+        IMAGE_LOGE("astc clSetKernelArg errBuffer failed ret %{public}d!", clRet);
+        return CL_ASTC_ENC_FAILED;
+    }
+    clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(int), &width);
+    if (clRet != CL_SUCCESS) {
+        IMAGE_LOGE("astc clSetKernelArg width failed ret %{public}d!", clRet);
+        return CL_ASTC_ENC_FAILED;
+    }
+    clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(int), &height);
+    if (clRet != CL_SUCCESS) {
+        IMAGE_LOGE("astc clSetKernelArg height failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     return CL_ASTC_ENC_SUCCESS;
@@ -1605,35 +1644,38 @@ static CL_ASTC_STATUS ClCreateBufferAndImage(const ClAstcImageOption *imageIn,
 
 static CL_ASTC_STATUS ClKernelArgSetAndRun(ClAstcHandle *clAstcHandle, ClAstcObjEnc *encObj, int width, int height)
 {
-    int32_t kernelId = 0;
-    cl_int clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(cl_mem), &encObj->inputImage);
-    if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clSetKernelArg inputImage failed ret %{public}d!", clRet);
+    if (ClKernelArgSet(clAstcHandle, encObj, width, height) != CL_ASTC_ENC_SUCCESS) {
+        IMAGE_LOGE("astc ClKernelArgSet failed!");
         return CL_ASTC_ENC_FAILED;
     }
-    clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(cl_mem), &encObj->astcResult);
-    if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clSetKernelArg astcResult failed ret %{public}d!", clRet);
-        return CL_ASTC_ENC_FAILED;
-    }
-    clRet = clSetKernelArg(clAstcHandle->kernel, kernelId++, sizeof(cl_mem), &encObj->errBuffer);
-    if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clSetKernelArg errBuffer failed ret %{public}d!", clRet);
-        return CL_ASTC_ENC_FAILED;
-    }
-    size_t local[] = {DIM, DIM};
+    size_t local[] = {WORK_GROUP_SIZE, WORK_GROUP_SIZE};
     size_t global[GLOBAL_WH_NUM_CL];
-    global[0] = (width % local[0] == 0 ? width : (width + local[0] - width % local[0]));
-    global[1] = (height % local[1] == 0 ? height : (height + local[1] - height % local[1]));
-    clRet = clEnqueueNDRangeKernel(clAstcHandle->queue, clAstcHandle->kernel, GLOBAL_WH_NUM_CL, NULL, global, local,
-        0, NULL, NULL);
+    global[0] = (width + DIM - 1) / DIM;
+    global[1] = (height + DIM - 1) / DIM;
+    size_t localMax;
+    cl_int clRet = clGetKernelWorkGroupInfo(clAstcHandle->kernel, clAstcHandle->deviceID, CL_KERNEL_WORK_GROUP_SIZE,
+        sizeof(size_t), &localMax, nullptr);
+    if ((clRet != CL_SUCCESS) || localMax <= 0) {
+        IMAGE_LOGE("astc clGetKernelWorkGroupInfo failed ret %{public}d!", clRet);
+        return CL_ASTC_ENC_FAILED;
+    }
+    while (local[0] * local[1] > localMax) {
+        local[0]--;
+        local[1]--;
+    }
+    if ((local[0] < 1) || (local[1] < 1)) {
+        IMAGE_LOGE("astc ClKernelArgSetAndRun local set failed!");
+        return CL_ASTC_ENC_FAILED;
+    }
+    clRet = clEnqueueNDRangeKernel(clAstcHandle->queue, clAstcHandle->kernel, GLOBAL_WH_NUM_CL, nullptr, global, local,
+        0, nullptr, nullptr);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clEnqueueNDRangeKernel failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clEnqueueNDRangeKernel failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     clRet = clFinish(clAstcHandle->queue);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clFinish failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clFinish failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     return CL_ASTC_ENC_SUCCESS;
@@ -1645,7 +1687,7 @@ static CL_ASTC_STATUS ClReadAstcBufAndBlockError(ClAstcHandle *clAstcHandle, ClA
     cl_int clRet = clEnqueueReadBuffer(clAstcHandle->queue, encObj->astcResult, CL_TRUE,
         0, encObj->astcSize, buffer + TEXTURE_HEAD_BYTES, 0, NULL, NULL);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clEnqueueReadBuffer astcResult failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clEnqueueReadBuffer astcResult failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     uint32_t maxVal = 0;
@@ -1654,7 +1696,7 @@ static CL_ASTC_STATUS ClReadAstcBufAndBlockError(ClAstcHandle *clAstcHandle, ClA
     clRet = clEnqueueReadBuffer(clAstcHandle->queue, encObj->errBuffer, CL_TRUE,
         0, sizeof(uint32_t) * numBlocks, encObj->blockErrs_, 0, NULL, NULL);
     if (clRet != CL_SUCCESS) {
-        HiLog::Error(LABEL, "astc clEnqueueReadBuffer blockErrs failed ret %{public}d!", clRet);
+        IMAGE_LOGE("astc clEnqueueReadBuffer blockErrs failed ret %{public}d!", clRet);
         return CL_ASTC_ENC_FAILED;
     }
     GetMaxAndSumVal(numBlocks, encObj->blockErrs_, maxVal, sumVal);
@@ -1665,30 +1707,33 @@ CL_ASTC_SHARE_LIB_API CL_ASTC_STATUS AstcClEncImage(ClAstcHandle *clAstcHandle,
     const ClAstcImageOption *imageIn, uint8_t *buffer)
 {
     if ((clAstcHandle == nullptr) || (imageIn == nullptr) || (buffer == nullptr)) {
-        HiLog::Error(LABEL, "astc AstcClEncImage clAstcHandle or imageIn or buffer is nullptr!");
+        IMAGE_LOGE("astc AstcClEncImage clAstcHandle or imageIn or buffer is nullptr!");
         return CL_ASTC_ENC_FAILED;
     }
     if (AstcClEncImageCheckImageOption(imageIn)) {
-        HiLog::Error(LABEL, "astc AstcClEncImageCheckImageOption failed!");
+        IMAGE_LOGE("astc AstcClEncImageCheckImageOption failed!");
         return CL_ASTC_ENC_FAILED;
     }
     GenAstcHeader(buffer, DIM, DIM, imageIn->width, imageIn->height);
     ClAstcObjEnc *encObj = &clAstcHandle->encObj;
     if (ClCreateBufferAndImage(imageIn, clAstcHandle, encObj) != CL_ASTC_ENC_SUCCESS) {
         ReleaseClAstcObj(encObj);
-        HiLog::Error(LABEL, "astc ClCreateBufferAndImage failed!");
+        IMAGE_LOGE("astc ClCreateBufferAndImage failed!");
         return CL_ASTC_ENC_FAILED;
     }
     if (ClKernelArgSetAndRun(clAstcHandle, encObj, imageIn->width, imageIn->height) != CL_ASTC_ENC_SUCCESS) {
         ReleaseClAstcObj(encObj);
-        HiLog::Error(LABEL, "astc ClKernelArgSetAndRun failed!");
+        IMAGE_LOGE("astc ClKernelArgSetAndRun failed!");
         return CL_ASTC_ENC_FAILED;
     }
     if (ClReadAstcBufAndBlockError(clAstcHandle, encObj, imageIn, buffer) != CL_ASTC_ENC_SUCCESS) {
         ReleaseClAstcObj(encObj);
-        HiLog::Error(LABEL, "astc ClReadAstcBufAndBlockError failed!");
+        IMAGE_LOGE("astc ClReadAstcBufAndBlockError failed!");
         return CL_ASTC_ENC_FAILED;
     }
     ReleaseClAstcObj(encObj);
     return CL_ASTC_ENC_SUCCESS;
+}
+}
+}
 }

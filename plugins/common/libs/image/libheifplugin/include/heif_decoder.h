@@ -19,8 +19,6 @@
 #include <memory>
 #include "abs_image_decoder.h"
 #include "heif_decoder_wrapper.h"
-#include "hilog/log.h"
-#include "log_tags.h"
 #include "nocopyable.h"
 #include "plugin_class_base.h"
 
@@ -41,6 +39,7 @@ public:
 private:
     DISALLOW_COPY_AND_MOVE(HeifDecoder);
     bool AllocHeapBuffer(DecodeContext &context);
+    bool AllocShareMem(DecodeContext &context, uint64_t byteCount);
     bool IsHeifImageParaValid(PlSize heifSize, uint32_t bytesPerPixel);
     std::unique_ptr<HeifDecoderInterface> heifDecoderInterface_ = nullptr;
     PlSize heifSize_;

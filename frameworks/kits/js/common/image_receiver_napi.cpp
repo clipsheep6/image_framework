@@ -16,24 +16,24 @@
 #include "image_receiver_napi.h"
 #include <uv.h>
 #include "media_errors.h"
-#include "hilog/log.h"
+#include "image_log.h"
 #include "image_napi_utils.h"
-#include "image_receiver_context.h"
 #include "image_napi.h"
+#include "image_receiver_context.h"
 #include "image_receiver_manager.h"
-#include "log_tags.h"
 
-using OHOS::HiviewDFX::HiLog;
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "ImageReceiverNapi"
+
 using std::string;
 using std::shared_ptr;
 using std::unique_ptr;
 using std::vector;
 using std::make_shared;
 using std::make_unique;
-
-namespace {
-    constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageReceiverNapi"};
-}
 
 namespace OHOS {
 namespace Media {
@@ -892,6 +892,40 @@ static bool JsOnQueryArgs(ImageReceiverCommonArgs &args, ImageReceiverInnerConte
     return true;
 }
 
+static void Callback(uv_work_t *work, int status)
+{
+    IMAGE_LINE_IN();
+    Context context = reinterpret_cast<Context>(work->data);
+    if (context == nullptr) {
+        IMAGE_ERR("context is empty");
+    } else {
+        napi_value result[PARAM2] = {0};
+        napi_value retVal;
+        napi_value callback = nullptr;
+        if (context->env != nullptr && context->callbackRef != nullptr) {
+            napi_handle_scope scope = nullptr;
+            napi_open_handle_scope(context->env, &scope);
+            if (scope == nullptr) {
+                delete work;
+                return;
+            }
+            napi_create_uint32(context->env, SUCCESS, &result[0]);
+            napi_get_undefined(context->env, &result[1]);
+            napi_get_reference_value(context->env, context->callbackRef, &callback);
+            if (callback != nullptr) {
+                napi_call_function(context->env, nullptr, callback, PARAM2, result, &retVal);
+            } else {
+                IMAGE_ERR("napi_get_reference_value callback is empty");
+            }
+            napi_close_handle_scope(context->env, scope);
+        } else {
+            IMAGE_ERR("env or callbackRef is empty");
+        }
+    }
+    delete work;
+    IMAGE_LINE_OUT();
+}
+
 void ImageReceiverNapi::DoCallBack(shared_ptr<ImageReceiverAsyncContext> context,
                                    string name, CompleteCallback callBack)
 {
@@ -919,35 +953,7 @@ void ImageReceiverNapi::DoCallBack(shared_ptr<ImageReceiverAsyncContext> context
     }
     work->data = reinterpret_cast<void *>(context.get());
     int ret = uv_queue_work(loop, work.get(), [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
-        IMAGE_LINE_IN();
-        Context context = reinterpret_cast<Context>(work->data);
-        if (context == nullptr) {
-            IMAGE_ERR("context is empty");
-        } else {
-            napi_value result[PARAM2] = {0};
-            napi_value retVal;
-            napi_value callback = nullptr;
-            if (context->env != nullptr && context->callbackRef != nullptr) {
-                napi_handle_scope scope = nullptr;
-                napi_open_handle_scope(context->env, &scope);
-                if (scope == nullptr) {
-                    return;
-                }
-                napi_create_uint32(context->env, SUCCESS, &result[0]);
-                napi_get_undefined(context->env, &result[1]);
-                napi_get_reference_value(context->env, context->callbackRef, &callback);
-                if (callback != nullptr) {
-                    napi_call_function(context->env, nullptr, callback, PARAM2, result, &retVal);
-                } else {
-                    IMAGE_ERR("napi_get_reference_value callback is empty");
-                }
-                napi_close_handle_scope(context->env, scope);
-            } else {
-                IMAGE_ERR("env or callbackRef is empty");
-            }
-        }
-        delete work;
-        IMAGE_LINE_OUT();
+        Callback(work, status);
     });
     if (ret != 0) {
         IMAGE_ERR("Failed to execute DoCallBack work queue");
