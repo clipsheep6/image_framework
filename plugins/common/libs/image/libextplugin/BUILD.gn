@@ -206,14 +206,13 @@ ohos_shared_library("extplugin") {
       "//third_party/opencl-headers:libcl",
     ]
     deps += skia_platform
-    #deps += [ "//third_party/libjpeg-turbo:turbojpeg" ]
+    deps += [ "//third_party/libjpeg-turbo:turbojpeg" ]
 
     external_deps = [
       "c_utils:utils",
       "graphic_2d:color_manager",
       "hilog:libhilog",
-      "hisysevent:libhisysevent",
-      "libjpeg-turbo:turbojpeg"
+      "hisysevent:libhisysevent"
     ]
 
     if (enable_jpeg_hw_decode) {
