@@ -163,7 +163,7 @@ if (use_clang_ios) {
       deps = [
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       ]
-
+      external_deps = [ "graphic_2d:color_manager" ]
       libs = [ "nativewindow" ]
     } else {
       deps = [
@@ -206,12 +206,13 @@ ohos_static_library("pixelconvertadapter_static") {
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
     ]
     deps += skia_platform
+    external_deps = [ "graphic_2d:color_manager" ]
   } else if (use_clang_android) {
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
     ]
     deps += skia_platform
-
+    external_deps = [ "graphic_2d:color_manager" ]
     libs = [ "nativewindow" ]
   } else {
     deps = [
