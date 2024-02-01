@@ -14,6 +14,7 @@
  */
 
 #include "image_source_napi.h"
+#include <chrono>
 #include <fcntl.h>
 #include "image_log.h"
 #include "image_napi_utils.h"
@@ -1108,7 +1109,9 @@ static void CreatePixelMapExecute(napi_env env, void *data)
 
 static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
 {
-    IMAGE_LOGD("CreatePixelMapComplete IN");
+    auto now = std::chrono::system_clock::now();
+    uint64_t completeId = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    IMAGE_LOGI("CreatePixelMapComplete IN, id: %{public}lu", static_cast<uint32_t>(completeId));
     napi_value result = nullptr;
     auto context = static_cast<ImageSourceAsyncContext*>(data);
 
@@ -1117,7 +1120,7 @@ static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
     } else {
         napi_get_undefined(env, &result);
     }
-    IMAGE_LOGD("CreatePixelMapComplete OUT");
+    IMAGE_LOGI("CreatePixelMapComplete OUT, id: %{public}lu", static_cast<uint32_t>(completeId));
     ImageSourceCallbackRoutine(env, context, result);
 }
 
