@@ -189,10 +189,10 @@ HWTEST_F(JpegHwDecoderTest, DecodeTest001, TestSize.Level3)
     PlSize srcImgSize;
     uint32_t sampleSize = 0;
     CodecImageBuffer outputBuffer;
-    uint32_t result = jpegHardwareDecoder->Decode(codec, srcStream, srcImgSize, sampleSize,outputBuffer);
+    uint32_t result = jpegHardwareDecoder->Decode(codec, srcStream, srcImgSize, sampleSize, outputBuffer);
     ASSERT_EQ(result, Media::ERR_IMAGE_DATA_UNSUPPORT);
     jpegHardwareDecoder->hwDecoder_ = nullptr;
-    result = jpegHardwareDecoder->Decode(codec, srcStream, srcImgSize, sampleSize,outputBuffer);
+    result = jpegHardwareDecoder->Decode(codec, srcStream, srcImgSize, sampleSize, outputBuffer);
     ASSERT_EQ(result, Media::ERR_IMAGE_DECODE_ABNORMAL);
     GTEST_LOG_(INFO) << "JpegHwDecoderTest: DecodeTest001 end";
 }
