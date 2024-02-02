@@ -176,7 +176,6 @@ uint32_t pixelYUV::crop(const Rect &rect)
         }
     }
 #endif
-    size_t count = rect.width * rect.height + ((rect.width + 1) / NUM_2) * ((rect.height + 1) / NUM_2) * NUM_2;
     if (!YUVCrop(data_, imageInfo_.size, (uint8_t*)m->data.data, rect, imageInfo.pixelFormat, imageInfo.pixelFormat)) {
         return ERR_IMAGE_CROP;
     }
