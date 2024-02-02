@@ -181,6 +181,22 @@ int32_t OH_Image_Size(const ImageNative* native, struct OhosImageSize* size);
 int32_t OH_Image_Format(const ImageNative* native, int32_t* format);
 
 /**
+ * @brief Obtains the image format of an {@link ImageNative} object at the native layer.
+ *
+ * @param native Indicates the pointer to an {@link ImageNative} object at the native layer.
+ * @param timestamp Indicates the pointer to the image timestamp obtained.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_GET_PARAMETER_FAILED - if Failed to obtain parameters for surface.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see ImageNative
+ * @since 11
+ * @version 2.0
+ */
+int32_t OH_Image_Timestamp(const ImageNative* native, int64_t* timestamp);
+
+/**
  * @brief Obtains {@link OhosImageComponent} of an {@link ImageNative} object at the native layer.
  *
  * @param native Indicates the pointer to an {@link ImageNative} object at the native layer.

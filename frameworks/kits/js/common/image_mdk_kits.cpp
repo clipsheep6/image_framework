@@ -88,6 +88,20 @@ static int32_t ImageNapiFormat(ImageNapi* native, struct ImageNapiArgs* args)
     return IMAGE_RESULT_SUCCESS;
 }
 
+static int32_t ImageNapiTimestamp(ImageNapi* native, struct ImageNapiArgs* args)
+{
+    auto nativeImage = CheckAndGetImage(native, args);
+    if (nativeImage == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    int64_t timestamp;
+    if (nativeImage->GetTimestamp(timestamp) != NUM_0) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    *(args->out64Num0) = timestamp;
+    return IMAGE_RESULT_SUCCESS;
+}
+
 static int32_t ImageNapiGetComponent(ImageNapi* native, struct ImageNapiArgs* args)
 {
     auto nativeImage = CheckAndGetImage(native, args);
@@ -120,6 +134,7 @@ static const std::map<int32_t, ImageNapiCtxFunc> g_CtxFunctions = {
     {CTX_FUNC_IMAGE_CLIP_RECT, ImageNapiClipRect},
     {CTX_FUNC_IMAGE_SIZE, ImageNapiSize},
     {CTX_FUNC_IMAGE_FORMAT, ImageNapiFormat},
+    {CTX_FUNC_IMAGE_TIMESTAMP, ImageNapiTimestamp},
     {CTX_FUNC_IMAGE_GET_COMPONENT, ImageNapiGetComponent},
 };
 
