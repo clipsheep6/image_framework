@@ -32,6 +32,7 @@ struct ImageNapiArgs {
     struct OhosImageRect* outRect;
     struct OhosImageSize* outSize;
     int32_t* outNum0;
+    int64_t* out64Num0;
     napi_value* outVal;
     struct OhosImageComponent* outComponent;
 };
@@ -40,6 +41,7 @@ enum {
     CTX_FUNC_IMAGE_CLIP_RECT,
     CTX_FUNC_IMAGE_SIZE,
     CTX_FUNC_IMAGE_FORMAT,
+    CTX_FUNC_IMAGE_TIMESTAMP,
     CTX_FUNC_IMAGE_GET_COMPONENT
 };
 
