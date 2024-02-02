@@ -1059,7 +1059,13 @@ napi_value ImageSourceNapi::GetImageInfo(napi_env env, napi_callback_info info)
 
 static void CreatePixelMapExecute(napi_env env, void *data)
 {
-    IMAGE_LOGD("CreatePixelMapExecute IN");
+    static bool isSceneboard = ImageNapiUtils::IsProcessRunning("neboard");
+    uint32_t executeId = isSceneboard ? static_cast<uint32_t>(ImageNapiUtils::GetNowTimeMicroSeconds()) : 0;
+    if (isSceneboard) {
+        IMAGE_LOGI("CreatePixelMapExecute IN, id: %{public}u", executeId);
+    } else {
+        IMAGE_LOGD("CreatePixelMapExecute IN");
+    }
     if (data == nullptr) {
         IMAGE_LOGE("data is nullptr");
         return;
@@ -1103,12 +1109,22 @@ static void CreatePixelMapExecute(napi_env env, void *data)
         context->errMsg = "Create PixelMap error";
         IMAGE_LOGE("Create PixelMap error");
     }
-    IMAGE_LOGD("CreatePixelMapExecute OUT");
+    if (isSceneboard) {
+        IMAGE_LOGI("CreatePixelMapExecute OUT, id: %{public}u", executeId);
+    } else {
+        IMAGE_LOGD("CreatePixelMapExecute OUT");
+    }
 }
 
 static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
 {
-    IMAGE_LOGD("CreatePixelMapComplete IN");
+    static bool isSceneboard = ImageNapiUtils::IsProcessRunning("neboard");
+    uint32_t completeId = isSceneboard ? static_cast<uint32_t>(ImageNapiUtils::GetNowTimeMicroSeconds()) : 0;
+    if (isSceneboard) {
+        IMAGE_LOGI("CreatePixelMapComplete IN, id: %{public}u", completeId);
+    } else {
+        IMAGE_LOGD("CreatePixelMapComplete IN");
+    }
     napi_value result = nullptr;
     auto context = static_cast<ImageSourceAsyncContext*>(data);
 
@@ -1117,7 +1133,11 @@ static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
     } else {
         napi_get_undefined(env, &result);
     }
-    IMAGE_LOGD("CreatePixelMapComplete OUT");
+    if (isSceneboard) {
+        IMAGE_LOGI("CreatePixelMapComplete IN, id: %{public}u", completeId);
+    } else {
+        IMAGE_LOGD("CreatePixelMapComplete OUT");
+    }
     ImageSourceCallbackRoutine(env, context, result);
 }
 
