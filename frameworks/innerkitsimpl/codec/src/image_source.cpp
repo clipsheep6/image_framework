@@ -586,7 +586,13 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
     PixelMapAddrInfos &addrInfos, uint32_t &errorCode)
 {
-    unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
+    unique_ptr<PixelMap> pixelMap;
+    if (plInfo.pixelFormat == PlPixelFormat::YV12 || plInfo.pixelFormat == PlPixelFormat::YU12
+     || plInfo.pixelFormat == PlPixelFormat::NV21 || plInfo.pixelFormat == PlPixelFormat::NV12) {
+        pixelMap = make_unique<pixelYUV>();
+    } else {
+        pixelMap = make_unique<PixelMap>();
+    }
 #ifdef IMAGE_COLORSPACE_FLAG
     // add graphic colorspace object to pixelMap.
     bool isSupportICCProfile = mainDecoder_->IsSupportICCProfile();

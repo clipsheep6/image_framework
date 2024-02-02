@@ -226,7 +226,7 @@ public:
     {
         return grColorSpace_;
     }
-    NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
+    NATIVEEXPORT virtual uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----end-------
 #endif
 
@@ -305,10 +305,6 @@ private:
     bool WriteAstcRealSizeToParcel(Parcel &parcel) const;
     bool ReadAstcRealSize(Parcel &parcel, PixelMap *pixelMap);
     uint32_t SetRowDataSizeForImageInfo(ImageInfo info);
-    void SetEditable(bool editable)
-    {
-        editable_ = editable;
-    }
 
     void ResetPixelMap()
     {
@@ -344,9 +340,14 @@ private:
         const int32_t &height, const int32_t &rowDataSize, const int32_t &rowStride) const;
     static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor);
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
-    bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
 
+protected:
+    void SetEditable(bool editable)
+    {
+        editable_ = editable;
+    }
+    bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
     ImageInfo imageInfo_;
