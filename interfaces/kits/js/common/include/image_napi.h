@@ -34,6 +34,7 @@ public:
 
     NativeImage* GetNative();
     void NativeRelease();
+    static napi_value JsGetTimestamp(napi_env env, napi_callback_info info);
 
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);

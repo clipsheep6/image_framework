@@ -58,8 +58,8 @@ public:
                                                               int32_t format,
                                                               int32_t capicity);
     sptr<Surface> GetReceiverSurface();
-    OHOS::sptr<OHOS::SurfaceBuffer> ReadNextImage();
-    OHOS::sptr<OHOS::SurfaceBuffer> ReadLastImage();
+    OHOS::sptr<OHOS::SurfaceBuffer> ReadNextImage(int64_t &timestamp);
+    OHOS::sptr<OHOS::SurfaceBuffer> ReadLastImage(int64_t &timestamp);
     int32_t SaveBufferAsImage(int &fd,
                               OHOS::sptr<OHOS::SurfaceBuffer> buffer,
                               InitializationOptions initializationOpts);

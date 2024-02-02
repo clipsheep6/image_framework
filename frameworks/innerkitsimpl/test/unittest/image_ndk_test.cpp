@@ -84,6 +84,23 @@ HWTEST_F(ImageNdkTest, OH_Image_FormatTest, TestSize.Level3)
 }
 
 /**
+ * @tc.name: OH_Image_TimestampTest
+ * @tc.desc: OH_Image_Timestamp
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_TimestampTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_TimestampTest start";
+    const ImageNative* native = nullptr;
+    int64_t* timestamp = nullptr;
+    int32_t result = OH_Image_Timestamp(native, timestamp);
+    ASSERT_EQ(result, UNSUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_TimestampTest end";
+}
+
+
+/**
  * @tc.name: OH_Image_GetComponentTest
  * @tc.desc: OH_Image_GetComponent
  * @tc.type: FUNC
