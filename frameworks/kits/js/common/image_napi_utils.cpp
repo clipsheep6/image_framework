@@ -14,12 +14,16 @@
  */
 
 #include "image_napi_utils.h"
+#include <chrono>
 #include <securec.h>
 #include <unistd.h>
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM) && defined(HICHECKER_ENABLE)
 #include "hichecker.h"
 #endif
 
+extern "C" {
+extern char* __progname;
+}
 namespace OHOS {
 namespace Media {
 const size_t NUM0 = 0;
@@ -219,6 +223,17 @@ napi_value ImageNapiUtils::ThrowExceptionError(napi_env env, const int32_t errCo
         napi_get_undefined(env, &result);
     }
     return result;
+}
+
+uint64_t ImageNapiUtils::GetNowTimeMicroSeconds()
+{
+    auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+}
+
+bool ImageNapiUtils::IsProcessRunning(const char* processName) {
+    return __progname != nullptr && processName != nullptr
+        && strncmp(__progname, processName, strlen(processName)) == 0;
 }
 }  // namespace Media
 }  // namespace OHOS
