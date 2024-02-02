@@ -50,7 +50,7 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
-
+#include "pixel_yuv.h"
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 

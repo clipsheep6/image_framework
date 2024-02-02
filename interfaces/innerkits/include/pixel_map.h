@@ -342,7 +342,7 @@ private:
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
     void UpdateImageInfo();
 
-protected:
+// protected:
     void SetEditable(bool editable)
     {
         editable_ = editable;

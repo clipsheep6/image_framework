@@ -237,6 +237,12 @@ if (use_clang_android) {
       external_deps += [ "memmgr_plugin:libpurgeablemem_plugin" ]
     }
 
+    if (defined(global_parts_info) &&
+      defined(global_parts_info.open_source_libyuv)) {
+      cflags += [ "-DLIBYUV" ]
+      external_deps += [ "libyuv:yuv" ]
+    }
+
     #  relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
     innerapi_tags = [ "platformsdk" ]
@@ -362,6 +368,13 @@ ohos_static_library("image_static") {
       "hilog:libhilog",
     ]
   }
+
+  if (defined(global_parts_info) &&
+    defined(global_parts_info.open_source_libyuv)) {
+    cflags += [ "-DLIBYUV" ]
+    external_deps += [ "libyuv:yuv" ]
+  }
+
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }
