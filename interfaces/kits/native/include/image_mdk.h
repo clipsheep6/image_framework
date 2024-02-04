@@ -38,12 +38,48 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_MDK_H
 #include "napi/native_api.h"
 #include "image_mdk_common.h"
+#ifdef IMAGE_COLORSPACE_FLAG
+#include "color_space.h"
+#endif
+#include "image_type.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct ImageNative_;
+
+/**
+ * @brief Rename a PixelMap type for void, used for pixelmap pointer passing.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef Capi PixelMapCapi;
+
+/**
+ * @brief Rename a MessageParcel type for void, used for MessageParcel pointer passing.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef Capi MessageParcelCapi;
+
+/**
+ * @brief Rename a ColorSpace type for void, used for MolorSpace pointer passing.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef Capi ColorSpaceCapi;
+
+/**
+ * @brief Rename a Parcel type for void, used for Parcel pointer passing.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef Capi ParcelCapi;
 
 /**
  * @brief Defines an image object at the native layer for the image interface.
@@ -118,6 +154,51 @@ struct OhosImageComponent {
     /** Pixel stride of the pixel data */
     int32_t pixelStride;
 };
+
+/**
+ * @brief Defines an pixel properties, including the alpha type, size, scale mode, pixel format, and editable.
+ *
+ * @since 10
+ * @version 2.0
+ */
+
+/**
+ * @brief Defines the options used for creating a pixel map.
+ *
+ * @since 10
+ * @version 1.0
+ */
+struct OhosPixelMapCreateOps {
+    /** Image width, in pixels. */
+    uint32_t width;
+    /** Image height, in pixels. */
+    uint32_t height;
+    /** Image format. */
+    int32_t pixelFormat;
+    /** Editing type of the image. */
+    uint32_t editable;
+    /** Alpha type of the image. */
+    uint32_t alphaType;
+    /** Scale mode of the image. */
+    uint32_t scaleMode;
+};
+
+/**
+ * @brief Defines the pixel map information.
+ *
+ * @since 10
+ * @version 1.0
+ */
+typedef struct OhosPixelMapInfos {
+    /** Image width, in pixels. */
+    uint32_t width;
+    /** Image height, in pixels. */
+    uint32_t height;
+    /** Number of bytes per row. */
+    uint32_t rowSize;
+    /** Pixel format. */
+    int32_t pixelFormat;
+} OhosPixelMapInfos;
 
 /**
  * @brief Parses an {@link ImageNative} object at the native layer from a JavaScript native API <b>image </b> object.
@@ -214,6 +295,170 @@ int32_t OH_Image_GetComponent(const ImageNative* native,
  * @version 2.0
  */
 int32_t OH_Image_Release(ImageNative* native);
+
+/**
+ * @brief PixelMap data conversion, from c type to js type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param pixelMap PixelMap type pointer that needs to be converted.
+ * @param jsPixelMap  js type object after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see PixelMap, OH_Image_CToJs_PixelMap
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_PixelMap(napi_env env, PixelMapCapi *pixelMap, napi_value jsPixelMap);
+
+/**
+ * @brief ColorSpace data conversion, from c type to js type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param colorSpace ColorSpace type pointer that needs to be converted.
+ * @param jsColorSpace  js type object after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see ColorSpace, OH_Image_CToJs_ColorSpace
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_ColorSpace(napi_env env, ColorSpaceCapi *colorSpace, napi_value jsColorSpace);
+
+/**
+ * @brief Uint8 data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsValue js type that needs to be converted.
+ * @param out  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Uint8
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Uint8(napi_env env, napi_value jsValue, uint8_t *out);
+
+/**
+ * @brief uint64 data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsValue js type that needs to be converted.
+ * @param out  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Uint8
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Uint64(napi_env env, napi_value jsValue, uint64_t *out);
+
+/**
+ * @brief ImageInfo data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsImageInfo ImageInfo js object type that needs to be converted.
+ * @param imageInfo  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see ImageInfo, OH_Image_JsToC_ImageInfo
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_ImageInfo(napi_env env, napi_value jsImageInfo, OhosPixelMapInfos *imageInfo);
+
+/**
+ * @brief Float data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsValue js type that needs to be converted.
+ * @param out  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Float
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Float(napi_env env, napi_value jsValue, float *out);
+
+/**
+ * @brief Bool data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsValue js type that needs to be converted.
+ * @param out  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Bool
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Bool(napi_env env, napi_value jsValue, bool *out);
+
+/**
+ * @brief Parcel data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsParcel Float js object type that needs to be converted.
+ * @param parcel  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Parcel
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Parcel(napi_env env, napi_value jsParcel, ParcelCapi *parcel);
+
+/**
+ * @brief ColorSpace data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsColorSpace Float js object type that needs to be converted.
+ * @param colorSpace  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_ColorSpace
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_ColorSpace(napi_env env, napi_value jsColorSpace, ColorSpaceCapi *colorSpace);
+
+/**
+ * @brief PixelMap data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsPixelMap Float js object type that needs to be converted.
+ * @param pixelMap  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_PixelMap
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_PixelMap(napi_env env, napi_value jsPixelMap, PixelMapCapi *pixelMap);
+
+/**
+ * @brief Creates a PixelMap object with the default BGRA_8888 format and pixel properties specified.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param ops Creates a PixelMap object with the default BGRA_8888 format and pixel properties specified.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_InitializationOptions
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_InitializationOptions(napi_env env, napi_value jsOps, OhosPixelMapCreateOps *ops);
 #ifdef __cplusplus
 };
 #endif

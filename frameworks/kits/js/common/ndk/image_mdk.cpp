@@ -17,6 +17,12 @@
 
 #include "common_utils.h"
 #include "image_mdk_kits.h"
+#include "js_native_api.h"
+#include "napi/native_node_api.h"
+#include "napi/native_api.h"
+#include "pixel_map_napi.h"
+
+#include "image_napi_utils.h"
 
 using namespace OHOS::Media;
 #ifdef __cplusplus
@@ -97,6 +103,201 @@ int32_t OH_Image_Release(ImageNative* native)
     return IMAGE_RESULT_SUCCESS;
 }
 
+MIDK_EXPORT
+int32_t OH_Image_CToJs_PixelMap(napi_env env, PixelMapCapi *pixelMap, napi_value jsPixelMap)
+{
+    napi_status status;
+    if (pixelMap == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+
+    auto pixelMapType = static_cast<OHOS::Media::PixelMap *>(pixelMap);
+    status = napi_wrap(env, jsPixelMap, pixelMapType, nullptr, nullptr, nullptr);
+    if (status != napi_ok) {
+        jsPixelMap = nullptr;
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_CToJs_ColorSpace(napi_env env, ColorSpaceCapi *colorSpace, napi_value jsColorSpace)
+{
+    if (colorSpace == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+#ifdef IMAGE_COLORSPACE_FLAG
+    napi_status status;
+    auto colorSpaceType = static_cast<OHOS::ColorManager::ColorSpace *>(colorSpace);
+    status = napi_wrap(env, jsColorSpace, colorSpaceType, nullptr, nullptr, nullptr);
+    if (status != napi_ok) {
+        jsColorSpace = nullptr;
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    return IMAGE_RESULT_SUCCESS;
+#else
+    return IMAGE_RESULT_MEDIA_INVALID_OPERATION;
+#endif
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Uint8(napi_env env, napi_value jsValue, uint8_t *out)
+{
+    napi_status status;
+    uint32_t cValue;
+    if (out == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    status = napi_get_value_uint32(env, jsValue, &cValue);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+    *out = static_cast<uint8_t>(cValue);
+
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Uint64(napi_env env, napi_value jsValue, uint64_t *out)
+{
+    napi_status status;
+    uint64_t cValue;
+    bool lossless;
+    if (out == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    status = napi_get_value_bigint_uint64(env, jsValue, &cValue, &lossless);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+    *out = cValue;
+
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Float(napi_env env, napi_value jsValue, float *out)
+{
+    napi_status status;
+    double cValue;
+    if (out == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    status = napi_get_value_double(env, jsValue, &cValue);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+    *out = static_cast<float>(cValue);
+
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Bool(napi_env env, napi_value jsValue, bool *out)
+{
+    napi_status status;
+    bool cValue;
+    if (out == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    status = napi_get_value_bool(env, jsValue, &cValue);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+    *out = static_cast<bool>(cValue);
+
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Parcel(napi_env env, napi_value jsParcel, ParcelCapi *parcel)
+{
+    napi_status status;
+    napi_valuetype valueType;
+    if (parcel == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto parcelType = static_cast<OHOS::Parcel *>(parcel);
+    status = napi_typeof(env, jsParcel, &valueType);
+    if (valueType != napi_object) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    status = napi_unwrap(env, jsParcel, reinterpret_cast<void**>(&parcelType));
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_ColorSpace(napi_env env, napi_value jsColorSpace, ColorSpaceCapi *colorSpace)
+{
+    if (colorSpace == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+#ifdef IMAGE_COLORSPACE_FLAG
+    napi_status status;
+    napi_valuetype valueType;
+    auto colorSpaceType = static_cast<OHOS::ColorManager::ColorSpace *>(colorSpace);
+    status = napi_typeof(env, jsColorSpace, &valueType);
+    if (valueType != napi_object) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    status = napi_unwrap(env, jsColorSpace, reinterpret_cast<void**>(&colorSpaceType));
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+    return IMAGE_RESULT_SUCCESS;
+#else
+    return IMAGE_RESULT_MEDIA_INVALID_OPERATION;
+#endif
+}
+
+int32_t OH_Image_JsToC_PixelMap(napi_env env, napi_value JsPixelMap, PixelMapCapi *pixelMap)
+{
+    napi_status status;
+    napi_valuetype valueType;
+    if (pixelMap == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto pixelMapType = static_cast<OHOS::Media::PixelMap *>(pixelMap);
+    status = napi_typeof(env, JsPixelMap, &valueType);
+    if (valueType != napi_object) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    status = napi_unwrap(env, JsPixelMap, reinterpret_cast<void**>(&pixelMapType));
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    return IMAGE_RESULT_SUCCESS;
+}
+
+int32_t OH_Image_JsToC_InitializationOptions(napi_env env, napi_value jsOps, OhosPixelMapCreateOps *ops)
+{
+    napi_status status;
+    napi_valuetype valueType;
+    if (ops == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    status = napi_typeof(env, jsOps, &valueType);
+    if (valueType != napi_object) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    status = napi_unwrap(env, jsOps, reinterpret_cast<void**>(&ops));
+    if (status != napi_ok) {
+        return IMAGE_RESULT_IMAGE_RESULT_BASE;
+    }
+
+    return IMAGE_RESULT_SUCCESS;
+}
 #ifdef __cplusplus
 };
 #endif
