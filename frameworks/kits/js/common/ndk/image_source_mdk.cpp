@@ -281,6 +281,209 @@ int32_t OH_ImageSource_Release(ImageSourceNative* native)
     return IMAGE_RESULT_SUCCESS;
 }
 
+/** ImageSource Capi */
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_CreateFromUri(char* uri, size_t size, ImageSource_Options* ops, void* res)
+{
+    if (uri == nullptr || size == SIZE_ZERO) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.uri = std::string(uri, size);
+    args.sourceOps = ops;
+    args.outImgSrc = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_URI, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_CreateFromFd(int32_t fd, ImageSource_Options* ops, void* res)
+{
+    ImageSourceArgsCapi args;
+    args.fd = fd;
+    args.sourceOps = ops;
+    args.outImgSrc = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_FD, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_CreateFromData(uint8_t* data, size_t dataSize, ImageSource_Options* ops, void* res)
+{
+    ImageSourceArgsCapi args;
+    DataArray dataArray;
+    dataArray.data = data;
+    dataArray.dataSize = dataSize;
+    args.dataArray = dataArray;
+    args.sourceOps = ops;
+    args.outImgSrc = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_DATA, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_CreateFromRawFile(RawFileDescriptor rawFile, ImageSource_Options* ops, void* res)
+{
+    ImageSourceArgsCapi args;
+    args.rawFile = rawFile;
+    args.sourceOps = ops;
+    args.outImgSrc = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_RAW_FILE, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_CreateIncremental(ImageSource_Source* source, ImageSource_Options* ops, void* res)
+{
+    ImageSourceArgsCapi args;
+    args.source = source;
+    args.sourceOps = ops;
+    args.outImgSrc = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_CREATE_INCREMENTAL, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_CreatePixelMap(void* imgSrc,
+    Image_DecodingOptions* ops, void* resPixMap)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.decodingOps = ops;
+    args.outPixMap = resPixMap;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_CreatePixelMapList(void* imgSrc, Image_DecodingOptions* ops, 
+    void* resVecPixMap[], uint32_t* outSize)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.decodingOps = ops;
+    args.outVecPixMap[0] = resVecPixMap;
+    args.outSize = outSize;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP_LIST, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_GetSupportedFormats(void* imgSrc, ImageSource_SupportedFormatList* res)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.outFormats = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_GET_SUPPORTED_FORMATS, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_GetDelayTime(void* imgSrc, ImageSource_DelayTimeList* res)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.outDelayTimes = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_GET_DELAY_TIME, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_GetImageInfo(void* imgSrc, int32_t index, ImageSource_Info* info)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.inInt32 = index;
+    args.outInfo = info;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_GET_IMAGE_INFO, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_GetImageProperty(void* imgSrc, ImageSource_Property* key, ImageSource_Property* value)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.inPropertyKey = key;
+    args.propertyVal = value;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_ModifyImageProperty(void* imgSrc, Image_Resource* imgResource, 
+    ImageSource_Property* key, ImageSource_Property* value)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.resource = imgResource;
+    args.inPropertyKey = key;
+    args.propertyVal = value;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_MODIFY_IMAGE_PROPERTY, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_GetFrameCount(void* imgSrc, uint32_t *res)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.outUint32 = res;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_GET_FRAME_COUNT, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_UpdateData(void* imgSrc, Image_DecodingOptions* decOption, ImageSource_UpdateData* data)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    args.decodingOps = decOption;
+    args.inUpdateData = data;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_UPDATE_DATA, &args);
+    return ret;
+}
+
+MIDK_EXPORT
+int32_t OH_ImageSourceCapi_Release(void* imgSrc)
+{
+    if (imgSrc == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageSourceArgsCapi args;
+    args.inImgSrc = imgSrc;
+    auto ret = ImageSourceCapiCall(CAPI_FUNC_IMAGE_SOURCE_UPDATE_RELEASE, &args);
+    return ret;
+}
+/** ImageSource Capi */
+
 #ifdef __cplusplus
 };
 #endif

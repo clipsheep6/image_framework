@@ -33,6 +33,7 @@ namespace OHOS {
 namespace Media {
 using OHOS::HiviewDFX::HiLog;
 using ImageSourceNapiFunc = int32_t (*)(struct ImageSourceArgs* args);
+using ImageSourceCapiFunc = int32_t (*)(struct ImageSourceArgsCapi* args);
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -747,6 +748,504 @@ static const std::map<int32_t, ImageSourceNapiFunc> g_Functions = {
     {CTX_FUNC_IMAGE_SOURCE_UPDATE_DATA, ImageSourceNapiUpdateData}
 };
 
+/** ImageSource Capi */
+
+static int32_t ImageSourceCapiCreateFromUri(struct ImageSourceArgsCapi* args)
+{
+    if (args == nullptr || args->uri.empty()) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    SourceOptions opts;
+    if (args->sourceOps != nullptr) {
+        ParseImageSourceOps(opts, args->sourceOps);
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromUri by path %{public}s", args->uri.c_str());
+    auto path = UrlToPath(args->uri);
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(path, opts, errorCode);
+    if (nativeImageSource == nullptr) {
+        HiLog::Debug(LABEL, "ImageSourceCapiCreateFromUri create failed:%{public}d", errorCode);
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageResource resource;
+    resource.type = ImageResourceType::IMAGE_RESOURCE_PATH;
+    resource.path = path;
+    std::shared_ptr<ImageSource> imageSource = std::move(nativeImageSource);
+    if (imageSource == nullptr) {
+        args->outImgSrc = nullptr;
+        HiLog::Error(LABEL, "ImageSourceCapiCreateFromUri native create failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    args->outImgSrc = static_cast<void*>(imageSource.get());
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromUri success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiCreateFromFd(struct ImageSourceArgsCapi* args)
+{
+    if (args == nullptr || args->fd == INVALID_FD) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    SourceOptions opts;
+    if (args->sourceOps != nullptr) {
+        ParseImageSourceOps(opts, args->sourceOps);
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromFd");
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(args->fd, opts, errorCode);
+    if (nativeImageSource == nullptr) {
+        HiLog::Debug(LABEL, "ImageSourceCapiCreateFromFd create failed:%{public}d", errorCode);
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageResource resource;
+    resource.type = ImageResourceType::IMAGE_RESOURCE_FD;
+    resource.fd = args->fd;
+    std::shared_ptr<ImageSource> imageSource = std::move(nativeImageSource);
+    if (imageSource == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreateFromFd native create failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    args->outImgSrc = static_cast<void*>(imageSource.get());
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromFd success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiCreateFromData(struct ImageSourceArgsCapi* args)
+{
+    if (args == nullptr || args->dataArray.data == nullptr || args->dataArray.dataSize == SIZE_ZERO) {
+
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    SourceOptions opts;
+    if (args->sourceOps != nullptr) {
+        ParseImageSourceOps(opts, args->sourceOps);
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromData");
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(
+        args->dataArray.data, args->dataArray.dataSize, opts, errorCode);
+    if (nativeImageSource == nullptr) {
+        HiLog::Debug(LABEL, "ImageSourceCapiCreateFromData create failed:%{public}d", errorCode);
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageResource resource;
+    resource.type = ImageResourceType::IMAGE_RESOURCE_BUFFER;
+    resource.buffer = args->dataArray.data;
+    resource.bufferSize = args->dataArray.dataSize;
+    std::shared_ptr<ImageSource> imageSource = std::move(nativeImageSource);
+    if (imageSource == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreateFromData native create failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    args->outImgSrc = static_cast<void*>(imageSource.get());
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromData success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiCreateFromRawFile(struct ImageSourceArgsCapi* args)
+{
+    if (args == nullptr || !isValidRawFile(args->rawFile)) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    SourceOptions opts;
+    if (args->sourceOps != nullptr) {
+        ParseImageSourceOps(opts, args->sourceOps);
+    }
+    RawFileDescriptor rawFile = args->rawFile;
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromRawFile");
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    int32_t rawFileLength = rawFile.start + rawFile.length;
+    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(
+        rawFile.fd, rawFile.start, rawFileLength, opts, errorCode);
+    if (nativeImageSource == nullptr) {
+        HiLog::Debug(LABEL, "ImageSourceCapiCreateFromRawFile create failed:%{public}d", errorCode);
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageResource resource;
+    resource.type = ImageResourceType::IMAGE_RESOURCE_RAW_FILE;
+    resource.fd = rawFile.fd;
+    resource.fileStart = rawFile.start;
+    resource.fileLength = rawFileLength;
+    std::shared_ptr<ImageSource> imageSource = std::move(nativeImageSource);
+    if (imageSource == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreateFromRawFile native create failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    args->outImgSrc = static_cast<void*>(imageSource.get());
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateFromRawFile success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiCreateIncremental(struct ImageSourceArgsCapi* args)
+{
+    if (args == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreateIncremental args or env is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    IncrementalSourceOptions incOpts;
+    if (args->sourceOps != nullptr) {
+        HiLog::Debug(LABEL, "ImageSourceNapiCreate ParseImageSourceOps");
+        ParseImageSourceOps(incOpts.sourceOptions, args->sourceOps);
+    }
+    incOpts.incrementalMode = IncrementalMode::INCREMENTAL_DATA;
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateIncrementalImageSource(incOpts, errorCode);
+    if (imageSource == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreateIncremental native imagesource failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    if (args->dataArray.data != nullptr && args->dataArray.dataSize > SIZE_ZERO) {
+        HiLog::Debug(LABEL, "ImageSourceCapiCreateIncremental update dataArray");
+        imageSource->UpdateData(args->dataArray.data, args->dataArray.dataSize, false);
+    }
+    std::shared_ptr<ImageSource> imageSourceShared = std::move(imageSource);
+    args->outImgSrc = static_cast<void*>(imageSourceShared.get());
+    HiLog::Debug(LABEL, "ImageSourceCapiCreateIncremental success");
+    return IMAGE_RESULT_SUCCESS;
+}
+static int32_t ImageSourceCapiGetSupportedFormats(struct ImageSourceArgsCapi* args)
+{
+    if (args == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetSupportedFormats args is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto formats = args->outFormats;
+    if (formats == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetSupportedFormats args is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    std::set<std::string> formatSet;
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    uint32_t errorCode = imgSrc->GetSupportedFormats(formatSet);
+    if (errorCode != SUCCESS) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetSupportedFormats native failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+
+    size_t formatCount = formatSet.size();
+    if (formats->supportedFormatList == nullptr) {
+        formats->size = formatCount;
+        HiLog::Debug(LABEL, "ImageSourceCapiGetSupportedFormats get count only Success");
+        return IMAGE_RESULT_SUCCESS;
+    } else {
+        formatCount = formats->size;
+    }
+
+    auto formatList = formats->supportedFormatList;
+    size_t i = 0;
+    for (const std::string& formatStr: formatSet) {
+        if (i >= formatCount) {
+            break;
+        }
+        if (formatList[i] == nullptr || formatList[i]->format == nullptr) {
+            HiLog::Debug(LABEL, "ImageSourceCapiGetSupportedFormats nullptr format out buffer");
+            return IMAGE_RESULT_BAD_PARAMETER;
+        }
+        memcpy_s(formatList[i]->format, formatList[i]->size, formatStr.c_str(), formatStr.size());
+        if (formatList[i]->size > formatStr.size()) {
+            formatList[i]->size = formatStr.size();
+        }
+        i++;
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiGetSupportedFormats Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiGetDelayTime(struct ImageSourceArgsCapi* args) __attribute__((no_sanitize("cfi")))
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr || args->outDelayTimes == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetDelayTime imageSource or out is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto outDelayTimes = args->outDelayTimes;
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    auto delayTimes = imgSrc->GetDelayTime(errorCode);
+    if (delayTimes == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetDelayTime imgSrc failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    size_t actCount = (*delayTimes).size();
+    if (outDelayTimes->delayTimeList == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetDelayTime get times count only");
+        outDelayTimes->size = actCount;
+        return IMAGE_RESULT_SUCCESS;
+    }
+    if (actCount > outDelayTimes->size) {
+        actCount = outDelayTimes->size;
+    }
+    for (size_t i = SIZE_ZERO; i < actCount; i++) {
+        outDelayTimes->delayTimeList[i] = (*delayTimes)[i];
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiGetDelayTime Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiGetImageInfo(struct ImageSourceArgsCapi* args)
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetImageInfo imgSrc is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto imageSourceInfo = args->outInfo;
+    if (imageSourceInfo == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetImageInfo image info is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImageInfo imageInfo;
+    uint32_t errorCode = imgSrc->GetImageInfo(args->inInt32, imageInfo);
+    if (errorCode != SUCCESS) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetImageInfo imgSrc failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ParseImageSourceInfo(imageSourceInfo, imageInfo);
+    HiLog::Debug(LABEL, "ImageSourceCapiGetImageInfo Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiGetImageProperty(
+    struct ImageSourceArgsCapi* args) __attribute__((no_sanitize("cfi")))
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetImageProperty imgSrc is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto propertyKey = args->inPropertyKey;
+    auto propertyVal = args->propertyVal;
+    if (propertyKey == nullptr || propertyKey->value == nullptr || propertyKey->size == SIZE_ZERO) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetImageProperty key is empty");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    if (propertyVal == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetImageProperty out val is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    std::string key(propertyKey->value, propertyKey->size);
+    std::string val;
+    uint32_t errorCode = imgSrc->GetImagePropertyString(DEFAULT_INDEX, key, val);
+    if (errorCode != SUCCESS || val.empty()) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetImageProperty imgSrc failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    if (propertyVal->value == nullptr) {
+        HiLog::Debug(LABEL, "ImageSourceCapiGetImageProperty return size only");
+        propertyVal->size = val.size();
+        return IMAGE_RESULT_SUCCESS;
+    }
+    memcpy_s(propertyVal->value, propertyVal->size, val.c_str(), val.size());
+    if (propertyVal->size > val.size()) {
+        propertyVal->size = val.size();
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiGetImageProperty Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static uint32_t CapiPropertyModify(ImageSource* imgSrc, ImageResource_* imageResource,
+    std::string &key, std::string &val)
+{
+    auto type = imageResource->type;
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    if (type == ImageResourceType_::IMAGE_RESOURCE_INVAILD) {
+        HiLog::Error(LABEL, "CapiPropertyModify resource is invaild");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    } else if (type == ImageResourceType_::IMAGE_RESOURCE_FD && imageResource->fd != INVALID_FD) {
+        HiLog::Debug(LABEL, "CapiPropertyModify fd resource");
+        errorCode = imgSrc->ModifyImageProperty(DEFAULT_INDEX, key, val, imageResource->fd);
+    } else if (type == ImageResourceType_::IMAGE_RESOURCE_PATH && !imageResource->path.empty()) {
+        HiLog::Debug(LABEL, "CapiPropertyModify path resource");
+        errorCode = imgSrc->ModifyImageProperty(DEFAULT_INDEX, key, val, imageResource->path);
+    } else if (type == ImageResourceType_::IMAGE_RESOURCE_BUFFER &&
+        imageResource->buffer != nullptr && imageResource->bufferSize > SIZE_ZERO) {
+        HiLog::Debug(LABEL, "CapiPropertyModify buffer resource");
+        errorCode = imgSrc->ModifyImageProperty(DEFAULT_INDEX, key, val,
+            imageResource->buffer, imageResource->bufferSize);
+    } else {
+        HiLog::Error(LABEL, "CapiPropertyModify %{public}d resource error", type);
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    if (errorCode == SUCCESS) {
+        HiLog::Debug(LABEL, "CapiPropertyModify Success");
+        return IMAGE_RESULT_SUCCESS;
+    }
+    HiLog::Error(LABEL, "CapiPropertyModify imgSrc failed");
+    return IMAGE_RESULT_BAD_PARAMETER;
+}
+
+static int32_t ImageSourceCapiModifyImageProperty(struct ImageSourceArgsCapi* args)
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiModifyImageProperty image is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto propertyKey = args->inPropertyKey;
+    auto propertyVal = args->propertyVal;
+    if (propertyKey == nullptr || propertyKey->value == nullptr || propertyKey->size == SIZE_ZERO) {
+        HiLog::Error(LABEL, "ImageSourceCapiModifyImageProperty key is empty");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    if (propertyVal == nullptr || propertyVal->value == nullptr || propertyVal->size == SIZE_ZERO) {
+        HiLog::Error(LABEL, "ImageSourceCapiModifyImageProperty val is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    std::string key(propertyKey->value, propertyKey->size);
+    std::string val(propertyVal->value, propertyVal->size);
+    auto imageResource = args->resource;
+    auto res = CapiPropertyModify(imgSrc, imageResource, key, val);
+    return res;
+}
+
+static int32_t ImageSourceCapiGetFrameCount(struct ImageSourceArgsCapi* args)
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr || args->outUint32 == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetFrameCount native image or out is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    *(args->outUint32) = imgSrc->GetFrameCount(errorCode);
+    if (errorCode != SUCCESS) {
+        HiLog::Error(LABEL, "ImageSourceCapiGetFrameCount native failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiGetFrameCount Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiUpdateData(struct ImageSourceArgsCapi* args)
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    if (imgSrc == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiUpdateData imgSrc image is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto data = args->inUpdateData;
+    if (data == nullptr || data->buffer == nullptr || data->bufferSize == SIZE_ZERO ||
+        data->offset >= data->bufferSize) {
+        HiLog::Error(LABEL, "ImageSourceCapiUpdateData update data is empty");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    uint32_t actSize = MathMin((data->bufferSize - data->offset), data->updateLength);
+    bool completed = data->isCompleted == INT8_TRUE;
+    uint32_t errCode = imgSrc->UpdateData((data->buffer + data->offset), actSize, completed);
+    if (errCode != SUCCESS) {
+        HiLog::Error(LABEL, "ImageSourceCapiUpdateData update imgSrc failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+
+    DecodeOptions decodeOpts;
+    uint32_t index = DEFAULT_INDEX;
+    if (args->decodingOps != nullptr) {
+        ParseDecodingOps(decodeOpts, args->decodingOps);
+        index = args->decodingOps->index;
+    }
+    std::unique_ptr<IncrementalPixelMap> incPixelMap = imgSrc->CreateIncrementalPixelMap(
+        index, decodeOpts, errorCode);
+    if (incPixelMap == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiUpdateData  incPixelMap failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }  
+ 
+    uint8_t tmpProgress = 0;
+    uint32_t errCodePro = incPixelMap->PromoteDecoding(tmpProgress);
+    if (completed) {
+        incPixelMap->DetachFromDecoding();
+    }
+    if (errCodePro != SUCCESS || (errCodePro == ERR_IMAGE_SOURCE_DATA_INCOMPLETE && !completed)) {
+        HiLog::Error(LABEL, "ImageSourceCapiUpdateData promote decoding failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+static int32_t ImageSourceCapiCreatePixelmap(struct ImageSourceArgsCapi* args)
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreatePixelmap args is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    DecodeOptions decOps;
+    uint32_t index = DEFAULT_INDEX;
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    if (args->decodingOps != nullptr) {
+        ParseDecodingOps(decOps, args->decodingOps);
+        index = args->decodingOps->index;
+    }
+    HiLog::Debug(LABEL, "ImageSourceCapiCreatePixelmap CreatePixelMapEx");
+    std::unique_ptr<PixelMap> tmpPixelmap = imgSrc->CreatePixelMapEx(index, decOps, errorCode);
+    if (tmpPixelmap == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreatePixelmap failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    std::shared_ptr<PixelMap> nativePixelMap = std::move(tmpPixelmap);
+    args->outPixMap = static_cast<void*>(nativePixelMap.get());
+    // args->outPixMap = nativePixelMap.get();
+    HiLog::Debug(LABEL, "ImageSourceCapiCreatePixelmap Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiCreatePixelmapList(struct ImageSourceArgsCapi* args)
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreatePixelmapList args or imgSrc is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    DecodeOptions decOps;
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    if (args->decodingOps != nullptr) {
+        ParseDecodingOps(decOps, args->decodingOps);
+    }
+    //unique_ptr<vector<unique_ptr<PixelMap>>>
+    auto pixelMapList = imgSrc->CreatePixelMapList(decOps, errorCode);
+    if (pixelMapList == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiCreatePixelmapList CreatePixelMapList failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    uint32_t index = 0;
+    for (auto &item : *pixelMapList) {
+        std::shared_ptr<PixelMap> tempPixMap = std::move(item);
+        args->outVecPixMap[index] = static_cast<void*>(tempPixMap.get());
+        index ++;
+    }
+    *(args->outSize) = index;
+    HiLog::Debug(LABEL, "ImageSourceCapiCreatePixelmapList Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageSourceCapiRelease(struct ImageSourceArgsCapi* args)
+{
+    ImageSource* imgSrc = static_cast<ImageSource*>(args->inImgSrc);
+    if (imgSrc == nullptr) {
+        HiLog::Error(LABEL, "ImageSourceCapiRelease args or imgSrc is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    imgSrc->~ImageSource();
+    HiLog::Debug(LABEL, "ImageSourceCapiRelease Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static const std::map<int32_t, ImageSourceCapiFunc> g_FunctionsCapi = {
+    {CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_URI, ImageSourceCapiCreateFromUri},
+    {CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_FD, ImageSourceCapiCreateFromFd},
+    {CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_DATA, ImageSourceCapiCreateFromData},
+    {CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_RAW_FILE, ImageSourceCapiCreateFromRawFile},
+    {CAPI_FUNC_IMAGE_SOURCE_CREATE_INCREMENTAL, ImageSourceCapiCreateIncremental},
+    {CAPI_FUNC_IMAGE_SOURCE_GET_SUPPORTED_FORMATS, ImageSourceCapiGetSupportedFormats},
+    {CAPI_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP, ImageSourceCapiCreatePixelmap},
+    {CAPI_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP_LIST, ImageSourceCapiCreatePixelmapList},
+    {CAPI_FUNC_IMAGE_SOURCE_GET_DELAY_TIME, ImageSourceCapiGetDelayTime},
+    {CAPI_FUNC_IMAGE_SOURCE_GET_FRAME_COUNT, ImageSourceCapiGetFrameCount},
+    {CAPI_FUNC_IMAGE_SOURCE_GET_IMAGE_INFO, ImageSourceCapiGetImageInfo},
+    {CAPI_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY, ImageSourceCapiGetImageProperty},
+    {CAPI_FUNC_IMAGE_SOURCE_MODIFY_IMAGE_PROPERTY, ImageSourceCapiModifyImageProperty},
+    {CAPI_FUNC_IMAGE_SOURCE_UPDATE_DATA, ImageSourceCapiUpdateData},
+    {CAPI_FUNC_IMAGE_SOURCE_UPDATE_RELEASE, ImageSourceCapiRelease}
+};
+
 MIDK_EXPORT
 int32_t ImageSourceNativeCall(int32_t mode, struct ImageSourceArgs* args)
 {
@@ -756,6 +1255,19 @@ int32_t ImageSourceNativeCall(int32_t mode, struct ImageSourceArgs* args)
     }
     return funcSearch->second(args);
 }
+
+MIDK_EXPORT
+int32_t ImageSourceCapiCall(int32_t mode, struct ImageSourceArgsCapi* args)
+{
+    auto funcSearch = g_FunctionsCapi.find(mode);
+    if (funcSearch == g_FunctionsCapi.end()) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return funcSearch->second(args);
+}
+
+/** ImageSource Capi */
+
 #ifdef __cplusplus
 };
 #endif
