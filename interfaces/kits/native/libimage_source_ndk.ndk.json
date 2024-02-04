@@ -58,5 +58,55 @@
     {
         "first_introduced": "11",
         "name": "OH_ImageSource_CreateIncrementalFromData"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageSourceCapi_CreateFromUri"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageSourceCapi_CreateFromFd"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageSourceCapi_CreateFromData"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageSourceCapi_CreateFromRawFile"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImageSourceCapi_CreateIncremental"
+    },
+    {
+        "name": "OH_ImageSourceCapi_UpdateData"
+    },
+    {
+        "name": "OH_ImageSourceCapi_CreatePixelMap"
+    },
+    {
+        "name": "OH_ImageSourceCapi_CreatePixelMapList"
+    },
+    {
+        "name": "OH_ImageSourceCapi_GetSupportedFormats"
+    },
+    {
+        "name": "OH_ImageSourceCapi_GetDelayTime"
+    },
+    {
+        "name": "OH_ImageSourceCapi_GetImageInfo"
+    },
+    {
+        "name": "OH_ImageSourceCapi_GetImageProperty"
+    },
+    {
+        "name": "OH_ImageSourceCapi_ModifyImageProperty"
+    },
+    {
+        "name": "OH_ImageSourceCapi_GetFrameCount"
+    },
+    {
+        "name": "OH_ImageSourceCapi_Release"
     }
 ]

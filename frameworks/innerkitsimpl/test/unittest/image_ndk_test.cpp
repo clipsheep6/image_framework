@@ -584,5 +584,507 @@ HWTEST_F(ImageNdkTest, OH_ImageSource_InitNativeTest, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSource_InitNativeTest end";
 }
+
+/* ImageSource Capi Test*/
+
+/**
+ * @tc.name: OH_ImageSourceCapi_CreateFromUriTest
+ * @tc.desc: OH_ImageSourceCapi_CreateFromUri
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_CreateFromUriTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromUriTest start";
+    void* res = nullptr;
+    char* uri = nullptr;
+    size_t size = 0;
+    OhosImageSourceOps* ops= nullptr;
+    int32_t ret = OH_ImageSourceCapi_CreateFromUri(uri, size, ops, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromUriTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_CreateFromFdTest
+ * @tc.desc: OH_ImageSourceCapi_CreateFromFd
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_CreateFromFdTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromFdTest start";
+    void* res = nullptr;
+    int32_t fd = -1;
+    OhosImageSourceOps* ops= nullptr;
+    int32_t ret = OH_ImageSourceCapi_CreateFromFd(fd, ops, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromFdTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_CreateFromDataTest
+ * @tc.desc: OH_ImageSourceCapi_CreateFromData
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_CreateFromDataTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromDataTest start";
+    void* res = nullptr;
+    uint8_t* data = nullptr;
+    size_t dataSize = 0;
+    OhosImageSourceOps* ops= nullptr;
+    int32_t ret = OH_ImageSourceCapi_CreateFromData(data, dataSize, ops, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromDataTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_CreateFromRawFileTest
+ * @tc.desc: OH_ImageSourceCapi_CreateFromRawFile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_CreateFromRawFileTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromRawFileTest start";
+    void* res = nullptr;
+    RawFileDescriptor rawFile;
+    rawFile.fd = -1;
+    rawFile.start = 0;
+    rawFile.length = 0;
+    OhosImageSourceOps* ops= nullptr;
+    int32_t ret = OH_ImageSourceCapi_CreateFromRawFile(rawFile, ops, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateFromRawFileTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_CreateIncrementalTest
+ * @tc.desc: OH_ImageSourceCapi_CreateIncremental
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_CreateIncrementalTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateIncrementalTest start";
+    void* res = nullptr;
+    OhosImageSource* src = nullptr;
+    OhosImageSourceOps* ops= nullptr;
+    int32_t ret = OH_ImageSourceCapi_CreateIncremental(src, ops, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreateIncrementalTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_GetSupportedFormatsTest
+ * @tc.desc: OH_ImageSourceCapi_GetSupportedFormats
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_GetSupportedFormatsTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetSupportedFormatsTest start";
+    void* imgSrc = nullptr;
+    OhosImageSourceSupportedFormatList* res = nullptr;
+    int32_t ret = OH_ImageSourceCapi_GetSupportedFormats(imgSrc,res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetSupportedFormatsTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_CreatePixelMapTest
+ * @tc.desc: OH_ImageSourceCapi_CreatePixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_CreatePixelMapTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreatePixelMapTest start";
+    void* imgSrc = nullptr;
+    OhosImageDecodingOps* ops = nullptr;
+    void* res = nullptr;
+    int32_t ret = OH_ImageSourceCapi_CreatePixelMap(imgSrc, ops, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreatePixelMapTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_CreatePixelMapListTest
+ * @tc.desc: OH_ImageSourceCapi_CreatePixelMapList
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_CreatePixelMapListTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreatePixelMapListTest start";
+    void* imgSrc = nullptr;
+    OhosImageDecodingOps* ops = nullptr;
+    void* res[] = nullptr;
+    int32_t ret = OH_ImageSourceCapi_CreatePixelMapList(imgSrc, ops, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_CreatePixelMapListTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_GetDelayTimeTest
+ * @tc.desc: OH_ImageSourceCapi_GetDelayTime
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_GetDelayTimeTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetDelayTimeTest start";
+    void* imgSrc = nullptr;
+    OhosImageSourceDelayTimeList* res = nullptr;
+    int32_t ret = OH_ImageSourceCapi_GetDelayTime(imgSrc, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetDelayTimeTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_GetFrameCountTest
+ * @tc.desc: OH_ImageSourceCapi_GetFrameCount
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_GetFrameCountTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetFrameCountTest start";
+    void* imgSrc = nullptr;
+    uint32_t *res = nullptr;
+    int32_t ret = OH_ImageSourceCapi_GetFrameCount(imgSrc, res);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetFrameCountTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_GetImageInfoTest
+ * @tc.desc: OH_ImageSourceCapi_GetImageInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_GetImageInfoTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetImageInfoTest start";
+    void* imgSrc = nullptr;
+    int32_t index = 0;
+    OhosImageSourceInfo* info = nullptr;
+    int32_t ret = OH_ImageSourceCapi_GetImageInfo(imgSrc, index, info);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetImageInfoTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_GetImagePropertyTest
+ * @tc.desc: OH_ImageSourceCapi_GetImageProperty
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_GetImagePropertyTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetImagePropertyTest start";
+    void* imgSrc = nullptr;
+    OhosImageSourceProperty* key = nullptr;
+    OhosImageSourceProperty* value = nullptr;
+    int32_t ret = OH_ImageSourceCapi_GetImageProperty(imgSrc, key, value);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_GetImagePropertyTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_ModifyImagePropertyTest
+ * @tc.desc: OH_ImageSourceCapi_ModifyImageProperty
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_ModifyImagePropertyTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_ModifyImagePropertyTest start";
+    void* imgSrc = nullptr;
+    ImageResource_* imgResource = nullptr;
+    OhosImageSourceProperty* key = nullptr;
+    OhosImageSourceProperty* value = nullptr;
+    int32_t ret = OH_ImageSourceCapi_ModifyImageProperty(imgSrc, imgResource, key, value);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_ModifyImagePropertyTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_UpdateDataTest
+ * @tc.desc: OH_ImageSourceCapi_UpdateData
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_UpdateDataTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_UpdateDataTest start";
+    void* imgSrc = nullptr;
+    OhosImageDecodingOps* decOption = nullptr;
+    OhosImageSourceUpdateData* data = nullptr;
+    int32_t ret = OH_ImageSourceCapi_UpdateData(imgSrc, decOption, data);
+    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_UpdateDataTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSourceCapi_ReleaseTest
+ * @tc.desc: OH_ImageSourceCapi_Release
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_ImageSourceCapi_ReleaseTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_ReleaseTest start";
+    void* imgSrc = nullptr;
+    int32_t ret = OH_ImageSourceCapi_Release(imgSrc);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSourceCapi_ReleaseTest end";
+}
+
+/* ImageSource Capi Test*/
+
+/* JS and C convert Func Test*/
+
+/**
+ * @tc.name: OH_Image_JsToC_Int32Test
+ * @tc.desc: OH_Image_JsToC_Int32
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_Int32Test, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Int32Test start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    int32_t out;
+    int32_t  ret = OH_Image_JsToC_Int32(env, jsValue, &out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Int32Test end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_Uint32Test
+ * @tc.desc: OH_Image_JsToC_Uint32
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_Uint32, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Uint32 start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    int32_t out;
+    int32_t  ret = OH_Image_JsToC_Uint32(env, jsValue, &out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Uint32 end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_Int64Test
+ * @tc.desc: OH_Image_JsToC_Int64
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_Int64Test, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Int64Test start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    int32_t out;
+    int32_t  ret = OH_Image_JsToC_Int64(env, jsValue, &out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Int64Test end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_Uint64Test
+ * @tc.desc: OH_Image_JsToC_Uint64
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_Uint64Test, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Uint64Test start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    int32_t out;
+    int32_t  ret = OH_Image_JsToC_Uint64(env, jsValue, &out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_Uint64Test end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_BoolTest
+ * @tc.desc: OH_Image_JsToC_Bool
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_BoolTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_BoolTest start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    int32_t out;
+    int32_t  ret = OH_Image_JsToC_Bool(env, jsValue, &out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_BoolTest end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_CharStr_Utf8Test
+ * @tc.desc: OH_Image_JsToC_CharStr_Utf8
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_CharStr_Utf8Test, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_CharStr_Utf8Test start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    char* out = nullptr;
+    int32_t  ret = OH_Image_JsToC_CharStr_Utf8(env, jsValue, out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_CharStr_Utf8Test end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_BufferUint8Test
+ * @tc.desc: OH_Image_JsToC_BufferUint8
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_BufferUint8Test, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_BufferUint8Test start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    uint8_t* out = nullptr;
+    size_t outLen;
+    int32_t  ret = OH_Image_JsToC_BufferUint8(env, jsValue, out, &outLen);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_BufferUint8Test end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_ImageSourceTest
+ * @tc.desc: OH_Image_JsToC_ImageSource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_ImageSourceTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_ImageSourceTest start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    void* out = nullptr;
+    int32_t  ret = OH_Image_JsToC_ImageSource(env, jsValue, out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_ImageSourceTest end";
+}
+
+/**
+ * @tc.name: OH_Image_JsToC_PixelMapTest
+ * @tc.desc: OH_Image_JsToC_PixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_JsToC_PixelMapTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_PixelMapTest start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    void* out = nullptr;
+    int32_t  ret = OH_Image_JsToC_PixelMap(env, jsValue, out);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_JsToC_PixelMapTest end";
+}
+
+/**
+ * @tc.name: OH_Image_CToJs_NumberIntTest
+ * @tc.desc: OH_Image_CToJs_NumberInt
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_CToJs_NumberIntTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_NumberIntTest start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    int32_t in ;
+    int32_t  ret = OH_Image_CToJs_NumberInt(env, in, jsValue);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_NumberIntTest end";
+}
+
+/**
+ * @tc.name: OH_Image_CToJs_String_Utf8Test
+ * @tc.desc: OH_Image_CToJs_String_Utf8
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_CToJs_String_Utf8Test, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_String_Utf8Test start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    std::string in = "";
+    int32_t  ret = OH_Image_CToJs_String_Utf8(env, in, jsValue);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_String_Utf8Test end";
+}
+
+/**
+ * @tc.name: OH_Image_CToJs_ObjImageSourceTest
+ * @tc.desc: OH_Image_CToJs_ObjImageSource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_CToJs_ObjImageSourceTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_ObjImageSourceTest start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    void* in = nullptr;
+    int32_t  ret = OH_Image_CToJs_ObjImageSource(env, jsValue, in);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_ObjImageSourceTest end";
+}
+
+/**
+ * @tc.name: OH_Image_CToJs_ObjPixelMapTest
+ * @tc.desc: OH_Image_CToJs_ObjPixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_CToJs_ObjPixelMapTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_ObjPixelMapTest start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    void* in = nullptr;
+    int32_t  ret = OH_Image_CToJs_ObjPixelMap(env, jsValue, in);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_ObjPixelMapTest end";
+}
+
+/**
+ * @tc.name: OH_Image_CToJs_ObjPixelMapListTest
+ * @tc.desc: OH_Image_CToJs_ObjPixelMapList
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageNdkTest, OH_Image_CToJs_ObjPixelMapListTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_ObjPixelMapListTest start";
+    napi_env env = nullptr;
+    napi_value jsValue = nullptr;
+    void* in[] = nullptr;
+    int32_t  ret = OH_Image_CToJs_ObjPixelMapList(env, jsValue, in);
+    ASSERT_EQ(ret, OHOS_IMAGE_RESULT_SUCCESS);
+
+    GTEST_LOG_(INFO) << "ImageNdkTest: OH_Image_CToJs_ObjPixelMapListTest end";
+}
+/* JS and C convert Func Test*/
 }
 }
