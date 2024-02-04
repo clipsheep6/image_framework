@@ -1283,6 +1283,68 @@ HWTEST_F(PluginLibJpegTest, CreateExifEntry0013, TestSize.Level3)
 }
 
 /**
+ * @tc.name: CreateExifEntry014
+ * @tc.desc: CreateExifEntry
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, CreateExifEntry014, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: CreateExifEntry014 start";
+    EXIFInfo exinfo;
+    ExifEntry *ptrEntry = nullptr;
+    ExifData *data;
+    FILE *file = fopen("/data/local/tmp/image/test_exif.jpg", "rb+");
+    ASSERT_NE(file, nullptr);
+    unsigned long fileLength = exinfo.GetFileSize(file);
+    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
+    bool isNewExifData = false;
+    (void)fseek(file, 0L, 0);
+    int ret = fread(fileBuf, fileLength, 1, file);
+    ASSERT_EQ(ret, 1);
+    exinfo.CreateExifData(fileBuf, fileLength, &ptrExifData, isNewExifData);
+    ExifByteOrder order = exinfo.GetExifByteOrder(isNewExifData, fileBuf);
+    ExifEntry *entry = nullptr;
+    const std::string value = "10,12,59.1234567";
+    bool ret = exinfo.CreateExifEntry(EXIF_TAG_GPS_LATITUDE, ptrExifData, value, order, &entry);
+    ASSERT_EQ(ret, true);
+    free(fileBuf);
+    fileBuf = nullptr;
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: CreateExifEntry014 end";
+}
+
+/**
+ * @tc.name: CreateExifEntry015
+ * @tc.desc: CreateExifEntry
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginLibJpegTest, CreateExifEntry015, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: CreateExifEntry015 start";
+    EXIFInfo exinfo;
+    ExifEntry *ptrEntry = nullptr;
+    ExifData *data;
+    FILE *file = fopen("/data/local/tmp/image/test_exif.jpg", "rb+");
+    ASSERT_NE(file, nullptr);
+    unsigned long fileLength = exinfo.GetFileSize(file);
+    unsigned char *fileBuf = static_cast<unsigned char *>(malloc(fileLength));
+    bool isNewExifData = false;
+    (void)fseek(file, 0L, 0);
+    int ret = fread(fileBuf, fileLength, 1, file);
+    ASSERT_EQ(ret, 1);
+    exinfo.CreateExifData(fileBuf, fileLength, &ptrExifData, isNewExifData);
+    ExifByteOrder order = exinfo.GetExifByteOrder(isNewExifData, fileBuf);
+    ExifEntry *entry = nullptr;
+
+    // Latitude over 90.0, create failed
+    const std::string value = "100,12,59.1234567";
+    bool ret = exinfo.CreateExifEntry(EXIF_TAG_GPS_LATITUDE, ptrExifData, value, order, &entry);
+    ASSERT_EQ(ret, false);
+    free(fileBuf);
+    fileBuf = nullptr;
+    GTEST_LOG_(INFO) << "PluginLibJpegTest: CreateExifEntry015 end";
+}
+
+/**
  * @tc.name: SetDEDataByteCount001
  * @tc.desc: SetDEDataByteCount
  * @tc.type: FUNC

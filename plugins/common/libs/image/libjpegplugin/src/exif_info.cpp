@@ -57,7 +57,7 @@ namespace {
     static constexpr int CONSTANT_3 = 3;
     static constexpr int CONSTANT_4 = 4;
     static constexpr unsigned long MAX_FILE_SIZE = 1000 * 1000 * 1000;
-    static constexpr unsigned long GPS_DIGIT_NUMBER = 1e6;
+    static constexpr unsigned long GPS_DIGIT_NUMBER = 1e7;
     static constexpr uint32_t GPS_DMS_COUNT = 3;
     static constexpr double GPS_MAX_LATITUDE = 90.0;
     static constexpr double GPS_MIN_LATITUDE = 0.0;
@@ -1186,12 +1186,12 @@ static bool ConvertGpsDataToRationals(const std::vector<std::string> &dataVec,
     ConvertStringToDouble(dataVec[CONSTANT_2], secondDouble);
     int32_t second = static_cast<int32_t>(secondDouble * GPS_DIGIT_NUMBER);
 
-    exifRationals[CONSTANT_0].numerator = static_cast<ExifSLong>(degree);
-    exifRationals[CONSTANT_0].denominator = static_cast<ExifSLong>(1);
-    exifRationals[CONSTANT_1].numerator = static_cast<ExifSLong>(minute);
-    exifRationals[CONSTANT_1].denominator = static_cast<ExifSLong>(1);
-    exifRationals[CONSTANT_2].numerator = static_cast<ExifSLong>(second);
-    exifRationals[CONSTANT_2].denominator = static_cast<ExifSLong>(GPS_DIGIT_NUMBER);
+    exifRationals[CONSTANT_0].numerator = static_cast<ExifLong>(degree);
+    exifRationals[CONSTANT_0].denominator = static_cast<ExifLong>(1);
+    exifRationals[CONSTANT_1].numerator = static_cast<ExifLong>(minute);
+    exifRationals[CONSTANT_1].denominator = static_cast<ExifLong>(1);
+    exifRationals[CONSTANT_2].numerator = static_cast<ExifLong>(second);
+    exifRationals[CONSTANT_2].denominator = static_cast<ExifLong>(GPS_DIGIT_NUMBER);
     return true;
 }
 
