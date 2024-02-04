@@ -169,7 +169,7 @@ public:
                                                           uint32_t &errorCode);
     NATIVEEXPORT std::unique_ptr<IncrementalPixelMap> CreateIncrementalPixelMap(uint32_t index,
                                                                                 const DecodeOptions &opts,
-                                                                                uint32_t &errorCode);
+                                                                                uint32_t &errorCode);                                                                           
     // for incremental source.
     NATIVEEXPORT uint32_t UpdateData(const uint8_t *data, uint32_t size, bool isCompleted);
     // for obtaining basic image information without decoding image data.
@@ -201,6 +201,8 @@ public:
         uint32_t &errorCode);
     NATIVEEXPORT std::unique_ptr<std::vector<int32_t>> GetDelayTime(uint32_t &errorCode);
     NATIVEEXPORT uint32_t GetFrameCount(uint32_t &errorCode);
+    NATIVEEXPORT std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
+                                                                        PixelMapAddrInfos &addrInfos);
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
@@ -261,6 +263,7 @@ private:
                                                      uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
+
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
     const std::string NINE_PATCH = "ninepatch";

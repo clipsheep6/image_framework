@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include "image_mdk_common.h"
+#include "pixel_map_napi.h"
 #include "common_utils.h"
 #include "hilog/log.h"
 #include "log_tags.h"
@@ -28,6 +29,9 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_TAG_DOMAIN_I
 
 using ImageConvertFunc = int32_t(*)(ImageFormatConvertArgs*);
 static std::unique_ptr<ImageFormatConvert> g_nativeImgFmtCvt = nullptr;
+static std::shared_ptr<PixelMap> g_srcPixelMap = nullptr;
+static std::shared_ptr<PixelMap> g_destPixelMap = nullptr;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -75,7 +79,7 @@ static int32_t CreateImageConvertNative(ImageFormatConvertArgs *args)
         g_nativeImgFmtCvt = std::make_unique<ImageFormatConvert>();
     } else {
         if (args->srcPixelMap == nullptr) {
-            HiLog::Error(LABEL, "parameter is invalid");
+            IMAGE_LOGD("parameter is invalid");
             return IMAGE_RESULT_INVALID_PARAMETER;
         }
         std::shared_ptr<PixelMap> srcPixelMap = nullptr;
@@ -84,7 +88,7 @@ static int32_t CreateImageConvertNative(ImageFormatConvertArgs *args)
     }
 
     if (g_nativeImgFmtCvt == nullptr) {
-        HiLog::Error(LABEL, "create image format convert failed!");
+        IMAGE_LOGD("create image format convert failed!");
         return IMAGE_RESULT_CREATE_FORMAT_CONVERT_FAILED;
     }
 
@@ -94,36 +98,36 @@ static int32_t CreateImageConvertNative(ImageFormatConvertArgs *args)
 static int32_t ImageConvertExec(ImageFormatConvertArgs *args)
 {
     if (args == nullptr || args->srcPixelMap == nullptr) {
-        HiLog::Error(LABEL, "parameter is invalid!");
+        IMAGE_LOGD("parameter is invalid!");
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     if (g_nativeImgFmtCvt == nullptr) {
-        HiLog::Error(LABEL, "native image format convert is null");
+        IMAGE_LOGD("native image format convert is null");
         return IMAGE_RESULT_MEDIA_NULL_POINTER;
     }
 
     PixelFormat srcPixelFormat = args->srcPixelMap->GetPixelFormat();
     if (!IsMatchType(args->srcFormatType, srcPixelFormat) ||
         !IsMatchType(args->destFormatType, args->destPixelFormat)) {
-        HiLog::Error(LABEL, "format mismatch");
+        IMAGE_LOGD("format mismatch");
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
 
     if (!g_nativeImgFmtCvt->SetDestinationFormat(args->destPixelFormat)) {
-        HiLog::Error(LABEL, "set destination pixel format failed!");
+        IMAGE_LOGD("set destination pixel format failed!");
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
     std::shared_ptr<PixelMap> srcPixelMap = nullptr;
     srcPixelMap.reset(args->srcPixelMap);
     if (!g_nativeImgFmtCvt->SetSourcePixelMap(srcPixelMap)) {
-        HiLog::Error(LABEL, "set source pixel map failed!");
+        IMAGE_LOGD("set source pixel map failed!");
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
     std::unique_ptr<PixelMap> destPixelMap = nullptr;
     uint32_t ret = g_nativeImgFmtCvt->ConvertImageFormat(destPixelMap);
     if (ret != IMAGE_RESULT_SUCCESS) {
-        HiLog::Error(LABEL, "fail to convert format");
+        IMAGE_LOGD("fail to convert format");
         return ret;
     }
     args->destPixelMap = destPixelMap.get();
@@ -140,10 +144,45 @@ static int32_t ImageConvertRelease(ImageFormatConvertArgs *args)
     return IMAGE_RESULT_SUCCESS;
 }
 
+static int32_t ImageConvertJsToCPixelMap(ImageFormatConvertArgs *args)
+{
+    if (args == nullptr) {
+        IMAGE_LOGE("parameter is invalid!");
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
+
+    g_srcPixelMap = PixelMapNapi::GetPixelMap(args->env, args->pixelMapValue);
+    if (g_srcPixelMap == nullptr) {
+        return IMAGE_RESULT_MEDIA_NULL_POINTER;
+    }
+    args->srcPixelMap = g_srcPixelMap.get();
+    return IMAGE_RESULT_SUCCESS;
+}
+
+static int32_t ImageConvertCToJsPixelMap(ImageFormatConvertArgs *args)
+{
+    if (args == nullptr || args->destPixelMap == nullptr || args->result == nullptr) {
+        IMAGE_LOGE("parameter is invalid!");
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
+
+    napi_get_undefined(args->env, args->result);
+    g_destPixelMap.reset(args->destPixelMap);
+    *(args->result) = PixelMapNapi::CreatePixelMap(args->env, g_destPixelMap);
+    napi_valuetype valueType;
+    napi_typeof(args->env, *(args->result), &valueType);
+    if (valueType != napi_object) {
+        return IMAGE_RESULT_MEDIA_JNI_NEW_OBJ_FAILED;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
 static const std::map<int32_t, ImageConvertFunc> g_Functions = {
     {CTX_FUNC_IMAGE_CONVERT_CREATE, CreateImageConvertNative},
     {CTX_FUNC_IMAGE_CONVERT_EXEC, ImageConvertExec},
-    {CTX_FUNC_IMAGE_CONVERT_RELEASE, ImageConvertRelease}
+    {CTX_FUNC_IMAGE_CONVERT_RELEASE, ImageConvertRelease},
+    {CTX_FUNC_IMAGE_CONVERT_JS_TO_C_PIXEL_MAP, ImageConvertJsToCPixelMap},
+    {CTX_FUNC_IMAGE_CONVERT_C_TO_JS_PIXEL_MAP, ImageConvertCToJsPixelMap}
 };
 
 MIDK_EXPORT

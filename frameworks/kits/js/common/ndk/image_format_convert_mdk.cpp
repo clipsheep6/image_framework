@@ -33,45 +33,78 @@ int32_t OH_ImageConvert_Create()
 }
 
 MIDK_EXPORT
-int32_t OH_ImageConvert_YuvToRgb(PixelMap *srcPixelMap, PixelMap **destPixelMap, PixelFormat destPixelFormat)
+int32_t OH_ImageConvert_YuvToRgb(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat)
 {
-    if (destPixelMap == nullptr) {
+    if (destPixelMap == nullptr || destPixelMap == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
     ImageFormatConvertArgs args;
-    args.srcPixelMap = srcPixelMap;
+    args.srcPixelMap = static_cast<PixelMap*>(srcPixelMap);
     args.srcFormatType = YUV_TYPE;
-    args.destPixelFormat = destPixelFormat;
-    args.destPixelMap = *destPixelMap;
+    args.destPixelFormat = PixelFormat(destPixelFormat);
     args.destFormatType = RGB_TYPE;
     
     int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_EXEC, &args);
+    if (ret == IMAGE_RESULT_SUCCESS) {
+        *destPixelMap = args.destPixelMap;
+    }
     return ret;
 }
 
 MIDK_EXPORT
-int32_t OH_ImageConvert_RGBToYUV(PixelMap *srcPixelMap, PixelMap **destPixelMap, PixelFormat destPixelFormat)
+int32_t OH_ImageConvert_RgbToYuv(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat)
 {
     if (destPixelMap == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
     ImageFormatConvertArgs args;
-    args.srcPixelMap = srcPixelMap;
+    args.srcPixelMap = static_cast<PixelMap*>(srcPixelMap);
     args.srcFormatType = RGB_TYPE;
-    args.destPixelFormat = destPixelFormat;
-    args.destPixelMap = *destPixelMap;
+    args.destPixelFormat = PixelFormat(destPixelFormat);
     args.destFormatType = YUV_TYPE;
     
     int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_EXEC, &args);
+    if (ret == IMAGE_RESULT_SUCCESS) {
+        *destPixelMap = args.destPixelMap;
+    }
     return ret;
 }
 
 MIDK_EXPORT
 int32_t OH_ImageConvert_Release()
 {
-    int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_RELEASE, nullptr);
+    return ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_RELEASE, nullptr);
+}
+
+MIDK_EXPORT
+int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, void **pixelMap)
+{
+    if (pixelMapValue == nullptr || pixelMap == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
+    ImageFormatConvertArgs args;
+    args.env = env;
+    args.pixelMapValue = pixelMapValue;
+    int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_JS_TO_C_PIXEL_MAP, &args);
+    if (ret == IMAGE_RESULT_SUCCESS) {
+        *pixelMap = args.srcPixelMap;
+    }
     return ret;
 }
+
+MIDK_EXPORT
+int32_t OH_ImageConvert_CToJs_PixelMap(napi_env env, void *pixelMap, napi_value *result)
+{
+    if (pixelMap == nullptr || result == nullptr) {
+        return IMAGE_RESULT_INVALID_PARAMETER;
+    }
+    ImageFormatConvertArgs args;
+    args.destPixelMap = static_cast<PixelMap*>(pixelMap);
+    args.env = env;
+    args.result = result;
+    return ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_C_TO_JS_PIXEL_MAP, &args);
+}
+
 #ifdef __cplusplus
 }
 #endif

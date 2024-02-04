@@ -644,6 +644,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     return pixelMap;
 }
 
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
@@ -787,6 +788,7 @@ unique_ptr<IncrementalPixelMap> ImageSource::CreateIncrementalPixelMap(uint32_t 
     errorCode = SUCCESS;
     return unique_ptr<IncrementalPixelMap>(incPixelMapPtr);
 }
+
 
 uint32_t ImageSource::PromoteDecoding(uint32_t index, const DecodeOptions &opts, PixelMap &pixelMap,
                                       ImageDecodingState &state, uint8_t &decodeProgress)
@@ -2165,6 +2167,26 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
     }
 
     return frameCount;
+}
+
+std::unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo, PixelMapAddrInfos &addrInfos)
+{
+    unique_ptr<PixelMap> pixelMap;
+    if (plInfo.pixelFormat == PlPixelFormat::YV12 || plInfo.pixelFormat == PlPixelFormat::YU12||
+        plInfo.pixelFormat == PlPixelFormat::NV21 || plInfo.pixelFormat == PlPixelFormat::NV12) {
+        pixelMap = make_unique<pixelYUV>();
+    } else {
+        pixelMap = make_unique<PixelMap>();
+    }
+    pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
+    uint32_t errorCode = UpdatePixelMapInfo(opts_, plInfo, *pixelMap.get(), opts_.fitDensity, true);
+    if (errorCode != SUCCESS) {
+        HiLog::Error(LABEL, "[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
+        return nullptr;
+    }
+    auto saveEditable = pixelMap->IsEditable();
+    pixelMap->SetEditable(saveEditable);
+    return pixelMap;
 }
 
 void ImageSource::DumpInputData(const std::string& fileSuffix)

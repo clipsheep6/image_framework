@@ -17,15 +17,15 @@
 #include "hilog/log.h"
 #include "media_errors.h"
 #include "log_tags.h"
-
+#include "image_source.h"
+#include "image_packer_napi.h"
+#include "media_errors.h"
 namespace {
     constexpr uint8_t NUM_0 = 0;
     constexpr uint8_t NUM_1 = 1;
     constexpr uint8_t NUM_2 = 2;
     constexpr uint8_t NUM_3 = 3;
     constexpr uint8_t NUM_4 = 4;
-    // constexpr uint8_t NUM_5 = 5;
-    // constexpr uint8_t NUM_6 = 6;
     constexpr uint8_t NUM_8 = 8;
 }
 
@@ -157,6 +157,17 @@ ImageFormatConvert::ImageFormatConvert(const std::shared_ptr<PixelMap> srcPiexlM
     colorSpace_ = ColorSpace::SRGB;
     srcPixelMap_ = srcPiexlMap;
     cvtFunc_ = nullptr;
+    SourceOptions options;
+    options.formatHint = "jpeg";
+    options.pixelFormat = PixelFormat::RGB_888;
+    options.size.width = imageSize_.width;
+    options.size.height = imageSize_.width;
+    error.hasErrorCode = true;
+    error.errorCode = SUCCESS;
+    error.msg = "An error has occurred.";
+    uint32_t size = imageSize_.width * imageSize_.height * NUM_3;
+    uint8_t *data = new uint8_t[size]();
+    imageSource = ImageSource::CreateImageSource(data,size,options,error.errorCode);
     ReadPixelMap();
 }
 
@@ -174,7 +185,7 @@ bool ImageFormatConvert::SetSourceBuffer(const_uint8_buffer_type srcBuffer, cons
                                          const int32_t width, const int32_t height, PixelFormat format)
 {
     if (!IsValidSize(width, height) || !CheckBufferInfo(srcBuffer, bufferSize, format, width, height)) {
-        HiLog::Error(LABEL, "parameter is invalid");
+        IMAGE_LOGD("parameter is invalid");
         return false;
     }
     srcBuffer_ = srcBuffer;
@@ -188,7 +199,7 @@ bool ImageFormatConvert::SetSourceBuffer(const_uint8_buffer_type srcBuffer, cons
                                          const Size &size, PixelFormat format)
 {
     if (!IsValidSize(size) || !CheckBufferInfo(srcBuffer, bufferSize, format, size.width, size.height)) {
-        HiLog::Error(LABEL, "parameter is invalid");
+        IMAGE_LOGD("parameter is invalid");
         return false;
     }
     srcBuffer_ = srcBuffer;
@@ -202,7 +213,7 @@ bool ImageFormatConvert::SetSourceBuffer(const ConvertDataInfo &srcDataInfo, con
 {
     if (!IsValidSize(size) || !CheckBufferInfo(srcDataInfo.buffer, srcDataInfo.bufferSize,
         srcDataInfo.pixelFormat, size.width, size.height)) {
-        HiLog::Error(LABEL, "parameter is invalid");
+        IMAGE_LOGD("parameter is invalid");
         return false;
     }
     srcBuffer_ = srcDataInfo.buffer;
@@ -215,7 +226,7 @@ bool ImageFormatConvert::SetSourceBuffer(const ConvertDataInfo &srcDataInfo, con
 bool ImageFormatConvert::SetSourcePixelMap(const std::shared_ptr<PixelMap> srcPiexlMap)
 {
     if (srcPiexlMap == nullptr) {
-        HiLog::Error(LABEL, "parameter is invalid");
+        IMAGE_LOGD("parameter is invalid");
         return false;
     }
     srcPixelMap_ = srcPiexlMap;
@@ -226,7 +237,7 @@ bool ImageFormatConvert::SetSourcePixelMap(const std::shared_ptr<PixelMap> srcPi
 bool ImageFormatConvert::SetSize(const int32_t width, const int32_t height)
 {
     if (!IsValidSize(width, height)) {
-        HiLog::Error(LABEL, "parameter is invalid");
+        IMAGE_LOGD("parameter is invalid");
         return false;
     }
     imageSize_.width = width;
@@ -237,7 +248,7 @@ bool ImageFormatConvert::SetSize(const int32_t width, const int32_t height)
 bool ImageFormatConvert::SetSize(const Size &size)
 {
     if (!IsValidSize(size)) {
-        HiLog::Error(LABEL, "parameter is invalid");
+        IMAGE_LOGD("parameter is invalid");
         return false;
     }
     imageSize_ = size;
@@ -247,7 +258,7 @@ bool ImageFormatConvert::SetSize(const Size &size)
 bool ImageFormatConvert::SetSourceFormat(PixelFormat srcFormat)
 {
     if(!IsSupport(srcFormat)) {
-        HiLog::Error(LABEL, "source format is unsupported");
+        IMAGE_LOGD("source format is unsupported");
         return false;
     }
     srcFormat_ = srcFormat;
@@ -257,7 +268,7 @@ bool ImageFormatConvert::SetSourceFormat(PixelFormat srcFormat)
 bool ImageFormatConvert::SetDestinationFormat(PixelFormat destFormat)
 {
     if(!IsSupport(destFormat)) {
-        HiLog::Error(LABEL, "destination format is unsupported");
+        IMAGE_LOGD("destination format is unsupported");
         return false;
     }
     destFormat_ = destFormat;
@@ -267,7 +278,7 @@ bool ImageFormatConvert::SetDestinationFormat(PixelFormat destFormat)
 bool ImageFormatConvert::SetColorSapace(ColorSpace colorSpace)
 {
     if (!IsValidColorSpace(colorSpace)) {
-        HiLog::Error(LABEL, "color space is invalid");
+        IMAGE_LOGD("color space is invalid");
         return false;
     }
     colorSpace_ = colorSpace;
@@ -277,7 +288,7 @@ bool ImageFormatConvert::SetColorSapace(ColorSpace colorSpace)
 bool ImageFormatConvert::SetConvertFunction(ConvertFunction cvtFunc)
 {
     if (cvtFunc == nullptr) {
-        HiLog::Error(LABEL, "convert function pointer is null!");
+        IMAGE_LOGD("convert function pointer is null!");
         return false;
     }
     cvtFunc_ = cvtFunc;
@@ -287,7 +298,7 @@ bool ImageFormatConvert::SetConvertFunction(ConvertFunction cvtFunc)
 bool ImageFormatConvert::SetConvertFunction(PixelFormat srcFormat, PixelFormat destFormat)
 {
     if (!(IsSupport(srcFormat) && IsSupport(destFormat))) {
-        HiLog::Error(LABEL, "Image format is invalid!");
+        IMAGE_LOGD("Image format is invalid!");
         return false;
     }
 
@@ -298,7 +309,7 @@ bool ImageFormatConvert::SetConvertFunction(PixelFormat srcFormat, PixelFormat d
     cvtFunc_ = g_convertFuncMap[row][column];
 
     if (cvtFunc_ == nullptr) {
-        HiLog::Error(LABEL, "current format is the same or not support");
+        IMAGE_LOGD("current format is the same or not support");
         return false;
     }
     return true;
@@ -313,20 +324,20 @@ uint8_buffer_type ImageFormatConvert::GetDestinationBuffer()
 uint32_t ImageFormatConvert::ConvertImageFormat(uint8_buffer_type &destBuffer, size_t &destBufferSize)
 {
     if (!IsValidSize(imageSize_)) {
-        HiLog::Error(LABEL, "image size is invalid");
+        IMAGE_LOGD("image size is invalid");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     if (!IsValidColorSpace(colorSpace_)) {
-        HiLog::Error(LABEL, "color space is invalid");
+        IMAGE_LOGD("color space is invalid");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     if (!CheckBufferInfo(srcBuffer_, srcBufferSize_, srcFormat_, imageSize_.width, imageSize_.height)) {
-        HiLog::Error(LABEL, "source data is invalid");
+        IMAGE_LOGD("source data is invalid");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
     if (cvtFunc_ == nullptr) {
         if (!GetConvertFuncByFormat()) {
-            HiLog::Error(LABEL, "get convert function by format failed!");
+            IMAGE_LOGD("get convert function by format failed!");
             return ERR_IMAGE_INVALID_PARAMETER;
         }
     }
@@ -335,7 +346,7 @@ uint32_t ImageFormatConvert::ConvertImageFormat(uint8_buffer_type &destBuffer, s
         if (destBuffer_) {
             ReleaseBuffer(destBuffer_);
         }
-        HiLog::Error(LABEL, "format convert failed!");
+        IMAGE_LOGD("format convert failed!");
         return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
     }
     destBufferSize = destBufferSize_;
@@ -347,24 +358,36 @@ uint32_t ImageFormatConvert::ConvertImageFormat(uint8_buffer_type &destBuffer, s
 
 uint32_t ImageFormatConvert::ConvertImageFormat(std::unique_ptr<PixelMap> &destPixelMap)
 {
+    if (srcPixelMap_ == nullptr) {
+        IMAGE_LOGD("source pixel map is null");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
     if (!IsSupportPixelMap(destFormat_)) {
-        HiLog::Error(LABEL, "destination format not support PixelMap");
+        IMAGE_LOGD("destination format not support PixelMap");
         return ERR_MEDIA_FORMAT_UNSUPPORT;
     }
 
-    uint8_buffer_type destBuffer = nullptr;
-    size_t bufferSize = 0;
+    if (cvtFunc_ == nullptr) {
+        if (!GetConvertFuncByFormat()) {
+            IMAGE_LOGD("get convert function by format failed!");
+            return ERR_IMAGE_INVALID_PARAMETER;
+        }
+    }
 
-    if (!ConvertImageFormat(destBuffer, bufferSize)) {
+    if (!cvtFunc_(srcBuffer_, imageSize_, &destBuffer_, destBufferSize_, colorSpace_)) {
+        if (destBuffer_) {
+            ReleaseBuffer(destBuffer_);
+        }
+        IMAGE_LOGD("format convert failed!");
         return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
     }
-
-    if (!MakeDestPixelMap(destPixelMap, destBuffer, bufferSize)) {
-        --destBufferRefCnt_;
-        HiLog::Error(LABEL, "create pixel map failed");
+    IMAGE_LOGD("destbufferSize = %{public}u.", destBufferSize_);
+    if (!MakeDestPixelMap(destPixelMap, destBuffer_, destBufferSize_)) {
+        IMAGE_LOGD("create pixel map failed");
         return ERR_IMAGE_PIXELMAP_CREATE_FAILED;
     }
-    --destBufferRefCnt_;
+
     return SUCCESS;
 }
 
@@ -387,17 +410,17 @@ bool ImageFormatConvert::CheckBufferInfo(const_uint8_buffer_type buffer, const s
                                          PixelFormat format, uint32_t width, uint32_t height)
 {
     if (buffer == nullptr) {
-        HiLog::Error(LABEL, "source buffer is null");
+        IMAGE_LOGD("source buffer is null");
         return false;
     }
 
     if (!IsSupport(format)) {
-        HiLog::Error(LABEL, "format is not support or invalid");
+        IMAGE_LOGD("format is not support or invalid");
         return false;
     }
 
     if (GetBufferSizeByFormat(format, width, height) != bufferSize) {
-        HiLog::Error(LABEL, "buffer size is wrong");
+        IMAGE_LOGD("buffer size is wrong");
         return false;
     }
 
@@ -438,7 +461,7 @@ size_t ImageFormatConvert::GetBufferSizeByFormat(PixelFormat format, int32_t wid
 bool ImageFormatConvert::GetConvertFuncByFormat()
 {
     if (!(IsSupport(srcFormat_) && IsSupport(destFormat_))) {
-        HiLog::Error(LABEL, "Image format is invalid!");
+        IMAGE_LOGD("Image format is invalid!");
         return false;
     }
 
@@ -446,7 +469,7 @@ bool ImageFormatConvert::GetConvertFuncByFormat()
     uint32_t column = static_cast<uint32_t>(destFormat_);
     cvtFunc_ = g_convertFuncMap[row][column];
     if (!cvtFunc_) {
-        HiLog::Error(LABEL, "current format is not supported or format is wrong");
+        IMAGE_LOGD("current format is not supported or format is wrong");
         return false;
     }
     return true;
@@ -463,7 +486,7 @@ void ImageFormatConvert::ReleaseBuffer(uint8_buffer_type buffer)
 void ImageFormatConvert::ReadPixelMap()
 {
     if (srcPixelMap_ == nullptr) {
-        HiLog::Error(LABEL, "source pixel map is null");
+        IMAGE_LOGD("source pixel map is null");
         return;
     }
 
@@ -473,6 +496,60 @@ void ImageFormatConvert::ReadPixelMap()
     colorSpace_ = srcPixelMap_->GetColorSpace();
     srcBuffer_ = srcPixelMap_->GetPixels();
     srcFormat_ = srcPixelMap_->GetPixelFormat();
+}
+
+bool ImageFormatConvert::SetPlInfo(const Size &size)
+{
+    plInfo.size.width = size.width;
+    plInfo.size.height = size.height;
+    plInfo.pixelFormat = (destFormat_ == PixelFormat::NV12) ? (ImagePlugin::PlPixelFormat::NV12) :
+        (ImagePlugin::PlPixelFormat::NV21);
+    plInfo.colorSpace = ImagePlugin::PlColorSpace::UNKNOWN;
+    plInfo.alphaType = ImagePlugin::PlAlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
+    plInfo.yuvDataInfo.imageSize = {size.width, size.height};
+    plInfo.yuvDataInfo.y_width = size.width;
+    plInfo.yuvDataInfo.y_height = size.height;
+    plInfo.yuvDataInfo.y_stride = size.width;
+    plInfo.yuvDataInfo.uv_width = (size.width + NUM_1) / NUM_2;
+    plInfo.yuvDataInfo.uv_height = ((size.height + NUM_1) / NUM_2) * NUM_2;
+    plInfo.yuvDataInfo.u_stride = plInfo.yuvDataInfo.uv_width;
+    plInfo.yuvDataInfo.v_stride = plInfo.yuvDataInfo.uv_width;
+    return true;
+}
+
+
+bool ImageFormatConvert::SetAddr(uint8_buffer_type destBuffer, size_t destBufferSize)
+{
+    addrInfos.addr = destBuffer;
+    if (destBuffer ==nullptr) {
+        IMAGE_LOGD("destbuffer is NULL");
+    }
+    addrInfos.context = nullptr;
+    addrInfos.size = destBufferSize;
+    IMAGE_LOGD("destBufferSize = %{public}u.", destBufferSize);
+    addrInfos.type = AllocatorType::DEFAULT;
+    addrInfos.func = nullptr;
+    return true;
+}
+
+bool ImageFormatConvert::CreateSource(PixelFormat &destFormat_, const Size &size)
+{
+        SourceOptions options;
+        options.formatHint = "jpeg";
+        options.pixelFormat = destFormat_;
+        options.size = size;
+        error.hasErrorCode = true;
+        error.errorCode = SUCCESS;
+        error.msg = "An error has occurred.";
+        if (destBuffer_ && destBufferSize_ > NUM_0) {
+            HiLog::Error(LABEL, "CreateImageSource start");
+            imageSource = ImageSource::CreateImageSource(reinterpret_cast<const uint8_t*>(destBuffer_), destBufferSize_,
+                                                         options, error.errorCode);
+        }
+        if (error.errorCode != SUCCESS) {
+            return false;
+        }
+        return true;
 }
 
 bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
@@ -486,11 +563,37 @@ bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMa
         opts.alphaType = srcPixelMap_->GetAlphaType();
         opts.editable = srcPixelMap_->IsEditable();
     }
-
-    auto destPixelMapUnique = PixelMap::Create(reinterpret_cast<uint32_t*>(destBuffer),
-                                               static_cast<uint32_t>(destBufferSize), opts);
+    if (destFormat_ == PixelFormat::NV12 || destFormat_ == PixelFormat::NV21) {
+        if (!SetPlInfo(imageSize_)) {
+            IMAGE_LOGD("create plInfo failed");
+            return false;
+        }
+        if (!SetAddr(destBuffer_, destBufferSize_)) {
+            IMAGE_LOGD("create addrInfos failed");
+            return false;
+        }
+        if (!CreateSource(destFormat_, imageSize_)) {
+            IMAGE_LOGD("create imageSource failed");
+            return false;
+        }
+        destPixelMapUnique = imageSource->GetPixelMap(plInfo, addrInfos);
+    }
+    else 
+    {
+        if (destBuffer == nullptr) {
+            IMAGE_LOGD("destbuffer is NULL");
+            PrintLog("destbuffer is NULL");
+            return false;
+        }
+        if (destBufferSize < 0) {
+            IMAGE_LOGD("destbufferSize < 0");
+            PrintLog("destbufferSize < 0");
+            return false;
+        }
+        destPixelMapUnique = PixelMap::Create(opts);
+    }
     if (destPixelMapUnique == nullptr) {
-        HiLog::Error(LABEL, "create pixel map failed");
+        IMAGE_LOGD("create pixel map failed");
         return false;
     }
 
@@ -506,10 +609,14 @@ bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMa
     destInfo.pixelFormat = destFormat_;
     destInfo.size = imageSize_;
     if (destPixelMapUnique->SetImageInfo(destInfo) != SUCCESS) {
-        HiLog::Error(LABEL, "set imageInfo failed");
+        IMAGE_LOGD("set imageInfo failed");
         return false;
     }
     destPixelMap = std::move(destPixelMapUnique);
+    int32_t dest_width = destPixelMap->GetHeight();
+    IMAGE_LOGD("dest_width = %{public}d.", dest_width);
+    PixelFormat dest_pix = destPixelMap->GetPixelFormat();
+    IMAGE_LOGD("dest_pix = %{public}d.", dest_pix);
     return true;
 }
 

@@ -18,6 +18,8 @@
 
 #include "pixel_map.h"
 #include "image_format_convert_utils.h"
+#include "image_source.h"
+#include "image_plugin_type.h"
 #include "image_type.h"
 #include  <memory>
 
@@ -30,6 +32,12 @@ struct ConvertDataInfo {
     uint8_buffer_type buffer;
     size_t bufferSize;
     PixelFormat pixelFormat = PixelFormat::UNKNOWN;
+};
+
+struct ImagePackerError {
+    bool hasErrorCode;
+    uint32_t errorCode;
+    std::string msg;
 };
 
 class ImageFormatConvert
@@ -60,10 +68,14 @@ public:
     bool SetColorSapace(ColorSpace colorSpace);
     bool SetConvertFunction(ConvertFunction cvtFunc);
     bool SetConvertFunction(PixelFormat srcFormat, PixelFormat destFormat);
+    bool SetPlInfo(const Size&size);
+    bool SetAddr(uint8_buffer_type destBuffer, size_t destBufferSize);
+    bool CreateSource(PixelFormat &destFormat, const Size &size);
     uint8_buffer_type GetDestinationBuffer();
 
     uint32_t ConvertImageFormat(uint8_buffer_type &destBuffer, size_t &destBufferSize);
     uint32_t ConvertImageFormat(std::unique_ptr<PixelMap> &destPixelMap);
+    ImagePackerError error;
 private:
     bool IsValidSize(int32_t width, int32_t height);
     bool IsValidSize(const Size &size);
@@ -78,6 +90,7 @@ private:
     bool IsSupport(PixelFormat format);
     bool IsSupportPixelMap(PixelFormat format);
 
+
     const_uint8_buffer_type srcBuffer_;
     size_t srcBufferSize_;
     uint8_buffer_type destBuffer_;
@@ -89,6 +102,10 @@ private:
     PixelFormat destFormat_;
     Size imageSize_;
     ConvertFunction cvtFunc_;
+    ImagePlugin::PlImageInfo plInfo;
+    PixelMapAddrInfos addrInfos;
+    std::unique_ptr<ImageSource> imageSource;
+    std::unique_ptr<PixelMap> destPixelMapUnique;
 };
 
 } //OHOS

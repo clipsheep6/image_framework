@@ -32,8 +32,8 @@
 
 #ifndef INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_FORMAT_CONVERT_MDK_H
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_FORMAT_CONVERT_MDK_H
-#include <cstdint>
-#include "pixel_map.h"
+
+#include "napi/native_api.h"
 #include "image_mdk_common.h"
 
 #ifdef __cplusplus
@@ -56,8 +56,7 @@ int32_t OH_ImageConvert_Create();
  *
  * @Syscap SystemCapability.Multimedia.Image
  */
-int32_t OH_ImageConvert_YuvToRgb(OHOS::Media::PixelMap *srcPixelMap, OHOS::Media::PixelMap **destPixelMap,
-                                 OHOS::Media::PixelFormat destPixelFormat);
+int32_t OH_ImageConvert_YuvToRgb(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat);
 
 /**
  * @brief Convert image format from RGB to YUV by PixelMap.
@@ -68,8 +67,7 @@ int32_t OH_ImageConvert_YuvToRgb(OHOS::Media::PixelMap *srcPixelMap, OHOS::Media
  *
  * @Syscap SystemCapability.Multimedia.Image
  */
-int32_t OH_ImageConvert_RgbToYuv(OHOS::Media::PixelMap *srcPixelMap, OHOS::Media::PixelMap **destPixelMap,
-                                 OHOS::Media::PixelFormat destPixelFormat);
+int32_t OH_ImageConvert_RgbToYuv(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat);
 
 /**
  * @brief Releases an <b>ImageFormatConvertNative</b> object.
@@ -81,6 +79,32 @@ int32_t OH_ImageConvert_RgbToYuv(OHOS::Media::PixelMap *srcPixelMap, OHOS::Media
  * @version 4.0
  */
 int32_t OH_ImageConvert_Release();
+
+/**
+ * @brief Convert Js objects to C pointers.
+ **@param env Indicates the pointer to the JavaScript Native Interface (JNI) environment
+ * @param pixelMapValue Indicates a JavaScript native API <b>PixelMapNapi</b> object
+ * @param pixelMap Indicates the result after conversion
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ *
+ * @Syscap SystemCapability.Multimedia.Image
+ * @since 12
+ * @version 4.0
+ */
+int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, void **pixelMap);
+
+/**
+ * @brief Convert Js objects to C pointers.
+ **@param env Indicates the pointer to the JavaScript Native Interface (JNI) environment
+ * @param pixelMap Indicates a C native API <b>PixelMap</b> object pointer
+ * @param result Indicates the result after conversion
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ *
+ * @Syscap SystemCapability.Multimedia.Image
+ * @since 12
+ * @version 4.0
+ */
+int32_t OH_ImageConvert_CToJs_PixelMap(napi_env env, void *pixelMap, napi_value *result);
 
 #ifdef __cplusplus
 };
