@@ -710,7 +710,7 @@ bool NV21ToRGBAF16(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **de
 bool NV12ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= 0 || imageSize.height <= 0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         HiLog::Error(LABEL, "apply space for dest buffer failed!");
         return false;
     }
@@ -758,7 +758,7 @@ bool NV12ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 bool BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= 0 || imageSize.height <= 0)
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0)
     {
         return false;
     }
@@ -784,7 +784,7 @@ bool BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                   size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= 0 || imageSize.height <= 0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         HiLog::Error(LABEL, "apply space for dest buffer failed!");
         return false;
     }
@@ -821,7 +821,7 @@ bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
 bool RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                   size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= 0 || imageSize.height <= 0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         HiLog::Error(LABEL, "apply space for dest buffer failed!");
         return false;
     }
@@ -1378,7 +1378,7 @@ bool NV12ToRGB(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
 bool NV12ToYU12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= NUM_0 || imageSize.height <= NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
     const uint8_t *srcY = srcBuffer;
@@ -1420,7 +1420,7 @@ bool NV12ToYU12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 bool NV21ToRGB(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= NUM_0 || imageSize.height <= NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
     const uint8_t *srcY = srcBuffer;
@@ -1465,7 +1465,7 @@ bool NV21ToRGB(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
 bool NV21ToRGBA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= NUM_0 || imageSize.height <= NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
 
@@ -1504,7 +1504,7 @@ bool NV21ToRGBA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 bool NV21ToBGRA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= NUM_0 || imageSize.height <= NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height * NUM_4);
@@ -1544,7 +1544,7 @@ bool NV21ToBGRA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 bool NV21ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                   size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= NUM_0 || imageSize.height <= NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height * NUM_2);
@@ -1585,7 +1585,7 @@ bool NV21ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
 bool RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= NUM_0 || imageSize.height <= NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + (imageSize.width + NUM_1) / NUM_2 *
@@ -1625,7 +1625,7 @@ bool RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
 bool YV12ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width <= NUM_0 || imageSize.height <= NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + (imageSize.width + NUM_1) / NUM_2 *
