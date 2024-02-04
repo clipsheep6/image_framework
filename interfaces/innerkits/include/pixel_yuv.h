@@ -65,10 +65,16 @@ public:
     NATIVEEXPORT void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
                                     CustomFreePixelMap func) override;
 #ifdef LIBYUV
-    bool RGBAToYUV420(const uint8_t *src, uint8_t *dst, int src_w, int src_h, PixelFormat pixelFormat);
-    bool YUV420ToRGBA(const uint8_t *sample, uint8_t *dst_argb, int width, int height, PixelFormat pixelFormat);
+    bool ARGBToYUV420(const uint8_t *src, uint8_t *dst, int src_w, int src_h, PixelFormat pixelFormat);
     bool YUV420ToARGB(const uint8_t *sample, uint8_t *dst_argb, int width, int height, PixelFormat pixelFormat);
     void scaleYUV420(float xAxis, float yAxis, const AntiAliasingOption &option);
+    NATIVEEXPORT void scale(float xAxis, float yAxis) override;
+    NATIVEEXPORT void scale(float xAxis, float yAxis, const AntiAliasingOption &option) override;
+    NATIVEEXPORT bool resize(float xAxis, float yAxis) override;
+    NATIVEEXPORT void flip(bool xAxis, bool yAxis) override;
+#ifdef IMAGE_COLORSPACE_FLAG
+    NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace) override;
+#endif
 #endif
 #ifdef IMAGE_COLORSPACE_FLAG
     NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace) override;
