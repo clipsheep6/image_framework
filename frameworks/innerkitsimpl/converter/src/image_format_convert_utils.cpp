@@ -196,7 +196,6 @@ static void NV12ToYV12Manual(const uint8_t *srcBuffer, const Size &imageSize, ui
     }
 }
 
-
 static void NV21ToYV12Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     const int32_t srcPlaneSizeY = imageSize.width * imageSize.height;
@@ -219,7 +218,7 @@ static void NV12ToRGBAManual(const uint8_t *srcBuffer, const Size &imageSize, ui
 
     for (int i = NUM_0; i < imageSize.height; i++) {
         int yRowIndex = i * imageSize.width;
-        int uvRowIndex = (imageSize.width % 2 == NUM_0) ? (i / NUM_2) * imageSize.width :
+        int uvRowIndex = (imageSize.width % NUM_2 == NUM_0) ? (i / NUM_2) * imageSize.width :
             (i / NUM_2) * (imageSize.width + NUM_1) / NUM_2 * NUM_2;
         for (int j = NUM_0; j < imageSize.width; j++) {
             int yIndex = yRowIndex + j;
@@ -637,12 +636,12 @@ bool NV21ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #ifdef LIBYUV
     int32_t i420_buffer_size = destBufferSize;
     uint8_t *i420_buffer = new uint8_t[i420_buffer_size];
-    libyuv::NV21ToI420(srcBuffer, width, srcBuffer + width*height, ((width+1)/2)*2,
-        i420_buffer, width, i420_buffer + width*height,(width + 1)/2,
-        i420_buffer + width*height + ((width+1)/2)*((height+1)/2), (width + 1)/2, width, height);
-    libyuv::I420ToNV12(i420_buffer, width, i420_buffer + width*height, (width + 1)/2,
-        i420_buffer + width*height + ((width+1)/2)*((height+1)/2), (width + 1)/2, *destBuffer,
-        width, *destBuffer + width*height, ((width+1)/2)*2, width, height);
+    libyuv::NV21ToI420(srcBuffer, width, srcBuffer + width * height, ((width + NUM_1) / NUM_2) * NUM_2, i420_buffer,
+        width, i420_buffer + width * height, (width + NUM_1) / NUM_2, i420_buffer + width * height +
+        ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2), (width + NUM_1) / NUM_2, width, height);
+    libyuv::I420ToNV12(i420_buffer, width, i420_buffer + width * height, (width + NUM_1) / NUM_2,
+        i420_buffer + width * height + ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2), (width + NUM_1) / NUM_2,
+        *destBuffer, width, *destBuffer + width * height, ((width + NUM_1) / NUM_2) * NUM_2, width, height);
     delete[] i420_buffer;
 #else
     int frameSize = width * height;
