@@ -876,9 +876,13 @@ HWTEST_F(PostProcTest, PostProcTest0037, TestSize.Level3)
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
-    pixelMap->imageInfo_.size.width = 1;
-    pixelMap->imageInfo_.size.height = 1;
-    pixelMap->isAstc_ = true;
+
+    ImageInfo info;
+    pixelMap->GetImageInfo(info);
+    info.size.width = 1;
+    info.size.height = 1;
+    pixelMap->SetImageInfo(info);
+    pixelMap->SetAstc(true);
 
     PostProc postProc;
     Size size;
