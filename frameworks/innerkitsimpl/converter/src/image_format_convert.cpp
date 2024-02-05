@@ -566,7 +566,7 @@ bool ImageFormatConvert::ConvertYUVPixelMap()
         IMAGE_LOGD("create imageSource failed");
         return false;
     }
-    destPixelMapUnique = imageSource->GetPixelMap(plInfo, addrInfos);
+    destPixelMapUnique = imageSource->CreatePixelMapByInfos(plInfo, addrInfos);
     return true;
 }
 
