@@ -347,6 +347,9 @@ private:
     bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
 
+    static bool PixelsConvert(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
+        void *dstPixels, int32_t &dstLength, const ImageInfo &dstInfo);
+
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
     ImageInfo imageInfo_;

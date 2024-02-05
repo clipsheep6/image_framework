@@ -53,6 +53,17 @@
 #include "surface_buffer.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "libswscale/swscale.h"
+#include "libavutil/opt.h"
+#include "libavutil/imgutils.h"
+#include "libavcodec/avcodec.h"
+#ifdef __cplusplus
+}
+#endif
+
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
@@ -63,7 +74,7 @@ namespace OHOS {
 namespace Media {
 using namespace std;
 constexpr int32_t MAX_DIMENSION = INT32_MAX >> 2;
-constexpr uint8_t FOUR_BYTE_SHIFT = 2;
+// constexpr uint8_t FOUR_BYTE_SHIFT = 2;
 constexpr int8_t INVALID_ALPHA_INDEX = -1;
 constexpr uint8_t ARGB_ALPHA_INDEX = 0;
 constexpr uint8_t BGRA_ALPHA_INDEX = 3;
@@ -214,7 +225,7 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
                                       const InitializationOptions &opts)
 {
     IMAGE_LOGD("PixelMap::Create2 enter");
-    return Create(colors, colorLength, 0, opts.size.width, opts, false);
+    return Create(colors, colorLength, 0, opts.size.width, opts, true);
 }
 
 unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLength, int32_t offset, int32_t stride,
@@ -238,6 +249,154 @@ static void MakePixelMap(void *dstPixels, int fd, std::unique_ptr<PixelMap> &dst
 #else
     dstPixelMap->SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
 #endif
+}
+
+static const map<PixelFormat, AVPixelFormat> FFMPEG_PIXEL_FORMAT_MAP = {
+    { PixelFormat::UNKNOWN, AVPixelFormat::AV_PIX_FMT_NONE },
+    { PixelFormat::ARGB_8888, AVPixelFormat::AV_PIX_FMT_ARGB },
+    { PixelFormat::RGB_565, AVPixelFormat::AV_PIX_FMT_RGB565 },
+    { PixelFormat::RGBA_8888, AVPixelFormat::AV_PIX_FMT_RGBA },
+    { PixelFormat::BGRA_8888, AVPixelFormat::AV_PIX_FMT_BGRA },
+    { PixelFormat::RGB_888, AVPixelFormat::AV_PIX_FMT_RGB24 },
+    // { PixelFormat::ALPHA_8, AVPixelFormat::AV_PIX_FMT_YA8 },
+    { PixelFormat::RGBA_F16, AVPixelFormat::AV_PIX_FMT_RGBA64 },
+    { PixelFormat::NV21, AVPixelFormat::AV_PIX_FMT_NV21 },
+    { PixelFormat::NV12, AVPixelFormat::AV_PIX_FMT_NV12 },
+    { PixelFormat::CMYK, AVPixelFormat::AV_PIX_FMT_GBRP },
+};
+
+static AVPixelFormat PixelFormatToAVPixelFormat(const PixelFormat &pixelFormat)
+{
+    auto formatSearch = FFMPEG_PIXEL_FORMAT_MAP.find(pixelFormat);
+    return (formatSearch != FFMPEG_PIXEL_FORMAT_MAP.end()) ? formatSearch->second : AVPixelFormat::AV_PIX_FMT_NONE;
+}
+
+static int32_t FFMpegGetByteCount(const PixelFormat pixelFormat, const int32_t width, const int32_t height)
+{
+    AVPixelFormat avPixelFormat = PixelFormatToAVPixelFormat(pixelFormat);
+    if (avPixelFormat == AVPixelFormat::AV_PIX_FMT_NONE) {
+        return 0;
+    }
+    if (width <= 0 || height <= 0) {
+        return 0;
+    }
+    return avpicture_get_size(avPixelFormat, width, height);
+}
+
+static bool FFMpegConvert(const void *srcPixels, const AVPixelFormat srcFormat, const int32_t srcWidth, const int32_t srcHeight,
+    void *dstPixels, const AVPixelFormat dstFormat, const int32_t dstWidth, const int32_t dstHeight)
+{
+    int ret = 0;
+    AVFrame *inputFrame = nullptr;
+    AVFrame *outputFrame = nullptr;
+    struct SwsContext *ctx = nullptr;
+
+    if (srcFormat == AVPixelFormat::AV_PIX_FMT_NONE || dstFormat == AVPixelFormat::AV_PIX_FMT_NONE) {
+        IMAGE_LOGE("unsupport src/dst pixel format!");
+        return false;
+    }
+    if (srcWidth <= 0 || srcHeight <= 0 || dstWidth <= 0 || dstHeight <= 0) {
+        IMAGE_LOGE("src/dst width/height error!");
+        return false;
+    }
+
+    inputFrame = av_frame_alloc();
+    outputFrame = av_frame_alloc();
+
+    if (inputFrame != nullptr && outputFrame != nullptr) {
+        ctx = sws_getContext(srcWidth, srcHeight, srcFormat,
+                             dstWidth, dstHeight, dstFormat,
+                             SWS_BICUBIC, nullptr, nullptr, nullptr);
+        if (ctx != nullptr) {
+            avpicture_fill((AVPicture *)inputFrame, (uint8_t *)srcPixels, srcFormat, srcWidth, srcHeight);
+            avpicture_fill((AVPicture *)outputFrame, (uint8_t *)dstPixels, dstFormat, dstWidth, dstHeight);
+
+            sws_scale(ctx, (uint8_t const **)inputFrame->data, inputFrame->linesize, 0, srcHeight,
+                outputFrame->data, outputFrame->linesize);
+        } else {
+            IMAGE_LOGE("FFMpeg: sws_getContext failed!");
+            ret = -1;
+        }
+    } else {
+        IMAGE_LOGE("FFMpeg: av_frame_alloc failed!");
+        ret = -1;
+    }
+
+    av_frame_free(&inputFrame);
+    av_frame_free(&outputFrame);
+    sws_freeContext(ctx);
+
+    return ((ret == 0) ? true : false);
+}
+
+bool PixelMap::PixelsConvert(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
+    void *dstPixels, int32_t &dstLength, const ImageInfo &dstInfo)
+{
+    // basic valid check, other parameters valid check in writePixels method
+    if (srcPixels == nullptr || dstPixels == nullptr) {
+        IMAGE_LOGE("src or dst pixels invalid.");
+        return false;
+    }
+
+    if (srcInfo.pixelFormat == dstInfo.pixelFormat && /*srcInfo.baseDensity == dstInfo.baseDensity &&*/
+        srcInfo.size.width == dstInfo.size.width && srcInfo.size.height == dstInfo.size.height/* &&
+        srcInfo.colorSpace == dstInfo.colorSpace && srcInfo.alphaType == dstInfo.alphaType*/) {
+        IMAGE_LOGE("src pixel format is equal dst pixel format. no need to convert.");
+        memcpy(dstPixels, srcPixels, srcLength);
+        dstLength = srcLength;
+        return true;
+    }
+
+    if (srcInfo.pixelFormat == PixelFormat::ALPHA_8 || dstInfo.pixelFormat == PixelFormat::ALPHA_8) {
+        uint8_t *pSrc = (uint8_t *)const_cast<void *>(srcPixels);
+        if (srcInfo.pixelFormat == PixelFormat::ALPHA_8) {  // ALPHA_8 -> RGBA_8888 -> dstInfo.pixelFormat
+            // ALPHA_8 -> RGBA_8888
+            int tmpPixelsLen = srcLength * 4;
+            std::shared_ptr<uint8_t> tmpPixels(new uint8_t[tmpPixelsLen], std::default_delete<uint8_t[]>());
+            memset(tmpPixels.get(), 0, tmpPixelsLen);
+            for (int i = 0; i < srcLength; i++) {
+                tmpPixels.get()[i * 4 + 3] = pSrc[i];
+            }
+            // RGBA_8888 -> dstInfo.pixelFormat
+            AVPixelFormat srcAVPixelFormat = PixelFormatToAVPixelFormat(PixelFormat::RGBA_8888);
+            AVPixelFormat dstAVPixelFormat = PixelFormatToAVPixelFormat(dstInfo.pixelFormat);
+            if (!FFMpegConvert(tmpPixels.get(), srcAVPixelFormat, srcInfo.size.width, srcInfo.size.height,
+                (void *)dstPixels, dstAVPixelFormat, dstInfo.size.width, dstInfo.size.height)) {
+                IMAGE_LOGE("ffmpeg convert failed!");
+                return false;
+            }
+            dstLength = avpicture_get_size(dstAVPixelFormat, dstInfo.size.width, dstInfo.size.height);
+        } else if (dstInfo.pixelFormat == PixelFormat::ALPHA_8) {  // srcInfo.pixelFormat -> RGBA_8888 -> ALPHA_8
+            // srcInfo.pixelFormat -> RGBA_8888
+            AVPixelFormat srcAVPixelFormat = PixelFormatToAVPixelFormat(srcInfo.pixelFormat);
+            AVPixelFormat dstAVPixelFormat = PixelFormatToAVPixelFormat(PixelFormat::RGBA_8888);
+            int tmpPixelsLen = avpicture_get_size(dstAVPixelFormat, dstInfo.size.width, dstInfo.size.height);
+            std::shared_ptr<uint8_t> tmpPixels(new uint8_t[tmpPixelsLen], std::default_delete<uint8_t[]>());
+            memset(tmpPixels.get(), 0, tmpPixelsLen);
+            if (!FFMpegConvert(srcPixels, srcAVPixelFormat, srcInfo.size.width, srcInfo.size.height,
+                (void *)tmpPixels.get(), dstAVPixelFormat, dstInfo.size.width, dstInfo.size.height)) {
+                IMAGE_LOGE("ffmpeg convert failed!");
+                return false;
+            }
+            // RGBA_8888 -> ALPHA_8
+            dstLength = tmpPixelsLen / 4;
+            for (int i = 0; i < dstLength; i++) {
+                ((uint8_t *)dstPixels)[i] = tmpPixels.get()[i * 4 + 3];
+            }
+        }
+        return true;
+    }
+
+    AVPixelFormat srcAVPixelFormat = PixelFormatToAVPixelFormat(srcInfo.pixelFormat);
+    AVPixelFormat dstAVPixelFormat = PixelFormatToAVPixelFormat(dstInfo.pixelFormat);
+    if (!FFMpegConvert(srcPixels, srcAVPixelFormat, srcInfo.size.width, srcInfo.size.height,
+        (void *)dstPixels, dstAVPixelFormat, dstInfo.size.width, dstInfo.size.height)) {
+        IMAGE_LOGE("ffmpeg convert failed!");
+        return false;
+    }
+
+    dstLength = avpicture_get_size(dstAVPixelFormat, dstInfo.size.width, dstInfo.size.height);
+    return true;
 }
 
 unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLength, BUILD_PARAM &info,
@@ -271,22 +430,24 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
     }
     int fd = 0;
     uint32_t bufferSize = dstPixelMap->GetByteCount();
+    
     void *dstPixels = AllocSharedMemory(bufferSize, fd, dstPixelMap->GetUniqueId());
     if (dstPixels == nullptr) {
         IMAGE_LOGE("allocate memory size %{public}u fail", bufferSize);
         errorCode = IMAGE_RESULT_ERR_SHAMEM_NOT_EXIST;
         return nullptr;
     }
-    Position dstPosition;
-    if (!PixelConvertAdapter::WritePixelsConvert(reinterpret_cast<const void *>(colors + offset),
-        static_cast<uint32_t>(stride) << FOUR_BYTE_SHIFT, srcImageInfo,
-        dstPixels, dstPosition, dstPixelMap->GetRowBytes(), dstImageInfo)) {
+
+    int32_t dstLength = 0;
+    if (!PixelsConvert(reinterpret_cast<const void *>(colors + offset), colorLength, srcImageInfo,
+        dstPixels, dstLength, dstImageInfo)) {
         IMAGE_LOGE("pixel convert in adapter failed.");
         ReleaseBuffer(AllocatorType::SHARE_MEM_ALLOC, fd, bufferSize, &dstPixels);
         dstPixels = nullptr;
         errorCode = IMAGE_RESULT_THIRDPART_SKIA_ERROR;
         return nullptr;
     }
+
     dstPixelMap->SetEditable(opts.editable);
     MakePixelMap(dstPixels, fd, dstPixelMap);
     ImageUtils::DumpPixelMapIfDumpEnabled(dstPixelMap);
@@ -1002,7 +1163,11 @@ int32_t PixelMap::GetRowBytes()
 int32_t PixelMap::GetByteCount()
 {
     IMAGE_LOGD("GetByteCount");
-    return rowDataSize_ * imageInfo_.size.height;
+    if (imageInfo_.pixelFormat == PixelFormat::NV12 || imageInfo_.pixelFormat == PixelFormat::NV21) {
+        return FFMpegGetByteCount(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
+    } else {
+        return rowDataSize_ * imageInfo_.size.height;
+    }
 }
 
 int32_t PixelMap::GetWidth()
