@@ -2169,7 +2169,8 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
     return frameCount;
 }
 
-std::unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo, PixelMapAddrInfos &addrInfos)
+std::unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
+                                                             PixelMapAddrInfos &addrInfos)
 {
     unique_ptr<PixelMap> pixelMap;
     if (plInfo.pixelFormat == PlPixelFormat::YV12 || plInfo.pixelFormat == PlPixelFormat::YU12||

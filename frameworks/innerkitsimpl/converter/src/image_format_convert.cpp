@@ -382,7 +382,6 @@ uint32_t ImageFormatConvert::ConvertImageFormat(std::unique_ptr<PixelMap> &destP
         IMAGE_LOGD("format convert failed!");
         return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
     }
-    IMAGE_LOGD("destbufferSize = %{public}u.", destBufferSize_);
     if (!MakeDestPixelMap(destPixelMap, destBuffer_, destBufferSize_)) {
         IMAGE_LOGD("create pixel map failed");
         return ERR_IMAGE_PIXELMAP_CREATE_FAILED;
@@ -522,11 +521,10 @@ bool ImageFormatConvert::SetAddr(uint8_buffer_type destBuffer, size_t destBuffer
 {
     addrInfos.addr = destBuffer;
     if (destBuffer ==nullptr) {
-        IMAGE_LOGD("destbuffer is NULL");
+        return false;
     }
     addrInfos.context = nullptr;
     addrInfos.size = destBufferSize;
-    IMAGE_LOGD("destBufferSize = %{public}u.", destBufferSize);
     addrInfos.type = AllocatorType::DEFAULT;
     addrInfos.func = nullptr;
     return true;
@@ -542,7 +540,6 @@ bool ImageFormatConvert::CreateSource(PixelFormat &destFormat_, const Size &size
         error.errorCode = SUCCESS;
         error.msg = "An error has occurred.";
         if (destBuffer_ && destBufferSize_ > NUM_0) {
-            HiLog::Error(LABEL, "CreateImageSource start");
             imageSource = ImageSource::CreateImageSource(reinterpret_cast<const uint8_t*>(destBuffer_), destBufferSize_,
                                                          options, error.errorCode);
         }
@@ -555,8 +552,8 @@ bool ImageFormatConvert::CreateSource(PixelFormat &destFormat_, const Size &size
 bool ImageFormatConvert::ConvertYUVPixelMap()
 {
     if (!SetPlInfo(imageSize_)) {
-            IMAGE_LOGD("create plInfo failed");
-            return false;
+        IMAGE_LOGD("create plInfo failed");
+        return false;
     }
     if (!SetAddr(destBuffer_, destBufferSize_)) {
         IMAGE_LOGD("create addrInfos failed");
@@ -573,14 +570,7 @@ bool ImageFormatConvert::ConvertYUVPixelMap()
 bool ImageFormatConvert::ConvertRGBPixelMap()
 {
     if (destBuffer == nullptr) {
-            IMAGE_LOGD("destbuffer is NULL");
-            PrintLog("destbuffer is NULL");
             return false;
-        }
-    if (destBufferSize < 0) {
-        IMAGE_LOGD("destbufferSize < 0");
-        PrintLog("destbufferSize < 0");
-        return false;
     }
     destPixelMapUnique = PixelMap::Create(opts);
     return true;    
@@ -631,9 +621,7 @@ bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMa
     }
     destPixelMap = std::move(destPixelMapUnique);
     int32_t dest_width = destPixelMap->GetHeight();
-    IMAGE_LOGD("dest_width = %{public}d.", dest_width);
     PixelFormat dest_pix = destPixelMap->GetPixelFormat();
-    IMAGE_LOGD("dest_pix = %{public}d.", dest_pix);
     return true;
 }
 
