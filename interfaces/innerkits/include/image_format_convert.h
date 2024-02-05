@@ -71,6 +71,7 @@ public:
     bool SetPlInfo(const Size&size);
     bool SetAddr(uint8_buffer_type destBuffer, size_t destBufferSize);
     bool CreateSource(PixelFormat &destFormat, const Size &size);
+    bool ConvertYUVPixelMap();
     uint8_buffer_type GetDestinationBuffer();
 
     uint32_t ConvertImageFormat(uint8_buffer_type &destBuffer, size_t &destBufferSize);
@@ -86,6 +87,7 @@ private:
     bool GetConvertFuncByFormat();
     void ReleaseBuffer(uint8_buffer_type buffer);
     void ReadPixelMap();
+    bool ConvertRGBPixelMap();
     bool MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer, size_t destBufferSize);
     bool IsSupport(PixelFormat format);
     bool IsSupportPixelMap(PixelFormat format);

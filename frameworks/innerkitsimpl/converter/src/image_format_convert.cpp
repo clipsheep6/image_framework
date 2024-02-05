@@ -552,6 +552,40 @@ bool ImageFormatConvert::CreateSource(PixelFormat &destFormat_, const Size &size
         return true;
 }
 
+bool ImageFormatConvert::ConvertYUVPixelMap()
+{
+    if (!SetPlInfo(imageSize_)) {
+            IMAGE_LOGD("create plInfo failed");
+            return false;
+    }
+    if (!SetAddr(destBuffer_, destBufferSize_)) {
+        IMAGE_LOGD("create addrInfos failed");
+        return false;
+    }
+    if (!CreateSource(destFormat_, imageSize_)) {
+        IMAGE_LOGD("create imageSource failed");
+        return false;
+    }
+    destPixelMapUnique = imageSource->GetPixelMap(plInfo, addrInfos);
+    return true;
+}
+
+bool ImageFormatConvert::ConvertRGBPixelMap()
+{
+    if (destBuffer == nullptr) {
+            IMAGE_LOGD("destbuffer is NULL");
+            PrintLog("destbuffer is NULL");
+            return false;
+        }
+    if (destBufferSize < 0) {
+        IMAGE_LOGD("destbufferSize < 0");
+        PrintLog("destbufferSize < 0");
+        return false;
+    }
+    destPixelMapUnique = PixelMap::Create(opts);
+    return true;    
+}
+
 bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
                                           size_t destBufferSize)
 {
@@ -564,39 +598,22 @@ bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMa
         opts.editable = srcPixelMap_->IsEditable();
     }
     if (destFormat_ == PixelFormat::NV12 || destFormat_ == PixelFormat::NV21) {
-        if (!SetPlInfo(imageSize_)) {
-            IMAGE_LOGD("create plInfo failed");
+        if (!ConvertYUVPixelMap()) {
+            IMAGE_LOGD("buffer to pixelmap failed");
             return false;
         }
-        if (!SetAddr(destBuffer_, destBufferSize_)) {
-            IMAGE_LOGD("create addrInfos failed");
-            return false;
-        }
-        if (!CreateSource(destFormat_, imageSize_)) {
-            IMAGE_LOGD("create imageSource failed");
-            return false;
-        }
-        destPixelMapUnique = imageSource->GetPixelMap(plInfo, addrInfos);
     }
     else 
     {
-        if (destBuffer == nullptr) {
-            IMAGE_LOGD("destbuffer is NULL");
-            PrintLog("destbuffer is NULL");
+        if (!ConvertRGBPixelMap()) {
+            IMAGE_LOGD("buffer to pixelmap failed");
             return false;
         }
-        if (destBufferSize < 0) {
-            IMAGE_LOGD("destbufferSize < 0");
-            PrintLog("destbufferSize < 0");
-            return false;
-        }
-        destPixelMapUnique = PixelMap::Create(opts);
     }
     if (destPixelMapUnique == nullptr) {
         IMAGE_LOGD("create pixel map failed");
         return false;
     }
-
     ImageInfo srcInfo;
     ImageInfo destInfo;
     if (srcPixelMap_ != nullptr) {
