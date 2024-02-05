@@ -144,6 +144,7 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
@@ -236,6 +237,12 @@ if (use_clang_android) {
       external_deps += [ "memmgr_plugin:libpurgeablemem_plugin" ]
     }
 
+    if (defined(global_parts_info) &&
+        defined(global_parts_info.open_source_libyuv)) {
+      cflags += [ "LIBYUV" ]
+      external_deps += [ "libyuv:yuv" ]
+    }
+
     #  relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
     innerapi_tags = [ "platformsdk" ]
@@ -249,6 +256,7 @@ ohos_static_library("image_static") {
 
   sources = [
     "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
@@ -360,6 +368,13 @@ ohos_static_library("image_static") {
       "hilog:libhilog",
     ]
   }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.open_source_libyuv)) {
+    cflags += [ "LIBYUV" ]
+    external_deps += [ "libyuv:yuv" ]
+  }
+
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }

@@ -50,7 +50,7 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
-
+#include "pixel_yuv.h"
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
@@ -592,7 +592,13 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
     PixelMapAddrInfos &addrInfos, uint32_t &errorCode)
 {
-    unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
+    unique_ptr<PixelMap> pixelMap;
+    if (plInfo.pixelFormat == PlPixelFormat::YV12 || plInfo.pixelFormat == PlPixelFormat::YU12 ||
+        plInfo.pixelFormat == PlPixelFormat::NV21 || plInfo.pixelFormat == PlPixelFormat::NV12) {
+        pixelMap = make_unique<PixelYUV>();
+    } else {
+        pixelMap = make_unique<PixelMap>();
+    }
 #ifdef IMAGE_COLORSPACE_FLAG
     // add graphic colorspace object to pixelMap.
     bool isSupportICCProfile = mainDecoder_->IsSupportICCProfile();
@@ -602,6 +608,19 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     }
 #endif
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
+    if (plInfo.pixelFormat == PlPixelFormat::YV12 || plInfo.pixelFormat == PlPixelFormat::YU12 ||
+        plInfo.pixelFormat == PlPixelFormat::NV21 || plInfo.pixelFormat == PlPixelFormat::NV12) {
+        YUVDataInfo yuvInfo;
+        yuvInfo.y_width = plInfo.yuvDataInfo.y_width;
+        yuvInfo.y_height = plInfo.yuvDataInfo.y_height;
+        yuvInfo.uv_width = plInfo.yuvDataInfo.uv_width;
+        yuvInfo.uv_height = plInfo.yuvDataInfo.uv_height;
+        yuvInfo.y_stride = plInfo.yuvDataInfo.y_stride;
+        yuvInfo.u_stride = plInfo.yuvDataInfo.u_stride;
+        yuvInfo.v_stride = plInfo.yuvDataInfo.v_stride;
+        yuvInfo.uv_stride = plInfo.yuvDataInfo.uv_stride;
+        pixelMap->SetImageYUVInfo(yuvInfo);
+    }
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);

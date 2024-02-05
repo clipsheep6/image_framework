@@ -34,6 +34,7 @@
 #include "parcel.h"
 #include "pubdef.h"
 #include "image_mdk_common.h"
+#include "pixel_yuv.h"
 
 #ifndef _WIN32
 #include "securec.h"
@@ -1881,18 +1882,27 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 
 PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
 {
-    PixelMap *pixelMap = new PixelMap();
-    if (pixelMap == nullptr) {
+    PixelMap *pixelMap;
+    PixelMap *tmpPixelMap = new PixelMap();
+    if (tmpPixelMap == nullptr) {
         PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "pixelmap create failed");
         return nullptr;
     }
 
     ImageInfo imgInfo;
-    if (!pixelMap->ReadImageInfo(parcel, imgInfo)) {
+    if (!tmpPixelMap->ReadImageInfo(parcel, imgInfo)) {
         IMAGE_LOGE("read imageInfo fail");
-        delete pixelMap;
+        delete tmpPixelMap;
         PixelMap::ConstructPixelMapError(error, ERR_IMAGE_READ_PIXELMAP_FAILED, "read pixelmap failed");
         return nullptr;
+    }
+    delete tmpPixelMap;
+
+    if (imgInfo.pixelFormat == PixelFormat::YU12 || imgInfo.pixelFormat == PixelFormat::YV12 ||
+        imgInfo.pixelFormat == PixelFormat::NV12 || imgInfo.pixelFormat == PixelFormat::NV21) {
+        pixelMap = new PixelYUV();
+    } else {
+        pixelMap = new PixelMap();
     }
 
     bool isEditable = parcel.ReadBool();
