@@ -74,6 +74,54 @@ enum {
 };
 
 int32_t ImageSourceNativeCall(int32_t mode, struct ImageSourceArgs* args);
+
+/** ImageSource Capi */
+struct ImageSourceArgsCapi {
+    struct OhosImageSource* source;
+    struct OhosImageSourceOps* sourceOps;
+    struct OhosImageDecodingOps* decodingOps;
+    struct OhosImageSourceDelayTimeList* outDelayTimes;
+    struct OhosImageSourceSupportedFormatList* outFormats;
+    struct OhosImageSourceInfo* outInfo;
+    struct OhosImageSourceProperty* inPropertyKey;
+    struct OhosImageSourceProperty* propertyVal;
+    struct OhosImageSourceUpdateData* inUpdateData;
+    struct ImageResource_* resource;
+    DataArray dataArray;
+    std::string uri;
+    int32_t fd = -1;
+    RawFileDescriptor rawFile;
+    int32_t inInt32;
+    void* outPixMap;
+    void* outImgSrc;
+    void* inImgSrc;
+    uint32_t* outUint32;
+    uint32_t* outSize;
+    void* outVecPixMap[];
+};
+
+enum {
+    CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_URI,
+    CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_FD,
+    CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_DATA,
+    CAPI_FUNC_IMAGE_SOURCE_CREATE_FROM_RAW_FILE,
+    CAPI_FUNC_IMAGE_SOURCE_CREATE_INCREMENTAL,
+    CAPI_FUNC_IMAGE_SOURCE_GET_SUPPORTED_FORMATS,
+    CAPI_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP,
+    CAPI_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP_LIST,
+    CAPI_FUNC_IMAGE_SOURCE_GET_DELAY_TIME,
+    CAPI_FUNC_IMAGE_SOURCE_GET_FRAME_COUNT,
+    CAPI_FUNC_IMAGE_SOURCE_GET_IMAGE_INFO,
+    CAPI_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY,
+    CAPI_FUNC_IMAGE_SOURCE_MODIFY_IMAGE_PROPERTY,
+    CAPI_FUNC_IMAGE_SOURCE_UPDATE_DATA,
+    CAPI_FUNC_IMAGE_SOURCE_UPDATE_RELEASE
+};
+
+int32_t ImageSourceCapiCall(int32_t mode, struct ImageSourceArgsCapi* args);
+
+/** ImageSource Capi */
+
 #ifdef __cplusplus
 };
 #endif
