@@ -172,6 +172,14 @@ struct OhosImageSize {
     int32_t height;
 };
 
+/**
+ * @brief Rename void type as Capi.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef void Capi;
+
 #ifdef __cplusplus
 };
 #endif
