@@ -2182,7 +2182,7 @@ std::unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImag
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     uint32_t errorCode = UpdatePixelMapInfo(opts_, plInfo, *pixelMap.get(), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
-        HiLog::Error(LABEL, "[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
+        IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
         return nullptr;
     }
     auto saveEditable = pixelMap->IsEditable();

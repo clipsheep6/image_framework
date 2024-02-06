@@ -22,7 +22,7 @@
 #ifdef LIBYUV
 #include "libyuv/convert.h"
 #endif
-#include "hilog/log.h"
+#include "image_log.h"
 #include "log_tags.h"
 
 namespace {
@@ -53,10 +53,11 @@ namespace {
     constexpr uint32_t NUM_516 = 516;
 }
 
+#undef LOG_TAG
+#define LOG_TAG "ImageFormatConvert"
 namespace OHOS {
 namespace Media {
-using namespace OHOS::HiviewDFX;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageFormatConvert" };
+
 
 #ifdef LIBYUV
 using namespace libyuv;
@@ -286,9 +287,9 @@ static void NV12ToBGRAManual(const uint8_t *srcBuffer, const Size &imageSize, ui
             int Y = yPlane[yIndex];
             int U = uvPlane[uvIndex];
             int V = uvPlane[uvIndex + NUM_1];
-            int R = (NUM_298 * (Y - NUM_16) + NUM_409 * (V - NUM_128) + NUM_128) >> NUM_8;
-            int G = (NUM_298 * (Y - NUM_16) - NUM_100 * (U - NUM_128) - NUM_208 * (V - NUM_128) + NUM_128) >> NUM_8;
-            int B = (NUM_298 * (Y - NUM_16) + NUM_516 * (U - NUM_128) + NUM_128) >> NUM_8;
+            uint8_t R = (NUM_298 * (Y - NUM_16) + NUM_409 * (V - NUM_128) + NUM_128) >> NUM_8;
+            uint8_t G = (NUM_298 * (Y - NUM_16) - NUM_100 * (U - NUM_128) - NUM_208 * (V - NUM_128) + NUM_128) >> NUM_8;
+            uint8_t B = (NUM_298 * (Y - NUM_16) + NUM_516 * (U - NUM_128) + NUM_128) >> NUM_8;
             R = (R < NUM_0) ? NUM_0 : ((R > NUM_255) ? NUM_255 : R);
             G = (G < NUM_0) ? NUM_0 : ((G > NUM_255) ? NUM_255 : G);
             B = (B < NUM_0) ? NUM_0 : ((B > NUM_255) ? NUM_255 : B);
@@ -389,9 +390,9 @@ static void NV21ToRGBAManual(const uint8_t *srcBuffer, const Size &imageSize, ui
             uint8_t u = srcUV[(h / NUM_2) * widthEven + (w / NUM_2) * NUM_2 + NUM_1];
             uint8_t v = srcUV[(h / NUM_2) * widthEven + (w / NUM_2) * NUM_2];
 
-            int r = static_cast<int>(y + 1.402 * (v - NUM_128));
-            int g = static_cast<int>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
-            int b = static_cast<int>(y + 1.772 * (u - NUM_128));
+            uint8_t r = static_cast<uint8_t>(y + 1.402 * (v - NUM_128));
+            uint8_t g = static_cast<uint8_t>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
+            uint8_t b = static_cast<uint8_t>(y + 1.772 * (u - NUM_128));
 
             (*destBuffer)[NUM_4 * yIndex] = r < NUM_0 ? NUM_0 : (r > NUM_255 ? NUM_255 : r);
             (*destBuffer)[NUM_4 * yIndex + NUM_1] = g < NUM_0 ? NUM_0 : (g > NUM_255 ? NUM_255 : g);
@@ -415,9 +416,9 @@ static void NV21ToRGB565Manual(const uint8_t *srcBuffer, const Size &imageSize, 
             uint8_t u = srcUV[(h / NUM_2) * widthEven + NUM_1 + (w / NUM_2) * NUM_2 + NUM_1];
             uint8_t v = srcUV[(h / NUM_2) * widthEven + NUM_1 + (w / NUM_2) * NUM_2];
 
-            int r = static_cast<int>(y + 1.402 * (v - NUM_128));
-            int g = static_cast<int>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
-            int b = static_cast<int>(y + 1.772 * (u - NUM_128));
+            uint8_t r = static_cast<uint8_t>(y + 1.402 * (v - NUM_128));
+            uint8_t g = static_cast<uint8_t>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
+            uint8_t b = static_cast<uint8_t>(y + 1.772 * (u - NUM_128));
 
             int32_t r1 = r < NUM_0 ? NUM_0 : (r > NUM_255 ? NUM_255 : r);
             int32_t g1 = g < NUM_0 ? NUM_0 : (g > NUM_255 ? NUM_255 : g);
@@ -445,9 +446,9 @@ static void NV21ToBGRAManual(const uint8_t *srcBuffer, const Size &imageSize, ui
             uint8_t u = srcUV[(h / NUM_2) * widthEven + (w / NUM_2) * NUM_2 + NUM_1];
             uint8_t v = srcUV[(h / NUM_2) * widthEven + (w / NUM_2) * NUM_2];
 
-            int r = static_cast<int>(y + 1.402 * (v - NUM_128));
-            int g = static_cast<int>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
-            int b = static_cast<int>(y + 1.772 * (u - NUM_128));
+            uint8_t r = static_cast<uint8_t>(y + 1.402 * (v - NUM_128));
+            uint8_t g = static_cast<uint8_t>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
+            uint8_t b = static_cast<uint8_t>(y + 1.772 * (u - NUM_128));
 
             (*destBuffer)[NUM_4 * yIndex] = b < NUM_0 ? NUM_0 : (b > NUM_255 ? NUM_255 : b);
             (*destBuffer)[NUM_4 * yIndex + NUM_1] = g < NUM_0 ? NUM_0 : (g > NUM_255 ? NUM_255 : g);
@@ -528,7 +529,6 @@ bool NV12ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
     libyuv::NV12ToRGB565Matrix(srcY, imageSize.width, srcUV ,widthEven, *destBuffer, dstStrideRGB565,
 	    yuvConstants, imageSize.width, imageSize.height);
 #else
-    HiLog::Error(LABEL,"convert ........start");
     for (int h = NUM_0; h < imageSize.height; h++) {
         for (int w = NUM_0; w < imageSize.width; w++) {
             int yIndex = h * imageSize.width + w;
@@ -672,6 +672,7 @@ bool NV21ToRGBAF16(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **de
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
+    }
     uint32_t frameSize = imageSize.width * imageSize.height;
     destBufferSize = frameSize * sizeof(uint64_t);
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
@@ -857,6 +858,7 @@ bool NV12ToRGBAF16(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **de
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
+    }
     uint32_t frameSize = imageSize.width * imageSize.height;
     destBufferSize = frameSize * sizeof(uint64_t);
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();

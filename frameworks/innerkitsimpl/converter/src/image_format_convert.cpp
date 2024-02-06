@@ -14,7 +14,7 @@
  */
 
 #include "image_format_convert.h"
-#include "hilog/log.h"
+#include "image_log.h"
 #include "media_errors.h"
 #include "log_tags.h"
 #include "image_source.h"
@@ -29,10 +29,15 @@ namespace {
     constexpr uint8_t NUM_8 = 8;
 }
 
+
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "ImageFormatConvert"
+
 namespace OHOS {
 namespace Media {
-using namespace OHOS::HiviewDFX;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE, "ImageFormatConvert" };
 
 const size_t MAX_CONVERT_FUNC_NUM = 16;
 
@@ -520,9 +525,6 @@ bool ImageFormatConvert::SetPlInfo(const Size &size)
 bool ImageFormatConvert::SetAddr(uint8_buffer_type destBuffer, size_t destBufferSize)
 {
     addrInfos.addr = destBuffer;
-    if (destBuffer ==nullptr) {
-        return false;
-    }
     addrInfos.context = nullptr;
     addrInfos.size = destBufferSize;
     addrInfos.type = AllocatorType::DEFAULT;
@@ -567,15 +569,6 @@ bool ImageFormatConvert::ConvertYUVPixelMap()
     return true;
 }
 
-bool ImageFormatConvert::ConvertRGBPixelMap()
-{
-    if (destBuffer == nullptr) {
-            return false;
-    }
-    destPixelMapUnique = PixelMap::Create(opts);
-    return true;    
-}
-
 bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
                                           size_t destBufferSize)
 {
@@ -595,10 +588,7 @@ bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMa
     }
     else 
     {
-        if (!ConvertRGBPixelMap()) {
-            IMAGE_LOGD("buffer to pixelmap failed");
-            return false;
-        }
+        destPixelMapUnique = PixelMap::Create(opts);
     }
     if (destPixelMapUnique == nullptr) {
         IMAGE_LOGD("create pixel map failed");
@@ -620,8 +610,6 @@ bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMa
         return false;
     }
     destPixelMap = std::move(destPixelMapUnique);
-    int32_t dest_width = destPixelMap->GetHeight();
-    PixelFormat dest_pix = destPixelMap->GetPixelFormat();
     return true;
 }
 
