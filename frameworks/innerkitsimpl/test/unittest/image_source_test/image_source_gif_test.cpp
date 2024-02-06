@@ -189,5 +189,33 @@ HWTEST_F(ImageSourceGifTest, GifImageDecode005, TestSize.Level3)
     EXPECT_EQ(63, green);
     EXPECT_EQ(19, blue);
 }
+
+/**
+ * @tc.name: GifImageDecode006
+ * @tc.desc: Decode gif image use index.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceGifTest, GifImageDecode006, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct file path and wrong format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+        ImageSource::CreateImageSource("/data/local/tmp/image/moving_test.gif", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode image source to pixel map by index is 1.
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    uint32_t index = 1;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(index, decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+}
 } // namespace Multimedia
 } // namespace OHOS
