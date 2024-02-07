@@ -16,6 +16,7 @@
 #include "render_context.h"
 
 #include "image_log.h"
+#include "image_trace.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -36,6 +37,11 @@ RenderContext::~RenderContext() noexcept
     
 bool RenderContext::Init()
 {
+    ImageTrace trace("ImageFramework RenderContext::Init");
+    if (IsValid()) {
+        return true;
+    }
+
     if (!InitEGLContext()) {
         return false;
     }

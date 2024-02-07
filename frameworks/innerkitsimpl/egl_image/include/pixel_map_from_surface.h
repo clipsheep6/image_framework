@@ -46,9 +46,10 @@ private:
     bool DrawImage(const Rect &srcRect);
     void Clear() noexcept;
 
+    static std::unique_ptr<RenderContext> renderContext;
+
     sptr<SurfaceBuffer> surfaceBuffer_;
     OHNativeWindowBuffer *nativeWindowBuffer_ = nullptr;
-    std::unique_ptr<RenderContext> renderContext_;
     GLuint texId_ = 0U;
     EGLImageKHR eglImage_ = EGL_NO_IMAGE_KHR;
     sk_sp<SkSurface> targetSurface_; // a tmp surface(renderTarget) to draw surfacebuffer and get the result.

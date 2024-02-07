@@ -31,7 +31,10 @@ ohos_shared_library("egl_image") {
     "src/render_context.cpp",
   ]
 
-  deps = [ "$image_subsystem/interfaces/innerkits:image_native" ]
+  deps = [
+    "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+    "$image_subsystem/interfaces/innerkits:image_native",
+  ]
   deps += skia_platform
 
   external_deps = [
