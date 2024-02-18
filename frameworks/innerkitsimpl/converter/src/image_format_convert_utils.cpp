@@ -537,9 +537,9 @@ bool NV12ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
             uint8_t y = srcY[yIndex];
             uint8_t v = srcUV[(h / NUM_2) * widthEven + NUM_1 + (w / NUM_2) * NUM_2 + NUM_1];
             uint8_t u = srcUV[(h / NUM_2) * widthEven + NUM_1 + (w / NUM_2) * NUM_2];
-            int r = static_cast<int>(y + 1.402 * (v - NUM_128));
-            int g = static_cast<int>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
-            int b = static_cast<int>(y + 1.772 * (u - NUM_128));
+            uint32_t r = static_cast<uint32_t>(y + 1.402 * (v - NUM_128));
+            uint32_t g = static_cast<uint32_t>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
+            uint32_t b = static_cast<uint32_t>(y + 1.772 * (u - NUM_128));
             int32_t r1 = r < NUM_0 ? NUM_0 : (r > NUM_255 ? NUM_255 : r);
             int32_t g1 = g < NUM_0 ? NUM_0 : (g > NUM_255 ? NUM_255 : g);
             int32_t b1 = b < NUM_0 ? NUM_0 : (b > NUM_255 ? NUM_255 : b);
@@ -571,12 +571,10 @@ bool RGBAF16ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **de
             uint16_t r16 = static_cast<uint16_t>(srcBuffer[NUM_4 * (h * imageSize.width + w)]);
             uint16_t g16 = static_cast<uint16_t>(srcBuffer[NUM_4 * (h * imageSize.width + w) + NUM_1]);
             uint16_t b16 = static_cast<uint16_t>(srcBuffer[NUM_4 * (h * imageSize.width + w) + NUM_2]);
-            uint8_t r8 = static_cast<uint8_t>(r16 >> NUM_8);
-            uint8_t g8 = static_cast<uint8_t>(g16 >> NUM_8);
-            uint8_t b8 = static_cast<uint8_t>(b16 >> NUM_8);
-            float y = 0.299f * r8 + 0.587f * g8 + 0.114f * b8;
-            float u = -0.14713f * r8 - 0.28886f * g8 + 0.436f * b8 + 128;
-            float v = 0.615f * r8 - 0.51499f * g8 - 0.10001f * b8 + 128;
+            uint32_t r = static_cast<uint32_t>(r16 >> NUM_8);
+            uint32_t g = static_cast<uint32_t>(g16 >> NUM_8);
+            uint32_t b = static_cast<uint32_t>(b16 >> NUM_8);
+            float y = 0.299f * r + 0.587f * g + 0.114f * b;
             int currentIndex = h * imageSize.width + w;
             (*destBuffer)[currentIndex] = static_cast<uint8_t> (y < NUM_0) ? NUM_0 : ((y > NUM_255) ? NUM_255 : y);
             if (h % NUM_2 == 0 && w % NUM_2 == 0) {
@@ -1397,7 +1395,7 @@ bool NV12ToYU12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         (*destBuffer)[i] = srcY[i];
     }
 
-    for (int32_t i = NUM_0; i < ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2); i++) {
+    for (size_t i = NUM_0; i < ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2); i++) {
         destU[i] = srcUV[i * NUM_2];
         destV[i] = srcUV[i * NUM_2 + NUM_1];
     }
@@ -1432,15 +1430,12 @@ bool NV21ToRGB(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
             int yIndex = h * imageSize.width + w;
             int widthEven = (imageSize.width % NUM_2 == NUM_0) ? imageSize.width :
                 ((imageSize.width + NUM_1) / NUM_2 * NUM_2);
-
             uint8_t y = srcY[yIndex];
             uint8_t u = srcUV[(h / NUM_2) * widthEven + (w / NUM_2) * NUM_2 + NUM_1];
             uint8_t v = srcUV[(h / NUM_2) * widthEven + (w / NUM_2) * NUM_2];
-
-            int r = static_cast<int>(y + 1.402 * (v - NUM_128));
-            int g = static_cast<int>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
-            int b = static_cast<int>(y + 1.772 * (u - NUM_128));
-
+            uint32_t r = static_cast<uint32_t>(y + 1.402 * (v - NUM_128));
+            uint32_t g = static_cast<uint32_t>(y - 0.344136 * (u - NUM_128) - 0.714136 * (v - NUM_128));
+            uint32_t b = static_cast<uint32_t>(y + 1.772 * (u - NUM_128));
             (*destBuffer)[NUM_3 * yIndex] = r < NUM_0 ? NUM_0 : (r > NUM_255 ? NUM_255 : r);
             (*destBuffer)[NUM_3 * yIndex + NUM_1] = g < NUM_0 ? NUM_0 : (g > NUM_255 ? NUM_255 : g);
             (*destBuffer)[NUM_3 * yIndex + NUM_2] = b < NUM_0 ? NUM_0 : (b > NUM_255 ? NUM_255 : b);
@@ -1630,15 +1625,12 @@ bool YV12ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
             int widthSrcH = (imageSize.width % NUM_2 == NUM_0) ? imageSize.height : (imageSize.height + NUM_1);
             int widthEvenDest = (imageSize.width % NUM_2 == NUM_0) ? imageSize.width :
                 ((imageSize.width + NUM_1) / NUM_2 * NUM_2);
-
             const int srcIndexY = h * imageSize.width + w;
             const int srcIndexV = imageSize.height * imageSize.width + (h / NUM_2) * widthSrcW / NUM_2 + (w / NUM_2);
             const int srcIndexU = srcIndexV + widthSrcW / NUM_2 * widthSrcH / NUM_2;
-
             const int destIndexY = h * imageSize.width + w;
             const int destIndexUV = imageSize.width * imageSize.height + (h / NUM_2) * widthEvenDest +
                 (w / NUM_2) * NUM_2;
-
             (*destBuffer)[destIndexY] = srcBuffer[srcIndexY];
             (*destBuffer)[destIndexUV] = srcBuffer[srcIndexU];
             (*destBuffer)[destIndexUV + NUM_1] = srcBuffer[srcIndexV];

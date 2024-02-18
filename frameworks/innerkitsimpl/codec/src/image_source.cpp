@@ -2173,8 +2173,7 @@ std::unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImag
                                                              PixelMapAddrInfos &addrInfos)
 {
     unique_ptr<PixelMap> pixelMap;
-    if (plInfo.pixelFormat == PlPixelFormat::YV12 || plInfo.pixelFormat == PlPixelFormat::YU12||
-        plInfo.pixelFormat == PlPixelFormat::NV21 || plInfo.pixelFormat == PlPixelFormat::NV12) {
+    if (plInfo.pixelFormat == PlPixelFormat::NV21 || plInfo.pixelFormat == PlPixelFormat::NV12) {
         pixelMap = make_unique<pixelYUV>();
     } else {
         pixelMap = make_unique<PixelMap>();
