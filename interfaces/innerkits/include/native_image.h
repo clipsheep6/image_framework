@@ -40,8 +40,8 @@ public:
 
 class NativeImage {
 public:
-    NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser, int64_t timestamp );
-    NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser );
+    NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser, int64_t timestamp);
+    NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser);
     ~NativeImage() = default;
     int32_t GetSize(int32_t &width, int32_t &height);
     int32_t GetDataSize(uint64_t &size);

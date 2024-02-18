@@ -462,7 +462,7 @@ napi_value ImageNapi::JsGetTimestamp(napi_env env, napi_callback_info info)
         return result;
     }
     if (context == nullptr || context->image == nullptr) {
-        IMAGE_ERR("Image surface buffer is nullptr");
+        IMAGE_ERR("context is nullptr or Image native is nullptr");
         return result;
     }
 

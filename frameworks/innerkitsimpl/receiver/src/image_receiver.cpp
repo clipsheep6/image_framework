@@ -231,7 +231,24 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage(int64_t &timestamp)
     } else {
         IMAGE_LOGD("buffer is null");
     }
-    IMAGE_LOGD("[ImageReceiver] ReadNextImage  %{public}lld", timestamp); 
+    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
+    return iraContext_->GetCurrentBuffer();
+}
+
+OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage()
+{
+    int32_t flushFence = 0;
+    int64_t timestamp = 0;
+    OHOS::Rect damage = {};
+    OHOS::sptr<OHOS::SurfaceBuffer> buffer;
+    sptr<IConsumerSurface> listenerConsumerSurface = iraContext_->GetReceiverBufferConsumer();
+    SurfaceError surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damage);
+    if (surfaceError == SURFACE_ERROR_OK) {
+        iraContext_->currentBuffer_ = buffer;
+    } else {
+        IMAGE_LOGD("buffer is null");
+    }
+    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -249,7 +266,26 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage(int64_t &timestamp)
     }
 
     iraContext_->currentBuffer_ = bufferBefore;
-    IMAGE_LOGD("[ImageReceiver] ReadLastImage  %{public}lld", timestamp); 
+    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
+    return iraContext_->GetCurrentBuffer();
+}
+
+OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage()
+{
+    int32_t flushFence = 0;
+    int64_t timestamp = 0;
+    OHOS::Rect damage = {};
+    OHOS::sptr<OHOS::SurfaceBuffer> buffer;
+    OHOS::sptr<OHOS::SurfaceBuffer> bufferBefore;
+    sptr<IConsumerSurface> listenerConsumerSurface = iraContext_->GetReceiverBufferConsumer();
+    SurfaceError surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damage);
+    while (surfaceError == SURFACE_ERROR_OK) {
+        bufferBefore = buffer;
+        surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damage);
+    }
+
+    iraContext_->currentBuffer_ = bufferBefore;
+    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
     return iraContext_->GetCurrentBuffer();
 }
 

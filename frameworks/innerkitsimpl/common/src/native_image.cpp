@@ -37,8 +37,8 @@ namespace Media {
 NativeImage::NativeImage(sptr<SurfaceBuffer> buffer,
     std::shared_ptr<IBufferProcessor> releaser) : buffer_(buffer), releaser_(releaser), timestamp_(0)
 {}
-NativeImage::NativeImage(sptr<SurfaceBuffer> buffer,
-    std::shared_ptr<IBufferProcessor> releaser, int64_t timestamp) : buffer_(buffer), releaser_(releaser), timestamp_(timestamp)
+NativeImage::NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser, 
+    int64_t timestamp) : buffer_(buffer), releaser_(releaser), timestamp_(timestamp)
 {}
 
 struct YUVData {

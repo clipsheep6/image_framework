@@ -181,7 +181,7 @@ int32_t OH_Image_Size(const ImageNative* native, struct OhosImageSize* size);
 int32_t OH_Image_Format(const ImageNative* native, int32_t* format);
 
 /**
- * @brief Obtains the image format of an {@link ImageNative} object at the native layer.
+ * @brief Obtains the image timestamp of an {@link ImageNative} object at the native layer.
  *
  * @param native Indicates the pointer to an {@link ImageNative} object at the native layer.
  * @param timestamp Indicates the pointer to the image timestamp obtained.
