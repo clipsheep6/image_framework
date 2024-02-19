@@ -45,6 +45,7 @@ class AbsImageDecoder;
 struct DataStreamBuffer;
 struct PixelDecodeOptions;
 struct PlImageInfo;
+struct DecodeContext;
 } // namespace ImagePlugin
 } // namespace OHOS
 
@@ -137,6 +138,8 @@ struct ASTCInfo {
 };
 
 class SourceStream;
+enum class HdrType;
+struct HdrMetadata;
 
 class ImageSource {
 public:
@@ -205,6 +208,7 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
+    NATIVEEXPORT bool IsHdrImage();
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -261,7 +265,16 @@ private:
     std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts,
                                                      uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
-                                                    PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
+                                                    ImagePlugin::DecodeContext& context, uint32_t &errorCode);
+    bool ApplyGainMap(HdrType hdrType, ImagePlugin::DecodeContext& baseCtx,
+                      ImagePlugin::DecodeContext& hdrCtx, float scale);
+    bool ComposeHdrImage(HdrType hdrType, ImagePlugin::DecodeContext& baseCtx, ImagePlugin::DecodeContext& gainMapCtx,
+                         ImagePlugin::DecodeContext& hdrCtx, HdrMetadata metadata);
+    uint32_t SetGainMapDecodeOption(std::unique_ptr<ImagePlugin::AbsImageDecoder>& decoder,
+                                    ImagePlugin::PlImageInfo& plInfo, float scale);
+    ImagePlugin::DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo info,
+                                                        ImagePlugin::PlImageInfo& outInfo, uint32_t& errorCode);
+    bool DecodeJpegGainMap(HdrType hdrType, float scale, ImagePlugin::DecodeContext& gainMapCtx, HdrMetadata& metadata);
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
     const std::string NINE_PATCH = "ninepatch";
@@ -291,6 +304,7 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
+    HdrType sourceHdrType_; // source image hdr type;
 };
 } // namespace Media
 } // namespace OHOS

@@ -13,9 +13,21 @@
 
 import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
-
+config("skia_includes") {
+  include_dirs = [
+    "${skia_root}/skia",
+    "${skia_root}/skia/include/codec",
+    "${skia_root}/skia/include/core",
+    "${skia_root}/skia/third_party/skcms",
+    "${skia_root}/skia/third_party/externals/libjpeg-turbo",
+  ]
+}
+config("public_include") {
+  include_dirs = [ "${image_subsystem}/frameworks/innerkitsimpl/hdr/include" ]
+}
 if (use_clang_ios) {
   ohos_source_set("image_utils") {
+    configs = [ ":skia_includes" ]
     include_dirs = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
       "//foundation/multimedia/utils/include",
@@ -24,9 +36,13 @@ if (use_clang_ios) {
       "//commonlibrary/c_utils/base/include",
       "//foundation/multimedia/media_utils_lite/interfaces/kits",
       "//foundation/communication/ipc/utils/include",
+      "${image_subsystem}/plugins/manager/include/image",
     ]
 
     sources = [
+      "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/hdr_utils.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/jpeg_mpf_parser.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/xmp_parser.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
       "src/image_system_properties.cpp",
@@ -54,6 +70,8 @@ if (use_clang_ios) {
         debug = false
       }
     }
+    public_configs = [ ":public_include" ]
+    configs = [ ":skia_includes" ]
     include_dirs = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
       "//foundation/multimedia/utils/include",
@@ -64,9 +82,13 @@ if (use_clang_ios) {
       "//foundation/communication/ipc/utils/include",
       "$skia_root/skia",
       "${graphic_subsystem}/interfaces/inner_api/surface",
+      "${image_subsystem}/plugins/manager/include/image",
     ]
 
     sources = [
+      "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/hdr_utils.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/jpeg_mpf_parser.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/xmp_parser.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
       "src/image_system_properties.cpp",
@@ -109,7 +131,7 @@ if (use_clang_ios) {
       deps = [
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
       ]
-
+      deps += skia_platform
       external_deps = [
         "c_utils:utils",
         "graphic_2d:color_manager",
@@ -133,6 +155,7 @@ if (use_clang_ios) {
 }
 
 ohos_static_library("image_utils_static") {
+  public_configs = [ ":public_include" ]
   include_dirs = [
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/utils/include",
@@ -140,9 +163,13 @@ ohos_static_library("image_utils_static") {
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
     "//commonlibrary/c_utils/base/include",
     "$skia_root/skia",
+    "${image_subsystem}/plugins/manager/include/image",
   ]
 
   sources = [
+    "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/hdr_utils.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/jpeg_mpf_parser.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/hdr/src/xmp_parser.cpp",
     "src/image_system_properties.cpp",
     "src/image_type_converter.cpp",
     "src/image_utils.cpp",
@@ -184,6 +211,7 @@ ohos_static_library("image_utils_static") {
     deps = [
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
+    deps += skia_platform
 
     external_deps = [
       "c_utils:utils",

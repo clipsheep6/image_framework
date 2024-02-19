@@ -59,6 +59,9 @@ public:
     uint32_t ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
         uint8_t *data, uint32_t size) override;
     uint32_t GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges) override;
+    Media::HdrType CheckHdrType() override;
+    uint32_t GetGainMapOffset() override;
+    Media::HdrMetadata GetHdrMetadata(Media::HdrType type) override;
 
 #ifdef IMAGE_COLORSPACE_FLAG
     OHOS::ColorManager::ColorSpace getGrColorSpace() override;
@@ -110,6 +113,10 @@ private:
     uint32_t sampleSize_ = 1;
     static constexpr uint32_t ALIGN_8 = 8;
     static constexpr uint32_t ALIGN_16 = 16;
+
+    // hdr
+    Media::HdrType hdrType_ = Media::HdrType::UNKNOWN;
+    uint32_t gainMapOffset_ = 0;
 };
 } // namespace ImagePlugin
 } // namespace OHOS

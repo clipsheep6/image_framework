@@ -29,6 +29,8 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
+#include "include/third_party/skcms/skcms.h"
+#include "hdr_utils.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -1266,6 +1268,38 @@ bool ExtDecoder::IsSupportHardwareDecode() {
     int height = info_.height();
     return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
         && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
+}
+
+HdrType ExtDecoder::CheckHdrType() {
+    if (!CheckCodec()) {
+        return Media::HdrType::UNKNOWN;
+    }
+    SkEncodedImageFormat format = codec_->getEncodedFormat();
+    if (format != SkEncodedImageFormat::kJPEG && format != SkEncodedImageFormat::kHEIF) {
+        hdrType_ = Media::HdrType::SDR;
+        gainMapOffset_ = 0;
+        return hdrType_;
+    }
+    hdrType_ = Media::HdrUtils::CheckHdrType(codec_.get(), gainMapOffset_);
+    return hdrType_;
+}
+
+uint32_t ExtDecoder::GetGainMapOffset() {
+    if (codec_ == nullptr || codec_->getEncodedFormat() != SkEncodedImageFormat::kJPEG) {
+        return 0;
+    }
+    if (hdrType_ == Media::HdrType::UNKNOWN) {
+        hdrType_ = Media::HdrUtils::CheckHdrType(codec_.get(), gainMapOffset_);
+    }
+    return gainMapOffset_;
+}
+
+HdrMetadata ExtDecoder::GetHdrMetadata(Media::HdrType type) {
+    HdrMetadata metadata = {};
+    if (type > Media::HdrType::SDR && Media::HdrUtils::GetMetadata(codec_.get(), type, metadata)) {
+        return metadata;
+    }
+    return {};
 }
 } // namespace ImagePlugin
 } // namespace OHOS

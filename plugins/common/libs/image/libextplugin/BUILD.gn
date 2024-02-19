@@ -206,6 +206,8 @@ ohos_shared_library("extplugin") {
 
     external_deps = [
       "c_utils:utils",
+      "drivers_interface_display:display_buffer_idl_headers",
+      "drivers_interface_display:display_commontype_idl_headers",
       "graphic_2d:color_manager",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
@@ -224,6 +226,11 @@ ohos_shared_library("extplugin") {
         "ipc:ipc_single",
       ]
       defines = [ "JPEG_HW_DECODE_ENABLE" ]
+    }
+
+    if (enable_hdr_converter) {
+      defines += [ "IMAGE_HDR_CONVERTER_FLAG" ]
+      external_deps += [ "video_processing_engine:videoprocessingengine" ]
     }
   }
   cflags = [

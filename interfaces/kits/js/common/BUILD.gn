@@ -21,6 +21,7 @@ config("image_external_config") {
     "include",
     "//utils/system/safwk/native/include",
     "${image_subsystem}/frameworks/kits/js/common/ndk/include",
+    "${image_subsystem}/frameworks/innerkitsimpl/hdr/include",
     "//foundation/ability/ability_runtime/interfaces/inner_api/runtime/include/",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/receiver/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/creator/include",

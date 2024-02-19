@@ -49,6 +49,8 @@ config("image_external_config") {
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//drivers/peripheral/display/interfaces/include",
     "//drivers/peripheral/base",
+    "${graphic_surface_root}/surface/include",
+    "${image_subsystem}/frameworks/innerkitsimpl/hdr/include",
   ]
 
   include_dirs += [
@@ -63,6 +65,11 @@ config("image_external_config") {
     "$skia_root/skia/third_party/skcms",
     "//third_party/libexif",
   ]
+
+  if (enable_hdr_converter) {
+    include_dirs +=
+        [ "${media_subsystem}/video_processing_engine/interfaces/inner_api" ]
+  }
 
   if (use_mingw_win) {
     include_dirs +=
@@ -221,6 +228,8 @@ if (use_clang_android) {
       deps += [ "//third_party/ffmpeg:libohosffmpeg" ]
       external_deps = [
         "c_utils:utils",
+        "drivers_interface_display:display_buffer_idl_headers",
+        "drivers_interface_display:display_commontype_idl_headers",
         "graphic_2d:color_manager",
         "graphic_surface:surface",
         "hilog:libhilog",
@@ -228,6 +237,11 @@ if (use_clang_android) {
         "ipc:ipc_core",
         "napi:ace_napi",
       ]
+    }
+
+    if (enable_hdr_converter) {
+      defines += [ "IMAGE_HDR_CONVERTER_FLAG" ]
+      external_deps += [ "video_processing_engine:videoprocessingengine" ]
     }
 
     if (purgeable_ashmem_enable && defined(global_parts_info) &&
@@ -355,11 +369,19 @@ ohos_static_library("image_static") {
     }
     external_deps = [
       "c_utils:utils",
+      "drivers_interface_display:display_buffer_idl_headers",
+      "drivers_interface_display:display_commontype_idl_headers",
       "graphic_2d:color_manager",
       "graphic_surface:surface",
       "hilog:libhilog",
     ]
   }
+
+  if (enable_hdr_converter) {
+    defines += [ "IMAGE_HDR_CONVERTER_FLAG" ]
+    external_deps += [ "video_processing_engine:videoprocessingengine" ]
+  }
+
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }

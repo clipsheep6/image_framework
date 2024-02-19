@@ -41,7 +41,8 @@
           "drivers_interface_codec",
           "drivers_interface_display",
           "hdf_core",
-          "memmgr_plugin"
+          "memmgr_plugin",
+          "video_processing_engine"
         ],
         "third_party": [
           "flutter",
