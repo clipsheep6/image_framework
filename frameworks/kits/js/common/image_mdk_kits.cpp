@@ -95,7 +95,7 @@ static int32_t ImageNapiTimestamp(ImageNapi* native, struct ImageNapiArgs* args)
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     int64_t timestamp;
-    if (nativeImage->GetTimestamp(timestamp) != SUCCESS) {
+    if (nativeImage->GetTimestamp(timestamp) != IMAGE_RESULT_SUCCESS) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     *(args->out64Num0) = timestamp;
