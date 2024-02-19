@@ -190,14 +190,8 @@ unique_ptr<ImageSource> ImageSource::DoImageSourceCreate(
         IMAGE_LOGE("[ImageSource]failed to create ImageSource.");
         return nullptr;
     }
-    auto imageSource = unique_ptr<ImageSource>(sourcePtr);
-    ImagePlugin::DataStreamBuffer outData;
-    uint32_t res = imageSource->GetData(outData, ASTC_HEADER_SIZE);
-    if (res == SUCCESS) {
-        imageSource->isAstc_ = IsASTC(outData.inputStreamBuffer, outData.dataSize);
-    }
     errorCode = SUCCESS;
-    return imageSource;
+    return unique_ptr<ImageSource>(sourcePtr);
 }
 
 unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is,
@@ -313,13 +307,22 @@ void ImageSource::Reset()
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapEx(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
-    HiLogPrint(LogType::LOG_CORE, LogLevel::LOG_INFO, LOG_TAG_DOMAIN_ID_PLUGIN, "ImageSource",
+    ImageTrace imageTrace("ImageSource::CreatePixelMapEx, index:%u, desiredSize:(%d, %d)", index,
+        opts.desiredSize.width, opts.desiredSize.height);
+    IMAGE_LOGD(
         "CreatePixelMapEx imageId_: %{public}lu, desiredPixelFormat: %{public}d,"
         "desiredSize: (%{public}d, %{public}d)", static_cast<unsigned long>(imageId_), opts.desiredPixelFormat,
         opts.desiredSize.width, opts.desiredSize.height);
 
 #if !defined(A_PLATFORM) || !defined(IOS_PLATFORM)
-    if (isAstc_) {
+    if (!isAstc_.has_value()) {
+        ImagePlugin::DataStreamBuffer outData;
+        uint32_t res = GetData(outData, ASTC_HEADER_SIZE);
+        if (res == SUCCESS) {
+            isAstc_ = IsASTC(outData.inputStreamBuffer, outData.dataSize);
+        }
+    }
+    if (isAstc_.has_value() && isAstc_.value()) {
         return CreatePixelMapForASTC(errorCode);
     }
 #endif
@@ -457,6 +460,12 @@ bool IsWidthAligned(const int32_t &width)
     return ((width * NUM_4) & INT_255) == 0;
 }
 
+bool IsPreferDma(bool perferDma)
+{
+    static bool isSceneBoard = ImageSystemProperties::IsPreferDma();
+    return perferDma && !isSceneBoard;
+}
+
 bool IsSupportDma(const DecodeOptions &opts, const ImageInfo &info, bool hasDesiredSizeOptions)
 {
 #if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
@@ -471,7 +480,7 @@ bool IsSupportDma(const DecodeOptions &opts, const ImageInfo &info, bool hasDesi
 
     if (ImageSystemProperties::GetDmaEnabled() && IsSupportFormat(opts.desiredPixelFormat)) {
         return IsSupportSize(hasDesiredSizeOptions ? opts.desiredSize : info.size) &&
-            IsWidthAligned(opts.desiredSize.width);
+            (IsWidthAligned(opts.desiredSize.width) || IsPreferDma(opts.preferDma));
     }
     return false;
 #endif
@@ -503,11 +512,11 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     const DecodeOptions &opts, uint32_t &errorCode)
 {
-    ImageTrace imageTrace("CreatePixelMapExtended");
     uint64_t decodeStartTime = GetNowTimeMicroSeconds();
     opts_ = opts;
     ImageInfo info;
     errorCode = GetImageInfo(FIRST_FRAME, info);
+    ImageTrace imageTrace("CreatePixelMapExtended, info.size:(%d, %d)", info.size.width, info.size.height);
     if (errorCode != SUCCESS || !IsSizeVailed(info.size)) {
         IMAGE_LOGE("[ImageSource]get image info failed, ret:%{public}u.", errorCode);
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
@@ -1340,7 +1349,14 @@ uint32_t ImageSource::OnSourceRecognized(bool isAcquiredImageNum)
 uint32_t ImageSource::OnSourceUnresolved()
 {
     string formatResult;
-    if (isAstc_) {
+    if (!isAstc_.has_value()) {
+        ImagePlugin::DataStreamBuffer outData;
+        uint32_t res = GetData(outData, ASTC_HEADER_SIZE);
+        if (res == SUCCESS) {
+            isAstc_ = IsASTC(outData.inputStreamBuffer, outData.dataSize);
+        }
+    }
+    if (isAstc_.has_value() && isAstc_.value()) {
         formatResult = InnerFormat::ASTC_FORMAT;
     } else {
         auto ret = GetEncodedFormat(sourceInfo_.encodedFormat, formatResult);

@@ -1010,7 +1010,7 @@ static bool GetColorSpaceName(const skcms_ICCProfile* profile, OHOS::ColorManage
         }
         auto size = u8ToU32(tags[i].size);
         auto offset = u8ToU32(tags[i].offset);
-        if (size <= SIZE_ZERO || offset >= profile->size) {
+        if (size == SIZE_ZERO || offset >= profile->size) {
             continue;
         }
         auto buffer = u8ToU32(tags[i].offset) + profile->buffer;
@@ -1058,16 +1058,17 @@ static uint32_t ProcessWithStreamData(InputDataStream *input,
         return Media::ERR_MEDIA_INVALID_VALUE;
     }
 
-    if (input->GetDataPtr() == nullptr) {
-        auto tmpBuffer = std::make_unique<uint8_t[]>(inputSize);
-        auto savePos = input->Tell();
-        input->Seek(SIZE_ZERO);
-        uint32_t readSize = 0;
-        input->Read(inputSize, tmpBuffer.get(), inputSize, readSize);
-        input->Seek(savePos);
-        return process(tmpBuffer.get(), inputSize);
+    auto tmpBuffer = std::make_unique<uint8_t[]>(inputSize);
+    auto savePos = input->Tell();
+    input->Seek(SIZE_ZERO);
+    uint32_t readSize = 0;
+    bool ret = input->Read(inputSize, tmpBuffer.get(), inputSize, readSize);
+    input->Seek(savePos);
+    if (!ret) {
+        IMAGE_LOGE("InputDataStream read failed.");
+        return Media::ERR_IMAGE_DATA_ABNORMAL;
     }
-    return process(input->GetDataPtr(), inputSize);
+    return process(tmpBuffer.get(), inputSize);
 }
 
 static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
