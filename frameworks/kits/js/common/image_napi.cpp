@@ -456,7 +456,7 @@ napi_value ImageNapi::JsGetTimestamp(napi_env env, napi_callback_info info)
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
-    if (context != nullptr && context->napi != nullptr && context->napi->isTestImage_) {
+    if (context != nullptr && context->napi != nullptr) {
         const int64_t TIMESTAMP = 0;
         napi_create_int64(env, TIMESTAMP, &result);
         return result;
@@ -466,7 +466,7 @@ napi_value ImageNapi::JsGetTimestamp(napi_env env, napi_callback_info info)
         return result;
     }
 
-    int64_t timestamp = NUM0;
+    int64_t timestamp = 0;
     if (context->image->GetTimestamp(timestamp) != SUCCESS) {
         IMAGE_ERR("Image native get timestamp failed");
         return result;
