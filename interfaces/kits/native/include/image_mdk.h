@@ -191,7 +191,7 @@ int32_t OH_Image_Format(const ImageNative* native, int32_t* format);
  * returns {@link IRNdkErrCode} IMAGE_RESULT_SURFACE_GET_PARAMETER_FAILED - if Failed to obtain parameters for surface.
  * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
  * @see ImageNative
- * @since 11
+ * @since 12
  * @version 2.0
  */
 int32_t OH_Image_Timestamp(const ImageNative* native, int64_t* timestamp);
