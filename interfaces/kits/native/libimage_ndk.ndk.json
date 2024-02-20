@@ -13,7 +13,7 @@
         "name": "OH_Image_Format"
     },
     {
-        "name": "OH_Image_Timestamp"
+        "name": "OH_Image_GetTimestamp"
     },
     {
         "name": "OH_Image_GetComponent"

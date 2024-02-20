@@ -75,7 +75,7 @@ int32_t OH_Image_Format(const ImageNative* native, int32_t* format)
 }
 
 MIDK_EXPORT
-int32_t OH_Image_Timestamp(const ImageNative* native, int64_t* timestamp)
+int32_t OH_Image_GetTimestamp(const ImageNative* native, int64_t* timestamp)
 {
     if (native == nullptr || native->napi == nullptr) {
         return IMAGE_RESULT_JNI_ENV_ABNORMAL;
