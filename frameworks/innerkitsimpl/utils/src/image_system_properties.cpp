@@ -20,6 +20,11 @@
 
 #include <parameter.h>
 #include <parameters.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 #endif
 
 extern "C" {
@@ -27,6 +32,27 @@ extern char* __progname;
 }
 namespace OHOS {
 namespace Media {
+std::string getCurrentProcessName()
+{
+    std::string processName;
+
+    std::ifstream cmdlineFile("/proc/self/cmdline");
+    if (cmdlineFile.is_open()) {
+        std::ostringstream oss;
+        oss << cmdlineFile.rdbuf();
+        cmdlineFile.close();
+
+        // Extract process name from the command line
+        std::string cmdline = oss.str();
+        size_t pos = cmdline.find_first_of('\0');
+        if (pos != std::string::npos) {
+            processName = cmdline.substr(0, pos);
+        }
+    }
+
+    return processName;
+}
+
 bool ImageSystemProperties::GetSkiaEnabled()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
@@ -104,6 +130,17 @@ bool ImageSystemProperties::IsPreferDma()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
     return __progname != nullptr && strncmp(__progname, "neboard", strlen("neboard")) == 0;
+#else
+    return false;
+#endif
+}
+
+bool ImageSystemProperties::IsPhotos()
+{
+#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+    static bool isPhone = system::GetParameter("const.product.devicetype", "pc") == "phone";
+    static std::string processName = getCurrentProcessName();
+    return isPhone && (processName == "com.huawei.hmos.photos");
 #else
     return false;
 #endif
