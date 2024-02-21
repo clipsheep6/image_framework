@@ -2169,25 +2169,6 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
     return frameCount;
 }
 
-std::unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
-                                                             PixelMapAddrInfos &addrInfos)
-{
-    unique_ptr<PixelMap> pixelMap;
-    if (plInfo.pixelFormat == PlPixelFormat::NV21 || plInfo.pixelFormat == PlPixelFormat::NV12) {
-        pixelMap = make_unique<pixelYUV>();
-    } else {
-        pixelMap = make_unique<PixelMap>();
-    }
-    pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
-    uint32_t errorCode = UpdatePixelMapInfo(opts_, plInfo, *pixelMap.get(), opts_.fitDensity, true);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
-        return nullptr;
-    }
-    auto saveEditable = pixelMap->IsEditable();
-    pixelMap->SetEditable(saveEditable);
-    return pixelMap;
-}
 
 void ImageSource::DumpInputData(const std::string& fileSuffix)
 {

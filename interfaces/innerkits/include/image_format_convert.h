@@ -68,10 +68,6 @@ public:
     bool SetColorSapace(ColorSpace colorSpace);
     bool SetConvertFunction(ConvertFunction cvtFunc);
     bool SetConvertFunction(PixelFormat srcFormat, PixelFormat destFormat);
-    bool SetPlInfo(const Size&size);
-    bool SetAddr(uint8_buffer_type destBuffer, size_t destBufferSize);
-    bool CreateSource(PixelFormat &destFormat, const Size &size);
-    bool ConvertYUVPixelMap();
     uint8_buffer_type GetDestinationBuffer();
 
     uint32_t ConvertImageFormat(uint8_buffer_type &destBuffer, size_t &destBufferSize);
@@ -104,7 +100,6 @@ private:
     Size imageSize_;
     ConvertFunction cvtFunc_;
     ImagePlugin::PlImageInfo plInfo;
-    PixelMapAddrInfos addrInfos;
     std::unique_ptr<ImageSource> imageSource;
     std::unique_ptr<PixelMap> destPixelMapUnique;
 };

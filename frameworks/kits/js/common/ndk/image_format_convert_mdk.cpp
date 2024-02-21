@@ -22,6 +22,9 @@ using namespace OHOS::Media;
 extern "C" {
 #endif
 
+struct ImageFormatConvertNative_ {
+    PixelMap *pixelMap;
+};
 MIDK_EXPORT
 int32_t OH_ImageConvert_Create()
 {
@@ -33,39 +36,41 @@ int32_t OH_ImageConvert_Create()
 }
 
 MIDK_EXPORT
-int32_t OH_ImageConvert_YuvToRgb(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat)
+int32_t OH_ImageConvert_YuvToRgb(ImageFormatCovnertNative *srcPixelMap, ImageFormatCovnertNative *destPixelMap,
+                                 int32_t destPixelFormat)
 {
-    if (destPixelMap == nullptr || destPixelMap == nullptr) {
+    if (srcPixelMap == nullptr || srcPixelMap->pixelMap == nullptr || destPixelMap == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
     ImageFormatConvertArgs args;
-    args.srcPixelMap = static_cast<PixelMap*>(srcPixelMap);
+    args.srcPixelMap = srcPixelMap->pixelMap;
     args.srcFormatType = YUV_TYPE;
     args.destPixelFormat = PixelFormat(destPixelFormat);
     args.destFormatType = RGB_TYPE;
     
     int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_EXEC, &args);
     if (ret == IMAGE_RESULT_SUCCESS) {
-        *destPixelMap = args.destPixelMap;
+        destPixelMap->pixelMap = args.destPixelMap;
     }
     return ret;
 }
 
 MIDK_EXPORT
-int32_t OH_ImageConvert_RgbToYuv(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat)
+int32_t OH_ImageConvert_RgbToYuv(ImageFormatCovnertNative *srcPixelMap, ImageFormatCovnertNative *destPixelMap,
+                                 int32_t destPixelFormat)
 {
-    if (destPixelMap == nullptr) {
+    if (srcPixelMap == nullptr || srcPixelMap->pixelMap == nullptr || destPixelMap == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
     ImageFormatConvertArgs args;
-    args.srcPixelMap = static_cast<PixelMap*>(srcPixelMap);
+    args.srcPixelMap = srcPixelMap->pixelMap;
     args.srcFormatType = RGB_TYPE;
     args.destPixelFormat = PixelFormat(destPixelFormat);
     args.destFormatType = YUV_TYPE;
     
     int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_EXEC, &args);
     if (ret == IMAGE_RESULT_SUCCESS) {
-        *destPixelMap = args.destPixelMap;
+        destPixelMap->pixelMap = args.destPixelMap;
     }
     return ret;
 }
@@ -77,7 +82,7 @@ int32_t OH_ImageConvert_Release()
 }
 
 MIDK_EXPORT
-int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, void **pixelMap)
+int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, ImageFormatCovnertNative *pixelMap)
 {
     if (pixelMapValue == nullptr || pixelMap == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
@@ -87,19 +92,19 @@ int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, v
     args.pixelMapValue = pixelMapValue;
     int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_JS_TO_C_PIXEL_MAP, &args);
     if (ret == IMAGE_RESULT_SUCCESS) {
-        *pixelMap = args.srcPixelMap;
+        pixelMap->pixelMap = args.srcPixelMap;
     }
     return ret;
 }
 
 MIDK_EXPORT
-int32_t OH_ImageConvert_CToJs_PixelMap(napi_env env, void *pixelMap, napi_value *result)
+int32_t OH_ImageConvert_CToJs_PixelMap(napi_env env, ImageFormatCovnertNative *pixelMap, napi_value *result)
 {
-    if (pixelMap == nullptr || result == nullptr) {
+    if (pixelMap == nullptr || pixelMap->pixelMap == nullptr ||result == nullptr) {
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
     ImageFormatConvertArgs args;
-    args.destPixelMap = static_cast<PixelMap*>(pixelMap);
+    args.destPixelMap = pixelMap->pixelMap;
     args.env = env;
     args.result = result;
     return ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_C_TO_JS_PIXEL_MAP, &args);

@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 /**
+ * @brief Defines a native image format convert object for the image format convert APIs.
+ *
+ * @Syscap SystemCapability.Multimedia.Image
+ * @since 12
+ */
+struct ImageFormatConvertNative_;
+typedef struct ImageFormatConvertNative_ ImageFormatCovnertNative;
+/**
  * @brief Creates an <b>ImageFormatConvert</b> object at the JavaScript native layer.
  *
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
@@ -56,7 +64,8 @@ int32_t OH_ImageConvert_Create();
  *
  * @Syscap SystemCapability.Multimedia.Image
  */
-int32_t OH_ImageConvert_YuvToRgb(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat);
+int32_t OH_ImageConvert_YuvToRgb(ImageFormatCovnertNative *srcPixelMap, ImageFormatCovnertNative *destPixelMap,
+                                 int32_t destPixelFormat);
 
 /**
  * @brief Convert image format from RGB to YUV by PixelMap.
@@ -67,7 +76,8 @@ int32_t OH_ImageConvert_YuvToRgb(void *srcPixelMap, void **destPixelMap, int32_t
  *
  * @Syscap SystemCapability.Multimedia.Image
  */
-int32_t OH_ImageConvert_RgbToYuv(void *srcPixelMap, void **destPixelMap, int32_t destPixelFormat);
+int32_t OH_ImageConvert_RgbToYuv(ImageFormatCovnertNative *srcPixelMap, ImageFormatCovnertNative *destPixelMap,
+                                 int32_t destPixelFormat);
 
 /**
  * @brief Releases an <b>ImageFormatConvertNative</b> object.
@@ -91,7 +101,7 @@ int32_t OH_ImageConvert_Release();
  * @since 12
  * @version 4.0
  */
-int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, void **pixelMap);
+int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, ImageFormatCovnertNative *pixelMap);
 
 /**
  * @brief Convert Js objects to C pointers.
@@ -104,7 +114,7 @@ int32_t OH_ImageConvert_JsToC_PixelMap(napi_env env, napi_value pixelMapValue, v
  * @since 12
  * @version 4.0
  */
-int32_t OH_ImageConvert_CToJs_PixelMap(napi_env env, void *pixelMap, napi_value *result);
+int32_t OH_ImageConvert_CToJs_PixelMap(napi_env env, ImageFormatCovnertNative *pixelMap, napi_value *result);
 
 #ifdef __cplusplus
 };

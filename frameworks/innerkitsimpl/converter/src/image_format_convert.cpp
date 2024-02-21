@@ -162,17 +162,7 @@ ImageFormatConvert::ImageFormatConvert(const std::shared_ptr<PixelMap> srcPiexlM
     colorSpace_ = ColorSpace::SRGB;
     srcPixelMap_ = srcPiexlMap;
     cvtFunc_ = nullptr;
-    SourceOptions options;
-    options.formatHint = "jpeg";
-    options.pixelFormat = PixelFormat::RGB_888;
-    options.size.width = imageSize_.width;
-    options.size.height = imageSize_.width;
-    error.hasErrorCode = true;
-    error.errorCode = SUCCESS;
-    error.msg = "An error has occurred.";
-    uint32_t size = imageSize_.width * imageSize_.height * NUM_3;
-    uint8_t *data = new uint8_t[size]();
-    imageSource = ImageSource::CreateImageSource(data,size,options,error.errorCode);
+    
     ReadPixelMap();
 }
 
@@ -392,6 +382,7 @@ uint32_t ImageFormatConvert::ConvertImageFormat(std::unique_ptr<PixelMap> &destP
         return ERR_IMAGE_PIXELMAP_CREATE_FAILED;
     }
 
+    ++destBufferRefCnt_;
     return SUCCESS;
 }
 
@@ -499,117 +490,40 @@ void ImageFormatConvert::ReadPixelMap()
     imageSize_ = {width, height};
     colorSpace_ = srcPixelMap_->GetColorSpace();
     srcBuffer_ = srcPixelMap_->GetPixels();
+    srcBufferSize_ = srcPixelMap_->GetByteCount();
     srcFormat_ = srcPixelMap_->GetPixelFormat();
 }
 
-bool ImageFormatConvert::SetPlInfo(const Size &size)
-{
-    plInfo.size.width = size.width;
-    plInfo.size.height = size.height;
-    plInfo.pixelFormat = (destFormat_ == PixelFormat::NV12) ? (ImagePlugin::PlPixelFormat::NV12) :
-        (ImagePlugin::PlPixelFormat::NV21);
-    plInfo.colorSpace = ImagePlugin::PlColorSpace::UNKNOWN;
-    plInfo.alphaType = ImagePlugin::PlAlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
-    plInfo.yuvDataInfo.imageSize = {size.width, size.height};
-    plInfo.yuvDataInfo.y_width = size.width;
-    plInfo.yuvDataInfo.y_height = size.height;
-    plInfo.yuvDataInfo.y_stride = size.width;
-    plInfo.yuvDataInfo.uv_width = (size.width + NUM_1) / NUM_2;
-    plInfo.yuvDataInfo.uv_height = ((size.height + NUM_1) / NUM_2) * NUM_2;
-    plInfo.yuvDataInfo.u_stride = plInfo.yuvDataInfo.uv_width;
-    plInfo.yuvDataInfo.v_stride = plInfo.yuvDataInfo.uv_width;
-    return true;
-}
 
 
-bool ImageFormatConvert::SetAddr(uint8_buffer_type destBuffer, size_t destBufferSize)
-{
-    addrInfos.addr = destBuffer;
-    addrInfos.context = nullptr;
-    addrInfos.size = destBufferSize;
-    addrInfos.type = AllocatorType::DEFAULT;
-    addrInfos.func = nullptr;
-    return true;
-}
 
-bool ImageFormatConvert::CreateSource(PixelFormat &destFormat_, const Size &size)
-{
-        SourceOptions options;
-        options.formatHint = "jpeg";
-        options.pixelFormat = destFormat_;
-        options.size = size;
-        error.hasErrorCode = true;
-        error.errorCode = SUCCESS;
-        error.msg = "An error has occurred.";
-        if (destBuffer_ && destBufferSize_ > NUM_0) {
-            imageSource = ImageSource::CreateImageSource(reinterpret_cast<const uint8_t*>(destBuffer_), destBufferSize_,
-                                                         options, error.errorCode);
-        }
-        if (error.errorCode != SUCCESS) {
-            return false;
-        }
-        return true;
-}
 
-bool ImageFormatConvert::ConvertYUVPixelMap()
-{
-    if (!SetPlInfo(imageSize_)) {
-        IMAGE_LOGD("create plInfo failed");
-        return false;
-    }
-    if (!SetAddr(destBuffer_, destBufferSize_)) {
-        IMAGE_LOGD("create addrInfos failed");
-        return false;
-    }
-    if (!CreateSource(destFormat_, imageSize_)) {
-        IMAGE_LOGD("create imageSource failed");
-        return false;
-    }
-    destPixelMapUnique = imageSource->CreatePixelMapByInfos(plInfo, addrInfos);
-    return true;
-}
 
 bool ImageFormatConvert::MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
                                           size_t destBufferSize)
 {
-    InitializationOptions opts;
-    opts.srcPixelFormat = destFormat_;
-    opts.pixelFormat = destFormat_;
-    opts.size = imageSize_;
-    if (srcPixelMap_ != nullptr) {
-        opts.alphaType = srcPixelMap_->GetAlphaType();
-        opts.editable = srcPixelMap_->IsEditable();
+    std::unique_ptr<PixelMap> pixelMap;
+    if (destFormat_ == PixelFormat::NV21 || destFormat_ == PixelFormat::NV12) {
+        pixelMap = std::make_unique<pixelYUV>();
+    } else {
+        pixelMap = std::make_unique<PixelMap>();
     }
-    if (destFormat_ == PixelFormat::NV12 || destFormat_ == PixelFormat::NV21) {
-        if (!ConvertYUVPixelMap()) {
-            IMAGE_LOGD("buffer to pixelmap failed");
-            return false;
-        }
-    }
-    else 
-    {
-        destPixelMapUnique = PixelMap::Create(opts);
-    }
-    if (destPixelMapUnique == nullptr) {
-        IMAGE_LOGD("create pixel map failed");
-        return false;
-    }
+    pixelMap->SetPixelsAddr(destBuffer_, nullptr, destBufferSize, AllocatorType::DEFAULT, nullptr);
     ImageInfo srcInfo;
     ImageInfo destInfo;
     if (srcPixelMap_ != nullptr) {
         srcPixelMap_->GetImageInfo(srcInfo);
         destInfo.alphaType = srcInfo.alphaType;
-        destInfo.stride = srcInfo.stride;
         destInfo.baseDensity = srcInfo.baseDensity;
     }
     destInfo.colorSpace = colorSpace_;
     destInfo.pixelFormat = destFormat_;
     destInfo.size = imageSize_;
-    if (destPixelMapUnique->SetImageInfo(destInfo) != SUCCESS) {
+    if (pixelMap->SetImageInfo(destInfo) != SUCCESS) {
         IMAGE_LOGD("set imageInfo failed");
         return false;
     }
-    destPixelMap = std::move(destPixelMapUnique);
+    destPixelMap = std::move(pixelMap);
     return true;
 }
 
