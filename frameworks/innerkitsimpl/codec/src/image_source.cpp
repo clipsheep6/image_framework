@@ -134,6 +134,7 @@ static const uint8_t ASTC_HEADER_BLOCK_X = 4;
 static const uint8_t ASTC_HEADER_BLOCK_Y = 5;
 static const uint8_t ASTC_HEADER_DIM_X = 7;
 static const uint8_t ASTC_HEADER_DIM_Y = 10;
+static const int LCD_DMA_SIZE = 1000;
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
@@ -467,6 +468,12 @@ bool IsPreferDma(bool perferDma)
     return perferDma && !isSceneBoard;
 }
 
+bool IsPhotosLcd(const Size &size)
+{
+    static bool isPhotos = ImageSystemProperties::IsPhotos();
+    return isPhotos && (size.width >= LCD_DMA_SIZE && size.height >= LCD_DMA_SIZE);
+}
+
 bool IsSupportDma(const DecodeOptions &opts, const ImageInfo &info, bool hasDesiredSizeOptions)
 {
 #if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
@@ -481,7 +488,9 @@ bool IsSupportDma(const DecodeOptions &opts, const ImageInfo &info, bool hasDesi
 
     if (ImageSystemProperties::GetDmaEnabled() && IsSupportFormat(opts.desiredPixelFormat)) {
         return IsSupportSize(hasDesiredSizeOptions ? opts.desiredSize : info.size) &&
-            (IsWidthAligned(opts.desiredSize.width) || IsPreferDma(opts.preferDma));
+            (IsWidthAligned(hasDesiredSizeOptions ? opts.desiredSize.width : info.size.width)
+            || IsPreferDma(opts.preferDma)
+            || IsPhotosLcd(hasDesiredSizeOptions ? opts.desiredSize : info.size));
     }
     return false;
 #endif

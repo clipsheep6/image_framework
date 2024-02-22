@@ -28,6 +28,7 @@ public:
     static bool GetAstcHardWareEncodeEnabled();
     static bool GetMediaLibraryAstcEnabled();
     static bool IsPreferDma();
+    static bool IsPhotos();
 private:
     ImageSystemProperties() = default;
 };
