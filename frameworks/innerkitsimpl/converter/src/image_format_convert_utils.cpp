@@ -19,6 +19,7 @@
 #include <iostream>
 #include <cstring>
 #include <string.h>
+#include "securec.h"
 #ifdef LIBYUV
 #include "libyuv/convert.h"
 #endif
@@ -32,7 +33,6 @@ namespace {
     constexpr uint32_t NUM_3 = 3;
     constexpr uint32_t NUM_4 = 4;
     constexpr uint32_t NUM_5 = 5;
-    // constexpr uint32_t NUM_6 = 6;
     constexpr uint32_t NUM_8 = 8;
     constexpr uint32_t NUM_11 = 11;
     constexpr uint32_t NUM_16 = 16;
@@ -640,20 +640,20 @@ bool NV21ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
     *destBuffer = new uint8_t[destBufferSize];
 #ifdef LIBYUV
     int32_t i420_buffer_size = destBufferSize;
-    uint8_t *i420_buffer = new uint8_t[i420_buffer_size];
+    std::unique_ptr<uint8_t[]> i420_buffer(new uint8_t[i420_buffer_size]);
     libyuv::NV21ToI420(srcBuffer, width, srcBuffer + width * height, ((width + NUM_1) / NUM_2) * NUM_2, i420_buffer,
         width, i420_buffer + width * height, (width + NUM_1) / NUM_2, i420_buffer + width * height +
         ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2), (width + NUM_1) / NUM_2, width, height);
     libyuv::I420ToNV12(i420_buffer, width, i420_buffer + width * height, (width + NUM_1) / NUM_2,
         i420_buffer + width * height + ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2), (width + NUM_1) / NUM_2,
         *destBuffer, width, *destBuffer + width * height, ((width + NUM_1) / NUM_2) * NUM_2, width, height);
-    delete[] i420_buffer;
 #else
     int frameSize = width * height;
     int32_t uvSize = ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2);
-    for (int i = 0; i < frameSize; i++) {
-        (*destBuffer)[i] = srcBuffer[i];
-    }
+    // for (int i = 0; i < frameSize; i++) {
+    //     (*destBuffer)[i] = srcBuffer[i];
+    // }
+    memcpy_s(*destBuffer, frameSize, srcBuffer, frameSize);
     const uint8_t* srcUV = srcBuffer + frameSize;
     uint8_t* destUV = *destBuffer + frameSize;
     for (int i = NUM_0; i < uvSize; i++) {
@@ -718,9 +718,10 @@ bool NV12ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         return false;
     }
 #ifdef LIBYUV
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]();
-        if(yu12Buffer == nullptr) {
+    std::unique_ptr<uint8_t[]>yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]());
+
+    if(yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
@@ -734,13 +735,13 @@ bool NV12ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2), (imageSize.width + NUM_1) / NUM_2,
         *destBuffer, imageSize.width, *destBuffer + imageSize.width * imageSize.height,
         ((imageSize.width + NUM_1) / NUM_2) * NUM_2, imageSize.width, imageSize.height);
-    delete[] yu12Buffer;
 #else
     int32_t frameSize = imageSize.width * imageSize.height;
     int32_t uvSize = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    for (int i = 0; i < frameSize; i++) {
-        (*destBuffer)[i] = srcBuffer[i];
-    }
+    // for (int i = 0; i < frameSize; i++) {
+    //     (*destBuffer)[i] = srcBuffer[i];
+    // }
+    memcpy_s(*destBuffer, frameSize, srcBuffer, frameSize);
     const uint8_t* srcUV = srcBuffer + frameSize;
     uint8_t* destUV = *destBuffer + frameSize;
     for (int i = 0; i < uvSize; i++) {
@@ -792,9 +793,9 @@ bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         return false;
     }
 #ifdef LIBYUV
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]();
-        if (yu12Buffer == nullptr) {
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]());
+    if (yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
@@ -807,7 +808,6 @@ bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
         (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width, *destBuffer + imageSize.width *
         imageSize.height, ((imageSize.width + NUM_1) / NUM_2) * NUM_2, imageSize.width, imageSize.height);
-    delete[] yu12Buffer;
 #else
     RGB565ToNV12Manual(srcBuffer, imageSize, destBuffer);
 #endif
@@ -829,9 +829,9 @@ bool RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         return false;
     }
 #ifdef LIBYUV
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]();
-        if(yu12Buffer == nullptr) {
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]());
+    if(yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
@@ -844,7 +844,6 @@ bool RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
         (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width, *destBuffer + imageSize.width *
         imageSize.height, ((imageSize.width + NUM_1) / NUM_2) * NUM_2, imageSize.width, imageSize.height);
-    delete[] yu12Buffer;
 #else
     RGB565ToNV21Manual(srcBuffer, imageSize, destBuffer);
 #endif
@@ -934,7 +933,6 @@ bool NV21ToYU12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #ifdef LIBYUV
     const uint8_t *srcY = srcBuffer;
     const uint8_t *srcVU = srcBuffer + imageSize.width * imageSize.height;
-
     uint8_t *yuv420Y = *destBuffer;
     uint8_t *yuv420U = *destBuffer + srcplaneSizeY;
     uint8_t *yuv420V = *destBuffer + srcplaneSizeY + srcPlaneSizeVU;
@@ -1043,19 +1041,19 @@ bool NV12ToRGBA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
-    
-    int32_t i420Buffer_size = imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2;
-    uint8_t *i420Buffer = new(std::nothrow) uint8_t[i420Buffer_size]();
-    if (i420Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
-        return false;
-    } 
+
 #ifdef LIBYUV
     const int32_t yStride= imageSize.width;
     const uint8_t *yPlane = srcBuffer;
     const uint8_t *uvPlane = srcBuffer + yStride* imageSize.height;
     const int32_t uvStride = imageSize.width;
+    int32_t i420Buffer_size = imageSize.width * imageSize.height +
+        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2;
+    std::unique_ptr<uint8_t[]> i420Buffer(new(std::nothrow) uint8_t[i420Buffer_size]());
+    if (i420Buffer == nullptr) {
+        IMAGE_LOGD("apply space for dest buffer failed!");
+        return false;
+    } 
     const struct YuvConstants * YuvConstants = mapColorSPaceToYuvConstants(colorSpace);
     if (imageSize.width % NUM_2 ==NUM_0) {
         libyuv::NV12ToI420(srcBuffer, yStride, uvPlane, uvStride, i420Buffer,
@@ -1076,7 +1074,6 @@ bool NV12ToRGBA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
             (imageSize.height + NUM_1) / NUM_2 * (yStride + NUM_1) / NUM_2,
             (yStride + NUM_1) / NUM_2, *destBuffer, yStride * NUM_4, YuvConstants, imageSize.width, imageSize.height);
     }
-    delete[] i420Buffer;
 #else
     NV12ToRGBAManual(srcBuffer, imageSize, *destBuffer);
 #endif
@@ -1095,38 +1092,39 @@ bool NV12ToBGRA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
+
+#ifdef LIBYUV
+    const int32_t yStride= imageSize.width;
+    const int32_t uvStride = imageSize.width;
+    const uint8_t *yPlane = srcBuffer;
+    const uint8_t *uvPlane = srcBuffer + imageSize.width * imageSize.height;
     int32_t i420Buffer_size = ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2;
-    uint8_t *i420Buffer = new(std::nothrow) uint8_t[i420Buffer_size];
+    std::unique_ptr<uint8_t[]> i420Buffer(new(std::nothrow) uint8_t[i420Buffer_size]);
     if (i420Buffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     } 
-#ifdef LIBYUV
-const int32_t yStride= imageSize.width;
-const int32_t uvStride = imageSize.width;
-const uint8_t *yPlane = srcBuffer;
-const uint8_t *uvPlane = srcBuffer + imageSize.width * imageSize.height;
-if (imageSize.width % NUM_2 == NUM_0) {
-    libyuv::NV12ToI420(srcBuffer, yStride, uvPlane, uvStride, i420Buffer, yStride,
-        i420Buffer + imageSize.width * imageSize.height, yStride / NUM_2,
-        i420Buffer + imageSize.width * imageSize.height + imageSize.width * imageSize.height / NUM_4,
-        yStride/ NUM_2, imageSize.width, imageSize.height);
-    libyuv::I420ToBGRA(i420Buffer, yStride, i420Buffer + imageSize.width * imageSize.height, yStride / NUM_2,
-        i420Buffer + imageSize.width * imageSize.height + imageSize.width * imageSize.height / NUM_4,
-        yStride / NUM_2, *destBuffer, imageSize.width * NUM_4, imageSize.width, imageSize.height);
-    } else {
-    libyuv::NV12ToI420(srcBuffer, yStride, uvPlane, (uvStride + NUM_1) / NUM_2 * NUM_2, i420Buffer, yStride,
-        i420Buffer + imageSize.width * imageSize.height, (yStride + NUM_1) / NUM_2,
-        i420Buffer + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
-        (yStride + NUM_1) / NUM_2 , imageSize.width, imageSize.height);
-    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height * NUM_4);
-    *destBuffer = new uint8_t[destBufferSize]();
-    libyuv::I420ToBGRA(i420Buffer, yStride, i420Buffer + yStride * imageSize.height, (yStride + NUM_1) / NUM_2,
-        i420Buffer + imageSize.height * yStride + (imageSize.height + NUM_1) / NUM_2 * (yStride + NUM_1) / NUM_2,
-        (yStride + NUM_1) / NUM_2, *destBuffer, yStride * NUM_4, mageSize.width, imageSize.height);
+    if (imageSize.width % NUM_2 == NUM_0) {
+        libyuv::NV12ToI420(srcBuffer, yStride, uvPlane, uvStride, i420Buffer, yStride,
+            i420Buffer + imageSize.width * imageSize.height, yStride / NUM_2,
+            i420Buffer + imageSize.width * imageSize.height + imageSize.width * imageSize.height / NUM_4,
+            yStride/ NUM_2, imageSize.width, imageSize.height);
+        libyuv::I420ToBGRA(i420Buffer, yStride, i420Buffer + imageSize.width * imageSize.height, yStride / NUM_2,
+            i420Buffer + imageSize.width * imageSize.height + imageSize.width * imageSize.height / NUM_4,
+            yStride / NUM_2, *destBuffer, imageSize.width * NUM_4, imageSize.width, imageSize.height);
+    } 
+    else {
+        libyuv::NV12ToI420(srcBuffer, yStride, uvPlane, (uvStride + NUM_1) / NUM_2 * NUM_2, i420Buffer, yStride,
+            i420Buffer + imageSize.width * imageSize.height, (yStride + NUM_1) / NUM_2,
+            i420Buffer + imageSize.width * imageSize.height +
+            ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
+            (yStride + NUM_1) / NUM_2 , imageSize.width, imageSize.height);
+        destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height * NUM_4);
+        *destBuffer = new uint8_t[destBufferSize]();
+        libyuv::I420ToBGRA(i420Buffer, yStride, i420Buffer + yStride * imageSize.height, (yStride + NUM_1) / NUM_2,
+            i420Buffer + imageSize.height * yStride + (imageSize.height + NUM_1) / NUM_2 * (yStride + NUM_1) / NUM_2,
+            (yStride + NUM_1) / NUM_2, *destBuffer, yStride * NUM_4, mageSize.width, imageSize.height);
     }
-    delete[] i420Buffer;
 #else
     NV12ToBGRAManual(srcBuffer, imageSize, *destBuffer);
 #endif
@@ -1185,7 +1183,7 @@ bool RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #ifdef LIBYUV
     const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    uint8_t *i420Buffer = new(std::nothrow) uint8_t[i420BufferSize]();
+    std::unique_ptr<uint8[]> i420Buffer(new(std::nothrow) uint8_t[i420BufferSize]());
     if (i420Buffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
@@ -1202,7 +1200,6 @@ bool RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
     libyuv::I420ToNV12(i420Y, imageSize.width, i420V, (imageSize.width + NUM_1) / NUM_2, i420U,
 		(imageSize.width + NUM_1) / NUM_2, nv12Y, imageSize.width, nv12UV,
         (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-    delete[] i420Buffer;
 #else
     RGBAToNV12Manual(srcBuffer,imageSize, destBuffer);
 #endif
@@ -1227,7 +1224,7 @@ bool RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #ifdef LIBYUV
     const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height + 
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    uint8_t *i420Buffer = new(std::nothrow) uint8_t[i420BufferSize]();
+    std::unique_ptr<uint8_t[]> i420Buffer(new(std::nothrow) uint8_t[i420BufferSize]());
     if (i420Buffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
@@ -1244,7 +1241,6 @@ bool RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
     libyuv::I420ToNV21(i420Y, imageSize.width, i420V, (imageSize.width + NUM_1) / NUM_2, i420U,
         (imageSize.width + NUM_1) / NUM_2, nv21Y, imageSize.width, nv21VU,
         (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-    delete[] i420Buffer;
 #else
     RGBAToNV21Manual(srcBuffer,imageSize, destBuffer);
 #endif
@@ -1299,7 +1295,7 @@ bool RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
 #ifdef LIBYUV
     const uint32_t yu12BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[yu12BufferSize]();
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[yu12BufferSize]());
     if (yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for I420 buffer failed!");
         return false;
@@ -1460,8 +1456,8 @@ bool NV21ToRGBA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
     }
 #ifdef LIBYUV
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2)]();
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2)]());
     if (*yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for I420 buffer failed!");
         return false;
@@ -1477,7 +1473,6 @@ bool NV21ToRGBA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         yu12Buffer + imageSize.width * imageSize.height + (imageSize.width + NUM_1) / NUM_2 *
         (imageSize.height + NUM_1) / NUM_2, (imageSize.width+NUM_1) / NUM_2, *destBuffer, imageSize.width * NUM_4,
         yuvConstants, imageSize.width, imageSize.height);
-    delete[] yu12Buffer;
 #else
     NV21ToRGBAManual(srcBuffer, imageSize, destBuffer);
 #endif
@@ -1497,8 +1492,8 @@ bool NV21ToBGRA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         return false;
     }
 #ifdef LIBYUV
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2)]();
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2)]());
     if (*yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for I420 buffer failed!");
         return false;
@@ -1517,7 +1512,6 @@ bool NV21ToBGRA(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         yu12Buffer + imageSize.width * imageSize.height + (imageSize.width + NUM_1) / NUM_2 *
         (imageSize.height + NUM_1) / NUM_2, (imageSize.width + NUM_1) / NUM_2,
         *destBuffer, imageSize.width * NUM_4, imageSize.width, imageSize.height);
-    delete[] yu12Buffer;
 #else
     NV21ToBGRAManual(srcBuffer, imageSize, destBuffer);
 #endif
@@ -1538,8 +1532,8 @@ bool NV21ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
     }
 #ifdef LIBYUV
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2)]();
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2)]());
     if (*yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for I420 buffer failed!");
         return false;
@@ -1558,7 +1552,6 @@ bool NV21ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         yu12Buffer + imageSize.width * imageSize.height + (imageSize.width + NUM_1) / NUM_2 *
         (imageSize.height + NUM_1) / NUM_2 * NUM_2, (imageSize.width + NUM_1) / NUM_2,
         *destBuffer, imageSize.width * NUM_2, yuvConstants, imageSize.width, imageSize.height);
-    delete[] yu12Buffer;
 #else
     NV21ToRGB565Manual(srcBuffer, imageSize, destBuffer);
 #endif
@@ -1579,8 +1572,8 @@ bool RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
         return false;
     }
 #ifdef LIBYUV
-    uint8_t *yu12Buffer = new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2]();
+    uint8_t *yu12Buffer (new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2]());
     if (*yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for I420 buffer failed!");
         return false;
@@ -1598,7 +1591,6 @@ bool RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
         (imageSize.height + NUM_1) / NUM_2, (imageSize.width + NUM_1) / NUM_2,
         *destBuffer, imageSize.width, *destBuffer + imageSize.width * imageSize.height + NUM_1,
         (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-    delete[] yu12Buffer;
 #else
     RGBToNV12Manual(srcBuffer, imageSize, destBuffer);
 #endif
@@ -1625,12 +1617,15 @@ bool YV12ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
             int widthSrcH = (imageSize.width % NUM_2 == NUM_0) ? imageSize.height : (imageSize.height + NUM_1);
             int widthEvenDest = (imageSize.width % NUM_2 == NUM_0) ? imageSize.width :
                 ((imageSize.width + NUM_1) / NUM_2 * NUM_2);
+
             const int srcIndexY = h * imageSize.width + w;
             const int srcIndexV = imageSize.height * imageSize.width + (h / NUM_2) * widthSrcW / NUM_2 + (w / NUM_2);
             const int srcIndexU = srcIndexV + widthSrcW / NUM_2 * widthSrcH / NUM_2;
+
             const int destIndexY = h * imageSize.width + w;
             const int destIndexUV = imageSize.width * imageSize.height + (h / NUM_2) * widthEvenDest +
                 (w / NUM_2) * NUM_2;
+
             (*destBuffer)[destIndexY] = srcBuffer[srcIndexY];
             (*destBuffer)[destIndexUV] = srcBuffer[srcIndexU];
             (*destBuffer)[destIndexUV + NUM_1] = srcBuffer[srcIndexV];

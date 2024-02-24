@@ -18,10 +18,9 @@
 
 #include "pixel_map.h"
 #include "image_format_convert_utils.h"
-#include "image_source.h"
 #include "image_plugin_type.h"
 #include "image_type.h"
-#include  <memory>
+#include <memory>
 
 namespace OHOS {
 namespace Media {
@@ -29,79 +28,29 @@ using uint8_buffer_type = uint8_t *;
 using const_uint8_buffer_type = const uint8_t *;
 
 struct ConvertDataInfo {
-    uint8_buffer_type buffer;
+    uint8_buffer_type buffer = nullptr;
     size_t bufferSize;
+    Size imageSize;
     PixelFormat pixelFormat = PixelFormat::UNKNOWN;
-};
-
-struct ImagePackerError {
-    bool hasErrorCode;
-    uint32_t errorCode;
-    std::string msg;
+    ColorSpace colorSpace = ColorSpace::SRGB;
 };
 
 class ImageFormatConvert
 {
 public:
-    ImageFormatConvert();
-    ImageFormatConvert(const_uint8_buffer_type srcBuffer, const size_t srcBufferSize,
-                       const int32_t width, const int32_t height, PixelFormat srcFormat);
-    ImageFormatConvert(const_uint8_buffer_type srcBuffer, const size_t srcBufferSize, const Size &size,
-                       PixelFormat srcFormat, PixelFormat destFormat);
-    ImageFormatConvert(const ConvertDataInfo &srcDataInfo, const Size &size, PixelFormat destPixelFormat,
-                       ColorSpace colorSpace);
-    ImageFormatConvert(const_uint8_buffer_type srcBuffer, const size_t srcBufferSize, const Size &size,
-                       ColorSpace colorSpace, ConvertFunction cvtFunc = nullptr);
-    ImageFormatConvert(const std::shared_ptr<PixelMap> srcPiexlMap, PixelFormat destFormat);
-    ~ImageFormatConvert();
+    ImageFormatConvert() = default;
 
-    bool SetSourceBuffer(const_uint8_buffer_type srcBuffer, const size_t bufferSize,
-                         const int32_t width, const int32_t height, PixelFormat format);
-    bool SetSourceBuffer(const_uint8_buffer_type srcBuffer, const size_t bufferSize,
-                         const Size &size, PixelFormat format);
-    bool SetSourceBuffer(const ConvertDataInfo &srcDataInfo, const Size &size);
-    bool SetSourcePixelMap(const std::shared_ptr<PixelMap> srcPiexlMap);
-    bool SetSize(const int32_t width, const int32_t height);
-    bool SetSize(const Size &size);
-    bool SetSourceFormat(PixelFormat srcFormat);
-    bool SetDestinationFormat(PixelFormat destFormat);
-    bool SetColorSapace(ColorSpace colorSpace);
-    bool SetConvertFunction(ConvertFunction cvtFunc);
-    bool SetConvertFunction(PixelFormat srcFormat, PixelFormat destFormat);
-    uint8_buffer_type GetDestinationBuffer();
-
-    uint32_t ConvertImageFormat(uint8_buffer_type &destBuffer, size_t &destBufferSize);
-    uint32_t ConvertImageFormat(std::unique_ptr<PixelMap> &destPixelMap);
-    ImagePackerError error;
+    static uint32_t ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo);
+    static uint32_t ConvertImageFormat(const std::shared_ptr<PixelMap> srcPiexlMap,
+                                       std::shared_ptr<PixelMap> &destPiexlMap, PixelFormat destFormat);
 private:
-    bool IsValidSize(int32_t width, int32_t height);
-    bool IsValidSize(const Size &size);
-    bool IsValidColorSpace(ColorSpace colorSpace);
-    bool CheckBufferInfo(const_uint8_buffer_type buffer, const size_t bufferSize,
-                         PixelFormat format, uint32_t width, uint32_t height);
-    size_t GetBufferSizeByFormat(PixelFormat format, int32_t width, int32_t height);
-    bool GetConvertFuncByFormat();
-    void ReleaseBuffer(uint8_buffer_type buffer);
-    void ReadPixelMap();
-    bool MakeDestPixelMap(std::unique_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer, size_t destBufferSize);
-    bool IsSupport(PixelFormat format);
-    bool IsSupportPixelMap(PixelFormat format);
-
-
-    const_uint8_buffer_type srcBuffer_;
-    size_t srcBufferSize_;
-    uint8_buffer_type destBuffer_;
-    size_t destBufferSize_;
-    uint8_t destBufferRefCnt_;
-    std::shared_ptr<PixelMap> srcPixelMap_;
-    ColorSpace colorSpace_;
-    PixelFormat srcFormat_;
-    PixelFormat destFormat_;
-    Size imageSize_;
-    ConvertFunction cvtFunc_;
-    ImagePlugin::PlImageInfo plInfo;
-    std::unique_ptr<ImageSource> imageSource;
-    std::unique_ptr<PixelMap> destPixelMapUnique;
+    static bool IsValidSize(const Size &size);
+    static bool CheckConvertDataInfo(const ConvertDataInfo &convertDataInfo);
+    static size_t GetBufferSizeByFormat(PixelFormat format, const Size &size);
+    static ConvertFunction GetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat);
+    static bool MakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
+                                 const size_t destBufferSize, ImageInfo &info, AllocatorType allcatorType);
+    static bool IsSupport(PixelFormat format);
 };
 
 } //OHOS
