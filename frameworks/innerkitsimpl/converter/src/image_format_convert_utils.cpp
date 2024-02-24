@@ -615,9 +615,7 @@ bool YU12ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
     uint8_t *yDest = *destBuffer;
     uint8_t *uvDest = *destBuffer + frameSize;
     int32_t uvSize = ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2);
-    for (int i = 0; i < frameSize; i++) {
-        yDest[i] = srcBuffer[i];
-    }
+    memcpy_s(*destBuffer, frameSize, srcBuffer, frameSize);
     const uint8_t *uSrc = srcBuffer + frameSize;
     const uint8_t *vSrc = uSrc + uvSize;
     for (int i = 0; i < uvSize; i++) {
@@ -650,9 +648,6 @@ bool NV21ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #else
     int frameSize = width * height;
     int32_t uvSize = ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2);
-    // for (int i = 0; i < frameSize; i++) {
-    //     (*destBuffer)[i] = srcBuffer[i];
-    // }
     memcpy_s(*destBuffer, frameSize, srcBuffer, frameSize);
     const uint8_t* srcUV = srcBuffer + frameSize;
     uint8_t* destUV = *destBuffer + frameSize;
@@ -720,7 +715,6 @@ bool NV12ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #ifdef LIBYUV
     std::unique_ptr<uint8_t[]>yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]());
-
     if(yu12Buffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
@@ -738,9 +732,6 @@ bool NV12ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #else
     int32_t frameSize = imageSize.width * imageSize.height;
     int32_t uvSize = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    // for (int i = 0; i < frameSize; i++) {
-    //     (*destBuffer)[i] = srcBuffer[i];
-    // }
     memcpy_s(*destBuffer, frameSize, srcBuffer, frameSize);
     const uint8_t* srcUV = srcBuffer + frameSize;
     uint8_t* destUV = *destBuffer + frameSize;
