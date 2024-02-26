@@ -239,7 +239,6 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
         errorCode = ERR_MEDIA_INVALID_PARAM;
         return nullptr;
     }
-
     return DoImageSourceCreate([&data, &size]() {
         auto streamPtr = DecodeBase64(data, size);
         if (streamPtr == nullptr) {

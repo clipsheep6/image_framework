@@ -23,6 +23,7 @@
 #include "media_errors.h"
 #include "hilog/log.h"
 #include "image_log.h"
+#include <set>
 
 #define N_(String) (String)
 
@@ -558,6 +559,9 @@ std::map<std::string, std::tuple<const TagDetails*, const size_t>> ExifMetaDataV
   {"Exif.Photo.CompositeImage", std::make_tuple(exifCompositeImage, std::size(exifCompositeImage))},
 };
 
+const std::set<std::string> HWALLOWMODIFYKEY = {"Exif.Huawei.CaptureMode"};
+const std::string COMMAREGEX("\\,"), COLONREGEX("\\:"), DOTREGEX("\\.");
+
 // validate the key is in value range array. For example GPSLatitudeRef value should be 'N' or 'S' in exifGPSLatitudeRef array.
 bool ExifMetaDataValidate::IsValidValue(const TagDetails *array, const size_t &size, const int64_t &key)
 {
@@ -603,12 +607,12 @@ bool ExifMetaDataValidate::ValidRegexWithComma(std::string &value, const std::st
     return false;
   }
 
-  ReplaceAsSpace(value, "\\,");
+  ReplaceAsSpace(value, COMMAREGEX);
   return true;
 }
 
 // convert integer to rational format. For example 23 15 83 --> 23/1 15/1 83
-void ExifMetaDataValidate::RationalFix(std::string &value)
+void ExifMetaDataValidate::RationalFormat(std::string &value)
 {
   std::regex pattern("\\d+"); // regex for integer
   std::string result;
@@ -656,7 +660,7 @@ std::string ExifMetaDataValidate::GetFractionFromStr(const std::string &decimal)
 }
 
 // convert decial to rational format. For example 2.5 -> 5/2
-void ExifMetaDataValidate::DecimalRationalFix(std::string &value)
+void ExifMetaDataValidate::DecimalRationalFormat(std::string &value)
 {
   std::string result;
   int icount = 0;
@@ -666,8 +670,8 @@ void ExifMetaDataValidate::DecimalRationalFix(std::string &value)
        it != std::sregex_iterator(); ++it)
   {
     std::smatch match = *it;
-    // HiLog::Debug(LABEL, "decimalRationalFix match. value is [%{public}s].", match[0]);
-    IMAGE_LOGD("decimalRationalFix match. value is [%{public}s].", match[0]);
+    // HiLog::Debug(LABEL, "decimalRationalFormat match. value is [%{public}s].", match[0]);
+    IMAGE_LOGD("decimalRationalFormat match. value is [%{public}s].", match[0]);
     // add a space at begin of each segment except the first segment
     if (icount != 0)
     {
@@ -678,13 +682,13 @@ void ExifMetaDataValidate::DecimalRationalFix(std::string &value)
     {
       // append '/1' to integer 23 -> 23/1
       result += match.str() + "/1";
-      IMAGE_LOGD("decimalRationalFix identify match. integer value is [%{public}s].", match[0]);
+      IMAGE_LOGD("decimalRationalFormat identify match. integer value is [%{public}s].", match[0]);
     }
     else if (ValidRegex(match[0], "\\d+\\.\\d+"))
     {
       // convert decimal to rational. 2.5 -> 5/2
       result += GetFractionFromStr(match[0]);
-      IMAGE_LOGD("decimalRationalFix identify match. decimal value is [%{public}s].", match[0]);
+      IMAGE_LOGD("decimalRationalFormat identify match. decimal value is [%{public}s].", match[0]);
     }
     icount++;
   }
@@ -692,40 +696,40 @@ void ExifMetaDataValidate::DecimalRationalFix(std::string &value)
 }
 
 // validate regex & convert integer to rational format. For example 23 15 83 --> 23/1 15/1 83
-bool ExifMetaDataValidate::ValidRegexWithRationalFix(std::string &value, const std::string &regex){
+bool ExifMetaDataValidate::ValidRegexWithRationalFormat(std::string &value, const std::string &regex){
   // 1.validate regex
   if(!ValidRegex(value, regex)){
     return false;
   }
   // 2.convert integer to rational format. 9 9 9 -> 9/1 9/1 9/1
-  RationalFix(value);
+  RationalFormat(value);
   return true;
 }
 
 
 // validate regex & convert value to rational format. For example 9,9,9 -> 9 9 9 -> 9/1 9/1 9/1
-bool ExifMetaDataValidate::ValidRegexWithCommaRationalFix(std::string &value, const std::string &regex){
+bool ExifMetaDataValidate::ValidRegexWithCommaRationalFormat(std::string &value, const std::string &regex){
   // 1.validate regex
   if(!ValidRegex(value, regex)){
     return false;
   }
   // 2.replace comma as a space
-  ReplaceAsSpace(value, "\\,");
+  ReplaceAsSpace(value, COMMAREGEX);
   // 3.convert integer to rational format. 9 9 9 -> 9/1 9/1 9/1
-  RationalFix(value);
+  RationalFormat(value);
   return true;
 }
 
 // validate regex & convert value to rational format. For example 9:9:9 -> 9 9 9 -> 9/1 9/1 9/1
-bool ExifMetaDataValidate::ValidRegexWithColonRationalFix(std::string &value, const std::string &regex){
+bool ExifMetaDataValidate::ValidRegexWithColonRationalFormat(std::string &value, const std::string &regex){
   // 1.validate regex
   if(!ValidRegex(value, regex)){
     return false;
   }
   // 2.replace colon as a space
-  ReplaceAsSpace(value, "\\:");
+  ReplaceAsSpace(value, COLONREGEX);
   // 3.convert integer to rational format. 9 9 9 -> 9/1 9/1 9/1
-  RationalFix(value);
+  RationalFormat(value);
   return true;
 }
 
@@ -736,33 +740,33 @@ bool ExifMetaDataValidate::ValidRegexWithDot(std::string &value, const std::stri
   {
     return false;
   }
-  ReplaceAsSpace(value, "\\.");
+  ReplaceAsSpace(value, DOTREGEX);
   return true;
 }
 
 // regex validation & convert decimal to rational. For example GPSLatitude 2.5,23,3.4 -> 2.5 23 3.4 -> 5/2 23/1 17/5
-bool ExifMetaDataValidate::ValidRegxWithCommaDecimalRationalFix(std::string &value, const std::string &regex){
+bool ExifMetaDataValidate::ValidRegxWithCommaDecimalRationalFormat(std::string &value, const std::string &regex){
   if (!ValidRegex(value, regex))
   {
     return false;
   }
 
   // replace comma with a space 1.5,2.5.3 -> 1.5 2.5 3
-  ReplaceAsSpace(value, "\\,");
+  ReplaceAsSpace(value, COMMAREGEX);
   // convert decimal to rationl 2.5 -> 5/2
-  DecimalRationalFix(value);
+  DecimalRationalFormat(value);
   return true;
 }
 
 // regex validation & convert decimal to rational. For example GPSLatitude 2.5 23 3.4 -> 5/2 23/1 17/5
-bool ExifMetaDataValidate::ValidRegexWithDecimalRationalFix(std::string &value, const std::string &regex)
+bool ExifMetaDataValidate::ValidRegexWithDecimalRationalFormat(std::string &value, const std::string &regex)
 {
   if (!ValidRegex(value, regex))
   {
     return false;
   }
   // convert decimal to rationl 2.5 -> 5/2
-  DecimalRationalFix(value);
+  DecimalRationalFormat(value);
   return true;
 }
 
@@ -772,184 +776,182 @@ bool ExifMetaDataValidate::ValidRegexWithDecimalRationalFix(std::string &value, 
    These extra pixels help prevent interpolation artifacts near the edges of the final image. 
    DefaultCropSize specifies the size of the final image area, in raw image coordinates (i.e., before the DefaultScale has been applied).
    */
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int2Blank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s{0,}[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::doubleIntWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s{0,}[0-9]+$)");
 // regex validation for two integer with comma like BitPerSample 9,9 the format is [0-9]+,[0-9]+,[0-9]+
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int2Comma = std::make_pair(ExifMetaDataValidate::ValidRegexWithComma, R"(^[0-9]+,[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::doubleIntWithComma = std::make_pair(ExifMetaDataValidate::ValidRegexWithComma, R"(^[0-9]+,[0-9]+$)");
 // regex validation for three integer like BitPerSample 9 9 9 the format is [0-9]+ [0-9]+ [0-9]+
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int3Blank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s{0,}[0-9]+\s{0,}[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::tribleIntWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s{0,}[0-9]+\s{0,}[0-9]+$)");
 // regex validation for three integer with comma like BitPerSample 9,9,0 the format is [0-9]+,[0-9]+,[0-9]+,[0-9]+
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int3Comma = std::make_pair(ExifMetaDataValidate::ValidRegexWithComma, R"(^[0-9]+,[0-9]+,[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::tribleIntWithComma = std::make_pair(ExifMetaDataValidate::ValidRegexWithComma, R"(^[0-9]+,[0-9]+,[0-9]+$)");
 // regex validation for four integer like DNGVersion 9 9 9 9 the format is [0-9]+ [0-9]+ [0-9]+ [0-9]+
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Blank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s{0,}[0-9]+\s{0,}[0-9]+\s{0,}[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::fourIntWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s{0,}[0-9]+\s{0,}[0-9]+\s{0,}[0-9]+$)");
 /* regex validation for four integer with comma like DNGVersion 9,9,9,9 the format is [0-9]+,[0-9]+,[0-9]+
    For example, DNGVersion tag encodes the DNG four-tier version number.
    For files compliant with version 1.1.0.0 of the DNG specification, this tag should contain the bytes: 1, 1, 0, 0.
    */
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Comma = std::make_pair(ExifMetaDataValidate::ValidRegexWithComma, R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::fourIntWithComma = std::make_pair(ExifMetaDataValidate::ValidRegexWithComma, R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)");
 // regex validation for one rational like ApertureValue 4/1 the format is [0-9]+/[1-9][0-9]
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::rational1 = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+/[1-9][0-9]*$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::oneRational = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+/[1-9][0-9]*$)");
 // regex validation for integer and convert it to rational like ApertureValue 4 --> 4/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int1Rational1 = std::make_pair(ExifMetaDataValidate::ValidRegexWithRationalFix, R"(^[0-9]+$)");
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::decimal1Rational1 = std::make_pair(ExifMetaDataValidate::ValidRegexWithDecimalRationalFix, "(\\d+)(\\.\\d+)?");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::oneIntToRational = std::make_pair(ExifMetaDataValidate::ValidRegexWithRationalFormat, R"(^[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::oneDecimalToRational = std::make_pair(ExifMetaDataValidate::ValidRegexWithDecimalRationalFormat, "(\\d+)(\\.\\d+)?");
 // regex validation for three rational like GPSLatitude 39/1 54/1 20/1 the format is [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9]
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::rational3Blank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::threeRationalWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*$)");
 // regex validation for three integer and convert to three rational like GPSLatitude 39 54 20 --> 39/1 54/1 20/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int3Rational3Blank = std::make_pair(ExifMetaDataValidate::ValidRegexWithRationalFix, R"(^[1-9][0-9]*\s{0,}[1-9][0-9]*\s{0,}[1-9][0-9]*$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::threeIntToRationalWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegexWithRationalFormat, R"(^[1-9][0-9]*\s{0,}[1-9][0-9]*\s{0,}[1-9][0-9]*$)");
 // regex validation for three integer with comma and convert to three rational like GPSLatitude 39,54,20 --> 39/1 54/1 20/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int3Ratiional3Comma = std::make_pair(ExifMetaDataValidate::ValidRegexWithCommaRationalFix, R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::threeIntToRationalWithComma = std::make_pair(ExifMetaDataValidate::ValidRegexWithCommaRationalFormat, R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)");
 // regex validation for three decimal or integer and convert to three rational like YCbCrCoefficients 39.0 54 20.0 --> 39/1 54/1 20/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::decimal3Ratiional3 = std::make_pair(ExifMetaDataValidate::ValidRegexWithDecimalRationalFix, "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::threeDecimalToRationalWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegexWithDecimalRationalFormat, "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?");
 // regex validation for three decimal or integer and convert to three rational like YCbCrCoefficients 39.0,54,20.0 --> 39.0 54 20.0 --> 39/1 54/1 20/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::decimal3Ratiional3Comma = std::make_pair(ExifMetaDataValidate::ValidRegxWithCommaDecimalRationalFix, "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::threeDecimalToRatiionalWithComma = std::make_pair(ExifMetaDataValidate::ValidRegxWithCommaDecimalRationalFormat, "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?");
 // regex validation for four rational like LensSpecification 1/1 3/2 1/1 2/1 the format is [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9]
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::rational4Blank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::fourRationalWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*\s{0,}[0-9]+/[1-9][0-9]*$)");
 // regex validation for four integer and convert to four rational like LensSpecification 1 3 1 2 --> 1/1 3/2 1/1 2/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Rational4Blank = std::make_pair(ExifMetaDataValidate::ValidRegexWithRationalFix, R"(^[1-9][0-9]*\s{0,}[1-9][0-9]*\s{0,}[1-9][0-9]*\s{0,}[1-9][0-9]*$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::fourIntToRationalWithBlank = std::make_pair(ExifMetaDataValidate::ValidRegexWithRationalFormat, R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)");
 // regex validation for four integer with comma and convert to four rational like LensSpecification 1,3,1,2 --> 1/1 3/2 1/1 2/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Ratiional4Comma = std::make_pair(ExifMetaDataValidate::ValidRegexWithCommaRationalFix, R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::fourIntToRationalWithComma = std::make_pair(ExifMetaDataValidate::ValidRegexWithCommaRationalFormat, R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)");
 // regex validation for four decimal or integer and convert to four rational like LensSpecification 1.0 3.0 1.0 2.0 --> 39/1 54/1 20/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::decimal4Ratiional4 = std::make_pair(ExifMetaDataValidate::ValidRegexWithDecimalRationalFix, "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::decimal4Ratiional4 = std::make_pair(ExifMetaDataValidate::ValidRegexWithDecimalRationalFormat, "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?");
 // regex validation for four decimal or integer and convert to four rational like LensSpecification 1.0,3.0,1.0,2.0 --> 39/1 54/1 20/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::decimal4Ratiional4Comma = std::make_pair(ExifMetaDataValidate::ValidRegxWithCommaDecimalRationalFix, "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::decimal4Ratiional4Comma = std::make_pair(ExifMetaDataValidate::ValidRegxWithCommaDecimalRationalFormat, "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?");
 // regex validation for datetime format like DateTimeOriginal 2022:06:02 15:51:34
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::datetimeRegex = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::dateTimeRegex = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$)");
 // regex validation for datetime format like DateTimeOriginal 2022:06:02
 std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::dateRegex = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}$)");
 //regex validation for three integer with colon and convert to three rational like GPSLatitude 39,54,21 --> 39/1 54/1 21/1
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int3Rational3Colon = std::make_pair(ExifMetaDataValidate::ValidRegexWithColonRationalFix, R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*$)");
-// regex validation for fou integer like GPSVersionID 2 2 0 0 the format is [0-9]+ [0-9]+ [0-9]+ [0-9]+
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Rational4 = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::threeIntToRationalWithColon = std::make_pair(ExifMetaDataValidate::ValidRegexWithColonRationalFormat, R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*$)");
 // regex validation for fou integer with pointer like GPSVersionID 2.2.0.0 -> 2 2 0 0 
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Rational4Pointer = std::make_pair(ExifMetaDataValidate::ValidRegexWithDot, R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::fourIntToRationalWithDot = std::make_pair(ExifMetaDataValidate::ValidRegexWithDot, R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)");
 
 // configuration for value format validation. For example BitPerSample the value format should be 9 9 9 or 9,9,9
 std::multimap<std::string, std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string>> ExifMetaDataValidate::valueFormatValidateConfig = {
-  {"Exif.Image.BitsPerSample",  int3Blank},
-  {"Exif.Image.BitsPerSample",  int3Comma},
-  {"Exif.Photo.CompressedBitsPerPixel", rational1},
-  {"Exif.Photo.CompressedBitsPerPixel", int1Rational1},
-  {"Exif.Photo.CompressedBitsPerPixel", decimal1Rational1},
-  {"Exif.GPSInfo.GPSLatitude", rational3Blank},
-  {"Exif.GPSInfo.GPSLatitude", int3Rational3Blank},
-  {"Exif.GPSInfo.GPSLatitude", int3Ratiional3Comma},
-  {"Exif.GPSInfo.GPSLongitude", rational3Blank},
-  {"Exif.GPSInfo.GPSLongitude", int3Rational3Blank},
-  {"Exif.GPSInfo.GPSLongitude", int3Ratiional3Comma},
-  {"Exif.Photo.ApertureValue", rational1},
-  {"Exif.Photo.ApertureValue", int1Rational1},
-  {"Exif.Photo.ApertureValue", decimal1Rational1},
-  {"Exif.Photo.DateTimeOriginal", datetimeRegex},
+  {"Exif.Image.BitsPerSample",  tribleIntWithBlank},
+  {"Exif.Image.BitsPerSample",  tribleIntWithComma},
+  {"Exif.Photo.CompressedBitsPerPixel", oneRational},
+  {"Exif.Photo.CompressedBitsPerPixel", oneIntToRational},
+  {"Exif.Photo.CompressedBitsPerPixel", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSLatitude", threeRationalWithBlank},
+  {"Exif.GPSInfo.GPSLatitude", threeIntToRationalWithBlank},
+  {"Exif.GPSInfo.GPSLatitude", threeIntToRationalWithComma},
+  {"Exif.GPSInfo.GPSLongitude", threeRationalWithBlank},
+  {"Exif.GPSInfo.GPSLongitude", threeIntToRationalWithBlank},
+  {"Exif.GPSInfo.GPSLongitude", threeIntToRationalWithComma},
+  {"Exif.Photo.ApertureValue", oneRational},
+  {"Exif.Photo.ApertureValue", oneIntToRational},
+  {"Exif.Photo.ApertureValue", oneDecimalToRational},
+  {"Exif.Photo.DateTimeOriginal", dateTimeRegex},
   {"Exif.Photo.DateTimeOriginal", dateRegex},
-  {"Exif.Image.DateTime", datetimeRegex},
+  {"Exif.Image.DateTime", dateTimeRegex},
   {"Exif.Image.DateTime", dateRegex},
-  {"Exif.Photo.ExposureBiasValue", rational1},
-  {"Exif.Photo.ExposureBiasValue", int1Rational1},
-  {"Exif.Photo.ExposureBiasValue", decimal1Rational1},
-  {"Exif.Photo.ExposureTime", rational1},
-  {"Exif.Photo.ExposureTime", int1Rational1},
-  {"Exif.Photo.ExposureTime", decimal1Rational1},
-  {"Exif.Photo.FNumber", rational1},
-  {"Exif.Photo.FNumber", int1Rational1},
-  {"Exif.Photo.FNumber", decimal1Rational1},
-  {"Exif.Photo.FocalLength", rational1},
-  {"Exif.Photo.FocalLength", int1Rational1},
-  {"Exif.Photo.FocalLength", decimal1Rational1},
-  {"Exif.GPSInfo.GPSTimeStamp", rational3Blank},
-  {"Exif.GPSInfo.GPSTimeStamp", int3Rational3Blank},
-  {"Exif.GPSInfo.GPSTimeStamp", int3Rational3Colon},
+  {"Exif.Photo.ExposureBiasValue", oneRational},
+  {"Exif.Photo.ExposureBiasValue", oneIntToRational},
+  {"Exif.Photo.ExposureBiasValue", oneDecimalToRational},
+  {"Exif.Photo.ExposureTime", oneRational},
+  {"Exif.Photo.ExposureTime", oneIntToRational},
+  {"Exif.Photo.ExposureTime", oneDecimalToRational},
+  {"Exif.Photo.FNumber", oneRational},
+  {"Exif.Photo.FNumber", oneIntToRational},
+  {"Exif.Photo.FNumber", oneDecimalToRational},
+  {"Exif.Photo.FocalLength", oneRational},
+  {"Exif.Photo.FocalLength", oneIntToRational},
+  {"Exif.Photo.FocalLength", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSTimeStamp", threeRationalWithBlank},
+  {"Exif.GPSInfo.GPSTimeStamp", threeIntToRationalWithBlank},
+  {"Exif.GPSInfo.GPSTimeStamp", threeIntToRationalWithColon},
   {"Exif.GPSInfo.GPSDateStamp", dateRegex},
-  {"Exif.Image.XResolution", rational1},
-  {"Exif.Image.XResolution", int1Rational1},
-  {"Exif.Image.XResolution", decimal1Rational1},
-  {"Exif.Image.YResolution", rational1},
-  {"Exif.Image.YResolution", int1Rational1},
-  {"Exif.Image.YResolution", decimal1Rational1},
-  {"Exif.Image.WhitePoint", rational1},
-  {"Exif.Image.WhitePoint", int1Rational1},
-  {"Exif.Image.WhitePoint", decimal1Rational1},
-  {"Exif.Image.PrimaryChromaticities", rational1},
-  {"Exif.Image.PrimaryChromaticities", int1Rational1},
-  {"Exif.Image.PrimaryChromaticities", decimal1Rational1},
-  {"Exif.Image.YCbCrCoefficients", rational3Blank},
-  {"Exif.Image.YCbCrCoefficients", int3Rational3Blank},
-  {"Exif.Image.YCbCrCoefficients", int3Ratiional3Comma},
-  {"Exif.Image.YCbCrCoefficients", decimal3Ratiional3},
-  {"Exif.Image.YCbCrCoefficients", decimal3Ratiional3Comma},
-  {"Exif.Image.ReferenceBlackWhite", rational1},
-  {"Exif.Image.ReferenceBlackWhite", int1Rational1},
-  {"Exif.Image.ReferenceBlackWhite", decimal1Rational1},
-  {"Exif.Photo.ShutterSpeedValue", rational1},
-  {"Exif.Photo.ShutterSpeedValue", int1Rational1},
-  {"Exif.Photo.ShutterSpeedValue", decimal1Rational1},
-  {"Exif.Photo.BrightnessValue", rational1},
-  {"Exif.Photo.BrightnessValue", int1Rational1},
-  {"Exif.Photo.BrightnessValue", decimal1Rational1},
-  {"Exif.Image.MaxApertureValue", rational1},
-  {"Exif.Image.MaxApertureValue", int1Rational1},
-  {"Exif.Image.MaxApertureValue", decimal1Rational1},
-  {"Exif.Image.SubjectDistance", rational1},
-  {"Exif.Image.SubjectDistance", int1Rational1},
-  {"Exif.Image.SubjectDistance", decimal1Rational1},
-  {"Exif.Photo.FlashEnergy", rational1},
-  {"Exif.Photo.FlashEnergy", int1Rational1},
-  {"Exif.Photo.FlashEnergy", decimal1Rational1},
-  {"Exif.Photo.FocalPlaneXResolution", rational1},
-  {"Exif.Photo.FocalPlaneXResolution", int1Rational1},
-  {"Exif.Photo.FocalPlaneXResolution", decimal1Rational1},
-  {"Exif.Photo.FocalPlaneYResolution", rational1},
-  {"Exif.Photo.FocalPlaneYResolution", int1Rational1},
-  {"Exif.Photo.FocalPlaneYResolution", decimal1Rational1},
-  {"Exif.Photo.ExposureIndex", rational1},
-  {"Exif.Photo.ExposureIndex", int1Rational1},
-  {"Exif.Photo.ExposureIndex", decimal1Rational1},
-  {"Exif.Photo.DigitalZoomRatio", rational1},
-  {"Exif.Photo.DigitalZoomRatio", int1Rational1},
-  {"Exif.Photo.DigitalZoomRatio", decimal1Rational1},
-  {"Exif.GPSInfo.GPSAltitude", rational1},
-  {"Exif.GPSInfo.GPSAltitude", int1Rational1},
-  {"Exif.GPSInfo.GPSAltitude", decimal1Rational1},
-  {"Exif.GPSInfo.GPSDOP", rational1},
-  {"Exif.GPSInfo.GPSDOP", int1Rational1},
-  {"Exif.GPSInfo.GPSDOP", decimal1Rational1},
-  {"Exif.GPSInfo.GPSSpeed", rational1},
-  {"Exif.GPSInfo.GPSSpeed", int1Rational1},
-  {"Exif.GPSInfo.GPSSpeed", decimal1Rational1},
-  {"Exif.GPSInfo.GPSTrack", rational1},
-  {"Exif.GPSInfo.GPSTrack", int1Rational1},
-  {"Exif.GPSInfo.GPSTrack", decimal1Rational1},
-  {"Exif.GPSInfo.GPSImgDirection", rational1},
-  {"Exif.GPSInfo.GPSImgDirection", int1Rational1},
-  {"Exif.GPSInfo.GPSImgDirection", decimal1Rational1},
-  {"Exif.GPSInfo.GPSDestLatitude", rational3Blank},
-  {"Exif.GPSInfo.GPSDestLatitude", int3Rational3Blank},
-  {"Exif.GPSInfo.GPSDestLatitude", int3Ratiional3Comma},
-  {"Exif.GPSInfo.GPSDestLongitude", rational3Blank},
-  {"Exif.GPSInfo.GPSDestLongitude", int3Rational3Blank},
-  {"Exif.GPSInfo.GPSDestLongitude", int3Ratiional3Comma},
-  {"Exif.GPSInfo.GPSDestBearing", rational1},
-  {"Exif.GPSInfo.GPSDestBearing", int1Rational1},
-  {"Exif.GPSInfo.GPSDestBearing", decimal1Rational1},
-  {"Exif.GPSInfo.GPSDestDistance", rational1},
-  {"Exif.GPSInfo.GPSDestDistance", int1Rational1},
-  {"Exif.GPSInfo.GPSDestDistance", decimal1Rational1},
-  {"Exif.GPSInfo.GPSVersionID", int4Rational4},
-  {"Exif.GPSInfo.GPSVersionID", int4Rational4Pointer},
-  {"Exif.Image.CompressedBitsPerPixel", rational1},
-  {"Exif.Image.CompressedBitsPerPixel", int1Rational1},
-  {"Exif.Image.CompressedBitsPerPixel", decimal1Rational1},
-  {"Exif.Image.DNGVersion", int4Blank},
-  {"Exif.Image.DNGVersion", int4Comma},
-  {"Exif.Image.DefaultCropSize", int2Blank},
-  {"Exif.Image.DefaultCropSize", int2Comma},
-  {"Exif.Photo.Gamma", rational1},
-  {"Exif.Photo.Gamma", int1Rational1},
-  {"Exif.Photo.Gamma", decimal1Rational1},
-  {"Exif.GPSInfo.GPSHPositioningError", rational1},
-  {"Exif.GPSInfo.GPSHPositioningError", int1Rational1},
-  {"Exif.GPSInfo.GPSHPositioningError", decimal1Rational1},
-  {"Exif.Photo.LensSpecification", rational4Blank},
-  {"Exif.Photo.LensSpecification", int4Rational4Blank},
-  {"Exif.Photo.LensSpecification", int4Ratiional4Comma},
+  {"Exif.Image.XResolution", oneRational},
+  {"Exif.Image.XResolution", oneIntToRational},
+  {"Exif.Image.XResolution", oneDecimalToRational},
+  {"Exif.Image.YResolution", oneRational},
+  {"Exif.Image.YResolution", oneIntToRational},
+  {"Exif.Image.YResolution", oneDecimalToRational},
+  {"Exif.Image.WhitePoint", oneRational},
+  {"Exif.Image.WhitePoint", oneIntToRational},
+  {"Exif.Image.WhitePoint", oneDecimalToRational},
+  {"Exif.Image.PrimaryChromaticities", oneRational},
+  {"Exif.Image.PrimaryChromaticities", oneIntToRational},
+  {"Exif.Image.PrimaryChromaticities", oneDecimalToRational},
+  {"Exif.Image.YCbCrCoefficients", threeRationalWithBlank},
+  {"Exif.Image.YCbCrCoefficients", threeIntToRationalWithBlank},
+  {"Exif.Image.YCbCrCoefficients", threeIntToRationalWithComma},
+  {"Exif.Image.YCbCrCoefficients", threeDecimalToRationalWithBlank},
+  {"Exif.Image.YCbCrCoefficients", threeDecimalToRatiionalWithComma},
+  {"Exif.Image.ReferenceBlackWhite", oneRational},
+  {"Exif.Image.ReferenceBlackWhite", oneIntToRational},
+  {"Exif.Image.ReferenceBlackWhite", oneDecimalToRational},
+  {"Exif.Photo.ShutterSpeedValue", oneRational},
+  {"Exif.Photo.ShutterSpeedValue", oneIntToRational},
+  {"Exif.Photo.ShutterSpeedValue", oneDecimalToRational},
+  {"Exif.Photo.BrightnessValue", oneRational},
+  {"Exif.Photo.BrightnessValue", oneIntToRational},
+  {"Exif.Photo.BrightnessValue", oneDecimalToRational},
+  {"Exif.Image.MaxApertureValue", oneRational},
+  {"Exif.Image.MaxApertureValue", oneIntToRational},
+  {"Exif.Image.MaxApertureValue", oneDecimalToRational},
+  {"Exif.Image.SubjectDistance", oneRational},
+  {"Exif.Image.SubjectDistance", oneIntToRational},
+  {"Exif.Image.SubjectDistance", oneDecimalToRational},
+  {"Exif.Photo.FlashEnergy", oneRational},
+  {"Exif.Photo.FlashEnergy", oneIntToRational},
+  {"Exif.Photo.FlashEnergy", oneDecimalToRational},
+  {"Exif.Photo.FocalPlaneXResolution", oneRational},
+  {"Exif.Photo.FocalPlaneXResolution", oneIntToRational},
+  {"Exif.Photo.FocalPlaneXResolution", oneDecimalToRational},
+  {"Exif.Photo.FocalPlaneYResolution", oneRational},
+  {"Exif.Photo.FocalPlaneYResolution", oneIntToRational},
+  {"Exif.Photo.FocalPlaneYResolution", oneDecimalToRational},
+  {"Exif.Photo.ExposureIndex", oneRational},
+  {"Exif.Photo.ExposureIndex", oneIntToRational},
+  {"Exif.Photo.ExposureIndex", oneDecimalToRational},
+  {"Exif.Photo.DigitalZoomRatio", oneRational},
+  {"Exif.Photo.DigitalZoomRatio", oneIntToRational},
+  {"Exif.Photo.DigitalZoomRatio", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSAltitude", oneRational},
+  {"Exif.GPSInfo.GPSAltitude", oneIntToRational},
+  {"Exif.GPSInfo.GPSAltitude", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSDOP", oneRational},
+  {"Exif.GPSInfo.GPSDOP", oneIntToRational},
+  {"Exif.GPSInfo.GPSDOP", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSSpeed", oneRational},
+  {"Exif.GPSInfo.GPSSpeed", oneIntToRational},
+  {"Exif.GPSInfo.GPSSpeed", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSTrack", oneRational},
+  {"Exif.GPSInfo.GPSTrack", oneIntToRational},
+  {"Exif.GPSInfo.GPSTrack", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSImgDirection", oneRational},
+  {"Exif.GPSInfo.GPSImgDirection", oneIntToRational},
+  {"Exif.GPSInfo.GPSImgDirection", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSDestLatitude", threeRationalWithBlank},
+  {"Exif.GPSInfo.GPSDestLatitude", threeIntToRationalWithBlank},
+  {"Exif.GPSInfo.GPSDestLatitude", threeIntToRationalWithComma},
+  {"Exif.GPSInfo.GPSDestLongitude", threeRationalWithBlank},
+  {"Exif.GPSInfo.GPSDestLongitude", threeIntToRationalWithBlank},
+  {"Exif.GPSInfo.GPSDestLongitude", threeIntToRationalWithComma},
+  {"Exif.GPSInfo.GPSDestBearing", oneRational},
+  {"Exif.GPSInfo.GPSDestBearing", oneIntToRational},
+  {"Exif.GPSInfo.GPSDestBearing", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSDestDistance", oneRational},
+  {"Exif.GPSInfo.GPSDestDistance", oneIntToRational},
+  {"Exif.GPSInfo.GPSDestDistance", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSVersionID", fourIntWithBlank},
+  {"Exif.GPSInfo.GPSVersionID", fourIntToRationalWithDot},
+  {"Exif.Image.CompressedBitsPerPixel", oneRational},
+  {"Exif.Image.CompressedBitsPerPixel", oneIntToRational},
+  {"Exif.Image.CompressedBitsPerPixel", oneDecimalToRational},
+  {"Exif.Image.DNGVersion", fourIntWithBlank},
+  {"Exif.Image.DNGVersion", fourIntWithComma},
+  {"Exif.Image.DefaultCropSize", doubleIntWithBlank},
+  {"Exif.Image.DefaultCropSize", doubleIntWithComma},
+  {"Exif.Photo.Gamma", oneRational},
+  {"Exif.Photo.Gamma", oneIntToRational},
+  {"Exif.Photo.Gamma", oneDecimalToRational},
+  {"Exif.GPSInfo.GPSHPositioningError", oneRational},
+  {"Exif.GPSInfo.GPSHPositioningError", oneIntToRational},
+  {"Exif.GPSInfo.GPSHPositioningError", oneDecimalToRational},
+  {"Exif.Photo.LensSpecification", fourRationalWithBlank},
+  {"Exif.Photo.LensSpecification", fourIntToRationalWithBlank},
+  {"Exif.Photo.LensSpecification", fourIntToRationalWithComma},
   {"Exif.Photo.LensSpecification", decimal4Ratiional4},
   {"Exif.Photo.LensSpecification", decimal4Ratiional4Comma},
 };
@@ -1022,7 +1024,6 @@ int32_t ExifMetaDataValidate::IsValueFormatValidate(const std::string &exiv2Tag,
     // call each value format function with value and regex
     int32_t i = func(value, (iterator->second).second);
     IMAGE_LOGD("isValueFormatValidate ret i is [%{public}d].", i);
-    // 修正成功 返回1
     if (i)
     {
       IMAGE_LOGD("isValueFormatValidate ret SUCCESS.");
@@ -1036,7 +1037,8 @@ int32_t ExifMetaDataValidate::IsValueFormatValidate(const std::string &exiv2Tag,
 
 // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
 bool ExifMetaDataValidate::IsModifyAllow(const std::string &exiv2Tag){
-  if (ExifMetaDataValidate::ValidRegex(exiv2Tag, R"(^Exif.Huawei.*)") && !ExifMetaDataValidate::ValidRegex(exiv2Tag, R"(^Exif.Huawei.CaptureMode$)")) {
+  if (ExifMetaDataValidate::ValidRegex(exiv2Tag, R"(^Exif.Huawei.*)") && 
+      (HWALLOWMODIFYKEY.find(exiv2Tag) == HWALLOWMODIFYKEY.end())) {
     return false;
   }
   return true;
@@ -1064,12 +1066,11 @@ int32_t ExifMetaDataValidate::ExifValidate(const std::string &keyName, std::stri
   IMAGE_LOGD("[ExifValidation] isValueFormatValidate is [%{public}d].", r);
   if (ExifMetaDataValidate::HasValueFormatValidate(exiv2Tag) && r)
   {
-    // printf("1.验证数据格式是否合法 未通过 跳出modify\n");
     IMAGE_LOGD("[ExifValidation] value formate is invalid. exiv2Tag is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());
     return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //value format validate does not pass
   }
   IMAGE_LOGD("[ExifValidation] processed formate value is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());
-  // 2.validat value range
+  // 2.validate value range
   if (ExifMetaDataValidate::IsValueRangeValidate(exiv2Tag, value))
   {
     IMAGE_LOGD("[ExifValidation] value range is invalid. value is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());

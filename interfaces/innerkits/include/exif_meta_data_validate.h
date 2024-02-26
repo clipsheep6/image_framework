@@ -45,30 +45,29 @@ public:
   static int32_t ExifValidate(const std::string &keyName, std::string &exiv2Tag, std::string &value);
   static bool IsModifyAllow(const std::string &exiv2Tag);
 private:
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int2Blank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int2Comma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int3Blank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int3Comma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int4Blank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int4Comma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> rational1;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int1Rational1;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> decimal1Rational1;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> rational3Blank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int3Rational3Blank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int3Ratiional3Comma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> decimal3Ratiional3;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> decimal3Ratiional3Comma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> rational4Blank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int4Rational4Blank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int4Ratiional4Comma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> doubleIntWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> doubleIntWithComma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleIntWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleIntWithComma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntWithComma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> oneRational;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> oneIntToRational;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> oneDecimalToRational;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeIntToRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeIntToRationalWithComma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeDecimalToRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeDecimalToRatiionalWithComma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntToRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntToRationalWithComma;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> decimal4Ratiional4;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> decimal4Ratiional4Comma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> datetimeRegex;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> dateTimeRegex;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> dateRegex;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int3Rational3Colon;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int4Rational4;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int4Rational4Pointer;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeIntToRationalWithColon;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntToRationalWithDot;
 private:
   static int Gcd(int a, int b)
   {
@@ -84,16 +83,16 @@ private:
   static bool IsValidValue(const TagDetails *array, const size_t &size, const int64_t &key);
   static bool ValidRegex(const std::string &value, const std::string &regex);
   static bool ValidRegexWithComma(std::string &value, const std::string &regex);
-  static bool ValidRegexWithRationalFix(std::string &value, const std::string &regex);
-  static bool ValidRegexWithCommaRationalFix(std::string &value, const std::string &regex);
-  static bool ValidRegexWithColonRationalFix(std::string &value, const std::string &regex);
+  static bool ValidRegexWithRationalFormat(std::string &value, const std::string &regex);
+  static bool ValidRegexWithCommaRationalFormat(std::string &value, const std::string &regex);
+  static bool ValidRegexWithColonRationalFormat(std::string &value, const std::string &regex);
   static bool ValidRegexWithDot(std::string &value, const std::string &regex);
-  static bool ValidRegxWithCommaDecimalRationalFix(std::string &value, const std::string &regex);
-  static bool ValidRegexWithDecimalRationalFix(std::string &value, const std::string &regex);
+  static bool ValidRegxWithCommaDecimalRationalFormat(std::string &value, const std::string &regex);
+  static bool ValidRegexWithDecimalRationalFormat(std::string &value, const std::string &regex);
   static void ReplaceAsSpace(std::string &value, const std::string &regex);
-  static void RationalFix(std::string &value);
+  static void RationalFormat(std::string &value);
   static std::string GetFractionFromStr(const std::string &decimal);
-  static void DecimalRationalFix(std::string &value);
+  static void DecimalRationalFormat(std::string &value);
 private:
   static std::multimap<std::string, std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string>> valueFormatValidateConfig;
   static std::map<std::string, std::tuple<const TagDetails*, const size_t>> valueRangeValidateConfig;
