@@ -970,7 +970,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
         }
     }
     std::string tagname, revalue(value);
-    auto ret = ExifMetaDataValidate::exifValidate(key, tagname, revalue);
+    auto ret = ExifMetaDataValidate::ExifValidate(key, tagname, revalue);
     if(ret)
     {
         return ret;
@@ -1082,7 +1082,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     }
     IMAGE_LOGD("[ImageSource] ModifyImageProperty fd going to exifValidate.");
     std::string tagname, revalue(value);
-    auto ret = ExifMetaDataValidate::exifValidate(key, tagname, revalue);
+    auto ret = ExifMetaDataValidate::ExifValidate(key, tagname, revalue);
     if(ret)
     {
         return ret;
@@ -1134,7 +1134,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
         }
     }
     std::string tagname, revalue(value);
-    auto ret = ExifMetaDataValidate::exifValidate(key, tagname, revalue);
+    auto ret = ExifMetaDataValidate::ExifValidate(key, tagname, revalue);
     if(ret)
     {
         return ret;
