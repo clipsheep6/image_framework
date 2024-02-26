@@ -38,12 +38,12 @@ struct TagDetails
 class ExifMetaDataValidate
 {
 public:
-  static bool HasValueFormatValidate(const std::string &tagname);
-  static int32_t IsValueRangeValidate(const std::string &tagname, const std::string &value);
-  static int32_t IsValueFormatValidate(const std::string &tagname, std::string &value);
-  static bool GetExiv2TagByName(const std::string &name, std::string &tag);
-  static int32_t ExifValidate(const std::string &name, std::string &tagname, std::string &value);
-  static bool IsModifyAllow(const std::string &tagname);
+  static bool HasValueFormatValidate(const std::string &exiv2Tag);
+  static int32_t IsValueRangeValidate(const std::string &exiv2Tag, const std::string &value);
+  static int32_t IsValueFormatValidate(const std::string &exiv2Tag, std::string &value);
+  static bool GetExiv2TagByName(const std::string &keyName, std::string &exiv2Tag);
+  static int32_t ExifValidate(const std::string &keyName, std::string &exiv2Tag, std::string &value);
+  static bool IsModifyAllow(const std::string &exiv2Tag);
 private:
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int2Blank;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> int2Comma;
@@ -87,7 +87,7 @@ private:
   static bool ValidRegexWithRationalFix(std::string &value, const std::string &regex);
   static bool ValidRegexWithCommaRationalFix(std::string &value, const std::string &regex);
   static bool ValidRegexWithColonRationalFix(std::string &value, const std::string &regex);
-  static bool ValidRegexWithPoint(std::string &value, const std::string &regex);
+  static bool ValidRegexWithDot(std::string &value, const std::string &regex);
   static bool ValidRegxWithCommaDecimalRationalFix(std::string &value, const std::string &regex);
   static bool ValidRegexWithDecimalRationalFix(std::string &value, const std::string &regex);
   static void ReplaceAsSpace(std::string &value, const std::string &regex);

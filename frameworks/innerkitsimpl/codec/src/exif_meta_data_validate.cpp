@@ -561,7 +561,7 @@ std::map<std::string, std::tuple<const TagDetails*, const size_t>> ExifMetaDataV
 // validate the key is in value range array. For example GPSLatitudeRef value should be 'N' or 'S' in exifGPSLatitudeRef array.
 bool ExifMetaDataValidate::IsValidValue(const TagDetails *array, const size_t &size, const int64_t &key)
 {
-  if (array == NULL)
+  if (array == nullptr)
   {
     return false;
   }
@@ -730,7 +730,7 @@ bool ExifMetaDataValidate::ValidRegexWithColonRationalFix(std::string &value, co
 }
 
 // validate regex & convert value to integer format. For example 2.2.0.0 -> 2 2 0 0
-bool ExifMetaDataValidate::ValidRegexWithPoint(std::string &value, const std::string &regex)
+bool ExifMetaDataValidate::ValidRegexWithDot(std::string &value, const std::string &regex)
 {
   if (!ValidRegex(value, regex))
   {
@@ -820,7 +820,7 @@ std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string
 // regex validation for fou integer like GPSVersionID 2 2 0 0 the format is [0-9]+ [0-9]+ [0-9]+ [0-9]+
 std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Rational4 = std::make_pair(ExifMetaDataValidate::ValidRegex, R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)");
 // regex validation for fou integer with pointer like GPSVersionID 2.2.0.0 -> 2 2 0 0 
-std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Rational4Pointer = std::make_pair(ExifMetaDataValidate::ValidRegexWithPoint, R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)");
+std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> ExifMetaDataValidate::int4Rational4Pointer = std::make_pair(ExifMetaDataValidate::ValidRegexWithDot, R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)");
 
 // configuration for value format validation. For example BitPerSample the value format should be 9 9 9 or 9,9,9
 std::multimap<std::string, std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string>> ExifMetaDataValidate::valueFormatValidateConfig = {
@@ -956,9 +956,9 @@ std::multimap<std::string, std::pair<std::function<int32_t (std::string&, const 
 
 
 // validate the value range. For example GPSLatitudeRef the value must be 'N' or 'S'.
-int32_t ExifMetaDataValidate::IsValueRangeValidate(const std::string &tagname, const std::string &value){
+int32_t ExifMetaDataValidate::IsValueRangeValidate(const std::string &exiv2Tag, const std::string &value){
     // 1. to find if any value range validation configuratiion according to exif tag in std::map container
-    auto iter  = valueRangeValidateConfig.find(tagname);
+    auto iter  = valueRangeValidateConfig.find(exiv2Tag);
     if (iter != valueRangeValidateConfig.end()) {
         // get value range array & size
         auto &[arrRef, arrSize] = iter->second;
@@ -1005,19 +1005,19 @@ int32_t ExifMetaDataValidate::IsValueRangeValidate(const std::string &tagname, c
 }
 
 // check if has any value format configuration
-bool ExifMetaDataValidate::HasValueFormatValidate(const std::string &tagname){
-  IMAGE_LOGD("hasValueFormatValidate tagname is [%{public}s].", tagname.c_str());
-  return ExifMetaDataValidate::valueFormatValidateConfig.find(tagname) != ExifMetaDataValidate::valueFormatValidateConfig.end();
+bool ExifMetaDataValidate::HasValueFormatValidate(const std::string &exiv2Tag){
+  IMAGE_LOGD("hasValueFormatValidate exiv2Tag is [%{public}s].", exiv2Tag.c_str());
+  return ExifMetaDataValidate::valueFormatValidateConfig.find(exiv2Tag) != ExifMetaDataValidate::valueFormatValidateConfig.end();
 }
 
 // validate value format. For example BitPerSample the value format should be 9 9 9 or 9,9,9
-int32_t ExifMetaDataValidate::IsValueFormatValidate(const std::string &tagname, std::string &value)
+int32_t ExifMetaDataValidate::IsValueFormatValidate(const std::string &exiv2Tag, std::string &value)
 {
-  IMAGE_LOGD("isValueFormatValidate tagname is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
-  // get first iterator according to tagname
-  for (auto iterator = ExifMetaDataValidate::valueFormatValidateConfig.find(tagname); iterator != ExifMetaDataValidate::valueFormatValidateConfig.end() && iterator != ExifMetaDataValidate::valueFormatValidateConfig.upper_bound(tagname); iterator++)
+  IMAGE_LOGD("isValueFormatValidate exiv2Tag is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());
+  // get first iterator according to exiv2Tag
+  for (auto iterator = ExifMetaDataValidate::valueFormatValidateConfig.find(exiv2Tag); iterator != ExifMetaDataValidate::valueFormatValidateConfig.end() && iterator != ExifMetaDataValidate::valueFormatValidateConfig.upper_bound(exiv2Tag); iterator++)
   {
-    IMAGE_LOGD("isValueFormatValidate forloop tagname is [%{public}s] regex string is [%{public}s].", (iterator->first).c_str(), (iterator->second).second.c_str());
+    IMAGE_LOGD("isValueFormatValidate forloop exiv2Tag is [%{public}s] regex string is [%{public}s].", (iterator->first).c_str(), (iterator->second).second.c_str());
     auto func = (iterator->second).first;
     // call each value format function with value and regex
     int32_t i = func(value, (iterator->second).second);
@@ -1035,44 +1035,44 @@ int32_t ExifMetaDataValidate::IsValueFormatValidate(const std::string &tagname, 
 }
 
 // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
-bool ExifMetaDataValidate::IsModifyAllow(const std::string &tagname){
-  if (ExifMetaDataValidate::ValidRegex(tagname, R"(^Exif.Huawei.*)") && !ExifMetaDataValidate::ValidRegex(tagname, R"(^Exif.Huawei.CaptureMode$)")) {
+bool ExifMetaDataValidate::IsModifyAllow(const std::string &exiv2Tag){
+  if (ExifMetaDataValidate::ValidRegex(exiv2Tag, R"(^Exif.Huawei.*)") && !ExifMetaDataValidate::ValidRegex(exiv2Tag, R"(^Exif.Huawei.CaptureMode$)")) {
     return false;
   }
   return true;
 }
 
 // exif validation portal when modify exif
-int32_t ExifMetaDataValidate::ExifValidate(const std::string &name, std::string &tagname, std::string &value)
+int32_t ExifMetaDataValidate::ExifValidate(const std::string &keyName, std::string &exiv2Tag, std::string &value)
 {
   IMAGE_LOGD("[ExifValidation] in exifValidate.");
   // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
-  if(!ExifMetaDataValidate::GetExiv2TagByName(name, tagname))
+  if(!ExifMetaDataValidate::GetExiv2TagByName(keyName, exiv2Tag))
   {
       return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
   }
 
   // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
-  if (!ExifMetaDataValidate::IsModifyAllow(tagname)) {
+  if (!ExifMetaDataValidate::IsModifyAllow(exiv2Tag)) {
       return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
   }
 
-  IMAGE_LOGD("[ExifValidation] tagname is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
+  IMAGE_LOGD("[ExifValidation] exiv2Tag is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());
   // 1.validate value format
-  IMAGE_LOGD("[ExifValidation] hasValueFormatValidate is [%{public}d].", ExifMetaDataValidate::HasValueFormatValidate(tagname));
-  auto r = ExifMetaDataValidate::IsValueFormatValidate(tagname, value);
+  IMAGE_LOGD("[ExifValidation] hasValueFormatValidate is [%{public}d].", ExifMetaDataValidate::HasValueFormatValidate(exiv2Tag));
+  auto r = ExifMetaDataValidate::IsValueFormatValidate(exiv2Tag, value);
   IMAGE_LOGD("[ExifValidation] isValueFormatValidate is [%{public}d].", r);
-  if (ExifMetaDataValidate::HasValueFormatValidate(tagname) && r)
+  if (ExifMetaDataValidate::HasValueFormatValidate(exiv2Tag) && r)
   {
     // printf("1.验证数据格式是否合法 未通过 跳出modify\n");
-    IMAGE_LOGD("[ExifValidation] value formate is invalid. tagname is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
+    IMAGE_LOGD("[ExifValidation] value formate is invalid. exiv2Tag is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());
     return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //value format validate does not pass
   }
-  IMAGE_LOGD("[ExifValidation] processed formate value is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
+  IMAGE_LOGD("[ExifValidation] processed formate value is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());
   // 2.validat value range
-  if (ExifMetaDataValidate::IsValueRangeValidate(tagname, value))
+  if (ExifMetaDataValidate::IsValueRangeValidate(exiv2Tag, value))
   {
-    IMAGE_LOGD("[ExifValidation] value range is invalid. value is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
+    IMAGE_LOGD("[ExifValidation] value range is invalid. value is [%{public}s] value is [%{public}s].", exiv2Tag.c_str(), value.c_str());
     return Media::ERR_MEDIA_OUT_OF_RANGE; // value range validate does not pass
   }
   return Media::SUCCESS;
@@ -1080,16 +1080,16 @@ int32_t ExifMetaDataValidate::ExifValidate(const std::string &name, std::string 
 
 
 // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
-bool ExifMetaDataValidate::GetExiv2TagByName(const std::string &name, std::string &tag)
+bool ExifMetaDataValidate::GetExiv2TagByName(const std::string &keyName, std::string &exiv2Tag)
 {
     auto find_item = std::find_if(TAG_MAP.begin(), TAG_MAP.end(),
-        [name](const std::map<std::string, std::string>::value_type item) {
-        return IsSameTextStr(item.first, name);
+        [keyName](const std::map<std::string, std::string>::value_type item) {
+        return IsSameTextStr(item.first, keyName);
     });
     if (find_item == TAG_MAP.end()) {
         return false;
     }
-    tag = find_item->second;
+    exiv2Tag = find_item->second;
     return true;
 }
 
