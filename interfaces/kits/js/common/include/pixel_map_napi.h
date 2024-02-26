@@ -177,6 +177,14 @@ private:
     std::mutex mutex_;
     std::map<uint32_t, std::shared_ptr<PixelMap>> map_;
 };
+
+struct PositionArea {
+    void* pixels;
+    size_t size;
+    uint32_t offset;
+    uint32_t stride;
+    Rect region;
+};
 } // namespace Media
 } // namespace OHOS
 #endif // INTERFACES_KITS_JS_COMMON_INCLUDE_PIXEL_MAP_NAPI_H

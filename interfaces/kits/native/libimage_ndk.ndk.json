@@ -17,5 +17,38 @@
     },
     {
         "name": "OH_Image_Release"
+    },
+    {
+        "name": "OH_Image_CToJs_PixelMap"
+    },
+    {
+        "name": "OH_Image_CToJs_ColorSpace"
+    },
+    {
+        "name": "OH_Image_JsToC_Uint8"
+    },
+    {
+        "name": "OH_Image_JsToC_Uint64"
+    },
+    {
+        "name": "OH_Image_JsToC_ImageInfo"
+    },
+    {
+        "name": "OH_Image_JsToC_Float"
+    },
+    {
+        "name": "OH_Image_JsToC_Bool"
+    },
+    {
+        "name": "OH_Image_JsToC_Parcel"
+    },
+    {
+        "name": "OH_Image_JsToC_ColorSpace"
+    },
+    {
+        "name": "OH_Image_JsToC_PixelMap"
+    },
+    {
+        "name": "OH_Image_JsToC_InitializationOptions"
     }
 ]

@@ -60,13 +60,6 @@ NAPI_MessageSequence* napi_messageSequence = nullptr;
 #endif
 
 static std::mutex pixelMapCrossThreadMutex_;
-struct PositionArea {
-    void* pixels;
-    size_t size;
-    uint32_t offset;
-    uint32_t stride;
-    Rect region;
-};
 
 struct PixelMapAsyncContext {
     napi_env env;
