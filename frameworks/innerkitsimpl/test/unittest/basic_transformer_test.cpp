@@ -44,10 +44,10 @@ HWTEST_F(BasicTransformerTest, CheckAllocateBufferTest001, TestSize.Level3)
     uint64_t bufferSize = 0;
     Size dstSize;
     bool ret = basicTransformer.CheckAllocateBuffer(outPixmap, allocate, fd, bufferSize, dstSize);
-    ASSERT_EQ(ret ,false);
+    ASSERT_EQ(ret, false);
     bufferSize = 128;
     ret = basicTransformer.CheckAllocateBuffer(outPixmap, allocate, fd, bufferSize, dstSize);
-    ASSERT_EQ(ret ,true);
+    ASSERT_EQ(ret, true);
     GTEST_LOG_(INFO) << "BasicTransformerTest: CheckAllocateBufferTest001 end";
 }
 
