@@ -201,9 +201,7 @@ static void NV21ToYV12Manual(const uint8_t *srcBuffer, const Size &imageSize, ui
 {
     const int32_t srcPlaneSizeY = imageSize.width * imageSize.height;
     const int32_t srcPlaneSizeUV = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    for (int32_t i = NUM_0; i < srcPlaneSizeY; i++) {
-        (*destBuffer)[i] = srcBuffer[i];
-    }
+    memcpy_s(*destBuffer, srcPlaneSizeY * sizeof(int32_t), srcBuffer, srcPlaneSizeY * sizeof(int32_t));
     for (int32_t i = NUM_0; i < srcPlaneSizeUV; i++) {
         (*destBuffer)[srcPlaneSizeY + i] = srcBuffer[srcPlaneSizeY + i * NUM_2];
         (*destBuffer)[srcPlaneSizeY + ((srcPlaneSizeUV + NUM_1) / NUM_2 * NUM_2) + i]
