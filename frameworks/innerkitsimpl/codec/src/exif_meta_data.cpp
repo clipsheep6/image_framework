@@ -80,7 +80,7 @@ uint32_t ExifMetaData::GetImagePropertyInt(const std::string &key, int32_t &valu
     Exiv2::ExifData::iterator itExif = exifData_.findKey(Exiv2::ExifKey(key));
     if (itExif == exifData_.end()) {
         IMAGE_LOGE("[ExifMetaData]get image property failed, key:%{public}s.", key.c_str());
-        return ERR_GET_EXIV2_IMAGE_PROPERTY;
+        return ERR_IMAGE_PROPERTY_NOT_EXIST;
     }
     Exiv2::Exifdatum &datumExif = exifData_[key];
     value = static_cast<int32_t>(datumExif.value().toInt64());
@@ -93,7 +93,7 @@ uint32_t ExifMetaData::GetImagePropertyString(const std::string &key, std::strin
     Exiv2::ExifData::iterator itExif = exifData_.findKey(Exiv2::ExifKey(key));
     if (itExif == exifData_.end()) {
         IMAGE_LOGE("[ExifMetaData]get image property failed, key:%{public}s.", key.c_str());
-        return ERR_GET_EXIV2_IMAGE_PROPERTY;
+        return ERR_IMAGE_PROPERTY_NOT_EXIST;
     }
     Exiv2::Exifdatum &datumExif = exifData_[key];
     value = datumExif.print();
