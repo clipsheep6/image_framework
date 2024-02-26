@@ -29,16 +29,15 @@ public:
     ~ExifMetaData();
     uint32_t CreateExiv2Image(const std::string &path);
     uint32_t CreateExiv2Image(uint8_t *data, uint32_t size);
-    uint32_t CreateExiv2Image(const int fd);
+    void ReadMetadata();
     uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
     uint32_t GetImagePropertyString(const std::string &key, std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
-    uint32_t GetExiv2ImageBuf(uint8_t **imageBuf, uint32_t &imageSize);
+    uint32_t GetExiv2ImageData(uint8_t **imageData, uint32_t &imageSize);
     void GetExifMetaData(Exiv2::ExifData &exifData);
-    uint32_t SetExifMetaData(const Exiv2::ExifData &exifData, uint8_t **imageBuf, uint32_t &imageSize);
+    void SetExifMetaData(const Exiv2::ExifData &exifData);
     void WriteMetadata();
 private:
-    uint8_t *innerData_ = nullptr;
     std::mutex dataMutex_;
     Exiv2::ExifData exifData_;
     Exiv2::Image::UniquePtr image_;

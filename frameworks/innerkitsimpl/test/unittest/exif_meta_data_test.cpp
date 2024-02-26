@@ -88,27 +88,6 @@ HWTEST_F(ExifMetaDataTest, CreateExiv2Image002, TestSize.Level3)
 }
 
 /**
- * @tc.name: CreateExiv2Image003
- * @tc.desc: test CreateExiv2Image
- * @tc.type: FUNC
- */
-HWTEST_F(ExifMetaDataTest, CreateExiv2Image003, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: CreateExiv2Image003 start";
-
-    ExifMetaData *exifMetaData = new ExifMetaData();
-    ASSERT_NE(exifMetaData, nullptr);
-    int fd = open(IMAGE_INPUT_PNG_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-    ASSERT_GT(fd, 0);
-    uint32_t ret = exifMetaData->CreateExiv2Image(fd);
-    ASSERT_EQ(ret, SUCCESS);
-    delete exifMetaData;
-    close(fd);
-
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: CreateExiv2Image003 end";
-}
-
-/**
  * @tc.name: GetImagePropertyInt001
  * @tc.desc: test GetImagePropertyInt
  * @tc.type: FUNC
@@ -121,6 +100,7 @@ HWTEST_F(ExifMetaDataTest, GetImagePropertyInt001, TestSize.Level3)
     ASSERT_NE(exifMetaData, nullptr);
     uint32_t ret = exifMetaData->CreateExiv2Image(IMAGE_INPUT_PNG_PATH);
     ASSERT_EQ(ret, SUCCESS);
+    exifMetaData->ReadMetadata();
     int32_t value = 0;
     uint32_t getRet = exifMetaData->GetImagePropertyInt(GET_EXIV2_INT_KEY, value);
     ASSERT_EQ(getRet, SUCCESS);
@@ -155,6 +135,7 @@ HWTEST_F(ExifMetaDataTest, GetImagePropertyInt002, TestSize.Level3)
     close(fd);
     uint32_t ret = exifMetaData->CreateExiv2Image(data, size);
     ASSERT_EQ(ret, SUCCESS);
+    exifMetaData->ReadMetadata();
     int32_t value = 0;
     uint32_t getRet = exifMetaData->GetImagePropertyInt(GET_EXIV2_INT_KEY, value);
     ASSERT_EQ(getRet, SUCCESS);
@@ -164,32 +145,6 @@ HWTEST_F(ExifMetaDataTest, GetImagePropertyInt002, TestSize.Level3)
     free(data);
 
     GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyInt002 end";
-}
-
-/**
- * @tc.name: GetImagePropertyInt003
- * @tc.desc: test GetImagePropertyInt
- * @tc.type: FUNC
- */
-HWTEST_F(ExifMetaDataTest, GetImagePropertyInt003, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyInt003 start";
-
-    ExifMetaData *exifMetaData = new ExifMetaData();
-    ASSERT_NE(exifMetaData, nullptr);
-    int fd = open(IMAGE_INPUT_PNG_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-    ASSERT_GT(fd, 0);
-    uint32_t ret = exifMetaData->CreateExiv2Image(fd);
-    ASSERT_EQ(ret, SUCCESS);
-    close(fd);
-    int32_t value = 0;
-    uint32_t getRet = exifMetaData->GetImagePropertyInt(GET_EXIV2_INT_KEY, value);
-    ASSERT_EQ(getRet, SUCCESS);
-    ASSERT_GT(value, 0);
-    GTEST_LOG_(INFO) << GET_EXIV2_INT_KEY << ": " << value;
-    delete exifMetaData;
-
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyInt003 end";
 }
 
 /**
@@ -205,6 +160,7 @@ HWTEST_F(ExifMetaDataTest, GetImagePropertyString001, TestSize.Level3)
     ASSERT_NE(exifMetaData, nullptr);
     uint32_t ret = exifMetaData->CreateExiv2Image(IMAGE_INPUT_PNG_PATH);
     ASSERT_EQ(ret, SUCCESS);
+    exifMetaData->ReadMetadata();
     std::string value = "";
     uint32_t getRet = exifMetaData->GetImagePropertyString(GET_EXIV2_STRING_KEY, value);
     ASSERT_EQ(getRet, SUCCESS);
@@ -239,6 +195,7 @@ HWTEST_F(ExifMetaDataTest, GetImagePropertyString002, TestSize.Level3)
     close(fd);
     uint32_t ret = exifMetaData->CreateExiv2Image(data, size);
     ASSERT_EQ(ret, SUCCESS);
+    exifMetaData->ReadMetadata();
     std::string value = "";
     uint32_t getRet = exifMetaData->GetImagePropertyString(GET_EXIV2_STRING_KEY, value);
     ASSERT_EQ(getRet, SUCCESS);
@@ -248,32 +205,6 @@ HWTEST_F(ExifMetaDataTest, GetImagePropertyString002, TestSize.Level3)
     free(data);
 
     GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyString002 end";
-}
-
-/**
- * @tc.name: GetImagePropertyString003
- * @tc.desc: test GetImagePropertyString
- * @tc.type: FUNC
- */
-HWTEST_F(ExifMetaDataTest, GetImagePropertyString003, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyString003 start";
-
-    ExifMetaData *exifMetaData = new ExifMetaData();
-    ASSERT_NE(exifMetaData, nullptr);
-    int fd = open(IMAGE_INPUT_PNG_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-    ASSERT_GT(fd, 0);
-    uint32_t ret = exifMetaData->CreateExiv2Image(fd);
-    ASSERT_EQ(ret, SUCCESS);
-    close(fd);
-    std::string value = "";
-    uint32_t getRet = exifMetaData->GetImagePropertyString(GET_EXIV2_STRING_KEY, value);
-    ASSERT_EQ(getRet, SUCCESS);
-    ASSERT_NE(value, "");
-    GTEST_LOG_(INFO) << GET_EXIV2_STRING_KEY << ": " << value;
-    delete exifMetaData;
-
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyString003 end";
 }
 
 /**
@@ -289,6 +220,7 @@ HWTEST_F(ExifMetaDataTest, ModifyImageProperty001, TestSize.Level3)
     ASSERT_NE(exifMetaData, nullptr);
     uint32_t ret = exifMetaData->CreateExiv2Image(IMAGE_INPUT_PNG_PATH);
     ASSERT_EQ(ret, SUCCESS);
+    exifMetaData->ReadMetadata();
     uint32_t setRet = exifMetaData->ModifyImageProperty(MODIFY_EXIV2_STRING_KEY, MODIFY_EXIV2_STRING_VALUE_PATH);
     ASSERT_EQ(setRet, SUCCESS);
     exifMetaData->WriteMetadata();
@@ -298,6 +230,7 @@ HWTEST_F(ExifMetaDataTest, ModifyImageProperty001, TestSize.Level3)
     ASSERT_NE(exifMetaDataNew, nullptr);
     uint32_t retNew = exifMetaDataNew->CreateExiv2Image(IMAGE_INPUT_PNG_PATH);
     ASSERT_EQ(retNew, SUCCESS);
+    exifMetaDataNew->ReadMetadata();
     std::string value = "";
     uint32_t getRet = exifMetaDataNew->GetImagePropertyString(MODIFY_EXIV2_STRING_KEY, value);
     ASSERT_EQ(getRet, SUCCESS);
@@ -331,16 +264,17 @@ HWTEST_F(ExifMetaDataTest, ModifyImageProperty002, TestSize.Level3)
     close(fd);
     uint32_t ret = exifMetaData->CreateExiv2Image(data, size);
     ASSERT_EQ(ret, SUCCESS);
+    exifMetaData->ReadMetadata();
     uint32_t setRet = exifMetaData->ModifyImageProperty(MODIFY_EXIV2_STRING_KEY, MODIFY_EXIV2_STRING_VALUE_BUF);
     ASSERT_EQ(setRet, SUCCESS);
     exifMetaData->WriteMetadata();
-    uint8_t *imageBuf = nullptr;
+    uint8_t *imageData = nullptr;
     uint32_t imageSize = 0;
-    uint32_t getBufRet =  exifMetaData->GetExiv2ImageBuf(&imageBuf, imageSize);
+    uint32_t getBufRet =  exifMetaData->GetExiv2ImageData(&imageData, imageSize);
     ASSERT_EQ(getBufRet, SUCCESS);
     int fdNew = open(IMAGE_INPUT_PNG_PATH.c_str(), O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GT(fdNew, 0);
-    size_t wrRet = write(fdNew, static_cast<void *>(imageBuf), static_cast<size_t>(imageSize));
+    size_t wrRet = write(fdNew, static_cast<void *>(imageData), static_cast<size_t>(imageSize));
     ASSERT_EQ(imageSize, wrRet);
     close(fdNew);
     delete exifMetaData;
@@ -350,6 +284,7 @@ HWTEST_F(ExifMetaDataTest, ModifyImageProperty002, TestSize.Level3)
     ASSERT_NE(exifMetaDataNew, nullptr);
     uint32_t retNew = exifMetaDataNew->CreateExiv2Image(IMAGE_INPUT_PNG_PATH);
     ASSERT_EQ(retNew, SUCCESS);
+    exifMetaDataNew->ReadMetadata();
     std::string value = "";
     uint32_t getRet = exifMetaDataNew->GetImagePropertyString(MODIFY_EXIV2_STRING_KEY, value);
     ASSERT_EQ(getRet, SUCCESS);
@@ -357,49 +292,6 @@ HWTEST_F(ExifMetaDataTest, ModifyImageProperty002, TestSize.Level3)
     delete exifMetaDataNew;
 
     GTEST_LOG_(INFO) << "ExifMetaDataTest: ModifyImageProperty002 end";
-}
-
-/**
- * @tc.name: ModifyImageProperty003
- * @tc.desc: test ModifyImageProperty
- * @tc.type: FUNC
- */
-HWTEST_F(ExifMetaDataTest, ModifyImageProperty003, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: ModifyImageProperty003 start";
-
-    ExifMetaData *exifMetaData = new ExifMetaData();
-    ASSERT_NE(exifMetaData, nullptr);
-    int fd = open(IMAGE_INPUT_PNG_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-    ASSERT_GT(fd, 0);
-    uint32_t ret = exifMetaData->CreateExiv2Image(fd);
-    ASSERT_EQ(ret, SUCCESS);
-    close(fd);
-    uint32_t setRet = exifMetaData->ModifyImageProperty(MODIFY_EXIV2_STRING_KEY, MODIFY_EXIV2_STRING_VALUE_FD);
-    ASSERT_EQ(setRet, SUCCESS);
-    exifMetaData->WriteMetadata();
-    uint8_t *imageBuf = nullptr;
-    uint32_t imageSize = 0;
-    uint32_t getBufRet =  exifMetaData->GetExiv2ImageBuf(&imageBuf, imageSize);
-    ASSERT_EQ(getBufRet, SUCCESS);
-    int fdNew = open(IMAGE_INPUT_PNG_PATH.c_str(), O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    ASSERT_GT(fdNew, 0);
-    size_t wrRet = write(fdNew, static_cast<void *>(imageBuf), static_cast<size_t>(imageSize));
-    ASSERT_EQ(imageSize, wrRet);
-    close(fdNew);
-    delete exifMetaData;
-
-    ExifMetaData *exifMetaDataNew = new ExifMetaData();
-    ASSERT_NE(exifMetaDataNew, nullptr);
-    uint32_t retNew = exifMetaDataNew->CreateExiv2Image(IMAGE_INPUT_PNG_PATH);
-    ASSERT_EQ(retNew, SUCCESS);
-    std::string value = "";
-    uint32_t getRet = exifMetaDataNew->GetImagePropertyString(MODIFY_EXIV2_STRING_KEY, value);
-    ASSERT_EQ(getRet, SUCCESS);
-    ASSERT_EQ(value, MODIFY_EXIV2_STRING_VALUE_FD);
-    delete exifMetaDataNew;
-
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: ModifyImageProperty003 end";
 }
 } // namespace Media
 } // namespace OHOS

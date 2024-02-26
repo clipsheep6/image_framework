@@ -34,16 +34,12 @@ ExifMetaData::ExifMetaData()
 
 ExifMetaData::~ExifMetaData()
 {
-    if (innerData_ != nullptr) {
-        free(innerData_);
-        innerData_ = nullptr;
-    }
     Exiv2::XmpParser::terminate();
 }
 
 uint32_t ExifMetaData::CreateExiv2Image(const std::string &path)
 {
-    if (path == "") {
+    if (path.empty()) {
         IMAGE_LOGE("[ExifMetaData]path can not be empty.");
         return ERR_OPEN_EXIV2_IMAGE_PATH;
     }
@@ -53,15 +49,13 @@ uint32_t ExifMetaData::CreateExiv2Image(const std::string &path)
         IMAGE_LOGE("[ExifMetaData]open image file with path failed, path:%{public}s.", path.c_str());
         return ERR_OPEN_EXIV2_IMAGE_PATH;
     }
-    image_->readMetadata();
-    exifData_ = image_->exifData();
     return SUCCESS;
 }
 
 uint32_t ExifMetaData::CreateExiv2Image(uint8_t *data, uint32_t size)
 {
-    if (data == nullptr) {
-        IMAGE_LOGE("[ExifMetaData]data can not be nullptr.");
+    if (data == nullptr || size == 0) {
+        IMAGE_LOGE("[ExifMetaData]exiv2 image buf can not be empty.");
         return ERR_OPEN_EXIV2_IMAGE_BUF;
     }
     std::unique_lock<std::mutex> guard(dataMutex_);
@@ -70,41 +64,14 @@ uint32_t ExifMetaData::CreateExiv2Image(uint8_t *data, uint32_t size)
         IMAGE_LOGE("[ExifMetaData]open image file with buf failed, size:%{public}u.", size);
         return ERR_OPEN_EXIV2_IMAGE_BUF;
     }
-    image_->readMetadata();
-    exifData_ = image_->exifData();
     return SUCCESS;
 }
 
-uint32_t ExifMetaData::CreateExiv2Image(const int fd)
+void ExifMetaData::ReadMetadata()
 {
-    struct stat fileStat;
-    if (fstat(fd, &fileStat) != -1 && fileStat.st_size > 0) {
-        off_t fileSize = fileStat.st_size;
-        uint8_t *data = static_cast<uint8_t *>(malloc(fileSize));
-        if (data == nullptr) {
-            IMAGE_LOGE("[ExifMetaData]malloc failed, size:%{public}u.", fileSize);
-            return ERR_OPEN_EXIV2_IMAGE_FD_MALLOC;
-        }
-        ssize_t size = read(fd, data, fileSize);
-        if (size < fileSize) {
-            IMAGE_LOGE("[ExifMetaData]read failed, size:%{public}u.", size);
-            free(data);
-            return ERR_OPEN_EXIV2_IMAGE_FD_READ;
-        }
-        std::unique_lock<std::mutex> guard(dataMutex_);
-        image_ = Exiv2::ImageFactory::open(data, size);
-        if (image_.get() == nullptr) {
-            IMAGE_LOGE("[ExifMetaData]open image file with fd failed, size:%{public}u.", size);
-            free(data);
-            return ERR_OPEN_EXIV2_IMAGE_FD_OPEN;
-        }
-        image_->readMetadata();
-        exifData_ = image_->exifData();
-        innerData_ = data;
-        return SUCCESS;
-    }
-    IMAGE_LOGE("[ExifMetaData]invalid fd, fd:%{public}d.", fd);
-    return ERR_OPEN_EXIV2_IMAGE_FD;
+    std::unique_lock<std::mutex> guard(dataMutex_);
+    image_->readMetadata();
+    exifData_ = image_->exifData();
 }
 
 uint32_t ExifMetaData::GetImagePropertyInt(const std::string &key, int32_t &value)
@@ -148,15 +115,11 @@ uint32_t ExifMetaData::ModifyImageProperty(const std::string &key, const std::st
     return SUCCESS;
 }
 
-uint32_t ExifMetaData::GetExiv2ImageBuf(uint8_t **imageBuf, uint32_t &imageSize)
+uint32_t ExifMetaData::GetExiv2ImageData(uint8_t **imageData, uint32_t &imageSize)
 {
     std::unique_lock<std::mutex> guard(dataMutex_);
     Exiv2::BasicIo& imageIo = image_->io();
-    if (imageIo.open() != 0) {
-        IMAGE_LOGE("[ExifMetaData]open image io failed.");
-        return ERR_EXIF_META_DATA_IMAGE_IO;
-    }
-    *imageBuf = static_cast<uint8_t *>(imageIo.mmap(true));
+    *imageData = static_cast<uint8_t *>(imageIo.mmap(true));
     imageSize = static_cast<uint32_t>(imageIo.size());
     return SUCCESS;
 }
@@ -167,20 +130,10 @@ void ExifMetaData::GetExifMetaData(Exiv2::ExifData &exifData)
     exifData = exifData_;
 }
 
-uint32_t ExifMetaData::SetExifMetaData(const Exiv2::ExifData &exifData, uint8_t **imageBuf, uint32_t &imageSize)
+void ExifMetaData::SetExifMetaData(const Exiv2::ExifData &exifData)
 {
     std::unique_lock<std::mutex> guard(dataMutex_);
-    image_->setExifData(exifData);
     exifData_ = exifData;
-    image_->writeMetadata();
-    Exiv2::BasicIo& imageIo = image_->io();
-    if (imageIo.open() != 0) {
-        IMAGE_LOGE("[ExifMetaData]open image io failed.");
-        return ERR_EXIF_META_DATA_IMAGE_IO;
-    }
-    *imageBuf = static_cast<uint8_t *>(imageIo.mmap(true));
-    imageSize = static_cast<uint32_t>(imageIo.size());
-    return SUCCESS;
 }
 
 void ExifMetaData::WriteMetadata()
