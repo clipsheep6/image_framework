@@ -17,6 +17,9 @@
 
 #include "common_utils.h"
 #include "image_mdk_kits.h"
+#include "image_packer.h"
+#include "image_packer_napi.h"
+#include "image_source_napi.h"
 
 using namespace OHOS::Media;
 #ifdef __cplusplus
@@ -93,6 +96,53 @@ int32_t OH_Image_Release(ImageNative* native)
 {
     if (native != nullptr) {
         delete native;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_CToJs_Array(napi_env env, napi_value tsArrayBuffer, uint8_t* outData, int64_t size)
+{
+    napi_status status = napi_ok;
+    size_t bufferSize = static_cast<size_t>(size);
+    status = napi_create_arraybuffer(env, bufferSize, (void**)&outData, &tsArrayBuffer);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_ImagePacker(napi_env env, napi_value tsImagePacker, ImagePackerCapi** imagePackerCapi)
+{
+    std::unique_ptr<ImagePackerNapi> napi = nullptr;
+    napi_status status = napi_unwrap(env, tsImagePacker, reinterpret_cast<void**>(&napi));
+    if ((status == napi_ok) && napi != nullptr) {
+        ImagePacker* imagePacker = napi.GetNative();
+        *imagePackerCapi = new ImagePackerCapi(imagePacker);
+        return IMAGE_RESULT_SUCCESS;
+    }
+    return IMAGE_RESULT_BAD_PARAMETER;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Int64_t(napi_env env, napi_value bufferSize, int64_t* result)
+{
+    napi_status status = napi_ok;
+    status = napi_get_value_int64(env, bufferSize, result);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_Image_JsToC_Int(napi_env env, napi_value fd, int* result)
+{
+    napi_status status = napi_ok;
+    status = napi_get_value_int32(env, fd, result);
+    if (status != napi_ok) {
+        return IMAGE_RESULT_BAD_PARAMETER;
     }
     return IMAGE_RESULT_SUCCESS;
 }

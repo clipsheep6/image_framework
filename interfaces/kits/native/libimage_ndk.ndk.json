@@ -17,5 +17,26 @@
     },
     {
         "name": "OH_Image_Release"
+    },
+    {
+        "name": "OH_Image_CToJs_Array"
+    },
+    {
+        "name": "OH_Image_JsToC_ImagePacker"
+    },
+    {
+        "name": "OH_Image_JsToC_ImagePackerOpts"
+    },
+    {
+        "name": "OH_Image_JsToC_Int64_t"
+    },
+    {
+        "name": "OH_Image_JsToC_PixelMap"
+    },
+    {
+        "name": "OH_Image_JsToC_ImageSource"
+    },
+    {
+        "name": "OH_Image_JsToC_Int"
     }
 ]
