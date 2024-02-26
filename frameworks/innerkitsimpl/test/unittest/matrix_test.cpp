@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#define private public
 #include <gtest/gtest.h>
 #include "image_type.h"
 #include "matrix.h"
@@ -521,6 +522,22 @@ HWTEST_F(MatrixTest, MatrixTest0027, TestSize.Level3)
     Matrix m;
     matrix_.SetConcat(m);
     GTEST_LOG_(INFO) << "MatrixTest: MatrixTest0027 end";
+}
+
+/**
+ * @tc.name: MatrixTest003
+ * @tc.desc: SetConcat
+ * @tc.type: FUNC
+ */
+HWTEST_F(MatrixTest, MatrixTest003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "MatrixTest: MatrixTest003 start";
+    Matrix matrix_;
+    Matrix m;
+    matrix_.OperType_ = 0xF;
+    matrix_.SetConcat(m);
+    ASSERT_EQ(matrix_.OperType_, Matrix::OperType::ROTATEORSKEW);
+    GTEST_LOG_(INFO) << "MatrixTest: MatrixTest003 end";
 }
 }
 }
