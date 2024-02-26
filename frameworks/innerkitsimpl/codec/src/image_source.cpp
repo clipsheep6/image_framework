@@ -51,6 +51,9 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
+#include "exif_meta_data.h"
+#include "exif_meta_data_validate.h"
+#include <sys/stat.h>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -236,6 +239,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
         errorCode = ERR_MEDIA_INVALID_PARAM;
         return nullptr;
     }
+
     return DoImageSourceCreate([&data, &size]() {
         auto streamPtr = DecodeBase64(data, size);
         if (streamPtr == nullptr) {
@@ -952,6 +956,30 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
     return SUCCESS;
 }
 
+#if defined(LIBEXIF_V2)
+uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
+    const std::string &value, const std::string &path)
+{
+    IMAGE_LOGD("[ImageSource] ModifyImageProperty path.");
+    if (exifMetaPtr_ == nullptr) {
+        exifMetaPtr_ = std::unique_ptr<ExifMetaData>(new ExifMetaData());
+        auto ret = exifMetaPtr_->CreateExiv2Image(path);
+        if (ret != SUCCESS) {
+            IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
+            return ret;
+        }
+    }
+    std::string tagname, revalue(value);
+    auto ret = ExifMetaDataValidate::exifValidate(key, tagname, revalue);
+    if(ret)
+    {
+        return ret;
+    }
+    exifMetaPtr_->ModifyImageProperty(tagname, revalue);
+    exifMetaPtr_->WriteMetadata();
+    return Media::SUCCESS;
+}
+#else
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const std::string &path)
 {
@@ -969,7 +997,110 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     }
     return SUCCESS;
 }
+#endif
 
+#if defined(LIBEXIF_V2)
+uint32_t ImageSource::CreateExiv2ImageByFd(const int fd)
+{
+    const int localFd = dup(fd);
+    struct stat fileStat;
+    if (fstat(localFd, &fileStat) != 0 || fileStat.st_size == 0) {
+        return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
+    }
+    off_t fileSize = fileStat.st_size;
+
+    FILE *file = fdopen(localFd, "wb+");
+    if (file == nullptr) {
+        IMAGE_LOGD("Error creating file %{public}d", localFd);
+        return Media::ERR_MEDIA_IO_ABNORMAL;
+    }
+
+    uint8_t *fileBuf = static_cast<unsigned char *>(malloc(fileSize));
+    if (fileBuf == nullptr) {
+        IMAGE_LOGD("Allocate buf failed.");
+        (void)fclose(file);
+        return Media::ERR_IMAGE_MALLOC_ABNORMAL;
+    }
+
+    // Set current position to begin of file.
+    (void)fseek(file, 0L, 0);
+    if (fread(fileBuf, fileSize, 1, file) != 1) {
+        IMAGE_LOGD("Read %{public}d failed.", localFd);
+        if (fileBuf != nullptr) {
+            free(fileBuf);
+            fileBuf = nullptr;
+        }
+        return Media::ERR_MEDIA_READ_PARCEL_FAIL;
+    }
+
+    uint32_t res = exifMetaPtr_->CreateExiv2Image(fileBuf, fileSize);
+
+    (void)fclose(file);
+    return res;
+}
+
+uint32_t ImageSource::SaveExiv2Image(const int fd, uint8_t *imageBuf, off_t imageSize)
+{
+    const int localFd = dup(fd);
+    struct stat fileStat;
+    if (fstat(localFd, &fileStat) != 0 || fileStat.st_size == 0) {
+        return Media::ERR_MEDIA_BUFFER_TOO_SMALL;
+    }
+    off_t fileSize = fileStat.st_size;
+
+    FILE *file = fdopen(localFd, "wb+");
+    if (file == nullptr) {
+        IMAGE_LOGD("Error creating file %{public}d", localFd);
+        return Media::ERR_MEDIA_IO_ABNORMAL;
+    }
+    if (imageSize < fileSize){
+        if (ftruncate(localFd, imageSize)!=0){
+            IMAGE_LOGD("ModifyImageProperty ftruncate fail");
+        }
+    }
+    (void)fseek(file, 0L, 0);
+    if (fwrite(imageBuf, imageSize, 1, file) != 1) {
+        IMAGE_LOGD("Error writing newImageBuf to file! imageSize %{public}d", imageSize);
+        (void)fclose(file);
+        return Media::ERR_MEDIA_IO_ABNORMAL;
+    }
+    (void)fclose(file);
+    return Media::SUCCESS;
+}
+
+uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
+    const std::string &value, const int fd)
+{
+    IMAGE_LOGD("[ImageSource] ModifyImageProperty fd.");
+    if (exifMetaPtr_ == nullptr) {
+        exifMetaPtr_ = std::unique_ptr<ExifMetaData>(new ExifMetaData());
+        uint32_t res = CreateExiv2ImageByFd(fd);
+        if (res != SUCCESS) {
+            IMAGE_LOGE("[ImageSource] create exiv2image by fd failed, ret:%{public}u.", res);
+            return res;
+        }
+    }
+    IMAGE_LOGD("[ImageSource] ModifyImageProperty fd going to exifValidate.");
+    std::string tagname, revalue(value);
+    auto ret = ExifMetaDataValidate::exifValidate(key, tagname, revalue);
+    if(ret)
+    {
+        return ret;
+    }
+    IMAGE_LOGD("[ImageSource] ModifyImageProperty fd tagname is [%{public}s] revalue is [%{public}s].", 
+        tagname.c_str(), revalue.c_str());
+    exifMetaPtr_->ModifyImageProperty(tagname, revalue);
+    IMAGE_LOGD("[ImageSource] ModifyImageProperty fd WriteMetadata");
+    exifMetaPtr_->WriteMetadata();
+
+    uint8_t *newImageBuf = nullptr;
+    uint32_t newImageSize = 0;
+    exifMetaPtr_->GetExiv2ImageBuf(&newImageBuf, newImageSize);
+    IMAGE_LOGD("[ImageSource] GetExiv2ImageBuf imageSize %{public}d", newImageSize);
+
+    return SaveExiv2Image(fd, newImageBuf, (off_t)newImageSize);
+}
+#else
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const int fd)
 {
@@ -987,7 +1118,32 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     }
     return SUCCESS;
 }
+#endif
 
+#if defined(LIBEXIF_V2)
+uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
+    const std::string &value, uint8_t *data, uint32_t size)
+{
+    IMAGE_LOGD("[ImageSource] ModifyImageProperty buffer.");
+    if (exifMetaPtr_ == nullptr) {
+        exifMetaPtr_ = std::unique_ptr<ExifMetaData>(new ExifMetaData());
+        auto ret = exifMetaPtr_->CreateExiv2Image(data, size);
+        if (ret != SUCCESS) {
+            IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
+            return ret;
+        }
+    }
+    std::string tagname, revalue(value);
+    auto ret = ExifMetaDataValidate::exifValidate(key, tagname, revalue);
+    if(ret)
+    {
+        return ret;
+    }
+    exifMetaPtr_->ModifyImageProperty(tagname, revalue);
+    exifMetaPtr_->WriteMetadata();
+    return Media::SUCCESS;
+}
+#else
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, uint8_t *data, uint32_t size)
 {
@@ -1005,7 +1161,33 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     }
     return SUCCESS;
 }
+#endif
 
+#if defined(LIBEXIF_V2)
+uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
+{
+    if (exifMetaPtr_ == nullptr) {
+        if (sourceStreamPtr_ == nullptr){
+            IMAGE_LOGE("[ImageSource] sourceStreamPtr_ eq nullptr");
+            return ERR_IMAGE_DATA_ABNORMAL;
+        }
+        exifMetaPtr_ = std::unique_ptr<ExifMetaData>(new ExifMetaData());
+        auto ret = exifMetaPtr_->CreateExiv2Image(sourceStreamPtr_->GetDataPtr(), sourceStreamPtr_->GetStreamSize());
+        if (ret != SUCCESS) {
+            IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
+            return ret;
+        }
+    }
+
+    std::string tagname;
+    if(!ExifMetaDataValidate::GetExiv2TagByName(key, tagname))
+    {
+        return Media::ERR_GET_EXIV2_Tag;
+    }
+
+    return exifMetaPtr_->GetImagePropertyInt(tagname, value);
+}
+#else
 uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
@@ -1023,7 +1205,35 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
     }
     return SUCCESS;
 }
+#endif
 
+#if defined(LIBEXIF_V2)
+uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
+{
+    if (exifMetaPtr_ == nullptr) {
+        if (sourceStreamPtr_ == nullptr){
+            IMAGE_LOGE("[ImageSource] sourceStreamPtr_ eq nullptr");
+            return ERR_IMAGE_DATA_ABNORMAL;
+        }
+        exifMetaPtr_ = std::unique_ptr<ExifMetaData>(new ExifMetaData());
+        auto ret = exifMetaPtr_->CreateExiv2Image(sourceStreamPtr_->GetDataPtr(), sourceStreamPtr_->GetStreamSize());
+        if (ret != SUCCESS) {
+            IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
+            return ret;
+        }
+
+    }
+
+    std::string tagname;
+    if(!ExifMetaDataValidate::GetExiv2TagByName(key, tagname))
+    {
+        return Media::ERR_GET_EXIV2_Tag;
+    }
+
+    IMAGE_LOGD("[ImageSource] GetImagePropertyString tagname:%{public}s value:%{public}s.", tagname.c_str(), value.c_str());
+    return exifMetaPtr_->GetImagePropertyString(tagname, value);
+}
+#else
 uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
@@ -1040,6 +1250,8 @@ uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &
     }
     return SUCCESS;
 }
+#endif
+
 const SourceInfo &ImageSource::GetSourceInfo(uint32_t &errorCode)
 {
     std::lock_guard<std::mutex> guard(decodingMutex_);
