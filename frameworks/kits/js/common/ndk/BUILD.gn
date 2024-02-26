@@ -26,6 +26,7 @@ config("native_public_config") {
     "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include",
     "$THIRD_DIR/node/src",
     "$resource_management_subsystem/interfaces/native/resource/include",
+    "$resource_management_subsystem/fameworks/kits/js/common/ndk/include",
   ]
 }
 
@@ -38,7 +39,12 @@ ohos_shared_library("image_ndk") {
 
   sources = [ "image_mdk.cpp" ]
   public_configs = [ ":native_public_config" ]
-  deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
+  deps = [
+    "$image_subsystem/frameworks/kits/js/common/ndk:image_packer_ndk",
+    "$image_subsystem/interfaces/kits/js/common:image",
+  ]
+
+  external_deps = [ "napi:ace_napi" ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
@@ -84,9 +90,15 @@ ohos_shared_library("image_packer_ndk") {
     debug = false
   }
 
-  sources = [ "image_packer_mdk.cpp" ]
+  sources = [
+    "image_packer_impl.cpp",
+    "image_packer_mdk.cpp",
+  ]
   public_configs = [ ":native_public_config" ]
-  deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
+  deps = [
+    "$image_subsystem/interfaces/innerkits:image_native",
+    "$image_subsystem/interfaces/kits/js/common:image",
+  ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"

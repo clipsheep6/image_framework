@@ -13,17 +13,16 @@
  * limitations under the License.
  */
 
-#include "..\include\image_packer_impl.h"
+#include "image_packer_impl.h"
 
 ImagePackerCapi::ImagePackerCapi()
 {
-    //MEDIA_DEBUG_LOG("Camera_Manager Constructor is called");
-    imagePacker_ = new ImagePacker();
+    imagePacker_ = std::make_shared<OHOS::Media::ImagePacker>();
 }
 
-ImagePackerCapi::ImagePackerCapi(ImagePacekr* imagePacker)
+ImagePackerCapi::ImagePackerCapi(OHOS::Media::ImagePacker* imagePacker)
 {
-    imagePacker_ = imagePacker;
+    imagePacker_ = std::shared_ptr<OHOS::Media::ImagePacker>(imagePacker);
 }
 
 ImagePackerCapi::~ImagePackerCapi()
@@ -37,14 +36,15 @@ ImagePackerCapi::~ImagePackerCapi()
 int32_t ImagePackerCapi::PackingFromImageSource(ImagePacker_Opts* option, ImageSourceCapi* imageSourceCapi,
     uint8_t** outData, int64_t* size)
 {
-    if (imagePackerCapi == nullptr || option == nullptr || imageSourceCapi == nullptr || outData != nullptr) {
+    if (option == nullptr || imageSourceCapi == nullptr || outData != nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    ImagePacker* imagePacker = imagePacker_;
-    share_ptr<OHOS::Media::ImageSource> imageSource = imageSourceCapi->GetImageSource();
+    OHOS::Media::ImagePacker* imagePacker = imagePacker_.get();
+    //OHOS::Media::ImageSource* imageSource = imageSourceCapi->GetImageSource().get();
+    OHOS::Media::ImageSource* imageSource = nullptr;
     int64_t packedSize = 0;
     uint32_t ret = IMAGE_RESULT_SUCCESS;
-    PackOption outOption;
+    OHOS::Media::PackOption outOption;
     outOption.format = option->format;
     outOption.quality = option->quality;
     const int64_t DEFAULT_BUFFER_SIZE = 25 * 1024 * 1024;
@@ -69,17 +69,18 @@ int32_t ImagePackerCapi::PackingFromImageSource(ImagePacker_Opts* option, ImageS
     return IMAGE_RESULT_BAD_PARAMETER;
 }
 
-int32_t ImagePackerCapi::PackingFromPixelMap(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts* option,
-    PixelMapCapi* pixelMapCapi, uint8_t** outData, int64_t* size)
+int32_t ImagePackerCapi::PackingFromPixelMap(ImagePacker_Opts* option, PixelMapCapi* pixelMapCapi, 
+    uint8_t** outData, int64_t* size)
 {
-    if (imagePackerCapi == nullptr || option == nullptr || pixelMapCapi == nullptr || outData != nullptr) {
+    if (option == nullptr || pixelMapCapi == nullptr || outData != nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    ImagePacker* imagePacker = imagePacker_;
-    PixelMap* pixelMap = pixelMapCapi->get...;
+    OHOS::Media::ImagePacker* imagePacker = imagePacker_.get();
+    //OHOS::Media::PixelMap* pixelMap = pixelMapCapi->GetPixelMapInstances().get();
+    OHOS::Media::PixelMap* pixelMap = nullptr;
     int64_t packedSize = 0;
     uint32_t ret = IMAGE_RESULT_SUCCESS;
-    PackOption outOption;
+    OHOS::Media::PackOption outOption;
     outOption.format = option->format;
     outOption.quality = option->quality;
     const int64_t DEFAULT_BUFFER_SIZE = 25 * 1024 * 1024;
@@ -104,17 +105,17 @@ int32_t ImagePackerCapi::PackingFromPixelMap(ImagePackerCapi* imagePackerCapi, I
     return IMAGE_RESULT_BAD_PARAMETER;
 }
 
-int32_t ImagePackerCapi::PackToFileFromImageSource(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts* option,
-    ImageSourceCapi* imageSourceCapi, const int fd)
+int32_t ImagePackerCapi::PackToFileFromImageSource(ImagePacker_Opts* option, ImageSourceCapi* imageSourceCapi, const int fd)
 {
-    if (imagePackerCapi == nullptr || option == nullptr || imageSourceCapi == nullptr) {
+    if (option == nullptr || imageSourceCapi == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    ImagePacker* imagePacker = imagePacker_;
-    ImageSource* imageSource = imageSourceCapi->GetImageSource();
+    OHOS::Media::ImagePacker* imagePacker = imagePacker_.get();
+    //OHOS::Media::ImageSource* imageSource = imageSourceCapi->GetImageSource().get();
+    OHOS::Media::ImageSource* imageSource = nullptr;
     int64_t packedSize = 0;
     uint32_t ret = IMAGE_RESULT_SUCCESS;
-    PackOption outOption;
+    OHOS::Media::PackOption outOption;
     outOption.format = option->format;
     outOption.quality = option->quality;
     ret = imagePacker->StartPacking(fd, outOption);
@@ -128,17 +129,17 @@ int32_t ImagePackerCapi::PackToFileFromImageSource(ImagePackerCapi* imagePackerC
     return imagePacker->FinalizePacking(packedSize);
 }
 
-int32_t ImagePackerCapi::PackToFileFromPixelMap(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts* option,
-    PixelMapCapi* pixelMapCapi, int fd)
+int32_t ImagePackerCapi::PackToFileFromPixelMap(ImagePacker_Opts* option, PixelMapCapi* pixelMapCapi, const int fd)
 {
-    if (imagePackerCapi == nullptr || option == nullptr || pixelMapCapi == nullptr) {
+    if (option == nullptr || pixelMapCapi == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    ImagePacker* imagePacker = imagePacker_;
-    PixelMap* pixelMap = pixelMapCapi->get...;
+    OHOS::Media::ImagePacker* imagePacker = imagePacker_.get();
+    //OHOS::Media::PixelMap* pixelMap = pixelMapCapi->GetPixelMapInstances().get();
+    OHOS::Media::PixelMap* pixelMap = nullptr;
     int64_t packedSize = 0;
     uint32_t ret = IMAGE_RESULT_SUCCESS;
-    PackOption outOption;
+    OHOS::Media::PackOption outOption;
     outOption.format = option->format;
     outOption.quality = option->quality;
     ret = imagePacker->StartPacking(fd, outOption);

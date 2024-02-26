@@ -13,14 +13,15 @@
  * limitations under the License.
  */
 
-#include "interfaces/kits/native/include/image_packer_mdk.h"
-#include "interfaces/kits/native/include/image_mdk.h"
+#include "image_packer_mdk.h"
+#include "image_mdk.h"
+#include "image_packer.h"
 
 
 struct ImagePackerCapi {
 public:
     ImagePackerCapi();
-    ImagePackerCapi(ImagePacekr* imagePacker);
+    ImagePackerCapi(OHOS::Media::ImagePacker* imagePacker);
     ~ImagePackerCapi();
 
     int32_t PackingFromImageSource(ImagePacker_Opts* option, ImageSourceCapi* imageSourceCapi,
@@ -33,8 +34,8 @@ public:
 
     int32_t PackToFileFromPixelMap(ImagePacker_Opts* option, PixelMapCapi* pixelMapCapi, const int fd);
 
-    shared_ptr<OHOS::Media::ImagePacker> GetImagePacker();
+    std::shared_ptr<OHOS::Media::ImagePacker> GetImagePacker();
 
 private:
-    shared_ptr<OHOS::Media::ImagePacker> imagePacker_;
+    std::shared_ptr<OHOS::Media::ImagePacker> imagePacker_;
 };

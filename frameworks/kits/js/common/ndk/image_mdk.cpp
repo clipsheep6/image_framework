@@ -17,9 +17,8 @@
 
 #include "common_utils.h"
 #include "image_mdk_kits.h"
-#include "image_packer.h"
 #include "image_packer_napi.h"
-#include "image_source_napi.h"
+#include "image_packer_impl.h"
 
 using namespace OHOS::Media;
 #ifdef __cplusplus
@@ -118,7 +117,7 @@ int32_t OH_Image_JsToC_ImagePacker(napi_env env, napi_value tsImagePacker, Image
     std::unique_ptr<ImagePackerNapi> napi = nullptr;
     napi_status status = napi_unwrap(env, tsImagePacker, reinterpret_cast<void**>(&napi));
     if ((status == napi_ok) && napi != nullptr) {
-        ImagePacker* imagePacker = napi.GetNative();
+        ImagePacker* imagePacker = napi->GetNative(napi.get()).get();
         *imagePackerCapi = new ImagePackerCapi(imagePacker);
         return IMAGE_RESULT_SUCCESS;
     }

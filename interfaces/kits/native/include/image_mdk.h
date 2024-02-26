@@ -50,6 +50,8 @@ extern "C" {
  * @version 2.0
  */
 typedef struct ImagePackerCapi  ImagePackerCapi;
+typedef struct ImageSourceCapi  ImageSourceCapi;
+typedef struct PixelMapCapi  PixelMapCapi;
 
 struct ImageNative_;
 
@@ -269,20 +271,7 @@ int32_t OH_Image_CToJs_Array(napi_env env, napi_value tsArrayBuffer, uint8_t* ou
  * @since 10
  * @version 2.0
  */
-int32_t OH_Image_JsToC_ImagePacker(napi_env env, napi_value tsImagePacker, ImagePackerCapi* imagePackerCapi);
-
-/**
- * @brief This function converts a JavaScript object to a C++ ImagePacker_Opts object.  
- *
- * @param env Indicates the pointer to the Java Native Interface (JNI) environment.  
- * @param option The JavaScript object containing the ImagePacker options.  
- * @param options A pointer to the converted C++ ImagePacker_Opts object.  
- * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
- * @since 10
- * @version 2.0
- */
-int32_t OH_Image_JsToC_ImagePackerOpts(napi_env env, napi_value option, ImagePacker_Opts* options);
+int32_t OH_Image_JsToC_ImagePacker(napi_env env, napi_value tsImagePacker, ImagePackerCapi** imagePackerCapi);
 
 /**
  * @brief This function converts a JavaScript value to a 64-bit integer using the specified buffer size.

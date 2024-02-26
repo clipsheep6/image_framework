@@ -17,8 +17,7 @@
 
 #include "common_utils.h"
 #include "image_packer_mdk_kits.h"
-#include "image_packer.h"
-#include "impl/image_packer_mdk_impl.h"
+#include "image_packer_impl.h"
 
 using namespace OHOS::Media;
 #ifdef __cplusplus

@@ -67,6 +67,14 @@ struct ImagePacker_Native_;
 typedef struct ImagePacker_Native_ ImagePacker_Native;
 
 /**
+ * @brief Defines alias of image packing options.
+ *
+ * @since 11
+ * @version 4.1
+ */
+typedef struct ImagePacker_Opts_ ImagePacker_Opts;
+
+/**
  * @brief Creates an <b>ImagePacker</b> object at the JavaScript native layer.
  *
  * @param env Indicates a pointer to the JavaScript Native Interface (JNI) environment.
