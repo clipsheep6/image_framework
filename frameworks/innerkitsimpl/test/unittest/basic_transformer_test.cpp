@@ -101,5 +101,56 @@ HWTEST_F(BasicTransformerTest, TransformPixmapTest001, TestSize.Level3)
     delete inPixmap.data;
     GTEST_LOG_(INFO) << "BasicTransformerTest: TransformPixmapTest001 end";
 }
+
+/**
+ * @tc.name: TransformPixmapTest002
+ * @tc.desc: TransformPixmap
+ * @tc.type: FUNC
+ */
+HWTEST_F(BasicTransformerTest, TransformPixmapTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "BasicTransformerTest: TransformPixmapTest002 start";
+    BasicTransformer basicTransformer;
+    PixmapInfo inPixmap;
+    PixmapInfo outPixmap;
+    BasicTransformer::AllocateMem allocate = nullptr;
+    inPixmap.data = new uint8_t;
+    inPixmap.imageInfo.pixelFormat = PixelFormat::ARGB_8888;
+    basicTransformer.matrix_.operType_ = 0x02;
+    basicTransformer.matrix_.fMat_[IMAGE_SCALEX] = 1;
+    inPixmap.imageInfo.size.width = PIXEL_MAP_MAX_RAM_SIZE;
+    basicTransformer.matrix_.fMat_[IMAGE_SCALEY] = 1;
+    inPixmap.imageInfo.size.height = 1;
+    uint32_t ret = basicTransformer.TransformPixmap(inPixmap, outPixmap, allocate);
+    ASSERT_EQ(ret, ERR_IMAGE_ALLOC_MEMORY_FAILED);
+    inPixmap.imageInfo.size.width = -FHALF;
+    inPixmap.imageInfo.size.height = -FHALF;
+    ret = basicTransformer.TransformPixmap(inPixmap, outPixmap, allocate);
+    ASSERT_EQ(ret, ERR_IMAGE_ALLOC_MEMORY_FAILED);
+    inPixmap.imageInfo.size.width = 1;
+    inPixmap.imageInfo.size.height = 1;
+    ret = basicTransformer.TransformPixmap(inPixmap, outPixmap, allocate);
+    ASSERT_EQ(ret, IMAGE_SUCCESS);
+    GTEST_LOG_(INFO) << "BasicTransformerTest: TransformPixmapTest002 end";
+}
+
+/**
+ * @tc.name: GetAroundPixelRGB565Test001
+ * @tc.desc: GetAroundPixelRGB565
+ * @tc.type: FUNC
+ */
+HWTEST_F(BasicTransformerTest, GetAroundPixelRGB565Test001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "BasicTransformerTest: GetAroundPixelRGB565Test001 start";
+    BasicTransformer basicTransformer;
+    Media::BasicTransformer::AroundPos aroundPos;
+    uint8_t *data = new uint8_t;
+    uint32_t rb = 2;
+    Media::BasicTransformer::AroundPixels aroundPixels;
+    basicTransformer.GetAroundPixelRGB565(aroundPos, data, rb, aroundPixels);
+    ASSERT_EQ(aroundPixels.color11, 0);
+    delete data;
+    GTEST_LOG_(INFO) << "BasicTransformerTest: GetAroundPixelRGB565Test001 end";
+}
 }
 }
