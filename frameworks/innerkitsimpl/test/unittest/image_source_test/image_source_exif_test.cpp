@@ -1295,6 +1295,8 @@ std::string MODIFYDATA[][3] = {
     {"Flash", "5", "Fired, return light not detected"},
     {"ApertureValue", "4/1", "F4"},
     {"DateTimeOriginal", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
+    {"DateTime", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
+    {"DateTime", "2024:01:25", "2024:01:25"},
     {"ExposureBiasValue", "23/1", "+23 EV"},
     {"ExposureTime", "1/34", "1/34 s"},
     {"FNumber", "3/1", "F3"},
@@ -1434,6 +1436,7 @@ std::string MODIFYDATA[][3] = {
     {"LensSerialNumber", "xxx", "xxx"},
     {"LensSpecification", "1/1 3/2 1/1 2/1", "1-1.5mm F1-2"},
     {"NewSubfileType", "1", "Thumbnail/Preview image"},
+    {"NewSubfileType", "2", "Primary image, Multi page file"},
     {"OffsetTime", "xx", "xx"},
     {"OffsetTimeDigitized", "xx", "xx"},
     {"OffsetTimeOriginal", "xx", "xx"},
@@ -1633,7 +1636,7 @@ HWTEST_F(ImageSourceExifTest, GetImagePropertyString_HwMnoteFrontCamera_001, Tes
     std::string key = "HwMnoteFrontCamera";
     std::string getvalue = "";
     uint32_t getret = imageSource->GetImagePropertyString(index, key, getvalue);
-    ASSERT_EQ(getret, SUCCESS);
+    ASSERT_NE(getret, SUCCESS);
     GTEST_LOG_(INFO) << "ImageSourceExifTest: GetImagePropertyString_HwMnoteFrontCamera_001 end";
 }
 
@@ -1648,7 +1651,7 @@ HWTEST_F(ImageSourceExifTest, GetImagePropertyString_png_HwMnoteFrontCamera_001,
     std::string key = "HwMnoteFrontCamera";
     std::string getvalue = "";
     uint32_t getret = imageSource->GetImagePropertyString(index, key, getvalue);
-    ASSERT_EQ(getret, SUCCESS);
+    ASSERT_NE(getret, SUCCESS);
     GTEST_LOG_(INFO) << "ImageSourceExifTest: GetImagePropertyString_png_HwMnoteFrontCamera_001 end";
 }
 

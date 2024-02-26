@@ -1182,7 +1182,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
     std::string tagname;
     if(!ExifMetaDataValidate::GetExiv2TagByName(key, tagname))
     {
-        return Media::ERR_GET_EXIV2_Tag;
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
     return exifMetaPtr_->GetImagePropertyInt(tagname, value);
@@ -1227,7 +1227,7 @@ uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &
     std::string tagname;
     if(!ExifMetaDataValidate::GetExiv2TagByName(key, tagname))
     {
-        return Media::ERR_GET_EXIV2_Tag;
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
     IMAGE_LOGD("[ImageSource] GetImagePropertyString tagname:%{public}s value:%{public}s.", tagname.c_str(), value.c_str());

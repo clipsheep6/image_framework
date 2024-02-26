@@ -982,21 +982,21 @@ int32_t ExifMetaDataValidate::isValueRangeValidate(const std::string &tagname, c
           if (ivalue == -1)
           {
             IMAGE_LOGD("isValueRangeValidate input does not match regex invalid value is [%{public}s].", value.c_str());
-            return Media::ERR_CAST_EXIV2_VALUE; //FAIL
+            return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //FAIL
           }
           // validate the ivalue is in value range array. For example GPSLatitudeRef value should be 'N' or 'S' in exifGPSLatitudeRef array.
           auto isValid = isValidValue(arrRef, arrSize, ivalue);
           if (!isValid)
           {
             IMAGE_LOGD("isValueRangeValidate input is not in range array. invalid value is [%{public}s].", value.c_str());
-            return Media::ERR_VALIDATE_EXIV2_VALUE_RANGE;
+            return Media::ERR_MEDIA_OUT_OF_RANGE;
           }else{
             IMAGE_LOGD("isValueRangeValidate valid value is [%{public}s].", value.c_str());
             return Media::SUCCESS;
           }
         }else{
           // return FAIL if the value range array nullptr.
-          return Media::ERR_ARRAY_EXIV2_VALUE_FORMAT;
+          return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
     }
 
@@ -1030,8 +1030,8 @@ int32_t ExifMetaDataValidate::isValueFormatValidate(const std::string &tagname, 
     }
   }
 
-  IMAGE_LOGD("isValueFormatValidate ret ERR_VALIDATE_EXIV2_VALUE_FORMAT.");
-  return Media::ERR_VALIDATE_EXIV2_VALUE_FORMAT; // FAILED
+  IMAGE_LOGD("isValueFormatValidate ret ERR_IMAGE_DECODE_EXIF_UNSUPPORT.");
+  return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; // FAILED
 }
 
 // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
@@ -1049,12 +1049,12 @@ int32_t ExifMetaDataValidate::exifValidate(const std::string &name, std::string 
   // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
   if(!ExifMetaDataValidate::GetExiv2TagByName(name, tagname))
   {
-      return Media::ERR_GET_EXIV2_Tag;
+      return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
   }
 
   // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
   if (!ExifMetaDataValidate::isModifyAllow(tagname)) {
-      return Media::ERR_FORBID_EXIV2_MODIFY;
+      return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
   }
 
   IMAGE_LOGD("[ExifValidation] tagname is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
@@ -1066,14 +1066,14 @@ int32_t ExifMetaDataValidate::exifValidate(const std::string &name, std::string 
   {
     // printf("1.验证数据格式是否合法 未通过 跳出modify\n");
     IMAGE_LOGD("[ExifValidation] value formate is invalid. tagname is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
-    return Media::ERR_VALIDATE_EXIV2_VALUE_FORMAT; //value format validate does not pass
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //value format validate does not pass
   }
   IMAGE_LOGD("[ExifValidation] processed formate value is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
   // 2.validat value range
   if (ExifMetaDataValidate::isValueRangeValidate(tagname, value))
   {
     IMAGE_LOGD("[ExifValidation] value range is invalid. value is [%{public}s] value is [%{public}s].", tagname.c_str(), value.c_str());
-    return Media::ERR_VALIDATE_EXIV2_VALUE_RANGE; // value range validate does not pass
+    return Media::ERR_MEDIA_OUT_OF_RANGE; // value range validate does not pass
   }
   return Media::SUCCESS;
 }

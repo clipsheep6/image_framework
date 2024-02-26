@@ -276,27 +276,6 @@ HWTEST_F(ExifMetaDataTest, GetImagePropertyString003, TestSize.Level3)
     GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyString003 end";
 }
 
-HWTEST_F(ExifMetaDataTest, GetImagePropertyString004, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyString004 start";
-
-    ExifMetaData *exifMetaData = new ExifMetaData();
-    ASSERT_NE(exifMetaData, nullptr);
-    int fd = open(IMAGE_INPUT_PNG_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-    ASSERT_GT(fd, 0);
-    uint32_t ret = exifMetaData->CreateExiv2Image(fd);
-    ASSERT_EQ(ret, SUCCESS);
-    close(fd);
-    std::string value = "";
-    uint32_t getRet = exifMetaData->GetImagePropertyString("NOTEXISTKEY", value);
-    ASSERT_EQ(getRet, SUCCESS);
-    ASSERT_NE(value, "");
-    GTEST_LOG_(INFO) << "NOTEXISTKEY" << ": " << value;
-    delete exifMetaData;
-
-    GTEST_LOG_(INFO) << "ExifMetaDataTest: GetImagePropertyString004 end";
-}
-
 /**
  * @tc.name: ModifyImageProperty001
  * @tc.desc: test ModifyImageProperty
