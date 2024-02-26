@@ -144,7 +144,7 @@ HWTEST_F(ScanLineFilterTest, FilterLineTest002, TestSize.Level3)
     ScanlineFilter scanlineFilter;
     void *destRowPixels = nullptr;
     uint32_t destRowBytes = 256;
-    void srcRowPixels = nullptr;
+    void *srcRowPixels = nullptr;
     uint32_t ret = scanlineFilter.FilterLine(destRowPixels, destRowBytes, srcRowPixels);
     ASSERT_EQ(ret, ERR_IMAGE_CROP);
     destRowPixels = new uint8_t;
