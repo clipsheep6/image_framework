@@ -50,6 +50,7 @@
 #define INTERFACES_KITS_NATIVE_INCLUDE_IMAGE_PACKER_MDK_H
 #include "napi/native_api.h"
 #include "image_mdk_common.h"
+#include "image_mdk.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -119,7 +120,7 @@ ImagePacker_Native* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
  * @param source Indicates an encoding source, a JS pixel map object or a JS image source object .
- * @param opts Indicates the encoding {@link ImagePacker_Opts} .
+ * @param opts Indicates the encoding {@link ImagePacker_Opts_} .
  * @param outData Indicates the pointer to the encoded data.
  * @param size Indicates the pointer to the {@link OhosImageComponent} object obtained.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
@@ -134,14 +135,14 @@ ImagePacker_Native* OH_ImagePacker_InitNative(napi_env env, napi_value packer);
  * @version 4.1
  */
 int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
-    ImagePacker_Opts* opts, uint8_t* outData, size_t* size);
+    ImagePacker_Opts_* opts, uint8_t* outData, size_t* size);
 
 /**
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the a file with fd with required format
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
  * @param source Indicates an encoding source, a JS pixel map object or a JS image source object .
- * @param opts Indicates the encoding {@link ImagePacker_Opts} .
+ * @param opts Indicates the encoding {@link ImagePacker_Opts_} .
  * @param fd Indicates the a writable file descriptor.
  * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
   * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
@@ -155,7 +156,7 @@ int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
  * @version 4.1
  */
 int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
-    ImagePacker_Opts* opts, int fd);
+    ImagePacker_Opts_* opts, int fd);
 
 
 /**
@@ -171,6 +172,120 @@ int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
  * @version 4.1
  */
 int32_t OH_ImagePacker_Release(ImagePacker_Native* native);
+
+/**
+ * @brief Creates a new image packer object.  
+ *
+ * @param imagePacker A pointer to the image packer object to be created.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * @Syscap SystemCapability.Multimedia.Image.ImagePacker
+ * @since 11
+ * @version 4.1
+ */
+int32_t OH_ImagePackerCapi_Create(ImagePackerCapi** imagePackerCapi);
+
+/**
+ * @brief Encoding an <b>ImageSource</b> into the data with required format.
+ *
+ * @param imagePacker The imagePacker to use for packing.
+ * @param option Indicates the encoding {@link ImagePacker_Opts_} .
+ * @param imageSource The imageSource to be packed.
+ * @param outData The output data buffer to store the packed image.
+ * @param size A pointer to the size of the output data buffer.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
+ * @Syscap SystemCapability.Multimedia.Image.ImagePacker
+ * @see {@link OH_ImagePackerCapi_PackingFromImageSource}
+ * @since 11
+ * @version 4.1
+ */
+int32_t OH_ImagePackerCapi_PackingFromImageSource(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts_* option,
+    ImageSourceCapi* imageSourceCapi, uint8_t** outData, int64_t* size);
+
+/**
+ * @brief Encoding a <b>PixelMap</b> into the data with required format.
+ *
+ * @param imagePacker The imagePacker to use for packing.
+ * @param option Indicates the encoding {@link ImagePacker_Opts_} .
+ * @param pixelMap The pixelMap to be packed.
+ * @param outData The output data buffer to store the packed image.
+ * @param size A pointer to the size of the output data buffer.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
+ * @Syscap SystemCapability.Multimedia.Image.ImagePacker
+ * @see {@link OH_ImagePackerCapi_PackingFromPixelMap}
+ * @since 11
+ * @version 4.1
+ */
+int32_t OH_ImagePackerCapi_PackingFromPixelMap(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts_* option,
+    PixelMapCapi* pixelMapCapi, uint8_t** outData, int64_t* size);
+
+/**
+ * @brief Encoding an <b>ImageSource</b> into the a file with fd with required format.
+ *
+ * @param imagePacker The image packer to use for packing.
+ * @param option Indicates the encoding {@link ImagePacker_Opts_} .
+ * @param imageSource The imageSource to be packed.
+ * @param fd Indicates the a writable file descriptor.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
+ * @Syscap SystemCapability.Multimedia.Image.ImagePacker
+ * @see {@link OH_ImagePackerCapi_PackToFileFromImageSource}
+ * @since 11
+ * @version 4.1
+ */
+int32_t OH_ImagePackerCapi_PackToFileFromImageSource(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts_* option,
+    ImageSourceCapi* imageSourceCapi, const int fd);
+
+/**
+ * @brief Encoding a <b>PixelMap</b> into the a file with fd with required format
+ *
+ * @param imagePacker The image packer to use for packing.
+ * @param option Indicates the encoding {@link ImagePacker_Opts_} .
+ * @param pixelMap The pixelMap to be packed.
+ * @param fd Indicates the a writable file descriptor.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
+ * @Syscap SystemCapability.Multimedia.Image.ImagePacker
+ * @see {@link OH_ImagePackerCapi_PackToFileFromPixelMap}
+ * @since 11
+ * @version 4.1
+ */
+int32_t OH_ImagePackerCapi_PackToFileFromPixelMap(ImagePackerCapi* imagePacker, ImagePacker_Opts_* option,
+    PixelMapCapi* pixelMap, const int fd);
+
+/**
+ * @brief Releases an imagePacker object.
+ *
+ * @param imagePacker A pointer to the image packer object to be released.  
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * @Syscap SystemCapability.Multimedia.Image.ImagePacker
+ * @see {@link OH_ImagePackerCapi_Release}
+ * @since 11
+ * @version 4.1
+ */
+int32_t OH_ImagePackerCapi_Release(ImagePackerCapi* imagePackerCapi);
+
 #ifdef __cplusplus
 };
 #endif

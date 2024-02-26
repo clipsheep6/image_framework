@@ -16,6 +16,8 @@
 #include "image_packer_mdk.h"
 
 #include "common_utils.h"
+#include "image_packer.h"
+#include "image_packer_impl.h"
 #include "image_packer_mdk_kits.h"
 
 using namespace OHOS::Media;
@@ -86,6 +88,78 @@ int32_t OH_ImagePacker_Release(ImagePacker_Native* native)
 {
     if (native != nullptr) {
         delete native;
+    }
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_Create(ImagePackerCapi** imagePackerCapi)
+{
+    *imagePackerCapi = new ImagePackerCapi();
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackingFromImageSource(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts* option,
+    ImageSourceCapi* imageSourceCapi, uint8_t** outData, int64_t* size)
+{
+    if (imagePackerCapi == nullptr || option == nullptr || imageSourceCapi == nullptr || outData != nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+
+    PackOption packOption;
+    packOption.format = option->format;
+    packOption.quality = option->quality;
+    return imagePackerCapi->PackingFromImageSource(&packOption, imageSourceCapi, outData, size);
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackingFromPixelMap(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts* option,
+    PixelMapCapi* pixelMapCapi, uint8_t** outData, int64_t* size)
+{
+    if (imagePackerCapi == nullptr || option == nullptr || pixelMapCapi == nullptr || outData != nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+
+    PackOption packOption;
+    packOption.format = option->format;
+    packOption.quality = option->quality;
+    return imagePackerCapi->PackingFromPixelMap(&packOption, pixelMapCapi, outData, size);
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackToFileFromImageSource(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts* option,
+    ImageSourceCapi* imageSourceCapi, const int fd)
+{
+    if (imagePackerCapi == nullptr || option == nullptr || imageSourceCapi == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+
+    PackOption packOption;
+    packOption.format = option->format;
+    packOption.quality = option->quality;
+    return imagePackerCapi->PackToFileFromImageSource(&packOption, imageSourceCapi, fd);
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_PackToFileFromPixelMap(ImagePackerCapi* imagePackerCapi, ImagePacker_Opts* option,
+    PixelMapCapi* pixelMapCapi, const int fd)
+{
+    if (imagePackerCapi == nullptr || option == nullptr || pixelMapCapi == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+
+    PackOption packOption;
+    packOption.format = option->format;
+    packOption.quality = option->quality;
+    return imagePackerCapi->PackToFileFromPixelMap(&packOption, pixelMapCapi, fd);
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePackerCapi_Release(ImagePackerCapi* imagePackerCapi)
+{
+    if (imagePackerCapi != nullptr) {
+        delete imagePackerCapi;
     }
     return IMAGE_RESULT_SUCCESS;
 }

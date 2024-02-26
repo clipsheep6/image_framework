@@ -62,5 +62,83 @@
   },
   {
     "name": "OH_PixelMap_UnAccessPixels"
+  },
+  {
+    "name": "OH_PixelMapCapi_CreatePixelMap"
+  },
+  {
+    "name": "OH_PixelMapCapi_CreatePixelMapFromSurface"
+  },
+  {
+    "name": "OH_PixelMapCapi_ReadPixelsToBuffer"
+  },
+  {
+    "name": "OH_PixelMapCapi_ReadPixels"
+  },
+  {
+    "name": "OH_PixelMapCapi_WritePixels"
+  },
+  {
+    "name": "OH_PixelMapCapi_WriteBufferToPixels"
+  },
+  {
+    "name": "OH_PixelMapCapi_GetImageInfo"
+  },
+  {
+    "name": "OH_PixelMapCapi_GetBytesNumberPerRow"
+  },
+  {
+    "name": "OH_PixelMapCapi_GetPixelBytesNumber"
+  },
+  {
+    "name": "OH_PixelMapCapi_GetDensity"
+  },
+  {
+    "name": "OH_PixelMapCapi_Opacity"
+  },
+  {
+    "name": "OH_PixelMapCapi_CreateAlphaPixelmap"
+  },
+  {
+    "name": "OH_PixelMapCapi_Scale"
+  },
+  {
+    "name": "OH_PixelMapCapi_Translate"
+  },
+  {
+    "name": "OH_PixelMapCapi_Rotate"
+  },
+  {
+    "name": "OH_PixelMapCapi_Flip"
+  },
+  {
+    "name": "OH_PixelMapCapi_Crop"
+  },
+  {
+    "name": "OH_PixelMapCapi_GetColorSpace"
+  },
+  {
+    "name": "OH_PixelMapCapi_SetColorSpace"
+  },
+  {
+    "name": "OH_PixelMapCapi_ApplyColorSpace"
+  },
+  {
+    "name": "OH_PixelMapCapi_GetIsEditable"
+  },
+  {
+    "name": "OH_PixelMapCapi_IsSupportAlpha"
+  },
+  {
+    "name": "OH_PixelMapCapi_SetAlphaAble"
+  },
+  {
+    "name": "OH_PixelMapCapi_AccessPixels"
+  },
+  {
+    "name": "OH_PixelMapCapi_UnAccessPixels"
+  },
+  {
+    "name": "OH_PixelMapCapi_Release"
   }
 ]
