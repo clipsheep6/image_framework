@@ -38,8 +38,6 @@ struct ConvertDataInfo {
 class ImageFormatConvert
 {
 public:
-    ImageFormatConvert() = default;
-
     static uint32_t ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo);
     static uint32_t ConvertImageFormat(const std::shared_ptr<PixelMap> srcPiexlMap,
                                        std::shared_ptr<PixelMap> &destPiexlMap, PixelFormat destFormat);
