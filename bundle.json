@@ -43,7 +43,8 @@
           "hdf_core",
           "memmgr_plugin",
           "libyuv",
-          "libjpeg-turbo"
+          "libjpeg-turbo",
+          "video_processing_engine"
         ],
         "third_party": [
           "flutter",

@@ -143,6 +143,9 @@ ohos_shared_library("extplugin") {
     "src/ext_pixel_convert.cpp",
     "src/ext_stream.cpp",
     "src/ext_wstream.cpp",
+    "src/hdr/hdr_helper.cpp",
+    "src/hdr/jpeg_mpf_parser.cpp",
+    "src/hdr/xmp_parser.cpp",
     "src/jpeg_yuv_decoder/jpeg_decoder_yuv.cpp",
     "src/jpeg_yuv_decoder/jpeg_yuvdata_converter.cpp",
     "src/plugin_export.cpp",
@@ -158,6 +161,7 @@ ohos_shared_library("extplugin") {
   ]
   include_dirs = [
     "include",
+    "include/hdr",
     "include/texture_encode",
     "include/jpeg_yuv_decoder",
     "${image_subsystem}/interfaces/innerkits/include",
@@ -210,6 +214,7 @@ ohos_shared_library("extplugin") {
 
     external_deps = [
       "c_utils:utils",
+      "drivers_interface_display:display_commontype_idl_headers",
       "graphic_2d:color_manager",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
@@ -229,6 +234,11 @@ ohos_shared_library("extplugin") {
         "ipc:ipc_single",
       ]
       defines = [ "JPEG_HW_DECODE_ENABLE" ]
+    }
+
+    if (enable_hdr_converter) {
+      defines += [ "IMAGE_HDR_CONVERTER_FLAG" ]
+      external_deps += [ "video_processing_engine:videoprocessingengine" ]
     }
   }
   cflags = [

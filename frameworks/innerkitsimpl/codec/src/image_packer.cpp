@@ -19,6 +19,7 @@
 #include "file_packer_stream.h"
 #include "image/abs_image_encoder.h"
 #include "image_log.h"
+#include "image_mime_type.h"
 #include "image_trace.h"
 #include "image_utils.h"
 #include "media_errors.h"
@@ -41,6 +42,12 @@ using namespace MultimediaPlugin;
 static constexpr uint8_t QUALITY_MAX = 100;
 const static std::string EXTENDED_ENCODER = "image/extended";
 static constexpr size_t SIZE_ZERO = 0;
+static const std::map<EncodeDynamicRange, PlEncodeDynamicRange> DYNAMIC_RANGE_MAP = {
+    { EncodeDynamicRange::DEFAULT, PlEncodeDynamicRange::DEFAULT },
+    { EncodeDynamicRange::SDR, PlEncodeDynamicRange::SDR },
+    { EncodeDynamicRange::HDR_VIVID_DUAL, PlEncodeDynamicRange::HDR_VIVID_DUAL },
+    { EncodeDynamicRange::HDR_VIVID_SINGLE, PlEncodeDynamicRange::HDR_VIVID_SINGLE },
+};
 
 PluginServer &ImagePacker::pluginServer_ = ImageUtils::GetPluginServer();
 
@@ -80,6 +87,12 @@ uint32_t ImagePacker::StartPackingImpl(const PackOption &option)
     if (!GetEncoderPlugin(option)) {
         IMAGE_LOGE("StartPackingImpl get encoder plugin failed.");
         return ERR_IMAGE_MISMATCHED_FORMAT;
+    }
+    if ((option.desiredDynamicRange == EncodeDynamicRange::SDR) ||
+        (option.format != IMAGE_JPEG_FORMAT && option.format != IMAGE_HEIC_FORMAT)) {
+        encodeToSdr_ = true;
+    } else {
+        encodeToSdr_ = false;
     }
     PlEncodeOptions plOpts;
     CopyOptionsToPlugin(option, plOpts);
@@ -190,12 +203,17 @@ uint32_t ImagePacker::AddImage(PixelMap &pixelMap)
 uint32_t ImagePacker::AddImage(ImageSource &source)
 {
     ImageTrace imageTrace("ImagePacker::AddImage by imageSource");
-    DecodeOptions opts;
+    DecodeOptions decodeOpts;
+    if (encodeToSdr_) {
+        decodeOpts.dynamicRange = DecodeDynamicRange::SDR;
+    } else {
+        decodeOpts.dynamicRange = DecodeDynamicRange::DEFAULT;
+    }
     uint32_t ret = SUCCESS;
     if (pixelMap_ != nullptr) {
         pixelMap_.reset();  // release old inner pixelmap
     }
-    pixelMap_ = source.CreatePixelMap(opts, ret);
+    pixelMap_ = source.CreatePixelMap(decodeOpts, ret);
     if (ret != SUCCESS) {
         IMAGE_LOGE("image source create pixel map failed.");
         return ret;
@@ -281,6 +299,8 @@ void ImagePacker::CopyOptionsToPlugin(const PackOption &opts, PlEncodeOptions &p
     plOpts.numberHint = opts.numberHint;
     plOpts.quality = opts.quality;
     plOpts.format = opts.format;
+    auto search = DYNAMIC_RANGE_MAP.find(opts.desiredDynamicRange);
+    plOpts.desiredDynamicRange = (search != DYNAMIC_RANGE_MAP.end()) ? search->second : PlEncodeDynamicRange::DEFAULT;
 }
 
 void ImagePacker::FreeOldPackerStream()
