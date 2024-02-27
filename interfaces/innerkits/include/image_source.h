@@ -50,6 +50,7 @@ struct PlImageInfo;
 
 namespace OHOS {
 namespace Media {
+class ExifMetaData;
 struct SourceOptions {
     std::string formatHint;
     int32_t baseDensity = 0;
@@ -262,6 +263,12 @@ private:
                                                      uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
+
+    #if defined(LIBEXIV2_ENABLE)
+    uint32_t CreateExiv2ImageByFd(const int fd);
+    uint32_t SaveExiv2Image(const int fd, uint8_t *imageBuf, off_t imageSize);
+    #endif
+
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
     const std::string NINE_PATCH = "ninepatch";
@@ -291,6 +298,7 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
+    std::unique_ptr<ExifMetaData> exifMetaPtr_;    
 };
 } // namespace Media
 } // namespace OHOS

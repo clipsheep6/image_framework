@@ -64,9 +64,25 @@ config("skia_includes") {
   ]
 }
 config("third_part_includes") {
+  cflags = [
+    "-Werror",
+    "-Wno-format",
+    "-Wno-sign-compare",
+    "-Wno-deprecated-register",
+    "-Wno-implicit-fallthrough",
+    "-Wno-deprecated-copy-with-user-provided-copy",
+  ]
+  
+  cflags_cc = [
+    "-fexceptions",
+    "-fdeclspec",
+  ]
+
   include_dirs = [
     "../libjpegplugin/include",
     "${third_party_root}/libexif",
+    "${third_party_root}/libexiv2/include",
+    "${third_party_root}/libexiv2/contrib/vs2019/solution",
   ]
 }
 config("win_config") {
@@ -202,6 +218,7 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/plugins/manager:pluginmanager",
       "//third_party/astc-encoder:astc_encoder_shared",
       "//third_party/opencl-headers:libcl",
+      "//third_party/libexiv2:libexiv2",
     ]
     deps += skia_platform
 

@@ -47,6 +47,7 @@
           "flutter",
           "libpng",
           "libexif",
+          "libexiv2",
           "bounds_checking_function",
           "expat",
           "json",

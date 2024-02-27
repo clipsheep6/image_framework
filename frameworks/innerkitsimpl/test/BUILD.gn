@@ -183,6 +183,44 @@ ohos_unittest("imagesourcetest") {
   resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
 }
 
+ohos_unittest("imagesourceexiftest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "$image_subsystem/frameworks/innerkitsimpl/converter/include",
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest",
+    "$image_subsystem/frameworks/innerkitsimpl/utils/include",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/plugins/manager/include",
+    "//foundation/multimedia/utils/include",
+    "//third_party/googletest/googletest/include",
+    "//commonlibrary/c_utils/base/include",
+  ]
+  sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_exif_test.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_util.cpp",
+  ]
+
+  deps = [
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
+    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "//third_party/googletest:gmock_main",
+    "//third_party/googletest:gtest_main",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
+  if (purgeable_ashmem_enable && defined(global_parts_info) &&
+      defined(global_parts_info.resourceschedule_memmgr_plugin)) {
+    defines = [ "IMAGE_PURGEABLE_PIXELMAP" ]
+    external_deps += [ "memmgr_plugin:libpurgeablemem_plugin" ]
+  }
+  resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
+}
+
 ohos_unittest("jpegdecoderextest") {
   module_out_path = module_output_path
 
@@ -1190,6 +1228,41 @@ ohos_unittest("eglimagetest") {
   ]
 }
 
+ohos_unittest("exifmetadatatest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "$image_subsystem/frameworks/innerkitsimpl/converter/include",
+    "$image_subsystem/frameworks/innerkitsimpl/utils/include",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/plugins/common/libs/image/libjpegplugin/include",
+    "$image_subsystem/plugins/manager/include",
+    "//third_party/googletest/googletest/include",
+    "//third_party/libexiv2/include",
+    "//third_party/libexiv2/contrib/vs2019/solution",
+  ]
+  cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
+  sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest/exif_meta_data_test.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/exif_meta_data.cpp",
+  ]
+  deps = [
+    "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+    "$image_subsystem/interfaces/innerkits:image_native",
+    "$image_subsystem/plugins/common/libs/image/libjpegplugin:jpegplugin",
+    "//third_party/googletest:gmock_main",
+    "//third_party/googletest:gtest_main",
+    "//third_party/libexiv2:libexiv2",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
+  resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
+}
+
 ################################################
 group("unittest") {
   testonly = true
@@ -1225,6 +1298,7 @@ group("unittest") {
     ":textureencodetest",
     ":transformtest",
     ":webpplugintest",
+    ":exifmetadatatest",
   ]
 
   if (enable_jpeg_hw_decode) {

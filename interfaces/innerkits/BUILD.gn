@@ -62,6 +62,24 @@ config("image_external_config") {
     "$skia_root/skia/third_party/externals/libjpeg-turbo",
     "$skia_root/skia/third_party/skcms",
     "//third_party/libexif",
+    "//third_party/libexiv2/include",
+    "//third_party/libexiv2/contrib/vs2019/solution",
+  ]
+
+  cflags = [
+    "-Werror",
+    "-Wno-format",
+    "-Wno-sign-compare",
+    "-Wno-deprecated-register",
+    "-Wno-implicit-fallthrough",
+    "-Wno-deprecated-copy-with-user-provided-copy",
+  ]
+  
+  cflags_cc = [
+    "-fexceptions",
+    "-std=c++17",
+    "-fdeclspec",
+    #"-frtti",
   ]
 
   if (use_mingw_win) {
@@ -166,6 +184,8 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/exif_meta_data.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/exif_meta_data_validate.cpp",
     ]
 
     if (use_mingw_win) {
@@ -229,12 +249,17 @@ if (use_clang_android) {
         "napi:ace_napi",
       ]
     }
-
+    defines += [ "LIBEXIV2_ENABLE" ]
+    
     if (purgeable_ashmem_enable && defined(global_parts_info) &&
         defined(global_parts_info.resourceschedule_memmgr_plugin)) {
       defines += [ "IMAGE_PURGEABLE_PIXELMAP" ]
       external_deps += [ "memmgr_plugin:libpurgeablemem_plugin" ]
     }
+
+    deps += [
+      "//third_party/libexiv2:libexiv2",
+    ]
 
     #  relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
@@ -270,6 +295,8 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/exif_meta_data.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/exif_meta_data_validate.cpp",
   ]
 
   if (use_mingw_win) {
