@@ -57,14 +57,15 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &
         IMAGE_LOGE("[FileSourceStream]input the file path exception, pathName=%{public}s", pathName.c_str());
         return nullptr;
     }
-    size_t size = 0;
-    if (!ImageUtils::GetFileSize(realPath, size)) {
-        IMAGE_LOGE("[FileSourceStream]get the file size fail.");
-        return nullptr;
-    }
     FILE *filePtr = fopen(realPath.c_str(), "rb");
     if (filePtr == nullptr) {
         IMAGE_LOGE("[FileSourceStream]open file fail.");
+        return nullptr;
+    }
+    size_t size = 0;
+    if (!ImageUtils::GetFileSize(realPath, size)) {
+        IMAGE_LOGE("[FileSourceStream]get the file size fail. pathName=%{public}s", pathName.c_str());
+        fclose(filePtr);
         return nullptr;
     }
     int64_t offset = ftell(filePtr);
@@ -78,21 +79,21 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &
 
 unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)
 {
-    size_t size = 0;
-
     int dupFd = dup(fd);
     if (dupFd < 0) {
         IMAGE_LOGE("[FileSourceStream]Fail to dup fd.");
         return nullptr;
     }
 
-    if (!ImageUtils::GetFileSize(dupFd, size)) {
-        IMAGE_LOGE("[FileSourceStream]get the file size fail.");
-        return nullptr;
-    }
     FILE *filePtr = fdopen(dupFd, "rb");
     if (filePtr == nullptr) {
         IMAGE_LOGE("[FileSourceStream]open file fail.");
+        return nullptr;
+    }
+    size_t size = 0;
+    if (!ImageUtils::GetFileSize(dupFd, size)) {
+        IMAGE_LOGE("[FileSourceStream]get the file size fail. dupFd=%{public}d", dupFd);
+        fclose(filePtr);
         return nullptr;
     }
 
@@ -154,7 +155,7 @@ bool FileSourceStream::Peek(uint32_t desiredSize, DataStreamBuffer &outData)
         return false;
     }
     if (!GetData(desiredSize, outData)) {
-        IMAGE_LOGI("[FileSourceStream]peek dataStreamBuffer fail, desiredSize:%{public}zu", desiredSize);
+        IMAGE_LOGI("[FileSourceStream]peek dataStreamBuffer fail, desiredSize:%{public}u", desiredSize);
         return false;
     }
     int ret = fseek(filePtr_, fileOffset_, SEEK_SET);
@@ -233,10 +234,15 @@ bool FileSourceStream::GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_
     }
     size_t bytesRead = fread(outBuffer, sizeof(outBuffer[0]), desiredSize, filePtr_);
     if (bytesRead < desiredSize) {
-        IMAGE_LOGI("[FileSourceStream]read outBuffer fail, bytesRead:%{public}zu", bytesRead);
-        return false;
+        IMAGE_LOGI("read outBuffer end, bytesRead:%{public}zu, desiredSize:%{public}u, fileSize_:%{public}zu,"
+            "fileOffset_:%{public}zu", bytesRead, desiredSize, fileSize_, fileOffset_);
+        int fRes = ferror(filePtr_);
+        if (fRes) {
+            IMAGE_LOGE("fread failed, ferror:%{public}d", fRes);
+            return false;
+        }
     }
-    readSize = desiredSize;
+    readSize = bytesRead;
     return true;
 }
 
@@ -265,13 +271,18 @@ bool FileSourceStream::GetData(uint32_t desiredSize, DataStreamBuffer &outData)
     }
     size_t bytesRead = fread(readBuffer_, sizeof(uint8_t), desiredSize, filePtr_);
     if (bytesRead < desiredSize) {
-        IMAGE_LOGI("[FileSourceStream]read dataStreamBuffer fail, bytesRead:%{public}zu", bytesRead);
-        free(readBuffer_);
-        readBuffer_ = nullptr;
-        return false;
+        IMAGE_LOGI("read outBuffer end, bytesRead:%{public}zu, desiredSize:%{public}u, fileSize_:%{public}zu,"
+            "fileOffset_:%{public}zu", bytesRead, desiredSize, fileSize_, fileOffset_);
+        int fRes = ferror(filePtr_);
+        if (fRes) {
+            IMAGE_LOGE("fread failed, ferror:%{public}d", fRes);
+            free(readBuffer_);
+            readBuffer_ = nullptr;
+            return false;
+        }
     }
     outData.inputStreamBuffer = static_cast<uint8_t *>(readBuffer_);
-    outData.dataSize = desiredSize;
+    outData.dataSize = bytesRead;
     return true;
 }
 
@@ -325,7 +336,7 @@ void FileSourceStream::ResetReadBuffer()
         free(readBuffer_);
         readBuffer_ = nullptr;
     }
-    if (fileData_ != nullptr && !mmapFdPassedOn_) {
+    if (fileData_ != nullptr) {
 #ifdef SUPPORT_MMAP
         ::munmap(fileData_, fileSize_);
         close(mmapFd_);
@@ -342,12 +353,6 @@ OutputDataStream* FileSourceStream::ToOutputDataStream()
         return nullptr;
     }
     return new (std::nothrow) FilePackerStream(dupFd);
-}
-
-int FileSourceStream::GetMMapFd()
-{
-    mmapFdPassedOn_ = true;
-    return mmapFd_;
 }
 } // namespace Media
 } // namespace OHOS
