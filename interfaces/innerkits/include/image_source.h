@@ -264,7 +264,7 @@ private:
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
 
-    #if defined(LIBEXIF_V2)
+    #if defined(LIBEXIV2_ENABLE)
     uint32_t CreateExiv2ImageByFd(const int fd);
     uint32_t SaveExiv2Image(const int fd, uint8_t *imageBuf, off_t imageSize);
     #endif

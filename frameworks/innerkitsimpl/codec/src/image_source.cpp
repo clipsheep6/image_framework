@@ -955,7 +955,7 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
     return SUCCESS;
 }
 
-#if defined(LIBEXIF_V2)
+#if defined(LIBEXIV2_ENABLE)
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const std::string &path)
 {
@@ -998,7 +998,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 }
 #endif
 
-#if defined(LIBEXIF_V2)
+#if defined(LIBEXIV2_ENABLE)
 uint32_t ImageSource::CreateExiv2ImageByFd(const int fd)
 {
     const int localFd = dup(fd);
@@ -1094,8 +1094,8 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 
     uint8_t *newImageBuf = nullptr;
     uint32_t newImageSize = 0;
-    exifMetaPtr_->GetExiv2ImageBuf(&newImageBuf, newImageSize);
-    IMAGE_LOGD("[ImageSource] GetExiv2ImageBuf imageSize %{public}d", newImageSize);
+    exifMetaPtr_->GetExiv2ImageData(&newImageBuf, newImageSize);
+    IMAGE_LOGD("[ImageSource] GetExiv2ImageData imageSize %{public}d", newImageSize);
 
     return SaveExiv2Image(fd, newImageBuf, (off_t)newImageSize);
 }
@@ -1119,7 +1119,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 }
 #endif
 
-#if defined(LIBEXIF_V2)
+#if defined(LIBEXIV2_ENABLE)
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, uint8_t *data, uint32_t size)
 {
@@ -1162,7 +1162,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 }
 #endif
 
-#if defined(LIBEXIF_V2)
+#if defined(LIBEXIV2_ENABLE)
 uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     if (exifMetaPtr_ == nullptr) {
@@ -1206,7 +1206,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
 }
 #endif
 
-#if defined(LIBEXIF_V2)
+#if defined(LIBEXIV2_ENABLE)
 uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
     if (exifMetaPtr_ == nullptr) {

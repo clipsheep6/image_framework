@@ -249,8 +249,7 @@ if (use_clang_android) {
         "napi:ace_napi",
       ]
     }
-    
-    defines += [ "LIBEXIF_V2" ]
+    defines += [ "LIBEXIV2_ENABLE" ]
     
     if (purgeable_ashmem_enable && defined(global_parts_info) &&
         defined(global_parts_info.resourceschedule_memmgr_plugin)) {
