@@ -25,7 +25,7 @@ using namespace testing::ext;
 using namespace OHOS::Media;
 namespace OHOS {
 namespace Media {
-static const std::string IMAGE_INPUT_PNG_PATH = "/data/local/tmp/image/test_exif.jpg";
+static const std::string IMAGE_INPUT_PNG_PATH = "/data/local/tmp/image/test.png";
 static const std::string GET_EXIV2_INT_KEY = "Exif.Photo.PixelXDimension";
 static const std::string GET_EXIV2_STRING_KEY = "Exif.Image.DateTime";
 static const std::string MODIFY_EXIV2_STRING_KEY = "Exif.Photo.UserComment";
@@ -272,11 +272,12 @@ HWTEST_F(ExifMetaDataTest, ModifyImageProperty002, TestSize.Level3)
     uint32_t imageSize = 0;
     uint32_t getBufRet =  exifMetaData->GetExiv2ImageData(&imageData, imageSize);
     ASSERT_EQ(getBufRet, SUCCESS);
-    int fdNew = open(IMAGE_INPUT_PNG_PATH.c_str(), O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    ASSERT_GT(fdNew, 0);
-    size_t wrRet = write(fdNew, static_cast<void *>(imageData), static_cast<size_t>(imageSize));
-    ASSERT_EQ(imageSize, wrRet);
-    close(fdNew);
+    FILE *file = fopen(IMAGE_INPUT_PNG_PATH.c_str(), "wb+");
+    ASSERT_NE(file, nullptr);
+    (void)fseek(file, 0L, 0);
+    int fRet = fwrite(imageData, imageSize, 1, file);
+    ASSERT_EQ(fRet, 1);
+    (void)fclose(file);
     delete exifMetaData;
     free(data);
 
