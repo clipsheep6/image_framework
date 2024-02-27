@@ -54,19 +54,19 @@ private:
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> oneRational;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> oneIntToRational;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> oneDecimalToRational;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeRationalWithBlank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeIntToRationalWithBlank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeIntToRationalWithComma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeDecimalToRationalWithBlank;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeDecimalToRatiionalWithComma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleIntToRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleIntToRationalWithComma;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleDecimalToRationalWithBlank;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleDecimalToRatiionalWithComma;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourRationalWithBlank;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntToRationalWithBlank;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntToRationalWithComma;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> decimal4Ratiional4;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> decimal4Ratiional4Comma;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> dateTimeRegex;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> dateRegex;
-  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> threeIntToRationalWithColon;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> dateTimeValidation;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> dateValidation;
+  static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleIntToRationalWithColon;
   static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntToRationalWithDot;
 private:
   static int Gcd(int a, int b)

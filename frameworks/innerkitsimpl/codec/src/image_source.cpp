@@ -967,6 +967,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
             IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
             return ret;
         }
+        exifMetaPtr_->ReadMetadata();
     }
     std::string tagname, revalue(value);
     auto ret = ExifMetaDataValidate::ExifValidate(key, tagname, revalue);
@@ -1033,7 +1034,7 @@ uint32_t ImageSource::CreateExiv2ImageByFd(const int fd)
     }
 
     uint32_t res = exifMetaPtr_->CreateExiv2Image(fileBuf, fileSize);
-
+    exifMetaPtr_->ReadMetadata();
     (void)fclose(file);
     return res;
 }
@@ -1070,6 +1071,7 @@ uint32_t ImageSource::SaveExiv2Image(const int fd, uint8_t *imageBuf, off_t imag
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const int fd)
 {
+    IMAGE_LOGD("[ImageSource] ModifyImageProperty fd josephxxxx.");
     IMAGE_LOGD("[ImageSource] ModifyImageProperty fd.");
     if (exifMetaPtr_ == nullptr) {
         exifMetaPtr_ = std::unique_ptr<ExifMetaData>(new ExifMetaData());
@@ -1131,6 +1133,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
             IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
             return ret;
         }
+        exifMetaPtr_->ReadMetadata();
     }
     std::string tagname, revalue(value);
     auto ret = ExifMetaDataValidate::ExifValidate(key, tagname, revalue);
@@ -1176,6 +1179,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
             IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
             return ret;
         }
+        exifMetaPtr_->ReadMetadata();
     }
 
     std::string tagname;
@@ -1220,6 +1224,7 @@ uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &
             IMAGE_LOGE("[ImageSource] create exiv2 image failed, ret:%{public}u.", ret);
             return ret;
         }
+        exifMetaPtr_->ReadMetadata();
 
     }
 

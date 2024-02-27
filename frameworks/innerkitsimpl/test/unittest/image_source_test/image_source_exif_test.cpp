@@ -1425,7 +1425,6 @@ std::string MODIFYDATA[][3] = {
     {"CompressedBitsPerPixel", "3/2", "1.5"},
     {"CompressedBitsPerPixel", "1/2", "0.5"},
     {"CompressedBitsPerPixel", "0.5", "0.5"},
-    {"DNGVersion", "1 113", "1 113"},
     {"DNGVersion", "1,1,2,3", "1 1 2 3"},
     {"DefaultCropSize", "12 1", "12 1"},
     {"Gamma", "3/2", "1.5"},
