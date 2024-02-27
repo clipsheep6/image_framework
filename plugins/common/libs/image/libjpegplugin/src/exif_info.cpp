@@ -22,6 +22,7 @@
 
 #include "exif_maker_note.h"
 #include "image_log.h"
+#include "libexif/exif-tag.h"
 #include "media_errors.h"
 #include "securec.h"
 #include "string_ex.h"
@@ -316,7 +317,7 @@ const std::map<ExifTag, std::string> TAG_MAP = {
     {ExifTag::EXIF_TAG_SENSITIVITY_TYPE, "SensitivityType"},
     {ExifTag::EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY, "StandardOutputSensitivity"},
     {ExifTag::EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX, "RecommendedExposureIndex"},
-    {ExifTag::EXIF_TAG_ISO_SPEED, "ISOSpeedRatings"},
+    {ExifTag::EXIF_TAG_ISO_SPEED, "ISOSpeed"},
     {ExifTag::EXIF_TAG_APERTURE_VALUE, "ApertureValue"},
     {ExifTag::EXIF_TAG_EXPOSURE_BIAS_VALUE, "ExposureBiasValue"},
     {ExifTag::EXIF_TAG_METERING_MODE, "MeteringMode"},
@@ -526,6 +527,8 @@ void EXIFInfo::SetExifTagValues(const ExifTag &tag, const std::string &value)
         fNumber_ = value;
     } else if (tag == EXIF_TAG_ISO_SPEED_RATINGS) {
         isoSpeedRatings_ = value;
+    } else if (tag == EXIF_TAG_ISO_SPEED){
+        isoSpeed_ = value;
     } else if (tag == EXIF_TAG_SCENE_TYPE) {
         sceneType_ = value;
     } else if (tag == EXIF_TAG_COMPRESSED_BITS_PER_PIXEL) {

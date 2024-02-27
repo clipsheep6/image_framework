@@ -93,7 +93,7 @@ const std::string PHOTO_MODE = "PhotoMode";
 const std::string SENSITIVITY_TYPE = "SensitivityType";
 const std::string STANDARD_OUTPUT_SENSITIVITY = "StandardOutputSensitivity";
 const std::string RECOMMENDED_EXPOSURE_INDEX = "RecommendedExposureIndex";
-const std::string ISO_SPEED = "ISOSpeedRatings";
+const std::string ISO_SPEED = "ISOSpeed";
 const std::string APERTURE_VALUE = "ApertureValue";
 const std::string EXPOSURE_BIAS_VALUE = "ExposureBiasValue";
 const std::string METERING_MODE = "MeteringMode";
@@ -871,7 +871,7 @@ uint32_t JpegDecoder::GetImagePropertyString(const std::string &key, std::string
     } else if (IsSameTextStr(key, RECOMMENDED_EXPOSURE_INDEX)) {
         value = exifInfo_.recommendedExposureIndex_;
     } else if (IsSameTextStr(key, ISO_SPEED)) {
-        value = exifInfo_.isoSpeedRatings_;
+        value = exifInfo_.isoSpeed_;
     } else if (IsSameTextStr(key, APERTURE_VALUE)) {
         value = exifInfo_.apertureValue_;
     } else if (IsSameTextStr(key, EXPOSURE_BIAS_VALUE)) {

@@ -77,6 +77,7 @@ public:
     std::string exposureTime_;
     std::string fNumber_;
     std::string isoSpeedRatings_;
+    std::string isoSpeed_;
     std::string sceneType_;
     std::string compressedBitsPerPixel_;
     std::string dateTime_;

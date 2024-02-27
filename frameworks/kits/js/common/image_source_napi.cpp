@@ -146,7 +146,7 @@ static std::vector<struct ImageEnum> sPropertyKeyMap = {
     {"SENSITIVITY_TYPE", 0, "SensitivityType"},
     {"STANDARD_OUTPUT_SENSITIVITY", 0, "StandardOutputSensitivity"},
     {"RECOMMENDED_EXPOSURE_INDEX", 0, "RecommendedExposureIndex"},
-    {"ISO_SPEED", 0, "ISOSpeedRatings"},
+    {"ISO_SPEED", 0, "ISOSpeed"},
     {"APERTURE_VALUE", 0, "ApertureValue"},
     {"EXPOSURE_BIAS_VALUE", 0, "ExposureBiasValue"},
     {"METERING_MODE", 0, "MeteringMode"},
