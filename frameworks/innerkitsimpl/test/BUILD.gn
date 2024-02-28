@@ -1211,7 +1211,7 @@ group("unittest") {
     ":imageutilstest",
     ":interfacetest",
     ":jpegdecoderextest",
-    ":jpegutilstest",s
+    ":jpegutilstest",
     ":napitest",
     ":pixelastctest",
     ":pixelconvertadaptertest",
