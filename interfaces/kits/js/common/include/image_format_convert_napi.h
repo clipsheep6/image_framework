@@ -27,7 +27,6 @@ namespace Media {
 class ImageFormatConvertNapi {
 public:
     ImageFormatConvertNapi();
-    ~ImageFormatConvertNapi();
 
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateImageConvert(napi_env env, napi_callback_info info);
@@ -43,8 +42,6 @@ private:
 
     static thread_local napi_ref sConstructor_;
     napi_env env_ = nullptr;
-    std::shared_ptr<ImageFormatConvert> nImgFmtCvt_;
-    bool isRelease = false;
 };
 } // Media
 } // HOOS

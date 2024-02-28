@@ -23,14 +23,21 @@ extern "C" {
 #endif
 
 struct ImageFormatConvertNative_ {
-    PixelMap *pixelMap;
+    std::shared_ptr<PixelMap> pixelMap = nullptr;
 };
+
 MIDK_EXPORT
-int32_t OH_ImageConvert_Create()
+ImageFormatCovnertNative* OH_ImageCovnertNative_InitNative()
 {
-    int32_t ret = ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_CREATE, nullptr);
-    if (ret != IMAGE_RESULT_SUCCESS) {
-        return ret;
+    std::unique_ptr<ImageFormatCovnertNative> result = std::make_unique<ImageFormatCovnertNative>();
+    return result.release();
+}
+
+MIDK_EXPORT
+int32_t OH_ImageCovnertNative_ReleaseNative(ImageFormatCovnertNative* native)
+{
+    if (native != nullptr) {
+        delete native;
     }
     return IMAGE_RESULT_SUCCESS;
 }
@@ -73,12 +80,6 @@ int32_t OH_ImageConvert_RgbToYuv(ImageFormatCovnertNative *srcPixelMap, ImageFor
         destPixelMap->pixelMap = args.destPixelMap;
     }
     return ret;
-}
-
-MIDK_EXPORT
-int32_t OH_ImageConvert_Release()
-{
-    return ImageConvertNativeCall(CTX_FUNC_IMAGE_CONVERT_RELEASE, nullptr);
 }
 
 MIDK_EXPORT

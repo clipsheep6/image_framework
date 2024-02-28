@@ -21,6 +21,8 @@
 #include "media_errors.h"
 #include "hilog/log.h"
 #include "log_tags.h"
+#include <stdio.h>
+#include <ctime>
 
 using OHOS::HiviewDFX::HiLog;
 namespace {
@@ -41,12 +43,6 @@ enum class FormatType:int8_t {
     RGB
 };
 
-struct ConvertValue{
-    napi_value arrayBufferValue;
-    napi_value pixelFormatValue;
-    napi_value colorSpaceValue;
-};
-
 struct ImageFormatConvertAsyncContext {
     napi_env env;
     napi_async_work work;
@@ -56,20 +52,34 @@ struct ImageFormatConvertAsyncContext {
     ImageFormatConvertNapi *nConstructor;
     FormatType srcFormatType = FormatType::UNKNOWN;
     FormatType destFormatType = FormatType::UNKNOWN;
-    std::shared_ptr<ImageFormatConvert> nImgFmtCvt;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    PixelFormat destPixelFormat = PixelFormat::UNKNOWN;
 };
 
 using ImgFmtCvtAsyncCtx = ImageFormatConvertAsyncContext;
 using ImgFmtCvtAsyncCtxPtr = ImageFormatConvertAsyncContext *;
+
+static void PrintLog(std::string logStr)
+{
+    FILE *outFile = fopen("./image_format_convert_napi.log", "a");
+    if (outFile) {
+        time_t now = time(nullptr);
+        char timeBuffer[100] = {0};
+        auto timeInfo = localtime(&now);
+        strftime(timeBuffer, 100, "%Y-%m-%d %H:%M:%S", timeInfo);
+        std::string timeStr(timeBuffer);
+        std::string log = timeStr + ":" + logStr + "\n";
+        fwrite(log.c_str(), 1, log.size(), outFile);
+        fclose(outFile);
+    }
+}
 
 static bool IsMatchFormatType(FormatType type, PixelFormat format)
 {
     if (type == FormatType::YUV) {
         switch (format) {
             case PixelFormat::NV21:
-            case PixelFormat::NV12:
-            case PixelFormat::YU12:
-            case PixelFormat::YV12:{
+            case PixelFormat::NV12:{
                 return true;
             }
             default:{
@@ -113,6 +123,7 @@ static bool ParsePixelMap(napi_env &env, napi_value &root, std::shared_ptr<Pixel
     pixelMap = PixelMapNapi::GetPixelMap(env, root);
     if (pixelMap == nullptr) {
         HiLog::Error(LABEL, "get pixel map failed!");
+        PrintLog("get pixel map failed!");
         return false;
     }
     return true;
@@ -123,26 +134,29 @@ static bool ParsePixelMap(napi_env &env, napi_value &root, std::shared_ptr<Pixel
 static void BuildContextError(napi_env env, napi_ref &error, const std::string errMsg, const int32_t errCode)
 {
     HiLog::Error(LABEL, "%{public}s", errMsg.c_str());
+    PrintLog(errMsg);
     napi_value tmpError;
     ImageNapiUtils::CreateErrorObj(env, tmpError, errCode, errMsg);
     napi_create_reference(env, tmpError, NUM_1, &(error));
 }
 
-static std::unique_ptr<ImageFormatConvert> CreateNativeObjByPixelMap(napi_env &env, napi_value &pixelMapValue,
+static uint32_t GetNativePixelMapInfo(napi_env &env, napi_value &pixelMapValue,
     napi_value pixelFormatValue, ImgFmtCvtAsyncCtxPtr context)
 {
     PixelFormat destPixelFormat = ParsePixelFormat(env, pixelFormatValue);
     IMG_NAPI_CHECK_BUILD_ERROR(IsMatchFormatType(context->destFormatType, destPixelFormat),
         BuildContextError(env, context->error, "dest format is wrong!", ERR_IMAGE_INVALID_PARAMETER),
-        context->status = ERR_IMAGE_INVALID_PARAMETER, nullptr);
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
     std::shared_ptr<PixelMap> pixelMap = nullptr;
     IMG_NAPI_CHECK_BUILD_ERROR(ParsePixelMap(env, pixelMapValue, pixelMap),
         BuildContextError(env, context->error, "fail to parse pixel map!", ERR_IMAGE_INVALID_PARAMETER),
-        context->status = ERR_IMAGE_INVALID_PARAMETER, nullptr);
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
     IMG_NAPI_CHECK_BUILD_ERROR(IsMatchFormatType(context->srcFormatType, pixelMap->GetPixelFormat()),
         BuildContextError(env, context->error, "source format is wrong!", ERR_IMAGE_INVALID_PARAMETER),
-        context->status = ERR_IMAGE_INVALID_PARAMETER, nullptr);
-    return std::make_unique<ImageFormatConvert>(pixelMap, destPixelFormat);
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
+    context->destPixelFormat = destPixelFormat;
+    context->srcPixelMap = pixelMap;
+    return SUCCESS;
 }
 
 static void CommonCallbackRoutine(napi_env env, ImgFmtCvtAsyncCtxPtr &asyncContext,
@@ -190,10 +204,11 @@ STATIC_COMPLETE_FUNC(ConvertWithPixelMap)
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
     auto context = static_cast<ImgFmtCvtAsyncCtxPtr>(data);
-    std::unique_ptr<PixelMap> destPixelMap = nullptr;
-    context->status = context->nImgFmtCvt->ConvertImageFormat(destPixelMap);
+    std::shared_ptr<PixelMap> destPixelMap = nullptr;
+    context->status = ImageFormatConvert::ConvertImageFormat(context->srcPixelMap, destPixelMap,
+                                                             context->destPixelFormat);
     if (context->status == SUCCESS) {
-        result = PixelMapNapi::CreatePixelMap(env, std::move(destPixelMap));
+        result = PixelMapNapi::CreatePixelMap(env, destPixelMap);
         if (ImageNapiUtils::getType(env, result) == napi_undefined) {
             context->status = ERR_MEDIA_INVALID_VALUE;
             BuildContextError(env, context->error, "napi create dest pixel map failed!", context->status);
@@ -225,8 +240,7 @@ STATIC_EXEC_FUNC(GeneralError)
     context->status = IMAGE_RESULT_CREATE_FORMAT_CONVERT_FAILED;
 }
 
-static std::unique_ptr<ImageFormatConvert> CreateNativeImageFormatConvert(napi_env &env, napi_callback_info &info,
-    ImgFmtCvtAsyncCtxPtr context)
+static uint32_t GetNativeConvertInfo(napi_env &env, napi_callback_info &info, ImgFmtCvtAsyncCtxPtr context)
 {
     napi_status status = napi_invalid_arg;
     napi_value thisVar = nullptr;
@@ -234,39 +248,31 @@ static std::unique_ptr<ImageFormatConvert> CreateNativeImageFormatConvert(napi_e
     napi_value argv[NUM_2] = {nullptr};
     IMG_JS_ARGS(env, info, status, argc, argv, thisVar);
     IMG_NAPI_CHECK_BUILD_ERROR(IMG_IS_OK(status),
-        BuildContextError(env, context->error, "fail to napi_get_cb_info", ERROR), context->status = ERROR, nullptr);
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&context->nConstructor));
-    IMG_NAPI_CHECK_BUILD_ERROR(IMG_IS_READY(status, context->nConstructor),
-        BuildContextError(env, context->error, "fail to unwrap context!", ERROR),
-        context->status = ERROR, nullptr);
+        BuildContextError(env, context->error, "fail to napi_get_cb_info", ERROR), context->status = ERROR, ERROR);
     IMG_NAPI_CHECK_BUILD_ERROR(argc == NUM_2,
         BuildContextError(env, context->error, "incorrect number of parametersarguments!", ERR_IMAGE_INVALID_PARAMETER),
-        context->status = ERR_IMAGE_INVALID_PARAMETER, nullptr);
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
     napi_value constructor = nullptr;
     napi_value global = nullptr;
     napi_get_global(env, &global);
     status = napi_get_named_property(env, global, "PixelMap", &constructor);
     IMG_NAPI_CHECK_BUILD_ERROR(IMG_IS_OK(status),
         BuildContextError(env, context->error, "Get PixelMapNapi property failed!", ERR_IMAGE_PROPERTY_NOT_EXIST),
-        context->status = ERR_IMAGE_PROPERTY_NOT_EXIST, nullptr);
+        context->status = ERR_IMAGE_PROPERTY_NOT_EXIST, ERR_IMAGE_PROPERTY_NOT_EXIST);
     bool isPixelMap = false;
     status = napi_instanceof(env, argv[NUM_0], constructor, &isPixelMap);
     IMG_NAPI_CHECK_BUILD_ERROR(IMG_IS_OK(status),
-        BuildContextError(env, context->error, "fail to napi_instanceof!", ERROR), context->status = ERROR, nullptr);
+        BuildContextError(env, context->error, "fail to napi_instanceof!", ERROR), context->status = ERROR, ERROR);
     if (isPixelMap) {
-        return CreateNativeObjByPixelMap(env, argv[NUM_0], argv[NUM_1], context);
+        return GetNativePixelMapInfo(env, argv[NUM_0], argv[NUM_1], context);
     }
     IMG_NAPI_CHECK_BUILD_ERROR(false,
         BuildContextError(env, context->error, "wrong arguments!", ERR_IMAGE_INVALID_PARAMETER),
-        context->status = ERR_IMAGE_INVALID_PARAMETER, nullptr);
-    return nullptr;
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
 }
 
-static napi_value DoInitAfter(napi_env env,
-                              napi_value exports,
-                              napi_value constructor,
-                              size_t property_count,
-                              const napi_property_descriptor* properties)
+static napi_value DoInitAfter(napi_env env, napi_value exports, napi_value constructor, 
+                              size_t property_count, const napi_property_descriptor* properties)
 {
     napi_value global = nullptr;
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(
@@ -301,7 +307,7 @@ static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType sr
     asyncContext->status = SUCCESS;
     asyncContext->srcFormatType = srcFormatType;
     asyncContext->destFormatType = destFormatType;
-    std::shared_ptr<ImageFormatConvert> nImgFmtCvtObj = CreateNativeImageFormatConvert(env, info, asyncContext.get());
+    uint32_t ret = GetNativeConvertInfo(env, info, asyncContext.get());
     napi_create_promise(env, &(asyncContext->deferred), &result);
 
     IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->error == nullptr,
@@ -309,13 +315,12 @@ static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType sr
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
         GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
         result);
-    IMG_NAPI_CHECK_BUILD_ERROR(nImgFmtCvtObj != nullptr,
+    IMG_NAPI_CHECK_BUILD_ERROR(ret != SUCCESS,
         BuildContextError(env, asyncContext->error, "fail to create native convert object!",
         IMAGE_RESULT_CREATE_FORMAT_CONVERT_FAILED),
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
         GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
         result);
-    asyncContext->nImgFmtCvt = nImgFmtCvtObj;
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, workName.c_str(),
     ConvertWithPixelMapExec, ConvertWithPixelMapComplete, asyncContext, asyncContext->work);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
@@ -327,21 +332,11 @@ ImageFormatConvertNapi::ImageFormatConvertNapi():env_(nullptr)
 {
 }
 
-ImageFormatConvertNapi::~ImageFormatConvertNapi()
-{
-    if (!isRelease) {
-        if (nImgFmtCvt_ != nullptr) {
-            nImgFmtCvt_ = nullptr;
-        }
-        isRelease = true;
-    }
-}
-
 napi_value ImageFormatConvertNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
-        DECLARE_NAPI_FUNCTION("yuvToRgb", YUVToRGB),
         DECLARE_NAPI_FUNCTION("rgbToYuv", RGBToYUV),
+        DECLARE_NAPI_FUNCTION("yuvToRgb", YUVToRGB),
     };
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createImageConvert", CreateImageConvert),
@@ -407,7 +402,6 @@ napi_value ImageFormatConvertNapi::Constructor(napi_env env, napi_callback_info 
         std::unique_ptr<ImageFormatConvertNapi> pImgFmtCvtNapi = std::make_unique<ImageFormatConvertNapi>();
         if (pImgFmtCvtNapi != nullptr) {
             pImgFmtCvtNapi->env_ = env;
-            pImgFmtCvtNapi->nImgFmtCvt_ = nullptr;
             status = napi_wrap(env, thisVar, reinterpret_cast<void *>(pImgFmtCvtNapi.get()),
                                ImageFormatConvertNapi::Destructor, nullptr, nullptr);
             if (status == napi_ok) {
@@ -424,7 +418,6 @@ napi_value ImageFormatConvertNapi::Constructor(napi_env env, napi_callback_info 
 
 void ImageFormatConvertNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
 {
-    reinterpret_cast<ImageFormatConvertNapi *>(nativeObject)->nImgFmtCvt_ = nullptr;
     HiLog::Debug(LABEL, "ImageFormatConvertNapi::Destructor");
 }
 
