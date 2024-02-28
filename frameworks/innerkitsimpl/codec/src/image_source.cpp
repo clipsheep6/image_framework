@@ -24,6 +24,7 @@
 #if !defined(_WIN32) && !defined(_APPLE)
 #include "hitrace_meter.h"
 #include "image_trace.h"
+#include "image_data_statistics.h"
 #endif
 #include "file_source_stream.h"
 #include "image/abs_image_decoder.h"
@@ -159,7 +160,7 @@ ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
 uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
 {
     IMAGE_LOGD("[ImageSource]get supported image type.");
-
+    ImageDataStatistics imageDataStatistics("[ImageSource]GetSupportedFormats.");
     formats.clear();
     vector<ClassInfo> classInfos;
     uint32_t ret = pluginServer_.PluginServerGetClassInfo<AbsImageDecoder>(AbsImageDecoder::SERVICE_DEFAULT,
@@ -217,6 +218,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is,
     const SourceOptions &opts, uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with stream.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with stream.");
     return DoImageSourceCreate([&is]() {
         auto stream = IstreamSourceStream::CreateSourceStream(move(is));
         if (stream == nullptr) {
@@ -230,7 +232,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
     const SourceOptions &opts, uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with buffer.");
-
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with buffer.");
     if (data == nullptr || size == 0) {
         IMAGE_LOGE("[ImageSource]parameter error.");
         errorCode = ERR_MEDIA_INVALID_PARAM;
@@ -252,6 +254,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
                                                        uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with pathName.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with pathName." \
+        "width %d, height %d, format %d", opts.size.width, opts.size.height, opts.pixelFormat);
     if (pathName.size() == SIZE_ZERO) {
         IMAGE_LOGE("[ImageSource]parameter error.");
         return nullptr;
@@ -273,6 +277,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const int fd, const Sourc
                                                        uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with fd.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with fd.width %d, height %d, format %d",
+        opts.size.width, opts.size.height, opts.pixelFormat);
     return DoImageSourceCreate([&fd]() {
         auto streamPtr = FileSourceStream::CreateSourceStream(fd);
         if (streamPtr == nullptr) {
@@ -286,6 +292,8 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const int fd, int32_t off
     int32_t length, const SourceOptions &opts, uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with fd offset and length.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with fd offset and length." \
+        "width %d, height %d, format %d", opts.size.width, opts.size.height, opts.pixelFormat);
     return DoImageSourceCreate([&fd, offset, length]() {
         auto streamPtr = FileSourceStream::CreateSourceStream(fd, offset, length);
         if (streamPtr == nullptr) {
@@ -299,6 +307,8 @@ unique_ptr<ImageSource> ImageSource::CreateIncrementalImageSource(const Incremen
                                                                   uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create incremental ImageSource.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateIncrementalImageSource width %d, height %d, format %d",
+        opts.sourceOptions.size.width, opts.sourceOptions.size.height, opts.sourceOptions.pixelFormat);
     auto sourcePtr = DoImageSourceCreate([&opts]() {
         auto streamPtr = IncrementalSourceStream::CreateSourceStream(opts.incrementalMode);
         if (streamPtr == nullptr) {
@@ -674,6 +684,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource] CreatePixelMap");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     opts_ = opts;
     bool useSkia = opts_.sampleSize != 1;
@@ -750,6 +761,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         }
     }
 
+    imageDataStatistics.AddTitle("width: %{public}u, height: %{public}u, format: %{public}u, colorspace: %{public}u.",
+        context.info.size.width, context.info.size.height, context.info.pixelFormat, context.info.colorSpace);
+
     errorCode = mainDecoder_->Decode(index, context);
     if (context.ifPartialOutput) {
         for (auto partialListener : decodeListeners_) {
@@ -803,12 +817,14 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     }
     // not ext decode, dump pixelMap while decoding svg here
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
+    
     return pixelMap;
 }
 
 unique_ptr<IncrementalPixelMap> ImageSource::CreateIncrementalPixelMap(uint32_t index, const DecodeOptions &opts,
                                                                        uint32_t &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource] CreateIncrementalPixelMap.");
     IncrementalPixelMap *incPixelMapPtr = new (std::nothrow) IncrementalPixelMap(index, opts, this);
     if (incPixelMapPtr == nullptr) {
         IMAGE_LOGE("[ImageSource]create the incremental pixel map unique_ptr fail.");
@@ -923,6 +939,7 @@ void ImageSource::DetachIncrementalDecoding(PixelMap &pixelMap)
 
 uint32_t ImageSource::UpdateData(const uint8_t *data, uint32_t size, bool isCompleted)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]UpdateData.");
     if (sourceStreamPtr_ == nullptr) {
         IMAGE_LOGE("[ImageSource]image source update data, source stream is null.");
         return ERR_IMAGE_INVALID_PARAMETER;
@@ -942,6 +959,7 @@ DecodeEvent ImageSource::GetDecodeEvent()
 uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
 {
     ImageTrace imageTrace("GetImageInfo by index");
+    ImageDataStatistics imageDataStatistics("[ImageSource]GetImageInfo.");
     uint32_t ret = SUCCESS;
     std::unique_lock<std::mutex> guard(decodingMutex_);
     auto iter = GetValidImageStatus(index, ret);
@@ -964,6 +982,7 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const std::string &path)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]ModifyImageProperty by path.");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -982,6 +1001,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const int fd)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]ModifyImageProperty by fd.");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -1000,6 +1020,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, uint8_t *data, uint32_t size)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]ModifyImageProperty by data.");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -1035,6 +1056,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
 
 uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]GetImagePropertyString.");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -2244,6 +2266,7 @@ bool ImageSource::GetASTCInfo(const uint8_t *fileData, size_t fileSize, ASTCInfo
 unique_ptr<vector<unique_ptr<PixelMap>>> ImageSource::CreatePixelMapList(const DecodeOptions &opts,
     uint32_t &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreatePixelMapList.");
     DumpInputData();
     auto frameCount = GetFrameCount(errorCode);
     if (errorCode != SUCCESS) {
@@ -2268,6 +2291,7 @@ unique_ptr<vector<unique_ptr<PixelMap>>> ImageSource::CreatePixelMapList(const D
 
 unique_ptr<vector<int32_t>> ImageSource::GetDelayTime(uint32_t &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]GetDelayTime.");
     auto frameCount = GetFrameCount(errorCode);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]GetDelayTime get frame sum error.");
@@ -2303,6 +2327,7 @@ unique_ptr<vector<int32_t>> ImageSource::GetDelayTime(uint32_t &errorCode)
 
 uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]GetFrameCount.");
     uint32_t frameCount = GetSourceInfo(errorCode).topLevelImageNum;
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]GetFrameCount get source info error.");

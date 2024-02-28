@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include "image_log.h"
+#include "image_data_statistics.h"
 #include "image_system_properties.h"
 #include "image_trace.h"
 #include "image_type_converter.h"
@@ -243,6 +244,7 @@ static void MakePixelMap(void *dstPixels, int fd, std::unique_ptr<PixelMap> &dst
 unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLength, BUILD_PARAM &info,
     const InitializationOptions &opts, int &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[PixelMap]Create.width %d, height %d", info.stride_, opts.size.height);
     int offset = info.offset_;
     int32_t stride = info.stride_;
     bool useCustomFormat = info.flag_;
@@ -258,8 +260,7 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
     if (useCustomFormat) {
         format = ((opts.srcPixelFormat == PixelFormat::UNKNOWN) ? PixelFormat::BGRA_8888 : opts.srcPixelFormat);
     }
-    ImageInfo srcImageInfo =
-        MakeImageInfo(stride, opts.size.height, format, AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL);
+    ImageInfo srcImageInfo = MakeImageInfo(stride, opts.size.height, format, AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL);
     PixelFormat dstPixelFormat = (opts.pixelFormat == PixelFormat::UNKNOWN ? PixelFormat::RGBA_8888 : opts.pixelFormat);
     AlphaType dstAlphaType =
         (opts.alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN) ? AlphaType::IMAGE_ALPHA_TYPE_PREMUL : opts.alphaType;
@@ -316,6 +317,8 @@ void PixelMap::ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataS
 
 void *PixelMap::AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId)
 {
+    ImageDataStatistics imageDataStatistics("[PixelMap]AllocSharedMemory.");
+    imageDataStatistics.SetRequestMemory(bufferSize);
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     std::string name = "PixelMap RawData, uniqueId: " + std::to_string(getpid()) + '_' + std::to_string(uniqueId);
     fd = AshmemCreate(name.c_str(), bufferSize);
@@ -790,6 +793,7 @@ uint32_t PixelMap::SetRowDataSizeForImageInfo(ImageInfo info)
 
 uint32_t PixelMap::SetImageInfo(ImageInfo &info, bool isReused)
 {
+    ImageDataStatistics imageDataStatistics("[PixelMap]SetImageInfo.");
     if (info.size.width <= 0 || info.size.height <= 0) {
         IMAGE_LOGE("pixel map image info invalid.");
         return ERR_IMAGE_DATA_ABNORMAL;
@@ -826,6 +830,8 @@ uint32_t PixelMap::SetImageInfo(ImageInfo &info, bool isReused)
         FreePixelMap();
     }
     imageInfo_ = info;
+    imageDataStatistics.AddTitle("width = %d, high = %d, format = %d, colorsapce = %d, type = %d, density = %d",
+        info.size.width, info.size.height, info.pixelFormat, info.colorSpace, info.alphaType, info.baseDensity);
     return SUCCESS;
 }
 
@@ -1257,6 +1263,7 @@ uint32_t PixelMap::ResetConfig(const Size &size, const PixelFormat &format)
 
 bool PixelMap::SetAlphaType(const AlphaType &alphaType)
 {
+    ImageDataStatistics imageDataStatistics("[PixelMap]SetAlphaType.");
     AlphaType type = ImageUtils::GetValidAlphaTypeByFormat(alphaType, imageInfo_.pixelFormat);
     if (type == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN) {
         IMAGE_LOGE("SetAlphaType Failed to get validate alpha type.");
@@ -2390,6 +2397,7 @@ static int8_t GetAlphaIndex(const PixelFormat& pixelFormat)
 
 uint32_t PixelMap::SetAlpha(const float percent)
 {
+    ImageDataStatistics imageDataStatistics("[PixelMap]SetAlpha.");
     auto alphaType = GetAlphaType();
     if (alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN ||
         alphaType == AlphaType::IMAGE_ALPHA_TYPE_OPAQUE) {
@@ -2515,6 +2523,15 @@ static void GenSrcTransInfo(SkTransInfo &srcInfo, ImageInfo &imageInfo, uint8_t*
 }
 #endif
 
+void PixelMap::TakeGenSrcTransInfo(SkTransInfo &srcInfo, ImageInfo &imageInfo)
+{
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    GenSrcTransInfo(srcInfo, imageInfo, this, ToSkColorSpace(this));
+#else
+    GenSrcTransInfo(srcInfo, imageInfo, data_, ToSkColorSpace(this));
+#endif
+}
+
 static bool GendstTransInfo(SkTransInfo &srcInfo, SkTransInfo &dstInfo, SkMatrix &matrix,
     TransMemoryInfo &memoryInfo)
 {
@@ -2632,6 +2649,7 @@ bool PixelMap::DoTranslation(TransInfos &infos, const AntiAliasingOption &option
 void PixelMap::scale(float xAxis, float yAxis)
 {
     ImageTrace imageTrace("PixelMap scale");
+    ImageDataStatistics imageDataStatistics("[PixelMap]scale");
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2641,7 +2659,8 @@ void PixelMap::scale(float xAxis, float yAxis)
 
 void PixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
 {
-    ImageTrace imageTrace("PixelMap scale");
+    ImageTrace imageTrace("PixelMap scale with option");
+    ImageDataStatistics imageDataStatistics("[PixelMap]scale with option");
     TransInfos infos;
     infos.matrix.setScale(xAxis, yAxis);
     if (!DoTranslation(infos, option)) {
@@ -2668,6 +2687,7 @@ bool PixelMap::resize(float xAxis, float yAxis)
 void PixelMap::translate(float xAxis, float yAxis)
 {
     ImageTrace imageTrace("PixelMap translate");
+    ImageDataStatistics imageDataStatistics("[PixelMap]translate");
     TransInfos infos;
     infos.matrix.setTranslate(xAxis, yAxis);
     if (!DoTranslation(infos)) {
@@ -2678,6 +2698,7 @@ void PixelMap::translate(float xAxis, float yAxis)
 void PixelMap::rotate(float degrees)
 {
     ImageTrace imageTrace("PixelMap rotate");
+    ImageDataStatistics imageDataStatistics("[PixelMap]rotate");
     TransInfos infos;
     infos.matrix.setRotate(degrees);
     if (!DoTranslation(infos)) {
@@ -2688,6 +2709,7 @@ void PixelMap::rotate(float degrees)
 void PixelMap::flip(bool xAxis, bool yAxis)
 {
     ImageTrace imageTrace("PixelMap flip");
+    ImageDataStatistics imageDataStatistics("[PixelMap]flip");
     if (xAxis == false && yAxis == false) {
         return;
     }
@@ -2696,23 +2718,17 @@ void PixelMap::flip(bool xAxis, bool yAxis)
 
 uint32_t PixelMap::crop(const Rect &rect)
 {
+    ImageDataStatistics imageDataStatistics("[PixelMap]crop");
     ImageInfo imageInfo;
     GetImageInfo(imageInfo);
-
     SkTransInfo src;
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
-    GenSrcTransInfo(src, imageInfo, this, ToSkColorSpace(this));
-#else
-    GenSrcTransInfo(src, imageInfo, data_, ToSkColorSpace(this));
-#endif
-
+    TakeGenSrcTransInfo(src, imageInfo);
     SkTransInfo dst;
     SkIRect dstIRect = SkIRect::MakeXYWH(rect.left, rect.top, rect.width, rect.height);
     dst.r = SkRect::Make(dstIRect);
     if (dst.r == src.r) {
         return SUCCESS;
     }
-
     if (!src.r.contains(dst.r)) {
         IMAGE_LOGE("Invalid crop rect");
         return ERR_IMAGE_CROP;
