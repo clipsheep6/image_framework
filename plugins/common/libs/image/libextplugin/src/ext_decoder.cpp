@@ -20,7 +20,9 @@
 
 #include "ext_pixel_convert.h"
 #include "image_log.h"
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "hisysevent.h"
+#endif
 #include "image_system_properties.h"
 #include "image_utils.h"
 #include "media_errors.h"
@@ -66,7 +68,9 @@ namespace {
 namespace OHOS {
 namespace ImagePlugin {
 using namespace Media;
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 using namespace OHOS::HDI::Base;
+#endif
 using namespace std;
 const static string DEFAULT_EXIF_VALUE = "default_exif_value";
 const static string CODEC_INITED_KEY = "CodecInited";
@@ -133,6 +137,10 @@ static const map<SkEncodedImageFormat, string> FORMAT_NAME = {
     { SkEncodedImageFormat::kASTC, "" },
     { SkEncodedImageFormat::kDNG, "" },
     { SkEncodedImageFormat::kHEIF, "image/heif" },
+};
+
+static const map<PlPixelFormat, JpegYuvFmt> PLPIXEL_FORMAT_YUV_JPG_MAP = {
+    { PlPixelFormat::NV21, JpegYuvFmt::OutFmt_NV21 }, { PlPixelFormat::NV12, JpegYuvFmt::OutFmt_NV12 }
 };
 
 static void SetDecodeContextBuffer(DecodeContext &context,
@@ -290,6 +298,7 @@ bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
     return true;
 }
 
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) {
     if (info_.isEmpty() && !DecodeHeader()) {
         IMAGE_LOGE("DecodeHeader failed in GetHardwareScaledSize!");
@@ -326,6 +335,7 @@ bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) 
     }
     return true;
 }
+#endif
 
 bool ExtDecoder::IsSupportScaleOnDecode()
 {
@@ -454,10 +464,20 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     }
     auto desireColor = ConvertToColorType(opts.desiredPixelFormat, info.pixelFormat);
     auto desireAlpha = ConvertToAlphaType(opts.desireAlphaType, info.alphaType);
+
+    if (codec_) {
+        SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+        if (skEncodeFormat == SkEncodedImageFormat::kJPEG && IsYuv420Format(opts.desiredPixelFormat)) {
+            info.pixelFormat = opts.desiredPixelFormat;
+            desiredSizeYuv_.width = std::abs((int)opts.desiredSize.width);
+            desiredSizeYuv_.height = std::abs((int)opts.desiredSize.height);
+        }
+    }
     // SK only support low down scale
     int dstWidth = opts.desiredSize.width;
     int dstHeight = opts.desiredSize.height;
     float scale = ZERO;
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     if (IsSupportHardwareDecode()) {
         // get dstInfo for hardware decode
         if (IsLowDownScale(opts.desiredSize, info_) && GetHardwareScaledSize(dstWidth, dstHeight, scale)) {
@@ -470,6 +490,7 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         dstWidth = opts.desiredSize.width;
         dstHeight = opts.desiredSize.height;
     }
+#endif
     if (IsLowDownScale(opts.desiredSize, info_) && GetScaledSize(dstWidth, dstHeight, scale)) {
         dstInfo_ = SkImageInfo::Make(dstWidth, dstHeight, desireColor, desireAlpha,
             getDesiredColorSpace(info_, opts));
@@ -543,6 +564,33 @@ uint32_t ExtDecoder::PreDecodeCheck(uint32_t index)
         return SUCCESS;
 }
 
+uint32_t ExtDecoder::PreDecodeCheckYuv(uint32_t index, PlPixelFormat desiredFormat)
+{
+    uint32_t ret = PreDecodeCheck(index);
+    if (ret != SUCCESS) {
+        return ret;
+    }
+    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+    if (skEncodeFormat != SkEncodedImageFormat::kJPEG) {
+        IMAGE_LOGE("PreDecodeCheckYuv, not support to create 420 data from not jpeg");
+        return ERR_IMAGE_DESIRED_PIXELFORMAT_UNSUPPORTED;
+    }
+    if (stream_ == nullptr) {
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    auto iter = PLPIXEL_FORMAT_YUV_JPG_MAP.find(desiredFormat);
+    if (iter == PLPIXEL_FORMAT_YUV_JPG_MAP.end()) {
+        IMAGE_LOGE("PreDecodeCheckYuv desiredFormat format not valid");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    uint32_t jpegBufferSize = stream_->GetStreamSize();
+    if (jpegBufferSize == 0) {
+        IMAGE_LOGE("PreDecodeCheckYuv jpegBufferSize 0");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    return SUCCESS;
+}
+
 bool ExtDecoder::ResetCodec()
 {
     codec_ = nullptr;
@@ -571,6 +619,11 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     if (res != SUCCESS) {
         return res;
     }
+    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+    bool isOutputYuv420Format = IsYuv420Format(context.info.pixelFormat);
+    if (isOutputYuv420Format && skEncodeFormat == SkEncodedImageFormat::kJPEG) {
+        return DecodeToYuv420(index, context);
+    }
     uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
     uint8_t *dstBuffer = nullptr;
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
@@ -579,7 +632,6 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         byteCount = byteCount / NUM_4 * NUM_3;
     }
     if (context.pixelsBuffer.buffer == nullptr) {
-        IMAGE_LOGD("Decode alloc byte count.");
         res = SetContextPixelsBuffer(byteCount, context);
         if (res != SUCCESS) {
             return res;
@@ -591,11 +643,12 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     dstOptions_.fFrameIndex = index;
     DebugInfo(info_, dstInfo_, dstOptions_);
     uint64_t rowStride = dstInfo_.minRowBytes64();
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     if (context.allocatorType == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
         rowStride = sbBuffer->GetStride();
     }
-    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+#endif
     ReportImageType(skEncodeFormat);
     IMAGE_LOGD("decode format %{public}d", skEncodeFormat);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
@@ -603,19 +656,105 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     }
     SkCodec::Result ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_);
     if (ret != SkCodec::kSuccess && ResetCodec()) {
-        // Try again
-        ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_);
+        ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_); // Try again
     }
     if (ret != SkCodec::kSuccess) {
         IMAGE_LOGE("Decode failed, get pixels failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
-        return RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(),
-            static_cast<uint8_t*>(context.pixelsBuffer.buffer),
+        return RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), static_cast<uint8_t*>(context.pixelsBuffer.buffer),
             byteCount, dstInfo_.width() * dstInfo_.height());
     }
     return SUCCESS;
+}
+
+uint32_t ExtDecoder::ReadJpegData(uint8_t* jpegBuffer, uint32_t jpegBufferSize)
+{
+    if (stream_ == nullptr) {
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    if (jpegBuffer == nullptr || jpegBufferSize == 0) {
+        IMAGE_LOGE("ExtDecoder::ReadJpegData wrong parameter");
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
+    uint32_t savedPosition = stream_->Tell();
+    if (!stream_->Seek(0)) {
+        IMAGE_LOGE("ExtDecoder::ReadJpegData seek stream failed");
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
+    uint32_t readSize = 0;
+    bool result = stream_->Read(jpegBufferSize, jpegBuffer, jpegBufferSize, readSize);
+    if (!stream_->Seek(savedPosition)) {
+        IMAGE_LOGE("ExtDecoder::ReadJpegData seek stream failed");
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
+    if (!result || readSize != jpegBufferSize) {
+        IMAGE_LOGE("ReadJpegData read image data failed");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    return SUCCESS;
+}
+
+JpegYuvFmt ExtDecoder::GetJpegYuvOutFmt(PlPixelFormat desiredFormat)
+{
+    auto iter = PLPIXEL_FORMAT_YUV_JPG_MAP.find(desiredFormat);
+    if (iter == PLPIXEL_FORMAT_YUV_JPG_MAP.end()) {
+        return JpegYuvFmt::OutFmt_NV12;
+    } else {
+        return iter->second;
+    }
+}
+
+uint32_t ExtDecoder::DecodeToYuv420(uint32_t index, DecodeContext &context)
+{
+    uint32_t res = PreDecodeCheckYuv(index, context.info.pixelFormat);
+    if (res != SUCCESS) {
+        return res;
+    }
+    uint32_t jpegBufferSize = stream_->GetStreamSize();
+    if (jpegBufferSize == 0) {
+        IMAGE_LOGE("DecodeToYuv420 jpegBufferSize 0");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    uint8_t* jpegBuffer = NULL;
+    if (stream_->GetStreamType() == ImagePlugin::BUFFER_SOURCE_TYPE) {
+        jpegBuffer = stream_->GetDataPtr();
+    }
+    std::unique_ptr<uint8_t[]> jpegBufferPtr;
+    if (jpegBuffer == nullptr) {
+        jpegBufferPtr = std::make_unique<uint8_t[]>(jpegBufferSize);
+        jpegBuffer = jpegBufferPtr.get();
+        res = ReadJpegData(jpegBuffer, jpegBufferSize);
+        if (res != SUCCESS) {
+            return res;
+        }
+    }
+    JpegYuvFmt decodeOutFormat = GetJpegYuvOutFmt(context.info.pixelFormat);
+    PlSize jpgSize;
+    jpgSize.width = info_.width();
+    jpgSize.height = info_.height();
+    PlSize desiredSize = desiredSizeYuv_;
+    bool bRet = JpegDecoderYuv::GetScaledSize(jpgSize.width, jpgSize.height, desiredSize.width, desiredSize.height);
+    if (!bRet || desiredSize.width == 0 || desiredSize.height == 0) {
+        IMAGE_LOGE("DecodeToYuv420 GetScaledSize failed");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    uint64_t yuvBufferSize = JpegDecoderYuv::GetYuvOutSize(desiredSize.width, desiredSize.height);
+    res = SetContextPixelsBuffer(yuvBufferSize, context);
+    if (res != SUCCESS) {
+        IMAGE_LOGE("ExtDecoder::DecodeToYuv420 SetContextPixelsBuffer failed");
+        return res;
+    }
+    uint8_t *yuvBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
+    std::unique_ptr<JpegDecoderYuv> jpegYuvDecoder_ = std::make_unique<JpegDecoderYuv>();
+    JpegDecoderYuvParameter para = {jpgSize.width, jpgSize.height, jpegBuffer, jpegBufferSize,
+        yuvBuffer, yuvBufferSize, decodeOutFormat, desiredSize.width, desiredSize.height};
+    int retDecode = jpegYuvDecoder_->DoDecode(context, para);
+    if (retDecode != JpegYuvDecodeError_Success) {
+        IMAGE_LOGE("DecodeToYuv420 DoDecode return %{public}d", retDecode);
+    }
+    return retDecode == JpegYuvDecodeError_Success ? SUCCESS : ERR_IMAGE_DECODE_FAILED;
 }
 
 static std::string GetFormatStr(SkEncodedImageFormat format)
@@ -656,6 +795,7 @@ void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
 {
     IMAGE_LOGD("ExtDecoder::ReportImageType format %{public}d start", skEncodeFormat);
     static constexpr char IMAGE_FWK_UE[] = "IMAGE_FWK_UE";
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     int32_t ret = HiSysEventWrite(
             IMAGE_FWK_UE,
             "DECODED_IMAGE_TYPE_STATISTICS",
@@ -668,6 +808,7 @@ void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
         IMAGE_LOGD("ExtDecoder::ReportImageType failed, ret = %{public}d", ret);
         return;
     }
+#endif
     IMAGE_LOGD("ExtDecoder::ReportImageType format %{public}d success", skEncodeFormat);
 }
 #ifdef JPEG_HW_DECODE_ENABLE
@@ -1058,16 +1199,17 @@ static uint32_t ProcessWithStreamData(InputDataStream *input,
         return Media::ERR_MEDIA_INVALID_VALUE;
     }
 
-    if (input->GetDataPtr() == nullptr) {
-        auto tmpBuffer = std::make_unique<uint8_t[]>(inputSize);
-        auto savePos = input->Tell();
-        input->Seek(SIZE_ZERO);
-        uint32_t readSize = 0;
-        input->Read(inputSize, tmpBuffer.get(), inputSize, readSize);
-        input->Seek(savePos);
-        return process(tmpBuffer.get(), inputSize);
+    auto tmpBuffer = std::make_unique<uint8_t[]>(inputSize);
+    auto savePos = input->Tell();
+    input->Seek(SIZE_ZERO);
+    uint32_t readSize = 0;
+    bool ret = input->Read(inputSize, tmpBuffer.get(), inputSize, readSize);
+    input->Seek(savePos);
+    if (!ret) {
+        IMAGE_LOGE("InputDataStream read failed.");
+        return Media::ERR_IMAGE_DATA_ABNORMAL;
     }
-    return process(input->GetDataPtr(), inputSize);
+    return process(tmpBuffer.get(), inputSize);
 }
 
 static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
@@ -1265,6 +1407,14 @@ bool ExtDecoder::IsSupportHardwareDecode() {
     int height = info_.height();
     return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
         && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
+}
+
+bool ExtDecoder::IsYuv420Format(PlPixelFormat format)
+{
+    if (format == PlPixelFormat::NV12 || format == PlPixelFormat::NV21) {
+        return true;
+    }
+    return false;
 }
 } // namespace ImagePlugin
 } // namespace OHOS

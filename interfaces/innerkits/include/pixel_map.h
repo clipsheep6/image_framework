@@ -80,6 +80,13 @@ typedef struct BuildParam {
     bool flag_ = true;
 } BUILD_PARAM;
 
+struct PixelMemInfo {
+    uint8_t* base = nullptr;
+    void* context = nullptr;
+    int32_t bufferSize = 0;
+    AllocatorType allocatorType = AllocatorType::SHARE_MEM_ALLOC;
+};
+
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
 public:
     static std::atomic<uint32_t> currentId;
@@ -217,7 +224,14 @@ public:
     NATIVEEXPORT static PixelMap *Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error);
     NATIVEEXPORT virtual bool EncodeTlv(std::vector<uint8_t> &buff) const;
     NATIVEEXPORT static PixelMap *DecodeTlv(std::vector<uint8_t> &buff);
-
+    NATIVEEXPORT virtual void SetImageYUVInfo(YUVDataInfo &yuvinfo)
+    {
+        yuvDataInfo_ = yuvinfo;
+    }
+    NATIVEEXPORT virtual void GetImageYUVInfo(YUVDataInfo &yuvInfo) const
+    {
+        yuvInfo = yuvDataInfo_;
+    }
 #ifdef IMAGE_COLORSPACE_FLAG
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----begin----
     NATIVEEXPORT void InnerSetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
@@ -255,15 +269,6 @@ public:
     NATIVEEXPORT void SetAstc(bool isAstc)
     {
         isAstc_ = isAstc;
-    }
-
-    NATIVEEXPORT virtual void SetImageYUVInfo(YUVDataInfo &yuvinfo)
-    {
-        yuvDataInfo_ = yuvinfo;
-    }
-    NATIVEEXPORT virtual void GetImageYUVInfo(YUVDataInfo &yuvInfo) const
-    {
-        yuvInfo = yuvDataInfo_;
     }
 
 private:
@@ -308,7 +313,11 @@ private:
     void ReleaseSharedMemory(void *addr, void *context, uint32_t size);
     static void ReleaseBuffer(AllocatorType allocatorType, int fd, uint64_t dataSize, void **buffer);
     static void *AllocSharedMemory(const uint64_t bufferSize, int &fd, uint32_t uniqueId);
-    bool WriteInfoToParcel(Parcel &parcel) const;
+    bool WritePropertiesToParcel(Parcel &parcel) const;
+    bool ReadPropertiesFromParcel(Parcel &parcel, ImageInfo &imgInfo, AllocatorType &allocatorType,
+                                  int32_t &bufferSize, PIXEL_MAP_ERR &error);
+    bool WriteMemInfoToParcel(Parcel &parcel, const int32_t &bufferSize) const;
+    static bool ReadMemInfoFromParcel(Parcel &parcel, PixelMemInfo &pixelMemInfo, PIXEL_MAP_ERR &error);
     bool WriteTransformDataToParcel(Parcel &parcel) const;
     bool ReadTransformData(Parcel &parcel, PixelMap *pixelMap);
     bool WriteAstcRealSizeToParcel(Parcel &parcel) const;
@@ -331,6 +340,7 @@ private:
     }
 
     static void ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size);
+    static bool UpdatePixelMapMemInfo(PixelMap *pixelMap, ImageInfo &imgInfo, PixelMemInfo &pixelMemInfo);
     bool WriteImageData(Parcel &parcel, size_t size) const;
     bool WriteAshmemDataToParcel(Parcel &parcel, size_t size) const;
     static uint8_t *ReadImageData(Parcel &parcel, int32_t size);
@@ -351,7 +361,7 @@ private:
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
     void UpdateImageInfo();
 
- protected:
+protected:
     void SetEditable(bool editable)
     {
         editable_ = editable;
@@ -366,7 +376,6 @@ private:
     void *context_ = nullptr;
     uint32_t pixelsSize_ = 0;
     CustomFreePixelMap custFreePixelMap_ = nullptr;
-    YUVDataInfo yuvDataInfo_;
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
 #else
@@ -393,6 +402,7 @@ private:
 #else
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
+    YUVDataInfo yuvDataInfo_;
 };
 } // namespace Media
 } // namespace OHOS
