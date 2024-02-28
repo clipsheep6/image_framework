@@ -156,3 +156,4 @@ ImageNapi* ImageNapi_Unwrap(napi_env env, napi_value value)
 
 //1
 //2
+//3
