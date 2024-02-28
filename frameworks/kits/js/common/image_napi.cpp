@@ -452,15 +452,10 @@ napi_value ImageNapi::JsGetFormat(napi_env env, napi_callback_info info)
 napi_value ImageNapi::JsGetTimestamp(napi_env env, napi_callback_info info)
 {
     napi_value result = nullptr;
-
+    
     IMAGE_FUNCTION_IN();
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
-    if (context != nullptr && context->napi != nullptr) {
-        const int64_t TIMESTAMP = 0;
-        napi_create_int64(env, TIMESTAMP, &result);
-        return result;
-    }
     if (context == nullptr || context->image == nullptr) {
         IMAGE_ERR("context is nullptr or Image native is nullptr");
         return result;
