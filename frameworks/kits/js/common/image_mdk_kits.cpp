@@ -157,3 +157,7 @@ ImageNapi* ImageNapi_Unwrap(napi_env env, napi_value value)
 //1
 //2
 //3
+<<<<<<< HEAD
+//4
+=======
+>>>>>>> 381cd2ada71041b8dfcd6ddd0aed1eace41d31d6
