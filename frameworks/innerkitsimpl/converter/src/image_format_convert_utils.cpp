@@ -610,7 +610,6 @@ bool YU12ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         src_stride_u, srcBuffer + frameSize + ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2),
         src_stride_v, *destBuffer, width, *destBuffer + width*height, dest_stride_uv, width, height);
 #else
-    uint8_t *yDest = *destBuffer;
     uint8_t *uvDest = *destBuffer + frameSize;
     int32_t uvSize = ((width + NUM_1) / NUM_2) * ((height + NUM_1) / NUM_2);
     memcpy_s(*destBuffer, frameSize, srcBuffer, frameSize);
