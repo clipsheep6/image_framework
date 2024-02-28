@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//1
+
 #include "image_mdk_kits.h"
 
 #include <map>
@@ -153,3 +153,6 @@ ImageNapi* ImageNapi_Unwrap(napi_env env, napi_value value)
 #endif
 }  // namespace Media
 }  // namespace OHOS
+
+//1
+//2
