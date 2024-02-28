@@ -18,6 +18,7 @@
 
 #include "common_utils.h"
 #include "image_format_convert.h"
+#include "napi/native_api.h"
 
 namespace OHOS {
 namespace Media {
@@ -26,12 +27,14 @@ namespace Media {
 extern "C" {
 #endif
 typedef struct ImageFormatConvertArgs {
-    PixelMap *srcPixelMap;
-    PixelMap *destPixelMap;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    std::shared_ptr<PixelMap> destPixelMap = nullptr;
     PixelFormat destPixelFormat;
-    ColorSpace colorSpace;
     int32_t srcFormatType;
     int32_t destFormatType;
+    napi_env env;
+    napi_value pixelMapValue;
+    napi_value *result;
 } ImageFormatCovnertArgs;
 
 enum {
@@ -41,9 +44,9 @@ enum {
 };
 
 enum {
-    CTX_FUNC_IMAGE_CONVERT_CREATE,
     CTX_FUNC_IMAGE_CONVERT_EXEC,
-    CTX_FUNC_IMAGE_CONVERT_RELEASE
+    CTX_FUNC_IMAGE_CONVERT_JS_TO_C_PIXEL_MAP,
+    CTX_FUNC_IMAGE_CONVERT_C_TO_JS_PIXEL_MAP
 };
 
 int32_t ImageConvertNativeCall(int32_t mode, ImageFormatConvertArgs *args);
