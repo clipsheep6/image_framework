@@ -98,7 +98,6 @@ uint32_t ImageFormatConvert::ConvertImageFormat(const ConvertDataInfo &srcDataIn
 uint32_t ImageFormatConvert::ConvertImageFormat(const std::shared_ptr<PixelMap> srcPiexlMap,
     std::shared_ptr<PixelMap> &destPiexlMap, PixelFormat destFormat)
 {
-    HiLog::Error(LABEL, "ConvertImageFormat ");
     if (srcPiexlMap == nullptr) {
         IMAGE_LOGD("source pixel map is null");
         return ERR_IMAGE_INVALID_PARAMETER;
