@@ -299,7 +299,7 @@ static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType sr
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
         GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
         result);
-    IMG_NAPI_CHECK_BUILD_ERROR(ret != SUCCESS,
+    IMG_NAPI_CHECK_BUILD_ERROR(ret == SUCCESS,
         BuildContextError(env, asyncContext->error, "get native convert info failed!", ret),
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
         GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
