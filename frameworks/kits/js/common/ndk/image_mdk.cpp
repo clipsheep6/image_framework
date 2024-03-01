@@ -75,18 +75,6 @@ int32_t OH_Image_Format(const ImageNative* native, int32_t* format)
 }
 
 MIDK_EXPORT
-int32_t OH_Image_GetTimestamp(const ImageNative* native, int64_t* timestamp)
-{
-    if (native == nullptr || native->napi == nullptr) {
-        return IMAGE_RESULT_JNI_ENV_ABNORMAL;
-    }
-    ImageNapiArgs args;
-    args.out64Num0 = timestamp;
-    auto res = ImageNapiNativeCtxCall(CTX_FUNC_IMAGE_TIMESTAMP, native->napi, &args);
-    return res;
-}
-
-MIDK_EXPORT
 int32_t OH_Image_GetComponent(const ImageNative* native, int32_t componentType,
     struct OhosImageComponent* componentNative)
 {
