@@ -59,20 +59,6 @@ struct ImageFormatConvertAsyncContext {
 using ImgFmtCvtAsyncCtx = ImageFormatConvertAsyncContext;
 using ImgFmtCvtAsyncCtxPtr = ImageFormatConvertAsyncContext *;
 
-static void PrintLog(std::string logStr)
-{
-    FILE *outFile = fopen("./image_format_convert_napi.log", "a");
-    if (outFile) {
-        time_t now = time(nullptr);
-        char timeBuffer[100] = {0};
-        auto timeInfo = localtime(&now);
-        strftime(timeBuffer, 100, "%Y-%m-%d %H:%M:%S", timeInfo);
-        std::string timeStr(timeBuffer);
-        std::string log = timeStr + ":" + logStr + "\n";
-        fwrite(log.c_str(), 1, log.size(), outFile);
-        fclose(outFile);
-    }
-}
 
 static bool IsMatchFormatType(FormatType type, PixelFormat format)
 {
@@ -123,7 +109,6 @@ static bool ParsePixelMap(napi_env &env, napi_value &root, std::shared_ptr<Pixel
     pixelMap = PixelMapNapi::GetPixelMap(env, root);
     if (pixelMap == nullptr) {
         HiLog::Error(LABEL, "get pixel map failed!");
-        PrintLog("get pixel map failed!");
         return false;
     }
     return true;
@@ -134,7 +119,6 @@ static bool ParsePixelMap(napi_env &env, napi_value &root, std::shared_ptr<Pixel
 static void BuildContextError(napi_env env, napi_ref &error, const std::string errMsg, const int32_t errCode)
 {
     HiLog::Error(LABEL, "%{public}s", errMsg.c_str());
-    PrintLog(errMsg);
     napi_value tmpError;
     ImageNapiUtils::CreateErrorObj(env, tmpError, errCode, errMsg);
     napi_create_reference(env, tmpError, NUM_1, &(error));
