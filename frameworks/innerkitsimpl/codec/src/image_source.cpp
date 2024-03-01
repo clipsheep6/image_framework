@@ -644,7 +644,6 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     return pixelMap;
 }
 
-
 unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
@@ -788,7 +787,6 @@ unique_ptr<IncrementalPixelMap> ImageSource::CreateIncrementalPixelMap(uint32_t 
     errorCode = SUCCESS;
     return unique_ptr<IncrementalPixelMap>(incPixelMapPtr);
 }
-
 
 uint32_t ImageSource::PromoteDecoding(uint32_t index, const DecodeOptions &opts, PixelMap &pixelMap,
                                       ImageDecodingState &state, uint8_t &decodeProgress)
@@ -2168,7 +2166,6 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
 
     return frameCount;
 }
-
 
 void ImageSource::DumpInputData(const std::string& fileSuffix)
 {
