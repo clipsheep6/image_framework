@@ -33,6 +33,8 @@
     *BasicTransformer*;
     *IncrementalSourceStream*CreateSourceStream*;
     *NativeImage*;
+    *FileImageStream*;
+    *BufferImageStream*;    
   local:
     *;
 };
