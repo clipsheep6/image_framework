@@ -72,6 +72,9 @@ ssize_t FileImageStream::Write(ImageStream& src) {
         size_t bytesWritten = Write(buffer, bytesRead);
         if (bytesWritten == static_cast<size_t>(-1)) {
             // 写入失败
+            char buf[256];        
+            strerror_r(errno, buf, sizeof(buf));
+            IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
             return -1;
         }
 
@@ -216,7 +219,9 @@ byte* FileImageStream::MMap(bool isWriteable) {
     if (fd == -1) {
         if (!Open()) {
             // 打开文件失败
-            IMAGE_LOGE("mmap: Open file failed: %{public}s", filePath.c_str());
+            char buf[256];        
+            strerror_r(errno, buf, sizeof(buf));
+            IMAGE_LOGE("mmap: Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
             return nullptr;
         }
     }
