@@ -191,4 +191,9 @@
             <option name="push" value="images/test-treeodd-444.jpg -> /data/local/tmp/image" src="res"/>
         </preparer>
     </target>
+    <target name="imagestreamtest">
+        <preparer>
+            <option name="push" value="images/test.jpg -> /data/local/tmp/image" src="res"/>
+        </preparer>
+    </target>
 </configuration>
