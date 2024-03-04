@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "image_stream.h"
+#include "file_image_stream.h"
 #include "image_log.h"
 
 #include <sys/mman.h>
@@ -27,7 +27,7 @@
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "ImageStream"
+#define LOG_TAG "FileImageStream"
 
 namespace OHOS {
 namespace Media {
@@ -290,116 +290,6 @@ void FileImageStream::Transfer(ImageStream& src) {
 
 size_t FileImageStream::GetSize() {
     return fileSize;
-}
-
-BufferImageStream::BufferImageStream() : currentOffset(0) {}
-
-BufferImageStream::~BufferImageStream() {}
-
-ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
-    if (buffer.capacity() < currentOffset + size) {
-        // 计算需要的内存大小，确保它是4k的整数倍
-        size_t newCapacity = ((currentOffset + size + 4095) / 4096) * 4096;
-        buffer.reserve(newCapacity);
-    }
-
-    buffer.insert(buffer.end(), data, data + size);
-    currentOffset += size;
-    return size;
-}
-
-ssize_t BufferImageStream::Write(ImageStream& src) {
-    uint8_t buffer[4096];
-    size_t totalBytesWritten = 0;
-
-    while (!src.IsEof()) {
-        size_t bytesRead = src.Read(buffer, sizeof(buffer));
-        if (bytesRead == 0) {
-            break;
-        }
-
-        size_t bytesWritten = Write(buffer, bytesRead);
-        totalBytesWritten += bytesWritten;
-    }
-
-    return totalBytesWritten;
-}
-
-ssize_t BufferImageStream::Read(uint8_t* buf, size_t size) {
-    size_t bytesToRead = std::min(size, buffer.size() - currentOffset);
-    std::copy(buffer.begin() + currentOffset, buffer.begin() + currentOffset + bytesToRead, buf);
-    currentOffset += bytesToRead;
-    return bytesToRead;
-}
-
-int BufferImageStream::Seek(int offset, SeekPos pos) {
-    switch (pos) {
-        case SeekPos::BEGIN:
-            currentOffset = offset;
-            break;
-        case SeekPos::CURRENT:
-            currentOffset += offset;
-            break;
-        case SeekPos::END:
-            currentOffset = buffer.size() + offset;
-            break;
-        default:
-            return -1;
-    }
-
-    if (currentOffset > buffer.size()) {
-        currentOffset = buffer.size();
-    }
-
-    return currentOffset;
-}
-
-ssize_t BufferImageStream::Tell() {
-    return currentOffset;
-}
-
-bool BufferImageStream::IsEof() {
-    return currentOffset >= buffer.size();
-}
-
-bool BufferImageStream::IsOpen() {
-    return true;
-}
-
-void BufferImageStream::Close() {
-    buffer.clear();
-    currentOffset = 0;
-}
-
-bool BufferImageStream::Open() {
-    return true;
-}
-
-byte* BufferImageStream::MMap(bool isWriteable) {
-    return buffer.data();
-}
-
-void BufferImageStream::Transfer(ImageStream& src) {
-    // 清空当前的缓冲区
-    buffer.clear();
-    currentOffset = 0;
-
-    // 预先估计需要的内存大小并预分配内存
-    size_t estimatedSize = src.GetSize();
-    buffer.reserve(estimatedSize);
-
-    // 从源ImageStream中读取数据并写入到当前的缓冲区
-    uint8_t tempBuffer[4096];
-    while (!src.IsEof()) {
-        size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
-        if (bytesRead > 0) {
-            buffer.insert(buffer.end(), tempBuffer, tempBuffer + bytesRead);
-        }
-    }
-}
-
-size_t BufferImageStream::GetSize() {
-    return buffer.size();
 }
 
 } // namespace Media

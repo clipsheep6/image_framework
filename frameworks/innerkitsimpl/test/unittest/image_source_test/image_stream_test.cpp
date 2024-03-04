@@ -21,6 +21,7 @@
 #include <pwd.h>
 #define private public
 #include "image_stream.h"
+#include "file_image_stream.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
