@@ -185,7 +185,7 @@ bool FileImageStream::Open() {
         Close();
     }
 
-    // 打开文件
+    // 打开文件，root用户可以忽略只读限制，直接打开这个文件
     fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1) {
         // 打开文件失败
