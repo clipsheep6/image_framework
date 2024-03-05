@@ -17,5 +17,47 @@
     },
     {
         "name": "OH_Image_Release"
+    },
+    {
+        "name": "OH_Image_JsToC_Int32"
+    },
+    {
+        "name": "OH_Image_JsToC_Uint32"
+    },
+    {
+        "name": "OH_Image_CToJs_Int64"
+    },
+    {
+        "name": "OH_Image_CToJs_Uint64"
+    },
+    {
+        "name": "OH_Image_CToJs_Bool"
+    },
+    {
+        "name": "OH_Image_CToJs_NumberInt"
+    },
+    {
+        "name": "OH_Image_JsToC_BufferUint8"
+    },
+    {
+        "name": "OH_Image_JsToC_CharStr_Utf8"
+    },
+    {
+        "name": "OH_Image_CToJs_String_Utf8"
+    },
+    {
+        "name": "OH_Image_JsToC_ImageSource"
+    },
+    {
+        "name": "OH_Image_CToJs_ObjImageSource"
+    },
+    {
+        "name": "OH_Image_JsToC_PixelMap"
+    },
+    {
+        "name": "OH_Image_CToJs_ObjPixelMap"
+    },
+    {
+        "name": "OH_Image_CToJs_ObjPixelMapList"
     }
 ]
