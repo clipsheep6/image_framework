@@ -28,6 +28,12 @@ namespace Media {
 
 class FileImageStream : public ImageStream {
 public:
+
+    enum class FileMode {
+        Read,       // 只读模式
+        ReadWrite   // 读写模式
+    };
+
     NATIVEEXPORT FileImageStream(const std::string& filePath);
     NATIVEEXPORT virtual ~FileImageStream();
 
@@ -40,6 +46,7 @@ public:
     NATIVEEXPORT virtual bool IsOpen() override;
     NATIVEEXPORT virtual void Close() override;
     NATIVEEXPORT virtual bool Open() override;
+    NATIVEEXPORT bool Open(FileMode mode);
 
     /**
      * 创建文件的内存映射。
@@ -71,49 +78,6 @@ private:
     size_t fileSize;  // 文件大小
     size_t currentOffset;  // 当前偏移量
     byte* mappedMemory;  // 内存映射的地址
-};
-
-class BufferImageStream : public ImageStream {
-public:
-    NATIVEEXPORT BufferImageStream();
-    NATIVEEXPORT virtual ~BufferImageStream();
-
-    NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
-    NATIVEEXPORT virtual ssize_t Write(ImageStream& src) override;
-    NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
-    NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
-    NATIVEEXPORT virtual ssize_t Tell() override;
-    NATIVEEXPORT virtual bool IsEof() override;
-    NATIVEEXPORT virtual bool IsOpen() override;
-    NATIVEEXPORT virtual void Close() override;
-    NATIVEEXPORT virtual bool Open() override;
-
-    /**
-     * 获取BufferImageStream的内存映射。
-     * 由于BufferImageStream的数据已经在内存中，所以这个函数直接返回数据的指针。
-     * 注意，这个函数忽略了isWriteable参数，因为BufferImageStream的数据总是可写的。
-     * 
-     * @param isWriteable 这个参数被忽略，BufferImageStream的数据总是可写的。
-     * @return 返回指向BufferImageStream数据的指针。
-     */
-    NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
-
-    /**
-     * 将源ImageStream的内容传输到当前的BufferImageStream中。
-     * 该函数首先清空当前的缓冲区，并将当前的偏移量设置为0。
-     * 然后，该函数从源ImageStream中读取数据，并将读取到的数据追加到当前的缓冲区。
-     * 如果在读取过程中发生错误，该函数会立即返回，并记录错误信息。
-     * 
-     * @param src 源ImageStream，该函数会从这个ImageStream中读取数据。
-     */
-    NATIVEEXPORT virtual void Transfer(ImageStream& src) override;
-
-    // 获取BufferImageStream的大小
-    // 返回值: BufferImageStream的大小
-    NATIVEEXPORT virtual size_t GetSize() override;
-private:
-    std::vector<uint8_t> buffer;  // 内存缓冲区
-    size_t currentOffset;  // 当前偏移量
 };
 
 } // namespace MultimediaPlugin

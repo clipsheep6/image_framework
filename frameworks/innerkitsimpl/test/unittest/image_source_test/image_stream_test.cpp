@@ -279,5 +279,33 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
     // 这个测试可能需要一些特殊的设置或者mock技术来模拟fstat失败的情况
 }
 
+/**
+ * @tc.name: FileImageStream_Read002
+ * @tc.desc: 测试FileImageStream的Read函数，读取512字节的情况
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
+    FileImageStream stream(filePathSource);
+    uint8_t buffer[1024];
+    stream.Open();
+    // Simulate reading 512 bytes
+    ssize_t bytesRead = stream.Read(buffer, 512);
+    EXPECT_EQ(512, bytesRead);
+}
+
+/**
+ * @tc.name: FileImageStream_Read003
+ * @tc.desc: 测试FileImageStream的Read函数，尝试从未打开的文件读取的情况
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Read003, TestSize.Level3) {
+    FileImageStream stream(filePathSource);
+    uint8_t buffer[1024];
+    // Close the stream to simulate an unopened file
+    stream.Close();
+    ssize_t bytesRead = stream.Read(buffer, 512);
+    EXPECT_EQ(-1, bytesRead);
+}
+
 }
 }

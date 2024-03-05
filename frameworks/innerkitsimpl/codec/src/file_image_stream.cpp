@@ -178,15 +178,29 @@ void FileImageStream::Close() {
     return;
 }
 
-bool FileImageStream::Open() {
+bool FileImageStream::Open(){
+    return Open(FileMode::ReadWrite);
+}
+
+bool FileImageStream::Open(FileMode mode) {
     // 如果文件已经打开，先关闭它
     if (fd != -1) {
         IMAGE_LOGD("File already opened, close it first");
         Close();
     }
 
+    int flags;
+    switch (mode) {
+        case FileMode::Read:
+            flags = O_RDONLY;
+            break;
+        case FileMode::ReadWrite:
+            flags = O_RDWR | O_CREAT;
+            break;
+    }
+
     // 打开文件，root用户可以忽略只读限制，直接打开这个文件
-    fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    fd = open(filePath.c_str(), flags, S_IRUSR | S_IWUSR);
     if (fd == -1) {
         // 打开文件失败
         char buf[256];        
