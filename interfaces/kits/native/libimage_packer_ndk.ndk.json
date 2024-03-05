@@ -18,5 +18,29 @@
     {
         "first_introduced": "11",
         "name": "OH_ImagePacker_Release"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImagePackerCapi_Create"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImagePackerCapi_PackingFromImageSource"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImagePackerCapi_PackingFromPixelMap"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImagePackerCapi_PackToFileFromImageSource"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImagePackerCapi_PackToFileFromPixelMap"
+    },
+    {
+        "first_introduced": "11",
+        "name": "OH_ImagePackerCapi_Release"
     }
 ]
