@@ -375,5 +375,433 @@ HWTEST_F(NdkTest, OH_GetImageInfoTest, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "NdkTest: OH_GetImageInfoTest end";
 }
+
+/**
+ * @tc.name: OH_PixelMapCapi_CreatePixelMapTest
+ * @tc.desc: OH_PixelMapCapi_CreatePixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_CreatePixelMapTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CreatePixelMapTest start";
+    uint32_t *colors = nullptr;
+    uint32_t colorLength = 0;
+    OhosPixelMapCreateOps *opts = nullptr;
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t res = OH_PixelMapCapi_CreatePixelMap(colors, colorLength, opts, &pixelmap);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CreatePixelMapTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_CreatePixelMapFromSurfaceTest
+ * @tc.desc: OH_PixelMapCapi_CreatePixelMapFromSurface
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_CreatePixelMapFromSurfaceTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CreatePixelMapFromSurfaceTest start";
+    uint64_t surfaceId = 0;
+    OhosImageRect rect;
+    int32_t value = 0;
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t res = OH_PixelMapCapi_CreatePixelMapFromSurface(surfaceId, rect, &pixelmap);
+    ASSERT_EQ(res, IMAGE_RESULT_ADD_PIXEL_MAP_FAILED);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CreatePixelMapFromSurfaceTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_ReadPixelsToBufferTest
+ * @tc.desc: OH_PixelMapCapi_ReadPixelsToBuffer
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_ReadPixelsToBufferTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ReadPixelsToBufferTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    uint64_t *bufferSize = nullptr;
+    uint8_t *dst = nullptr;
+    int32_t res = OH_PixelMapCapi_ReadPixelsToBuffer(pixelMap, bufferSize, dst);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ReadPixelsToBufferTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_ReadPixelsTest
+ * @tc.desc: OH_PixelMapCapi_ReadPixels
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_ReadPixelsToBufferTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ReadPixelsTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    OhosPositionArea positionArea
+    uint8_t *dst = nullptr;
+    int32_t res = OH_PixelMapCapi_ReadPixels(pixelMap, positionArea);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ReadPixelsTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_WritePixelsTest
+ * @tc.desc: OH_PixelMapCapi_WritePixels
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_WritePixelsTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_WritePixelsTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    OhosPositionArea positionArea
+    uint8_t *dst = nullptr;
+    int32_t res = OH_PixelMapCapi_WritePixels(pixelMap, positionArea);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_WritePixelsTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_WriteBufferToPixelsTest
+ * @tc.desc: OH_PixelMapCapi_WriteBufferToPixels
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_WriteBufferToPixelsTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_WriteBufferToPixelsTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    uint8_t *source = nullptr;
+    uint64_t *bufferSize = nullptr;
+    int32_t res = OH_PixelMapCapi_WriteBufferToPixels(pixelMap, source, bufferSize);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_WriteBufferToPixelsTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_GetImageInfoTest
+ * @tc.desc: OH_PixelMapCapi_GetImageInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_GetImageInfoTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetImageInfoTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    OhosPixelMapInfos *imageInfo = nullptr;
+    int32_t res = OH_PixelMapCapi_GetImageInfo(pixelMap, imageInfo);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetImageInfoTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_GetBytesNumberPerRowTest
+ * @tc.desc: OH_PixelMapCapi_GetBytesNumberPerRow
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_GetBytesNumberPerRowTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetBytesNumberPerRowTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t *bytesNumberPerRow = nullptr;
+    int32_t res = OH_PixelMapCapi_GetBytesNumberPerRow(pixelMap, bytesNumberPerRow);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetBytesNumberPerRowTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_GetPixelBytesNumberTest
+ * @tc.desc: OH_PixelMapCapi_GetPixelBytesNumber
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_GetPixelBytesNumberTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetPixelBytesNumberTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t *pixelBytesNumber = nullptr;
+    int32_t res = OH_PixelMapCapi_GetPixelBytesNumber(pixelMap, pixelBytesNumber);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetPixelBytesNumberTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_GetDensityTest
+ * @tc.desc: OH_PixelMapCapi_GetDensity
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_GetDensityTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetDensityTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t *density = nullptr;
+    int32_t res = OH_PixelMapCapi_GetDensity(pixelMap, density);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetDensityTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_OpacityTest
+ * @tc.desc: OH_PixelMapCapi_Opacity
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_OpacityTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_OpacityTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    float rate = 0.0f;
+    int32_t res = OH_PixelMapCapi_Opacity(pixelMap, rate);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_OpacityTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_CreateAlphaPixelmapTest
+ * @tc.desc: OH_PixelMapCapi_CreateAlphaPixelmap
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_CreateAlphaPixelmapTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CreateAlphaPixelmapTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    void *pixelMapAlpha = nullptr;
+    int32_t res = OH_PixelMapCapi_CreateAlphaPixelmap(pixelMap, &pixelMapAlpha);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CreateAlphaPixelmapTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_ScaleTest
+ * @tc.desc: OH_PixelMapCapi_Scale
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_ScaleTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ScaleTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    float x = 0.0f;
+    float y = 0.0f;
+    int32_t res = OH_PixelMapCapi_Scale(pixelMap, x, y);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ScaleTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_TranslateTest
+ * @tc.desc: OH_PixelMapCapi_Translate
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_TranslateTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_TranslateTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    float x = 0.0f;
+    float y = 0.0f;
+    int32_t res = OH_PixelMapCapi_Translate(pixelMap, x, y);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_TranslateTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_RotateTest
+ * @tc.desc: OH_PixelMapCapi_Rotate
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_RotateTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_RotateTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    float angle = 0.0f;
+    int32_t res = OH_PixelMapCapi_Rotate(pixelMap, angle);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_RotateTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_FlipTest
+ * @tc.desc: OH_PixelMapCapi_Flip
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_FlipTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_FlipTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    bool horizontal = true;
+    bool vertical = true;
+    int32_t res = OH_PixelMapCapi_Flip(pixelMap, horizontal, vertical);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_FlipTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_CropTest
+ * @tc.desc: OH_PixelMapCapi_Crop
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_CropTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CropTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t x = 0;
+    int32_t y = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t res = OH_PixelMapCapi_Crop(pixelMap, x, y, width, height);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_CropTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_GetColorSpaceTest
+ * @tc.desc: OH_PixelMapCapi_GetColorSpace
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_GetColorSpaceTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetColorSpaceTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    void colorSpace = nullptr;
+    int32_t res = OH_PixelMapCapi_GetColorSpace(pixelMap, colorSpace);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetColorSpaceTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_SetColorSpaceTest
+ * @tc.desc: OH_PixelMapCapi_SetColorSpace
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_SetColorSpaceTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_SetColorSpaceTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    void *colorSpace = nullptr;
+    int32_t res = OH_PixelMapCapi_SetColorSpace(pixelMap, colorSpace);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_SetColorSpaceTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_ApplyColorSpaceTest
+ * @tc.desc: OH_PixelMapCapi_ApplyColorSpace
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_ApplyColorSpaceTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ApplyColorSpaceTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    void *targetColorSpace = nullptr;
+    int32_t res = OH_PixelMapCapi_ApplyColorSpace(pixelMap, targetColorSpace);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ApplyColorSpaceTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_GetIsEditableTest
+ * @tc.desc: OH_PixelMapCapi_GetIsEditable
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_GetIsEditableTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetIsEditableTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t* editable = nullptr;
+    int32_t res = OH_PixelMapCapi_GetIsEditable(pixelMap, editable);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_GetIsEditableTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_IsSupportAlphaTest
+ * @tc.desc: OH_PixelMapCapi_IsSupportAlpha
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_IsSupportAlphaTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_IsSupportAlphaTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t* alpha = nullptr;
+    int32_t res = OH_PixelMapCapi_IsSupportAlpha(pixelMap, alpha);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_IsSupportAlphaTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_SetAlphaAbleTest
+ * @tc.desc: OH_PixelMapCapi_SetAlphaAble
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_SetAlphaAbleTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_SetAlphaAbleTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t alpha = 0;
+    int32_t res = OH_PixelMapCapi_SetAlphaAble(pixelMap, alpha);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_SetAlphaAbleTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_AccessPixelsTest
+ * @tc.desc: OH_PixelMapCapi_AccessPixels
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_AccessPixelsTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_AccessPixelsTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    void* addr = null;
+    int32_t res = OH_PixelMapCapi_AccessPixels(pixelMap, &addr);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_AccessPixelsTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_UnAccessPixelsTest
+ * @tc.desc: OH_PixelMapCapi_UnAccessPixels
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_UnAccessPixelsTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_UnAccessPixelsTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t res = OH_PixelMapCapi_UnAccessPixels(pixelMap);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_UnAccessPixelsTest end";
+}
+
+/**
+ * @tc.name: OH_PixelMapCapi_ReleaseTest
+ * @tc.desc: OH_PixelMapCapi_Release
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMapCapi_ReleaseTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ReleaseTest start";
+    PixelMapCapi *pixelmap = nullptr;
+    int32_t res = OH_PixelMapCapi_Release(pixelMap);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMapCapi_ReleaseTest end";
+}
 }
 }

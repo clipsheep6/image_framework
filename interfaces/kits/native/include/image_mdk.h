@@ -46,6 +46,38 @@ extern "C" {
 struct ImageNative_;
 
 /**
+ * @brief Rename a PixelMap type for void, used for pixelmap pointer passing.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef struct PixelMapCapi PixelMapCapi;
+
+/**
+ * @brief Defines an image object at the Capi for the image interface.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef struct ImagePackerCapi  ImagePackerCapi;
+
+/**
+ * @brief Defines an image source object at the Capi for the image interface.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef struct ImageSourceCapi  ImageSourceCapi;
+
+/**
+ * @brief Rename a ColorSpace type for void, used for MolorSpace pointer passing.
+ *
+ * @since 10
+ * @version 2.0
+ */
+typedef void ColorSpaceCapi;
+
+/**
  * @brief Defines an image object at the native layer for the image interface.
  *
  * @since 10
@@ -98,6 +130,25 @@ struct OhosImageRect {
     int32_t width;
     /** Height of the rectangle, in pixels. */
     int32_t height;
+};
+
+/**
+ * @brief Defines the data in the specified area of the image.
+ *
+ * @since 10
+ * @version 2.0
+ */
+struct OhosPositionArea {
+    /** Buffer that stores the pixel data. */
+    uint8_t* byteBuffer;
+    /** Size of the pixel data in the memory. */
+    size_t size;
+    /** The number of offset */
+    int32_t offset;
+    /** TSpan, the space occupied by each row of pixels in memory */
+    int32_t stride;
+    /** Height of the rectangle, in pixels. */
+    OhosImageRect rect;
 };
 
 /**
@@ -214,6 +265,302 @@ int32_t OH_Image_GetComponent(const ImageNative* native,
  * @version 2.0
  */
 int32_t OH_Image_Release(ImageNative* native);
+
+/**
+ * @brief PixelMap data conversion, from c type to js type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param pixelMap PixelMap type pointer that needs to be converted.
+ * @param jsPixelMap  js type object after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see PixelMap, OH_Image_CToJs_PixelMap
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_PixelMap(napi_env env, PixelMapCapi *pixelMap, napi_value *jsPixelMap);
+
+/**
+ * @brief ColorSpace data conversion, from c type to js type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param colorSpace ColorSpace type pointer that needs to be converted.
+ * @param jsColorSpace  js type object after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see ColorSpace, OH_Image_CToJs_ColorSpace
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_ColorSpace(napi_env env, ColorSpaceCapi *colorSpace, napi_value jsColorSpace);
+
+/**
+ * @brief uint64 data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsValue js type that needs to be converted.
+ * @param out  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Uint8
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Uint64(napi_env env, napi_value jsValue, uint64_t *out);
+
+/**
+ * @brief Float data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsValue js type that needs to be converted.
+ * @param out  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Float
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Float(napi_env env, napi_value jsValue, float *out);
+
+/**
+ * @brief Bool data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsValue js type that needs to be converted.
+ * @param out  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Bool
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Bool(napi_env env, napi_value jsValue, bool *out);
+
+/**
+ * @brief Parcel data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsParcel Float js object type that needs to be converted.
+ * @param parcel  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_Parcel
+ * @since 10
+ * @version 2.0
+ */
+// int32_t OH_Image_JsToC_Parcel(napi_env env, napi_value jsParcel, ParcelCapi *parcel);
+
+/**
+ * @brief ColorSpace data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsColorSpace Float js object type that needs to be converted.
+ * @param colorSpace  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_ColorSpace
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_ColorSpace(napi_env env, napi_value jsColorSpace, ColorSpaceCapi *colorSpace);
+
+/**
+ * @brief PixelMap data conversion, from js type to c type.
+ *
+ * @param env Indicates the NAPI environment pointer.
+ * @param jsPixelMap Float js object type that needs to be converted.
+ * @param pixelMap  c type pointer after completing the turn
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if Operation failed.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @see OH_Image_JsToC_PixelMap
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_PixelMap(napi_env env, napi_value jsPixelMap, PixelMapCapi **pixelMap);
+
+/**
+ * @brief Convert JavaScript number data to C++ int32 data type at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param jsValue Indicates a pointer to the value of Js number data.
+ * @param out Indicates a pointer to the int of C++ obtained.
+ * 
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Int32(napi_env env, napi_value jsValue, int32_t* out);
+
+/**
+ * @brief Convert JavaScript number data to C++ uint32 data type at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param jsValue Indicates a pointer to the value of Js number data.
+ * @param out Indicates a pointer to the uint32 of C++ obtained.
+ * 
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Uint32(napi_env env, napi_value jsValue, uint32_t* out);
+
+
+/**
+ * @brief Convert JavaScript number data to C++ int64 data type at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param jsValue Indicates a pointer to the value of Js number data.
+ * @param out Indicates a pointer to the int64 of C++ obtained.
+ * 
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Int64(napi_env env, napi_value jsValue, int64_t *out);
+
+/**
+ * @brief Convert C++ int32 to JavaScript number data at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param in Indicates a pointer to the int of C++.
+ * @param jsValue Indicates a pointer to the value of Js number data obtained.
+ *
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_NumberInt(napi_env env, int32_t in, napi_value jsValue);
+
+/**
+ * @brief Convert C++ string to JavaScript string data at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param in Indicates a string of C++.
+ * @param jsValue Indicates a pointer to the value of Js string data obtained.
+ *
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * 
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_String_Utf8(napi_env env, char* in, size_t len, napi_value jsValue);
+
+/**
+ * @brief Convert JavaScript ImageSource object to C++ ImageSource pointer at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param jsValue Indicates a pointer to the value of Js ImageSource object.
+ * @param imageSourceCapi Indicates a pointer to the char of C++ ImageSource obtained.
+ * 
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_ImageSource(napi_env env, napi_value jsValue, ImageSourceCapi** imageSourceCapi);
+
+/**
+ * @brief Convert C++ ImageSource to JavaScript ImageSource object at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param imageSourceCapi Indicates a void pointer to the pointer of C++ ImageSource.
+ * @param jsValue Indicates a pointer to the value of Js ImageSource object obtained.
+ *
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_ObjImageSource(napi_env env, ImageSourceCapi* imageSourceCapi, napi_value* jsValue);
+
+/**
+ * @brief Convert C++ vector<PixelMap> to JavaScript array PixelMap object at the native layer.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.
+ * @param jsValue Indicates a pointer to the value of Js array PixelMap object obtained.
+ * @param in Indicates a void pointer array to the pointer of C++ vector<PixelMap>.
+ * 
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_IMAGE_RESULT_BASE - if  Operation failed.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_ObjPixelMapList(napi_env env, napi_value jsValue, void* in[], uint32_t sizeLen);
+
+/**
+ * @brief This function converts a C array to a JavaScript ArrayBuffer.  
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.  
+ * @param tsArrayBuffer The JavaScript ArrayBuffer object.  
+ * @param outData A pointer to the unsigned 8-bit integer array that stores the converted data.  
+ * @param size The size of the data.  
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @since 11
+ * @version 2.0
+ */
+int32_t OH_Image_CToJs_Array(napi_env env, uint8_t* outData, int64_t size, napi_value tsArrayBuffer);
+
+/**
+ * @brief This function converts a JavaScript ImagePacker object to a C++ ImagePacker object.  
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.  
+ * @param tsImagePacker The JavaScript ImagePacker object.  
+ * @param imagePacker A pointer to the converted C++ ImagePacker object.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_ImagePacker(napi_env env, napi_value tsImagePacker, ImagePackerCapi** imagePackerCapi);
+
+/**
+ * @brief This function converts a JavaScript value to a 64-bit integer using the specified buffer size.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.  
+ * @param bufferSize The size of the buffer used for the conversion.
+ * @param result A pointer to the converted 64-bit integer value.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Int64_t(napi_env env, napi_value bufferSize, int64_t* result);
+
+/**
+ * @brief This function converts a JavaScript file descriptor to a C integer using the specified environment.
+ *
+ * @param env Indicates the pointer to the Java Native Interface (JNI) environment.  
+ * @param fd The JavaScript file descriptor.
+ * @param result A pointer to the converted integer value.  
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * @since 10
+ * @version 2.0
+ */
+int32_t OH_Image_JsToC_Int(napi_env env, napi_value fd, int* result);
+
 #ifdef __cplusplus
 };
 #endif
