@@ -277,6 +277,9 @@ void FileImageStream::Transfer(ImageStream& src) {
     // 从源ImageStream中读取数据并写入到当前的文件中
     uint8_t tempBuffer[4096];
     size_t totalBytesWritten = 0;
+    if(!src.IsOpen()) src.Open();               //如果src没有打开，就打开src
+    ssize_t src_cur = src.Tell();               //暂存src的位置
+    src.Seek(0, SeekPos::BEGIN);    //将src的位置设置为0
     while (!src.IsEof()) {
         size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
         if (bytesRead > 0) {
@@ -286,11 +289,13 @@ void FileImageStream::Transfer(ImageStream& src) {
                 char buf[256];        
                 strerror_r(errno, buf, sizeof(buf));
                 IMAGE_LOGE("transfer: Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+                src.Seek(src_cur, SeekPos::BEGIN); //恢复src的位置
                 return;
             }
             totalBytesWritten += bytesWritten;
         }
     }
+    IMAGE_LOGD("transfer: Write file done: %{public}s, size: %{public}zu", filePath.c_str(), totalBytesWritten);
 
     // 截断文件
     if (ftruncate(fd, totalBytesWritten) == -1) {
@@ -298,8 +303,14 @@ void FileImageStream::Transfer(ImageStream& src) {
         char buf[256];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("transfer: Truncate file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+        src.Seek(src_cur, SeekPos::BEGIN); //恢复src的位置
         return;
     }
+
+    //将文件的尺寸设置成新尺寸
+    fileSize = totalBytesWritten;
+    src.Seek(src_cur, SeekPos::BEGIN); //恢复src的位置
+    return;
 }
 
 size_t FileImageStream::GetSize() {

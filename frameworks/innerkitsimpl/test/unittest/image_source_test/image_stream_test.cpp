@@ -13,14 +13,17 @@
  * limitations under the License.
  */
 
+#include "image_stream.h"
 #include <gtest/gtest.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <pwd.h>
+#include <csetjmp>
+#include <csignal>
 #define private public
-#include "image_stream.h"
 #include "file_image_stream.h"
 
 using namespace testing::ext;
@@ -36,6 +39,7 @@ public:
     std::string filePath = "/data/local/tmp/image/testfile.txt";
     std::string filePathSource = "/data/local/tmp/image/testfile_source.png";
     std::string filePathDest = "/data/local/tmp/image/testfile_dest.png";
+    std::string backupFilePathSource = filePathSource + ".bak";
 
     virtual void SetUp() {
         // Create the directory
@@ -49,6 +53,8 @@ public:
             }
         }
         
+        // Backup the files
+        std::filesystem::copy(filePathSource, backupFilePathSource, std::filesystem::copy_options::overwrite_existing);
     }
 
     const static std::string tmpDirectory;
@@ -200,16 +206,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write006, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Read001
- * @tc.desc: 测试FileImageStream的Write函数，是否能正常写入并验证写入的数据
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3){
-    FileImageStream* stream = new FileImageStream(filePath);
-    delete stream;
-}
-
-/**
  * @tc.name: FileImageStream_Open001
  * @tc.desc: 测试FileImageStream的Open函数，文件路径不存在的情况
  * @tc.type: FUNC
@@ -280,6 +276,16 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
 }
 
 /**
+ * @tc.name: FileImageStream_Read001
+ * @tc.desc: 测试FileImageStream的Write函数，是否能正常写入并验证写入的数据
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3){
+    FileImageStream* stream = new FileImageStream(filePath);
+    delete stream;
+}
+
+/**
  * @tc.name: FileImageStream_Read002
  * @tc.desc: 测试FileImageStream的Read函数，读取512字节的情况
  * @tc.type: FUNC
@@ -305,6 +311,72 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read003, TestSize.Level3) {
     stream.Close();
     ssize_t bytesRead = stream.Read(buffer, 512);
     EXPECT_EQ(-1, bytesRead);
+}
+
+// 定义一个全局的 jmp_buf 变量
+static sigjmp_buf jmpbuf;
+
+// 定义一个信号处理函数
+static void handle_sigsegv(int sig) {
+    siglongjmp(jmpbuf, 1);
+}
+
+// 测试MMap函数
+HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
+    // 假定有一个合适的方式来创建或获取测试所需的资源
+    // YourResource test_resource;
+    // 测试MMap函数在isWriteable为false时的行为
+    FileImageStream stream(filePathSource);
+    byte* result = stream.MMap(false);
+    // 假设检查result是否为非nullptr，或有其他合适的验证方式
+    ASSERT_NE(result, nullptr);
+  
+    // 设置信号处理函数
+    signal(SIGSEGV, handle_sigsegv);
+
+    // 尝试写入数据
+    if (sigsetjmp(jmpbuf, 1) == 0) {
+        result[0] = 0;
+        // 如果没有引发段错误，那么这是一个错误
+        FAIL() << "Expected a segmentation fault";
+    }
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
+    // 测试MMap函数在isWriteable为true时的行为
+    FileImageStream stream(filePathSource);
+    byte* result = stream.MMap(true);
+    ASSERT_NE(result, nullptr);
+    // 尝试写入数据
+    result[0] = 123;
+
+    // 读取数据并检查是否与写入的数据相同
+    ASSERT_EQ(result[0], 123);
+}
+
+// 测试Transfer函数
+HWTEST_F(ImageStreamTest, FileImageStream_Transfer001, TestSize.Level3) {
+    FileImageStream src(filePathSource);
+    FileImageStream dest(filePathDest);
+    
+    src.Open();
+    // 向src中写入一些已知的数据
+    std::string data = "Hello, world!";
+    ASSERT_GE(src.Write((uint8_t*)data.c_str(), data.size()), 0);
+    ASSERT_GE(src.GetSize(), data.size());
+    ASSERT_EQ(src.Seek(0, SeekPos::BEGIN), 0);
+    ASSERT_FALSE(src.IsEof());
+    // 调用Transfer函数将数据从src转移到dest
+    dest.Transfer(src);
+
+    // 从dest中读取数据，并验证这些数据是否与写入src的数据相同
+    uint8_t buffer[256];
+    ASSERT_EQ(dest.Seek(0, SeekPos::BEGIN), 0);
+    ASSERT_EQ(dest.Read(buffer, data.size()), data.size());
+    ASSERT_EQ(std::string(buffer, buffer + data.size()), data);
+
+    // 验证src是否为空
+    ASSERT_EQ(dest.GetSize(), src.GetSize());
 }
 
 }
