@@ -16,6 +16,7 @@
 #include "pixel_map_from_surface.h"
 
 #include "image_log.h"
+#include "image_trace.h"
 #include "sync_fence.h"
 
 #undef LOG_DOMAIN
@@ -26,6 +27,7 @@
 
 namespace OHOS {
 namespace Media {
+std::unique_ptr<RenderContext> PixelMapFromSurface::renderContext;
 
 PixelMapFromSurface::PixelMapFromSurface()
 {}
@@ -38,8 +40,8 @@ PixelMapFromSurface::~PixelMapFromSurface() noexcept
 void PixelMapFromSurface::Clear() noexcept
 {
     if (eglImage_ != EGL_NO_IMAGE_KHR) {
-        if (renderContext_ != nullptr) {
-            eglDestroyImageKHR(renderContext_->GetEGLDisplay(), eglImage_);
+        if (renderContext != nullptr) {
+            eglDestroyImageKHR(renderContext->GetEGLDisplay(), eglImage_);
         } else {
             auto disp = eglGetDisplay(EGL_DEFAULT_DISPLAY);
             eglDestroyImageKHR(disp, eglImage_);
@@ -74,7 +76,7 @@ bool PixelMapFromSurface::GetNativeWindowBufferFromSurface(const sptr<Surface> &
     if (ret != OHOS::GSERROR_OK || surfaceBuffer_ == nullptr) {
         Clear();
         IMAGE_LOGE(
-            "CreatePixelMapFromSurface: GetLastFlushedBuffer from nativeWindow failed, err: %{public}d",
+            "CreatePixelMapFromSurface: GetLastFlushedBuffer from surface failed, err: %{public}d",
             ret);
         return false;
     }
@@ -101,13 +103,14 @@ bool PixelMapFromSurface::GetNativeWindowBufferFromSurface(const sptr<Surface> &
 
 bool PixelMapFromSurface::CreateEGLImage()
 {
+    ImageTrace trace("ImageFramework PixelMapFromSurface::CreateEGLImage");
     EGLint attrs[] = {
         EGL_IMAGE_PRESERVED,
         EGL_TRUE,
         EGL_NONE,
     };
     eglImage_ = eglCreateImageKHR(
-        renderContext_->GetEGLDisplay(), EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_OHOS,
+        renderContext->GetEGLDisplay(), EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_OHOS,
         nativeWindowBuffer_, attrs);
     if (eglImage_ == EGL_NO_IMAGE_KHR) {
         Clear();
@@ -134,6 +137,7 @@ bool PixelMapFromSurface::CreateEGLImage()
 
 bool PixelMapFromSurface::DrawImage(const Rect &srcRect)
 {
+    ImageTrace trace("ImageFramework PixelMapFromSurface::DrawImage");
     GraphicPixelFormat pixelFormat = static_cast<GraphicPixelFormat>(surfaceBuffer_->GetFormat());
     SkColorType colorType = kRGBA_8888_SkColorType;
     GLuint glType = GL_RGBA8;
@@ -148,7 +152,7 @@ bool PixelMapFromSurface::DrawImage(const Rect &srcRect)
     GrGLTextureInfo grExternalTextureInfo = { GL_TEXTURE_EXTERNAL_OES, texId_, static_cast<GrGLenum>(glType) };
     auto backendTexturePtr =
         std::make_shared<GrBackendTexture>(bufferWidth, bufferHeight, GrMipMapped::kNo, grExternalTextureInfo);
-    auto image = SkImage::MakeFromTexture(renderContext_->GetGrContext().get(), *backendTexturePtr,
+    auto image = SkImage::MakeFromTexture(renderContext->GetGrContext().get(), *backendTexturePtr,
         kTopLeft_GrSurfaceOrigin, colorType, kPremul_SkAlphaType, nullptr);
     if (image == nullptr) {
         Clear();
@@ -157,7 +161,7 @@ bool PixelMapFromSurface::DrawImage(const Rect &srcRect)
     }
 
     auto imageInfo = SkImageInfo::Make(srcRect.width, srcRect.height, kRGBA_8888_SkColorType, kPremul_SkAlphaType);
-    targetSurface_ = SkSurface::MakeRenderTarget(renderContext_->GetGrContext().get(), SkBudgeted::kYes,
+    targetSurface_ = SkSurface::MakeRenderTarget(renderContext->GetGrContext().get(), SkBudgeted::kYes,
         imageInfo, 0, kTopLeft_GrSurfaceOrigin, nullptr);
     if (targetSurface_ == nullptr) {
         Clear();
@@ -199,9 +203,12 @@ std::unique_ptr<PixelMap> PixelMapFromSurface::Create(uint64_t surfaceId, const 
     }
 
     // init renderContext to do some format convertion if necessary.
-    renderContext_ = std::make_unique<RenderContext>();
-    if (!renderContext_->Init()) {
+    if (renderContext == nullptr) {
+        renderContext = std::make_unique<RenderContext>();
+    }
+    if (!renderContext->IsValid() && !renderContext->Init()) {
         Clear();
+        renderContext.reset();
         IMAGE_LOGE("CreatePixelMapFromSurface: init renderContext failed.");
         return nullptr;
     }
@@ -214,6 +221,7 @@ std::unique_ptr<PixelMap> PixelMapFromSurface::Create(uint64_t surfaceId, const 
         return nullptr;
     }
 
+    ImageTrace trace("ImageFramework PixelMapFromSurface::readPixels");
     InitializationOptions options;
     options.size.width = srcRect.width;
     options.size.height = srcRect.height;

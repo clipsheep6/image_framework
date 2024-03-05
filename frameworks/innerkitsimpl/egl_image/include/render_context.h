@@ -48,6 +48,10 @@ public:
     void operator=(const RenderContext &&) = delete;
 
     bool Init();
+    bool IsValid() const
+    {
+        return eglDisplay_ != EGL_NO_DISPLAY && eglContext_ != EGL_NO_CONTEXT && grContext_ != nullptr;
+    }
 
     void MakeCurrent(EGLSurface surface) const;
 
