@@ -1071,7 +1071,7 @@ bool PixelMap::IsHdr()
         return false;
     }
 #endif
-    return true;
+    return false;
 }
 
 uint8_t PixelMap::GetARGB32ColorA(uint32_t color)
@@ -2523,7 +2523,8 @@ static bool GendstTransInfo(SkTransInfo &srcInfo, SkTransInfo &dstInfo, SkMatrix
     Size desiredSize = {dstInfo.info.width(), dstInfo.info.height()};
     MemoryData memoryData = {nullptr, dstInfo.info.computeMinByteSize(), "Trans ImageData", desiredSize, format};
 #else
-    MemoryData memoryData = {nullptr, dstInfo.info.computeMinByteSize(), "Trans ImageData", format};
+    MemoryData memoryData = {nullptr, dstInfo.info.computeMinByteSize(), "Trans ImageData"};
+    memoryData.format = format;
 #endif
     std::unique_ptr<AbsMemory> dstMemory = MemoryManager::CreateMemory(memoryInfo.allocType, memoryData);
     if (dstMemory == nullptr) {

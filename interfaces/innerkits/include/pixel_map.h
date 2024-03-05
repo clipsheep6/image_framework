@@ -263,7 +263,6 @@ public:
     {
         isAstc_ = isAstc;
     }
-    
     NATIVEEXPORT bool IsHdr();
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;

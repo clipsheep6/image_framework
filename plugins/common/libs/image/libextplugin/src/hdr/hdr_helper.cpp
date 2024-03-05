@@ -266,7 +266,7 @@ HdrType HdrHelper::CheckHdrType(SkCodec* codec, uint32_t& offset)
     return type;
 }
 
-//// parse metadata
+// parse metadata
 static bool GetCuvaGainMapMetadata(jpeg_marker_struct* markerList, std::vector<uint8_t>& metadata)
 {
     auto handle = dlopen("libimage_cuva_parser.z.so", RTLD_LAZY);

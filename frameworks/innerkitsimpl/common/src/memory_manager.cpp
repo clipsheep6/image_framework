@@ -254,6 +254,7 @@ std::unique_ptr<AbsMemory> MemoryManager::TransMemoryType(const AbsMemory &sourc
     std::string tag)
 {
     MemoryData data = { nullptr, source.data.size, tag.c_str()};
+    data.format = source.data.format;
     auto res = CreateMemory(target, data);
     if (res == nullptr) {
         return res;

@@ -47,4 +47,4 @@ public:
 } // namespace Media
 } // namespace OHOS
 
-#endif // FRAMEWORKS_INNERKITSIMPL_IMAGE_INCLUDE_VPE_UTILS_H    
+#endif // FRAMEWORKS_INNERKITSIMPL_IMAGE_INCLUDE_VPE_UTILS_H

@@ -29,7 +29,6 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
-#include "include/third_party/skcms/skcms.h"
 #include "hdr_helper.h"
 
 #undef LOG_DOMAIN
