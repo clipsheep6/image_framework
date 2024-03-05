@@ -81,6 +81,12 @@ static const uint8_t NUM_3 = 3;
 static const uint8_t NUM_5 = 5;
 static const uint8_t NUM_6 = 6;
 static const uint8_t NUM_7 = 7;
+constexpr int32_t INT_128 = 128;
+constexpr int32_t INT_255 = 255;
+const float YUV_TO_RGB888_PARAM_1 = 1.402;
+const float YUV_TO_RGB888_PARAM_2 = 0.344136;
+const float YUV_TO_RGB888_PARAM_3 = 0.714136;
+const float YUV_TO_RGB888_PARAM_4 = 1.772;
 
 constexpr int32_t ANTIALIASING_SIZE = 350;
 
@@ -2023,7 +2029,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
     } else {
         pixelMap = new PixelMap();
     }
-    
+
     if (!ReadMemInfoFromParcel(parcel, pixelMemInfo, error)) {
         IMAGE_LOGE("read properties fail");
         delete pixelMap;
@@ -2249,6 +2255,103 @@ PixelMap *PixelMap::DecodeTlv(std::vector<uint8_t> &buff)
     }
     pixelMap->SetPixelsAddr(data, nullptr, dataSize, static_cast<AllocatorType>(allocType), nullptr);
     return pixelMap;
+}
+
+bool PixelMap::YUV420ToRGB888(const uint8_t *in, uint8_t *out, int32_t width, int32_t height, PixelFormat pixelFormat)
+{
+    if (!in || !out || width <= 0 || height == 0) {
+        return false;
+    }
+    for (int32_t i = 0; i < height; i++) {
+        for (int32_t j = 0; j < width; j++) {
+            uint8_t Y = GetYUV420Y(j, i, width, in);
+            uint8_t U = GetYUV420U(j, i, width, height, pixelFormat, in);
+            uint8_t V = GetYUV420V(j, i, width, height, pixelFormat, in);
+
+            int32_t colorR = Y + YUV_TO_RGB888_PARAM_1 * (V - INT_128);
+            int32_t colorG = Y - YUV_TO_RGB888_PARAM_2 * (U - INT_128) - YUV_TO_RGB888_PARAM_3 * (V - INT_128);
+            int32_t colorB = Y + YUV_TO_RGB888_PARAM_4 * (U - INT_128);
+
+            colorR = colorR > INT_255 ? INT_255 : (colorR < 0 ? 0 : colorR);
+            colorG = colorG > INT_255 ? INT_255 : (colorG < 0 ? 0 : colorG);
+            colorB = colorB > INT_255 ? INT_255 : (colorB < 0 ? 0 : colorB);
+
+            *out++ = colorB;
+            *out++ = colorG;
+            *out++ = colorR;
+        }
+    }
+    return true;
+}
+
+uint8_t PixelMap::GetYUV420Y(uint32_t x, uint32_t y, int32_t width, const uint8_t *in)
+{
+    return *(in + y * width + x);
+}
+
+uint8_t PixelMap::GetYUV420U(uint32_t x, uint32_t y, int32_t width, int32_t height, PixelFormat format,
+                             const uint8_t *in)
+{
+    switch (format) {
+        case PixelFormat::NV21:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1) + 1);
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1) + 1);
+        case PixelFormat::NV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1));
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1));
+        case PixelFormat::YU12:
+            if (width & 1) {
+                return *(in + y / NUM_2 + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        case PixelFormat::YV12:
+            if (width & 1) {
+                return *(in + height / NUM_2 + y / NUM_2 + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                            (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        default:
+            break;
+    }
+    return SUCCESS;
+}
+
+uint8_t PixelMap::GetYUV420V(uint32_t x, uint32_t y, int32_t width, int32_t height, PixelFormat format,
+    const uint8_t *in)
+{
+    switch (format) {
+        case PixelFormat::NV21:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1));
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1));
+        case PixelFormat::NV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1) + 1);
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1) + 1);
+        case PixelFormat::YU12:
+            if (width & 1) {
+                return *(in + height / NUM_2 + y / NUM_2 + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                            (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            break;
+        case PixelFormat::YV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        default:
+            break;
+    }
+    return SUCCESS;
 }
 
 static const string GetNamedAlphaType(const AlphaType alphaType)

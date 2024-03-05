@@ -37,6 +37,7 @@
 #include "media_errors.h"
 #include "pixel_astc.h"
 #include "pixel_map.h"
+#include "pixel_yuv.h"
 #include "plugin_server.h"
 #include "post_proc.h"
 #include "securec.h"
@@ -51,7 +52,7 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
-#include "pixel_yuv.h"
+
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
@@ -650,11 +651,6 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     }
 #endif
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
-    if (isYuvFormat(plInfo.pixelFormat)) {
-        YUVDataInfo yuvInfo;
-        CopyYuvInfo(yuvInfo, plInfo);
-        pixelMap->SetImageYUVInfo(yuvInfo);
-    }
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
@@ -1667,6 +1663,10 @@ void ImageSource::CopyOptionsToPlugin(const DecodeOptions &opts, PixelDecodeOpti
     if (opts.SVGOpts.fillColor.isValidColor) {
         plOpts.plFillColor.isValidColor = opts.SVGOpts.fillColor.isValidColor;
         plOpts.plFillColor.color = opts.SVGOpts.fillColor.color;
+    }
+    if (opts.SVGOpts.strokeColor.isValidColor) {
+        plOpts.plStrokeColor.isValidColor = opts.SVGOpts.strokeColor.isValidColor;
+        plOpts.plStrokeColor.color = opts.SVGOpts.strokeColor.color;
     }
     if (opts.SVGOpts.SVGResize.isValidPercentage) {
         plOpts.plSVGResize.isValidPercentage = opts.SVGOpts.SVGResize.isValidPercentage;

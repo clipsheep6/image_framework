@@ -152,6 +152,8 @@ public:
     NATIVEEXPORT virtual uint8_t GetARGB32ColorR(uint32_t color);
     NATIVEEXPORT virtual uint8_t GetARGB32ColorG(uint32_t color);
     NATIVEEXPORT virtual uint8_t GetARGB32ColorB(uint32_t color);
+    NATIVEEXPORT virtual bool YUV420ToRGB888(const uint8_t *in, uint8_t *out, int32_t width, int32_t height,
+        PixelFormat pixelFormat);
     // Config the pixel map parameter
     NATIVEEXPORT virtual bool IsSameImage(const PixelMap &other);
     NATIVEEXPORT virtual uint32_t ReadPixels(const uint64_t &bufferSize, const uint32_t &offset, const uint32_t &stride,
@@ -293,6 +295,11 @@ private:
     static bool RGBA8888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
     static bool BGRA8888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
     static bool RGB888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
+    static uint8_t GetYUV420Y(uint32_t x, uint32_t y, int32_t width, const uint8_t *in);
+    static uint8_t GetYUV420U(uint32_t x, uint32_t y, int32_t width, int32_t height,
+                              PixelFormat format, const uint8_t *in);
+    static uint8_t GetYUV420V(uint32_t x, uint32_t y, int32_t width, int32_t height,
+                              PixelFormat format, const uint8_t *in);
     static bool CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t offset, int32_t stride,
         const InitializationOptions &opts);
     static void UpdatePixelsAlpha(const AlphaType &alphaType, const PixelFormat &pixelFormat, uint8_t *dstPixels,

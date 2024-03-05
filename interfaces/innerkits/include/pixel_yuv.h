@@ -22,6 +22,11 @@
 namespace OHOS {
 namespace Media {
 
+struct UVPos {
+    size_t upos = 0;
+    size_t vpos = 0;
+};
+
 class PixelYUV : public PixelMap {
 public:
     PixelYUV() {}
@@ -62,6 +67,8 @@ public:
     {
         yuvInfo = yuvDataInfo_;
     }
+    NATIVEEXPORT int32_t scaleYuvToBGRA(ImageInfo &imageInfo, PixelFormat &format);
+    NATIVEEXPORT int32_t scaleBGRAToYuv(ImageInfo &imageInfo, PixelFormat &format);
 private:
     static bool YUV420WritePixels(Size &size, uint8_t *dstPixels, const PixelFormat &format, const uint32_t &color);
     static bool YUVReadPixel(const uint8_t *srcPixels, Size &size, const PixelFormat &format, const Position &pos,
@@ -78,6 +85,7 @@ private:
     static bool YUVCrop(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels, const Rect &rect,
                  const PixelFormat &srcFormat);
     static bool CropYU12(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels, Rect rect);
+    static void SwapUV(uint8_t *dstPixels, int32_t width, int32_t heigth);
     static bool CropNV21(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels, Rect rect);
     static bool YUVRotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int32_t degrees,
                           const PixelFormat &format);
@@ -105,11 +113,8 @@ private:
     static void WriteDataNV12Convert(uint8_t *srcPixels, const Size &size, uint8_t *dstPixels, Position dstPos,
                                      const Size &dstSize);
     static uint32_t GetImageSize(int32_t width, int32_t height);
-    bool scaleConvert(MemoryData memoryData, ImageInfo imageInfo, PixelFormat format);
     static bool isYUVImage(PixelFormat format);
     void assignYUVDataOnType(PixelFormat format, int32_t width, int32_t height);
-    static void flipYUVXaixs(const uint8_t *src, uint8_t *dst, PixelFormat format, Size &size, int32_t &ret);
-    static void flipYUVYaixs(const uint8_t *src, uint8_t *dst, PixelFormat format, Size &size, int32_t &ret);
     YUVDataInfo yuvDataInfo_;
 #ifdef IMAGE_COLORSPACE_FLAG
     NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace) override;
@@ -121,8 +126,9 @@ private:
     static bool YUV420ToARGB(const uint8_t *sample, uint8_t *dst_argb, int width, int height, PixelFormat pixelFormat);
     void scaleYUV420(float xAxis, float yAxis, const AntiAliasingOption &option = AntiAliasingOption::NONE);
 #else
-    static bool I420ToNV12(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height);
+    static bool NV21ToI420(const uint8_t *src, const Size &size, uint8_t *dst);
     static bool NV12ToI420(const uint8_t *src, const Size &size, uint8_t *dst);
+    static bool I420ToNV12(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height);
     static bool I420ToNV21(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height);
     static bool YV12Rotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int degrees);
     static void MergeUVPlane(const uint8_t *srcU, int srcStrideU, const uint8_t *srcV, int32_t srcStrideV,
@@ -135,15 +141,17 @@ private:
     static void RotatePlane90(const uint8_t *src, int32_t srcStride, uint8_t *dst, int32_t dstStride, const Size &half);
     static void TransposePlane(const uint8_t *src, int32_t srcStride, uint8_t *dst,
                                int32_t dstStride, const Size &half);
+    static void TransposeW8(const uint8_t *src, int32_t srcStride, uint8_t *dst, int32_t dstStride, int32_t width);
     static void MirrorRow(const uint8_t *src, uint8_t *dst, int32_t width);
     static bool BGRAToYUV420(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat pixelFormat);
     static bool YUV420ToBGRA(const uint8_t *in, uint8_t *out, int32_t width, int32_t height, PixelFormat pixelFormat);
     static bool YUV420ToARGB(const uint8_t *in, uint8_t *out, int32_t width, int32_t height, PixelFormat pixelFormat);
+    static void setTranslateDataDefault(uint8_t *srcPixels, int32_t width, int32_t height);
     static int32_t I420Copy(const uint8_t *srcY, int32_t srcStrideY, const uint8_t *srcU, int32_t srcStrideU,
                             const uint8_t *srcV, int32_t srcStrideV, uint8_t *dstY, int32_t dstStrideY, uint8_t *dstU,
                             int32_t dstStrideU, uint8_t *dstV, int32_t dstStrideV, int32_t width, int32_t height);
     static bool BGRAToI420(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height);
-    static void translateRGBToYUV(const uint8_t *src, uint8_t *dst, int32_t width, bool isUpos, size_t i, size_t pos);
+    static void translateRGBToYUV(const uint8_t *src, uint8_t *dst, Size &size,  size_t &i, UVPos &uvPos);
     static void MirrorPlane(const uint8_t *srcY, int32_t srcStrideY, uint8_t *dstY, int32_t dstStrideY, int32_t width,
                             int32_t height);
     static void MirrorUVRow(const uint8_t *srcUV, uint8_t *dstUV, int32_t width);
