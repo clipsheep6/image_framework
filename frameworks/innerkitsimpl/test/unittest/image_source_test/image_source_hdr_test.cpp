@@ -27,7 +27,7 @@
 #include "file_source_stream.h"
 #include "buffer_source_stream.h"
 #include "ext_stream.h"
-#include "hdr_utils.h"
+#include "hdr_helper.h"
 #include "SkCodec.h"
 #include "src/codec/SkJpegCodec.h"
 #include "src/codec/SkJpegDecoderMgr.h"
@@ -79,29 +79,29 @@ HWTEST_F(ImageSourceHdrTest, HdrDecode001, TestSize.Level3)
 }
 
 /**
- * @tc.name: HdrUtils001
+ * @tc.name: HdrHelper001
  * @tc.desc: Test CheckHdrType ultrahdr
  * @tc.type: FUNC
  */
-HWTEST_F(ImageSourceHdrTest, HdrUtils001, TestSize.Level3)
+HWTEST_F(ImageSourceHdrTest, HdrHelper001, TestSize.Level3)
 {
     std::unique_ptr<Media::SourceStream> stream =
         Media::FileSourceStream::CreateSourceStream(IMAGE_INPUT_ULTRA_HDR_PATH);
     ImagePlugin::InputDataStream* inputStream = stream.get();
     std::unique_ptr<SkCodec> codec = SkCodec::MakeFromStream(std::make_unique<ImagePlugin::ExtStream>(inputStream));
     uint32_t offset;
-    HdrType type = HdrUtils::CheckHdrType(codec.get(), offset);
-    HiLog::Info(LABEL_TEST, "HdrUtils001 CheckHdrType type=%{public}d, offset=%{public}d", type, offset);
+    HdrType type = HdrHelper::CheckHdrType(codec.get(), offset);
+    HiLog::Info(LABEL_TEST, "HdrHelper001 CheckHdrType type=%{public}d, offset=%{public}d", type, offset);
     ASSERT_EQ(type, HdrType::HDR_ISO);
     ASSERT_NE(offset, 0);
 }
 
 /**
- * @tc.name: HdrUtils002
+ * @tc.name: HdrHelper002
  * @tc.desc: Test GetMetadata ultrahdr
  * @tc.type: FUNC
  */
-HWTEST_F(ImageSourceHdrTest, HdrUtils002, TestSize.Level3)
+HWTEST_F(ImageSourceHdrTest, HdrHelper002, TestSize.Level3)
 {
     std::unique_ptr<Media::SourceStream> stream =
             Media::FileSourceStream::CreateSourceStream(IMAGE_INPUT_ULTRA_HDR_PATH);
@@ -112,8 +112,8 @@ HWTEST_F(ImageSourceHdrTest, HdrUtils002, TestSize.Level3)
     ASSERT_NE(codec, nullptr);
 
     uint32_t offset;
-    HdrType type = HdrUtils::CheckHdrType(codec.get(), offset);
-    HiLog::Info(LABEL_TEST, "HdrUtils001 CheckHdrType type=%{public}d, offset=%{public}d", type, offset);
+    HdrType type = HdrHelper::CheckHdrType(codec.get(), offset);
+    HiLog::Info(LABEL_TEST, "HdrHelper002 CheckHdrType type=%{public}d, offset=%{public}d", type, offset);
     ASSERT_EQ(type, HdrType::HDR_ISO);
     ASSERT_NE(offset, 0);
 
@@ -124,7 +124,7 @@ HWTEST_F(ImageSourceHdrTest, HdrUtils002, TestSize.Level3)
                                             std::make_unique<ImagePlugin::ExtStream>(gainMapStream.get()));
     ASSERT_NE(gainMapCodec, nullptr);
     HdrMetadata metadata = {};
-    bool result = HdrUtils::GetMetadata(gainMapCodec.get(), type, metadata);
+    bool result = HdrHelper::GetMetadata(gainMapCodec.get(), type, metadata);
     ASSERT_EQ(result, true);
 }
 }
