@@ -14,8 +14,13 @@
  */
 
 #include "image_stream.h"
+#include "gmock/gmock-actions.h"
+#include "gmock/gmock-cardinalities.h"
+#include "gmock/gmock-spec-builders.h"
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <fcntl.h>
+#include <memory>
 #include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -27,6 +32,7 @@
 #include "file_image_stream.h"
 
 using namespace testing::ext;
+using namespace testing;
 using namespace OHOS::Media;
 
 namespace OHOS {
@@ -89,10 +95,29 @@ public:
 bool ImageStreamTest::alreadyExist = false;
 const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
 
-HWTEST_F(ImageStreamTest, FileImageStream_Mock001, TestSize.Level3){
-    // MockImageStream mock(1);
-    // ASSERT_EQ(1, mock.GetIndex());
-}
+class MockFileWrapper : public FileWrapper {
+public:
+    MOCK_METHOD(int, fstat, (int fd, struct stat *buf), (override));
+    MOCK_METHOD(ssize_t, write, (int fd, const void* buf, size_t count), (override));
+    MOCK_METHOD(ssize_t, read, (int fd, void *buf, size_t count), (override));
+
+    MockFileWrapper() {
+        ON_CALL(*this, fstat(_, _)).WillByDefault(Invoke([](int fd, struct stat* buf){
+            return ::fstat(fd, buf);
+        }));        
+
+        // 设置write的默认行为，使其调用系统的write函数
+        ON_CALL(*this, write(_, _, _))
+            .WillByDefault(Invoke([](int fd, const void* buf, size_t count) {
+                return ::write(fd, buf, count);
+        }));
+                
+        ON_CALL(*this, read(_, _, _))
+            .WillByDefault(Invoke([](int fd, void* buf, size_t count) {
+                return ::read(fd, buf, count);
+        }));                
+    }
+};
 
 /**
  * @tc.name: FileImageStream_Write001
@@ -162,7 +187,20 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write002, TestSize.Level3)
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
 {
-    // 这个测试用例需要一个几乎已满的文件系统，因此在实际测试中可能难以实现
+    // 这个测试用例需要一个能够模拟读取失败的ImageStream对象，因此在实际测试中可能需要使用mock技术
+    auto mockFileWrapper = std::make_unique<MockFileWrapper>();
+    // 设置write函数的行为，使其总是返回-1，模拟写入失败的情况
+    EXPECT_CALL(*mockFileWrapper.get(), write(_, _, _))
+        .WillOnce(Return(-1));
+    EXPECT_CALL(*mockFileWrapper.get(), fstat(_, _))
+        .Times(AtLeast(1));  // fstat函数至少被调用一次
+
+    FileImageStream stream(filePath, std::move(mockFileWrapper));
+
+    // 测试Write函数
+    uint8_t buffer[1024];
+    stream.Open();
+    EXPECT_EQ(stream.Write(buffer, sizeof(buffer)), -1);
 }
 
 /**
@@ -193,6 +231,28 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 {
     // 这个测试用例需要一个能够模拟读取失败的ImageStream对象，因此在实际测试中可能需要使用mock技术
+    auto mockSourceFileWrapper = std::make_unique<MockFileWrapper>();
+    auto mockDestFileWrapper = std::make_unique<MockFileWrapper>();
+
+    // 设置write函数的行为，使其总是返回-1，模拟写入失败的情况
+    EXPECT_CALL(*mockDestFileWrapper.get(), write(_, _, _))
+        .Times(Exactly(0));
+    EXPECT_CALL(*mockDestFileWrapper.get(), fstat(_, _))
+        .Times(AtLeast(1));  // fstat函数至少被调用一次
+    EXPECT_CALL(*mockSourceFileWrapper.get(), read(_, _, _))
+        .WillOnce(Return(-1));
+    EXPECT_CALL(*mockSourceFileWrapper.get(), fstat(_, _))
+        .Times(Exactly(1));
+
+    FileImageStream sourceStream(filePathSource, std::move(mockSourceFileWrapper));
+    FileImageStream destStream(filePath, std::move(mockDestFileWrapper));
+
+    // 测试Write函数
+    sourceStream.Open();
+    destStream.Open();
+    EXPECT_EQ(destStream.Write(sourceStream), -1);
+    // mockDestFileWrapper.reset();
+    // mockSourceFileWrapper.reset();
 }
 
 /**
@@ -203,6 +263,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_Write006, TestSize.Level3)
 {
     // 这个测试用例需要一个几乎已满的文件系统，因此在实际测试中可能难以实现
+    auto mockFileWrapper = std::make_unique<MockFileWrapper>();
+    FileImageStream stream(filePath, std::move(mockFileWrapper));
 }
 
 /**
@@ -273,24 +335,19 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
 {
     // 测试获取文件大小失败的情况
     // 这个测试可能需要一些特殊的设置或者mock技术来模拟fstat失败的情况
+    auto mockFileWrapper = std::make_unique<MockFileWrapper>();
+    EXPECT_CALL(*mockFileWrapper.get(), fstat(testing::_, testing::_)).WillOnce(Return(-1));
+
+    FileImageStream stream(filePath, std::move(mockFileWrapper));
+    ASSERT_FALSE(stream.Open());
 }
 
 /**
  * @tc.name: FileImageStream_Read001
- * @tc.desc: 测试FileImageStream的Write函数，是否能正常写入并验证写入的数据
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3){
-    FileImageStream* stream = new FileImageStream(filePath);
-    delete stream;
-}
-
-/**
- * @tc.name: FileImageStream_Read002
  * @tc.desc: 测试FileImageStream的Read函数，读取512字节的情况
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
+HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
     FileImageStream stream(filePathSource);
     uint8_t buffer[1024];
     stream.Open();
@@ -300,11 +357,11 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
 }
 
 /**
- * @tc.name: FileImageStream_Read003
+ * @tc.name: FileImageStream_Read002
  * @tc.desc: 测试FileImageStream的Read函数，尝试从未打开的文件读取的情况
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Read003, TestSize.Level3) {
+HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
     FileImageStream stream(filePathSource);
     uint8_t buffer[1024];
     // Close the stream to simulate an unopened file

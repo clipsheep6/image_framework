@@ -16,6 +16,8 @@
 #include "file_image_stream.h"
 #include "image_log.h"
 
+#include <cwchar>
+#include <memory>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -31,11 +33,36 @@
 
 namespace OHOS {
 namespace Media {
-FileImageStream::FileImageStream(const std::string& filePath)
-    : fd(-1), filePath(filePath), fileSize(0), currentOffset(0), mappedMemory(nullptr) {
+
+int FileWrapper::fstat(int fd, struct stat *st){
+    return ::fstat(fd, st);
 }
 
-FileImageStream::~FileImageStream() { Close(); }
+ssize_t FileWrapper::write(int fd, const void* buf, size_t count){
+    return ::write(fd, buf, count);
+}
+
+ssize_t FileWrapper::read(int fd, void *buf, size_t count){
+    return ::read(fd, buf, count);
+}
+
+FileImageStream::FileImageStream(const std::string& filePath)
+    : fd(-1), filePath(filePath), fileSize(0), currentOffset(0), mappedMemory(nullptr) {
+        this->fileWrapper = std::make_unique<FileWrapper>();
+}
+
+FileImageStream::FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper)
+    : fd(-1), filePath(filePath), fileSize(0), currentOffset(0), mappedMemory(nullptr){
+    if (fileWrapper == nullptr) {
+        this->fileWrapper = std::make_unique<FileWrapper>();
+    } else {
+        this->fileWrapper = std::move(fileWrapper);
+    }
+}
+
+FileImageStream::~FileImageStream() { 
+    Close(); 
+}
 
 ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
     if (fd == -1) {
@@ -43,7 +70,7 @@ ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
         return -1;
     }
 
-    ssize_t result = write(fd, data, size);
+    ssize_t result = fileWrapper->write(fd, data, size);
     if (result == -1) {
         // 写入失败
         char buf[256];        
@@ -59,18 +86,24 @@ ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
 ssize_t FileImageStream::Write(ImageStream& src) {
     // 创建一个缓冲区
     uint8_t buffer[4096];
-    size_t totalBytesWritten = 0;
+    ssize_t totalBytesWritten = 0;
 
     while (!src.IsEof()) {
         // 从源图像流中读取数据
-        size_t bytesRead = src.Read(buffer, sizeof(buffer));
+        ssize_t bytesRead = src.Read(buffer, sizeof(buffer));
         if (bytesRead == 0) {
             break;
         }
 
+        // 如果读取失败，立即返回错误
+        if (bytesRead == -1) {
+            IMAGE_LOGE("Read from source stream failed.");
+            return -1;
+        }
+
         // 将数据写入到当前图像流中
-        size_t bytesWritten = Write(buffer, bytesRead);
-        if (bytesWritten == static_cast<size_t>(-1)) {
+        ssize_t bytesWritten = Write(buffer, bytesRead);
+        if (bytesWritten == -1) {
             // 写入失败
             char buf[256];        
             strerror_r(errno, buf, sizeof(buf));
@@ -90,7 +123,7 @@ ssize_t FileImageStream::Read(uint8_t* buf, size_t size) {
         return -1;
     }
 
-    ssize_t result = read(fd, buf, size);
+    ssize_t result = fileWrapper->read(fd, buf, size);
     if (result == -1) {
         // 读取失败
         char buf[256];        
@@ -211,7 +244,7 @@ bool FileImageStream::Open(FileMode mode) {
 
     // 获取文件大小
     struct stat sb;
-    if (fstat(fd, &sb) == -1) {
+    if (fileWrapper->fstat(fd, &sb) == -1) {
         // 获取文件大小失败
         char buf[256];        
         strerror_r(errno, buf, sizeof(buf));

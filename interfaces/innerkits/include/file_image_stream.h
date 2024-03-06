@@ -20,11 +20,21 @@
 #include <cstdint>
 #include <fstream>
 #include <vector>
+#include <sys/stat.h>
+#include <memory>
 #include "image_type.h"
 #include "image_stream.h"
 
 namespace OHOS {
 namespace Media {
+
+class FileWrapper{
+public:
+    virtual ~FileWrapper(){}
+    virtual int fstat(int fd, struct stat *st);
+    virtual ssize_t write(int fd, const void* buf, size_t count);
+    virtual ssize_t read(int fd, void *buf, size_t count);
+};
 
 class FileImageStream : public ImageStream {
 public:
@@ -35,6 +45,7 @@ public:
     };
 
     NATIVEEXPORT FileImageStream(const std::string& filePath);
+    FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper);
     NATIVEEXPORT virtual ~FileImageStream();
 
     NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
@@ -80,6 +91,7 @@ private:
     size_t fileSize;  // 文件大小
     size_t currentOffset;  // 当前偏移量
     byte* mappedMemory;  // 内存映射的地址
+    std::unique_ptr<FileWrapper> fileWrapper;   // 文件包装类，用于测试
 };
 
 } // namespace MultimediaPlugin
