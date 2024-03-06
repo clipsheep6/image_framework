@@ -372,29 +372,22 @@ HWTEST_F(ImageReceiverTest, ImageReceiver0016, TestSize.Level3)
     };
 
     std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
-
-    OHOS::sptr<OHOS::Surface> receiverSurface = ImageReceiver::getSurfaceById(receiveKey);
-    if (receiverSurface == nullptr) {
-        GTEST_LOG_(INFO) << " getSurfaceById is nullptr";
-        return;
-    }
+    auto surface = ImageReceiver::getSurfaceById(receiveKey);
+    ASSERT_NE(surface, nullptr);
 
     int32_t releaseFence;
     OHOS::sptr<OHOS::SurfaceBuffer> buffer;
+    surface->RequestBuffer(buffer, releaseFence, requestConfig);
+    ASSERT_NE(buffer, nullptr);
 
-    receiverSurface->RequestBuffer(buffer, releaseFence, requestConfig);
-    if (buffer == nullptr) {
-        GTEST_LOG_(INFO) << "Image receiver buffer is nullptr";
-        return;
-    }
     int32_t *p = reinterpret_cast<int32_t *>(buffer->GetVirAddr());
     int32_t size = static_cast<int32_t>(buffer->GetSize() / 4);
     if (p != nullptr) {
-        for (int32_t i = 0; i < size; i) {
+        for (int32_t i = 0; i < size; i++) {
             p[i] = i;
         }
     }
-    receiverSurface->FlushBuffer(buffer, -1, flushConfig);
+    surface->FlushBuffer(buffer, -1, flushConfig);
 
     int64_t timestamp = 0;
     OHOS::sptr<OHOS::SurfaceBuffer> surfacebuffer = imageReceiver->ReadLastImage(timestamp);
@@ -431,29 +424,23 @@ HWTEST_F(ImageReceiverTest, ImageReceiver0017, TestSize.Level3)
     };
 
     std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
-
-    OHOS::sptr<OHOS::Surface> receiverSurface = ImageReceiver::getSurfaceById(receiveKey);
-    if (receiverSurface == nullptr) {
-        GTEST_LOG_(INFO) << " getSurfaceById is nullptr";
-        return;
-    }
+    auto surface = ImageReceiver::getSurfaceById(receiveKey);
+    ASSERT_NE(surface, nullptr);
 
     OHOS::sptr<OHOS::SurfaceBuffer> buffer;
     int32_t releaseFence;
 
-    receiverSurface->RequestBuffer(buffer, releaseFence, requestConfig);
-    if (buffer == nullptr) {
-        GTEST_LOG_(INFO) << "Image receiver buffer is nullptr";
-        return;
-    }
+    surface->RequestBuffer(buffer, releaseFence, requestConfig);
+    ASSERT_NE(buffer, nullptr);
+
     int32_t *p = reinterpret_cast<int32_t *>(buffer->GetVirAddr());
     int32_t size = static_cast<int32_t>(buffer->GetSize() / 4);
     if (p != nullptr) {
-        for (int32_t i = 0; i < size; i) {
+        for (int32_t i = 0; i < size; i++) {
             p[i] = i;
         }
     }
-    receiverSurface->FlushBuffer(buffer, -1, flushConfig);
+    surface->FlushBuffer(buffer, -1, flushConfig);
 
     int64_t timestamp = 0;
     OHOS::sptr<OHOS::SurfaceBuffer> surfacebuffer = imageReceiver->ReadNextImage(timestamp);
@@ -490,33 +477,27 @@ HWTEST_F(ImageReceiverTest, ImageReceiver0018, TestSize.Level3)
     };
 
     std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
-
-    OHOS::sptr<OHOS::Surface> receiverSurface = ImageReceiver::getSurfaceById(receiveKey);
-    if (receiverSurface == nullptr) {
-        GTEST_LOG_(INFO) << " getSurfaceById is nullptr";
-        return;
-    }
+    auto surface = ImageReceiver::getSurfaceById(receiveKey);
+    ASSERT_NE(surface, nullptr);
 
     OHOS::sptr<OHOS::SurfaceBuffer> buffer;
     int32_t releaseFence;
-    receiverSurface->RequestBuffer(buffer, releaseFence, requestConfig);
-    if (buffer == nullptr) {
-        GTEST_LOG_(INFO) << "Image receiver buffer is nullptr";
-        return;
-    }
+    surface->RequestBuffer(buffer, releaseFence, requestConfig);
+    ASSERT_NE(buffer, nullptr);
+
     int32_t *p = reinterpret_cast<int32_t *>(buffer->GetVirAddr());
     int32_t size = static_cast<int32_t>(buffer->GetSize() / 4);
     if (p != nullptr) {
-        for (int32_t i = 0; i < size; i) {
+        for (int32_t i = 0; i < size; i++) {
             p[i] = i;
         }
     }
-    receiverSurface->FlushBuffer(buffer, -1, flushConfig);
-
+    surface->FlushBuffer(buffer, -1, flushConfig);
     std::shared_ptr<NativeImage> image = imageReceiver->NextNativeImage();
 
     int64_t timestamp = 0;
-    image->GetTimestamp(timestamp); 
+    int32_t res = image->GetTimestamp(timestamp);
+    ASSERT_EQ(res, SUCCESS);
     ASSERT_EQ(timestamp, RECEIVER_TEST_TIMESTAMP);
     GTEST_LOG_(INFO) << "ImageReceiverTest: ImageReceiver0018 end";
 }
@@ -550,29 +531,22 @@ HWTEST_F(ImageReceiverTest, ImageReceiver0019, TestSize.Level3)
     };
 
     std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
-
-    OHOS::sptr<OHOS::Surface> receiverSurface = ImageReceiver::getSurfaceById(receiveKey);
-    if (receiverSurface == nullptr) {
-        GTEST_LOG_(INFO) << " getSurfaceById is nullptr";
-        return;
-    }
+    auto surface = ImageReceiver::getSurfaceById(receiveKey);
+    ASSERT_NE(surface, nullptr);
 
     OHOS::sptr<OHOS::SurfaceBuffer> buffer;
     int32_t releaseFence;
-    receiverSurface->RequestBuffer(buffer, releaseFence, requestConfig);
-    if (buffer == nullptr) {
-        GTEST_LOG_(INFO) << "Image receiver buffer is nullptr";
-        return;
-    }
+    surface->RequestBuffer(buffer, releaseFence, requestConfig);
+    ASSERT_NE(buffer, nullptr);
+
     int32_t *p = reinterpret_cast<int32_t *>(buffer->GetVirAddr());
     int32_t size = static_cast<int32_t>(buffer->GetSize() / 4);
     if (p != nullptr) {
-        for (int32_t i = 0; i < size; i) {
+        for (int32_t i = 0; i < size; i++) {
             p[i] = i;
         }
     }
-    receiverSurface->FlushBuffer(buffer, -1, flushConfig);
-
+    surface->FlushBuffer(buffer, -1, flushConfig);
     std::shared_ptr<NativeImage> image = imageReceiver->LastNativeImage();
 
     int64_t timestamp = 0;
