@@ -144,7 +144,11 @@ const uint32_t IMAGE_RESULT_ALLOCATER_TYPE_ERROR = BASE_MEDIA_ERR_OFFSET + 174; 
 const uint32_t IMAGE_RESULT_ALPHA_TYPE_ERROR = BASE_MEDIA_ERR_OFFSET + 175; // hard decode failed
 const uint32_t IMAGE_RESULT_INDEX_INVALID = BASE_MEDIA_ERR_OFFSET + 176; // invalid index
 const uint32_t IMAGE_RESULT_SAVE_DATA_TO_FILE_FAILED = BASE_MEDIA_ERR_OFFSET + 177; // save data to file failed
+const uint32_t IMAGE_RESULT_FORMAT_CONVERT_FAILED = BASE_MEDIA_ERR_OFFSET + 178; // convert format failed
+const uint32_t IMAGE_RESULT_CREATE_FORMAT_CONVERT_FAILED = BASE_MEDIA_ERR_OFFSET + 179; // create convert format failed
 
+const uint32_t ERR_MEDIA_FORMAT_UNSUPPORT = BASE_MEDIA_ERR_OFFSET + 180;
+const uint32_t ERR_MEDIA_MEMERY_COPY = BASE_MEDIA_ERR_OFFSET + 181;
 const int32_t ERR_MEDIA_UNKNOWN = BASE_MEDIA_ERR_OFFSET + 200;  // media unknown error
 const int32_t ERR_RESOURCE_UNAVAILABLE = 501; // Resource Unavailable
 const int32_t COMMON_ERR_INVALID_PARAMETER = 401; // Common error，Invalid parameter
