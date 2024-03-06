@@ -41,6 +41,7 @@
 #include "post_proc.h"
 #include "securec.h"
 #include "source_stream.h"
+#include "image_accessor.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -155,6 +156,11 @@ const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
+
+std::shared_ptr<ImageAccessor> ImageSource::CreateImageAccessor(const EncodedFormat& type)
+{
+    return nullptr;
+}
 
 uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
 {

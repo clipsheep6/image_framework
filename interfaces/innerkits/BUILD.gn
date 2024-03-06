@@ -31,6 +31,7 @@ config("image_external_config") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/include",
     "//foundation/multimedia/image_framework/frameworks/kits/js/common/include",
     "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
     "//foundation/multimedia/utils/include",
@@ -168,6 +169,13 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/dng_image_accessor.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/heif_image_accessor.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
     ]
 
     if (use_mingw_win) {
@@ -274,6 +282,13 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/dng_image_accessor.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/heif_image_accessor.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
   ]
 
   if (use_mingw_win) {

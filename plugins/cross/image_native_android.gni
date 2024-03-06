@@ -47,6 +47,15 @@ image_native_android_sources = [
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
 
+  # accessor
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/dng_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/heif_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
+
   # image_native
   "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/native_image.cpp",

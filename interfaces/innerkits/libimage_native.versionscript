@@ -36,6 +36,8 @@
     *FileWrapper*;
     *FileImageStream*;
     *BufferImageStream*;
+    *JpegImageAccessor*;
+    *ExifMetadata*;
   local:
     *;
 };
