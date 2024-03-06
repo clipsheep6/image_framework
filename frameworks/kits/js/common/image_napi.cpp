@@ -76,6 +76,7 @@ napi_value ImageNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_GETTER("size", JsGetSize),
         DECLARE_NAPI_GETTER("format", JsGetFormat),
         DECLARE_NAPI_GETTER("timestamp", JsGetTimestamp),
+        DECLARE_NAPI_GETTER("isCpuAccess", JsIsCpuAccess),
         DECLARE_NAPI_FUNCTION("getComponent", JsGetComponent),
         DECLARE_NAPI_FUNCTION("release", JsRelease),
     };
@@ -468,6 +469,26 @@ napi_value ImageNapi::JsGetTimestamp(napi_env env, napi_callback_info info)
     }
 
     napi_create_int64(env, timestamp, &result);
+    return result;
+}
+
+napi_value ImageNapi::JsIsCpuAccess(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+
+    IMAGE_FUNCTION_IN();
+    napi_get_undefined(env, &result);
+    std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
+    if (context == nullptr || context->image == nullptr) {
+        IMAGE_ERR("context or context->image is nullptr");
+        return result;
+    }
+    bool isCpuAccess = false;
+    if (context->image->IsCpuAccess(isCpuAccess) != SUCCESS) {
+        IMAGE_ERR("check Image native frame mode is cpu access fail");
+        return result;
+    }
+    napi_get_boolean(env, isCpuAccess, &result);
     return result;
 }
 
