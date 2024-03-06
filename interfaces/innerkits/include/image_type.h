@@ -220,7 +220,7 @@ struct DecodeOptions {
     SVGDecodeOptions SVGOpts;
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
-    DecodeDynamicRange dynamicRange = DecodeDynamicRange::DEFAULT;
+    DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::DEFAULT;
 };
 
 enum class ScaleMode : int32_t {

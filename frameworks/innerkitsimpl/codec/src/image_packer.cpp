@@ -88,12 +88,8 @@ uint32_t ImagePacker::StartPackingImpl(const PackOption &option)
         IMAGE_LOGE("StartPackingImpl get encoder plugin failed.");
         return ERR_IMAGE_MISMATCHED_FORMAT;
     }
-    if ((option.desiredDynamicRange == EncodeDynamicRange::SDR) ||
-        (option.format != IMAGE_JPEG_FORMAT && option.format != IMAGE_HEIC_FORMAT)) {
-        encodeToSdr_ = true;
-    } else {
-        encodeToSdr_ = false;
-    }
+    encodeToSdr_ = ((option.desiredDynamicRange == EncodeDynamicRange::SDR) ||
+        (option.format != IMAGE_JPEG_FORMAT && option.format != IMAGE_HEIC_FORMAT));
     PlEncodeOptions plOpts;
     CopyOptionsToPlugin(option, plOpts);
     return DoEncodingFunc([this, &plOpts](ImagePlugin::AbsImageEncoder* encoder) {
@@ -204,11 +200,7 @@ uint32_t ImagePacker::AddImage(ImageSource &source)
 {
     ImageTrace imageTrace("ImagePacker::AddImage by imageSource");
     DecodeOptions decodeOpts;
-    if (encodeToSdr_) {
-        decodeOpts.dynamicRange = DecodeDynamicRange::SDR;
-    } else {
-        decodeOpts.dynamicRange = DecodeDynamicRange::DEFAULT;
-    }
+    decodeOpts.desiredDynamicRange = encodeToSdr_ ? DecodeDynamicRange::SDR : DecodeDynamicRange::DEFAULT;
     uint32_t ret = SUCCESS;
     if (pixelMap_ != nullptr) {
         pixelMap_.reset();  // release old inner pixelmap

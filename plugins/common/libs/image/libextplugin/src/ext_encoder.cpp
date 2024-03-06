@@ -281,6 +281,7 @@ static void FreeBaseAndGainMapSurfaceBuffer(sptr<SurfaceBuffer>& base, sptr<Surf
     ImageUtils::SurfaceBuffer_Unreference(gainMap.GetRefPtr());
 }
 
+#ifdef IMAGE_HDR_CONVERTER_FLAG
 static HdrMetadata GetHdrMetadata(sptr<SurfaceBuffer>& sb)
 {
     std::vector<uint8_t> dynamicMetadata = {};
@@ -293,6 +294,7 @@ static HdrMetadata GetHdrMetadata(sptr<SurfaceBuffer>& sb)
     };
     return metadata;
 }
+#endif
 
 static uint32_t DecomposeImage(Media::PixelMap* pixelMap, sptr<SurfaceBuffer>& base, sptr<SurfaceBuffer>& gainMap,
     ImagePlugin::HdrMetadata& metadata)
@@ -305,13 +307,13 @@ static uint32_t DecomposeImage(Media::PixelMap* pixelMap, sptr<SurfaceBuffer>& b
     VpeUtils::SetSbColorSpaceType(hdrSurfaceBuffer, CM_BT2020_HLG_LIMIT);
     VpeUtils::SetSbDynamicMetadata(hdrSurfaceBuffer, std::vector<uint8_t>());
     VpeUtils::SetSbStaticMetadata(hdrSurfaceBuffer, std::vector<uint8_t>());
-    metadata = GetHdrMetadata(hdrSurfaceBuffer);
 #ifdef IMAGE_HDR_CONVERTER_FLAG
     auto convert = VpeUtils::GetColorSpaceConverter();
     int error = convert->DecomposeImage(hdrSurfaceBuffer, base, gainMap);
     if (error != VPE_ALGO_ERR_OK || base == nullptr || gainMap == nullptr) {
         return IMAGE_RESULT_CREATE_SURFAC_FAILED;
     }
+    metadata = GetHdrMetadata(hdrSurfaceBuffer);
     return SUCCESS:
 #else
     return IMAGE_RESULT_CREATE_SURFAC_FAILED;

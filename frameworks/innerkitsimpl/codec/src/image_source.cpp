@@ -163,6 +163,9 @@ constexpr uint8_t BYTE_POS_0 = 0;
 constexpr uint8_t BYTE_POS_1 = 1;
 constexpr uint8_t BYTE_POS_2 = 2;
 constexpr uint8_t BYTE_POS_3 = 3;
+constexpr int GAINMAP_MAX = 10;
+constexpr int GAINMAP_MIN = 11;
+constexpr int HDR_MODEL = 12;
 const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress.z.so";
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
@@ -567,6 +570,11 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
         return nullptr;
     }
+    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
+        context.yuvInfo.imageSize.width != 0) {
+        plInfo.yuvDataInfo = context.yuvInfo;
+        plInfo.size = context.yuvInfo.imageSize;
+    }
     auto pixelMap = CreatePixelMapByInfos(plInfo, context, errorCode);
     if (pixelMap == nullptr) {
         return nullptr;
@@ -610,36 +618,32 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
     }
 }
 
-static OHOS::ColorManager::ColorSpace GetDecodedColorSpace(HdrType type,
+// add graphic colorspace object to pixelMap.
+static void SetPixelMapColorSpace(HdrType type, unique_ptr<PixelMap>& pixelMap,
     std::unique_ptr<ImagePlugin::AbsImageDecoder>& decoder)
 {
-    if (type > HdrType::SDR) {
-        return OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::BT2020_HLG);
-    }
 #ifdef IMAGE_COLORSPACE_FLAG
+    if (type > HdrType::SDR) {
+        pixelMap->InnerSetColorSpace(OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::BT2020_HLG));
+        return ;
+    }
+    
     bool isSupportICCProfile = decoder->IsSupportICCProfile();
     if (isSupportICCProfile) {
-        return decoder->getGrColorSpace();
+        OHOS::ColorManager::ColorSpace grColorSpace = decoder->getGrColorSpace();
+        pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
-    return OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::SRGB);
 }
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
     ImagePlugin::DecodeContext& context, uint32_t &errorCode)
 {
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
-    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
-        context.yuvInfo.imageSize.width != 0) {
-        plInfo.yuvDataInfo = context.yuvInfo;
-        plInfo.size = context.yuvInfo.imageSize;
-    }
     PixelMapAddrInfos addrInfos;
     ContextToAddrInfos(context, addrInfos);
-#ifdef IMAGE_COLORSPACE_FLAG
     // add graphic colorspace object to pixelMap.
-    pixelMap->InnerSetColorSpace(GetDecodedColorSpace(context.hdrType, mainDecoder_));
-#endif
+    SetPixelMapColorSpace(context.hdrType, pixelMap, mainDecoder_);
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
@@ -2423,7 +2427,7 @@ static uint32_t AllocHdrSurfaceBuffer(DecodeContext& context, HdrType hdrType)
         .height = context.info.size.height,
         .strideAlignment = context.info.size.width,
         .format = GRAPHIC_PIXEL_FMT_RGBA_1010102,
-        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
         .timeout = 0,
     };
     GSError ret = sb->Alloc(requestConfig);
@@ -2456,7 +2460,7 @@ DecodeContext ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo in
     context.info.pixelFormat = plInfo.pixelFormat;
 #ifdef IMAGE_HDR_CONVERTER_FLAG
     HdrType decodedHdrType = HdrType::UNKNOWN;
-    if (opts_.dynamicRange != DecodeDynamicRange::SDR) {
+    if (opts_.desiredDynamicRange != DecodeDynamicRange::SDR) {
         decodedHdrType = IsHdrImage() ? sourceHdrType_ : HdrType::SDR;
         if (!ImageSystemProperties::GetDmaEnabled()) {
             decodedHdrType = HdrType::SDR;
@@ -2621,14 +2625,11 @@ static void SetBaseSurfaceBuffer(sptr<SurfaceBuffer>& buffer, CM_HDR_Metadata_Ty
     VpeUtils::SetSbColorSpaceType(buffer, color);
     VpeUtils::SetSbDynamicMetadata(buffer, metadata.dynamicMetadata);
     VpeUtils::SetSbStaticMetadata(buffer, metadata.staticMetadata);
-    int gainMapMax = 10;
-    int gainMapMin = 11;
-    int hdrModel = 12;
-    float data = 1.0;
-    float data1 = 0.0;
-    SetFloatMetadata(buffer, gainMapMax, data);
-    SetFloatMetadata(buffer, gainMapMin, data1);
-    SetIntMetadata(buffer, hdrModel, 0);
+    float maxData = 1.0;
+    float minData = 0.0;
+    SetFloatMetadata(buffer, GAINMAP_MAX, maxData);
+    SetFloatMetadata(buffer, GAINMAP_MIN, minData);
+    SetIntMetadata(buffer, HDR_MODEL, 0);
 }
 
 bool ImageSource::ComposeHdrImage(HdrType hdrType, DecodeContext& baseCtx, DecodeContext& gainMapCtx,
