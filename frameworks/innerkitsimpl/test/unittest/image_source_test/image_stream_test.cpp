@@ -13,17 +13,26 @@
  * limitations under the License.
  */
 
+#include "image_stream.h"
+#include "gmock/gmock-actions.h"
+#include "gmock/gmock-cardinalities.h"
+#include "gmock/gmock-spec-builders.h"
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <fcntl.h>
+#include <memory>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <pwd.h>
+#include <csetjmp>
+#include <csignal>
 #define private public
-#include "image_stream.h"
 #include "file_image_stream.h"
 
 using namespace testing::ext;
+using namespace testing;
 using namespace OHOS::Media;
 
 namespace OHOS {
@@ -36,6 +45,7 @@ public:
     std::string filePath = "/data/local/tmp/image/testfile.txt";
     std::string filePathSource = "/data/local/tmp/image/testfile_source.png";
     std::string filePathDest = "/data/local/tmp/image/testfile_dest.png";
+    std::string backupFilePathSource = filePathSource + ".bak";
 
     virtual void SetUp() {
         // Create the directory
@@ -49,6 +59,8 @@ public:
             }
         }
         
+        // Backup the files
+        std::filesystem::copy(filePathSource, backupFilePathSource, std::filesystem::copy_options::overwrite_existing);
     }
 
     const static std::string tmpDirectory;
@@ -83,10 +95,29 @@ public:
 bool ImageStreamTest::alreadyExist = false;
 const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
 
-HWTEST_F(ImageStreamTest, FileImageStream_Mock001, TestSize.Level3){
-    // MockImageStream mock(1);
-    // ASSERT_EQ(1, mock.GetIndex());
-}
+class MockFileWrapper : public FileWrapper {
+public:
+    MOCK_METHOD(int, fstat, (int fd, struct stat *buf), (override));
+    MOCK_METHOD(ssize_t, write, (int fd, const void* buf, size_t count), (override));
+    MOCK_METHOD(ssize_t, read, (int fd, void *buf, size_t count), (override));
+
+    MockFileWrapper() {
+        ON_CALL(*this, fstat(_, _)).WillByDefault(Invoke([](int fd, struct stat* buf){
+            return ::fstat(fd, buf);
+        }));        
+
+        // 设置write的默认行为，使其调用系统的write函数
+        ON_CALL(*this, write(_, _, _))
+            .WillByDefault(Invoke([](int fd, const void* buf, size_t count) {
+                return ::write(fd, buf, count);
+        }));
+                
+        ON_CALL(*this, read(_, _, _))
+            .WillByDefault(Invoke([](int fd, void* buf, size_t count) {
+                return ::read(fd, buf, count);
+        }));                
+    }
+};
 
 /**
  * @tc.name: FileImageStream_Write001
@@ -156,7 +187,20 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write002, TestSize.Level3)
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
 {
-    // 这个测试用例需要一个几乎已满的文件系统，因此在实际测试中可能难以实现
+    // 这个测试用例需要一个能够模拟读取失败的ImageStream对象，因此在实际测试中可能需要使用mock技术
+    auto mockFileWrapper = std::make_unique<MockFileWrapper>();
+    // 设置write函数的行为，使其总是返回-1，模拟写入失败的情况
+    EXPECT_CALL(*mockFileWrapper.get(), write(_, _, _))
+        .WillOnce(Return(-1));
+    EXPECT_CALL(*mockFileWrapper.get(), fstat(_, _))
+        .Times(AtLeast(1));  // fstat函数至少被调用一次
+
+    FileImageStream stream(filePath, std::move(mockFileWrapper));
+
+    // 测试Write函数
+    uint8_t buffer[1024];
+    stream.Open();
+    EXPECT_EQ(stream.Write(buffer, sizeof(buffer)), -1);
 }
 
 /**
@@ -187,6 +231,28 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 {
     // 这个测试用例需要一个能够模拟读取失败的ImageStream对象，因此在实际测试中可能需要使用mock技术
+    auto mockSourceFileWrapper = std::make_unique<MockFileWrapper>();
+    auto mockDestFileWrapper = std::make_unique<MockFileWrapper>();
+
+    // 设置write函数的行为，使其总是返回-1，模拟写入失败的情况
+    EXPECT_CALL(*mockDestFileWrapper.get(), write(_, _, _))
+        .Times(Exactly(0));
+    EXPECT_CALL(*mockDestFileWrapper.get(), fstat(_, _))
+        .Times(AtLeast(1));  // fstat函数至少被调用一次
+    EXPECT_CALL(*mockSourceFileWrapper.get(), read(_, _, _))
+        .WillOnce(Return(-1));
+    EXPECT_CALL(*mockSourceFileWrapper.get(), fstat(_, _))
+        .Times(Exactly(1));
+
+    FileImageStream sourceStream(filePathSource, std::move(mockSourceFileWrapper));
+    FileImageStream destStream(filePath, std::move(mockDestFileWrapper));
+
+    // 测试Write函数
+    sourceStream.Open();
+    destStream.Open();
+    EXPECT_EQ(destStream.Write(sourceStream), -1);
+    // mockDestFileWrapper.reset();
+    // mockSourceFileWrapper.reset();
 }
 
 /**
@@ -197,16 +263,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_Write006, TestSize.Level3)
 {
     // 这个测试用例需要一个几乎已满的文件系统，因此在实际测试中可能难以实现
-}
-
-/**
- * @tc.name: FileImageStream_Read001
- * @tc.desc: 测试FileImageStream的Write函数，是否能正常写入并验证写入的数据
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3){
-    FileImageStream* stream = new FileImageStream(filePath);
-    delete stream;
+    auto mockFileWrapper = std::make_unique<MockFileWrapper>();
+    FileImageStream stream(filePath, std::move(mockFileWrapper));
 }
 
 /**
@@ -277,6 +335,105 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
 {
     // 测试获取文件大小失败的情况
     // 这个测试可能需要一些特殊的设置或者mock技术来模拟fstat失败的情况
+    auto mockFileWrapper = std::make_unique<MockFileWrapper>();
+    EXPECT_CALL(*mockFileWrapper.get(), fstat(testing::_, testing::_)).WillOnce(Return(-1));
+
+    FileImageStream stream(filePath, std::move(mockFileWrapper));
+    ASSERT_FALSE(stream.Open());
+}
+
+/**
+ * @tc.name: FileImageStream_Read001
+ * @tc.desc: 测试FileImageStream的Read函数，读取512字节的情况
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
+    FileImageStream stream(filePathSource);
+    uint8_t buffer[1024];
+    stream.Open();
+    // Simulate reading 512 bytes
+    ssize_t bytesRead = stream.Read(buffer, 512);
+    EXPECT_EQ(512, bytesRead);
+}
+
+/**
+ * @tc.name: FileImageStream_Read002
+ * @tc.desc: 测试FileImageStream的Read函数，尝试从未打开的文件读取的情况
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
+    FileImageStream stream(filePathSource);
+    uint8_t buffer[1024];
+    // Close the stream to simulate an unopened file
+    stream.Close();
+    ssize_t bytesRead = stream.Read(buffer, 512);
+    EXPECT_EQ(-1, bytesRead);
+}
+
+// 定义一个全局的 jmp_buf 变量
+static sigjmp_buf jmpbuf;
+
+// 定义一个信号处理函数
+static void handle_sigsegv(int sig) {
+    siglongjmp(jmpbuf, 1);
+}
+
+// 测试MMap函数
+HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
+    // 假定有一个合适的方式来创建或获取测试所需的资源
+    // YourResource test_resource;
+    // 测试MMap函数在isWriteable为false时的行为
+    FileImageStream stream(filePathSource);
+    byte* result = stream.MMap(false);
+    // 假设检查result是否为非nullptr，或有其他合适的验证方式
+    ASSERT_NE(result, nullptr);
+  
+    // 设置信号处理函数
+    signal(SIGSEGV, handle_sigsegv);
+
+    // 尝试写入数据
+    if (sigsetjmp(jmpbuf, 1) == 0) {
+        result[0] = 0;
+        // 如果没有引发段错误，那么这是一个错误
+        FAIL() << "Expected a segmentation fault";
+    }
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
+    // 测试MMap函数在isWriteable为true时的行为
+    FileImageStream stream(filePathSource);
+    byte* result = stream.MMap(true);
+    ASSERT_NE(result, nullptr);
+    // 尝试写入数据
+    result[0] = 123;
+
+    // 读取数据并检查是否与写入的数据相同
+    ASSERT_EQ(result[0], 123);
+}
+
+// 测试Transfer函数
+HWTEST_F(ImageStreamTest, FileImageStream_Transfer001, TestSize.Level3) {
+    FileImageStream src(filePathSource);
+    FileImageStream dest(filePathDest);
+    
+    src.Open();
+    // 向src中写入一些已知的数据
+    std::string data = "Hello, world!";
+    ASSERT_GE(src.Write((uint8_t*)data.c_str(), data.size()), 0);
+    ASSERT_GE(src.GetSize(), data.size());
+    ASSERT_EQ(src.Seek(0, SeekPos::BEGIN), 0);
+    ASSERT_FALSE(src.IsEof());
+    // 调用Transfer函数将数据从src转移到dest
+    dest.Transfer(src);
+
+    // 从dest中读取数据，并验证这些数据是否与写入src的数据相同
+    uint8_t buffer[256];
+    ASSERT_EQ(dest.Seek(0, SeekPos::BEGIN), 0);
+    ASSERT_EQ(dest.Read(buffer, data.size()), data.size());
+    ASSERT_EQ(std::string(buffer, buffer + data.size()), data);
+
+    // 验证src是否为空
+    ASSERT_EQ(dest.GetSize(), src.GetSize());
 }
 
 }

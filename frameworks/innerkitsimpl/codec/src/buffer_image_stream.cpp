@@ -27,7 +27,7 @@
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "ImageStream"
+#define LOG_TAG "BufferImageStream"
 
 namespace OHOS {
 namespace Media {
