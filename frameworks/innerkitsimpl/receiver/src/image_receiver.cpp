@@ -21,6 +21,9 @@
 #include "image_utils.h"
 #include "image_receiver_buffer_processor.h"
 #include "image_receiver_manager.h"
+#include "v1_1/buffer_handle_meta_key_type.h"
+
+using namespace OHOS::HDI::Display::Graphic::Common::V1_1;
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -196,6 +199,8 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
 
     iva->receiverConsumerSurface_->SetDefaultWidthAndHeight(width, height);
     iva->receiverConsumerSurface_->SetQueueSize(capicity);
+
+    iva->receiverConsumerSurface_->SetDefaultUsage(BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_CPU_HW_BOTH); 
     auto p = iva->receiverConsumerSurface_->GetProducer();
     iva->receiverProducerSurface_ = Surface::CreateSurfaceAsProducer(p);
     if (iva->receiverProducerSurface_ == nullptr) {
@@ -217,6 +222,13 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
     iva->receiverConsumerSurface_->
     RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
     return iva;
+}
+
+uint32_t ImageReceiver::SetFrameMode(bool isCpuAccess)
+{
+    receiverConsumerSurface_->ConsumerRequestCpuAccess(isCpuAccess);
+    IMAGE_LOGD("ImageReceiver::SetFrameMode %{public}d", isCpuAccess);
+    return SUCCESS;
 }
 
 OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage()
@@ -280,6 +292,22 @@ std::shared_ptr<NativeImage> ImageReceiver::NextNativeImage()
     if (surfaceBuffer == nullptr) {
         return nullptr;
     }
+    std::vector<uint8_t> values;
+    surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+    if (values.size() == 1) {
+        if (values[0] == HEBC_ACCESS_CPU_ACCESS){
+            IMAGE_LOGD("ImageReceiver::NextNativeImage GetMetadata ATTRKEY_REQUEST_ACCESS_TYPE HEBC_ACCESS_CPU_ACCESS");
+            return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), 
+                    HEBC_ACCESS_CPU_ACCESS);
+        }
+        else {
+            IMAGE_LOGD("ImageReceiver::NextNativeImage GetMetadata ATTRKEY_REQUEST_ACCESS_TYPE HW_ONLY");
+        }
+    }
+    else{
+        IMAGE_LOGD("ImageReceiver::NextNativeImage GetMetadata ATTRKEY_REQUEST_ACCESS_TYPE not found");
+    }
+
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor());
 }
 
@@ -293,6 +321,24 @@ std::shared_ptr<NativeImage> ImageReceiver::LastNativeImage()
     if (surfaceBuffer == nullptr) {
         return nullptr;
     }
+    
+    std::vector<uint8_t> values;
+    surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+    if (values.size() == 1) {
+        if (values[0] ==HEBC_ACCESS_CPU_ACCESS){
+            IMAGE_LOGD("ImageReceiver::LastNativeImage GetMetadata ATTRKEY_REQUEST_ACCESS_TYPE HEBC_ACCESS_CPU_ACCESS");
+            return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), 
+                    HEBC_ACCESS_CPU_ACCESS);
+        }
+        else {
+            IMAGE_LOGD("ImageReceiver::LastNativeImage GetMetadata ATTRKEY_REQUEST_ACCESS_TYPE err");
+        }
+    }    
+    else{
+        IMAGE_LOGD("ImageReceiver::LastNativeImage GetMetadata ATTRKEY_REQUEST_ACCESS_TYPE not found");
+    }
+
+    
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor());
 }
 } // namespace Media

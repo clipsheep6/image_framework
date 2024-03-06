@@ -71,6 +71,7 @@ private:
     static napi_value JsReadNextImage(napi_env env, napi_callback_info info);
     static napi_value JsOn(napi_env env, napi_callback_info info);
     static napi_value JsRelease(napi_env env, napi_callback_info info);
+    static napi_value JsRequestCpuAccess(napi_env env, napi_callback_info info);
 
     static bool GetNativeFromEnv(napi_env env, napi_callback_info info, std::shared_ptr<ImageReceiver> &native);
     static napi_value JSCommonProcess(ImageReceiverCommonArgs &args);
