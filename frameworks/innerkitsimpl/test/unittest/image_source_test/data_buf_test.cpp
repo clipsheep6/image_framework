@@ -36,7 +36,7 @@ public:
  */
 HWTEST_F(DataBufTest, DataBufTest_Write001, TestSize.Level3){
     DataBuf dataBuf(10);
-    dataBuf.write_uint8(0, 123);
+    dataBuf.WriteUInt8(0, 123);
     EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
 }
 

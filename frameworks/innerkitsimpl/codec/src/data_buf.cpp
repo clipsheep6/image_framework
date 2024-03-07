@@ -82,19 +82,19 @@ DataBuf::DataBuf(const byte* pData, size_t size) : pData_(size) {
   std::copy_n(pData, size, pData_.begin());
 }
 
-void DataBuf::alloc(size_t size) {
+void DataBuf::Alloc(size_t size) {
   pData_.resize(size);
 }
 
-void DataBuf::resize(size_t size) {
+void DataBuf::Resize(size_t size) {
   pData_.resize(size);
 }
 
-void DataBuf::reset() {
+void DataBuf::Reset() {
   pData_.clear();
 }
 
-uint8_t DataBuf::read_uint8(size_t offset) const {
+uint8_t DataBuf::ReadUInt8(size_t offset) const {
   if (offset >= pData_.size()) {
     IMAGE_LOGE("Overflow in DataBuf::read_uint8");
     return 0;
@@ -103,7 +103,7 @@ uint8_t DataBuf::read_uint8(size_t offset) const {
   return pData_[offset];
 }
 
-void DataBuf::write_uint8(size_t offset, uint8_t x) {
+void DataBuf::WriteUInt8(size_t offset, uint8_t x) {
   if (offset >= pData_.size()) {
     IMAGE_LOGE("Overflow in DataBuf::write_uint8");
     return;
@@ -112,7 +112,7 @@ void DataBuf::write_uint8(size_t offset, uint8_t x) {
   pData_[offset] = x;
 }
 
-uint16_t DataBuf::read_uint16(size_t offset, ByteOrder byteOrder) const {
+uint16_t DataBuf::ReadUInt16(size_t offset, ByteOrder byteOrder) const {
   if (pData_.size() < 2 || offset > (pData_.size() - 2)) {
     IMAGE_LOGE("Overflow in DataBuf::read_uint16");
     return 0;
@@ -121,7 +121,7 @@ uint16_t DataBuf::read_uint16(size_t offset, ByteOrder byteOrder) const {
   return getUShort(&pData_[offset], byteOrder);
 }
 
-void DataBuf::write_uint16(size_t offset, uint16_t x, ByteOrder byteOrder) {
+void DataBuf::WriteUInt16(size_t offset, uint16_t x, ByteOrder byteOrder) {
   if (pData_.size() < 2 || offset > (pData_.size() - 2)) {
     IMAGE_LOGE("Overflow in DataBuf::write_uint16");
     return;
@@ -130,7 +130,7 @@ void DataBuf::write_uint16(size_t offset, uint16_t x, ByteOrder byteOrder) {
   us2Data(&pData_[offset], x, byteOrder);
 }
 
-uint32_t DataBuf::read_uint32(size_t offset, ByteOrder byteOrder) const {
+uint32_t DataBuf::ReadUInt32(size_t offset, ByteOrder byteOrder) const {
   if (pData_.size() < 4 || offset > (pData_.size() - 4)) {
     IMAGE_LOGE("Overflow in DataBuf::read_uint32");
     return 0;
@@ -139,7 +139,7 @@ uint32_t DataBuf::read_uint32(size_t offset, ByteOrder byteOrder) const {
   return getULong(&pData_[offset], byteOrder);
 }
 
-void DataBuf::write_uint32(size_t offset, uint32_t x, ByteOrder byteOrder) {
+void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder) {
   if (pData_.size() < 4 || offset > (pData_.size() - 4)) {
     IMAGE_LOGE("Overflow in DataBuf::write_uint32");
     return;
@@ -148,7 +148,7 @@ void DataBuf::write_uint32(size_t offset, uint32_t x, ByteOrder byteOrder) {
   ul2Data(&pData_[offset], x, byteOrder);
 }
 
-uint64_t DataBuf::read_uint64(size_t offset, ByteOrder byteOrder) const {
+uint64_t DataBuf::ReadUInt64(size_t offset, ByteOrder byteOrder) const {
   if (pData_.size() < 8 || offset > (pData_.size() - 8)) {
     IMAGE_LOGE("Overflow in DataBuf::read_uint64");
     return 0;
@@ -157,7 +157,7 @@ uint64_t DataBuf::read_uint64(size_t offset, ByteOrder byteOrder) const {
   return getULongLong(&pData_[offset], byteOrder);
 }
 
-void DataBuf::write_uint64(size_t offset, uint64_t x, ByteOrder byteOrder) {
+void DataBuf::WriteUInt64(size_t offset, uint64_t x, ByteOrder byteOrder) {
   if (pData_.size() < 8 || offset > (pData_.size() - 8)) {
     IMAGE_LOGE("Overflow in DataBuf::write_uint64");
     return;
@@ -166,7 +166,7 @@ void DataBuf::write_uint64(size_t offset, uint64_t x, ByteOrder byteOrder) {
   ull2Data(&pData_[offset], x, byteOrder);
 }
 
-int DataBuf::cmpBytes(size_t offset, const void* buf, size_t bufsize) const {
+int DataBuf::CmpBytes(size_t offset, const void* buf, size_t bufsize) const {
   if (pData_.size() < bufsize || offset > pData_.size() - bufsize) {
     IMAGE_LOGE("Overflow in DataBuf::cmpBytes");
     return 0;
@@ -175,11 +175,11 @@ int DataBuf::cmpBytes(size_t offset, const void* buf, size_t bufsize) const {
   return memcmp(&pData_[offset], buf, bufsize);
 }
 
-byte* DataBuf::data(size_t offset) {
-  return const_cast<byte*>(c_data(offset));
+byte* DataBuf::Data(size_t offset) {
+  return const_cast<byte*>(C_Data(offset));
 }
 
-const byte* DataBuf::c_data(size_t offset) const {
+const byte* DataBuf::C_Data(size_t offset) const {
   if (pData_.empty() || offset == pData_.size()) {
     return nullptr;
   }
@@ -191,8 +191,8 @@ const byte* DataBuf::c_data(size_t offset) const {
   return &pData_[offset];
 }
 
-const char* DataBuf::c_str(size_t offset) const {
-  return reinterpret_cast<const char*>(c_data(offset));
+const char* DataBuf::C_Str(size_t offset) const {
+  return reinterpret_cast<const char*>(C_Data(offset));
 }
 
 // *************************************************************************
@@ -206,12 +206,12 @@ static void checkDataBufBounds(const DataBuf& buf, size_t end) {
 
 Slice<byte*> makeSlice(DataBuf& buf, size_t begin, size_t end) {
   checkDataBufBounds(buf, end);
-  return {buf.data(), begin, end};
+  return {buf.Data(), begin, end};
 }
 
 Slice<const byte*> makeSlice(const DataBuf& buf, size_t begin, size_t end) {
   checkDataBufBounds(buf, end);
-  return {buf.c_data(), begin, end};
+  return {buf.C_Data(), begin, end};
 }
 
 std::ostream& operator<<(std::ostream& os, const Rational& r) {

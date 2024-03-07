@@ -136,14 +136,14 @@ struct DataBuf {
            the requested \em size is less than the current buffer size, no
            new memory is allocated and the buffer size doesn't change.
    */
-  void alloc(size_t size);
+  void Alloc(size_t size);
   /*!
     @brief Resize the buffer. Existing data is preserved (like std::realloc()).
    */
-  void resize(size_t size);
+  void Resize(size_t size);
 
   //! Reset value
-  void reset();
+  void Reset();
   //@}
 
   using iterator = std::vector<byte>::iterator;
@@ -166,29 +166,29 @@ struct DataBuf {
     return pData_.size();
   }
 
-  [[nodiscard]] uint8_t read_uint8(size_t offset) const;
-  void write_uint8(size_t offset, uint8_t x);
+  [[nodiscard]] uint8_t ReadUInt8(size_t offset) const;
+  void WriteUInt8(size_t offset, uint8_t x);
 
-  [[nodiscard]] uint16_t read_uint16(size_t offset, ByteOrder byteOrder) const;
-  void write_uint16(size_t offset, uint16_t x, ByteOrder byteOrder);
+  [[nodiscard]] uint16_t ReadUInt16(size_t offset, ByteOrder byteOrder) const;
+  void WriteUInt16(size_t offset, uint16_t x, ByteOrder byteOrder);
 
-  [[nodiscard]] uint32_t read_uint32(size_t offset, ByteOrder byteOrder) const;
-  void write_uint32(size_t offset, uint32_t x, ByteOrder byteOrder);
+  [[nodiscard]] uint32_t ReadUInt32(size_t offset, ByteOrder byteOrder) const;
+  void WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder);
 
-  [[nodiscard]] uint64_t read_uint64(size_t offset, ByteOrder byteOrder) const;
-  void write_uint64(size_t offset, uint64_t x, ByteOrder byteOrder);
+  [[nodiscard]] uint64_t ReadUInt64(size_t offset, ByteOrder byteOrder) const;
+  void WriteUInt64(size_t offset, uint64_t x, ByteOrder byteOrder);
 
   //! Equivalent to: memcmp(&pData_[offset], buf, bufsize)
-  int cmpBytes(size_t offset, const void* buf, size_t bufsize) const;
+  int CmpBytes(size_t offset, const void* buf, size_t bufsize) const;
 
   //! Returns a data pointer.
-  [[nodiscard]] byte* data(size_t offset = 0);
+  [[nodiscard]] byte* Data(size_t offset = 0);
 
   //! Returns a (read-only) data pointer.
-  [[nodiscard]] const byte* c_data(size_t offset = 0) const;
+  [[nodiscard]] const byte* C_Data(size_t offset = 0) const;
 
   //! Returns a (read-only) C-style string pointer.
-  [[nodiscard]] const char* c_str(size_t offset = 0) const;
+  [[nodiscard]] const char* C_Str(size_t offset = 0) const;
 
   [[nodiscard]] bool empty() const {
     return pData_.empty();
