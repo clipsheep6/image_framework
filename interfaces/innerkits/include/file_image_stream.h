@@ -49,8 +49,17 @@ public:
     NATIVEEXPORT virtual ~FileImageStream();
 
     NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
+
+    /**
+     * Write the content of the source ImageStream to the current FileImageStream.
+     * Unlike the CopyFrom function, this function will not modify the offset positions of the source ImageStream and the current FileImageStream.
+     * 
+     * @param src The source ImageStream, this function will read data from this ImageStream.
+     * @return The number of bytes written. If an error occurs, a negative number will be returned.
+     */    
     NATIVEEXPORT virtual ssize_t Write(ImageStream& src) override;
     NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+    NATIVEEXPORT virtual int ReadByte() override;
     NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
     NATIVEEXPORT virtual ssize_t Tell() override;
     NATIVEEXPORT virtual bool IsEof() override;
@@ -69,6 +78,11 @@ public:
      */
     NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
+    // Release a memory map
+    // mmap: The pointer to the memory map that needs to be released.
+    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
+
     /**
      * Transfer the content of the source ImageStream to the current FileImageStream.
      * If the current file is already open, this function will close it first, then open a new file. (There is
@@ -80,7 +94,7 @@ public:
      * 
      * @param src The source ImageStream, this function will read data from this ImageStream.
      */
-    NATIVEEXPORT void Transfer(ImageStream& src) override;
+    NATIVEEXPORT void CopyFrom(ImageStream& src) override;
 
     // Get the size of the FileImageStream
     // Return value: The size of the FileImageStream

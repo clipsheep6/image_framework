@@ -50,6 +50,8 @@ public:
     // Return: The actual size of the data read
     virtual ssize_t Read(uint8_t* buf, size_t size) = 0;
 
+    virtual int ReadByte() = 0;
+
     // Seek a specific position in the image stream
     // offset: The offset
     // pos: The starting position of the offset (from the head, current position, or tail)
@@ -80,9 +82,14 @@ public:
     // Return: If the memory map is created successfully, return a pointer to the memory map; otherwise, return nullptr.
     virtual byte* MMap(bool isWriteable =false) =0;
 
-    // Transfer the content of the source ImageStream to the current ImageStream.
+    // Release a memory map
+    // mmap: The pointer to the memory map that needs to be released.
+    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    virtual bool MUnmap(byte* mmap) = 0;
+
+    // Copy the entire content from the source ImageStream to the current ImageStream.
     // src: The source ImageStream, this function will read data from this ImageStream.
-    virtual void Transfer(ImageStream& src) = 0;
+    virtual void CopyFrom(ImageStream& src) = 0;
 
     // Get the size of the ImageStream
     // Return: The size of the ImageStream

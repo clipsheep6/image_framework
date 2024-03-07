@@ -136,6 +136,32 @@ ssize_t FileImageStream::Read(uint8_t* buf, size_t size) {
     return result;
 }
 
+int FileImageStream::ReadByte(){
+    if (fd == -1) {
+        // File is not open
+        return -1;
+    }
+
+    // Convert the file descriptor to FILE*
+    FILE* file = fdopen(fd, "r");
+    if (file == nullptr) {
+        // Conversion failed
+        return -1;
+    }
+
+    int byte = getc(file);
+    if (byte == EOF) {
+        // Read failed
+        char buf[256]; 
+        strerror_r(errno, buf, sizeof(buf));
+        IMAGE_LOGE("Read file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+        return -1;
+    }
+
+    currentOffset++;
+    return byte;
+}
+
 int FileImageStream::Seek(int offset, SeekPos pos) {
     if (fd == -1) {
         // File is not open
@@ -196,7 +222,11 @@ void FileImageStream::Close() {
 
     // If there is a memory map, delete it
     if (mappedMemory != nullptr) {
-        munmap(mappedMemory, fileSize);
+        if(munmap(mappedMemory, fileSize) == -1){
+            char buf[256];        
+            strerror_r(errno, buf, sizeof(buf));
+            IMAGE_LOGE("munmap: Memory mapping failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+        }
         mappedMemory = nullptr;
     }
 
@@ -292,7 +322,25 @@ byte* FileImageStream::MMap(bool isWriteable) {
     return mappedMemory;
 }
 
-void FileImageStream::Transfer(ImageStream& src) {
+bool FileImageStream::MUnmap(byte* mmap){
+    if (mmap == nullptr) {
+        // The memory map is nullptr
+        return false;
+    }
+
+    // Delete the memory map
+    if (munmap(mmap, fileSize) == -1) {
+        // Memory mapping failed
+        char buf[256];        
+        strerror_r(errno, buf, sizeof(buf));
+        IMAGE_LOGE("munmap: Memory mapping failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+        return false;
+    }
+    IMAGE_LOGD("munmap: Memory mapping removed: %{public}s, size: %{public}zu", filePath.c_str(), fileSize);
+    return true;
+}
+
+void FileImageStream::CopyFrom(ImageStream& src) {
     // If the file is already open, close it first
     if (IsOpen()) {
         Close();

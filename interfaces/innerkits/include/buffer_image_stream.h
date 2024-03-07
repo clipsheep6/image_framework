@@ -34,6 +34,7 @@ public:
     NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
     NATIVEEXPORT virtual ssize_t Write(ImageStream& src) override;
     NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+    NATIVEEXPORT virtual int ReadByte() override;
     NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
     NATIVEEXPORT virtual ssize_t Tell() override;
     NATIVEEXPORT virtual bool IsEof() override;
@@ -51,6 +52,11 @@ public:
      */
     NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
+    // Release a memory map
+    // mmap: The pointer to the memory map that needs to be released.
+    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
+
     /**
      * Transfer the content of the source ImageStream to the current BufferImageStream.
      * This function first clears the current buffer and sets the current offset to 0.
@@ -59,7 +65,7 @@ public:
      * 
      * @param src The source ImageStream, this function will read data from this ImageStream.
      */
-    NATIVEEXPORT virtual void Transfer(ImageStream& src) override;
+    NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
 
     // Get the size of BufferImageStream
     // Return: The size of BufferImageStream

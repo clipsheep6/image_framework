@@ -72,6 +72,14 @@ ssize_t BufferImageStream::Read(uint8_t* buf, size_t size) {
     return bytesToRead;
 }
 
+int BufferImageStream::ReadByte(){
+    if (currentOffset >= buffer.size()) {
+        return -1;
+    }
+
+    return buffer[currentOffset++];
+}
+
 int BufferImageStream::Seek(int offset, SeekPos pos) {
     switch (pos) {
         case SeekPos::BEGIN:
@@ -119,7 +127,11 @@ byte* BufferImageStream::MMap(bool isWriteable) {
     return buffer.data();
 }
 
-void BufferImageStream::Transfer(ImageStream& src) {
+bool BufferImageStream::MUnmap(byte* mmap) {
+    return true;
+}
+
+void BufferImageStream::CopyFrom(ImageStream& src) {
     // Clear the current buffer
     buffer.clear();
     currentOffset = 0;
