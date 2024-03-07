@@ -989,6 +989,17 @@ bool PixelMap::RGB888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, 
     return true;
 }
 
+int32_t PixelMap::GetAllocRowStride()
+{
+    return rowStride_;
+}
+
+int32_t PixelMap::GetPixelAllocByteCount()
+{
+    IMAGE_LOGD("GetPixelAllocByteCount");
+    return rowStride_ * imageInfo_.size.height;
+}
+
 int32_t PixelMap::GetPixelBytes()
 {
     return pixelBytes_;

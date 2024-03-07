@@ -365,6 +365,8 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getImageInfoSync", GetImageInfoSync),
         DECLARE_NAPI_FUNCTION("getBytesNumberPerRow", GetBytesNumberPerRow),
         DECLARE_NAPI_FUNCTION("getPixelBytesNumber", GetPixelBytesNumber),
+        DECLARE_NAPI_FUNCTION("getAllocRowBytes", GetAllocRowBytes),
+        DECLARE_NAPI_FUNCTION("getAllocByteCount", GetAllocByteCount),
         DECLARE_NAPI_FUNCTION("isSupportAlpha", IsSupportAlpha),
         DECLARE_NAPI_FUNCTION("setAlphaAble", SetAlphaAble),
         DECLARE_NAPI_FUNCTION("createAlphaPixelmap", CreateAlphaPixelmap),
@@ -1715,6 +1717,80 @@ napi_value PixelMapNapi::GetPixelBytesNumber(napi_env env, napi_callback_info in
     if (pixelMapNapi->nativePixelMap_ != nullptr) {
         uint32_t byteCount = pixelMapNapi->nativePixelMap_->GetByteCount();
         status = napi_create_int32(env, byteCount, &result);
+        if (!IMG_IS_OK(status)) {
+            IMAGE_LOGE("napi_create_int32 failed!");
+        }
+    } else {
+        IMAGE_LOGE("native pixelmap is nullptr!");
+    }
+    pixelMapNapi.release();
+    return result;
+}
+
+napi_value PixelMapNapi::GetAllocRowBytes(napi_env env, napi_callback_info info)
+{
+    ImageTrace imageTrace("PixelMapNapi::GetAllocRowBytes");
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = 0;
+
+    IMAGE_LOGD("GetAllocRowBytes IN");
+    IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to napi_get_cb_info"));
+
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, IMAGE_LOGE("fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . GetAllocRowBytes failed"),
+        IMAGE_LOGE("Pixelmap has crossed threads . GetAllocRowBytes failed"));
+
+    if (pixelMapNapi->nativePixelMap_ != nullptr) {
+        uint32_t allocRowBytes = pixelMapNapi->nativePixelMap_->GetAllocRowStride();
+        status = napi_create_int32(env, allocRowBytes, &result);
+        if (!IMG_IS_OK(status)) {
+            IMAGE_LOGE("napi_create_int32 failed!");
+        }
+    } else {
+        IMAGE_LOGE("native pixelmap is nullptr!");
+    }
+    pixelMapNapi.release();
+    return result;
+}
+
+napi_value PixelMapNapi::GetAllocByteCount(napi_env env, napi_callback_info info)
+{
+    ImageTrace imageTrace("PixelMapNapi::GetAllocByteCount");
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = 0;
+
+    IMAGE_LOGD("GetAllocByteCount IN");
+    IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to napi_get_cb_info"));
+
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi), result, IMAGE_LOGE("fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(pixelMapNapi->GetPixelNapiEditable(),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_RESOURCE_UNAVAILABLE,
+        "Pixelmap has crossed threads . GetAllocByteCount failed"),
+        IMAGE_LOGE("Pixelmap has crossed threads . GetAllocByteCount failed"));
+
+    if (pixelMapNapi->nativePixelMap_ != nullptr) {
+        uint32_t allocByteCount = pixelMapNapi->nativePixelMap_->GetPixelAllocByteCount();
+        status = napi_create_int32(env, allocByteCount, &result);
         if (!IMG_IS_OK(status)) {
             IMAGE_LOGE("napi_create_int32 failed!");
         }
