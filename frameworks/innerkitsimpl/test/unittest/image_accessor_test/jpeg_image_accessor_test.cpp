@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,8 +15,9 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+
 #include "jpeg_image_accessor.h"
-#include "file_source_stream.h"
+#include "file_image_stream.h"
 
 using namespace OHOS::Media;
 using namespace testing::ext;
@@ -35,9 +36,11 @@ public:
 HWTEST_F(JpegImageAccessorTest, TC001, TestSize.Level3)
 {
     JpegImageAccessor imageAccessor;
-    std::unique_ptr<FileSourceStream> sourceStream = FileSourceStream::CreateSourceStream(IMAGE_INPUT_JPEG_PATH);
-    ExifMetadata metadata = imageAccessor.ReadMetadata(*sourceStream);
-    ASSERT_EQ(metadata.GetValue("FileType"), "JPEG");
+    OHOS::Media::FileImageStream imageStream(IMAGE_INPUT_JPEG_PATH);
+    ExifMetadata metadata = imageAccessor.ReadMetadata(imageStream);
+    std::string result = metadata.GetValue("ResolutionUnit");
+    ASSERT_EQ(result, "Inch");
 }
+
 } // namespace Multimedia
 } // namespace OHOS

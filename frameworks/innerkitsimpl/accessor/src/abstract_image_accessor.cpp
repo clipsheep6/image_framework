@@ -13,7 +13,7 @@ AbstractImageAccessor::~AbstractImageAccessor()
 
 }
 
-ExifMetadata AbstractImageAccessor::ReadMetadata(const OHOS::Media::SourceStream& stream) const
+ExifMetadata AbstractImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
 {
     (void)stream;
     return ExifMetadata();

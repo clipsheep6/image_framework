@@ -10,7 +10,7 @@ public:
     AbstractImageAccessor();
     virtual ~AbstractImageAccessor();
 
-    ExifMetadata ReadMetadata(const OHOS::Media::SourceStream& stream) const override;
+    ExifMetadata ReadMetadata(OHOS::Media::ImageStream& stream) override;
     void WriteMetadata(const ExifMetadata& metadata) override;
 };
 } // namespace Media
