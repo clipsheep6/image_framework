@@ -42,31 +42,31 @@ public:
     NATIVEEXPORT virtual bool Open() override;
 
     /**
-     * 获取BufferImageStream的内存映射。
-     * 由于BufferImageStream的数据已经在内存中，所以这个函数直接返回数据的指针。
-     * 注意，这个函数忽略了isWriteable参数，因为BufferImageStream的数据总是可写的。
+     * Get the memory map of BufferImageStream.
+     * Since the data of BufferImageStream is already in memory, this function directly returns the pointer to the data.
+     * Note that this function ignores the isWriteable parameter, because the data of BufferImageStream is always writable.
      * 
-     * @param isWriteable 这个参数被忽略，BufferImageStream的数据总是可写的。
-     * @return 返回指向BufferImageStream数据的指针。
+     * @param isWriteable This parameter is ignored, the data of BufferImageStream is always writable.
+     * @return Returns a pointer to the data of BufferImageStream.
      */
     NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
     /**
-     * 将源ImageStream的内容传输到当前的BufferImageStream中。
-     * 该函数首先清空当前的缓冲区，并将当前的偏移量设置为0。
-     * 然后，该函数从源ImageStream中读取数据，并将读取到的数据追加到当前的缓冲区。
-     * 如果在读取过程中发生错误，该函数会立即返回，并记录错误信息。
+     * Transfer the content of the source ImageStream to the current BufferImageStream.
+     * This function first clears the current buffer and sets the current offset to 0.
+     * Then, this function reads data from the source ImageStream and appends the read data to the current buffer.
+     * If an error occurs during the reading process, this function will return immediately and log the error information.
      * 
-     * @param src 源ImageStream，该函数会从这个ImageStream中读取数据。
+     * @param src The source ImageStream, this function will read data from this ImageStream.
      */
     NATIVEEXPORT virtual void Transfer(ImageStream& src) override;
 
-    // 获取BufferImageStream的大小
-    // 返回值: BufferImageStream的大小
+    // Get the size of BufferImageStream
+    // Return: The size of BufferImageStream
     NATIVEEXPORT virtual size_t GetSize() override;
 private:
-    std::vector<uint8_t> buffer;  // 内存缓冲区
-    size_t currentOffset;  // 当前偏移量
+    std::vector<uint8_t> buffer;  // Memory buffer
+    size_t currentOffset;  // Current offset
 };
 
 } // namespace MultimediaPlugin

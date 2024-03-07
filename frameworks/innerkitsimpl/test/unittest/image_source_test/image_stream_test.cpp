@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include "image_stream.h"
 #include "gmock/gmock-actions.h"
 #include "gmock/gmock-cardinalities.h"
 #include "gmock/gmock-spec-builders.h"
