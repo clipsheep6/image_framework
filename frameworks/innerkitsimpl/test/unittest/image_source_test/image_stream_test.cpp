@@ -411,8 +411,33 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
     ASSERT_EQ(result[0], 123);
 }
 
-// 测试Transfer函数
-HWTEST_F(ImageStreamTest, FileImageStream_Transfer001, TestSize.Level3) {
+HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
+    // Test whether MMap can actually modify the content of the file
+    FileImageStream stream(filePathSource);
+    byte* result = stream.MMap(true);
+    ASSERT_NE(result, nullptr);
+
+    // Try to write data
+    result[0] = 123;
+
+    stream.Seek(0, SeekPos::BEGIN);
+    byte buffer[1];
+    ASSERT_EQ(stream.Read(buffer, 1), 1);
+    ASSERT_EQ(buffer[0], 123);
+
+    // Close the stream and reopen it
+    stream.Close();
+    FileImageStream checkStream(filePathSource);
+    checkStream.Open();
+    byte checkBuffer[1];
+    ASSERT_EQ(checkStream.Read(checkBuffer, 1), 1);
+
+    // Check if the data in the file is the same as the data written
+    ASSERT_EQ(checkBuffer[0], 123);
+}
+
+// 测试CopyFrom函数
+HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3) {
     FileImageStream src(filePathSource);
     FileImageStream dest(filePathDest);
     
@@ -424,7 +449,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Transfer001, TestSize.Level3) {
     ASSERT_EQ(src.Seek(0, SeekPos::BEGIN), 0);
     ASSERT_FALSE(src.IsEof());
     // 调用Transfer函数将数据从src转移到dest
-    dest.Transfer(src);
+    dest.CopyFrom(src);
 
     // 从dest中读取数据，并验证这些数据是否与写入src的数据相同
     uint8_t buffer[256];
@@ -434,6 +459,48 @@ HWTEST_F(ImageStreamTest, FileImageStream_Transfer001, TestSize.Level3) {
 
     // 验证src是否为空
     ASSERT_EQ(dest.GetSize(), src.GetSize());
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3) {
+    FileImageStream stream(filePathSource);
+    stream.Open();
+
+    // Read 10 bytes using Read function
+    byte buffer[10];
+    stream.Read(buffer, 10);
+
+    // Reset the file offset
+    stream.Seek(0, SeekPos::BEGIN);
+
+    // Read 10 bytes using ReadByte function
+    byte byteBuffer[10];
+    for (int i = 0; i < 10; i++) {
+        byteBuffer[i] = stream.ReadByte();
+    }
+
+    // Compare the results
+    for (int i = 0; i < 10; i++) {
+        EXPECT_EQ(buffer[i], byteBuffer[i]);
+    }
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3) {
+    FileImageStream stream(filePathSource);
+    stream.Open();
+
+    // Get the file size
+    // int fileSize = stream.GetSize();
+
+    // Set the file offset to the end of the file
+    EXPECT_EQ(stream.Seek(1, SeekPos::END), stream.GetSize());
+
+    // Try to read one more byte
+    int result = stream.ReadByte();
+    result = stream.ReadByte();
+
+    EXPECT_EQ(stream.Tell(), stream.GetSize()+1);
+    // Check if the result is -1
+    EXPECT_EQ(result, -1);
 }
 
 }

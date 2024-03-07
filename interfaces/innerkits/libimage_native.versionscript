@@ -38,6 +38,7 @@
     *BufferImageStream*;
     *JpegImageAccessor*;
     *ExifMetadata*;
+    *DataBuf*;
   local:
     *;
 };

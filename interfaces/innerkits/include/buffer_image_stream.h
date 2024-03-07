@@ -34,6 +34,7 @@ public:
     NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
     NATIVEEXPORT virtual ssize_t Write(ImageStream& src) override;
     NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+    NATIVEEXPORT virtual int ReadByte() override;
     NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
     NATIVEEXPORT virtual ssize_t Tell() override;
     NATIVEEXPORT virtual bool IsEof() override;
@@ -42,31 +43,36 @@ public:
     NATIVEEXPORT virtual bool Open() override;
 
     /**
-     * 获取BufferImageStream的内存映射。
-     * 由于BufferImageStream的数据已经在内存中，所以这个函数直接返回数据的指针。
-     * 注意，这个函数忽略了isWriteable参数，因为BufferImageStream的数据总是可写的。
+     * Get the memory map of BufferImageStream.
+     * Since the data of BufferImageStream is already in memory, this function directly returns the pointer to the data.
+     * Note that this function ignores the isWriteable parameter, because the data of BufferImageStream is always writable.
      * 
-     * @param isWriteable 这个参数被忽略，BufferImageStream的数据总是可写的。
-     * @return 返回指向BufferImageStream数据的指针。
+     * @param isWriteable This parameter is ignored, the data of BufferImageStream is always writable.
+     * @return Returns a pointer to the data of BufferImageStream.
      */
     NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
-    /**
-     * 将源ImageStream的内容传输到当前的BufferImageStream中。
-     * 该函数首先清空当前的缓冲区，并将当前的偏移量设置为0。
-     * 然后，该函数从源ImageStream中读取数据，并将读取到的数据追加到当前的缓冲区。
-     * 如果在读取过程中发生错误，该函数会立即返回，并记录错误信息。
-     * 
-     * @param src 源ImageStream，该函数会从这个ImageStream中读取数据。
-     */
-    NATIVEEXPORT virtual void Transfer(ImageStream& src) override;
+    // Release a memory map
+    // mmap: The pointer to the memory map that needs to be released.
+    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
-    // 获取BufferImageStream的大小
-    // 返回值: BufferImageStream的大小
+    /**
+     * Transfer the content of the source ImageStream to the current BufferImageStream.
+     * This function first clears the current buffer and sets the current offset to 0.
+     * Then, this function reads data from the source ImageStream and appends the read data to the current buffer.
+     * If an error occurs during the reading process, this function will return immediately and log the error information.
+     * 
+     * @param src The source ImageStream, this function will read data from this ImageStream.
+     */
+    NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
+
+    // Get the size of BufferImageStream
+    // Return: The size of BufferImageStream
     NATIVEEXPORT virtual size_t GetSize() override;
 private:
-    std::vector<uint8_t> buffer;  // 内存缓冲区
-    size_t currentOffset;  // 当前偏移量
+    std::vector<uint8_t> buffer;  // Memory buffer
+    size_t currentOffset;  // Current offset
 };
 
 } // namespace MultimediaPlugin
