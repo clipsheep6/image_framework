@@ -31,9 +31,8 @@ namespace Media {
 class FileWrapper{
 public:
     virtual ~FileWrapper(){}
-    virtual int fstat(int fd, struct stat *st);
-    virtual ssize_t write(int fd, const void* buf, size_t count);
-    virtual ssize_t read(int fd, void *buf, size_t count);
+    virtual size_t fwrite(const void* src, size_t size, size_t nmemb, FILE* f);
+    virtual size_t fread(void* destv, size_t size, size_t nmemb, FILE* f);
 };
 
 class FileImageStream : public ImageStream {
@@ -43,7 +42,7 @@ public:
         Read,       // Read mode
         ReadWrite   // Read-write mode
     };
-
+    NATIVEEXPORT FileImageStream(FILE *p);
     NATIVEEXPORT FileImageStream(const std::string& filePath);
     FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper);
     NATIVEEXPORT virtual ~FileImageStream();
@@ -103,7 +102,6 @@ private:
     FILE *fp;                 // File descriptor
     std::string filePath;   // File path
     size_t fileSize;        // File size
-    size_t currentOffset;   // Current offset
     byte* mappedMemory;     // Address of memory mapping
     std::unique_ptr<FileWrapper> fileWrapper;   // File wrapper class, used for testing
 };

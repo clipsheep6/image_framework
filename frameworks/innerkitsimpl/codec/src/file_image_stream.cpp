@@ -15,6 +15,7 @@
 
 #include "file_image_stream.h"
 #include "image_log.h"
+#include "out/rk3568/obj/third_party/musl/intermidiates/linux/musl_src_ported/include/stdio.h"
 
 #include <cwchar>
 #include <memory>
@@ -34,25 +35,28 @@
 namespace OHOS {
 namespace Media {
 
-int FileWrapper::fstat(int fd, struct stat *st){
-    return ::fstat(fd, st);
+size_t FileWrapper::fwrite(const void* src, size_t size, size_t nmemb, FILE* f){
+    return ::fwrite(src, size, nmemb, f);
 }
 
-ssize_t FileWrapper::write(int fd, const void* buf, size_t count){
-    return ::write(fd, buf, count);
+size_t FileWrapper::fread(void* destv, size_t size, size_t nmemb, FILE* f){
+    return ::fread(destv, size, nmemb, f);
 }
 
-ssize_t FileWrapper::read(int fd, void *buf, size_t count){
-    return ::read(fd, buf, count);
+FileImageStream::FileImageStream(FILE *p){
+    fp = p;
+    fileSize = 0;
+    mappedMemory = nullptr;
+    this->fileWrapper = std::make_unique<FileWrapper>();
 }
 
 FileImageStream::FileImageStream(const std::string& filePath)
-    : fp(nullptr), filePath(filePath), fileSize(0), currentOffset(0), mappedMemory(nullptr) {
+    : fp(nullptr), filePath(filePath), fileSize(0), mappedMemory(nullptr) {
         this->fileWrapper = std::make_unique<FileWrapper>();
 }
 
 FileImageStream::FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper)
-    : fp(nullptr), filePath(filePath), fileSize(0), currentOffset(0), mappedMemory(nullptr){
+    : fp(nullptr), filePath(filePath), fileSize(0), mappedMemory(nullptr){
     if (fileWrapper == nullptr) {
         this->fileWrapper = std::make_unique<FileWrapper>();
     } else {
@@ -70,7 +74,8 @@ ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
         return -1;
     }
 
-    size_t result = fwrite(data, 1, size, fp);
+    size_t result = fileWrapper->fwrite(data, 1, size, fp);
+    // size_t result = fileWrapper->fwrite(data, 1, size, fp);
     if (result != size) {
         // Write failed
         char buf[256];        
@@ -78,8 +83,6 @@ ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
         IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         return -1;
     }
-
-    currentOffset += result;
     return result;
 }
 
@@ -123,7 +126,7 @@ ssize_t FileImageStream::Read(uint8_t* buf, size_t size) {
         return -1;
     }
 
-    size_t result = fread(buf, 1, size, fp);
+    size_t result = fileWrapper->fread(buf, 1, size, fp);
     if (result == 0 && ferror(fp)) {
         // Read failed
         char buf[256];        
@@ -132,7 +135,6 @@ ssize_t FileImageStream::Read(uint8_t* buf, size_t size) {
         return -1;
     }
 
-    currentOffset += result;
     return result;
 }
 
@@ -151,7 +153,6 @@ int FileImageStream::ReadByte(){
         return -1;
     }
 
-    currentOffset++;
     return byte;
 }
 
@@ -181,9 +182,8 @@ int FileImageStream::Seek(int offset, SeekPos pos) {
         // Seek failed
         return -1;
     }
-
-    currentOffset = ftell(fp);
-    return currentOffset;
+    
+    return ftell(fp);
 }
 
 ssize_t FileImageStream::Tell() {
@@ -230,7 +230,6 @@ void FileImageStream::Close() {
     // Reset all member variables
     fp = nullptr;
     fileSize = 0;
-    currentOffset = 0;
     IMAGE_LOGD("File closed: %{public}s", filePath.c_str());
     return;
 }
@@ -246,7 +245,7 @@ bool FileImageStream::Open(FileMode mode){
             modeStr = "r";
             break;
         case FileMode::ReadWrite:
-            modeStr = "a+";
+            modeStr = "r+";
             break;
         default:
             return false;
@@ -254,11 +253,23 @@ bool FileImageStream::Open(FileMode mode){
 
     fp = fopen(filePath.c_str(), modeStr);
     if (fp == nullptr) {
-        // Open failed
-        char buf[256];        
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
-        return false;
+        if (mode == FileMode::ReadWrite) {
+            // 如果以读写模式打开文件失败，尝试创建新文件
+            fp = fopen(filePath.c_str(), "w");
+            if (fp == nullptr) {
+                // 创建文件失败
+                char buf[256];        
+                strerror_r(errno, buf, sizeof(buf));
+                IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+                return false;
+            }
+        } else {
+            // Open failed
+            char buf[256];        
+            strerror_r(errno, buf, sizeof(buf));
+            IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+            return false;
+        }
     }
 
     // Get the file size
