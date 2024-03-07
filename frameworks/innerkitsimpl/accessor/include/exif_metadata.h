@@ -3,17 +3,19 @@
 
 #include <string>
 #include <libexif/exif-data.h>
+#include <libexif/exif-entry.h>
+#include <libexif/exif-tag.h>
 
 namespace OHOS {
 namespace Media {
 class ExifMetadata {
 public:
-    std::string GetValue(const std::string& key) const;
+    std::string GetValue(const std::string& key);
     void SetValue(const std::string& key, const std::string& value);
-    ExifData GetData() const;
+    ExifData GetData();
 
 private:
-    ExifData exifData_;
+    ExifData *exifData_;
 };
 } // namespace Media
 } // namespace OHOS
