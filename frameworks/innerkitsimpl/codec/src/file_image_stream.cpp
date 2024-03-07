@@ -239,6 +239,10 @@ bool FileImageStream::Open(){
 }
 
 bool FileImageStream::Open(FileMode mode){
+    // 如果 fp 已经指向一个打开的文件，直接返回 true
+    if (fp != nullptr) {
+        return true;
+    }
     const char* modeStr;
     switch (mode) {
         case FileMode::Read:
