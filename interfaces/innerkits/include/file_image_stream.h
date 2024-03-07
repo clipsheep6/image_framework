@@ -100,7 +100,7 @@ public:
     // Return value: The size of the FileImageStream
     NATIVEEXPORT size_t GetSize() override;
 private:
-    int fd;                 // File descriptor
+    FILE *fp;                 // File descriptor
     std::string filePath;   // File path
     size_t fileSize;        // File size
     size_t currentOffset;   // Current offset
