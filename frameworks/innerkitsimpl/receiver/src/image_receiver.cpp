@@ -224,10 +224,10 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
     return iva;
 }
 
-uint32_t ImageReceiver::SetFrameMode(bool isCpuAccess)
+uint32_t ImageReceiver::RequestCpuAccess(bool isCpuAccess)
 {
     receiverConsumerSurface_->ConsumerRequestCpuAccess(isCpuAccess);
-    IMAGE_LOGD("ImageReceiver::SetFrameMode %{public}d", isCpuAccess);
+    IMAGE_LOGD("ImageReceiver::RequestCpuAccess %{public}d", isCpuAccess);
     return SUCCESS;
 }
 

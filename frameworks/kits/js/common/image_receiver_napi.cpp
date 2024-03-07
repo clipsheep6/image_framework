@@ -563,7 +563,7 @@ napi_value ImageReceiverNapi::JsRequestCpuAccess(napi_env env, napi_callback_inf
             IMAGE_ERR("Native instance is nullptr");
             return false;
         }
-        napi_create_int32(args.env, native->SetFrameMode(isCpuAccess), &(ic.result));
+        napi_create_int32(args.env, native->RequestCpuAccess(isCpuAccess), &(ic.result));
         return true;
     };
 
