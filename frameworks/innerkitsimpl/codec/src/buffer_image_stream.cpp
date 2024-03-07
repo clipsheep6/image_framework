@@ -38,7 +38,7 @@ BufferImageStream::~BufferImageStream() {}
 
 ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
     if (buffer.capacity() < currentOffset + size) {
-        // 计算需要的内存大小，确保它是4k的整数倍
+        // Calculate the required memory size, ensuring it is a multiple of 4k
         size_t newCapacity = ((currentOffset + size + 4095) / 4096) * 4096;
         buffer.reserve(newCapacity);
     }
@@ -70,6 +70,14 @@ ssize_t BufferImageStream::Read(uint8_t* buf, size_t size) {
     std::copy(buffer.begin() + currentOffset, buffer.begin() + currentOffset + bytesToRead, buf);
     currentOffset += bytesToRead;
     return bytesToRead;
+}
+
+int BufferImageStream::ReadByte(){
+    if (currentOffset >= buffer.size()) {
+        return -1;
+    }
+
+    return buffer[currentOffset++];
 }
 
 int BufferImageStream::Seek(int offset, SeekPos pos) {
@@ -119,16 +127,20 @@ byte* BufferImageStream::MMap(bool isWriteable) {
     return buffer.data();
 }
 
-void BufferImageStream::Transfer(ImageStream& src) {
-    // 清空当前的缓冲区
+bool BufferImageStream::MUnmap(byte* mmap) {
+    return true;
+}
+
+void BufferImageStream::CopyFrom(ImageStream& src) {
+    // Clear the current buffer
     buffer.clear();
     currentOffset = 0;
 
-    // 预先估计需要的内存大小并预分配内存
+    // Pre-allocate memory based on the estimated size
     size_t estimatedSize = src.GetSize();
     buffer.reserve(estimatedSize);
 
-    // 从源ImageStream中读取数据并写入到当前的缓冲区
+    // Read data from the source ImageStream and write it to the current buffer
     uint8_t tempBuffer[4096];
     while (!src.IsEof()) {
         size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
