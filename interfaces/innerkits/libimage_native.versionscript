@@ -36,6 +36,7 @@
     *FileWrapper*;
     *FileImageStream*;
     *BufferImageStream*;
+    *DataBuf*;
   local:
     *;
 };

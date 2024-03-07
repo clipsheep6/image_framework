@@ -44,6 +44,7 @@ image_native_android_sources = [
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/file_image_stream.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
 
