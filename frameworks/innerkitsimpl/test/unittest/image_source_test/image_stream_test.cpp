@@ -31,6 +31,7 @@
 #include <csignal>
 #define private public
 #include "file_image_stream.h"
+#include "buffer_image_stream.h"
 
 using namespace testing::ext;
 using namespace testing;
@@ -313,8 +314,19 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
 {
     // 测试文件路径不存在的情况
     std::string nonExistFilePath = "/data/local/tmp/image/non_exist_file.txt";
+    remove(nonExistFilePath.c_str());
     FileImageStream stream1(nonExistFilePath);
     ASSERT_TRUE(stream1.Open());
+    std::string sourceData = "Hello, world!";
+    stream1.Write((uint8_t*)sourceData.c_str(), sourceData.size());
+    // 读取 stream1 的数据
+    uint8_t buffer[256];
+    stream1.Seek(0, SeekPos::BEGIN);
+    ssize_t bytesRead = stream1.Read(buffer, sourceData.size());
+    ASSERT_EQ(bytesRead, sourceData.size());
+    buffer[bytesRead] = '\0';  // 添加字符串结束符
+    // 检查读取的数据是否与写入的数据相同
+    ASSERT_STREQ((char*)buffer, sourceData.c_str());
     stream1.Close();
     remove(nonExistFilePath.c_str());
 }
@@ -553,6 +565,31 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
     // 检查读取的数据是否包含新的数据
     ASSERT_STRNE((char*)buffer, newData.c_str());
 }
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Open001, TestSize.Level3){
+    BufferImageStream stream;
+    ASSERT_TRUE(stream.Open());
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3){
+    BufferImageStream stream;
+    ASSERT_TRUE(stream.Open());
+
+    // 写入一个字符串
+    std::string sourceData = "Hello, world!";
+    ASSERT_EQ(stream.Tell(), 0);
+    stream.Write((uint8_t*)sourceData.c_str(), sourceData.size());
+
+    // 读取字符串
+    uint8_t buffer[256];
+    stream.Seek(0, SeekPos::BEGIN);
+    size_t bytesRead = stream.Read(buffer, sourceData.size());
+    buffer[bytesRead] = '\0';  // 添加字符串结束符
+
+    // 比较读取的字符串是否与写入的字符串相同
+    ASSERT_STREQ((char*)buffer, sourceData.c_str());
+}
+
 
 }
 }

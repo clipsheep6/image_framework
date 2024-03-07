@@ -239,6 +239,11 @@ bool FileImageStream::Open(){
 }
 
 bool FileImageStream::Open(FileMode mode){
+    // 如果 fp 已经指向一个打开的文件，直接返回 true
+    if (fp != nullptr) {
+        return true;
+    }
+
     const char* modeStr;
     switch (mode) {
         case FileMode::Read:
@@ -261,6 +266,16 @@ bool FileImageStream::Open(FileMode mode){
                 char buf[256];        
                 strerror_r(errno, buf, sizeof(buf));
                 IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+                return false;
+            }
+            // 关闭文件，然后以 "r+" 模式重新打开
+            fclose(fp);
+            fp = fopen(filePath.c_str(), "r+");
+            if (fp == nullptr) {
+                // 重新打开文件失败
+                char buf[256];        
+                strerror_r(errno, buf, sizeof(buf));
+                IMAGE_LOGE("Reopen file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
                 return false;
             }
         } else {
