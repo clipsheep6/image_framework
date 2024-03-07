@@ -31,14 +31,14 @@ namespace Media {
 class TiffParser {
 public:
     // 将exif buffer解码为ExifData数据结构 *dataPtr --> *exifData
-    void Decode(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData);
+    static void Decode(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData);
     // 将ExifData数据编码为exif buffer *exifData --> *dataPtr
-    void Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifData);
+    static void Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifData);
 
     // 将exif buffer解码为ExifData数据结构 (针对JPEG图片格式) *dataPtr --> *exifData
-    void DecodeJpegExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData);
+    static void DecodeJpegExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData);
     // 将ExifData数据编码为exif buffer (针对JPEG图片格式) *exifData --> *dataPtr
-    void EncodeJpegExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData);
+    static void EncodeJpegExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData);
 };
 
 

@@ -16,6 +16,7 @@
 #include "tiff_parser.h"
 #include "image_log.h"
 
+#include <cstring>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
