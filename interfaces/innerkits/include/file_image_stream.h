@@ -37,6 +37,8 @@ public:
 
 class FileImageStream : public ImageStream {
 public:
+    //ToDo 加一个flush
+     
     /**
      * @brief Constructs a new FileImageStream object from a file descriptor.
      * @param fd The file descriptor.
@@ -101,7 +103,7 @@ public:
      * @brief Gets the current position in the FileImageStream.
      * @return The current position.
      */
-    NATIVEEXPORT virtual ssize_t Tell() override;
+    NATIVEEXPORT virtual long Tell() override;
 
     /**
      * @brief Checks if the end of the FileImageStream has been reached.
@@ -116,11 +118,6 @@ public:
     NATIVEEXPORT virtual bool IsOpen() override;
 
     /**
-     * @brief Closes the FileImageStream.
-     */
-    NATIVEEXPORT virtual void Close() override;
-
-    /**
      * @brief Opens the FileImageStream.
      * @return true if it opens successfully, false otherwise.
      */
@@ -132,6 +129,12 @@ public:
      * @return true if it opens successfully, false otherwise.
      */
     NATIVEEXPORT virtual bool Open(OpenMode mode) override;
+
+    /**
+     * @brief Flushes the FileImageStream.
+     * @return true if it flushes successfully, false otherwise.
+     */
+    NATIVEEXPORT virtual bool Flush() override;
 
     /**
      * @brief Creates a memory map of the file.
@@ -160,6 +163,11 @@ public:
     NATIVEEXPORT size_t GetSize() override;
 
 private:
+    /**
+     * @brief Closes the FileImageStream.
+     */
+    NATIVEEXPORT virtual void Close() override;
+
     /**
      * @brief Constructs a new FileImageStream object from a file path and a file wrapper.
      * @param filePath The file path.

@@ -66,14 +66,14 @@ ssize_t BufferImageStream::Write(ImageStream& src) {
 }
 
 ssize_t BufferImageStream::Read(uint8_t* buf, size_t size) {
-    size_t bytesToRead = std::min(size, buffer.size() - currentOffset);
+    size_t bytesToRead = std::min(size, buffer.size() - static_cast<size_t>(currentOffset));
     std::copy(buffer.begin() + currentOffset, buffer.begin() + currentOffset + bytesToRead, buf);
     currentOffset += bytesToRead;
     return bytesToRead;
 }
 
 int BufferImageStream::ReadByte(){
-    if (currentOffset >= buffer.size()) {
+    if (static_cast<size_t>(currentOffset) >= buffer.size()) {
         return -1;
     }
 
@@ -95,19 +95,19 @@ int BufferImageStream::Seek(int offset, SeekPos pos) {
             return -1;
     }
 
-    if (currentOffset > buffer.size()) {
+    if (static_cast<size_t>(currentOffset) > buffer.size()) {
         currentOffset = buffer.size();
     }
 
     return currentOffset;
 }
 
-ssize_t BufferImageStream::Tell() {
+long BufferImageStream::Tell() {
     return currentOffset;
 }
 
 bool BufferImageStream::IsEof() {
-    return currentOffset >= buffer.size();
+    return static_cast<size_t>(currentOffset) >= buffer.size();
 }
 
 bool BufferImageStream::IsOpen() {
@@ -124,6 +124,10 @@ bool BufferImageStream::Open() {
 }
 
 bool BufferImageStream::Open(OpenMode mode) {
+    return true;
+}
+
+bool BufferImageStream::Flush() {
     return true;
 }
 

@@ -79,7 +79,7 @@ public:
      * @brief Gets the current position in the BufferImageStream.
      * @return The current position.
      */
-    NATIVEEXPORT virtual ssize_t Tell() override;
+    NATIVEEXPORT virtual long Tell() override;
 
     /**
      * @brief Checks if the end of the BufferImageStream has been reached.
@@ -92,11 +92,6 @@ public:
      * @return true if it is open, false otherwise.
      */
     NATIVEEXPORT virtual bool IsOpen() override;
-
-    /**
-     * @brief Closes the BufferImageStream.
-     */
-    NATIVEEXPORT virtual void Close() override;
 
     /**
      * @brief Opens the BufferImageStream.
@@ -112,6 +107,8 @@ public:
      * @return Returns false, as this function is not applicable for BufferImageStream.
      */
     NATIVEEXPORT virtual bool Open(OpenMode mode) override;
+
+    NATIVEEXPORT virtual bool Flush() override;
 
     /**
      * Get the memory map of BufferImageStream.
@@ -150,6 +147,11 @@ public:
 
 private:
     /**
+     * @brief Closes the BufferImageStream.
+     */
+    virtual void Close() override;
+
+    /**
      * @brief The memory buffer of the BufferImageStream.
      */
     std::vector<uint8_t> buffer;
@@ -157,7 +159,7 @@ private:
     /**
      * @brief The current offset in the BufferImageStream.
      */
-    size_t currentOffset;
+    long currentOffset;
 };
 
 } // namespace MultimediaPlugin

@@ -70,7 +70,8 @@ public:
     static bool alreadyExist;
 
     virtual void TearDown() {
-        // remove(filePath.c_str());
+        std::filesystem::copy(backupFilePathSource, filePathSource, std::filesystem::copy_options::overwrite_existing);
+        remove(filePath.c_str());
         remove(filePathDest.c_str());
     }
 
@@ -146,8 +147,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     ASSERT_EQ(bytesWritten, sizeof(data));
     ASSERT_EQ(bytesWritten, 10);
 
-    // Close the file
-    stream.Close();
+    // Flush the file
+    stream.Flush();
 
     // Open the file again
     int fd = open(filePath.c_str(), O_RDONLY);
@@ -219,8 +220,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
     while (stream1.Read(buffer, sizeof(buffer)) > 0) {}
     // At this point, all data from stream1 has been read, so the write should return 0
     ASSERT_EQ(stream2.Write(stream1), 0);
-    stream1.Close();
-    stream2.Close();
+    stream1.Flush();
+    stream2.Flush();
 }
 
 /**
@@ -247,8 +248,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
     sourceStream.Open();
     destStream.Open();
     EXPECT_EQ(destStream.Write(sourceStream), -1);
-    // mockDestFileWrapper.reset();
-    // mockSourceFileWrapper.reset();
 }
 
 /**
@@ -286,8 +285,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
     // Write the data to the file
     ASSERT_EQ(stream.Write((uint8_t*)data.c_str(), data.size()), data.size());
     ASSERT_EQ(stream.Tell(), data.size());
-    // Close the file
-    stream.Close();
+    // Flush the file
+    stream.Flush();
 
     // Open the file again
     int fd = open(filePath.c_str(), O_RDONLY);
@@ -332,7 +331,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
     buffer[bytesRead] = '\0';  // Add string termination character
     // Check if the read data is the same as the written data
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
-    stream1.Close();
+    ASSERT_TRUE(stream1.Flush());
     remove(nonExistFilePath.c_str());
 }
 
@@ -377,7 +376,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open003, TestSize.Level3)
     FileImageStream stream3(filePath);
     ASSERT_TRUE(stream3.Open());
     ASSERT_TRUE(stream3.Open());
-    stream3.Close();
+    ASSERT_TRUE(stream3.Flush());
 }
 
 /**
@@ -415,8 +414,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
 HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
     FileImageStream stream(filePathSource);
     uint8_t buffer[1024];
-    // Close the stream to simulate an unopened file
-    stream.Close();
+    // Flush the stream to simulate an unopened file
+    ASSERT_FALSE(stream.Flush());
     ssize_t bytesRead = stream.Read(buffer, 512);
     EXPECT_EQ(-1, bytesRead);
 }
@@ -490,8 +489,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
     ASSERT_EQ(stream.Read(buffer, 1), 1);
     ASSERT_EQ(buffer[0], 123);
 
-    // Close the stream and reopen it
-    stream.Close();
+    // Flush stream
+    ASSERT_TRUE(stream.Flush());
     FileImageStream checkStream(filePathSource);
     checkStream.Open();
     byte checkBuffer[1];
@@ -590,7 +589,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
     ASSERT_EQ(stream.Write((uint8_t*)sourceData.c_str(), sourceData.size()), sourceData.size());
     
     FileImageStream cloneStream(stream.fp);
-    stream.Close();
+    ASSERT_TRUE(stream.Flush());
     ASSERT_TRUE(cloneStream.Open());
     // Read the data from cloneStream
     uint8_t buffer[256];
@@ -722,6 +721,30 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3){
     fclose(f);
     close(dupFD);
     close(fd);
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3){
+    remove(filePath.c_str());
+    FileImageStream stream(filePath);
+    stream.Open();
+    std::string sourceData = "Hello, world!";
+    ASSERT_EQ(stream.Tell(), 0);
+    stream.Write((uint8_t*)sourceData.c_str(), sourceData.size());
+    ASSERT_EQ(stream.Tell(), sourceData.size());
+    stream.Seek(2, SeekPos::BEGIN);
+    ASSERT_EQ(stream.Tell(), 2);
+    uint8_t buffer[256];
+    ssize_t bytesRead = stream.Read(buffer, 1);
+    buffer[bytesRead] = '\0';  // Add string termination character
+    ASSERT_STREQ((char*)buffer, "l");
+    ASSERT_EQ(stream.Tell(), 3);
+    stream.Seek(3, SeekPos::CURRENT);
+    ASSERT_EQ(stream.Tell(), 6);
+    bytesRead = stream.Read(buffer, 1);
+    buffer[bytesRead] = '\0';  // Add string termination character
+    ASSERT_STREQ((char*)buffer, " ");
+    stream.Seek(0, SeekPos::END);
+    ASSERT_EQ(stream.Tell(), sourceData.size());
 }
 
 /**

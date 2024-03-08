@@ -99,7 +99,6 @@ ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
         return -1;
     }
 
-    // size_t result = ::fwrite(data, 1, size, fp);
     size_t result = fileWrapper->fwrite(data, 1, size, fp);
     if (result != size || ferror(fp)) {
         // Write failed
@@ -185,6 +184,7 @@ int FileImageStream::ReadByte(){
     return byte;
 }
 
+//todo，改成直接暴露
 int FileImageStream::Seek(int offset, SeekPos pos) {
     if (fp == nullptr) {
         // File is not open
@@ -215,9 +215,16 @@ int FileImageStream::Seek(int offset, SeekPos pos) {
     return ftell(fp);
 }
 
-ssize_t FileImageStream::Tell() {
+long FileImageStream::Tell() {
     if (fp == nullptr) {
-        // File is not open
+        if(initPath == INIT_FROM_FD){
+            IMAGE_LOGE("Tell file failed: %{public}d, reason: %{public}s", dupFD, "fp is nullptr");
+        }else if(initPath == INIT_FROM_PATH){
+            IMAGE_LOGE("Tell file failed: %{public}s, reason: %{public}s", filePath.c_str(), "fp is nullptr");
+        }else if(initPath == INIT_FROM_UNKNOWN){
+            IMAGE_LOGE("Tell file failed: %{public}s, reason: %{public}s", "initPath is INIT_FROM_UNKNOWN", "fp is nullptr");
+        }
+        IMAGE_LOGE("Tell file failed: %{public}s, reason: %{public}s", filePath.c_str(), "fp is nullptr");
         return -1;
     }
 
@@ -227,10 +234,19 @@ ssize_t FileImageStream::Tell() {
 bool FileImageStream::IsEof() {
     if (fp == nullptr) {
         // File is not open
+        IMAGE_LOGE("Check EOF failed: fp is nullptr");
         return true;
     }
 
-    return feof(fp);
+    if (ferror(fp)) {
+        char errstr[256];
+        strerror_r(errno, errstr, sizeof(errstr));
+        IMAGE_LOGE("Check EOF failed: %{public}s", errstr);
+        clearerr(fp); // Clear the error
+        return true;
+    }
+
+    return feof(fp) != 0;
 }
 
 bool FileImageStream::IsOpen() {
@@ -254,6 +270,7 @@ void FileImageStream::Close() {
         fp = nullptr;
     }
     // Close the file
+    // Todo 这里是否需要关闭dupFD
     int tmpFD = dupFD;
     if (dupFD != -1){
         close(dupFD);
@@ -364,6 +381,28 @@ bool FileImageStream::Open(OpenMode mode){
     fseek(fp, 0, SEEK_END);
     fileSize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
+
+    return true;
+}
+
+bool FileImageStream::Flush(){
+    if (fp == nullptr) {
+        if(initPath == INIT_FROM_FD){
+            IMAGE_LOGE("Flush file failed: %{public}d, reason: %{public}s", dupFD, "fp is nullptr");
+        }else if(initPath == INIT_FROM_PATH){
+            IMAGE_LOGE("Flush file failed: %{public}s, reason: %{public}s", filePath.c_str(), "fp is nullptr");
+        }else if(initPath == INIT_FROM_UNKNOWN){
+            IMAGE_LOGE("Flush file failed: %{public}s, reason: %{public}s", "initPath is INIT_FROM_UNKNOWN", "fp is nullptr");
+        }        
+        return false;
+    }
+
+    if (fflush(fp) != 0) {
+        char errstr[100];
+        strerror_r(errno, errstr, sizeof(errstr));
+        IMAGE_LOGE("Flush file failed: %{public}s", errstr);
+        return false;
+    }
 
     return true;
 }
