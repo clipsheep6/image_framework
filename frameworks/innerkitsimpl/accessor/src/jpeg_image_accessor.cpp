@@ -103,7 +103,7 @@ uint32_t JpegImageAccessor::WriteMetadata()
     uint32_t size = 0;
     if (!GetExifEncodeBlob(&dataBlob, size)) {
         IMAGE_LOGE("Encode Metadata failed");
-        return false;
+        return ERR_MEDIA_VALUE_INVALID;
     }
 
     return UpdateData(dataBlob, size);
@@ -115,7 +115,7 @@ uint32_t JpegImageAccessor::WriteExifBlob(DataBuf& blob)
     uint32_t size = 0;
     if (!GetExifBlob(blob, &dataBlob, size)) {
         IMAGE_LOGE("blob data empty");
-        return false;
+        return ERR_MEDIA_VALUE_INVALID;
     }
 
     return UpdateData(dataBlob, size);
@@ -193,7 +193,7 @@ bool JpegImageAccessor::GetExifBlob(const DataBuf& blob, uint8_t** dataBlob, uin
         return false;
     }
 
-    if (blob.CmpBytes(EXIF_BLOB_OFFSET, EXIF_ID, EXIF_ID_SIZE) == 0) {
+    if (blob.CmpBytes(0, EXIF_ID, EXIF_ID_SIZE) == 0) {
         *dataBlob = (byte *)blob.C_Data(EXIF_ID_SIZE);
         size = blob.size() - EXIF_ID_SIZE;
     } else {
@@ -342,32 +342,32 @@ bool JpegImageAccessor::UpdateExifMetadata(BufferImageStream& bufStream, uint8_t
     return CopyRestData(bufStream);
 }
 
-bool JpegImageAccessor::UpdateData(uint8_t* dataBlob, uint32_t size)
+uint32_t JpegImageAccessor::UpdateData(uint8_t* dataBlob, uint32_t size)
 {
     BufferImageStream tmpBufStream;
     if (!tmpBufStream.Open(OpenMode::ReadWrite)) {
         IMAGE_LOGE("Image temp stream open failed");
-        return false;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     if (!OpenOrSeek()) {
         IMAGE_LOGE("Image stream open failed");
-        return false;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     if (!WriteHeader(tmpBufStream)) {
         IMAGE_LOGE("Output image stream write header failed");
-        return false;
+        return ERROR;
     }
 
     if (!UpdateExifMetadata(tmpBufStream, dataBlob, size)) {
         IMAGE_LOGE("Image temp stream write failed");
-        return false;
+        return ERROR;
     }
 
     imageStream_->CopyFrom(tmpBufStream);
 
-    return true;
+    return SUCCESS;
 }
 } // namespace Media
 } // namespace OHOS

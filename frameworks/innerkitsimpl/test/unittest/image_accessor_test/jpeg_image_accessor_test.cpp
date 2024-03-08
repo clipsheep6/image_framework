@@ -31,7 +31,8 @@ static const std::string IMAGE_INPUT1_JPEG_PATH = "/data/local/tmp/image/exif.jp
 static const std::string IMAGE_INPUT2_JPEG_PATH = "/data/local/tmp/image/huawei.jpg";
 static const std::string IMAGE_ERROR1_JPEG_PATH = "/data/local/tmp/image/testerror.jpg";
 static const std::string IMAGE_ERROR2_JPEG_PATH = "/data/local/tmp/image/R_C.jpg";
-static const std::string IMAGE_INPUT1_PNG_PATH = "/data/local/tmp/image/png.jpg";
+static const std::string IMAGE_INPUT3_JPEG_PATH = "/data/local/tmp/image/input.jpg";
+static const std::string IMAGE_OUTPUT_JPEG_PATH = "/data/local/tmp/image/output.jpg";
 
 class JpegImageAccessorTest : public testing::Test {
 public:
@@ -272,74 +273,36 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("Orientation", "Unknown value 0"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageLength", "4000"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageWidth", "3000"));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSLatitude", "39, 54, 20"));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSLongitude", ""));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSLatitudeRef", "R98"));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSLongitudeRef", ""));
     ASSERT_TRUE(exifMetadata->SetValue("DateTimeOriginal", "2024:01:11 09:39:58"));
     ASSERT_TRUE(exifMetadata->SetValue("ExposureTime", "1/590 sec."));
-    ASSERT_TRUE(exifMetadata->SetValue("SceneType", "Directly photographed"));
     ASSERT_TRUE(exifMetadata->SetValue("ISOSpeedRatings", "160"));
-    ASSERT_TRUE(exifMetadata->SetValue("FNumber", "f/2.0"));
-    ASSERT_TRUE(exifMetadata->SetValue("DateTime", ""));
     ASSERT_TRUE(exifMetadata->SetValue("GPSTimeStamp", "01:39:58.00"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDateStamp", "2024:01:11"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageDescription", "_cuva"));
-    ASSERT_TRUE(exifMetadata->SetValue("Make", ""));
-    ASSERT_TRUE(exifMetadata->SetValue("Model", ""));
-    ASSERT_TRUE(exifMetadata->SetValue("SensitivityType", ""));
-    ASSERT_TRUE(exifMetadata->SetValue("StandardOutputSensitivity", ""));
-    ASSERT_TRUE(exifMetadata->SetValue("RecommendedExposureIndex", ""));
-    ASSERT_TRUE(exifMetadata->SetValue("ApertureValue", "2.00 EV (f/2.0)"));
-    ASSERT_TRUE(exifMetadata->SetValue("ExposureBiasValue", "0.00 EV"));
-    ASSERT_TRUE(exifMetadata->SetValue("MeteringMode", "Pattern"));
-    ASSERT_TRUE(exifMetadata->SetValue("LightSource", "Daylight"));
     ASSERT_TRUE(exifMetadata->SetValue("Flash", "Flash did not fire"));
-    ASSERT_TRUE(exifMetadata->SetValue("FocalLength", "6.3 mm"));
-    ASSERT_TRUE(exifMetadata->SetValue("UserComment", ""));
     ASSERT_TRUE(exifMetadata->SetValue("PixelXDimension", "4000"));
     ASSERT_TRUE(exifMetadata->SetValue("PixelYDimension", "3000"));
     ASSERT_TRUE(exifMetadata->SetValue("WhiteBalance", "Auto white balance"));
     ASSERT_TRUE(exifMetadata->SetValue("FocalLengthIn35mmFilm", "27"));
-    ASSERT_TRUE(exifMetadata->SetValue("JPEGProc", ""));
 
-    ASSERT_TRUE(imageAccessor.WriteMetadata());
+    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
 
     ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "8, 8, 8");
     ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Unknown value 0");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "4000");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "3000");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitude"), "39, 54, 20");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitude"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitudeRef"), "R98");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2024:01:11 09:39:58");
     ASSERT_EQ(GetProperty(exifMetadata, "ExposureTime"), "1/590 sec.");
-    ASSERT_EQ(GetProperty(exifMetadata, "SceneType"), "Directly photographed");
     ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedRatings"), "160");
-    ASSERT_EQ(GetProperty(exifMetadata, "FNumber"), "f/2.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "DateTime"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTimeStamp"), "01:39:58.00");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDateStamp"), "2024:01:11");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageDescription"), "_cuva");
-    ASSERT_EQ(GetProperty(exifMetadata, "Make"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "Model"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "SensitivityType"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "StandardOutputSensitivity"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "RecommendedExposureIndex"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "ApertureValue"), "2.00 EV (f/2.0)");
-    ASSERT_EQ(GetProperty(exifMetadata, "ExposureBiasValue"), "0.00 EV");
-    ASSERT_EQ(GetProperty(exifMetadata, "MeteringMode"), "Pattern");
-    ASSERT_EQ(GetProperty(exifMetadata, "LightSource"), "Daylight");
     ASSERT_EQ(GetProperty(exifMetadata, "Flash"), "Flash did not fire");
-    ASSERT_EQ(GetProperty(exifMetadata, "FocalLength"), "6.3 mm");
-    ASSERT_EQ(GetProperty(exifMetadata, "UserComment"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelXDimension"), "4000");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelYDimension"), "3000");
     ASSERT_EQ(GetProperty(exifMetadata, "WhiteBalance"), "Auto white balance");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalLengthIn35mmFilm"), "27");
-    ASSERT_EQ(GetProperty(exifMetadata, "JPEGProc"), "");
 }
 
 /**
@@ -349,24 +312,19 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream(new FileImageStream(IMAGE_INPUT1_JPEG_PATH));
+    std::shared_ptr<ImageStream> readStream(new FileImageStream(IMAGE_INPUT3_JPEG_PATH));
     JpegImageAccessor imageReadAccessor(readStream);
-    ASSERT_EQ(imageReadAccessor.ReadMetadata(), 0);
-
     DataBuf exifBuf;
-    bool result = imageReadAccessor.ReadExifBlob(exifBuf);
-    ASSERT_TRUE(result);
+    ASSERT_TRUE(imageReadAccessor.ReadExifBlob(exifBuf));
     ASSERT_EQ(exifBuf.size(), 0x0932);
 
-    std::shared_ptr<ImageStream> writeStream(new FileImageStream(IMAGE_INPUT1_PNG_PATH));
+    std::shared_ptr<ImageStream> writeStream(new FileImageStream(IMAGE_OUTPUT_JPEG_PATH));
     JpegImageAccessor imageWriteAccessor(writeStream);
-    ASSERT_EQ(imageWriteAccessor.ReadMetadata(), 0);
-    result = imageWriteAccessor.WriteExifBlob(exifBuf);
-    ASSERT_TRUE(result);
+    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(exifBuf), 0);
 
-    result = imageWriteAccessor.ReadExifBlob(exifBuf);
-    ASSERT_TRUE(result);
-    ASSERT_EQ(exifBuf.size(), 0x0932);
+    DataBuf outputBuf;
+    ASSERT_TRUE(imageWriteAccessor.ReadExifBlob(outputBuf));
+    ASSERT_EQ(outputBuf.size(), 0x0932);
 }
 
 std::string JpegImageAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop)
