@@ -13,7 +13,7 @@ DngImageAccessor::~DngImageAccessor()
 
 }
 
-ExifMetadata DngImageAccessor::ReadMetadata(const OHOS::Media::SourceStream& stream) const
+ExifMetadata DngImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
 {
     (void)stream;
 

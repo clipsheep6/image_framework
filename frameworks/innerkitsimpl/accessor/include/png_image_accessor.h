@@ -10,7 +10,7 @@ public:
     PngImageAccessor();
     ~PngImageAccessor();
 
-    ExifMetadata ReadMetadata(const OHOS::Media::SourceStream& stream) const override;
+    ExifMetadata ReadMetadata(OHOS::Media::ImageStream& stream) override;
 };
 } // namespace Media
 } // namespace OHOS

@@ -10,6 +10,9 @@ namespace OHOS {
 namespace Media {
 class ExifMetadata {
 public:
+    ExifMetadata() = default;
+    ExifMetadata(ExifData* exifData);
+    ~ExifMetadata();
     std::string GetValue(const std::string& key);
     void SetValue(const std::string& key, const std::string& value);
     ExifData GetData();

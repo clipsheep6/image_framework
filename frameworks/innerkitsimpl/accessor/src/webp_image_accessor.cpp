@@ -13,7 +13,7 @@ WebpImageAccessor::~WebpImageAccessor()
 
 }
 
-ExifMetadata WebpImageAccessor::ReadMetadata(const OHOS::Media::SourceStream& stream) const
+ExifMetadata WebpImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
 {
     (void)stream;
     return ExifMetadata();

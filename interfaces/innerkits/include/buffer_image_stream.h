@@ -42,6 +42,9 @@ public:
     NATIVEEXPORT virtual void Close() override;
     NATIVEEXPORT virtual bool Open() override;
 
+    // 对于BufferImageStream来说，带模式的Open函数是无效的，因为BufferImageStream的数据已经在内存中，不存在只读的场景
+    NATIVEEXPORT virtual bool Open(OpenMode mode) override;
+
     /**
      * Get the memory map of BufferImageStream.
      * Since the data of BufferImageStream is already in memory, this function directly returns the pointer to the data.

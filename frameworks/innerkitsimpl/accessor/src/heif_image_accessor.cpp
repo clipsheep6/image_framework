@@ -13,7 +13,7 @@ HeifImageAccessor::~HeifImageAccessor()
 
 }
 
-ExifMetadata HeifImageAccessor::ReadMetadata(const OHOS::Media::SourceStream& stream) const
+ExifMetadata HeifImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
 {
     (void)stream;
 
