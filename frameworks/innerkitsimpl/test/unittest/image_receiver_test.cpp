@@ -490,7 +490,7 @@ HWTEST_F(ImageReceiverTest, RequestCpuAccessTest001, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageReceiverTest: RequestCpuAccessTest001 end";
 }
 
-void PushBuffer(std::string receiveKey)
+void PushBuffer(std::shared_ptr<ImageReceiver> imageReceiver)
 {
     OHOS::BufferRequestConfig requestConfig = {
         .width = RECEIVER_TEST_WIDTH,
@@ -508,7 +508,7 @@ void PushBuffer(std::string receiveKey)
         },
         .timestamp = 0,
     };
-
+     std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
     auto receiverSurface = imageReceiver->getSurfaceById(receiveKey);
     ASSERT_NE(receiverSurface, nullptr);
 
@@ -538,8 +538,7 @@ HWTEST_F(ImageReceiverTest, IsCpuAccessTest001, TestSize.Level3)
     std::shared_ptr<ImageReceiver> imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
         RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
     
-    std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
-    PushBuffer(receiveKey);
+    PushBuffer(imageReceiver);
 
     std::shared_ptr<NativeImage> image = imageReceiver->LastNativeImage();
     ASSERT_NE(image, nullptr);
@@ -560,8 +559,7 @@ HWTEST_F(ImageReceiverTest, IsCpuAccessTest002, TestSize.Level3)
     std::shared_ptr<ImageReceiver> imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
         RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
 
-    std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
-    PushBuffer(receiveKey);
+    PushBuffer(imageReceiver);
 
     std::shared_ptr<NativeImage> image = imageReceiver->NextNativeImage();
     ASSERT_NE(image, nullptr);
