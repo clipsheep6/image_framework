@@ -37,11 +37,6 @@ public:
 
 class FileImageStream : public ImageStream {
 public:
-
-    enum class FileMode {
-        Read,       // Read mode
-        ReadWrite   // Read-write mode
-    };
     NATIVEEXPORT FileImageStream(FILE *p);
     NATIVEEXPORT FileImageStream(const std::string& filePath);
     FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper);
@@ -65,7 +60,7 @@ public:
     NATIVEEXPORT virtual bool IsOpen() override;
     NATIVEEXPORT virtual void Close() override;
     NATIVEEXPORT virtual bool Open() override;
-    NATIVEEXPORT bool Open(FileMode mode);
+    NATIVEEXPORT virtual bool Open(OpenMode mode) override;
 
     /**
      * Create a memory map of the file.

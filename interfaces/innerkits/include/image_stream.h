@@ -29,6 +29,11 @@ enum SeekPos { BEGIN, CURRENT, END };
 
 typedef uint8_t byte;
 
+enum class OpenMode {
+    Read,       // Read mode
+    ReadWrite   // Read-write mode
+};
+
 class ImageStream {
 public:
     virtual ~ImageStream() {}
@@ -77,6 +82,8 @@ public:
     // Return: true if it opens successfully, false otherwise
     virtual bool Open() = 0;
 
+    virtual bool Open(OpenMode mode) = 0;
+    
     // Create a memory map
     // isWriteable: If true, the created memory map will be writable; otherwise, the created memory map will be read-only.
     // Return: If the memory map is created successfully, return a pointer to the memory map; otherwise, return nullptr.

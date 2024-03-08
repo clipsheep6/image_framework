@@ -375,6 +375,13 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open003, TestSize.Level3)
     stream3.Close();
 }
 
+HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3){
+    // Arrange
+    const char* nonExistentFilePath = "/path/to/nonexistent/file";
+    FileImageStream stream(nonExistentFilePath);
+    ASSERT_FALSE(stream.Open(OpenMode::Read));
+}
+
 /**
  * @tc.name: FileImageStream_Read001
  * @tc.desc: 测试FileImageStream的Read函数，读取512字节的情况
