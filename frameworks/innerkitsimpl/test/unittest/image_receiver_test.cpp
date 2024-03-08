@@ -542,8 +542,8 @@ HWTEST_F(ImageReceiverTest, IsCpuAccessTest001, TestSize.Level3)
     PushBuffer(receiveKey);
 
     std::shared_ptr<NativeImage> image = imageReceiver->LastNativeImage();
-    ASSERT_NE(isCpuAccess, nullptr);
-    bool image = false;
+    ASSERT_NE(image, nullptr);
+    bool isCpuAccess = false;
     image->IsCpuAccess(isCpuAccess);
     ASSERT_EQ(isCpuAccess, false);
     GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest001 end";
@@ -564,8 +564,8 @@ HWTEST_F(ImageReceiverTest, IsCpuAccessTest002, TestSize.Level3)
     PushBuffer(receiveKey);
 
     std::shared_ptr<NativeImage> image = imageReceiver->NextNativeImage();
-    ASSERT_NE(isCpuAccess, nullptr);
-    bool image = false;
+    ASSERT_NE(image, nullptr);
+    bool isCpuAccess = false;
     image->IsCpuAccess(isCpuAccess);
     ASSERT_EQ(isCpuAccess, false);
     GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest002 end";
