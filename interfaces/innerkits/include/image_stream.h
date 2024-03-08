@@ -62,9 +62,10 @@ public:
     virtual bool IsOpen() = 0;
 
     /**
-     * Close the image stream
+     * Flush the image stream
+     * @return true if it flushes successfully, false otherwise
      */
-    virtual void Close() = 0;
+    virtual bool Flush() = 0;
 
     /**
      * Write data to the image stream
@@ -102,7 +103,7 @@ public:
      * Get the current position in the image stream
      * @return The current position
      */
-    virtual ssize_t Tell() = 0;
+    virtual long Tell() = 0;
 
     /**
      * Check if the end of the image stream has been reached
@@ -135,6 +136,12 @@ public:
      * @return The size of the ImageStream
      */
     virtual size_t GetSize() = 0;
+
+private:
+    /**
+     * Close the image stream
+     */
+    virtual void Close() = 0;
 };
 
 } // namespace MultimediaPlugin
