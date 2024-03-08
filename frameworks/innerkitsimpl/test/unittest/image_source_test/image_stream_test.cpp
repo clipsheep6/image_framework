@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <string>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 #include <string.h>
 #include <pwd.h>
@@ -123,7 +124,7 @@ public:
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 start";
+    // GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 start";
    
     // Create a FileImageStream object
     FileImageStream stream(filePath);
@@ -134,12 +135,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     // Create some data to write
     uint8_t data[10];
     memset(data, 'a', sizeof(data));
+    
+    ASSERT_EQ(stream.Tell(), 0);
 
     // Write the data to the file
     size_t bytesWritten = stream.Write(data, sizeof(data));
 
     // Check that the correct number of bytes were written
     ASSERT_EQ(bytesWritten, sizeof(data));
+    ASSERT_EQ(bytesWritten, 10);
 
     // Close the file
     stream.Close();
@@ -161,7 +165,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     // Close the file
     close(fd);
 
-    GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 end";
+    // GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 end";
 }
 
 /**
@@ -551,10 +555,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
     stream.Write((uint8_t*)sourceData.c_str(), sourceData.size());
     
     FileImageStream cloneStream(stream.fp);
+    cloneStream.Open();
     // 读取 cloneStream 的数据
     uint8_t buffer[256];
     stream.Seek(5, SeekPos::BEGIN);
-    size_t bytesRead = cloneStream.Read(buffer, sourceData.size());
+    ssize_t bytesRead = cloneStream.Read(buffer, sourceData.size());
+    ASSERT_EQ(bytesRead, sourceData.size());
     buffer[bytesRead] = '\0';  // 添加字符串结束符
 
     // 检查读取的数据是否与源文件的数据相同
@@ -571,6 +577,98 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
 
     // 检查读取的数据是否包含新的数据
     ASSERT_STRNE((char*)buffer, newData.c_str());
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
+    // 创建并打开一个临时文件
+    int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    ASSERT_NE(fd,-1);
+
+    // 使用文件描述符创建一个新的FileImageStream对象
+    FileImageStream stream(fd);
+    ASSERT_TRUE(stream.Open());
+    ASSERT_NE(stream.dupFD, -1);
+    // 检查FileImageStream对象的状态
+    ASSERT_TRUE(stream.fp != nullptr);
+    ASSERT_EQ(stream.fileSize, 0);
+    ASSERT_EQ(stream.mappedMemory, nullptr);
+    ASSERT_EQ(stream.Tell(), 0);
+
+    // 写入数据
+    uint8_t writeData[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    ssize_t bytesWritten = stream.Write(writeData, sizeof(writeData));
+    ASSERT_EQ(bytesWritten, sizeof(writeData));
+
+    // 重置文件指针到文件开始
+    stream.Seek(0, SeekPos::BEGIN);
+
+    // 读取数据
+    uint8_t readData[10] = {0};
+    ssize_t bytesRead = stream.Read(readData, sizeof(readData));
+    ASSERT_EQ(bytesRead, sizeof(readData));
+
+    // 检查读取的数据是否与写入的数据一致
+    for (size_t i = 0; i < sizeof(writeData); ++i) {
+        ASSERT_EQ(writeData[i], readData[i]);
+    }
+
+    // 关闭文件
+    close(fd);
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
+    int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int dupFD = dup(fd);
+    ASSERT_NE(fd,-1);
+    FILE *f = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
+    ASSERT_NE(f, nullptr);
+    std::string text = "Hello, world!";
+    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(), f); // Use sizeof(char) as the second argument
+    ASSERT_EQ(ferror(f), 0);
+    ASSERT_EQ(result, text.size());
+
+    // 重置文件指针到文件开始
+    rewind(f);
+
+    // 读取并验证数据
+    char buffer[256];
+    result = fread(buffer, sizeof(char), text.size(), f);
+    ASSERT_EQ(result, text.size());
+    buffer[result] = '\0'; // 添加字符串结束符
+    ASSERT_STREQ(buffer, text.c_str());
+
+    fclose(f);
+    close(dupFD);
+    close(fd);
+}
+
+HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3){
+    int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    FileImageStream stream(fd);
+    int dupFD = stream.dupFD;
+    ASSERT_NE(fd,-1);
+    ASSERT_TRUE(stream.Open());
+    FILE *f = stream.fp; // Change "rb" to "wb" for writing in binary mode
+    // FILE *f = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
+    ASSERT_NE(f, nullptr);
+    std::string text = "Hello, world!";
+    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(), f); // Use sizeof(char) as the second argument
+    ASSERT_EQ(ferror(f), 0);
+    ASSERT_EQ(result, text.size());
+
+    // 重置文件指针到文件开始
+    rewind(f);
+
+    // 读取并验证数据
+    char buffer[256];
+    result = fread(buffer, sizeof(char), text.size(), f);
+    ASSERT_EQ(result, text.size());
+    buffer[result] = '\0'; // 添加字符串结束符
+    ASSERT_STREQ(buffer, text.c_str());
+
+    fclose(f);
+    close(dupFD);
+    close(fd);
 }
 
 HWTEST_F(ImageStreamTest, BufferImageStream_Open001, TestSize.Level3){

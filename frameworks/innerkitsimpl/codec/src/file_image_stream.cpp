@@ -44,16 +44,38 @@ size_t FileWrapper::fread(void* destv, size_t size, size_t nmemb, FILE* f){
     return ::fread(destv, size, nmemb, f);
 }
 
-FileImageStream::FileImageStream(FILE *p){
-    fp = p;
+FileImageStream::FileImageStream(int fd){
+    dupFD = dup(fd);
+    if(dupFD == -1){
+        char buf[256];        
+        strerror_r(errno, buf, sizeof(buf));
+        IMAGE_LOGE("dup: Duplicate file descriptor failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+    }
+    initPath = INIT_FROM_FD;
+
     fileSize = 0;
     mappedMemory = nullptr;
     this->fileWrapper = std::make_unique<FileWrapper>();
 }
 
+FileImageStream::FileImageStream(FILE *p){
+    dupFD = fileno(p);
+    if(dupFD == -1){
+        char buf[256];        
+        strerror_r(errno, buf, sizeof(buf));
+        IMAGE_LOGE("fileno: Get file descriptor failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+    }
+    fileSize = 0;
+    mappedMemory = nullptr;
+    this->fileWrapper = std::make_unique<FileWrapper>();
+    initPath = INIT_FROM_FD;
+}
+
 FileImageStream::FileImageStream(const std::string& filePath)
     : fp(nullptr), filePath(filePath), fileSize(0), mappedMemory(nullptr) {
-        this->fileWrapper = std::make_unique<FileWrapper>();
+    this->fileWrapper = std::make_unique<FileWrapper>();
+    dupFD = -1;
+    initPath = INIT_FROM_PATH;
 }
 
 FileImageStream::FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper)
@@ -63,6 +85,7 @@ FileImageStream::FileImageStream(const std::string& filePath, std::unique_ptr<Fi
     } else {
         this->fileWrapper = std::move(fileWrapper);
     }
+    initPath = INIT_FROM_PATH;
 }
 
 FileImageStream::~FileImageStream() { 
@@ -72,16 +95,21 @@ FileImageStream::~FileImageStream() {
 ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
     if (fp == nullptr) {
         // File is not open
+        IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), "fp is nullptr");
         return -1;
     }
 
+    // size_t result = ::fwrite(data, 1, size, fp);
     size_t result = fileWrapper->fwrite(data, 1, size, fp);
-    // size_t result = fileWrapper->fwrite(data, 1, size, fp);
-    if (result != size) {
+    if (result != size || ferror(fp)) {
         // Write failed
         char buf[256];        
         strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+        if(initPath == INIT_FROM_FD){
+            IMAGE_LOGE("Write file failed: %{public}d, reason: %{public}s。result is %{public}d, size is %{public}d", dupFD, buf, result, size);
+        }else{
+            IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s。result is %{public}d, size is %{public}d", filePath.c_str(), buf, result, size);
+        }
         return -1;
     }
     return result;
@@ -210,11 +238,6 @@ bool FileImageStream::IsOpen() {
 }
 
 void FileImageStream::Close() {
-    // If the file is not open, return directly
-    if (fp == nullptr) {
-        return;
-    }
-
     // If there is a memory map, delete it
     if (mappedMemory != nullptr) {
         if(munmap(mappedMemory, fileSize) == -1){
@@ -225,11 +248,18 @@ void FileImageStream::Close() {
         mappedMemory = nullptr;
     }
 
+    // If the file is not open, return directly
+    if (fp != nullptr) {
+        fclose(fp);
+        fp = nullptr;
+    }
     // Close the file
-    fclose(fp);
+    if (dupFD != -1){
+        close(dupFD);
+        dupFD = -1;
+    }
 
     // Reset all member variables
-    fp = nullptr;
     fileSize = 0;
     IMAGE_LOGD("File closed: %{public}s", filePath.c_str());
     return;
@@ -240,9 +270,31 @@ bool FileImageStream::Open(){
 }
 
 bool FileImageStream::Open(OpenMode mode){
-    // 如果 fp 已经指向一个打开的文件，直接返回 true
-    if (fp != nullptr) {
-        return true;
+    if(initPath == INIT_FROM_FD){
+        IMAGE_LOGD("initPath is INIT_FROM_FD");
+        if(dupFD == -1){
+            IMAGE_LOGE("FileImageStream: Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), "dupFD is -1");
+            return false;
+        }
+        // 根据mode参数决定如何创建FILE* fp
+        if (mode == OpenMode::ReadWrite) {
+            fp = fdopen(dupFD, "r+");
+            IMAGE_LOGD("openMode is ReadWrite");
+        } else if (mode == OpenMode::Read) {
+            fp = fdopen(dupFD, "r");
+            IMAGE_LOGD("openMode is Read");
+        }
+
+        if (fp == NULL || ferror(fp)) {
+            // 处理错误，例如抛出异常或返回错误代码
+            char buf[256];        
+            strerror_r(errno, buf, sizeof(buf));
+            IMAGE_LOGE("FileImageStream: Open file failed: %{public}s, reason: %{public}s。", filePath.c_str(), buf);
+            return false;
+        }else{
+            IMAGE_LOGD("File opened: %{public}d", dupFD);
+            return true;
+        }
     }
 
     const char* modeStr;
