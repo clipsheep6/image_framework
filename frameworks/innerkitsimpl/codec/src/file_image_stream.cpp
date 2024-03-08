@@ -15,6 +15,7 @@
 
 #include "file_image_stream.h"
 #include "image_log.h"
+#include "image_stream.h"
 #include "out/rk3568/obj/third_party/musl/intermidiates/linux/musl_src_ported/include/stdio.h"
 
 #include <cwchar>
@@ -235,10 +236,10 @@ void FileImageStream::Close() {
 }
 
 bool FileImageStream::Open(){
-    return Open(FileMode::ReadWrite);
+    return Open(OpenMode::ReadWrite);
 }
 
-bool FileImageStream::Open(FileMode mode){
+bool FileImageStream::Open(OpenMode mode){
     // 如果 fp 已经指向一个打开的文件，直接返回 true
     if (fp != nullptr) {
         return true;
@@ -246,10 +247,10 @@ bool FileImageStream::Open(FileMode mode){
 
     const char* modeStr;
     switch (mode) {
-        case FileMode::Read:
+        case OpenMode::Read:
             modeStr = "r";
             break;
-        case FileMode::ReadWrite:
+        case OpenMode::ReadWrite:
             modeStr = "r+";
             break;
         default:
@@ -258,7 +259,7 @@ bool FileImageStream::Open(FileMode mode){
 
     fp = fopen(filePath.c_str(), modeStr);
     if (fp == nullptr) {
-        if (mode == FileMode::ReadWrite) {
+        if (mode == OpenMode::ReadWrite) {
             // 如果以读写模式打开文件失败，尝试创建新文件
             fp = fopen(filePath.c_str(), "w");
             if (fp == nullptr) {

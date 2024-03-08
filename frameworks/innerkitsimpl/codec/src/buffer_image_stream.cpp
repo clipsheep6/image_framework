@@ -123,6 +123,10 @@ bool BufferImageStream::Open() {
     return true;
 }
 
+bool BufferImageStream::Open(OpenMode mode) {
+    return true;
+}
+
 byte* BufferImageStream::MMap(bool isWriteable) {
     return buffer.data();
 }
