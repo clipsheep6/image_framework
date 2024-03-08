@@ -59,7 +59,7 @@ FileImageStream::FileImageStream(int fd){
 }
 
 FileImageStream::FileImageStream(FILE *p){
-    dupFD = fileno(p);
+    dupFD = dup(fileno(p));
     if(dupFD == -1){
         char buf[256];        
         strerror_r(errno, buf, sizeof(buf));
@@ -254,6 +254,7 @@ void FileImageStream::Close() {
         fp = nullptr;
     }
     // Close the file
+    int tmpFD = dupFD;
     if (dupFD != -1){
         close(dupFD);
         dupFD = -1;
@@ -261,7 +262,12 @@ void FileImageStream::Close() {
 
     // Reset all member variables
     fileSize = 0;
-    IMAGE_LOGD("File closed: %{public}s", filePath.c_str());
+    if(initPath == INIT_FROM_FD){
+        IMAGE_LOGD("File closed: %{public}d", tmpFD);
+    }else if(initPath == INIT_FROM_PATH){
+        IMAGE_LOGD("File closed: %{public}s", filePath.c_str());
+    }
+    initPath = INIT_FROM_UNKNOWN;
     return;
 }
 
@@ -269,32 +275,64 @@ bool FileImageStream::Open(){
     return Open(OpenMode::ReadWrite);
 }
 
-bool FileImageStream::Open(OpenMode mode){
-    if(initPath == INIT_FROM_FD){
-        IMAGE_LOGD("initPath is INIT_FROM_FD");
-        if(dupFD == -1){
-            IMAGE_LOGE("FileImageStream: Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), "dupFD is -1");
-            return false;
-        }
-        // 根据mode参数决定如何创建FILE* fp
-        if (mode == OpenMode::ReadWrite) {
-            fp = fdopen(dupFD, "r+");
-            IMAGE_LOGD("openMode is ReadWrite");
-        } else if (mode == OpenMode::Read) {
-            fp = fdopen(dupFD, "r");
-            IMAGE_LOGD("openMode is Read");
-        }
+bool FileImageStream::OpenFromFD(const char* modeStr){
+    if(dupFD == -1){
+        IMAGE_LOGE("FileImageStream: Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), "dupFD is -1");
+        return false;
+    }
+    // Decide how to create FILE* fp based on the mode parameter
+    fp = fdopen(dupFD, modeStr);
+    if (fp == NULL || ferror(fp)) {
+        // Handle errors, such as throwing exceptions or returning error codes
+        char buf[256];        
+        strerror_r(errno, buf, sizeof(buf));
+        IMAGE_LOGE("FileImageStream: Open file failed: %{public}s, reason: %{public}s.", filePath.c_str(), buf);
+        return false;
+    }else{
+        IMAGE_LOGD("File opened: %{public}d", dupFD);
+    }
+    return true;
+}
 
-        if (fp == NULL || ferror(fp)) {
-            // 处理错误，例如抛出异常或返回错误代码
+bool FileImageStream::OpenFromPath(const char* modeStr){
+    fp = fopen(filePath.c_str(), modeStr);
+    if (fp == nullptr) {
+        if (strcmp(modeStr, "r+") == 0) {
+            // If opening the file in read-write mode fails, try creating a new file
+            fp = fopen(filePath.c_str(), "w");
+            if (fp == nullptr) {
+                // Failed to create file
+                char buf[256];        
+                strerror_r(errno, buf, sizeof(buf));
+                IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+                return false;
+            }
+            // Close the file, then reopen it in "r+" mode
+            fclose(fp);
+            fp = fopen(filePath.c_str(), "r+");
+            if (fp == nullptr) {
+                // Failed to reopen the file
+                char buf[256];        
+                strerror_r(errno, buf, sizeof(buf));
+                IMAGE_LOGE("Reopen file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
+                return false;
+            }
+        } else {
+            // Open failed
             char buf[256];        
             strerror_r(errno, buf, sizeof(buf));
-            IMAGE_LOGE("FileImageStream: Open file failed: %{public}s, reason: %{public}s。", filePath.c_str(), buf);
+            IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
             return false;
-        }else{
-            IMAGE_LOGD("File opened: %{public}d", dupFD);
-            return true;
         }
+    }
+    IMAGE_LOGD("File opened: %{public}s", filePath.c_str());
+    return true;
+}
+
+bool FileImageStream::Open(OpenMode mode){
+    if(initPath == INIT_FROM_UNKNOWN){
+        IMAGE_LOGE("initPath is INIT_FROM_UNKNOWN. It seems that the file has been closed before.");
+        return false;
     }
 
     const char* modeStr;
@@ -309,35 +347,17 @@ bool FileImageStream::Open(OpenMode mode){
             return false;
     }
 
-    fp = fopen(filePath.c_str(), modeStr);
-    if (fp == nullptr) {
-        if (mode == OpenMode::ReadWrite) {
-            // 如果以读写模式打开文件失败，尝试创建新文件
-            fp = fopen(filePath.c_str(), "w");
-            if (fp == nullptr) {
-                // 创建文件失败
-                char buf[256];        
-                strerror_r(errno, buf, sizeof(buf));
-                IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
-                return false;
-            }
-            // 关闭文件，然后以 "r+" 模式重新打开
-            fclose(fp);
-            fp = fopen(filePath.c_str(), "r+");
-            if (fp == nullptr) {
-                // 重新打开文件失败
-                char buf[256];        
-                strerror_r(errno, buf, sizeof(buf));
-                IMAGE_LOGE("Reopen file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
-                return false;
-            }
-        } else {
-            // Open failed
-            char buf[256];        
-            strerror_r(errno, buf, sizeof(buf));
-            IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
-            return false;
-        }
+    bool openResult = false;
+    if(initPath == INIT_FROM_FD){
+        IMAGE_LOGD("initPath is INIT_FROM_FD");
+        openResult = OpenFromFD(modeStr);
+    }
+    if(initPath == INIT_FROM_PATH){
+        openResult = OpenFromPath(modeStr);
+    }
+
+    if (!openResult) {
+        return false;
     }
 
     // Get the file size
@@ -345,7 +365,6 @@ bool FileImageStream::Open(OpenMode mode){
     fileSize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    IMAGE_LOGD("File opened: %{public}s", filePath.c_str());
     return true;
 }
 

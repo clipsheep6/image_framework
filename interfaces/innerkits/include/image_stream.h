@@ -25,7 +25,11 @@
 namespace OHOS {
 namespace Media {
 
-enum SeekPos { BEGIN, CURRENT, END };
+enum SeekPos { 
+    BEGIN, 
+    CURRENT, 
+    END 
+};
 
 typedef uint8_t byte;
 
@@ -38,71 +42,101 @@ class ImageStream {
 public:
     virtual ~ImageStream() {}
 
-    // Write data to the image stream
-    // data: The data to be written
-    // size: The size of the data to be written
-    // Return: The actual size of the data written
-    virtual ssize_t Write(uint8_t* data, size_t size) = 0;
-
-    // Write data from another image stream
-    // src: The image stream where the data comes from
-    // Return: The actual size of the data written
-    virtual ssize_t Write(ImageStream& src) = 0;
-
-    // Read data from the image stream
-    // buf: The buffer to store the data read
-    // size: The size of the data to be read
-    // Return: The actual size of the data read
-    virtual ssize_t Read(uint8_t* buf, size_t size) = 0;
-
-    virtual int ReadByte() = 0;
-
-    // Seek a specific position in the image stream
-    // offset: The offset
-    // pos: The starting position of the offset (from the head, current position, or tail)
-    // Return: The new position
-    virtual int Seek(int offset, SeekPos pos) = 0;
-
-    // Get the current position in the image stream
-    // Return: The current position
-    virtual ssize_t Tell() = 0;
-
-    // Check if the end of the image stream has been reached
-    // Return: true if the end has been reached, false otherwise
-    virtual bool IsEof() = 0;
-
-    // Check if the image stream is open
-    // Return: true if it is open, false otherwise
-    virtual bool IsOpen() = 0;
-
-    // Close the image stream
-    virtual void Close() = 0;
-
-    // Open the image stream
-    // Return: true if it opens successfully, false otherwise
+    /**
+     * Open the image stream
+     * @return true if it opens successfully, false otherwise
+     */
     virtual bool Open() = 0;
 
+    /**
+     * Open the image stream with a specific mode
+     * @param mode The mode to open the image stream
+     * @return true if it opens successfully, false otherwise
+     */
     virtual bool Open(OpenMode mode) = 0;
-    
-    // Create a memory map
-    // isWriteable: If true, the created memory map will be writable; otherwise, the created memory map will be read-only.
-    // Return: If the memory map is created successfully, return a pointer to the memory map; otherwise, return nullptr.
-    virtual byte* MMap(bool isWriteable =false) =0;
 
-    // Release a memory map
-    // mmap: The pointer to the memory map that needs to be released.
-    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    /**
+     * Check if the image stream is open
+     * @return true if it is open, false otherwise
+     */
+    virtual bool IsOpen() = 0;
+
+    /**
+     * Close the image stream
+     */
+    virtual void Close() = 0;
+
+    /**
+     * Write data to the image stream
+     * @param data The data to be written
+     * @param size The size of the data to be written
+     * @return The actual size of the data written
+     */
+    virtual ssize_t Write(uint8_t* data, size_t size) = 0;
+
+    /**
+     * Write data from another image stream
+     * @param src The image stream where the data comes from
+     * @return The actual size of the data written
+     */
+    virtual ssize_t Write(ImageStream& src) = 0;
+
+    /**
+     * Read data from the image stream
+     * @param buf The buffer to store the data read
+     * @param size The size of the data to be read
+     * @return The actual size of the data read
+     */
+    virtual ssize_t Read(uint8_t* buf, size_t size) = 0;
+    virtual int ReadByte() = 0;
+
+    /**
+     * Seek a specific position in the image stream
+     * @param offset The offset
+     * @param pos The starting position of the offset (from the head, current position, or tail)
+     * @return The new position
+     */
+    virtual int Seek(int offset, SeekPos pos) = 0;
+
+    /**
+     * Get the current position in the image stream
+     * @return The current position
+     */
+    virtual ssize_t Tell() = 0;
+
+    /**
+     * Check if the end of the image stream has been reached
+     * @return true if the end has been reached, false otherwise
+     */
+    virtual bool IsEof() = 0;
+
+    /**
+     * Create a memory map
+     * @param isWriteable If true, the created memory map will be writable; otherwise, the created memory map will be read-only.
+     * @return If the memory map is created successfully, return a pointer to the memory map; otherwise, return nullptr.
+     */
+    virtual byte* MMap(bool isWriteable = false) = 0;
+
+    /**
+     * Release a memory map
+     * @param mmap The pointer to the memory map that needs to be released.
+     * @return If the memory map is released successfully, return true; otherwise, return false.
+     */
     virtual bool MUnmap(byte* mmap) = 0;
 
-    // Copy the entire content from the source ImageStream to the current ImageStream.
-    // src: The source ImageStream, this function will read data from this ImageStream.
+    /**
+     * Copy the entire content from the source ImageStream to the current ImageStream.
+     * @param src The source ImageStream, this function will read data from this ImageStream.
+     */
     virtual void CopyFrom(ImageStream& src) = 0;
 
-    // Get the size of the ImageStream
-    // Return: The size of the ImageStream
+    /**
+     * Get the size of the ImageStream
+     * @return The size of the ImageStream
+     */
     virtual size_t GetSize() = 0;
 };
 
 } // namespace MultimediaPlugin
 } // namespace OHOS
-#endif // IMAGE_STREAM_H
+#endif // INTERFACES_INNERKITS_INCLUDE_IMAGE_STREAM_H

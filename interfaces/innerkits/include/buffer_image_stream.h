@@ -28,21 +28,89 @@ namespace Media {
 
 class BufferImageStream : public ImageStream {
 public:
+    /**
+     * @brief Constructs a new BufferImageStream object.
+     */
     NATIVEEXPORT BufferImageStream();
+
+    /**
+     * @brief Destructs the BufferImageStream object.
+     */
     NATIVEEXPORT virtual ~BufferImageStream();
 
+    /**
+     * @brief Writes data to the BufferImageStream.
+     * @param data The data to be written.
+     * @param size The size of the data.
+     * @return The number of bytes written.
+     */
     NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
+
+    /**
+     * @brief Writes the content of the source ImageStream to the current BufferImageStream.
+     * @param src The source ImageStream.
+     * @return The number of bytes written.
+     */
     NATIVEEXPORT virtual ssize_t Write(ImageStream& src) override;
+
+    /**
+     * @brief Reads data from the BufferImageStream.
+     * @param buf The buffer to store the data.
+     * @param size The size of the data.
+     * @return The number of bytes read.
+     */
     NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+
+    /**
+     * @brief Reads a byte from the BufferImageStream.
+     * @return The byte read.
+     */
     NATIVEEXPORT virtual int ReadByte() override;
+
+    /**
+     * @brief Seeks to a specific position in the BufferImageStream.
+     * @param offset The offset.
+     * @param pos The starting position of the offset.
+     * @return The new position.
+     */
     NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
+
+    /**
+     * @brief Gets the current position in the BufferImageStream.
+     * @return The current position.
+     */
     NATIVEEXPORT virtual ssize_t Tell() override;
+
+    /**
+     * @brief Checks if the end of the BufferImageStream has been reached.
+     * @return true if the end has been reached, false otherwise.
+     */
     NATIVEEXPORT virtual bool IsEof() override;
+
+    /**
+     * @brief Checks if the BufferImageStream is open.
+     * @return true if it is open, false otherwise.
+     */
     NATIVEEXPORT virtual bool IsOpen() override;
+
+    /**
+     * @brief Closes the BufferImageStream.
+     */
     NATIVEEXPORT virtual void Close() override;
+
+    /**
+     * @brief Opens the BufferImageStream.
+     * @return true if it opens successfully, false otherwise.
+     */
     NATIVEEXPORT virtual bool Open() override;
 
-    // 对于BufferImageStream来说，带模式的Open函数是无效的，因为BufferImageStream的数据已经在内存中，不存在只读的场景
+    /**
+     * For BufferImageStream, the Open function with a mode is not applicable, 
+     * as the data for BufferImageStream is already in memory and there are no read-only scenarios.
+     * 
+     * @param mode This parameter is ignored, as there are no read-only scenarios for BufferImageStream.
+     * @return Returns false, as this function is not applicable for BufferImageStream.
+     */
     NATIVEEXPORT virtual bool Open(OpenMode mode) override;
 
     /**
@@ -55,9 +123,12 @@ public:
      */
     NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
-    // Release a memory map
-    // mmap: The pointer to the memory map that needs to be released.
-    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    /**
+     * Release a memory map.
+     * 
+     * @param mmap The pointer to the memory map that needs to be released.
+     * @return Returns true if the memory map is released successfully; otherwise, returns false.
+     */
     NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
     /**
@@ -70,12 +141,23 @@ public:
      */
     NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
 
-    // Get the size of BufferImageStream
-    // Return: The size of BufferImageStream
+    /**
+     * Get the size sof the BufferImageStream.
+     * 
+     * @return Returns the size of the BufferImageStream.
+     */
     NATIVEEXPORT virtual size_t GetSize() override;
+
 private:
-    std::vector<uint8_t> buffer;  // Memory buffer
-    size_t currentOffset;  // Current offset
+    /**
+     * @brief The memory buffer of the BufferImageStream.
+     */
+    std::vector<uint8_t> buffer;
+
+    /**
+     * @brief The current offset in the BufferImageStream.
+     */
+    size_t currentOffset;
 };
 
 } // namespace MultimediaPlugin
