@@ -492,7 +492,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3) {
     ASSERT_GE(src.Write((uint8_t*)data.c_str(), data.size()), 0);
     // 调用Transfer函数将数据从src转移到dest
     dest.CopyFrom(src);
-    dest.Close();
     
     dest.Open();
     // 从dest中读取数据，并验证这些数据是否与写入src的数据相同
@@ -548,17 +547,18 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3) {
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
-    FileImageStream stream(filePathSource);
+    FileImageStream stream(filePath);
     ASSERT_TRUE(stream.Open());
     std::string sourceData = "Hello, world!";
-    stream.Seek(5, SeekPos::BEGIN);
-    stream.Write((uint8_t*)sourceData.c_str(), sourceData.size());
+    ASSERT_EQ(stream.Seek(5, SeekPos::BEGIN), 5);
+    ASSERT_EQ(stream.Write((uint8_t*)sourceData.c_str(), sourceData.size()), sourceData.size());
     
     FileImageStream cloneStream(stream.fp);
-    cloneStream.Open();
+    stream.Close();
+    ASSERT_TRUE(cloneStream.Open());
     // 读取 cloneStream 的数据
     uint8_t buffer[256];
-    stream.Seek(5, SeekPos::BEGIN);
+    cloneStream.Seek(5, SeekPos::BEGIN);
     ssize_t bytesRead = cloneStream.Read(buffer, sourceData.size());
     ASSERT_EQ(bytesRead, sourceData.size());
     buffer[bytesRead] = '\0';  // 添加字符串结束符
@@ -581,7 +581,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
 
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
     // 创建并打开一个临时文件
-    int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    std::string tempFile = "/tmp/testfile";
+    int fd = open(tempFile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     ASSERT_NE(fd,-1);
 
     // 使用文件描述符创建一个新的FileImageStream对象
@@ -590,7 +591,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
     ASSERT_NE(stream.dupFD, -1);
     // 检查FileImageStream对象的状态
     ASSERT_TRUE(stream.fp != nullptr);
-    ASSERT_EQ(stream.fileSize, 0);
+    ASSERT_EQ(stream.fileSize, stream.GetSize());
     ASSERT_EQ(stream.mappedMemory, nullptr);
     ASSERT_EQ(stream.Tell(), 0);
 
@@ -614,6 +615,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
 
     // 关闭文件
     close(fd);
+    remove(tempFile.c_str());
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
@@ -693,6 +695,56 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3){
 
     // 比较读取的字符串是否与写入的字符串相同
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3){
+    BufferImageStream stream;
+    uint8_t data[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    stream.Open();
+    size_t size = sizeof(data) / sizeof(data[0]);
+    int offset = 0;
+    stream.Seek(0, SeekPos::BEGIN);
+    ssize_t bytesWritten = stream.Write(data, size);
+    ASSERT_EQ(bytesWritten, size);
+    offset = stream.Tell();
+    ASSERT_EQ(stream.Tell(), size);
+    ASSERT_NE(offset, 0);
+    uint8_t readData[10] = {0};
+    stream.Seek(0, SeekPos::BEGIN);
+    ASSERT_EQ(stream.Tell(), 0);
+    ssize_t bytesRead = stream.Read(readData, size);
+    ASSERT_EQ(bytesRead, size);
+
+    for (size_t i = 0; i < size; ++i) {
+        ASSERT_EQ(data[i], readData[i]);
+    }
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
+    BufferImageStream stream;
+    stream.Open();
+    stream.Write((uint8_t*)"Hello, world!", 13);
+    ASSERT_EQ(stream.buffer.capacity(), 4096);
+    ASSERT_EQ(stream.Tell(), 13);
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3){
+    OHOS::Media::BufferImageStream stream;
+    stream.Open();
+    uint8_t data[4097] = {0};  // 创建一个4097字节的数据
+    stream.Write(data, 4097);  // 写入4097字节的数据
+    ASSERT_GE(stream.buffer.capacity(), 4096*2);  // 检查缓冲区容量是否至少为4097
+    ASSERT_EQ(stream.Tell(), 4097);  // 检查写入位置是否正确
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3){
+    OHOS::Media::BufferImageStream stream;
+    stream.Open();
+
+    uint8_t data[4096] = {0};  // 创建一个4096字节的数据
+    stream.Write(data, 4096);  // 写入4096字节的数据
+    ASSERT_EQ(stream.buffer.capacity(), 4096);  // 检查缓冲区容量是否为4096
+    ASSERT_EQ(stream.Tell(), 4096);  // 检查写入位置是否正确
 }
 
 

@@ -126,7 +126,7 @@ private:
     enum{
         INIT_FROM_FD,
         INIT_FROM_PATH,
-        INIT_FROM_FILE
+        INIT_FROM_UNKNOWN,
     }initPath;
 };
 
