@@ -42,7 +42,13 @@ public:
     NATIVEEXPORT virtual void Close() override;
     NATIVEEXPORT virtual bool Open() override;
 
-    // 对于BufferImageStream来说，带模式的Open函数是无效的，因为BufferImageStream的数据已经在内存中，不存在只读的场景
+    /**
+     * For BufferImageStream, the Open function with a mode is not applicable, 
+     * as the data for BufferImageStream is already in memory and there are no read-only scenarios.
+     * 
+     * @param mode This parameter is ignored, as there are no read-only scenarios for BufferImageStream.
+     * @return Returns false, as this function is not applicable for BufferImageStream.
+     */
     NATIVEEXPORT virtual bool Open(OpenMode mode) override;
 
     /**
@@ -55,9 +61,12 @@ public:
      */
     NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
-    // Release a memory map
-    // mmap: The pointer to the memory map that needs to be released.
-    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    /**
+     * Release a memory map.
+     * 
+     * @param mmap The pointer to the memory map that needs to be released.
+     * @return Returns true if the memory map is released successfully; otherwise, returns false.
+     */
     NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
     /**
@@ -70,8 +79,11 @@ public:
      */
     NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
 
-    // Get the size of BufferImageStream
-    // Return: The size of BufferImageStream
+    /**
+     * Get the size sof the BufferImageStream.
+     * 
+     * @return Returns the size of the BufferImageStream.
+     */
     NATIVEEXPORT virtual size_t GetSize() override;
 private:
     std::vector<uint8_t> buffer;  // Memory buffer

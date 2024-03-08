@@ -104,12 +104,13 @@ public:
     MOCK_METHOD(size_t, fread, (void* destv, size_t size, size_t nmemb, FILE* f), (override));
 
     MockFileWrapper() {
-        // 设置write的默认行为，使其调用系统的write函数
+        // Set the default behavior of write to call the system's write function
         ON_CALL(*this, fwrite(_, _, _, _))
             .WillByDefault(Invoke([](const void* src, size_t size, size_t nmemb, FILE* f) {
                 return ::fwrite(src, size, nmemb, f);
         }));
                 
+        // Set the default behavior of read to call the system's read function
         ON_CALL(*this, fread(_, _, _, _))
             .WillByDefault(Invoke([](void* destv, size_t size, size_t nmemb, FILE* f) {
                 return ::fread(destv, size, nmemb, f);
@@ -119,7 +120,7 @@ public:
 
 /**
  * @tc.name: FileImageStream_Write001
- * @tc.desc: 测试FileImageStream的Write函数，是否能正常写入并验证写入的数据
+ * @tc.desc: Test the Write function of FileImageStream, whether it can write normally and verify the written data
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
@@ -170,7 +171,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Write002
- * @tc.desc: 测试FileImageStream的Write函数，文件没有打开的情况
+ * @tc.desc: Test the Write function of FileImageStream when the file is not open
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write002, TestSize.Level3)
@@ -183,20 +184,20 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write002, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Write003
- * @tc.desc: 测试FileImageStream的Write函数，写入的数据量超过文件系统的剩余空间的情况
+ * @tc.desc: Test the Write function of FileImageStream when the amount of data written exceeds the remaining space in the file system
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
 {
-    // 这个测试用例需要一个能够模拟读取失败的ImageStream对象，因此在实际测试中可能需要使用mock技术
+    // This test case requires an ImageStream object that can simulate a read failure, so mock technology may be needed in actual testing
     auto mockFileWrapper = std::make_unique<MockFileWrapper>();
-    // 设置write函数的行为，使其总是返回-1，模拟写入失败的情况
+    // Set the behavior of the write function to always return -1, simulating a write failure
     EXPECT_CALL(*mockFileWrapper.get(), fwrite(_, _, _, _))
         .WillOnce(Return(-1));
 
     FileImageStream stream(filePath, std::move(mockFileWrapper));
 
-    // 测试Write函数
+    // Test the Write function
     uint8_t buffer[1024];
     stream.Open();
     EXPECT_EQ(stream.Write(buffer, sizeof(buffer)), -1);
@@ -204,7 +205,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Write004
- * @tc.desc: 测试FileImageStream的Write函数，源图像流的数据已经全部读取的情况
+ * @tc.desc: Test the Write function of FileImageStream when all data from the source image stream has been read
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
@@ -213,10 +214,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
     FileImageStream stream2(filePathDest);
     ASSERT_TRUE(stream1.Open());
     ASSERT_TRUE(stream2.Open());
-    // 读取stream1的所有数据
+    // Read all data from stream1
     uint8_t buffer[4096];
     while (stream1.Read(buffer, sizeof(buffer)) > 0) {}
-    // 此时stream1的数据已经全部读取，所以写入应返回0
+    // At this point, all data from stream1 has been read, so the write should return 0
     ASSERT_EQ(stream2.Write(stream1), 0);
     stream1.Close();
     stream2.Close();
@@ -224,16 +225,16 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Write005
- * @tc.desc: 测试FileImageStream的Write函数，从源图像流中读取数据失败的情况
+ * @tc.desc: Test the Write function of FileImageStream when reading data from the source image stream fails
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 {
-    // 这个测试用例需要一个能够模拟读取失败的ImageStream对象，因此在实际测试中可能需要使用mock技术
+    // This test case requires an ImageStream object that can simulate a read failure, so mock technology may be needed in actual testing
     auto mockSourceFileWrapper = std::make_unique<MockFileWrapper>();
     auto mockDestFileWrapper = std::make_unique<MockFileWrapper>();
 
-    // 设置write函数的行为，使其总是返回-1，模拟写入失败的情况
+    // Set the behavior of the write function to always return -1, simulating a write failure
     EXPECT_CALL(*mockDestFileWrapper.get(), fwrite(_, _, _, _))
         .Times(Exactly(0));
     EXPECT_CALL(*mockSourceFileWrapper.get(), fread(_, _, _, _))
@@ -242,7 +243,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
     FileImageStream sourceStream(filePathSource, std::move(mockSourceFileWrapper));
     FileImageStream destStream(filePath, std::move(mockDestFileWrapper));
 
-    // 测试Write函数
+    // Test the Write function
     sourceStream.Open();
     destStream.Open();
     EXPECT_EQ(destStream.Write(sourceStream), -1);
@@ -252,19 +253,19 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Write006
- * @tc.desc: 测试FileImageStream的Write函数，写入的数据量超过文件系统的剩余空间的情况
+ * @tc.desc: Test the Write function of FileImageStream when the amount of data written exceeds the remaining space in the file system
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write006, TestSize.Level3)
 {
-    // 这个测试用例需要一个几乎已满的文件系统，因此在实际测试中可能难以实现
+    // This test case requires a nearly full file system, so it may be difficult to implement in actual testing
     auto mockFileWrapper = std::make_unique<MockFileWrapper>();
     FileImageStream stream(filePath, std::move(mockFileWrapper));
 }
 
 /**
  * @tc.name: FileImageStream_Write001
- * @tc.desc: 测试FileImageStream的Write函数，是否能正常写入并验证写入的数据
+ * @tc.desc: Test the Write function of FileImageStream, whether it can write normally and verify the written data
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
@@ -311,25 +312,25 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Open001
- * @tc.desc: 测试FileImageStream的Open函数，文件路径不存在的情况
+ * @tc.desc: Test the Open function of FileImageStream when the file path does not exist
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
 {
-    // 测试文件路径不存在的情况
+    // Test the case where the file path does not exist
     std::string nonExistFilePath = "/data/local/tmp/image/non_exist_file.txt";
     remove(nonExistFilePath.c_str());
     FileImageStream stream1(nonExistFilePath);
     ASSERT_TRUE(stream1.Open());
     std::string sourceData = "Hello, world!";
     stream1.Write((uint8_t*)sourceData.c_str(), sourceData.size());
-    // 读取 stream1 的数据
+    // Read data from stream1
     uint8_t buffer[256];
     stream1.Seek(0, SeekPos::BEGIN);
     ssize_t bytesRead = stream1.Read(buffer, sourceData.size());
     ASSERT_EQ(bytesRead, sourceData.size());
-    buffer[bytesRead] = '\0';  // 添加字符串结束符
-    // 检查读取的数据是否与写入的数据相同
+    buffer[bytesRead] = '\0';  // Add string termination character
+    // Check if the read data is the same as the written data
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
     stream1.Close();
     remove(nonExistFilePath.c_str());
@@ -337,12 +338,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Open002
- * @tc.desc: 测试FileImageStream的Open函数，文件路径存在但不可写的情况
+ * @tc.desc: Test the Open function of FileImageStream when the file path exists but is not writable
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
 {
-    // 获取当前执行用户的用户名
+    // Get the username of the current user
     uid_t uid = getuid();
     struct passwd *pw = getpwuid(uid);
     if (!pw) {
@@ -351,15 +352,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
     }
     std::string username(pw->pw_name);
 
-    // 测试文件路径存在但不可写的情况
+    // Test the case where the file path exists but is not writable
     std::string nonWritableFilePath = "/data/local/tmp/image/non_writable_file.txt";
     close(open(nonWritableFilePath.c_str(), O_CREAT, S_IRUSR));
     FileImageStream stream2(nonWritableFilePath);
     if (username == "root") {
-        // 如果当前用户是root，那么可以成功打开
+        // If the current user is root, then it can be opened successfully
         ASSERT_TRUE(stream2.Open());
     } else {
-        // 如果当前用户不是root，那么无法打开
+        // If the current user is not root, then it cannot be opened
         ASSERT_FALSE(stream2.Open());
     }
     remove(nonWritableFilePath.c_str());
@@ -367,20 +368,26 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Open003
- * @tc.desc: 测试FileImageStream的Open函数，文件已经打开的情况
+ * @tc.desc: Test the Open function of FileImageStream when the file is already open
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Open003, TestSize.Level3)
 {
-    // 测试文件已经打开的情况
+    // Test the case where the file is already open
     FileImageStream stream3(filePath);
     ASSERT_TRUE(stream3.Open());
     ASSERT_TRUE(stream3.Open());
     stream3.Close();
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3){
-    // Arrange
+/**
+ * @tc.name: FileImageStream_Open004
+ * @tc.desc: Test the Open function of FileImageStream when the file does not exist
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
+{
+    // Test the case where the file does not exist
     const char* nonExistentFilePath = "/path/to/nonexistent/file";
     FileImageStream stream(nonExistentFilePath);
     ASSERT_FALSE(stream.Open(OpenMode::Read));
@@ -388,7 +395,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3){
 
 /**
  * @tc.name: FileImageStream_Read001
- * @tc.desc: 测试FileImageStream的Read函数，读取512字节的情况
+ * @tc.desc: Test the Read function of FileImageStream, reading 512 bytes
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
@@ -402,7 +409,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
 
 /**
  * @tc.name: FileImageStream_Read002
- * @tc.desc: 测试FileImageStream的Read函数，尝试从未打开的文件读取的情况
+ * @tc.desc: Test the Read function of FileImageStream, trying to read from a file that has not been opened
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
@@ -414,47 +421,61 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
     EXPECT_EQ(-1, bytesRead);
 }
 
-// 定义一个全局的 jmp_buf 变量
+// Define a global jmp_buf variable
 static sigjmp_buf jmpbuf;
 
-// 定义一个信号处理函数
+// Define a signal handler function
 static void handle_sigsegv(int sig) {
     siglongjmp(jmpbuf, 1);
 }
 
-// 测试MMap函数
+/**
+ * @tc.name: FileImageStream_MMap001
+ * @tc.desc: Test the MMap function of FileImageStream, trying to write to a memory-mapped file that is not writable
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
-    // 假定有一个合适的方式来创建或获取测试所需的资源
+    // Assume there is an appropriate way to create or obtain the resources needed for the test
     // YourResource test_resource;
-    // 测试MMap函数在isWriteable为false时的行为
+    // Test the behavior of the MMap function when isWriteable is false
     FileImageStream stream(filePathSource);
     byte* result = stream.MMap(false);
-    // 假设检查result是否为非nullptr，或有其他合适的验证方式
+    // Assume that checking whether result is not nullptr, or there is another appropriate verification method
     ASSERT_NE(result, nullptr);
   
-    // 设置信号处理函数
+    // Set the signal handler function
     signal(SIGSEGV, handle_sigsegv);
 
-    // 尝试写入数据
+    // Try to write data
     if (sigsetjmp(jmpbuf, 1) == 0) {
         result[0] = 0;
-        // 如果没有引发段错误，那么这是一个错误
+        // If no segmentation fault is triggered, then this is an error
         FAIL() << "Expected a segmentation fault";
     }
 }
 
+/**
+ * @tc.name: FileImageStream_MMap002
+ * @tc.desc: Test the MMap function of FileImageStream, trying to write to a memory-mapped file that is writable
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
-    // 测试MMap函数在isWriteable为true时的行为
+    // Test the behavior of the MMap function when isWriteable is true
     FileImageStream stream(filePathSource);
     byte* result = stream.MMap(true);
     ASSERT_NE(result, nullptr);
-    // 尝试写入数据
+    // Try to write data
     result[0] = 123;
 
-    // 读取数据并检查是否与写入的数据相同
+    // Read the data and check if it is the same as the written data
     ASSERT_EQ(result[0], 123);
 }
 
+/**
+ * @tc.name: FileImageStream_MMap003
+ * @tc.desc: Test whether the MMap function of FileImageStream can actually modify the content of the file
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
     // Test whether MMap can actually modify the content of the file
     FileImageStream stream(filePathSource);
@@ -480,31 +501,40 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
     ASSERT_EQ(checkBuffer[0], 123);
 }
 
-// 测试CopyFrom函数
+/**
+ * @tc.name: FileImageStream_CopyFrom001
+ * @tc.desc: Test the CopyFrom function of FileImageStream, copying data from one stream to another
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3) {
     FileImageStream src(filePathSource);
     FileImageStream dest(filePathDest);
     
     src.Open();
-    // 向src中写入一些已知的数据
+    // Write some known data to src
     std::string data = "Hello, world!";
     ASSERT_EQ(src.Tell(), 0);
     ASSERT_GE(src.Write((uint8_t*)data.c_str(), data.size()), 0);
-    // 调用Transfer函数将数据从src转移到dest
+    // Call the Transfer function to transfer data from src to dest
     dest.CopyFrom(src);
     
     dest.Open();
-    // 从dest中读取数据，并验证这些数据是否与写入src的数据相同
+    // Read data from dest and verify that it is the same as the data written to src
     uint8_t buffer[256];
     memset(buffer, 0, 256);
     ASSERT_EQ(dest.Seek(0, SeekPos::BEGIN), 0);
     ASSERT_EQ(dest.Read(buffer, data.size()), data.size());
     ASSERT_EQ(std::string(buffer, buffer + data.size()), data);
 
-    // 验证src是否为空
+    // Verify that src is empty
     ASSERT_EQ(dest.GetSize(), src.GetSize());
 }
 
+/**
+ * @tc.name: FileImageStream_ReadByte001
+ * @tc.desc: Test the ReadByte function of FileImageStream, comparing its output with the Read function
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3) {
     FileImageStream stream(filePathSource);
     stream.Open();
@@ -528,12 +558,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3) {
     }
 }
 
+/**
+ * @tc.name: FileImageStream_ReadByte002
+ * @tc.desc: Test the ReadByte function of FileImageStream, trying to read beyond the end of the file
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3) {
     FileImageStream stream(filePathSource);
     stream.Open();
-
-    // Get the file size
-    // int fileSize = stream.GetSize();
 
     // Set the file offset to the end of the file
     EXPECT_EQ(stream.Seek(0, SeekPos::END), stream.GetSize());
@@ -541,11 +573,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3) {
     // Try to read one more byte
     int result = stream.ReadByte();
 
-    // EXPECT_EQ(stream.Tell(), stream.GetSize()+1);
     // Check if the result is -1
     EXPECT_EQ(result, -1);
 }
 
+/**
+ * @tc.name: FileImageStream_CONSTRUCTOR001
+ * @tc.desc: Test the constructor of FileImageStream, checking if it can correctly initialize a stream from an existing file pointer
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
     FileImageStream stream(filePath);
     ASSERT_TRUE(stream.Open());
@@ -556,68 +592,78 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
     FileImageStream cloneStream(stream.fp);
     stream.Close();
     ASSERT_TRUE(cloneStream.Open());
-    // 读取 cloneStream 的数据
+    // Read the data from cloneStream
     uint8_t buffer[256];
     cloneStream.Seek(5, SeekPos::BEGIN);
     ssize_t bytesRead = cloneStream.Read(buffer, sourceData.size());
     ASSERT_EQ(bytesRead, sourceData.size());
-    buffer[bytesRead] = '\0';  // 添加字符串结束符
+    buffer[bytesRead] = '\0';  // Add string termination character
 
-    // 检查读取的数据是否与源文件的数据相同
+    // Check if the read data is the same as the data in the source file
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
 
-    // 写入一些新的数据到 cloneStream
+    // Write some new data to cloneStream
     std::string newData = "New data";
     cloneStream.Write((uint8_t*)newData.c_str(), newData.size());
 
-    // 重新读取 cloneStream 的数据
+    // Read the data from cloneStream again
     cloneStream.Seek(0, SeekPos::BEGIN);
     bytesRead = cloneStream.Read(buffer, sizeof(buffer) - 1);
-    buffer[bytesRead] = '\0';  // 添加字符串结束符
+    buffer[bytesRead] = '\0';  // Add string termination character
 
-    // 检查读取的数据是否包含新的数据
+    // Check if the read data contains the new data
     ASSERT_STRNE((char*)buffer, newData.c_str());
 }
 
+/**
+ * @tc.name: FileImageStream_CONSTRUCTOR002
+ * @tc.desc: Test the constructor of FileImageStream, checking if it can correctly initialize a stream from an existing file descriptor
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
-    // 创建并打开一个临时文件
+    // Create and open a temporary file
     std::string tempFile = "/tmp/testfile";
     int fd = open(tempFile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     ASSERT_NE(fd,-1);
 
-    // 使用文件描述符创建一个新的FileImageStream对象
+    // Use the file descriptor to create a new FileImageStream object
     FileImageStream stream(fd);
     ASSERT_TRUE(stream.Open());
     ASSERT_NE(stream.dupFD, -1);
-    // 检查FileImageStream对象的状态
+    // Check the state of the FileImageStream object
     ASSERT_TRUE(stream.fp != nullptr);
     ASSERT_EQ(stream.fileSize, stream.GetSize());
     ASSERT_EQ(stream.mappedMemory, nullptr);
     ASSERT_EQ(stream.Tell(), 0);
 
-    // 写入数据
+    // Write data
     uint8_t writeData[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ssize_t bytesWritten = stream.Write(writeData, sizeof(writeData));
     ASSERT_EQ(bytesWritten, sizeof(writeData));
 
-    // 重置文件指针到文件开始
+    // Reset the file pointer to the beginning of the file
     stream.Seek(0, SeekPos::BEGIN);
 
-    // 读取数据
+    // Read data
     uint8_t readData[10] = {0};
     ssize_t bytesRead = stream.Read(readData, sizeof(readData));
     ASSERT_EQ(bytesRead, sizeof(readData));
 
-    // 检查读取的数据是否与写入的数据一致
+    // Check if the read data is the same as the written data
     for (size_t i = 0; i < sizeof(writeData); ++i) {
         ASSERT_EQ(writeData[i], readData[i]);
     }
 
-    // 关闭文件
+    // Close the file
     close(fd);
     remove(tempFile.c_str());
 }
 
+/**
+ * @tc.name: FileImageStream_CONSTRUCTOR003
+ * @tc.desc: Test the constructor of FileImageStream, checking if it can correctly initialize a stream from an existing file descriptor and handle file operations
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
     int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     int dupFD = dup(fd);
@@ -629,14 +675,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
     ASSERT_EQ(ferror(f), 0);
     ASSERT_EQ(result, text.size());
 
-    // 重置文件指针到文件开始
+    // Reset the file pointer to the beginning of the file
     rewind(f);
 
-    // 读取并验证数据
+    // Read and verify the data
     char buffer[256];
     result = fread(buffer, sizeof(char), text.size(), f);
     ASSERT_EQ(result, text.size());
-    buffer[result] = '\0'; // 添加字符串结束符
+    buffer[result] = '\0'; // Add string termination character
     ASSERT_STREQ(buffer, text.c_str());
 
     fclose(f);
@@ -644,6 +690,11 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
     close(fd);
 }
 
+/**
+ * @tc.name: FileImageStream_CONSTRUCTOR004
+ * @tc.desc: Test the constructor of FileImageStream, checking if it can correctly initialize a stream from an existing file descriptor and handle file operations using the stream's file pointer
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3){
     int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     FileImageStream stream(fd);
@@ -658,14 +709,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3){
     ASSERT_EQ(ferror(f), 0);
     ASSERT_EQ(result, text.size());
 
-    // 重置文件指针到文件开始
+    // Reset the file pointer to the beginning of the file
     rewind(f);
 
-    // 读取并验证数据
+    // Read and verify the data
     char buffer[256];
     result = fread(buffer, sizeof(char), text.size(), f);
     ASSERT_EQ(result, text.size());
-    buffer[result] = '\0'; // 添加字符串结束符
+    buffer[result] = '\0'; // Add string termination character
     ASSERT_STREQ(buffer, text.c_str());
 
     fclose(f);
@@ -673,30 +724,45 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3){
     close(fd);
 }
 
+/**
+ * @tc.name: BufferImageStream_Open001
+ * @tc.desc: Test the Open function of BufferImageStream, checking if it can correctly open a stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Open001, TestSize.Level3){
     BufferImageStream stream;
     ASSERT_TRUE(stream.Open());
 }
 
+/**
+ * @tc.name: BufferImageStream_Read001
+ * @tc.desc: Test the Read function of BufferImageStream, checking if it can correctly read data from the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3){
     BufferImageStream stream;
     ASSERT_TRUE(stream.Open());
 
-    // 写入一个字符串
+    // Write a string
     std::string sourceData = "Hello, world!";
     ASSERT_EQ(stream.Tell(), 0);
     stream.Write((uint8_t*)sourceData.c_str(), sourceData.size());
 
-    // 读取字符串
+    // Read the string
     uint8_t buffer[256];
     stream.Seek(0, SeekPos::BEGIN);
     size_t bytesRead = stream.Read(buffer, sourceData.size());
-    buffer[bytesRead] = '\0';  // 添加字符串结束符
+    buffer[bytesRead] = '\0';  // Add string termination character
 
-    // 比较读取的字符串是否与写入的字符串相同
+    // Compare the read string with the written string
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
 }
 
+/**
+ * @tc.name: BufferImageStream_Write001
+ * @tc.desc: Test the Write function of BufferImageStream, checking if it can correctly write data to the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3){
     BufferImageStream stream;
     uint8_t data[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -720,6 +786,11 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3){
     }
 }
 
+/**
+ * @tc.name: BufferImageStream_Write002
+ * @tc.desc: Test the Write function of BufferImageStream, checking if it can correctly write a string to the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
     BufferImageStream stream;
     stream.Open();
@@ -728,23 +799,33 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
     ASSERT_EQ(stream.Tell(), 13);
 }
 
+/**
+ * @tc.name: BufferImageStream_Write003
+ * @tc.desc: Test the Write function of BufferImageStream, checking if it can correctly handle large data
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3){
     OHOS::Media::BufferImageStream stream;
     stream.Open();
-    uint8_t data[4097] = {0};  // 创建一个4097字节的数据
-    stream.Write(data, 4097);  // 写入4097字节的数据
-    ASSERT_GE(stream.buffer.capacity(), 4096*2);  // 检查缓冲区容量是否至少为4097
-    ASSERT_EQ(stream.Tell(), 4097);  // 检查写入位置是否正确
+    uint8_t data[4097] = {0};  // Create a 4097-byte data
+    stream.Write(data, 4097);  // Write 4097 bytes of data
+    ASSERT_GE(stream.buffer.capacity(), 4096*2);  // Check if the buffer capacity is at least 4097
+    ASSERT_EQ(stream.Tell(), 4097);  // Check if the write position is correct
 }
 
+/**
+ * @tc.name: BufferImageStream_Write004
+ * @tc.desc: Test the Write function of BufferImageStream, checking if it can correctly handle data of the exact buffer capacity
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3){
     OHOS::Media::BufferImageStream stream;
     stream.Open();
 
-    uint8_t data[4096] = {0};  // 创建一个4096字节的数据
-    stream.Write(data, 4096);  // 写入4096字节的数据
-    ASSERT_EQ(stream.buffer.capacity(), 4096);  // 检查缓冲区容量是否为4096
-    ASSERT_EQ(stream.Tell(), 4096);  // 检查写入位置是否正确
+    uint8_t data[4096] = {0};  // Create a 4096-byte data
+    stream.Write(data, 4096);  // Write 4096 bytes of data
+    ASSERT_EQ(stream.buffer.capacity(), 4096);  // Check if the buffer capacity is 4096
+    ASSERT_EQ(stream.Tell(), 4096);  // Check if the write position is correct
 }
 
 

@@ -94,9 +94,12 @@ public:
      */
     NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
-    // Release a memory map
-    // mmap: The pointer to the memory map that needs to be released.
-    // Return: If the memory map is released successfully, return true; otherwise, return false.
+    /**
+     * Release a memory map.
+     * 
+     * @param mmap The pointer to the memory map that needs to be released.
+     * @return If the memory map is released successfully, return true; otherwise, return false.
+     */
     NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
     /**
@@ -112,13 +115,18 @@ public:
      */
     NATIVEEXPORT void CopyFrom(ImageStream& src) override;
 
-    // Get the size of the FileImageStream
-    // Return value: The size of the FileImageStream
+    /**
+     * Get the size of the FileImageStream.
+     * 
+     * @return The size of the FileImageStream.
+     */
     NATIVEEXPORT size_t GetSize() override;
 private:
     FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper);
+    bool OpenFromFD(const char* modeStr);
+    bool OpenFromPath(const char* modeStr);
     FILE *fp;               // File descriptor
-    int dupFD;             // Duplicated file descriptor
+    int dupFD;              // Duplicated file descriptor
     std::string filePath;   // File path
     size_t fileSize;        // File size
     byte* mappedMemory;     // Address of memory mapping
