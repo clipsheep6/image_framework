@@ -37,9 +37,31 @@ public:
 
 class FileImageStream : public ImageStream {
 public:
-    NATIVEEXPORT FileImageStream(FILE *p);
+
+    /**
+     * @brief Constructs a new FileImageStream object from a file descriptor.
+     * 
+     * This function creates a new FILE* stream from an existing file descriptor.
+     * The new stream and the original file descriptor share the same file status
+     * (including the file position indicator, end-of-file indicator, error indicator, etc.).
+     * Therefore, switching between the FILE* stream and the original file descriptor
+     * may lead to some unexpected behaviors.
+     * 
+     * For example, if you write some data to the FILE* stream without calling fflush
+     * or other operations that cause the stream to flush, and then perform read/write
+     * operations through the original file descriptor, the data just written may not be
+     * immediately written to the file.
+     * 
+     * Therefore, in general, if you have created a FILE* stream using fdopen, it is better
+     * to only use this FILE* stream for subsequent read/write operations, rather than
+     * directly using the original file descriptor. This can avoid possible conflicts and
+     * inconsistent behaviors.
+     * 
+     * @param fd The file descriptor.
+     */
+    NATIVEEXPORT FileImageStream(int fd);
     NATIVEEXPORT FileImageStream(const std::string& filePath);
-    FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper);
+    NATIVEEXPORT FileImageStream(FILE *p);
     NATIVEEXPORT virtual ~FileImageStream();
 
     NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
@@ -94,11 +116,18 @@ public:
     // Return value: The size of the FileImageStream
     NATIVEEXPORT size_t GetSize() override;
 private:
-    FILE *fp;                 // File descriptor
+    FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper);
+    FILE *fp;               // File descriptor
+    int dupFD;             // Duplicated file descriptor
     std::string filePath;   // File path
     size_t fileSize;        // File size
     byte* mappedMemory;     // Address of memory mapping
     std::unique_ptr<FileWrapper> fileWrapper;   // File wrapper class, used for testing
+    enum{
+        INIT_FROM_FD,
+        INIT_FROM_PATH,
+        INIT_FROM_FILE
+    }initPath;
 };
 
 } // namespace MultimediaPlugin
