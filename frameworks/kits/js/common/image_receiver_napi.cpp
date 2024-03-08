@@ -550,7 +550,7 @@ napi_value ImageReceiverNapi::JsRequestCpuAccess(napi_env env, napi_callback_inf
         }
         bool isCpuAccess = false;
         auto argType0 = ImageNapiUtils::getType(args.env, argv[PARAM0]);
-        if (argType0 != napi_boolean ) {
+        if (argType0 != napi_boolean) {
             return false;
         }
 

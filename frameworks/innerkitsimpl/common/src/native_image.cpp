@@ -42,9 +42,8 @@ NativeImage::NativeImage(sptr<SurfaceBuffer> buffer,
     frameMode_(HEBC_ACCESS_HW_ONLY)
 {}
 
-NativeImage::NativeImage(sptr<SurfaceBuffer> buffer,
-    std::shared_ptr<IBufferProcessor> releaser, uint8_t frameMode) : buffer_(buffer), 
-    releaser_(releaser), frameMode_(frameMode)
+NativeImage::NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser,
+    uint8_t frameMode) : buffer_(buffer), releaser_(releaser), frameMode_(frameMode)
 {}
 
 struct YUVData {
@@ -308,7 +307,7 @@ int32_t NativeImage::IsCpuAccess(bool &isCpuAccess)
         return ERR_MEDIA_DEAD_OBJECT;
     }
     isCpuAccess = false;
-    if (frameMode_ == HEBC_ACCESS_CPU_ACCESS){
+    if (frameMode_ == HEBC_ACCESS_CPU_ACCESS) {
         isCpuAccess = true;
     }
     return SUCCESS;

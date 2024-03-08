@@ -457,10 +457,9 @@ napi_value ImageNapi::JsIsCpuAccess(napi_env env, napi_callback_info info)
     napi_get_undefined(env, &result);
     std::unique_ptr<ImageAsyncContext> context = UnwrapContext(env, info);
     if (context == nullptr || context->image == nullptr) {
-        IMAGE_ERR("Image surface buffer is nullptr");
+        IMAGE_ERR("context or context->image is nullptr");
         return result;
     }
-
     bool isCpuAccess = false;
     if (context->image->IsCpuAccess(isCpuAccess) != SUCCESS) {
         IMAGE_ERR("check Image native frame mode is cpu access fail");

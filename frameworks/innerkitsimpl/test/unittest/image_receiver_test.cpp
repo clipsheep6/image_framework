@@ -508,7 +508,7 @@ void PushBuffer(std::shared_ptr<ImageReceiver> imageReceiver)
         },
         .timestamp = 0,
     };
-     std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
+    std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
     auto receiverSurface = imageReceiver->getSurfaceById(receiveKey);
     ASSERT_NE(receiverSurface, nullptr);
 
