@@ -5,6 +5,7 @@
 namespace OHOS {
 namespace Media {
 
+// joseph.xu codereview 遵循华为原有的逻辑 如果找不到exif需要返回错误码
 std::string ExifMetadata::GetValue(const std::string& key)
 {
     auto tag = exif_tag_from_name(key.c_str());

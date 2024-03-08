@@ -49,6 +49,7 @@ void TiffParser::Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifD
         return;
     }
     exif_data_save_data_general(exifData, dataPtr, &size);
+    IMAGE_LOGE("[TiffParser] Encode dataPtr size is [%{public}u].", size);
 
 }
 
