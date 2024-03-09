@@ -269,11 +269,11 @@ void FileImageStream::Close() {
         fclose(fp);
         fp = nullptr;
     }
+    
     // Close the file
-    // Todo 这里是否需要关闭dupFD
     int tmpFD = dupFD;
     if (dupFD != -1){
-        close(dupFD);
+        // close(dupFD); fclose已经释放了
         dupFD = -1;
     }
 
