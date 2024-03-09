@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include "image_stream.h"
 #include "gmock/gmock-actions.h"
 #include "gmock/gmock-cardinalities.h"
 #include "gmock/gmock-spec-builders.h"
@@ -36,6 +35,7 @@
 #define private public
 #include "file_image_stream.h"
 #include "buffer_image_stream.h"
+#include "data_buf.h"
 
 using namespace testing::ext;
 using namespace testing;
@@ -685,14 +685,14 @@ int countOpenFileDescriptors() {
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
-    GTEST_LOG_(INFO) << "fd0: " << countOpenFileDescriptors();
+    // GTEST_LOG_(INFO) << "fd0: " << countOpenFileDescriptors();
     int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-    GTEST_LOG_(INFO) << "fd1: " << countOpenFileDescriptors();
+    // GTEST_LOG_(INFO) << "fd1: " << countOpenFileDescriptors();
     int dupFD = dup(fd);
-    GTEST_LOG_(INFO) << "fd2: " << countOpenFileDescriptors();
+    // GTEST_LOG_(INFO) << "fd2: " << countOpenFileDescriptors();
     ASSERT_NE(fd,-1);
     FILE *f = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
-    GTEST_LOG_(INFO) << "fd3: " << countOpenFileDescriptors();
+    // GTEST_LOG_(INFO) << "fd3: " << countOpenFileDescriptors();
     ASSERT_NE(f, nullptr);
     std::string text = "Hello, world!";
     ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(), f); // Use sizeof(char) as the second argument
@@ -711,11 +711,11 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
 
     // GTEST_LOG_(INFO) << "fd5: " << countOpenFileDescriptors();
     fclose(f);
-    GTEST_LOG_(INFO) << "fd6: " << countOpenFileDescriptors();
+    // GTEST_LOG_(INFO) << "fd6: " << countOpenFileDescriptors();
     // close(dupFD);
-    GTEST_LOG_(INFO) << "fd7: " << countOpenFileDescriptors();
+    // GTEST_LOG_(INFO) << "fd7: " << countOpenFileDescriptors();
     close(fd);
-    GTEST_LOG_(INFO) << "fd8: " << countOpenFileDescriptors();
+    // GTEST_LOG_(INFO) << "fd8: " << countOpenFileDescriptors();
 }
 
 /**
@@ -942,6 +942,10 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Close007, TestSize.Level3){
     BufferImageStream stream((byte*)text, sizeof(text), BufferImageStream::Dynamic);
     stream.Write((byte*)"this is a very very long text", 28);
     delete[] stream.Release();
+
+    DataBuf dataBuf(10);
+    dataBuf.WriteUInt8(0, 123);
+    EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
 }
 
 }
