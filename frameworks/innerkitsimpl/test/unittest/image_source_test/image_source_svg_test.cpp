@@ -255,5 +255,108 @@ HWTEST_F(ImageSourceSvgTest, SvgImageDecodeWithResizePercentage, TestSize.Level3
 
     GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgImageDecodeWithResizePercentage end";
 }
+
+/**
+ * @tc.name: SvgGetEncodedFormat001
+ * @tc.desc: Decode svg image from file source stream
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceSvgTest, SvgGetEncodedFormat001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgGetEncodedFormat001 start";
+
+    const std::string testName = TEST_FILE_SVG;
+
+    /**
+     * @tc.steps: step1. create image source by correct svg file path and svg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    const std::string inName = INPUT_PATH + testName;
+    auto imageSource = ImageSource::CreateImageSource(inName, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options  which sets resizePercentage 200
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    decodeOpts.SVGOpts.SVGResize.isValidPercentage = true;
+    decodeOpts.SVGOpts.SVGResize.resizePercentage = 200;
+    auto pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+
+    /**
+     * @tc.steps: step3. get imagesource encodedformat.
+     * @tc.expected: step3. get imagesource encodedformat success.
+     */
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSourceFormat, SVG_FORMAT_TYPE);
+    GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgGetEncodedFormat001 imageSourceFormat" << imageSourceFormat;
+    /**
+     * @tc.steps: step3. get pixelmap encodedformat.
+     * @tc.expected: step3. get pixelmap encodedformat success.
+     */
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, SVG_FORMAT_TYPE);
+    GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgGetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;;
+}
+
+/**
+ * @tc.name: SvgGetEncodedFormat002
+ * @tc.desc: Decode svg image from file source stream
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceSvgTest, SvgGetEncodedFormat002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgGetEncodedFormat002 start";
+
+    const std::string testName = TEST_FILE_SVG;
+
+    /**
+     * @tc.steps: step1. create image source by correct svg file path and svg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = SVG_FORMAT_TYPE;
+    const std::string inName = INPUT_PATH + testName;
+    auto imageSource = ImageSource::CreateImageSource(inName, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options  which sets resizePercentage 200
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    auto pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+
+    /**
+     * @tc.steps: step3. get imagesource encodedformat.
+     * @tc.expected: step3. get imagesource encodedformat success.
+     */
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSourceFormat, SVG_FORMAT_TYPE);
+    GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgGetEncodedFormat002 imageSourceFormat" << imageSourceFormat;
+    /**
+     * @tc.steps: step3. get pixelmap encodedformat.
+     * @tc.expected: step3. get pixelmap encodedformat success.
+     */
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, SVG_FORMAT_TYPE);
+    GTEST_LOG_(INFO) << "ImageSourceSvgTest: SvgGetEncodedFormat002 pixelMapFormat: " << pixelMapFormat;
+}
 } // namespace Multimedia
 } // namespace OHOS

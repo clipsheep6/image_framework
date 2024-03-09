@@ -3618,5 +3618,140 @@ HWTEST_F(ImageSourceJpegTest, GetAstcInfoTest001, TestSize.Level3)
     ASSERT_NE(ret, true);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetAstcInfoTest001 end";
 }
+
+/**
+ * @tc.name: GetEncodedFormat001
+ * @tc.desc: The GetEncodedFormat001
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceJpegTest, GetEncodedFormat001, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg file path and jpeg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::string IMAGE_ENCODEDFORMAR = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options(RGBA_8888).
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    /**
+     * @tc.steps: step3. check the SourceInfo encodedformat.
+     * @tc.expected: step3. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat001 imageSourceFormat" << imageSourceFormat;
+    /**
+     * @tc.steps: step2. check the Pixelmap encodedformat
+     * @tc.expected: step2. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;
+}
+
+/**
+ * @tc.name: GetEncodedFormat002
+ * @tc.desc: The GetEncodedFormat002
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceJpegTest, GetEncodedFormat002, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg file path and jpeg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::string IMAGE_ENCODEDFORMAR = "image/jpeg";
+    opts.formatHint = "image/bmp";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_HW_JPEG_PATH,
+        opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options(RGBA_8888).
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    /**
+     * @tc.steps: step3. check the SourceInfo encodedformat.
+     * @tc.expected: step3. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string imageSource_format;
+    errorCode = imageSource->GetEncodedFormat(imageSource_format);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSource_format, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat002 imageSource_format" << imageSource_format;
+    /**
+     * @tc.steps: step2. check the Pixelmap encodedformat
+     * @tc.expected: step2. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string pixelMap_format;
+    pixelMap->GetEncodedFormat(pixelMap_format);
+    ASSERT_EQ(pixelMap_format, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetEncodedFormat002 pixelMap_format: " << pixelMap_format;
+}
+
+/**
+ * @tc.name: GetEncodedFormat003
+ * @tc.desc: The GetEncodedFormat003
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceJpegTest, GetEncodedFormat003, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg file path and jpeg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::string IMAGE_ENCODEDFORMAR = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_EXIF_JPEG_PATH,
+        opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options(RGBA_8888).
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    /**
+     * @tc.steps: step3. check the SourceInfo encodedformat.
+     * @tc.expected: step3. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string imageSource_format;
+    errorCode = imageSource->GetEncodedFormat(imageSource_format);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSource_format, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat003 imageSource_format" << imageSource_format;
+    /**
+     * @tc.steps: step2. check the Pixelmap encodedformat
+     * @tc.expected: step2. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string pixelMap_format;
+    pixelMap->GetEncodedFormat(pixelMap_format);
+    ASSERT_EQ(pixelMap_format, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetEncodedFormat003 pixelMap_format: " << pixelMap_format;
+}
 } // namespace Multimedia
 } // namespace OHOS

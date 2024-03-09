@@ -603,5 +603,53 @@ HWTEST_F(ImageSourcePngTest, PngNinePatch003, TestSize.Level3)
     const NinePatchInfo &ninePatch = imageSource->GetNinePatchInfo();
     ASSERT_EQ(ninePatch.ninePatch, nullptr);
 }
+
+/**
+ * @tc.name: PngGetEncodedFormat001
+ * @tc.desc: Decoding non-nine-patch picture
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourcePngTest, PngGetEncodedFormat001, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create png image source by istream source stream and default format hit
+     * @tc.expected: step1. create png image source success.
+     */
+    std::string IMAGE_ENCODEDFORMAR = "image/png";
+    std::unique_ptr<std::fstream> fs = std::make_unique<std::fstream>();
+    fs->open("/data/local/tmp/image/test.png", std::fstream::binary | std::fstream::in);
+    bool isOpen = fs->is_open();
+    ASSERT_EQ(isOpen, true);
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(std::move(fs), opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode png image source to pixel map
+     * @tc.expected: step2. decode png image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    /**
+     * @tc.steps: step3. get imagesource encodedformat.
+     * @tc.expected: step3. get imagesource encodedformat success.
+     */
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourcePngTest: PngGetEncodedFormat001 imageSourceFormat" << imageSourceFormat;
+    /**
+     * @tc.steps: step3. get pixelmap encodedformat.
+     * @tc.expected: step3. get pixelmap encodedformat success.
+     */
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourcePngTest: PngGetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;
+}
 } // namespace Multimedia
 } // namespace OHOS

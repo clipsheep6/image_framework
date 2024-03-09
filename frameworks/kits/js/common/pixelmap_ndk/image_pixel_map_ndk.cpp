@@ -235,6 +235,18 @@ int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native)
     PixelMapNapiArgs args;
     return PixelMapNapiNativeCtxCall(CTX_FUNC_UNACCESS_PIXELS, native->napi, &args);
 }
+
+MIDK_EXPORT
+int32_t OH_PixelMap_GetEncodedFormat(const NativePixelMap* native, char* res)
+{
+    if (native == nullptr || native->napi == nullptr || res == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    PixelMapNapiArgs args;
+    std::string format(res);
+    args.encodedFormat = &format;
+    return PixelMapNapiNativeCtxCall(CTX_FUNC_GET_ENCODED_FORMAT, native->napi, &args);
+}
 #ifdef __cplusplus
 };
 #endif

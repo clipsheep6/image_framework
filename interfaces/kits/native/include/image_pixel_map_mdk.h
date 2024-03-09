@@ -607,6 +607,21 @@ int32_t OH_PixelMap_AccessPixels(const NativePixelMap* native, void** addr);
  */
 int32_t OH_PixelMap_UnAccessPixels(const NativePixelMap* native);
 
+/**
+ * @brief Obtains the image encodedformat of a <b>PixelMap</b> object.
+ * @param native Indicates the pointer to a <b>NativePixelMap</b> object.
+ * @param res Indicates a pointer to the string of image encodedFormat obtained.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_DECODE_FAILED - if decode fail.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_CHECK_FORMAT_ERROR - if decode fail.
+ * @since 12
+ * @version 5.0
+ */
+int32_t OH_PixelMap_GetEncodedFormat(const NativePixelMap* native, char* res);
+
 #ifdef __cplusplus
 };
 #endif

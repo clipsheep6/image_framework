@@ -507,5 +507,46 @@ HWTEST_F(ImageSourceRawTest, RawImageDecode014, TestSize.Level3)
     ASSERT_NE(pixelMap.get(), nullptr);
     ASSERT_EQ(pixelMap->GetAlphaType(), AlphaType::IMAGE_ALPHA_TYPE_PREMUL);
 }
+
+/**
+ * @tc.name: RawGetEncodedFormat001
+ * @tc.desc: Decode raw image from file source stream(default:RGBA_8888)
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceRawTest, RawGetEncodedFormat001, TestSize.Level3)
+{
+   /**
+     * @tc.steps: step1. create image source by correct raw file path and format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    std::string IMAGE_ENCODEDFORMAR = "image/x-raw";
+    opts.formatHint = IMAGE_ENCODEDFORMAR;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options(RGBA_8888).
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    ASSERT_EQ(pixelMap->GetAlphaType(), AlphaType::IMAGE_ALPHA_TYPE_OPAQUE);
+    /**
+     * @tc.steps: step3. get imagesource encodedformat.
+     * @tc.expected: step3. get imagesource encodedformat success.
+     */
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat001 imageSourceFormat" << imageSourceFormat;
+    /**
+     * @tc.steps: step3. get pixelmap encodedformat.
+     * @tc.expected: step3. get pixelmap encodedformat success.
+     */
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;
+}
 } // namespace Multimedia
 } // namespace OHOS

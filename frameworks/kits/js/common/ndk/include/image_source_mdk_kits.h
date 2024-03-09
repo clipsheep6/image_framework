@@ -52,6 +52,7 @@ struct ImageSourceArgs {
     int32_t inInt32;
     napi_value *outVal;
     uint32_t* outUint32;
+    std::string* encodedFormat;
 };
 
 enum {
@@ -70,7 +71,8 @@ enum {
     CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_INFO,
     CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY,
     CTX_FUNC_IMAGE_SOURCE_MODIFY_IMAGE_PROPERTY,
-    CTX_FUNC_IMAGE_SOURCE_UPDATE_DATA
+    CTX_FUNC_IMAGE_SOURCE_UPDATE_DATA,
+    CTX_FUNC_IMAGE_SOURCE_GET_ENCODED_FORMAT,
 };
 
 int32_t ImageSourceNativeCall(int32_t mode, struct ImageSourceArgs* args);

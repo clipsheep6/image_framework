@@ -375,5 +375,21 @@ HWTEST_F(NdkTest, OH_GetImageInfoTest, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "NdkTest: OH_GetImageInfoTest end";
 }
+
+/**
+ * @tc.name: OH_PixelMap_GetEncodedFormatTest
+ * @tc.desc: OH_PixelMap_GetEncodedFormat
+ * @tc.type: FUNC
+ */
+HWTEST_F(NdkTest, OH_PixelMap_GetEncodedFormatTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMap_GetEncodedFormatTest start";
+    NativePixelMap *pixelMap = nullptr;
+    char *format = nullptr;
+    int32_t res = OH_PixelMap_GetEncodedFormat(pixelMap, format);
+    ASSERT_EQ(res, IMAGE_RESULT_BAD_PARAMETER);
+
+    GTEST_LOG_(INFO) << "NdkTest: OH_PixelMap_GetEncodedFormatTest end";
+}
 }
 }

@@ -605,6 +605,25 @@ int32_t OH_ImageSource_CreateIncrementalFromData(napi_env env, uint8_t* data, si
 int32_t OH_ImageSource_GetSupportedFormats(struct OhosImageSourceSupportedFormatList* res);
 
 /**
+ * @brief Obtains the Format of image encodedfrom an <b>ImageSource</b> object.
+ *
+ * @param native Indicates a pointer to the {@link ImageSourceNative} object at the C++ native layer.
+ * @param res Indicates a pointer to the string of image encodedformat obtained.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_BAD_PARAMETER - if bad parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_JNI_ENV_ABNORMAL - if Abnormal JNI environment.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_DECODE_FAILED - if decode fail.
+ * returns {@link IRNdkErrCode} IMAGE_RESULT_CHECK_FORMAT_ERROR - if decode fail.
+ * @see {@link ImageSourceNative}
+ *
+ * @Syscap SystemCapability.Multimedia.Image
+ * @since 12
+ * @version 5.0
+ */
+int32_t OH_ImageSource_GetEncodedFormat(const ImageSourceNative* native, char* res);
+
+/**
  * @brief Converts an {@link ImageSource} object at the JavaScript native layer to an <b>ImageSourceNative</b> object
  * at the C++ native layer.
  *

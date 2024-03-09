@@ -134,6 +134,7 @@ public:
     }
     NATIVEEXPORT void GetTransformData(TransformData &transformData);
     NATIVEEXPORT void SetTransformData(TransformData transformData);
+    NATIVEEXPORT void GetEncodedFormat(std::string &format);
     NATIVEEXPORT virtual int32_t GetBaseDensity();
     NATIVEEXPORT virtual void scale(float xAxis, float yAxis);
     NATIVEEXPORT virtual void scale(float xAxis, float yAxis, const AntiAliasingOption &option);

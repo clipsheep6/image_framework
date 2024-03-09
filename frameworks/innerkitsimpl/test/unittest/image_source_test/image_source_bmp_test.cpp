@@ -396,5 +396,49 @@ HWTEST_F(ImageSourceBmpTest, BmpImageDecode011, TestSize.Level3)
     ASSERT_NE(errorCode, SUCCESS);
     ASSERT_EQ(pixelMap.get(), nullptr);
 }
+
+/**
+ * @tc.name: BmpImageDecode013
+ * @tc.desc: get encodeformat from imageSource
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceBmpTest, BmpImageDecode013, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct bmp file path and bmp format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::string IMAGE_ENCODEDFORMAR = "image/bmp";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_BMP_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options(RGBA_8888).
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    /**
+     * @tc.steps: step3. check the SourceInfo encodedformat.
+     * @tc.expected: step3. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceBmpTest: BmpImageDecode013 imageSourceFormat" << imageSourceFormat;
+    /**
+     * @tc.steps: step2. check the Pixelmap encodedformat
+     * @tc.expected: step2. the SourceInfo encodedformat the same as input type of image.
+     */
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceBmpTest: BmpImageDecode013 pixelMapFormat: " << pixelMapFormat;
+}
 } // namespace Multimedia
 } // namespace OHOS

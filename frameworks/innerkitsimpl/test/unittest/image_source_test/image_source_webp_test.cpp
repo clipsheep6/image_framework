@@ -644,5 +644,50 @@ HWTEST_F(ImageSourceWebpTest, OnPeerDestory001, TestSize.Level3)
     incOpts->OnPeerDestory();
     ASSERT_EQ(incOpts->imageSource_, nullptr);
 }
+
+/**
+ * @tc.name: WebpGetEncodedFormat001
+ * @tc.desc: Decode webp image from file source stream
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceWebpTest, WebpGetEncodedFormat001, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct webp file path and jpeg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::string IMAGE_ENCODEDFORMAT = "image/webp";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_WEBP_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. decode image source to pixel map by default decode options.
+     * @tc.expected: step2. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+
+    /**
+     * @tc.steps: step3. get imagesource encodedformat.
+     * @tc.expected: step3. get imagesource encodedformat success.
+     */
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAT);
+    GTEST_LOG_(INFO) << "ImageSourceWebpTest: WebpGetEncodedFormat001 imageSourceFormat" << imageSourceFormat;
+    /**
+     * @tc.steps: step3. get pixelmap encodedformat.
+     * @tc.expected: step3. get pixelmap encodedformat success.
+     */
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAT);
+    GTEST_LOG_(INFO) << "ImageSourceWebpTest: WebpGetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;
+}
 } // namespace Multimedia
 } // namespace OHOS

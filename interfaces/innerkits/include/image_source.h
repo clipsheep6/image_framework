@@ -205,6 +205,7 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
+    NATIVEEXPORT uint32_t GetEncodedFormat(std::string &format);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
