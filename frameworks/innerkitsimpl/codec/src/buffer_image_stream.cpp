@@ -44,7 +44,7 @@ BufferImageStream::BufferImageStream() {
 
 BufferImageStream::~BufferImageStream() {}
 
-BufferImageStream::BufferImageStream(uint8_t *originData, size_t size, MemoryMode mode){
+BufferImageStream::BufferImageStream(byte *originData, size_t size, MemoryMode mode){
     buffer = originData;
     this->originData = originData;
     capacity = size;
@@ -53,14 +53,14 @@ BufferImageStream::BufferImageStream(uint8_t *originData, size_t size, MemoryMod
     memoryMode = mode;
 }
 
-ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
+ssize_t BufferImageStream::Write(byte* data, size_t size) {
     if(currentOffset + static_cast<long>(size) > capacity){
         if(memoryMode == Fix){
             IMAGE_LOGE("BufferImageStream::Write failed, currentOffset:%{public}ld, size:%{public}u, capacity:%{public}ld", currentOffset, size, capacity);
             return -1;
         }
         long newCapacity = ((currentOffset + size + 4095) / 4096) * 4096; // Ensure it is a multiple of 4k
-        uint8_t *newBuffer = new uint8_t[newCapacity];
+        byte *newBuffer = new byte[newCapacity];
         if(newBuffer == nullptr){
             IMAGE_LOGE("BufferImageStream::Write failed, newBuffer is nullptr");
             return -1;
@@ -88,7 +88,7 @@ ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
 }
 
 ssize_t BufferImageStream::Write(ImageStream& src) {
-    uint8_t buffer[4096];
+    byte buffer[4096];
     size_t totalBytesWritten = 0;
 
     while (!src.IsEof()) {
@@ -105,7 +105,7 @@ ssize_t BufferImageStream::Write(ImageStream& src) {
     return totalBytesWritten;
 }
 
-ssize_t BufferImageStream::Read(uint8_t* buf, size_t size) {
+ssize_t BufferImageStream::Read(byte* buf, size_t size) {
     if (currentOffset >= bufferSize) {
         IMAGE_LOGE("BufferImageStream::Read failed, currentOffset:%{public}ld, bufferSize:%{public}ld", currentOffset, bufferSize);
         return -1;
@@ -182,11 +182,11 @@ bool BufferImageStream::Flush() {
     return true;
 }
 
-uint8_t* BufferImageStream::MMap(bool isWriteable) {
+byte* BufferImageStream::MMap(bool isWriteable) {
     return buffer;
 }
 
-bool BufferImageStream::MUnmap(uint8_t* mmap) {
+bool BufferImageStream::MUnmap(byte* mmap) {
     return true;
 }
 
@@ -205,13 +205,13 @@ void BufferImageStream::CopyFrom(ImageStream& src) {
 
     // Pre-allocate memory based on the estimated size
     size_t estimatedSize = ((src.GetSize() + 4095) / 4096) * 4096; // Ensure it is a multiple of 4k
-    buffer = new uint8_t[estimatedSize];
+    buffer = new byte[estimatedSize];
     currentOffset = 0;
     bufferSize = 0;
     capacity = estimatedSize;
 
     // Read data from the source ImageStream and write it to the current buffer
-    uint8_t tempBuffer[4096];
+    byte tempBuffer[4096];
     while (!src.IsEof()) {
         size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
         if (bytesRead > 0) {
@@ -224,8 +224,8 @@ size_t BufferImageStream::GetSize() {
     return bufferSize;
 }
 
-uint8_t* BufferImageStream::Release() {
-    uint8_t* ret = buffer;
+byte* BufferImageStream::Release() {
+    byte* ret = buffer;
     buffer = nullptr;
     capacity = 0;
     bufferSize = 0;

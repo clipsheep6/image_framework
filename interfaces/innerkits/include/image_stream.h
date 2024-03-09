@@ -73,7 +73,7 @@ public:
      * @param size The size of the data to be written
      * @return The actual size of the data written
      */
-    virtual ssize_t Write(uint8_t* data, size_t size) = 0;
+    virtual ssize_t Write(byte* data, size_t size) = 0;
 
     /**
      * Write data from another image stream
@@ -88,7 +88,7 @@ public:
      * @param size The size of the data to be read
      * @return The actual size of the data read
      */
-    virtual ssize_t Read(uint8_t* buf, size_t size) = 0;
+    virtual ssize_t Read(byte* buf, size_t size) = 0;
     virtual int ReadByte() = 0;
 
     /**
@@ -116,14 +116,14 @@ public:
      * @param isWriteable If true, the created memory map will be writable; otherwise, the created memory map will be read-only.
      * @return If the memory map is created successfully, return a pointer to the memory map; otherwise, return nullptr.
      */
-    virtual uint8_t* MMap(bool isWriteable = false) = 0;
+    virtual byte* MMap(bool isWriteable = false) = 0;
 
     /**
      * Release a memory map
      * @param mmap The pointer to the memory map that needs to be released.
      * @return If the memory map is released successfully, return true; otherwise, return false.
      */
-    virtual bool MUnmap(uint8_t* mmap) = 0;
+    virtual bool MUnmap(byte* mmap) = 0;
 
     /**
      * Copy the entire content from the source ImageStream to the current ImageStream.

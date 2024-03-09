@@ -92,7 +92,7 @@ FileImageStream::~FileImageStream() {
     Close(); 
 }
 
-ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
+ssize_t FileImageStream::Write(byte* data, size_t size) {
     if (fp == nullptr) {
         // File is not open
         IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), "fp is nullptr");
@@ -116,7 +116,7 @@ ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
 
 ssize_t FileImageStream::Write(ImageStream& src) {
     // Create a buffer
-    uint8_t buffer[4096];
+    byte buffer[4096];
     ssize_t totalBytesWritten = 0;
 
     while (!src.IsEof()) {
@@ -148,7 +148,7 @@ ssize_t FileImageStream::Write(ImageStream& src) {
     return totalBytesWritten;
 }
 
-ssize_t FileImageStream::Read(uint8_t* buf, size_t size) {
+ssize_t FileImageStream::Read(byte* buf, size_t size) {
     if (fp == nullptr) {
         // File is not open
         return -1;
@@ -407,7 +407,7 @@ bool FileImageStream::Flush(){
     return true;
 }
 
-uint8_t* FileImageStream::MMap(bool isWriteable) {
+byte* FileImageStream::MMap(bool isWriteable) {
     // If the file is not open, open it first
     if (fp == nullptr) {
         if (!Open()) {
@@ -429,7 +429,7 @@ uint8_t* FileImageStream::MMap(bool isWriteable) {
     int fd = fileno(fp);
 
     // Create a memory map
-    mappedMemory = static_cast<uint8_t*>(::mmap(nullptr, fileSize, isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fd, 0));
+    mappedMemory = static_cast<byte*>(::mmap(nullptr, fileSize, isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fd, 0));
     if (mappedMemory == MAP_FAILED) {
         // Memory mapping failed
         char buf[256];        
@@ -441,7 +441,7 @@ uint8_t* FileImageStream::MMap(bool isWriteable) {
     return mappedMemory;
 }
 
-bool FileImageStream::MUnmap(uint8_t* mmap){
+bool FileImageStream::MUnmap(byte* mmap){
     if (mmap == nullptr) {
         // The memory map is nullptr
         return false;
@@ -475,7 +475,7 @@ void FileImageStream::CopyFrom(ImageStream& src) {
     }
 
     // Read data from the source ImageStream and write it to the current file
-    uint8_t tempBuffer[4096];
+    byte tempBuffer[4096];
     size_t totalBytesWritten = 0;
     if(!src.IsOpen()) src.Open();               // If src is not open, open src
     ssize_t src_cur = src.Tell();               // Temporarily store the position of src

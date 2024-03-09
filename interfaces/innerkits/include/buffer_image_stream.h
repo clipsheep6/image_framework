@@ -46,7 +46,7 @@ public:
      * @param size Size of the original data.
      * @param mode Memory mode, can be Fix or Dynamic.
      */
-    NATIVEEXPORT BufferImageStream(uint8_t *originData, size_t size, MemoryMode mode);
+    NATIVEEXPORT BufferImageStream(byte *originData, size_t size, MemoryMode mode);
 
     /**
      * @brief Constructs a new BufferImageStream object.
@@ -64,7 +64,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes written.
      */
-    NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Write(byte* data, size_t size) override;
 
     /**
      * @brief Writes the content of the source ImageStream to the current BufferImageStream.
@@ -79,7 +79,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes read.
      */
-    NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Read(byte* buf, size_t size) override;
 
     /**
      * @brief Reads a byte from the BufferImageStream.
@@ -144,7 +144,7 @@ public:
      * @param isWriteable This parameter is ignored, the data of BufferImageStream is always writable.
      * @return Returns a pointer to the data of BufferImageStream.
      */
-    NATIVEEXPORT virtual uint8_t* MMap(bool isWriteable =false) override;
+    NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
 
     /**
      * Release a memory map.
@@ -152,7 +152,7 @@ public:
      * @param mmap The pointer to the memory map that needs to be released.
      * @return Returns true if the memory map is released successfully; otherwise, returns false.
      */
-    NATIVEEXPORT virtual bool MUnmap(uint8_t* mmap) override;
+    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
     /**
      * Transfer the content of the source ImageStream to the current BufferImageStream.
@@ -173,7 +173,7 @@ public:
      * 
      * @return Returns the pointer to the data.
      */
-    NATIVEEXPORT uint8_t* Release();
+    NATIVEEXPORT byte* Release();
     NATIVEEXPORT virtual size_t GetSize() override;
 
 private:
@@ -185,13 +185,13 @@ private:
     /**
      * @brief The memory buffer of the BufferImageStream.
      */
-    uint8_t* buffer;
+    byte* buffer;
 
     /**
      * @brief The original pointer saved when constructed with originData. 
      * It is needed when closing to determine whether to release the buffer.
      */
-    uint8_t* originData;
+    byte* originData;
 
     /**
      * @brief The pre-allocated memory capacity of the buffer.

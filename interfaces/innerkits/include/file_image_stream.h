@@ -68,7 +68,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes written.
      */
-    NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Write(byte* data, size_t size) override;
 
     /**
      * @brief Writes the content of the source ImageStream to the current FileImageStream.
@@ -83,7 +83,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes read.
      */
-    NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Read(byte* buf, size_t size) override;
 
     /**
      * @brief Reads a byte from the FileImageStream.
@@ -141,14 +141,14 @@ public:
      * @param isWriteable If true, the created memory map will be writable; otherwise, it will be read-only.
      * @return A pointer to the memory map if it is created successfully, nullptr otherwise.
      */
-    NATIVEEXPORT virtual uint8_t* MMap(bool isWriteable = false) override;
+    NATIVEEXPORT virtual byte* MMap(bool isWriteable = false) override;
 
     /**
      * @brief Releases a memory map.
      * @param mmap The pointer to the memory map that needs to be released.
      * @return true if the memory map is released successfully, false otherwise.
      */
-    NATIVEEXPORT virtual bool MUnmap(uint8_t* mmap) override;
+    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
     /**
      * @brief Transfers the content of the source ImageStream to the current FileImageStream.
@@ -193,7 +193,7 @@ private:
     int dupFD;              // Duplicated file descriptor
     std::string filePath;   // File path
     size_t fileSize;        // File size
-    uint8_t* mappedMemory;     // Address of memory mapping
+    byte* mappedMemory;     // Address of memory mapping
     std::unique_ptr<FileWrapper> fileWrapper;   // File wrapper class, used for testing
 
     enum {
