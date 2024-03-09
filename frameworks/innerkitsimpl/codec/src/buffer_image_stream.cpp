@@ -32,19 +32,46 @@
 namespace OHOS {
 namespace Media {
 
-BufferImageStream::BufferImageStream() : currentOffset(0) {}
+BufferImageStream::BufferImageStream() {
+    buffer = nullptr;
+    capacity = 0;
+    bufferSize = 0;
+    currentOffset = 0;
+    memoryMode = Dynamic;
+}
 
 BufferImageStream::~BufferImageStream() {}
 
-ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
-    if (buffer.capacity() < currentOffset + size) {
-        // Calculate the required memory size, ensuring it is a multiple of 4k
-        size_t newCapacity = ((currentOffset + size + 4095) / 4096) * 4096;
-        buffer.reserve(newCapacity);
-    }
+BufferImageStream::BufferImageStream(uint8_t *originData, size_t size){
+    buffer = originData;
+    capacity = size;
+    bufferSize = size;
+    currentOffset = 0;
+    memoryMode = Fix;
+}
 
-    buffer.insert(buffer.end(), data, data + size);
+ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
+    if(currentOffset + static_cast<long>(size) > capacity){
+        if(memoryMode == Fix){
+            IMAGE_LOGE("BufferImageStream::Write failed, currentOffset:%{public}ld, size:%{public}u, capacity:%{public}ld", currentOffset, size, capacity);
+            return -1;
+        }
+        long newCapacity = ((currentOffset + size + 4095) / 4096) * 4096; // Ensure it is a multiple of 4k
+        uint8_t *newBuffer = new uint8_t[newCapacity];
+        if(newBuffer == nullptr){
+            IMAGE_LOGE("BufferImageStream::Write failed, newBuffer is nullptr");
+            return -1;
+        }
+        if(buffer != nullptr){
+            memcpy(newBuffer, buffer, capacity);
+            delete[] buffer;
+        }
+        buffer = newBuffer;
+        capacity = newCapacity;
+    }
+    memcpy(buffer + currentOffset, data, size);
     currentOffset += size;
+    bufferSize = std::max(currentOffset, bufferSize);
     return size;
 }
 
@@ -61,26 +88,36 @@ ssize_t BufferImageStream::Write(ImageStream& src) {
         size_t bytesWritten = Write(buffer, bytesRead);
         totalBytesWritten += bytesWritten;
     }
+    bufferSize = src.GetSize();
 
     return totalBytesWritten;
 }
 
 ssize_t BufferImageStream::Read(uint8_t* buf, size_t size) {
-    size_t bytesToRead = std::min(size, buffer.size() - static_cast<size_t>(currentOffset));
-    std::copy(buffer.begin() + currentOffset, buffer.begin() + currentOffset + bytesToRead, buf);
+    if (currentOffset >= bufferSize) {
+        IMAGE_LOGE("BufferImageStream::Read failed, currentOffset:%{public}ld, bufferSize:%{public}ld", currentOffset, bufferSize);
+        return -1;
+    }
+
+    long bytesToRead = std::min(static_cast<long>(size), bufferSize - currentOffset);
+    memcpy(buf, buffer + currentOffset, bytesToRead);
     currentOffset += bytesToRead;
     return bytesToRead;
 }
 
 int BufferImageStream::ReadByte(){
-    if (static_cast<size_t>(currentOffset) >= buffer.size()) {
+    if (currentOffset >= bufferSize) {
+        IMAGE_LOGE("BufferImageStream::ReadByte failed, currentOffset:%{public}ld, bufferSize:%{public}ld", currentOffset, bufferSize);
         return -1;
     }
 
-    return buffer[currentOffset++];
+    if (currentOffset < bufferSize) {
+        return buffer[currentOffset++];
+    }
+    return -1;
 }
 
-int BufferImageStream::Seek(int offset, SeekPos pos) {
+long BufferImageStream::Seek(int offset, SeekPos pos) {
     switch (pos) {
         case SeekPos::BEGIN:
             currentOffset = offset;
@@ -89,14 +126,14 @@ int BufferImageStream::Seek(int offset, SeekPos pos) {
             currentOffset += offset;
             break;
         case SeekPos::END:
-            currentOffset = buffer.size() + offset;
+            currentOffset = bufferSize + offset;
             break;
         default:
             return -1;
     }
 
-    if (static_cast<size_t>(currentOffset) > buffer.size()) {
-        currentOffset = buffer.size();
+    if (currentOffset > bufferSize) {
+        currentOffset = bufferSize;
     }
 
     return currentOffset;
@@ -107,7 +144,7 @@ long BufferImageStream::Tell() {
 }
 
 bool BufferImageStream::IsEof() {
-    return static_cast<size_t>(currentOffset) >= buffer.size();
+    return currentOffset >= bufferSize;
 }
 
 bool BufferImageStream::IsOpen() {
@@ -115,7 +152,9 @@ bool BufferImageStream::IsOpen() {
 }
 
 void BufferImageStream::Close() {
-    buffer.clear();
+    if(memoryMode == Dynamic){
+        delete[] buffer;
+    }
     currentOffset = 0;
 }
 
@@ -132,7 +171,7 @@ bool BufferImageStream::Flush() {
 }
 
 byte* BufferImageStream::MMap(bool isWriteable) {
-    return buffer.data();
+    return buffer;
 }
 
 bool BufferImageStream::MUnmap(byte* mmap) {
@@ -141,25 +180,36 @@ bool BufferImageStream::MUnmap(byte* mmap) {
 
 void BufferImageStream::CopyFrom(ImageStream& src) {
     // Clear the current buffer
-    buffer.clear();
-    currentOffset = 0;
+    if(memoryMode == Dynamic){
+        delete[] buffer;
+    }
+    if(memoryMode == Fix){
+        if(src.GetSize() > static_cast<size_t>(capacity)){
+            //固定内存，且超长就不拷贝了，拷了数据也不完整
+            IMAGE_LOGE("BufferImageStream::CopyFrom failed, src size:%{public}zu, capacity:%{public}ld", src.GetSize(), capacity);
+            return;
+        }
+    }
 
     // Pre-allocate memory based on the estimated size
-    size_t estimatedSize = src.GetSize();
-    buffer.reserve(estimatedSize);
+    size_t estimatedSize = ((src.GetSize() + 4095) / 4096) * 4096; // Ensure it is a multiple of 4k
+    buffer = new uint8_t[estimatedSize];
+    currentOffset = 0;
+    bufferSize = 0;
+    capacity = estimatedSize;
 
     // Read data from the source ImageStream and write it to the current buffer
     uint8_t tempBuffer[4096];
     while (!src.IsEof()) {
         size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
         if (bytesRead > 0) {
-            buffer.insert(buffer.end(), tempBuffer, tempBuffer + bytesRead);
+            Write(tempBuffer, bytesRead);
         }
     }
 }
 
 size_t BufferImageStream::GetSize() {
-    return buffer.size();
+    return bufferSize;
 }
 
 } // namespace Media

@@ -97,7 +97,7 @@ public:
      * @param pos The starting position of the offset.
      * @return The new position.
      */
-    NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
+    NATIVEEXPORT virtual long Seek(int offset, SeekPos pos) override;
 
     /**
      * @brief Gets the current position in the FileImageStream.

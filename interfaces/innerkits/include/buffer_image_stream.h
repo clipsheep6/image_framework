@@ -28,6 +28,7 @@ namespace Media {
 
 class BufferImageStream : public ImageStream {
 public:
+    NATIVEEXPORT BufferImageStream(uint8_t *originData, size_t size);
     /**
      * @brief Constructs a new BufferImageStream object.
      */
@@ -73,7 +74,7 @@ public:
      * @param pos The starting position of the offset.
      * @return The new position.
      */
-    NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
+    NATIVEEXPORT virtual long Seek(int offset, SeekPos pos) override;
 
     /**
      * @brief Gets the current position in the BufferImageStream.
@@ -154,12 +155,21 @@ private:
     /**
      * @brief The memory buffer of the BufferImageStream.
      */
-    std::vector<uint8_t> buffer;
+    uint8_t* buffer;
+
+    long capacity;
+
+    long bufferSize; //由于是内存里，所以bufferSize不会超过内存的最大长度，所以这里不用size_t了
 
     /**
      * @brief The current offset in the BufferImageStream.
      */
     long currentOffset;
+
+    enum{        
+        Fix,        //内存在构造时固定不可变更
+        Dynamic     //内存可以变更
+    }memoryMode;
 };
 
 } // namespace MultimediaPlugin

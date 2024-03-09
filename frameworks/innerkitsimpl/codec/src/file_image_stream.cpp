@@ -185,7 +185,7 @@ int FileImageStream::ReadByte(){
 }
 
 //todo，改成直接暴露
-int FileImageStream::Seek(int offset, SeekPos pos) {
+long FileImageStream::Seek(int offset, SeekPos pos) {
     if (fp == nullptr) {
         // File is not open
         return -1;

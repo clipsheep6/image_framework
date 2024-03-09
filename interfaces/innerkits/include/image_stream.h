@@ -97,7 +97,7 @@ public:
      * @param pos The starting position of the offset (from the head, current position, or tail)
      * @return The new position
      */
-    virtual int Seek(int offset, SeekPos pos) = 0;
+    virtual long Seek(int offset, SeekPos pos) = 0;
 
     /**
      * Get the current position in the image stream

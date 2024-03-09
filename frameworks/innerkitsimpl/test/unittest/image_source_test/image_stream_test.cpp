@@ -818,7 +818,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
     BufferImageStream stream;
     stream.Open();
     stream.Write((uint8_t*)"Hello, world!", 13);
-    ASSERT_EQ(stream.buffer.capacity(), 4096);
+    ASSERT_EQ(stream.capacity, 4096);
     ASSERT_EQ(stream.Tell(), 13);
 }
 
@@ -828,11 +828,11 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3){
-    OHOS::Media::BufferImageStream stream;
+    BufferImageStream stream;
     stream.Open();
     uint8_t data[4097] = {0};  // Create a 4097-byte data
     stream.Write(data, 4097);  // Write 4097 bytes of data
-    ASSERT_GE(stream.buffer.capacity(), 4096*2);  // Check if the buffer capacity is at least 4097
+    ASSERT_GE(stream.capacity, 4096*2);  // Check if the buffer capacity is at least 4097
     ASSERT_EQ(stream.Tell(), 4097);  // Check if the write position is correct
 }
 
@@ -842,13 +842,24 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3){
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3){
-    OHOS::Media::BufferImageStream stream;
+    BufferImageStream stream;
     stream.Open();
 
     uint8_t data[4096] = {0};  // Create a 4096-byte data
     stream.Write(data, 4096);  // Write 4096 bytes of data
-    ASSERT_EQ(stream.buffer.capacity(), 4096);  // Check if the buffer capacity is 4096
+    ASSERT_EQ(stream.capacity, 4096);  // Check if the buffer capacity is 4096
     ASSERT_EQ(stream.Tell(), 4096);  // Check if the write position is correct
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3){
+    char text[] = "Hello, world!";
+    BufferImageStream stream((uint8_t*)text, sizeof(text));
+    ASSERT_TRUE(stream.Open());
+    ASSERT_EQ(stream.Write((uint8_t*)"Hi", 2), 2);
+    ASSERT_EQ(stream.Tell(), 2);
+    ASSERT_STREQ(text, "Hillo, world!");
+    ASSERT_EQ(stream.Write((uint8_t*)"this is a very long text", 24), -1);
+    ASSERT_STREQ(text, "Hillo, world!");
 }
 
 
