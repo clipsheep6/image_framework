@@ -92,7 +92,7 @@ FileImageStream::~FileImageStream() {
     Close(); 
 }
 
-ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
+ssize_t FileImageStream::Write(byte* data, size_t size) {
     if (fp == nullptr) {
         // File is not open
         IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), "fp is nullptr");
@@ -116,7 +116,7 @@ ssize_t FileImageStream::Write(uint8_t* data, size_t size) {
 
 ssize_t FileImageStream::Write(ImageStream& src) {
     // Create a buffer
-    uint8_t buffer[4096];
+    byte buffer[4096];
     ssize_t totalBytesWritten = 0;
 
     while (!src.IsEof()) {
@@ -148,7 +148,7 @@ ssize_t FileImageStream::Write(ImageStream& src) {
     return totalBytesWritten;
 }
 
-ssize_t FileImageStream::Read(uint8_t* buf, size_t size) {
+ssize_t FileImageStream::Read(byte* buf, size_t size) {
     if (fp == nullptr) {
         // File is not open
         return -1;
@@ -185,7 +185,7 @@ int FileImageStream::ReadByte(){
 }
 
 //todo，改成直接暴露
-int FileImageStream::Seek(int offset, SeekPos pos) {
+long FileImageStream::Seek(int offset, SeekPos pos) {
     if (fp == nullptr) {
         // File is not open
         return -1;
@@ -475,7 +475,7 @@ void FileImageStream::CopyFrom(ImageStream& src) {
     }
 
     // Read data from the source ImageStream and write it to the current file
-    uint8_t tempBuffer[4096];
+    byte tempBuffer[4096];
     size_t totalBytesWritten = 0;
     if(!src.IsOpen()) src.Open();               // If src is not open, open src
     ssize_t src_cur = src.Tell();               // Temporarily store the position of src

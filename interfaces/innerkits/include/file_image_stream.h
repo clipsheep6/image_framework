@@ -68,7 +68,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes written.
      */
-    NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Write(byte* data, size_t size) override;
 
     /**
      * @brief Writes the content of the source ImageStream to the current FileImageStream.
@@ -83,7 +83,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes read.
      */
-    NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Read(byte* buf, size_t size) override;
 
     /**
      * @brief Reads a byte from the FileImageStream.
@@ -97,7 +97,7 @@ public:
      * @param pos The starting position of the offset.
      * @return The new position.
      */
-    NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
+    NATIVEEXPORT virtual long Seek(int offset, SeekPos pos) override;
 
     /**
      * @brief Gets the current position in the FileImageStream.

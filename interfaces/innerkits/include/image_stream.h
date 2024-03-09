@@ -73,7 +73,7 @@ public:
      * @param size The size of the data to be written
      * @return The actual size of the data written
      */
-    virtual ssize_t Write(uint8_t* data, size_t size) = 0;
+    virtual ssize_t Write(byte* data, size_t size) = 0;
 
     /**
      * Write data from another image stream
@@ -88,7 +88,7 @@ public:
      * @param size The size of the data to be read
      * @return The actual size of the data read
      */
-    virtual ssize_t Read(uint8_t* buf, size_t size) = 0;
+    virtual ssize_t Read(byte* buf, size_t size) = 0;
     virtual int ReadByte() = 0;
 
     /**
@@ -97,7 +97,7 @@ public:
      * @param pos The starting position of the offset (from the head, current position, or tail)
      * @return The new position
      */
-    virtual int Seek(int offset, SeekPos pos) = 0;
+    virtual long Seek(int offset, SeekPos pos) = 0;
 
     /**
      * Get the current position in the image stream

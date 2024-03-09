@@ -26,8 +26,28 @@
 namespace OHOS {
 namespace Media {
 
+
 class BufferImageStream : public ImageStream {
 public:
+    enum MemoryMode{
+        Fix,        // Memory is fixed at construction and cannot be changed
+        Dynamic     // Memory can be changed
+    };
+
+    /**
+     * @brief Constructs a new BufferImageStream object.
+     * 
+     * Initially, when the write range does not exceed originData, the memory uses the pointer of originData, and there will be no memory copy.
+     * However, when the write range exceeds originData, it will choose according to the MemoryMode. 
+     * If the mode is Fix, it will report a write error and keep the original pointer unchanged.
+     * If the mode is Dynamic, it will reallocate memory, copy the original data, and then write new data.
+     * 
+     * @param originData Pointer to the original data.
+     * @param size Size of the original data.
+     * @param mode Memory mode, can be Fix or Dynamic.
+     */
+    NATIVEEXPORT BufferImageStream(byte *originData, size_t size, MemoryMode mode);
+
     /**
      * @brief Constructs a new BufferImageStream object.
      */
@@ -44,7 +64,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes written.
      */
-    NATIVEEXPORT virtual ssize_t Write(uint8_t* data, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Write(byte* data, size_t size) override;
 
     /**
      * @brief Writes the content of the source ImageStream to the current BufferImageStream.
@@ -59,7 +79,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes read.
      */
-    NATIVEEXPORT virtual ssize_t Read(uint8_t* buf, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Read(byte* buf, size_t size) override;
 
     /**
      * @brief Reads a byte from the BufferImageStream.
@@ -73,7 +93,7 @@ public:
      * @param pos The starting position of the offset.
      * @return The new position.
      */
-    NATIVEEXPORT virtual int Seek(int offset, SeekPos pos) override;
+    NATIVEEXPORT virtual long Seek(int offset, SeekPos pos) override;
 
     /**
      * @brief Gets the current position in the BufferImageStream.
@@ -108,6 +128,12 @@ public:
      */
     NATIVEEXPORT virtual bool Open(OpenMode mode) override;
 
+    /**
+     * For BufferImageStream, the Flush function is not applicable, 
+     * as the data for BufferImageStream is already in memory and there is no need to flush.
+     * 
+     * @return Returns true, as this function is not applicable for BufferImageStream.
+     */
     NATIVEEXPORT virtual bool Flush() override;
 
     /**
@@ -139,10 +165,15 @@ public:
     NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
 
     /**
-     * Get the size sof the BufferImageStream.
+     * After calling Release, BufferImageStream no longer manages the lifecycle of the pointer.
+     * The lifecycle of the pointer needs to be managed by the user. 
+     * Please note that if the returned pointer is the one passed in the constructor, 
+     * then the lifecycle of this pointer should be managed by the one who created it.
+     * If the pointer was created by BufferImageStream, then the lifecycle should be managed by the one who calls Release.
      * 
-     * @return Returns the size of the BufferImageStream.
+     * @return Returns the pointer to the data.
      */
+    NATIVEEXPORT byte* Release();
     NATIVEEXPORT virtual size_t GetSize() override;
 
 private:
@@ -154,12 +185,36 @@ private:
     /**
      * @brief The memory buffer of the BufferImageStream.
      */
-    std::vector<uint8_t> buffer;
+    byte* buffer;
+
+    /**
+     * @brief The original pointer saved when constructed with originData. 
+     * It is needed when closing to determine whether to release the buffer.
+     */
+    byte* originData;
+
+    /**
+     * @brief The pre-allocated memory capacity of the buffer.
+     */
+    long capacity;
+
+    /**
+     * @brief The data size of the buffer. 
+     * Since it is in memory, bufferSize will not exceed the maximum length of memory, 
+     * so size_t is not used here.
+     */
+    long bufferSize;
 
     /**
      * @brief The current offset in the BufferImageStream.
      */
     long currentOffset;
+
+    /**
+     * @brief The memory mode, which can be fixed memory or dynamic memory. 
+     * See MemoryMode for details.
+     */
+    MemoryMode memoryMode;
 };
 
 } // namespace MultimediaPlugin
