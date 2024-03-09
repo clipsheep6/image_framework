@@ -8,14 +8,15 @@ namespace OHOS {
 namespace Media {
 class JpegImageAccessor : public AbstractImageAccessor {
 public:
-    JpegImageAccessor();
+    JpegImageAccessor(std::unique_ptr<ImageStream> &stream);
     ~JpegImageAccessor();
 
-    ExifMetadata ReadMetadata(OHOS::Media::ImageStream& stream) override;
+    virtual int ReadMetadata() const override;
 
 private:
-    int FindNextMarker(ImageStream& imageStream);
-    std::pair<std::array<byte, 2>, uint16_t> ReadSegmentSize(ImageStream& imageStream, uint8_t marker);
+    int FindNextMarker() const;
+    std::pair<std::array<byte, 2>, uint16_t> ReadSegmentSize(uint8_t marker) const;
+
 };
 } // namespace Media
 } // namespace OHOS

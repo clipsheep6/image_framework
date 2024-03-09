@@ -203,7 +203,6 @@ public:
         uint32_t &errorCode);
     NATIVEEXPORT std::unique_ptr<std::vector<int32_t>> GetDelayTime(uint32_t &errorCode);
     NATIVEEXPORT uint32_t GetFrameCount(uint32_t &errorCode);
-    NATIVEEXPORT std::shared_ptr<ImageAccessor> CreateImageAccessor(const EncodedFormat& type);
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
@@ -293,7 +292,6 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
-    std::shared_ptr<ImageAccessor> imageAccessor_;
 };
 } // namespace Media
 } // namespace OHOS

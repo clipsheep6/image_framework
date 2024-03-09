@@ -3,7 +3,7 @@
 namespace OHOS {
 namespace Media {
 
-AbstractImageAccessor::AbstractImageAccessor()
+AbstractImageAccessor::AbstractImageAccessor(std::unique_ptr<ImageStream> &&stream) : imageStream_(std::move(stream))
 {
 
 }
@@ -13,16 +13,31 @@ AbstractImageAccessor::~AbstractImageAccessor()
 
 }
 
-ExifMetadata AbstractImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
+int AbstractImageAccessor::ReadMetadata() const
 {
-    (void)stream;
-    return ExifMetadata();
+    return 0;
 }
 
-void AbstractImageAccessor::WriteMetadata(const ExifMetadata& metadata)
+bool AbstractImageAccessor::WriteMetadata()
 {
-    (void)metadata;
-    return;
+    return true;
+}
+
+bool AbstractImageAccessor::ReadExifBlob(DataBuf &blob) const
+{
+    (void)blob;
+    return true;
+}
+
+bool AbstractImageAccessor::WriteExifBlob(DataBuf &blob)
+{
+    (void)blob;
+    return true;
+}
+
+std::shared_ptr<ExifMetadata> AbstractImageAccessor::GetExifMetadata()
+{
+    return exifMetadata_;
 }
 
 } // namespace Media

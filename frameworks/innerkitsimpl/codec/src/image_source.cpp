@@ -41,7 +41,8 @@
 #include "post_proc.h"
 #include "securec.h"
 #include "source_stream.h"
-#include "image_accessor.h"
+#include "exif_metadata.h"
+#include "image_accessor_factory.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -156,11 +157,6 @@ const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
-
-std::shared_ptr<ImageAccessor> ImageSource::CreateImageAccessor(const EncodedFormat& type)
-{
-    return nullptr;
-}
 
 uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
 {
@@ -1024,37 +1020,37 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on get image property, ret:%{public}u.", ret);
-        return ret;
+    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
+    uint32_t size = sourceStreamPtr_->GetStreamSize();
+    auto imageAccessor_ = ImageAccessorFactory::CreateImageAccessor(ptr, size);
+    if (imageAccessor_ == nullptr) {
+        return IMAGE_GET_ACCESSOR_FAILED; //todo 返回失败
     }
 
-    ret = mainDecoder_->GetImagePropertyInt(index, key, value);
-    if (ret != SUCCESS) {
-        IMAGE_LOGD("[ImageSource] GetImagePropertyInt fail, ret:%{public}u", ret);
-        return ret;
-    }
+    imageAccessor_->ReadMetadata();
+    std::string strValue("");
+    imageAccessor_->GetExifMetadata()->GetValue(key, strValue);
+    value = std::stoi(strValue);
+
     return SUCCESS;
 }
 
 uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on get image property, ret:%{public}u.", ret);
-        return ret;
+    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
+    uint32_t size = sourceStreamPtr_->GetStreamSize();
+    auto imageAccessor_ = ImageAccessorFactory::CreateImageAccessor(ptr, size);
+    if (imageAccessor_ == nullptr) {
+        return IMAGE_GET_ACCESSOR_FAILED;
     }
-    ret = mainDecoder_->GetImagePropertyString(index, key, value);
-    if (ret != SUCCESS) {
-        IMAGE_LOGD("[ImageSource] GetImagePropertyString fail, ret:%{public}u", ret);
-        return ret;
-    }
+
+    imageAccessor_->ReadMetadata();
+    imageAccessor_->GetExifMetadata()->GetValue(key, value);
+
     return SUCCESS;
 }
+
 const SourceInfo &ImageSource::GetSourceInfo(uint32_t &errorCode)
 {
     std::lock_guard<std::mutex> guard(decodingMutex_);
