@@ -178,6 +178,7 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_meta_data_validate.cpp",
     ]
 
     if (use_mingw_win) {
@@ -296,6 +297,7 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_meta_data_validate.cpp",
   ]
 
   if (use_mingw_win) {

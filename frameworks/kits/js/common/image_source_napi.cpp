@@ -21,6 +21,7 @@
 #include "string_ex.h"
 #include "image_trace.h"
 #include "hitrace_meter.h"
+#include "exif_meta_data_validate.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
 #endif
@@ -1490,7 +1491,7 @@ napi_value ImageSourceNapi::ModifyImageProperty(napi_env env, napi_callback_info
                 context->status = ERR_MEDIA_VALUE_INVALID;
                 return;
             }
-            if (!IsSameTextStr(context->pathName, "")) {
+                        if (!IsSameTextStr(context->pathName, "")) {
                 context->status = context->rImageSource->ModifyImageProperty(context->index,
                     context->keyStr, context->valueStr, context->pathName);
             } else if (context->fdIndex != -1) {
