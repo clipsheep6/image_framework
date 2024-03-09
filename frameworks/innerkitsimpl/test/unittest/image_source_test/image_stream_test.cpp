@@ -141,11 +141,11 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     ASSERT_EQ(stream.Tell(), 0);
 
     // Write the data to the file
-    size_t bytesWritten = stream.Write(data, sizeof(data));
+    size_t uint8_tsWritten = stream.Write(data, sizeof(data));
 
-    // Check that the correct number of bytes were written
-    ASSERT_EQ(bytesWritten, sizeof(data));
-    ASSERT_EQ(bytesWritten, 10);
+    // Check that the correct number of uint8_ts were written
+    ASSERT_EQ(uint8_tsWritten, sizeof(data));
+    ASSERT_EQ(uint8_tsWritten, 10);
 
     // Flush the file
     stream.Flush();
@@ -156,10 +156,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 
     // Read the data from the file
     uint8_t buffer[10];
-    ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
+    ssize_t uint8_tsRead = read(fd, buffer, sizeof(buffer));
 
-    // Check that the correct number of bytes were read
-    ASSERT_EQ(bytesRead, sizeof(data));
+    // Check that the correct number of uint8_ts were read
+    ASSERT_EQ(uint8_tsRead, sizeof(data));
 
     // Check that the data read is the same as the data written
     ASSERT_EQ(memcmp(data, buffer, sizeof(data)), 0);
@@ -295,10 +295,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
     // Read the data from the file
     uint8_t buffer[20];
     read(fd, buffer, sizeof(buffer));
-    // ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
+    // ssize_t uint8_tsRead = read(fd, buffer, sizeof(buffer));
 
-    // Check that the correct number of bytes were read
-    // ASSERT_EQ(bytesRead, data.size());
+    // Check that the correct number of uint8_ts were read
+    // ASSERT_EQ(uint8_tsRead, data.size());
 
     // Check that the data read is the same as the data written
     ASSERT_EQ(memcmp(data.c_str(), buffer, data.size()), 0);
@@ -326,9 +326,9 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
     // Read data from stream1
     uint8_t buffer[256];
     stream1.Seek(0, SeekPos::BEGIN);
-    ssize_t bytesRead = stream1.Read(buffer, sourceData.size());
-    ASSERT_EQ(bytesRead, sourceData.size());
-    buffer[bytesRead] = '\0';  // Add string termination character
+    ssize_t uint8_tsRead = stream1.Read(buffer, sourceData.size());
+    ASSERT_EQ(uint8_tsRead, sourceData.size());
+    buffer[uint8_tsRead] = '\0';  // Add string termination character
     // Check if the read data is the same as the written data
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
     ASSERT_TRUE(stream1.Flush());
@@ -394,16 +394,16 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
 
 /**
  * @tc.name: FileImageStream_Read001
- * @tc.desc: Test the Read function of FileImageStream, reading 512 bytes
+ * @tc.desc: Test the Read function of FileImageStream, reading 512 uint8_ts
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
     FileImageStream stream(filePathSource);
     uint8_t buffer[1024];
     stream.Open();
-    // Simulate reading 512 bytes
-    ssize_t bytesRead = stream.Read(buffer, 512);
-    EXPECT_EQ(512, bytesRead);
+    // Simulate reading 512 uint8_ts
+    ssize_t uint8_tsRead = stream.Read(buffer, 512);
+    EXPECT_EQ(512, uint8_tsRead);
 }
 
 /**
@@ -416,8 +416,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
     uint8_t buffer[1024];
     // Flush the stream to simulate an unopened file
     ASSERT_FALSE(stream.Flush());
-    ssize_t bytesRead = stream.Read(buffer, 512);
-    EXPECT_EQ(-1, bytesRead);
+    ssize_t uint8_tsRead = stream.Read(buffer, 512);
+    EXPECT_EQ(-1, uint8_tsRead);
 }
 
 // Define a global jmp_buf variable
@@ -438,7 +438,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
     // YourResource test_resource;
     // Test the behavior of the MMap function when isWriteable is false
     FileImageStream stream(filePathSource);
-    byte* result = stream.MMap(false);
+    uint8_t* result = stream.MMap(false);
     // Assume that checking whether result is not nullptr, or there is another appropriate verification method
     ASSERT_NE(result, nullptr);
   
@@ -461,7 +461,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
 HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
     // Test the behavior of the MMap function when isWriteable is true
     FileImageStream stream(filePathSource);
-    byte* result = stream.MMap(true);
+    uint8_t* result = stream.MMap(true);
     ASSERT_NE(result, nullptr);
     // Try to write data
     result[0] = 123;
@@ -478,14 +478,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
 HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
     // Test whether MMap can actually modify the content of the file
     FileImageStream stream(filePathSource);
-    byte* result = stream.MMap(true);
+    uint8_t* result = stream.MMap(true);
     ASSERT_NE(result, nullptr);
 
     // Try to write data
     result[0] = 123;
 
     stream.Seek(0, SeekPos::BEGIN);
-    byte buffer[1];
+    uint8_t buffer[1];
     ASSERT_EQ(stream.Read(buffer, 1), 1);
     ASSERT_EQ(buffer[0], 123);
 
@@ -493,7 +493,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
     ASSERT_TRUE(stream.Flush());
     FileImageStream checkStream(filePathSource);
     checkStream.Open();
-    byte checkBuffer[1];
+    uint8_t checkBuffer[1];
     ASSERT_EQ(checkStream.Read(checkBuffer, 1), 1);
 
     // Check if the data in the file is the same as the data written
@@ -538,22 +538,22 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3) {
     FileImageStream stream(filePathSource);
     stream.Open();
 
-    // Read 10 bytes using Read function
-    byte buffer[10];
+    // Read 10 uint8_ts using Read function
+    uint8_t buffer[10];
     stream.Read(buffer, 10);
 
     // Reset the file offset
     stream.Seek(0, SeekPos::BEGIN);
 
-    // Read 10 bytes using ReadByte function
-    byte byteBuffer[10];
+    // Read 10 uint8_ts using ReadByte function
+    uint8_t uint8_tBuffer[10];
     for (int i = 0; i < 10; i++) {
-        byteBuffer[i] = stream.ReadByte();
+        uint8_tBuffer[i] = stream.ReadByte();
     }
 
     // Compare the results
     for (int i = 0; i < 10; i++) {
-        EXPECT_EQ(buffer[i], byteBuffer[i]);
+        EXPECT_EQ(buffer[i], uint8_tBuffer[i]);
     }
 }
 
@@ -569,7 +569,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3) {
     // Set the file offset to the end of the file
     EXPECT_EQ(stream.Seek(0, SeekPos::END), stream.GetSize());
 
-    // Try to read one more byte
+    // Try to read one more uint8_t
     int result = stream.ReadByte();
 
     // Check if the result is -1
@@ -594,9 +594,9 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
     // Read the data from cloneStream
     uint8_t buffer[256];
     cloneStream.Seek(5, SeekPos::BEGIN);
-    ssize_t bytesRead = cloneStream.Read(buffer, sourceData.size());
-    ASSERT_EQ(bytesRead, sourceData.size());
-    buffer[bytesRead] = '\0';  // Add string termination character
+    ssize_t uint8_tsRead = cloneStream.Read(buffer, sourceData.size());
+    ASSERT_EQ(uint8_tsRead, sourceData.size());
+    buffer[uint8_tsRead] = '\0';  // Add string termination character
 
     // Check if the read data is the same as the data in the source file
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
@@ -607,8 +607,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
 
     // Read the data from cloneStream again
     cloneStream.Seek(0, SeekPos::BEGIN);
-    bytesRead = cloneStream.Read(buffer, sizeof(buffer) - 1);
-    buffer[bytesRead] = '\0';  // Add string termination character
+    uint8_tsRead = cloneStream.Read(buffer, sizeof(buffer) - 1);
+    buffer[uint8_tsRead] = '\0';  // Add string termination character
 
     // Check if the read data contains the new data
     ASSERT_STRNE((char*)buffer, newData.c_str());
@@ -637,16 +637,16 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
 
     // Write data
     uint8_t writeData[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    ssize_t bytesWritten = stream.Write(writeData, sizeof(writeData));
-    ASSERT_EQ(bytesWritten, sizeof(writeData));
+    ssize_t uint8_tsWritten = stream.Write(writeData, sizeof(writeData));
+    ASSERT_EQ(uint8_tsWritten, sizeof(writeData));
 
     // Reset the file pointer to the beginning of the file
     stream.Seek(0, SeekPos::BEGIN);
 
     // Read data
     uint8_t readData[10] = {0};
-    ssize_t bytesRead = stream.Read(readData, sizeof(readData));
-    ASSERT_EQ(bytesRead, sizeof(readData));
+    ssize_t uint8_tsRead = stream.Read(readData, sizeof(readData));
+    ASSERT_EQ(uint8_tsRead, sizeof(readData));
 
     // Check if the read data is the same as the written data
     for (size_t i = 0; i < sizeof(writeData); ++i) {
@@ -734,14 +734,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3){
     stream.Seek(2, SeekPos::BEGIN);
     ASSERT_EQ(stream.Tell(), 2);
     uint8_t buffer[256];
-    ssize_t bytesRead = stream.Read(buffer, 1);
-    buffer[bytesRead] = '\0';  // Add string termination character
+    ssize_t uint8_tsRead = stream.Read(buffer, 1);
+    buffer[uint8_tsRead] = '\0';  // Add string termination character
     ASSERT_STREQ((char*)buffer, "l");
     ASSERT_EQ(stream.Tell(), 3);
     stream.Seek(3, SeekPos::CURRENT);
     ASSERT_EQ(stream.Tell(), 6);
-    bytesRead = stream.Read(buffer, 1);
-    buffer[bytesRead] = '\0';  // Add string termination character
+    uint8_tsRead = stream.Read(buffer, 1);
+    buffer[uint8_tsRead] = '\0';  // Add string termination character
     ASSERT_STREQ((char*)buffer, " ");
     stream.Seek(0, SeekPos::END);
     ASSERT_EQ(stream.Tell(), sourceData.size());
@@ -774,8 +774,8 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3){
     // Read the string
     uint8_t buffer[256];
     stream.Seek(0, SeekPos::BEGIN);
-    size_t bytesRead = stream.Read(buffer, sourceData.size());
-    buffer[bytesRead] = '\0';  // Add string termination character
+    size_t uint8_tsRead = stream.Read(buffer, sourceData.size());
+    buffer[uint8_tsRead] = '\0';  // Add string termination character
 
     // Compare the read string with the written string
     ASSERT_STREQ((char*)buffer, sourceData.c_str());
@@ -793,16 +793,16 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3){
     size_t size = sizeof(data) / sizeof(data[0]);
     int offset = 0;
     stream.Seek(0, SeekPos::BEGIN);
-    ssize_t bytesWritten = stream.Write(data, size);
-    ASSERT_EQ(bytesWritten, size);
+    ssize_t uint8_tsWritten = stream.Write(data, size);
+    ASSERT_EQ(uint8_tsWritten, size);
     offset = stream.Tell();
     ASSERT_EQ(stream.Tell(), size);
     ASSERT_NE(offset, 0);
     uint8_t readData[10] = {0};
     stream.Seek(0, SeekPos::BEGIN);
     ASSERT_EQ(stream.Tell(), 0);
-    ssize_t bytesRead = stream.Read(readData, size);
-    ASSERT_EQ(bytesRead, size);
+    ssize_t uint8_tsRead = stream.Read(readData, size);
+    ASSERT_EQ(uint8_tsRead, size);
 
     for (size_t i = 0; i < size; ++i) {
         ASSERT_EQ(data[i], readData[i]);
@@ -830,8 +830,8 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
 HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3){
     BufferImageStream stream;
     stream.Open();
-    uint8_t data[4097] = {0};  // Create a 4097-byte data
-    stream.Write(data, 4097);  // Write 4097 bytes of data
+    uint8_t data[4097] = {0};  // Create a 4097-uint8_t data
+    stream.Write(data, 4097);  // Write 4097 uint8_ts of data
     ASSERT_GE(stream.capacity, 4096*2);  // Check if the buffer capacity is at least 4097
     ASSERT_EQ(stream.Tell(), 4097);  // Check if the write position is correct
 }
@@ -845,15 +845,15 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3){
     BufferImageStream stream;
     stream.Open();
 
-    uint8_t data[4096] = {0};  // Create a 4096-byte data
-    stream.Write(data, 4096);  // Write 4096 bytes of data
+    uint8_t data[4096] = {0};  // Create a 4096-uint8_t data
+    stream.Write(data, 4096);  // Write 4096 uint8_ts of data
     ASSERT_EQ(stream.capacity, 4096);  // Check if the buffer capacity is 4096
     ASSERT_EQ(stream.Tell(), 4096);  // Check if the write position is correct
 }
 
 HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3){
     char text[] = "Hello, world!";
-    BufferImageStream stream((uint8_t*)text, sizeof(text));
+    BufferImageStream stream((uint8_t*)text, sizeof(text), BufferImageStream::Fix);
     ASSERT_TRUE(stream.Open());
     ASSERT_EQ(stream.Write((uint8_t*)"Hi", 2), 2);
     ASSERT_EQ(stream.Tell(), 2);
@@ -862,6 +862,58 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3){
     ASSERT_STREQ(text, "Hillo, world!");
 }
 
+HWTEST_F(ImageStreamTest, BufferImageStream_Write006, TestSize.Level3){
+    char text[] = "Hello, world!";
+    BufferImageStream stream((uint8_t*)text, sizeof(text), BufferImageStream::Dynamic);
+    ASSERT_TRUE(stream.Open());
+    ASSERT_EQ(stream.Write((uint8_t*)"Hi", 2), 2);
+    // GTEST_LOG_(INFO) << "text: " << text;
+    ASSERT_EQ(stream.Tell(), 2);
+    ASSERT_STREQ(text, "Hillo, world!");
+    stream.Seek(0, SeekPos::BEGIN);
+    ASSERT_EQ(stream.Write((uint8_t*)"this is a very long text", 24), 24);
+    // GTEST_LOG_(INFO) << "text: " << text;
+    ASSERT_STREQ((char*)stream.MMap(false), "this is a very long text");
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Close001, TestSize.Level3){
+    BufferImageStream stream;
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Close002, TestSize.Level3){
+    BufferImageStream stream;
+    stream.Write((uint8_t*)"Hello, world!", 13);
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Close003, TestSize.Level3){
+    BufferImageStream stream;
+    stream.Write((uint8_t*)"Hello, world!", 13);
+    delete[] stream.Release();
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Close004, TestSize.Level3){
+    BufferImageStream stream;
+    stream.Write((uint8_t*)"Hello, world!", 13);
+    stream.Close();
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Close005, TestSize.Level3){
+    char text[] = "Hello, world!";
+    BufferImageStream stream((uint8_t*)text, sizeof(text), BufferImageStream::Fix);
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Close006, TestSize.Level3){
+    char text[] = "Hello, world!";
+    BufferImageStream stream((uint8_t*)text, sizeof(text), BufferImageStream::Fix);
+    stream.Release();
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_Close007, TestSize.Level3){
+    char text[] = "Hello, world!";
+    BufferImageStream stream((uint8_t*)text, sizeof(text), BufferImageStream::Dynamic);
+    stream.Write((uint8_t*)"this is a very very long text", 28);
+    delete[] stream.Release();
+}
 
 }
 }

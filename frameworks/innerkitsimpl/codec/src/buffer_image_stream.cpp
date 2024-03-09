@@ -15,6 +15,7 @@
 
 #include "buffer_image_stream.h"
 #include "image_log.h"
+#include "image_stream.h"
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -38,16 +39,18 @@ BufferImageStream::BufferImageStream() {
     bufferSize = 0;
     currentOffset = 0;
     memoryMode = Dynamic;
+    originData = nullptr;
 }
 
 BufferImageStream::~BufferImageStream() {}
 
-BufferImageStream::BufferImageStream(uint8_t *originData, size_t size){
+BufferImageStream::BufferImageStream(uint8_t *originData, size_t size, MemoryMode mode){
     buffer = originData;
+    this->originData = originData;
     capacity = size;
     bufferSize = size;
     currentOffset = 0;
-    memoryMode = Fix;
+    memoryMode = mode;
 }
 
 ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
@@ -62,14 +65,23 @@ ssize_t BufferImageStream::Write(uint8_t* data, size_t size) {
             IMAGE_LOGE("BufferImageStream::Write failed, newBuffer is nullptr");
             return -1;
         }
+        std::fill_n(newBuffer, newCapacity, 0); // Initialize the new memory
         if(buffer != nullptr){
+            IMAGE_LOGD("BufferImageStream::Write, before memcpy1, currentOffset:%{public}ld, size:%{public}u, capacity:%{public}ld, newCapacity:%{public}ld", currentOffset, size, capacity, newCapacity);
             memcpy(newBuffer, buffer, capacity);
-            delete[] buffer;
+            IMAGE_LOGD("BufferImageStream::Write, after memcpy1, currentOffset:%{public}ld, size:%{public}u, capacity:%{public}ld, newCapacity:%{public}ld", currentOffset, size, capacity, newCapacity);
+            if(originData != buffer){
+                //不能删外面传入的内存，只能删自己的内存
+                delete[] buffer;
+            }
+            
         }
         buffer = newBuffer;
         capacity = newCapacity;
     }
-    memcpy(buffer + currentOffset, data, size);
+    IMAGE_LOGD("BufferImageStream::Write, before memcpy2, currentOffset:%{public}ld, size:%{public}u, capacity:%{public}ld", currentOffset, size, capacity);
+    memmove(buffer + currentOffset, data, size); // Use memmove instead of memcpy
+    IMAGE_LOGD("BufferImageStream::Write, after memcpy2, currentOffset:%{public}ld, size:%{public}u, capacity:%{public}ld", currentOffset, size, capacity);
     currentOffset += size;
     bufferSize = std::max(currentOffset, bufferSize);
     return size;
@@ -152,7 +164,7 @@ bool BufferImageStream::IsOpen() {
 }
 
 void BufferImageStream::Close() {
-    if(memoryMode == Dynamic){
+    if(memoryMode == Dynamic && buffer != originData && buffer != nullptr){
         delete[] buffer;
     }
     currentOffset = 0;
@@ -170,11 +182,11 @@ bool BufferImageStream::Flush() {
     return true;
 }
 
-byte* BufferImageStream::MMap(bool isWriteable) {
+uint8_t* BufferImageStream::MMap(bool isWriteable) {
     return buffer;
 }
 
-bool BufferImageStream::MUnmap(byte* mmap) {
+bool BufferImageStream::MUnmap(uint8_t* mmap) {
     return true;
 }
 
@@ -210,6 +222,15 @@ void BufferImageStream::CopyFrom(ImageStream& src) {
 
 size_t BufferImageStream::GetSize() {
     return bufferSize;
+}
+
+uint8_t* BufferImageStream::Release() {
+    uint8_t* ret = buffer;
+    buffer = nullptr;
+    capacity = 0;
+    bufferSize = 0;
+    currentOffset = 0;
+    return ret;
 }
 
 } // namespace Media

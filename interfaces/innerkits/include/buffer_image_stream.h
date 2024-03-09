@@ -26,9 +26,28 @@
 namespace OHOS {
 namespace Media {
 
+
 class BufferImageStream : public ImageStream {
 public:
-    NATIVEEXPORT BufferImageStream(uint8_t *originData, size_t size);
+    enum MemoryMode{
+        Fix,        // Memory is fixed at construction and cannot be changed
+        Dynamic     // Memory can be changed
+    };
+
+    /**
+     * @brief Constructs a new BufferImageStream object.
+     * 
+     * Initially, when the write range does not exceed originData, the memory uses the pointer of originData, and there will be no memory copy.
+     * However, when the write range exceeds originData, it will choose according to the MemoryMode. 
+     * If the mode is Fix, it will report a write error and keep the original pointer unchanged.
+     * If the mode is Dynamic, it will reallocate memory, copy the original data, and then write new data.
+     * 
+     * @param originData Pointer to the original data.
+     * @param size Size of the original data.
+     * @param mode Memory mode, can be Fix or Dynamic.
+     */
+    NATIVEEXPORT BufferImageStream(uint8_t *originData, size_t size, MemoryMode mode);
+
     /**
      * @brief Constructs a new BufferImageStream object.
      */
@@ -109,6 +128,12 @@ public:
      */
     NATIVEEXPORT virtual bool Open(OpenMode mode) override;
 
+    /**
+     * For BufferImageStream, the Flush function is not applicable, 
+     * as the data for BufferImageStream is already in memory and there is no need to flush.
+     * 
+     * @return Returns true, as this function is not applicable for BufferImageStream.
+     */
     NATIVEEXPORT virtual bool Flush() override;
 
     /**
@@ -119,7 +144,7 @@ public:
      * @param isWriteable This parameter is ignored, the data of BufferImageStream is always writable.
      * @return Returns a pointer to the data of BufferImageStream.
      */
-    NATIVEEXPORT virtual byte* MMap(bool isWriteable =false) override;
+    NATIVEEXPORT virtual uint8_t* MMap(bool isWriteable =false) override;
 
     /**
      * Release a memory map.
@@ -127,7 +152,7 @@ public:
      * @param mmap The pointer to the memory map that needs to be released.
      * @return Returns true if the memory map is released successfully; otherwise, returns false.
      */
-    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
+    NATIVEEXPORT virtual bool MUnmap(uint8_t* mmap) override;
 
     /**
      * Transfer the content of the source ImageStream to the current BufferImageStream.
@@ -140,10 +165,15 @@ public:
     NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
 
     /**
-     * Get the size sof the BufferImageStream.
+     * After calling Release, BufferImageStream no longer manages the lifecycle of the pointer.
+     * The lifecycle of the pointer needs to be managed by the user. 
+     * Please note that if the returned pointer is the one passed in the constructor, 
+     * then the lifecycle of this pointer should be managed by the one who created it.
+     * If the pointer was created by BufferImageStream, then the lifecycle should be managed by the one who calls Release.
      * 
-     * @return Returns the size of the BufferImageStream.
+     * @return Returns the pointer to the data.
      */
+    NATIVEEXPORT uint8_t* Release();
     NATIVEEXPORT virtual size_t GetSize() override;
 
 private:
@@ -157,19 +187,34 @@ private:
      */
     uint8_t* buffer;
 
+    /**
+     * @brief The original pointer saved when constructed with originData. 
+     * It is needed when closing to determine whether to release the buffer.
+     */
+    uint8_t* originData;
+
+    /**
+     * @brief The pre-allocated memory capacity of the buffer.
+     */
     long capacity;
 
-    long bufferSize; //由于是内存里，所以bufferSize不会超过内存的最大长度，所以这里不用size_t了
+    /**
+     * @brief The data size of the buffer. 
+     * Since it is in memory, bufferSize will not exceed the maximum length of memory, 
+     * so size_t is not used here.
+     */
+    long bufferSize;
 
     /**
      * @brief The current offset in the BufferImageStream.
      */
     long currentOffset;
 
-    enum{        
-        Fix,        //内存在构造时固定不可变更
-        Dynamic     //内存可以变更
-    }memoryMode;
+    /**
+     * @brief The memory mode, which can be fixed memory or dynamic memory. 
+     * See MemoryMode for details.
+     */
+    MemoryMode memoryMode;
 };
 
 } // namespace MultimediaPlugin

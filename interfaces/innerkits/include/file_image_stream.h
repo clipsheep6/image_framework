@@ -141,14 +141,14 @@ public:
      * @param isWriteable If true, the created memory map will be writable; otherwise, it will be read-only.
      * @return A pointer to the memory map if it is created successfully, nullptr otherwise.
      */
-    NATIVEEXPORT virtual byte* MMap(bool isWriteable = false) override;
+    NATIVEEXPORT virtual uint8_t* MMap(bool isWriteable = false) override;
 
     /**
      * @brief Releases a memory map.
      * @param mmap The pointer to the memory map that needs to be released.
      * @return true if the memory map is released successfully, false otherwise.
      */
-    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
+    NATIVEEXPORT virtual bool MUnmap(uint8_t* mmap) override;
 
     /**
      * @brief Transfers the content of the source ImageStream to the current FileImageStream.
@@ -193,7 +193,7 @@ private:
     int dupFD;              // Duplicated file descriptor
     std::string filePath;   // File path
     size_t fileSize;        // File size
-    byte* mappedMemory;     // Address of memory mapping
+    uint8_t* mappedMemory;     // Address of memory mapping
     std::unique_ptr<FileWrapper> fileWrapper;   // File wrapper class, used for testing
 
     enum {
