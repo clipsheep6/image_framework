@@ -1,5 +1,5 @@
-#ifndef PNG_IMAGE_ACCESSOR_H_
-#define PNG_IMAGE_ACCESSOR_H_
+#ifndef DNG_IMAGE_ACCESSOR_H_
+#define DNG_IMAGE_ACCESSOR_H_
 
 #include "abstract_image_accessor.h"
 
@@ -7,10 +7,10 @@ namespace OHOS {
 namespace Media {
 class DngImageAccessor : public AbstractImageAccessor {
 public:
-    DngImageAccessor();
+    DngImageAccessor(std::unique_ptr<ImageStream> &stream);
     ~DngImageAccessor();
 
-    ExifMetadata ReadMetadata(OHOS::Media::ImageStream& stream) override;
+    virtual int ReadMetadata() const override;
 };
 } // namespace Media
 } // namespace OHOS

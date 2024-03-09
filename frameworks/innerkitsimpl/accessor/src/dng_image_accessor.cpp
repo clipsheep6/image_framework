@@ -3,7 +3,8 @@
 namespace OHOS {
 namespace Media {
 
-DngImageAccessor::DngImageAccessor()
+DngImageAccessor::DngImageAccessor(std::unique_ptr<ImageStream> &stream)
+    : AbstractImageAccessor(std::move(stream))
 {
 
 }
@@ -13,11 +14,9 @@ DngImageAccessor::~DngImageAccessor()
 
 }
 
-ExifMetadata DngImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
+int DngImageAccessor::ReadMetadata() const
 {
-    (void)stream;
-
-    return ExifMetadata();
+    return 0;
 }
 
 } // namespace Media

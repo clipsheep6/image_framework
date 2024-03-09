@@ -7,10 +7,10 @@ namespace OHOS {
 namespace Media {
 class PngImageAccessor : public AbstractImageAccessor {
 public:
-    PngImageAccessor();
+    PngImageAccessor(std::unique_ptr<ImageStream> &stream);
     ~PngImageAccessor();
 
-    ExifMetadata ReadMetadata(OHOS::Media::ImageStream& stream) override;
+    virtual int ReadMetadata() const override;
 };
 } // namespace Media
 } // namespace OHOS

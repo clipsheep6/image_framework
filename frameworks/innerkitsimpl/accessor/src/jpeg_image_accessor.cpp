@@ -25,20 +25,31 @@ constexpr byte JPEG_MARKER_SOS = 0xda;
 constexpr auto EXIF_ID = "Exif\0\0";
 constexpr auto EXIF_BLOB_OFFSET = 2;
 
-int JpegImageAccessor::FindNextMarker(ImageStream& imageStream)
+JpegImageAccessor::JpegImageAccessor(std::unique_ptr<ImageStream> &stream)
+    : AbstractImageAccessor(std::move(stream))
+{
+
+}
+
+JpegImageAccessor::~JpegImageAccessor()
+{
+
+}
+
+int JpegImageAccessor::FindNextMarker() const
 {
     int marker = -1;
     byte ch = 0;
-    ssize_t result = imageStream.Read(&ch, 1);
+    ssize_t result = imageStream_->Read(&ch, 1);
     while (ch != 0xff) {
-        result = imageStream.Read(&ch, 1);
+        result = imageStream_->Read(&ch, 1);
         if (static_cast<int>(ch) == EOF) {
             return marker;
         }
     }
 
     if (ch == 0xff) {
-        result = imageStream.Read(&ch, 1);
+        result = imageStream_->Read(&ch, 1);
     }
 
     return static_cast<int>(ch);
@@ -53,48 +64,37 @@ bool HasLength(byte marker)
     }
 }
 
-std::pair<std::array<byte, 2>, uint16_t> JpegImageAccessor::ReadSegmentSize(ImageStream& imageStream,
-                                                                            uint8_t marker)
+std::pair<std::array<byte, 2>, uint16_t> JpegImageAccessor::ReadSegmentSize(uint8_t marker) const
 {
     std::array<byte, 2> buf{0, 0};
     uint16_t size{0};
     if (HasLength(marker)) {
-        imageStream.Read(buf.data(), buf.size());
+        imageStream_->Read(buf.data(), buf.size());
         size = getUShort(buf.data(), bigEndian);
     }
     return {buf, size};
 }
 
-JpegImageAccessor::JpegImageAccessor()
+int JpegImageAccessor::ReadMetadata() const
 {
-
-}
-
-JpegImageAccessor::~JpegImageAccessor()
-{
-
-}
-
-ExifMetadata JpegImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
-{
-    if (!stream.Open()) {
+    if (!imageStream_->Open()) {
         IMAGE_LOGE("Image stream open failed");
-        return ExifMetadata();
+        return 1;
     }
 
     ExifData *exifData;
 
-    int marker = FindNextMarker(stream);
+    int marker = FindNextMarker();
     if (marker == EOF) {
-        return ExifMetadata();
+        return 1;
     }
 
     while (marker != JPEG_MARKER_SOS && marker != JPEG_MARKER_EOI) {
-        const auto [sizebuf, size] = ReadSegmentSize(stream, marker);
+        const auto [sizebuf, size] = ReadSegmentSize(marker);
 
         DataBuf buf(size);
         if (size > 2) {
-            stream.Read(buf.Data(2), size - 2);
+            imageStream_->Read(buf.Data(2), size - 2);
             std::copy(sizebuf.begin(), sizebuf.end(), buf.begin());
         }
 
@@ -105,12 +105,13 @@ ExifMetadata JpegImageAccessor::ReadMetadata(OHOS::Media::ImageStream& stream)
             }
         }
 
-        marker = FindNextMarker(stream);
+        marker = FindNextMarker();
     }
 
-    ExifMetadata metadata(exifData);
+    // std::shared_ptr<ExifData> exifDataPtr(exifData);
+    // exifMetadata_ = std::make_shared<ExifMetadata>(exifDataPtr);
 
-    return metadata;
+    return 0;
 }
 
 } // namespace Media

@@ -11,14 +11,14 @@ namespace Media {
 class ExifMetadata {
 public:
     ExifMetadata() = default;
-    ExifMetadata(ExifData* exifData);
+    ExifMetadata(std::shared_ptr<ExifData> &exifData);
     ~ExifMetadata();
-    std::string GetValue(const std::string& key);
-    void SetValue(const std::string& key, const std::string& value);
-    ExifData GetData();
+    int GetValue(const std::string &key, std::string &value) const;
+    void SetValue(const std::string &key, const std::string &value);
+    ExifData GetData() const;
 
 private:
-    ExifData *exifData_;
+    std::shared_ptr<ExifData> exifData_;
 };
 } // namespace Media
 } // namespace OHOS
