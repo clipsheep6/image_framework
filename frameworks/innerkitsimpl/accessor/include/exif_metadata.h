@@ -1,6 +1,7 @@
 #ifndef EXIF_METADATA_H_
 #define EXIF_METADATA_H_
 
+#include <stdint.h>
 #include <string>
 #include <libexif/exif-data.h>
 #include <libexif/exif-entry.h>
@@ -15,6 +16,7 @@ public:
     ~ExifMetadata();
     int GetValue(const std::string &key, std::string &value) const;
     void SetValue(const std::string &key, const std::string &value);
+    int32_t SetValue_(const std::string &key, const std::string &value);
     ExifData GetData() const;
 
 private:

@@ -1325,6 +1325,7 @@ ohos_unittest("imagetiffparsertest") {
 
   sources = [ 
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_accessor_test/tiff_parser_test.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
     ]
 

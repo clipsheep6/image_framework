@@ -1113,39 +1113,39 @@ int32_t ExifMetaDataValidate::ExifValidateConvert(const std::string &keyName, st
 }
 
 // exif validation portal when modify exif
-int32_t ExifMetaDataValidate::ExifValidate(const std::string &keyName, const std::string &value)
-{
-  IMAGE_LOGD("[ExifValidation] in exifValidate.");
-  // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
-  if(!ExifMetaDataValidate::IsSupportKey(keyName))
-  {
-      return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
-  }
+// int32_t ExifMetaDataValidate::ExifValidate(const std::string &keyName, const std::string &value)
+// {
+//   IMAGE_LOGD("[ExifValidation] in exifValidate.");
+//   // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
+//   if(!ExifMetaDataValidate::IsSupportKey(keyName))
+//   {
+//       return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+//   }
 
-  // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
-  if (!ExifMetaDataValidate::IsModifyAllow(keyName)) {
-      return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
-  }
+//   // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
+//   if (!ExifMetaDataValidate::IsModifyAllow(keyName)) {
+//       return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+//   }
 
-  IMAGE_LOGD("[ExifValidation] keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
-  // 1.validate value format
-  IMAGE_LOGD("[ExifValidation] hasValueFormatValidate is [%{public}d].", ExifMetaDataValidate::HasValueFormatValidate(keyName));
-  auto r = ExifMetaDataValidate::IsValueFormatValidate(keyName, value);
-  IMAGE_LOGD("[ExifValidation] isValueFormatValidate is [%{public}d].", r);
-  if (ExifMetaDataValidate::HasValueFormatValidate(keyName) && r)
-  {
-    IMAGE_LOGD("[ExifValidation] value formate is invalid. keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
-    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //value format validate does not pass
-  }
-  IMAGE_LOGD("[ExifValidation] processed formate value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
-  // 2.validate value range
-  if (ExifMetaDataValidate::IsValueRangeValidate(keyName, value))
-  {
-    IMAGE_LOGD("[ExifValidation] value range is invalid. value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
-    return Media::ERR_MEDIA_OUT_OF_RANGE; // value range validate does not pass
-  }
-  return Media::SUCCESS;
-}
+//   IMAGE_LOGD("[ExifValidation] keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+//   // 1.validate value format
+//   IMAGE_LOGD("[ExifValidation] hasValueFormatValidate is [%{public}d].", ExifMetaDataValidate::HasValueFormatValidate(keyName));
+//   auto r = ExifMetaDataValidate::IsValueFormatValidate(keyName, value);
+//   IMAGE_LOGD("[ExifValidation] isValueFormatValidate is [%{public}d].", r);
+//   if (ExifMetaDataValidate::HasValueFormatValidate(keyName) && r)
+//   {
+//     IMAGE_LOGD("[ExifValidation] value formate is invalid. keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+//     return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //value format validate does not pass
+//   }
+//   IMAGE_LOGD("[ExifValidation] processed formate value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+//   // 2.validate value range
+//   if (ExifMetaDataValidate::IsValueRangeValidate(keyName, value))
+//   {
+//     IMAGE_LOGD("[ExifValidation] value range is invalid. value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+//     return Media::ERR_MEDIA_OUT_OF_RANGE; // value range validate does not pass
+//   }
+//   return Media::SUCCESS;
+// }
 
 
 } // namespace Media
