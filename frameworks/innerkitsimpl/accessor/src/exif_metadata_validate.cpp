@@ -17,7 +17,7 @@
 #include <iostream>
 #include <regex>
 #include <string_view>
-#include "exif_meta_data_validate.h"
+#include "exif_metadata_validate.h"
 #include "hilog/log_cpp.h"
 #include "string_ex.h"
 #include "media_errors.h"
@@ -1080,7 +1080,7 @@ bool ExifMetaDataValidate::IsModifyAllow(const std::string &keyName){
 // exif validation portal when modify exif
 int32_t ExifMetaDataValidate::ExifValidateConvert(const std::string &keyName, std::string &value)
 {
-  IMAGE_LOGD("[ExifValidation] in exifValidate.");
+  IMAGE_LOGD("[ExifValidateConvert] in exifValidate.");
   // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
   if(!ExifMetaDataValidate::IsSupportKey(keyName))
   {
@@ -1092,21 +1092,21 @@ int32_t ExifMetaDataValidate::ExifValidateConvert(const std::string &keyName, st
       return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
   }
 
-  IMAGE_LOGD("[ExifValidation] keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+  IMAGE_LOGD("[ExifValidateConvert] keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
   // 1.validate value format
-  IMAGE_LOGD("[ExifValidation] hasValueFormatValidate is [%{public}d].", ExifMetaDataValidate::HasValueFormatValidate(keyName));
+  IMAGE_LOGD("[ExifValidateConvert] hasValueFormatValidate is [%{public}d].", ExifMetaDataValidate::HasValueFormatValidate(keyName));
   auto r = ExifMetaDataValidate::IsValueFormatValidate(keyName, value);
-  IMAGE_LOGD("[ExifValidation] isValueFormatValidate is [%{public}d].", r);
+  IMAGE_LOGD("[ExifValidateConvert] isValueFormatValidate is [%{public}d].", r);
   if (ExifMetaDataValidate::HasValueFormatValidate(keyName) && r)
   {
-    IMAGE_LOGD("[ExifValidation] value formate is invalid. keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+    IMAGE_LOGD("[ExifValidateConvert] value formate is invalid. keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
     return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //value format validate does not pass
   }
-  IMAGE_LOGD("[ExifValidation] processed formate value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+  IMAGE_LOGD("[ExifValidateConvert] processed formate value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
   // 2.validate value range
   if (ExifMetaDataValidate::IsValueRangeValidate(keyName, value))
   {
-    IMAGE_LOGD("[ExifValidation] value range is invalid. value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+    IMAGE_LOGD("[ExifValidateConvert] value range is invalid. value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
     return Media::ERR_MEDIA_OUT_OF_RANGE; // value range validate does not pass
   }
   return Media::SUCCESS;

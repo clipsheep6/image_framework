@@ -16,7 +16,7 @@ public:
     ~ExifMetadata();
     int GetValue(const std::string &key, std::string &value) const;
     void SetValue(const std::string &key, const std::string &value);
-    int32_t SetValue_(const std::string &key, const std::string &value);
+    int32_t SetValue_(const std::string &key, const std::string &value, std::string &errorstr);
     ExifData GetData() const;
 
 private:

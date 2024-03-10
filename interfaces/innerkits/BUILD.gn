@@ -178,7 +178,7 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_meta_data_validate.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_metadata_validate.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/image_accessor_factory.cpp",
     ]
 
@@ -298,7 +298,7 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_meta_data_validate.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_metadata_validate.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/image_accessor_factory.cpp",
   ]
 

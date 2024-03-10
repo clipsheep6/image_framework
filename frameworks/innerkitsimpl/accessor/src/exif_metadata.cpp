@@ -1,7 +1,8 @@
 #include "exif_metadata.h"
-#include "exif_meta_data_validate.h"
+#include "exif_metadata_validate.h"
 #include "image_log.h"
 #include "media_errors.h"
+#include "securec.h"
 #include <iostream>
 #include <map>
 #include <set>
@@ -67,7 +68,7 @@ std::map<ExifTag, ExifIfd> TagIfdTable = {
     {EXIF_TAG_GPS_LONGITUDE_REF, EXIF_IFD_GPS},
 };
 
-std::set<ExifTag> UndefineFormat = { EXIF_TAG_USER_COMMENT };
+std::set<ExifTag> UndefinedFormat = { EXIF_TAG_USER_COMMENT, EXIF_TAG_SCENE_TYPE };
 
 ExifMetadata::ExifMetadata(std::shared_ptr<ExifData> &exifData)
     : exifData_(exifData)
@@ -108,13 +109,16 @@ void ExifMetadata::SetValue(const std::string &key, const std::string &value)
     (void)key;
 }
 
-int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value)
+int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value, std::string &errorstr)
 {
     std::string valuefix = value;
     auto error = ExifMetaDataValidate::ExifValidateConvert(key, valuefix);
     if(error){
+        IMAGE_LOGE("[SetValue_] ExifValidateConvert fail.");
+        errorstr = "[SetValue_] ExifValidateConvert fail.";
         return error;
     }
+    IMAGE_LOGD("[SetValue_] valuefix is [%{public}s]", valuefix.c_str());
     int valueLen = valuefix.length();
 
     ExifTag tag = exif_tag_from_name(key.c_str());
@@ -129,26 +133,32 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
     }else {
         entry = exif_data_get_entry(exifData_, tag);
     }
-     
+
     // 如果原有exifData不存在此tag需要初始化
     if (entry == nullptr)
     {
+        IMAGE_LOGD("[SetValue_] entry is nullptr.");
+        errorstr = "[SetValue_] entry is nullptr.";
         // 需要判断是否为undefined tag
-        if (UndefineFormat.find(tag) != UndefineFormat.end())
+        if (UndefinedFormat.find(tag) != UndefinedFormat.end())
         {
+            IMAGE_LOGD("[SetValue_] key name is [%{public}s] format is Undefined.", key.c_str());
             /* Create a memory allocator to manage this ExifEntry */
             ExifMem* exifMem = exif_mem_new_default();
             if (exifMem == nullptr) {
+                IMAGE_LOGD("[SetValue_] exif_mem_new_default fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
             }
             /* Create a new ExifEntry using our allocator */
             entry = exif_entry_new_mem(exifMem);
             if (entry == nullptr) {
+                IMAGE_LOGD("[SetValue_] exif_entry_new_mem fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
             }
             /* Allocate memory to use for holding the tag data */
             void* buffer = exif_mem_alloc(exifMem, valueLen);
             if (buffer == nullptr) {
+                IMAGE_LOGD("[SetValue_] allocate memory exif_mem_alloc fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
             }
             /* Fill in the entry */
@@ -166,6 +176,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         else {
             entry = exif_entry_new();
             if (entry == nullptr) {
+                IMAGE_LOGD("[SetValue_] exif_entry_new fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
             }
             entry->tag = tag; // tag must be set before calling exif_content_add_entry
@@ -176,10 +187,11 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
     }
 
     // 如果空间不一致需重新分配
-    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII) && (entry->size > (unsigned int)valueLen)) {
+    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII) && (entry->size != (unsigned int)valueLen)) {
         /* Create a memory allocator to manage this ExifEntry */
         ExifMem* exifMem = exif_mem_new_default();
         if (exifMem == nullptr) {
+            IMAGE_LOGD("[SetValue_] undeinfed or ascii exif_mem_new_default fail.");
             return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
         auto buf = exif_mem_realloc(exifMem, entry->data, valueLen);
@@ -201,8 +213,10 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         ExifShort tmp;
         while (!(is.eof()) && entry->components > icount) {
             is >> tmp;
-            if (is.fail())
+            if (is.fail()){
+                IMAGE_LOGE("[SetValue_] istringstream read ExifShort fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            }
             exif_set_short(
                 entry->data + icount * exif_format_get_size(entry->format),
                 o, tmp);
@@ -216,8 +230,10 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         ExifLong tmp;
         while (!(is.eof()) && entry->components > icount) {
             is >> tmp;
-            if (is.fail())
+            if (is.fail()){
+                IMAGE_LOGE("[SetValue_] istringstream read ExifLong fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            }
             exif_set_long(
                 entry->data + icount * exif_format_get_size(entry->format),
                 o, tmp);
@@ -231,8 +247,10 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         ExifSShort tmp;
         while (!(is.eof()) && entry->components > icount) {
             is >> tmp;
-            if (is.fail())
+            if (is.fail()){
+                IMAGE_LOGE("[SetValue_] istringstream read ExifShort fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            }
             exif_set_sshort(
                 entry->data + icount * exif_format_get_size(entry->format),
                 o, tmp);
@@ -246,8 +264,10 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         ExifSLong tmp;
         while (!(is.eof()) && entry->components > icount) {
             is >> tmp;
-            if (is.fail())
+            if (is.fail()){
+                IMAGE_LOGE("[SetValue_] istringstream read ExifSLong fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            }
             exif_set_slong(
                 entry->data + icount * exif_format_get_size(entry->format),
                 o, tmp);
@@ -259,10 +279,13 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         std::istringstream is(valuefix);
         unsigned long icount = 0;
         ExifRational rat;
+        errorstr = valuefix;
         while (!(is.eof()) && entry->components > icount) {
             is >> rat;
-            if (is.fail())
+            if (is.fail()){
+                IMAGE_LOGE("[SetValue_] istringstream read ExifRational fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            }
             int offset = icount * exif_format_get_size(entry->format);
             exif_set_rational(
                 entry->data + offset,
@@ -277,8 +300,10 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         ExifSRational rat;
         while (!(is.eof()) && entry->components > icount) {
             is >> rat;
-            if (is.fail())
+            if (is.fail()){
+                IMAGE_LOGE("[SetValue_] istringstream read ExifSRational fail.");
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            }
             int offset = icount * exif_format_get_size(entry->format);
             exif_set_srational(
                 entry->data + offset,
@@ -288,10 +313,12 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         break;
     }
     case EXIF_FORMAT_UNDEFINED:
-    case EXIF_FORMAT_ASCII: {
-        // 需要改用为memcpy_s
-        memcpy((entry)->data, valuefix.c_str(), valueLen);
-        std::string result(reinterpret_cast<const char*>((entry)->data), valueLen);
+    case EXIF_FORMAT_ASCII:{
+        if (memcpy_s((entry)->data, valueLen, valuefix.c_str(), valueLen) != 0) {
+            IMAGE_LOGE("[SetValue_] memcpy_s error tag is [%{public}d].", tag);
+            errorstr = "[SetValue_] memcpy_s error";
+            return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        }
     }
         break;
     default:

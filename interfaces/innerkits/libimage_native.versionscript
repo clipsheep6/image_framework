@@ -39,6 +39,7 @@
     *JpegImageAccessor*;
     *ExifMetadata*;
     *DataBuf*;
+    *TiffParser*;
   local:
     *;
 };
