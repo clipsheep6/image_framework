@@ -192,7 +192,11 @@ bool BufferImageStream::MUnmap(byte* mmap) {
     return true;
 }
 
-void BufferImageStream::CopyFrom(ImageStream& src) {
+bool BufferImageStream::CopyFrom(ImageStream& src) {
+    if(!src.IsOpen()){
+        IMAGE_LOGE("BufferImageStream::CopyFrom failed, src is not open");
+        return false;
+    }
     // Clear the current buffer
     if(memoryMode == Dynamic){
         delete[] buffer;
@@ -201,7 +205,7 @@ void BufferImageStream::CopyFrom(ImageStream& src) {
         if(src.GetSize() > static_cast<size_t>(capacity)){
             //固定内存，且超长就不拷贝了，拷了数据也不完整
             IMAGE_LOGE("BufferImageStream::CopyFrom failed, src size:%{public}zu, capacity:%{public}ld", src.GetSize(), capacity);
-            return;
+            return false;
         }
     }
 
@@ -220,6 +224,7 @@ void BufferImageStream::CopyFrom(ImageStream& src) {
             Write(tempBuffer, bytesRead);
         }
     }
+    return true;
 }
 
 size_t BufferImageStream::GetSize() {

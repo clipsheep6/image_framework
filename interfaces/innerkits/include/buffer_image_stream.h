@@ -166,7 +166,7 @@ public:
      * 
      * @param src The source ImageStream, this function will read data from this ImageStream.
      */
-    NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
+    NATIVEEXPORT virtual bool CopyFrom(ImageStream& src) override;
 
     /**
      * After calling Release, BufferImageStream no longer manages the lifecycle of the pointer.

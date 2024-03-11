@@ -454,27 +454,21 @@ bool FileImageStream::MUnmap(byte* mmap){
     return true;
 }
 
-void FileImageStream::CopyFrom(ImageStream& src) {
-    // If the file is already open, close it first
-    if (IsOpen()) {
-        Close();
+bool FileImageStream::CopyFrom(ImageStream& src) {
+    if(!src.IsOpen()) {
+        IMAGE_LOGE("transfer: Source file is not open");
+        return false;
     }
 
-    // Open the new file
-    if (!Open()) {
-        // Failed to open the file
-        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("transfer: Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
-        return;
+    if(!IsOpen()) {
+        IMAGE_LOGE("transfer: File is not open: %{public}s", filePath.c_str());
+        return false;
     }
+    Seek(0, SeekPos::BEGIN);
 
     // Read data from the source ImageStream and write it to the current file
     byte tempBuffer[IMAGE_STREAM_PAGE_SIZE];
     size_t totalBytesWritten = 0;
-    if(!src.IsOpen()) {
-        src.Open();               // If src is not open, open src
-    }
     ssize_t src_cur = src.Tell();               // Temporarily store the position of src
     src.Seek(0, SeekPos::BEGIN);    // Set the position of src to 0
     while (!src.IsEof()) {
@@ -487,7 +481,7 @@ void FileImageStream::CopyFrom(ImageStream& src) {
                 strerror_r(errno, buf, sizeof(buf));
                 IMAGE_LOGE("transfer: Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
                 src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
-                return;
+                return false;
             }
             totalBytesWritten += bytesWritten;
         }
@@ -501,7 +495,7 @@ void FileImageStream::CopyFrom(ImageStream& src) {
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("transfer: Flush file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
-        return;
+        return false;
     }
 
     // Truncate the file
@@ -512,12 +506,13 @@ void FileImageStream::CopyFrom(ImageStream& src) {
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("transfer: Truncate file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
-        return;
+        return false;
     }
 
     // Set the file size to the new size
     fileSize = totalBytesWritten;
-    src.Seek(src_cur, SeekPos::BEGIN); 
+    src.Seek(src_cur, SeekPos::BEGIN);
+    return true;
 }
 
 size_t FileImageStream::GetSize() {

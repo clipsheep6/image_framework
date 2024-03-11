@@ -117,13 +117,14 @@ public:
     NATIVEEXPORT virtual bool IsOpen() override;
 
     /**
-     * @brief Opens the FileImageStream.
+     * @brief Opens the FileImageStream. The default mode is "rb".
      * @return true if it opens successfully, false otherwise.
      */
     NATIVEEXPORT virtual bool Open() override;
 
     /**
-     * @brief Opens the FileImageStream with a specific mode.
+     * @brief Opens the FileImageStream with a specific mode.  
+     *        The Open operation will reset the read and write position of the file
      * @param mode The mode to open the FileImageStream.
      * @return true if it opens successfully, false otherwise.
      */
@@ -150,10 +151,10 @@ public:
     NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
     /**
-     * @brief Transfers the content of the source ImageStream to the current FileImageStream.
+     * @brief Should call Open first.Transfers the content of the source ImageStream to the current FileImageStream.
      * @param src The source ImageStream.
      */
-    NATIVEEXPORT void CopyFrom(ImageStream& src) override;
+    NATIVEEXPORT bool CopyFrom(ImageStream& src) override;
 
     /**
      * @brief Gets the size of the FileImageStream.

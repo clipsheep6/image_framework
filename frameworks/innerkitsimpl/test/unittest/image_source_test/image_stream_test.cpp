@@ -410,6 +410,17 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
 }
 
 /**
+ * @tc.name: FileImageStream_Open005
+ * @tc.desc: Test the Open twice
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Open005, TestSize.Level3){    
+    FileImageStream stream(filePathSource);
+    ASSERT_TRUE(stream.Open(OpenMode::Read));
+    ASSERT_TRUE(stream.Open(OpenMode::Read));
+}
+
+/**
  * @tc.name: FileImageStream_Read001
  * @tc.desc: Test the Read function of FileImageStream, reading 512 bytes
  * @tc.type: FUNC
@@ -532,9 +543,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3) {
     ASSERT_EQ(src.Tell(), 0);
     ASSERT_GE(src.Write((byte*)data.c_str(), data.size()), 0);
     // Call the Transfer function to transfer data from src to dest
-    dest.CopyFrom(src);
-    
     dest.Open();
+    ASSERT_TRUE(dest.CopyFrom(src));
     // Read data from dest and verify that it is the same as the data written to src
     byte buffer[SIZE_255];
     memset(buffer, 0, SIZE_255);
@@ -544,6 +554,20 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3) {
 
     // Verify that src is empty
     ASSERT_EQ(dest.GetSize(), src.GetSize());
+}
+
+
+HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom002, TestSize.Level3) {
+    BufferImageStream src;
+    FileImageStream dest(filePathDest);
+    ASSERT_TRUE(src.Open());
+    ASSERT_EQ(dest.Open(), true);
+    src.Write((byte*)"Hello, world!", 13);
+    ASSERT_TRUE(dest.CopyFrom(src));
+    dest.Seek(0, SeekPos::BEGIN);
+    char buf[14] = {0};
+    dest.Read((byte*)buf, 13);
+    ASSERT_STREQ(buf, "Hello, world!");
 }
 
 /**
