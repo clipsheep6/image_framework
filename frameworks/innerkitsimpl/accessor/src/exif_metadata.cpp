@@ -62,10 +62,37 @@ std::map<ExifTag, ExifIfd> TagIfdTable = {
     {EXIF_TAG_PIXEL_Y_DIMENSION, EXIF_IFD_EXIF},
     {EXIF_TAG_WHITE_BALANCE, EXIF_IFD_EXIF},
     {EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM, EXIF_IFD_EXIF},
-    {EXIF_TAG_GPS_LATITUDE, EXIF_IFD_GPS},
-    {EXIF_TAG_GPS_LONGITUDE, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_VERSION_ID, EXIF_IFD_GPS},
     {EXIF_TAG_GPS_LATITUDE_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_LATITUDE, EXIF_IFD_GPS},
     {EXIF_TAG_GPS_LONGITUDE_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_LONGITUDE, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_ALTITUDE, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_TIME_STAMP, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_SATELLITES, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_STATUS, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_MEASURE_MODE, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DOP, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_SPEED_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_SPEED, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_TRACK_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_TRACK, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_IMG_DIRECTION_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_IMG_DIRECTION, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_MAP_DATUM, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_LATITUDE_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_LATITUDE, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_LONGITUDE_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_LONGITUDE, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_BEARING_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_BEARING, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_DISTANCE_REF, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DEST_DISTANCE, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_PROCESSING_METHOD, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_AREA_INFORMATION, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DATE_STAMP, EXIF_IFD_GPS},
+    {EXIF_TAG_GPS_DIFFERENTIAL, EXIF_IFD_GPS}
 };
 
 std::set<ExifTag> UndefinedFormat = { EXIF_TAG_USER_COMMENT, EXIF_TAG_SCENE_TYPE };
@@ -183,6 +210,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
             exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
             exif_entry_initialize(entry, tag);
             exif_entry_unref(entry);
+            errorstr = "after initialize entry format is " + std::to_string(entry->format);
         }
     }
 
@@ -204,6 +232,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
     }
 
     ExifByteOrder o = exif_data_get_byte_order(entry->parent->parent);
+    // errorstr = "entry format is " + std::to_string(entry->format);
 
     switch (entry->format)
     {
