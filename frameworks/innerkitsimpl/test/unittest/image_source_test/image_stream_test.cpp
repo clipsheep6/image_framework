@@ -686,12 +686,16 @@ int countOpenFileDescriptors() {
  */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
     // GTEST_LOG_(INFO) << "fd0: " << countOpenFileDescriptors();
+    int fdCount = countOpenFileDescriptors();
     int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    ASSERT_EQ(fdCount+1, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd1: " << countOpenFileDescriptors();
     int dupFD = dup(fd);
+    ASSERT_EQ(fdCount+2, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd2: " << countOpenFileDescriptors();
     ASSERT_NE(fd,-1);
     FILE *f = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
+    ASSERT_EQ(fdCount+2, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd3: " << countOpenFileDescriptors();
     ASSERT_NE(f, nullptr);
     std::string text = "Hello, world!";
@@ -711,10 +715,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
 
     // GTEST_LOG_(INFO) << "fd5: " << countOpenFileDescriptors();
     fclose(f);
+    ASSERT_EQ(fdCount+1, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd6: " << countOpenFileDescriptors();
     // close(dupFD);
     // GTEST_LOG_(INFO) << "fd7: " << countOpenFileDescriptors();
     close(fd);
+    ASSERT_EQ(fdCount, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd8: " << countOpenFileDescriptors();
 }
 
@@ -880,6 +886,11 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3){
     ASSERT_EQ(stream.Tell(), 4096);  // Check if the write position is correct
 }
 
+/**
+ * @tc.name: BufferImageStream_Write005
+ * @tc.desc: Test the Write function of BufferImageStream, checking if it can correctly handle fixed buffer size
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3){
     char text[] = "Hello, world!";
     BufferImageStream stream((byte*)text, sizeof(text), BufferImageStream::Fix);
@@ -891,6 +902,11 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3){
     ASSERT_STREQ(text, "Hillo, world!");
 }
 
+/**
+ * @tc.name: BufferImageStream_Write006
+ * @tc.desc: Test the Write function of BufferImageStream, checking if it can correctly handle dynamic buffer size
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Write006, TestSize.Level3){
     char text[] = "Hello, world!";
     BufferImageStream stream((byte*)text, sizeof(text), BufferImageStream::Dynamic);
@@ -905,38 +921,73 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write006, TestSize.Level3){
     ASSERT_STREQ((char*)stream.MMap(false), "this is a very long text");
 }
 
+/**
+ * @tc.name: BufferImageStream_Close001
+ * @tc.desc: Test the Close function of BufferImageStream with an empty stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Close001, TestSize.Level3){
     BufferImageStream stream;
 }
 
+/**
+ * @tc.name: BufferImageStream_Close002
+ * @tc.desc: Test the Close function of BufferImageStream after writing to the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Close002, TestSize.Level3){
     BufferImageStream stream;
     stream.Write((byte*)"Hello, world!", 13);
 }
 
+/**
+ * @tc.name: BufferImageStream_Close003
+ * @tc.desc: Test the Close function of BufferImageStream after releasing the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Close003, TestSize.Level3){
     BufferImageStream stream;
     stream.Write((byte*)"Hello, world!", 13);
     delete[] stream.Release();
 }
 
+/**
+ * @tc.name: BufferImageStream_Close004
+ * @tc.desc: Test the Close function of BufferImageStream after closing the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Close004, TestSize.Level3){
     BufferImageStream stream;
     stream.Write((byte*)"Hello, world!", 13);
     stream.Close();
 }
 
+/**
+ * @tc.name: BufferImageStream_Close005
+ * @tc.desc: Test the Close function of BufferImageStream with a fixed size buffer
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Close005, TestSize.Level3){
     char text[] = "Hello, world!";
     BufferImageStream stream((byte*)text, sizeof(text), BufferImageStream::Fix);
 }
 
+/**
+ * @tc.name: BufferImageStream_Close006
+ * @tc.desc: Test the Close function of BufferImageStream with a fixed size buffer after releasing the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Close006, TestSize.Level3){
     char text[] = "Hello, world!";
     BufferImageStream stream((byte*)text, sizeof(text), BufferImageStream::Fix);
     stream.Release();
 }
 
+/**
+ * @tc.name: BufferImageStream_Close007
+ * @tc.desc: Test the Close function of BufferImageStream with a dynamic size buffer after writing and releasing the stream
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, BufferImageStream_Close007, TestSize.Level3){
     char text[] = "Hello, world!";
     BufferImageStream stream((byte*)text, sizeof(text), BufferImageStream::Dynamic);
@@ -946,6 +997,11 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Close007, TestSize.Level3){
     DataBuf dataBuf(10);
     dataBuf.WriteUInt8(0, 123);
     EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
+}
+
+HWTEST_F(ImageStreamTest, BufferImageStream_MemoryLeak001, TestSize.Level3){
+    char *p = new char[10];
+    p[0] = 1;
 }
 
 }
