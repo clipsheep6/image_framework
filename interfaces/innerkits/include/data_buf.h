@@ -165,7 +165,9 @@ struct DataBuf {
    * Check if the buffer is empty
    * @return true if the buffer is empty, false otherwise
    */
-  bool empty() const;
+  bool empty() const {
+    return pData_.empty();
+  }
 
  private:
   ByteVector pData_;
