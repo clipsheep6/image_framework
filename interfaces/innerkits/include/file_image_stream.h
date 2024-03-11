@@ -189,18 +189,18 @@ private:
      */
     bool OpenFromPath(const char* modeStr);
 
-    FILE *fp;               // File descriptor
-    int dupFD;              // Duplicated file descriptor
-    std::string filePath;   // File path
-    size_t fileSize;        // File size
-    void* mappedMemory;     // Address of memory mapping
-    std::unique_ptr<FileWrapper> fileWrapper;   // File wrapper class, used for testing
+    FILE *fp_;               // File descriptor
+    int dupFD_;              // Duplicated file descriptor
+    std::string filePath_;   // File path
+    size_t fileSize_;        // File size
+    void* mappedMemory_;     // Address of memory mapping
+    std::unique_ptr<FileWrapper> fileWrapper_;   // File wrapper class, used for testing
 
     enum {
         INIT_FROM_FD,
         INIT_FROM_PATH,
         INIT_FROM_UNKNOWN,
-    } initPath;
+    } initPath_;
 };
 
 } // namespace MultimediaPlugin
