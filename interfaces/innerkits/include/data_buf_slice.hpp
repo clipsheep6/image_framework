@@ -564,13 +564,6 @@ Slice<T> makeSlice(T& cont, size_t begin, size_t end) {
   return {cont, begin, end};
 }
 
-/*!
- * Overload of makeSlice for slices of C-arrays.
- */
-template <typename T>
-Slice<T*> makeSlice(T* ptr, size_t begin, size_t end) {
-  return {ptr, begin, end};
-}
 
 /*!
  * @brief Return a new slice spanning the whole container.
@@ -580,14 +573,6 @@ Slice<container> makeSlice(container& cont) {
   return {cont, 0, cont.size()};
 }
 
-/*!
- * @brief Return a new slice spanning from begin until the end of the
- * container.
- */
-template <typename container>
-Slice<container> makeSliceFrom(container& cont, size_t begin) {
-  return {cont, begin, cont.size()};
-}
 
 /*!
  * @brief Return a new slice spanning until `end`.
@@ -597,13 +582,7 @@ Slice<container> makeSliceUntil(container& cont, size_t end) {
   return {cont, 0, end};
 }
 
-/*!
- * Overload of makeSliceUntil for pointer based slices.
- */
-template <typename T>
-Slice<T*> makeSliceUntil(T* ptr, size_t end) {
-  return {ptr, 0, end};
-}
+
 }  // namespace Internal
 }  // namespace Exiv2
 
