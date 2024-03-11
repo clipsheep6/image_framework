@@ -1895,7 +1895,7 @@ HWTEST_F(ImageSourceTest, End2EndTest005, TestSize.Level3)
     int32_t desiredWidth = 56;
     int32_t desiredHeight = 56;
     DecodeOptions decodeOpts;
-    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.width = desiredWidth*2;
     decodeOpts.desiredSize.height = desiredHeight;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
