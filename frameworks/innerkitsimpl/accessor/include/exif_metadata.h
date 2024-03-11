@@ -4,23 +4,42 @@
 #include <stdint.h>
 #include <string>
 #include <libexif/exif-data.h>
-#include <libexif/exif-entry.h>
-#include <libexif/exif-tag.h>
 
 namespace OHOS {
 namespace Media {
 class ExifMetadata {
 public:
-    ExifMetadata() = default;
-    ExifMetadata(std::shared_ptr<ExifData> &exifData);
+    ExifMetadata();
+    ExifMetadata(ExifData *exifData);
     ~ExifMetadata();
     int GetValue(const std::string &key, std::string &value) const;
-    void SetValue(const std::string &key, const std::string &value);
+    bool SetValue(const std::string &key, const std::string &value);
     int32_t SetValue_(const std::string &key, const std::string &value);
-    ExifData GetData() const;
-
+    ExifData* GetData();
+    bool CreateExifdata();
 private:
-    std::shared_ptr<ExifData> exifData_;
+    ExifEntry* InitExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag);
+    ExifEntry* CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len, ExifFormat format);
+    ExifEntry* GetExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len);
+    ExifIfd GetExifIfdByExifTag(const ExifTag &tag);
+    ExifFormat GetExifFormatByExifTag(const ExifTag &tag);
+    std::string GetExifNameByExifTag(const ExifTag &tag);
+    bool CreateExifEntryOfBitsPerSample(const ExifTag &tag, ExifData *data, const std::string &value,
+        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateExifEntryOfRationalExif(const ExifTag &tag, ExifData *data, const std::string &value,
+        ExifByteOrder order, ExifEntry **ptrEntry, const std::string& separator, size_t sepSize);
+    bool CreateExifEntryOfGpsTimeStamp(const ExifTag &tag, ExifData *data, const std::string &value,
+        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateExifEntryOfCompressedBitsPerPixel(const ExifTag &tag, ExifData *data, const std::string &value,
+        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool CreateExifEntryOfGpsLatitudeOrLongitude(const ExifTag &tag, ExifData *data, const std::string &value,
+        ExifByteOrder order, ExifEntry **ptrEntry);
+    bool SetGpsDegreeRational(ExifData *data, ExifEntry **ptrEntry, ExifByteOrder order, const ExifTag &tag,
+    const std::vector<std::string> &dataVec);
+    bool SetGpsRationals(ExifData *data, ExifEntry **ptrEntry, ExifByteOrder order, const ExifTag &tag,
+        const std::vector<ExifRational> &exifRationals);
+private:
+    ExifData *exifData_;
 };
 } // namespace Media
 } // namespace OHOS

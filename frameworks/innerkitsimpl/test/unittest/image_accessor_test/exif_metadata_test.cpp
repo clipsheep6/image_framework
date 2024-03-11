@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include "tiff_parser.h"
+#include "exif_metadata.h"
 
 using namespace OHOS::Media;
 using namespace testing::ext;
@@ -102,6 +103,28 @@ HWTEST_F(ExifMetadataTest, Encode001, TestSize.Level3)
     uint32_t size;
     parser.Encode(&dataPtr, size, exifData_);
     ASSERT_NE(dataPtr, nullptr);
+}
+
+HWTEST_F(ExifMetadataTest, GetValue001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001 start";
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ExifMetadata *ptrExifMetadata = new ExifMetadata(exifData);
+    std::string key = "BitsPerSample";
+    std::string value;
+    ptrExifMetadata->GetValue(key,value);
+    GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001 end";
+}
+
+HWTEST_F(ExifMetadataTest, SetValue001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue001 start";
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ExifMetadata *ptrExifMetadata = new ExifMetadata(exifData);
+    std::string key = "BitsPerSample";
+    std::string value = "8,8,8";
+    ptrExifMetadata->SetValue(key,value);
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue001 end";
 }
 
 
