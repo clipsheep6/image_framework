@@ -13,16 +13,18 @@
  * limitations under the License.
  */
 
+// Standard library includes
+#include <errno.h>
+#include <fcntl.h>
+#include <string>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+// Project includes
 #include "buffer_image_stream.h"
 #include "image_log.h"
 #include "image_stream.h"
-
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -59,7 +61,7 @@ ssize_t BufferImageStream::Write(byte* data, size_t size) {
             IMAGE_LOGE("BufferImageStream::Write failed, currentOffset:%{public}ld, size:%{public}u, capacity:%{public}ld", currentOffset, size, capacity);
             return -1;
         }
-        long newCapacity = ((currentOffset + size + 4095) / 4096) * 4096; // Ensure it is a multiple of 4k
+        long newCapacity = ((currentOffset + size + BUFFER_IMAGE_STREAM_PAGE_SIZE-1) / BUFFER_IMAGE_STREAM_PAGE_SIZE) * BUFFER_IMAGE_STREAM_PAGE_SIZE; // Ensure it is a multiple of 4k
         byte *newBuffer = new byte[newCapacity];
         if(newBuffer == nullptr){
             IMAGE_LOGE("BufferImageStream::Write failed, newBuffer is nullptr");
@@ -88,7 +90,7 @@ ssize_t BufferImageStream::Write(byte* data, size_t size) {
 }
 
 ssize_t BufferImageStream::Write(ImageStream& src) {
-    byte buffer[4096];
+    byte buffer[BUFFER_IMAGE_STREAM_PAGE_SIZE];
     size_t totalBytesWritten = 0;
 
     while (!src.IsEof()) {
@@ -204,14 +206,14 @@ void BufferImageStream::CopyFrom(ImageStream& src) {
     }
 
     // Pre-allocate memory based on the estimated size
-    size_t estimatedSize = ((src.GetSize() + 4095) / 4096) * 4096; // Ensure it is a multiple of 4k
+    size_t estimatedSize = ((src.GetSize() + BUFFER_IMAGE_STREAM_PAGE_SIZE-1) / BUFFER_IMAGE_STREAM_PAGE_SIZE) * BUFFER_IMAGE_STREAM_PAGE_SIZE; // Ensure it is a multiple of 4k
     buffer = new byte[estimatedSize];
     currentOffset = 0;
     bufferSize = 0;
     capacity = estimatedSize;
 
     // Read data from the source ImageStream and write it to the current buffer
-    byte tempBuffer[4096];
+    byte tempBuffer[BUFFER_IMAGE_STREAM_PAGE_SIZE];
     while (!src.IsEof()) {
         size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
         if (bytesRead > 0) {

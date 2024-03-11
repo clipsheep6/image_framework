@@ -19,11 +19,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <vector>
-#include <sys/stat.h>
 #include <memory>
-#include "image_type.h"
+#include <sys/stat.h>
+#include <vector>
+
 #include "image_stream.h"
+#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
@@ -31,19 +32,17 @@ namespace Media {
 class FileWrapper{
 public:
     virtual ~FileWrapper(){}
-    virtual size_t fwrite(const void* src, size_t size, size_t nmemb, FILE* f);
-    virtual size_t fread(void* destv, size_t size, size_t nmemb, FILE* f);
+    virtual size_t fwrite(const void* src, size_t size, size_t nmemb, FILE* file);
+    virtual size_t fread(void* destv, size_t size, size_t nmemb, FILE* file);
 };
 
 class FileImageStream : public ImageStream {
 public:
-    //ToDo 加一个flush
-     
     /**
      * @brief Constructs a new FileImageStream object from a file descriptor.
-     * @param fd The file descriptor.
+     * @param fileDescriptor The file descriptor.
      */
-    NATIVEEXPORT FileImageStream(int fd);
+    NATIVEEXPORT FileImageStream(int fileDescriptor);
 
     /**
      * @brief Constructs a new FileImageStream object from a file path.
@@ -53,9 +52,9 @@ public:
 
     /**
      * @brief Constructs a new FileImageStream object from a FILE pointer.
-     * @param p The FILE pointer.
+     * @param filePointer The FILE pointer.
      */
-    NATIVEEXPORT FileImageStream(FILE *p);
+    NATIVEEXPORT FileImageStream(FILE *filePointer);
 
     /**
      * @brief Destructs the FileImageStream object.
@@ -193,7 +192,7 @@ private:
     int dupFD;              // Duplicated file descriptor
     std::string filePath;   // File path
     size_t fileSize;        // File size
-    byte* mappedMemory;     // Address of memory mapping
+    void* mappedMemory;     // Address of memory mapping
     std::unique_ptr<FileWrapper> fileWrapper;   // File wrapper class, used for testing
 
     enum {

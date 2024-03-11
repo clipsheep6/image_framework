@@ -13,19 +13,17 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <fcntl.h>
+#include <memory>
+#include <string>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "file_image_stream.h"
 #include "image_log.h"
 #include "image_stream.h"
-#include "out/rk3568/obj/third_party/musl/intermidiates/linux/musl_src_ported/include/stdio.h"
-
-#include <cwchar>
-#include <memory>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -36,18 +34,18 @@
 namespace OHOS {
 namespace Media {
 
-size_t FileWrapper::fwrite(const void* src, size_t size, size_t nmemb, FILE* f){
-    return ::fwrite(src, size, nmemb, f);
+size_t FileWrapper::fwrite(const void* src, size_t size, size_t nmemb, FILE* file){
+    return ::fwrite(src, size, nmemb, file);
 }
 
-size_t FileWrapper::fread(void* destv, size_t size, size_t nmemb, FILE* f){
-    return ::fread(destv, size, nmemb, f);
+size_t FileWrapper::fread(void* destv, size_t size, size_t nmemb, FILE* file){
+    return ::fread(destv, size, nmemb, file);
 }
 
-FileImageStream::FileImageStream(int fd){
-    dupFD = dup(fd);
+FileImageStream::FileImageStream(int fileDescriptor){
+    dupFD = dup(fileDescriptor);
     if(dupFD == -1){
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("dup: Duplicate file descriptor failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
     }
@@ -58,10 +56,10 @@ FileImageStream::FileImageStream(int fd){
     this->fileWrapper = std::make_unique<FileWrapper>();
 }
 
-FileImageStream::FileImageStream(FILE *p){
-    dupFD = dup(fileno(p));
+FileImageStream::FileImageStream(FILE *filePointer){
+    dupFD = dup(fileno(filePointer));
     if(dupFD == -1){
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("fileno: Get file descriptor failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
     }
@@ -100,9 +98,9 @@ ssize_t FileImageStream::Write(byte* data, size_t size) {
     }
 
     size_t result = fileWrapper->fwrite(data, 1, size, fp);
-    if (result != size || ferror(fp)) {
+    if (result != size || (ferror(fp) != 0)) {
         // Write failed
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         if(initPath == INIT_FROM_FD){
             IMAGE_LOGE("Write file failed: %{public}d, reason: %{public}s。result is %{public}d, size is %{public}d", dupFD, buf, result, size);
@@ -116,7 +114,7 @@ ssize_t FileImageStream::Write(byte* data, size_t size) {
 
 ssize_t FileImageStream::Write(ImageStream& src) {
     // Create a buffer
-    byte buffer[4096];
+    byte buffer[IMAGE_STREAM_PAGE_SIZE];
     ssize_t totalBytesWritten = 0;
 
     while (!src.IsEof()) {
@@ -136,7 +134,7 @@ ssize_t FileImageStream::Write(ImageStream& src) {
         ssize_t bytesWritten = Write(buffer, bytesRead);
         if (bytesWritten == -1) {
             // Write failed
-            char buf[256];        
+            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
             strerror_r(errno, buf, sizeof(buf));
             IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
             return -1;
@@ -155,9 +153,9 @@ ssize_t FileImageStream::Read(byte* buf, size_t size) {
     }
 
     size_t result = fileWrapper->fread(buf, 1, size, fp);
-    if (result == 0 && ferror(fp)) {
+    if (result == 0 && ferror(fp) != 0) {
         // Read failed
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("Read file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         return -1;
@@ -175,7 +173,7 @@ int FileImageStream::ReadByte(){
     int byte = fgetc(fp);
     if (byte == EOF) {
         // Read failed
-        char buf[256]; 
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE]; 
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("Read file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         return -1;
@@ -184,7 +182,6 @@ int FileImageStream::ReadByte(){
     return byte;
 }
 
-//todo，改成直接暴露
 long FileImageStream::Seek(int offset, SeekPos pos) {
     if (fp == nullptr) {
         // File is not open
@@ -238,8 +235,8 @@ bool FileImageStream::IsEof() {
         return true;
     }
 
-    if (ferror(fp)) {
-        char errstr[256];
+    if (ferror(fp) != 0) {
+        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, errstr, sizeof(errstr));
         IMAGE_LOGE("Check EOF failed: %{public}s", errstr);
         clearerr(fp); // Clear the error
@@ -257,7 +254,7 @@ void FileImageStream::Close() {
     // If there is a memory map, delete it
     if (mappedMemory != nullptr) {
         if(munmap(mappedMemory, fileSize) == -1){
-            char buf[256];        
+            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
             strerror_r(errno, buf, sizeof(buf));
             IMAGE_LOGE("munmap: Memory mapping failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         }
@@ -285,7 +282,6 @@ void FileImageStream::Close() {
         IMAGE_LOGD("File closed: %{public}s", filePath.c_str());
     }
     initPath = INIT_FROM_UNKNOWN;
-    return;
 }
 
 bool FileImageStream::Open(){
@@ -299,15 +295,14 @@ bool FileImageStream::OpenFromFD(const char* modeStr){
     }
     // Decide how to create FILE* fp based on the mode parameter
     fp = fdopen(dupFD, modeStr);
-    if (fp == NULL || ferror(fp)) {
+    if (fp == NULL || ferror(fp) != 0) {
         // Handle errors, such as throwing exceptions or returning error codes
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("FileImageStream: Open file failed: %{public}s, reason: %{public}s.", filePath.c_str(), buf);
         return false;
-    }else{
-        IMAGE_LOGD("File opened: %{public}d", dupFD);
-    }
+    }   IMAGE_LOGD("File opened: %{public}d", dupFD);
+   
     return true;
 }
 
@@ -319,7 +314,7 @@ bool FileImageStream::OpenFromPath(const char* modeStr){
             fp = fopen(filePath.c_str(), "w");
             if (fp == nullptr) {
                 // Failed to create file
-                char buf[256];        
+                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
                 strerror_r(errno, buf, sizeof(buf));
                 IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
                 return false;
@@ -329,14 +324,14 @@ bool FileImageStream::OpenFromPath(const char* modeStr){
             fp = fopen(filePath.c_str(), "r+");
             if (fp == nullptr) {
                 // Failed to reopen the file
-                char buf[256];        
+                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
                 strerror_r(errno, buf, sizeof(buf));
                 IMAGE_LOGE("Reopen file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
                 return false;
             }
         } else {
             // Open failed
-            char buf[256];        
+            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
             strerror_r(errno, buf, sizeof(buf));
             IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
             return false;
@@ -398,7 +393,7 @@ bool FileImageStream::Flush(){
     }
 
     if (fflush(fp) != 0) {
-        char errstr[100];
+        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, errstr, sizeof(errstr));
         IMAGE_LOGE("Flush file failed: %{public}s", errstr);
         return false;
@@ -412,7 +407,7 @@ byte* FileImageStream::MMap(bool isWriteable) {
     if (fp == nullptr) {
         if (!Open()) {
             // Failed to open the file
-            char buf[256];        
+            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
             strerror_r(errno, buf, sizeof(buf));
             IMAGE_LOGE("mmap: Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
             return nullptr;
@@ -426,19 +421,19 @@ byte* FileImageStream::MMap(bool isWriteable) {
     }
 
     // Get the file descriptor from the file pointer
-    int fd = fileno(fp);
+    int fileDescriptor = fileno(fp);
 
     // Create a memory map
-    mappedMemory = static_cast<byte*>(::mmap(nullptr, fileSize, isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fd, 0));
-    if (mappedMemory == MAP_FAILED) {
+    mappedMemory = ::mmap(nullptr, fileSize, isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fileDescriptor, 0);
+    if (mappedMemory == (void*)MAP_FAILED) {
         // Memory mapping failed
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("mmap: Memory mapping failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         mappedMemory = nullptr;
     }
     IMAGE_LOGD("mmap: Memory mapping created: %{public}s, size: %{public}zu", filePath.c_str(), fileSize);
-    return mappedMemory;
+    return (byte*)mappedMemory;
 }
 
 bool FileImageStream::MUnmap(byte* mmap){
@@ -450,7 +445,7 @@ bool FileImageStream::MUnmap(byte* mmap){
     // Delete the memory map
     if (munmap(mmap, fileSize) == -1) {
         // Memory mapping failed
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("munmap: Memory mapping failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         return false;
@@ -468,16 +463,18 @@ void FileImageStream::CopyFrom(ImageStream& src) {
     // Open the new file
     if (!Open()) {
         // Failed to open the file
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("transfer: Open file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         return;
     }
 
     // Read data from the source ImageStream and write it to the current file
-    byte tempBuffer[4096];
+    byte tempBuffer[IMAGE_STREAM_PAGE_SIZE];
     size_t totalBytesWritten = 0;
-    if(!src.IsOpen()) src.Open();               // If src is not open, open src
+    if(!src.IsOpen()) {
+        src.Open();               // If src is not open, open src
+    }
     ssize_t src_cur = src.Tell();               // Temporarily store the position of src
     src.Seek(0, SeekPos::BEGIN);    // Set the position of src to 0
     while (!src.IsEof()) {
@@ -486,7 +483,7 @@ void FileImageStream::CopyFrom(ImageStream& src) {
             size_t bytesWritten = Write(tempBuffer, bytesRead);
             if (bytesWritten == static_cast<size_t>(-1)) {
                 // Write failed
-                char buf[256];        
+                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
                 strerror_r(errno, buf, sizeof(buf));
                 IMAGE_LOGE("transfer: Write file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
                 src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
@@ -500,7 +497,7 @@ void FileImageStream::CopyFrom(ImageStream& src) {
     // Flush the file
     if (fflush(fp) != 0) {
         // Failed to flush the file
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("transfer: Flush file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
@@ -508,10 +505,10 @@ void FileImageStream::CopyFrom(ImageStream& src) {
     }
 
     // Truncate the file
-    int fd = fileno(fp);
-    if (ftruncate(fd, totalBytesWritten) == -1) {
+    int fileDescriptor = fileno(fp);
+    if (ftruncate(fileDescriptor, totalBytesWritten) == -1) {
         // Failed to truncate the file
-        char buf[256];        
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];        
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("transfer: Truncate file failed: %{public}s, reason: %{public}s", filePath.c_str(), buf);
         src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
@@ -520,8 +517,7 @@ void FileImageStream::CopyFrom(ImageStream& src) {
 
     // Set the file size to the new size
     fileSize = totalBytesWritten;
-    src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
-    return;
+    src.Seek(src_cur, SeekPos::BEGIN); 
 }
 
 size_t FileImageStream::GetSize() {

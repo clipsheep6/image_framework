@@ -16,16 +16,20 @@
 #ifndef INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_H
 #define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_H
 
+// Standard library includes
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <vector>
-#include "image_type.h"
+
+// Project includes
 #include "image_stream.h"
+#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
 
+#define BUFFER_IMAGE_STREAM_PAGE_SIZE IMAGE_STREAM_PAGE_SIZE
 
 class BufferImageStream : public ImageStream {
 public:

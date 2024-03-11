@@ -13,10 +13,7 @@
  * limitations under the License.
  */
 
-// included header files
-#include "image_log.h"
-#include "data_buf.h"
-// + standard includes
+// Standard library includes
 #include <array>
 #include <cctype>
 #include <climits>
@@ -26,6 +23,10 @@
 #include <numeric>
 #include <sstream>
 #include <utility>
+
+// Project includes
+#include "data_buf.h"
+#include "image_log.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -40,14 +41,14 @@ namespace Media {
 
 std::string upper(const std::string& str) {
   std::string result = str;
-  std::transform(str.begin(), str.end(), result.begin(), [](int c) { return static_cast<char>(toupper(c)); });
+  std::transform(str.begin(), str.end(), result.begin(), [](int character) { return static_cast<char>(toupper(character)); });
   return result;
 }
 
-std::string lower(const std::string& a) {
-  std::string b = a;
-  std::transform(a.begin(), a.end(), b.begin(), [](int c) { return static_cast<char>(tolower(c)); });
-  return b;
+std::string lower(const std::string& inputString) {
+  std::string result = inputString;
+  std::transform(inputString.begin(), inputString.end(), result.begin(), [](int character) { return static_cast<char>(tolower(character)); });
+  return result;
 }
 
 DataBuf::DataBuf(size_t size) : pData_(size) {
@@ -73,25 +74,22 @@ uint8_t DataBuf::ReadUInt8(size_t offset) const {
   if (offset >= pData_.size()) {
     IMAGE_LOGE("Overflow in DataBuf::read_uint8");
     return 0;
-    // throw std::out_of_range("Overflow in DataBuf::read_uint8");
   }
   return pData_[offset];
 }
 
-void DataBuf::WriteUInt8(size_t offset, uint8_t x) {
+void DataBuf::WriteUInt8(size_t offset, uint8_t value) {
   if (offset >= pData_.size()) {
     IMAGE_LOGE("Overflow in DataBuf::write_uint8");
     return;
-    // throw std::out_of_range("Overflow in DataBuf::write_uint8");
   }
-  pData_[offset] = x;
+  pData_[offset] = value;
 }
 
 int DataBuf::CmpBytes(size_t offset, const void* buf, size_t bufsize) const {
   if (pData_.size() < bufsize || offset > pData_.size() - bufsize) {
     IMAGE_LOGE("Overflow in DataBuf::cmpBytes");
-    return 0;
-    // throw std::out_of_range("Overflow in DataBuf::cmpBytes");
+    return -1;
   }
   return memcmp(&pData_[offset], buf, bufsize);
 }
@@ -107,7 +105,6 @@ const byte* DataBuf::C_Data(size_t offset) const {
   if (offset > pData_.size()) {
     IMAGE_LOGE("Overflow in DataBuf::c_data");
     return nullptr;
-    // throw std::out_of_range("Overflow in DataBuf::c_data");
   }
   return &pData_[offset];
 }
@@ -116,24 +113,27 @@ uint16_t getUShort(const byte* buf, ByteOrder byteOrder) {
   return getUShort(makeSliceUntil(buf, 2), byteOrder);
 }
 
-size_t us2Data(byte* buf, uint16_t s, ByteOrder byteOrder) {
+const uint16_t LOWER_BYTE_MASK = 0x00ffU;
+const uint16_t UPPER_BYTE_MASK = 0xff00U;
+
+size_t us2Data(byte* buf, uint16_t value, ByteOrder byteOrder) {
   if (byteOrder == littleEndian) {
-    buf[0] = static_cast<byte>(s & 0x00ffU);
-    buf[1] = static_cast<byte>((s & 0xff00U) >> 8);
+    buf[0] = static_cast<byte>(value & LOWER_BYTE_MASK);
+    buf[1] = static_cast<byte>((value & UPPER_BYTE_MASK) >> DATA_BUF_BYTE_SIZE);
   } else {
-    buf[0] = static_cast<byte>((s & 0xff00U) >> 8);
-    buf[1] = static_cast<byte>(s & 0x00ffU);
+    buf[0] = static_cast<byte>((value & UPPER_BYTE_MASK) >> DATA_BUF_BYTE_SIZE);
+    buf[1] = static_cast<byte>(value & LOWER_BYTE_MASK);
   }
   return 2;
 }
 
-size_t s2Data(byte* buf, int16_t s, ByteOrder byteOrder) {
+size_t s2Data(byte* buf, int16_t value, ByteOrder byteOrder) {
   if (byteOrder == littleEndian) {
-    buf[0] = static_cast<byte>(s & 0x00ffU);
-    buf[1] = static_cast<byte>((s & 0xff00U) >> 8);
+    buf[0] = static_cast<byte>(value & LOWER_BYTE_MASK);
+    buf[1] = static_cast<byte>((value & UPPER_BYTE_MASK) >> DATA_BUF_BYTE_SIZE);
   } else {
-    buf[0] = static_cast<byte>((s & 0xff00U) >> 8);
-    buf[1] = static_cast<byte>(s & 0x00ffU);
+    buf[0] = static_cast<byte>((value & UPPER_BYTE_MASK) >> DATA_BUF_BYTE_SIZE);
+    buf[1] = static_cast<byte>(value & LOWER_BYTE_MASK);
   }
   return 2;
 }
