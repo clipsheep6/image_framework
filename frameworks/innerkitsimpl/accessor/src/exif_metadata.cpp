@@ -136,13 +136,12 @@ void ExifMetadata::SetValue(const std::string &key, const std::string &value)
     (void)key;
 }
 
-int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value, std::string &errorstr)
+int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value)
 {
     std::string valuefix = value;
     auto error = ExifMetaDataValidate::ExifValidateConvert(key, valuefix);
     if(error){
         IMAGE_LOGE("[SetValue_] ExifValidateConvert fail.");
-        errorstr = "[SetValue_] ExifValidateConvert fail.";
         return error;
     }
     IMAGE_LOGD("[SetValue_] valuefix is [%{public}s]", valuefix.c_str());
@@ -165,7 +164,6 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
     if (entry == nullptr)
     {
         IMAGE_LOGD("[SetValue_] entry is nullptr.");
-        errorstr = "[SetValue_] entry is nullptr.";
         // 需要判断是否为undefined tag
         if (UndefinedFormat.find(tag) != UndefinedFormat.end())
         {
@@ -210,7 +208,6 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
             exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
             exif_entry_initialize(entry, tag);
             exif_entry_unref(entry);
-            errorstr = "after initialize entry format is " + std::to_string(entry->format);
         }
     }
 
@@ -308,7 +305,6 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         std::istringstream is(valuefix);
         unsigned long icount = 0;
         ExifRational rat;
-        errorstr = valuefix;
         while (!(is.eof()) && entry->components > icount) {
             is >> rat;
             if (is.fail()){
@@ -345,7 +341,6 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
     case EXIF_FORMAT_ASCII:{
         if (memcpy_s((entry)->data, valueLen, valuefix.c_str(), valueLen) != 0) {
             IMAGE_LOGE("[SetValue_] memcpy_s error tag is [%{public}d].", tag);
-            errorstr = "[SetValue_] memcpy_s error";
             return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
     }
