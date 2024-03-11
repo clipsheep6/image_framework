@@ -138,7 +138,7 @@ napi_value ImageReceiverNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("readNextImage", JsReadNextImage),
         DECLARE_NAPI_FUNCTION("on", JsOn),
         DECLARE_NAPI_FUNCTION("release", JsRelease),
-        DECLARE_NAPI_FUNCTION("requestCpuAccess", JsRequestCpuAccess),
+        DECLARE_NAPI_FUNCTION("setCpuAccess", JsSetCpuAccess),
 
 #ifdef IMAGE_DEBUG_FLAG
         DECLARE_NAPI_GETTER("test", JsTest),
@@ -528,7 +528,7 @@ napi_value ImageReceiverNapi::JsGetFormat(napi_env env, napi_callback_info info)
     return JSCommonProcess(args);
 }
 
-napi_value ImageReceiverNapi::JsRequestCpuAccess(napi_env env, napi_callback_info info)
+napi_value ImageReceiverNapi::JsSetCpuAccess(napi_env env, napi_callback_info info)
 {
     IMAGE_FUNCTION_IN();
 
@@ -563,7 +563,7 @@ napi_value ImageReceiverNapi::JsRequestCpuAccess(napi_env env, napi_callback_inf
             IMAGE_ERR("Native instance is nullptr");
             return false;
         }
-        napi_create_int32(args.env, native->RequestCpuAccess(isCpuAccess), &(ic.result));
+        napi_create_int32(args.env, native->SetCpuAccess(isCpuAccess), &(ic.result));
         return true;
     };
 

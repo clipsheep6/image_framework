@@ -475,19 +475,19 @@ HWTEST_F(ImageReceiverTest, ReleaseReceiverTest001, TestSize.Level3)
 }
 
 /**
- * @tc.name: RequestCpuAccessTest001
- * @tc.desc: test RequestCpuAccess
+ * @tc.name: SetCpuAccessTest001
+ * @tc.desc: test SetCpuAccess
  * @tc.type: FUNC
  */
-HWTEST_F(ImageReceiverTest, RequestCpuAccessTest001, TestSize.Level3)
+HWTEST_F(ImageReceiverTest, SetCpuAccessTest001, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImageReceiverTest: RequestCpuAccessTest001 start";
+    GTEST_LOG_(INFO) << "ImageReceiverTest: SetCpuAccessTest001 start";
     std::shared_ptr<ImageReceiver> imageReceiver;
     imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
         RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
-    auto res = imageReceiver->RequestCpuAccess(true);
+    auto res = imageReceiver->SetCpuAccess(true);
     ASSERT_EQ(res, SUCCESS);
-    GTEST_LOG_(INFO) << "ImageReceiverTest: RequestCpuAccessTest001 end";
+    GTEST_LOG_(INFO) << "ImageReceiverTest: SetCpuAccessTest001 end";
 }
 
 void PushBuffer(std::shared_ptr<ImageReceiver> imageReceiver)

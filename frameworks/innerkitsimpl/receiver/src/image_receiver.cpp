@@ -225,10 +225,14 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
     return iva;
 }
 
-uint32_t ImageReceiver::RequestCpuAccess(bool isCpuAccess)
+uint32_t ImageReceiver::SetCpuAccess(bool isCpuAccess)
 {
+    if (receiverConsumerSurface_ == nullptr) {
+        IMAGE_LOGD("SurfaceAsConsumer == nullptr");
+        return IMAGE_RESULT_GET_SURFAC_FAILED;
+    }
     receiverConsumerSurface_->ConsumerRequestCpuAccess(isCpuAccess);
-    IMAGE_LOGD("ImageReceiver::RequestCpuAccess %{public}d", isCpuAccess);
+    IMAGE_LOGD("ImageReceiver::SetCpuAccess %{public}d", isCpuAccess);
     return SUCCESS;
 }
 
