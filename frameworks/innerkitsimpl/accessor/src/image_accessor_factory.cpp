@@ -14,7 +14,7 @@ namespace Media {
 
 const int IMAGE_HEADER_SIZE = 10;
 const byte jpegHeader[] = { 0xff, 0xd8, 0xff };
-const byte pngHeader[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+const byte pngHeader[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
 std::shared_ptr<ImageAccessor> ImageAccessorFactory::CreateImageAccessor(uint8_t *buffer, const uint32_t size)
 {
