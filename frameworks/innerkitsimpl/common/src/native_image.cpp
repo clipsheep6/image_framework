@@ -17,6 +17,7 @@
 #include "image_log.h"
 #include "media_errors.h"
 #include "native_image.h"
+#include "v1_1/buffer_handle_meta_key_type.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -32,10 +33,17 @@ namespace {
     const std::string DATA_SIZE_TAG = "dataSize";
 }
 
+using namespace OHOS::HDI::Display::Graphic::Common::V1_1;
+
 namespace OHOS {
 namespace Media {
 NativeImage::NativeImage(sptr<SurfaceBuffer> buffer,
-    std::shared_ptr<IBufferProcessor> releaser) : buffer_(buffer), releaser_(releaser)
+    std::shared_ptr<IBufferProcessor> releaser) : buffer_(buffer), releaser_(releaser),
+    frameMode_(HEBC_ACCESS_HW_ONLY)
+{}
+
+NativeImage::NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser,
+    uint8_t frameMode) : buffer_(buffer), releaser_(releaser), frameMode_(frameMode)
 {}
 
 struct YUVData {
@@ -290,6 +298,18 @@ int32_t NativeImage::GetFormat(int32_t &format)
         return ERR_MEDIA_DEAD_OBJECT;
     }
     format = buffer_->GetFormat();
+    return SUCCESS;
+}
+
+int32_t NativeImage::IsCpuAccess(bool &isCpuAccess)
+{
+    if (buffer_ == nullptr) {
+        return ERR_MEDIA_DEAD_OBJECT;
+    }
+    isCpuAccess = false;
+    if (frameMode_ == HEBC_ACCESS_CPU_ACCESS) {
+        isCpuAccess = true;
+    }
     return SUCCESS;
 }
 
