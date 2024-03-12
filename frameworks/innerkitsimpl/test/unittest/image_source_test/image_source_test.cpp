@@ -633,9 +633,10 @@ HWTEST_F(ImageSourceTest, GetImagePropertyInt001, TestSize.Level3)
 
     uint32_t index = 0;
     int32_t value = 0;
-    std::string key;
+    std::string key = "ImageWidth";
     imageSource->GetImagePropertyInt(index, key, value);
 
+    ASSERT_EQ(value, 500);
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImagePropertyInt001 end";
 }
 
@@ -671,10 +672,10 @@ HWTEST_F(ImageSourceTest, GetImagePropertyString001, TestSize.Level3)
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
 
     uint32_t index = 0;
-    std::string key = "";
+    std::string key = "ImageWidth";
     std::string value;
-    uint32_t ret = imageSource->GetImagePropertyString(index, key, value);
-    ASSERT_NE(ret, SUCCESS);
+    imageSource->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(value, "500");
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImagePropertyString001 end";
 }
 

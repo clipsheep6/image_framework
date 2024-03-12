@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <string>
 #include <libexif/exif-data.h>
+#include <libexif/exif-entry.h>
+#include <libexif/exif-tag.h>
 
 namespace OHOS {
 namespace Media {
