@@ -37,17 +37,13 @@ struct TagDetails
 
 class ExifMetadataConverter
 {
-public:
-    static std::pair<int32_t, std::string> Convert(const std::string &keyName, const std::string &value);
-    static int32_t Validate(const std::string &keyName, const std::string &value);
-
 private:
     static int32_t ValidateValueRange(const std::string &keyName, const std::string &value);
     static int32_t ValidateValueFormat(const std::string &keyName, std::string &value);
+    static int32_t ValidateValueFormat_(const std::string &keyName, const std::string &value);
     static bool IsKeySupported(const std::string &keyName);
     static bool IsModifyAllowed(const std::string &keyName);
     static bool IsFormatValidationConfigExisting(const std::string &keyName);
-
     static int Gcd(int a, int b)
     {
         if (b == 0) {
@@ -68,8 +64,6 @@ private:
     static void RationalFormat(std::string &value);
     static std::string GetFractionFromStr(const std::string &decimal);
     static void DecimalRationalFormat(std::string &value);
-
-private:
     static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> doubleIntWithBlank;
     static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> doubleIntWithComma;
     static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleIntWithBlank;
@@ -94,7 +88,12 @@ private:
     static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> tribleIntToRationalWithColon;
     static std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string> fourIntToRationalWithDot;
     static std::multimap<std::string, std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string>> valueFormatValidateConfig;
+    static std::multimap<std::string, std::string> valueFormatValidateConfig_;
     static std::map<std::string, std::tuple<const TagDetails*, const size_t>> valueRangeValidateConfig;
+public:
+    static std::pair<int32_t, std::string> Convert(const std::string &keyName, const std::string &value);
+    static int32_t Validate(const std::string &keyName, const std::string &value);
+
 };
 
 } // namespace Media

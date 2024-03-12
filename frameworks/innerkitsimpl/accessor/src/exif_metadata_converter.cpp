@@ -26,6 +26,12 @@
 #include <set>
 #include <utility>
 
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "ExifMetadataConverter"
+
 #define N_(String) (String)
 
 namespace OHOS {
@@ -993,6 +999,16 @@ std::multimap<std::string, std::pair<std::function<int32_t (std::string&, const 
   {"LensSpecification", decimal4Ratiional4Comma},
 };
 
+std::multimap<std::string, std::string> ExifMetadataConverter::valueFormatValidateConfig_ = {
+  {"BitsPerSample",  TRIBLEINTWITHCOMMAREGEX},
+  {"ImageLength",  ONEINTREGEX},
+  {"ImageWidth",  ONEINTREGEX},
+  {"GPSLatitude", TRIBLEINTWITHCOMMAREGEX},
+  {"GPSLatitude", TRIBLEDECIMALWITHCOMMAREGEX},
+  {"GPSLongitude", TRIBLEINTWITHCOMMAREGEX},
+  {"GPSLongitude", TRIBLEDECIMALWITHCOMMAREGEX}
+};
+
 // validate the value range. For example GPSLatitudeRef the value must be 'N' or 'S'.
 int32_t ExifMetadataConverter::ValidateValueRange(const std::string &keyName, const std::string &value)
 {
@@ -1073,6 +1089,25 @@ int32_t ExifMetadataConverter::ValidateValueFormat(const std::string &keyName, s
   return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; // FAILED
 }
 
+int32_t ExifMetadataConverter::ValidateValueFormat_(const std::string &keyName, const std::string &value)
+{
+  IMAGE_LOGD("isValueFormatValidate keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+  // get first iterator according to keyName
+  for (auto iterator = ExifMetadataConverter::valueFormatValidateConfig_.find(keyName); iterator != ExifMetadataConverter::valueFormatValidateConfig_.end() && iterator != ExifMetadataConverter::valueFormatValidateConfig_.upper_bound(keyName); iterator++)
+  {
+    bool isValidated = ExifMetadataConverter::ValidRegex(value, iterator->second);
+    IMAGE_LOGD("isValueFormatValidate ret i is [%{public}d].", isValidated);
+    if (isValidated)
+    {
+      IMAGE_LOGD("isValueFormatValidate ret SUCCESS.");
+      return Media::SUCCESS; // SUCCESS
+    }
+  }
+
+  IMAGE_LOGD("isValueFormatValidate ret ERR_IMAGE_DECODE_EXIF_UNSUPPORT.");
+  return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; // FAILED
+}
+
 bool ExifMetadataConverter::IsKeySupported(const std::string &keyName)
 {
   auto it = SUPPORTKEYS.find(keyName);
@@ -1128,6 +1163,36 @@ std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string
 // exif validation portal
 int32_t ExifMetadataConverter::Validate(const std::string &keyName, const std::string &value)
 {
+  IMAGE_LOGD("[ValidateAndConvert] in exifValidate.");
+  // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
+  if(!ExifMetadataConverter::IsKeySupported(keyName))
+  {
+      return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+  }
+
+  // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
+  if (!ExifMetadataConverter::IsModifyAllowed(keyName)) {
+      return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+  }
+
+  IMAGE_LOGD("[ValidateAndConvert] keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+  // 1.validate value format
+  IMAGE_LOGD("[ValidateAndConvert] hasValueFormatValidate is [%{public}d].", ExifMetadataConverter::IsFormatValidationConfigExisting(keyName));
+  auto r = ExifMetadataConverter::ValidateValueFormat_(keyName, value);
+  IMAGE_LOGD("[ValidateAndConvert] isValueFormatValidate is [%{public}d].", r);
+  bool isFormatExisting = (ExifMetadataConverter::valueFormatValidateConfig_.find(keyName) != ExifMetadataConverter::valueFormatValidateConfig_.end());
+  if (isFormatExisting && r)
+  {
+    IMAGE_LOGD("[ValidateAndConvert] value formate is invalid. keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; //value format validate does not pass
+  }
+  IMAGE_LOGD("[ValidateAndConvert] processed formate value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+  // 2.validate value range
+  if (ExifMetadataConverter::ValidateValueRange(keyName, value))
+  {
+    IMAGE_LOGD("[ValidateAndConvert] value range is invalid. value is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+    return Media::ERR_MEDIA_OUT_OF_RANGE; // value range validate does not pass
+  }
   return Media::SUCCESS;
 }
 

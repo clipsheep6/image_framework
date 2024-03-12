@@ -17,12 +17,6 @@
 #undef LOG_TAG
 #define LOG_TAG "ExifMetadata"
 
-#undef LOG_DOMAIN
-#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
-
-#undef LOG_TAG
-#define LOG_TAG "ExifMetadata"
-
 namespace OHOS {
 namespace Media {
 namespace {

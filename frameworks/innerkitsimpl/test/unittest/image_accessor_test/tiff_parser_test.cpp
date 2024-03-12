@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include "tiff_parser.h"
+#include "image_log.h"
 
 using namespace OHOS::Media;
 using namespace testing::ext;
@@ -33,6 +34,7 @@ public:
 
 HWTEST_F(TiffParserTest, DecodeJpegExif001, TestSize.Level3)
 {
+    IMAGE_LOGD("DecodeJpegExif001");
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
     unsigned char* buf = nullptr;
     unsigned int len = 0;

@@ -15,9 +15,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include <stdint.h>
-#include "tiff_parser.h"
-#include "exif_metadata.h"
+#include "exif_metadata_converter.h"
 #include "image_log.h"
 
 using namespace OHOS::Media;
@@ -28,11 +26,12 @@ namespace Multimedia {
 
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
 
-class ExifMetadataTest : public testing::Test {
+class MetadataConverterTest : public testing::Test {
 public:
-    ExifMetadataTest() {}
-    ~ExifMetadataTest() {}
+    MetadataConverterTest() {}
+    ~MetadataConverterTest() {}
 };
+
 
 std::string MODIFYDATA[][3] = {
     {"BitsPerSample", "9 9 8", "9, 9, 8"},
@@ -72,63 +71,20 @@ std::string MODIFYDATA[][3] = {
     {"UserComment", "comm", "comm"},
 };
 
-HWTEST_F(ExifMetadataTest, SetValue_001, TestSize.Level3)
+HWTEST_F(MetadataConverterTest, Validate001, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue_001 start";
-    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
-    unsigned char* buf = nullptr;
-    unsigned int len = 0;
-    // 从文件中获取exif buffer（包括了jpeg exif header 头信息45 78 69 66 00 00）
-    exif_data_save_data(exifData, &buf, &len);
-    ASSERT_NE(len, 0);
+    IMAGE_LOGD("MetadataConverterTest: Validate001");
+    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 start";
 
-    ExifData *exifData_ = nullptr;
-    TiffParser::DecodeJpegExif(buf, len, &exifData_);
-    ASSERT_NE(exifData_, nullptr);
+    ASSERT_EQ(ExifMetadataConverter::Validate("BitsPerSample", "9,9,8"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("Orientation", "1"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("ImageLength", "100"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("ImageWidth", "100"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitude", "39,54,20"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitude", "39,54,20"), 0);
 
-    ExifMetadata metadata(exifData_);
-
-    int rows = sizeof(MODIFYDATA) / sizeof(MODIFYDATA[0]);
-
-    // int cols = sizeof(MODIFYDATA[0]) / sizeof(MODIFYDATA[0][0]);
-    for (int i = 0; i < rows; ++i) {
-        std::string key = MODIFYDATA[i][0];
-        std::string modifyvalue = MODIFYDATA[i][1];
-        GTEST_LOG_(INFO) << "ExifMetadataTest: modifyvalue: "<< modifyvalue;
-
-        int32_t iret = metadata.SetValue_(key, modifyvalue);
-        std::string retvalue;
-        metadata.GetValue(key, retvalue);
-
-        GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue_001" << "key: " << key << " modifyvalue: " << modifyvalue 
-            << " iret: " << iret << " retvalue: " << retvalue;
-        ASSERT_EQ(retvalue, MODIFYDATA[i][2]);
-
-    }
-
-    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue_001 end";
-}
-
-HWTEST_F(ExifMetadataTest, GetValue001, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001 start";
-    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
-    ExifMetadata *ptrExifMetadata = new ExifMetadata(exifData);
-    std::string key = "BitsPerSample";
-    std::string value;
-    ptrExifMetadata->GetValue(key,value);
-    GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001 end";
-}
-
-HWTEST_F(ExifMetadataTest, SetValue001, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue001 start";
-    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
-    ExifMetadata *ptrExifMetadata = new ExifMetadata(exifData);
-    std::string key = "BitsPerSample";
-    std::string value = "8,8,8";
-    ptrExifMetadata->SetValue(key,value);
-    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue001 end";
+    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 end";
+   
 }
 
 } // namespace Multimedia

@@ -1364,48 +1364,10 @@ static bool CheckExifDataValueOfBitsPerSample(const std::string &key, const std:
 
 static bool CheckExifDataValue(const std::string &key, const std::string &value, std::string &errorInfo)
 {
-    if (IsSameTextStr(key, "BitsPerSample")) {
-        return CheckExifDataValueOfBitsPerSample(key, value, errorInfo);
-    } else if (IsSameTextStr(key, "Orientation")) {
-        if (!IsNumericStr(value) || atoi(value.c_str()) < 1 || static_cast<uint32_t>(atoi(value.c_str())) > NUM_8) {
-            errorInfo = "Orientation has invalid exif value: ";
-            errorInfo.append(value);
-            return false;
-        }
-    } else if (IsSameTextStr(key, "ImageLength") || IsSameTextStr(key, "ImageWidth")) {
-        if (!IsNumericStr(value)) {
-            errorInfo = "ImageLength or ImageWidth has invalid exif value: ";
-            errorInfo.append(value);
-            return false;
-        }
-    } else if (IsSameTextStr(key, "GPSLatitude") || IsSameTextStr(key, "GPSLongitude")) {
-        std::vector<std::string> gpsVec;
-        SplitStr(value, ",", gpsVec);
-        if (gpsVec.size() != NUM_2 && gpsVec.size() != NUM_3) {
-            errorInfo = "GPSLatitude or GPSLongitude has invalid exif value: ";
-            errorInfo.append(value);
-            return false;
-        }
-
-        for (size_t i = 0; i < gpsVec.size(); i++) {
-            if (!IsDoubleString(gpsVec[i])) {
-                errorInfo = "GPSLatitude or GPSLongitude has invalid exif value: ";
-                errorInfo.append(gpsVec[i]);
-                return false;
-            }
-        }
-    } else if (IsSameTextStr(key, "GPSLatitudeRef")) {
-        if (!IsSameTextStr(value, "N") && !IsSameTextStr(value, "S")) {
-            errorInfo = "GPSLatitudeRef has invalid exif value: ";
-            errorInfo.append(value);
-            return false;
-        }
-    } else if (IsSameTextStr(key, "GPSLongitudeRef")) {
-        if (!IsSameTextStr(value, "W") && !IsSameTextStr(value, "E")) {
-            errorInfo = "GPSLongitudeRef has invalid exif value: ";
-            errorInfo.append(value);
-            return false;
-        }
+    bool isError = ExifMetadataConverter::Validate(key, value);
+    if (isError) {
+        errorInfo = key + "has invalid exif value: ";
+        errorInfo.append(value);
     }
     return true;
 }
