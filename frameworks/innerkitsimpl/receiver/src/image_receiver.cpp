@@ -334,7 +334,7 @@ std::shared_ptr<NativeImage> ImageReceiver::LastNativeImage()
         }
     } else {
         IMAGE_LOGD("ImageReceiver::LastNativeImage GetMetadata ATTRKEY_REQUEST_ACCESS_TYPE not found");
-    }   
+    }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor());
 }
 } // namespace Media
