@@ -3694,19 +3694,19 @@ HWTEST_F(ImageSourceJpegTest, GetEncodedFormat002, TestSize.Level3)
      * @tc.steps: step3. check the SourceInfo encodedformat.
      * @tc.expected: step3. the SourceInfo encodedformat the same as input type of image.
      */
-    std::string imageSource_format;
-    errorCode = imageSource->GetEncodedFormat(imageSource_format);
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
     ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_EQ(imageSource_format, IMAGE_ENCODEDFORMAR);
-    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat002 imageSource_format" << imageSource_format;
+    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat002 imageSourceFormat" << imageSourceFormat;
     /**
      * @tc.steps: step2. check the Pixelmap encodedformat
      * @tc.expected: step2. the SourceInfo encodedformat the same as input type of image.
      */
-    std::string pixelMap_format;
-    pixelMap->GetEncodedFormat(pixelMap_format);
-    ASSERT_EQ(pixelMap_format, IMAGE_ENCODEDFORMAR);
-    GTEST_LOG_(INFO) << "ImageSourceTest: GetEncodedFormat002 pixelMap_format: " << pixelMap_format;
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetEncodedFormat002 pixelMapFormat: " << pixelMapFormat;
 }
 
 /**
@@ -3739,19 +3739,19 @@ HWTEST_F(ImageSourceJpegTest, GetEncodedFormat003, TestSize.Level3)
      * @tc.steps: step3. check the SourceInfo encodedformat.
      * @tc.expected: step3. the SourceInfo encodedformat the same as input type of image.
      */
-    std::string imageSource_format;
-    errorCode = imageSource->GetEncodedFormat(imageSource_format);
+    std::string imageSourceFormat;
+    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
     ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_EQ(imageSource_format, IMAGE_ENCODEDFORMAR);
-    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat003 imageSource_format" << imageSource_format;
+    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat003 imageSourceFormat" << imageSourceFormat;
     /**
      * @tc.steps: step2. check the Pixelmap encodedformat
      * @tc.expected: step2. the SourceInfo encodedformat the same as input type of image.
      */
-    std::string pixelMap_format;
-    pixelMap->GetEncodedFormat(pixelMap_format);
-    ASSERT_EQ(pixelMap_format, IMAGE_ENCODEDFORMAR);
-    GTEST_LOG_(INFO) << "ImageSourceTest: GetEncodedFormat003 pixelMap_format: " << pixelMap_format;
+    std::string pixelMapFormat;
+    pixelMap->GetEncodedFormat(pixelMapFormat);
+    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetEncodedFormat003 pixelMapFormat: " << pixelMapFormat;
 }
 } // namespace Multimedia
 } // namespace OHOS

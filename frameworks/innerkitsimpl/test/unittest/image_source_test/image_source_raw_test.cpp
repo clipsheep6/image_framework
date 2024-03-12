@@ -519,6 +519,8 @@ HWTEST_F(ImageSourceRawTest, RawGetEncodedFormat001, TestSize.Level3)
      * @tc.steps: step1. create image source by correct raw file path and format hit.
      * @tc.expected: step1. create image source success.
      */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
     std::string IMAGE_ENCODEDFORMAR = "image/x-raw";
     opts.formatHint = IMAGE_ENCODEDFORMAR;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
@@ -529,6 +531,10 @@ HWTEST_F(ImageSourceRawTest, RawGetEncodedFormat001, TestSize.Level3)
      * @tc.expected: step2. decode image source to pixel map success.
      */
     DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap, nullptr);
+    ASSERT_NE(pixelMap.get(), nullptr);
     ASSERT_EQ(pixelMap->GetAlphaType(), AlphaType::IMAGE_ALPHA_TYPE_OPAQUE);
     /**
      * @tc.steps: step3. get imagesource encodedformat.

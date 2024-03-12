@@ -584,21 +584,5 @@ HWTEST_F(ImageNdkTest, OH_ImageSource_InitNativeTest, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSource_InitNativeTest end";
 }
-
-/**
- * @tc.name: OH_ImageSource_GetEncodedFormatTest
- * @tc.desc: OH_ImageSource_GetEncodedFormat
- * @tc.type: FUNC
- */
-HWTEST_F(ImageNdkTest, OH_ImageSource_GetEncodedFormatTest, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSource_GetEncodedFormatTest start";
-    ImageSourceNative *native = nullptr;
-    char* res = nullptr;
-    int32_t ret = OH_ImageSource_GetEncodedFormat(native, res);
-    ASSERT_NE(ret, OHOS_IMAGE_RESULT_SUCCESS);
-
-    GTEST_LOG_(INFO) << "ImageNdkTest: OH_ImageSource_GetEncodedFormatTest end";
-}
 }
 }

@@ -357,20 +357,6 @@ static int32_t PixelMapNapiUnAccessPixels(PixelMapNapi* native, PixelMapNapiArgs
     }
 }
 
-static int32_t PixelMapNapiGetEncodedFormat(PixelMapNapi* native, PixelMapNapiArgs* args)
-{
-    int32_t error = IMAGE_RESULT_SUCCESS;
-    auto pixelmap = CheckAndGetPixelMap(native, args, error);
-    if (pixelmap == nullptr || args->encodedFormat == nullptr) {
-        return error != IMAGE_RESULT_SUCCESS ? error : IMAGE_RESULT_INVALID_PARAMETER;
-    }
-
-    std::string format;
-    pixelmap->GetEncodedFormat(format);
-    *(args->encodedFormat) = format;
-    return pixelmap->errorCode;
-}
-
 static const std::map<int32_t, PixelMapNapiEnvFunc> g_EnvFunctions = {
     {ENV_FUNC_CREATE, PixelMapNapiCreate},
     {ENV_FUNC_CREATE_ALPHA, PixelMapNapiCreateAlpha},
@@ -391,7 +377,6 @@ static const std::map<int32_t, PixelMapNapiCtxFunc> g_CtxFunctions = {
     {CTX_FUNC_GET_IMAGE_INFO, PixelMapNapiGetImageInfo},
     {CTX_FUNC_ACCESS_PIXELS, PixelMapNapiAccessPixels},
     {CTX_FUNC_UNACCESS_PIXELS, PixelMapNapiUnAccessPixels},
-    {CTX_FUNC_GET_ENCODED_FORMAT, PixelMapNapiGetEncodedFormat},
 };
 
 MIDK_EXPORT

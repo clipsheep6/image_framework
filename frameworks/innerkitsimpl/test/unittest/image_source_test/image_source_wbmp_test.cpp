@@ -372,8 +372,8 @@ HWTEST_F(ImageSourceWbmpTest, WbmpGetEncodedFormat001, TestSize.Level3)
      */
     DecodeOptions decodeOpts;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_NE(errorCode, SUCCESS);
-    ASSERT_EQ(pixelMap.get(), nullptr);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
 
     /**
      * @tc.steps: step3. get imagesource encodedformat.
@@ -407,8 +407,8 @@ HWTEST_F(ImageSourceWbmpTest, WbmpGetEncodedFormat002, TestSize.Level3)
      */
     uint32_t errorCode = 0;
     SourceOptions opts;
-    opts.formatHint = IMAGE_ENCODEDFORMAR;
     std::string IMAGE_ENCODEDFORMAR = "image/vnd.wap.wbmp";
+    opts.formatHint = IMAGE_ENCODEDFORMAR;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_WBMP_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);

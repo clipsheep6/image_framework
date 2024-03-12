@@ -731,24 +731,6 @@ static int32_t ImageSourceNapiUpdateData(struct ImageSourceArgs* args)
     return ProcessIncrementalPixelMap(args, completed);
 }
 
-static int32_t ImageSourceNapiGetEncodedFormat(struct ImageSourceArgs* args)
-{
-    auto native = GetNativeImageSource(args);
-    if (native == nullptr || args->encodedFormat == nullptr) {
-        IMAGE_LOGE("ImageSourceNapiGetEncodedFormat native image or out is nullptr");
-        return IMAGE_RESULT_BAD_PARAMETER;
-    }
-    std::string format;
-    uint32_t errorCode = native->GetEncodedFormat(format);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("ImageSourceNapiGetEncodedFormat native failed");
-        return IMAGE_RESULT_BAD_PARAMETER;
-    }
-    *(args->encodedFormat) = format;
-    IMAGE_LOGD("ImageSourceNapiGetEncodedFormat Success");
-    return IMAGE_RESULT_SUCCESS;
-}
-
 static const std::map<int32_t, ImageSourceNapiFunc> g_Functions = {
     {ENV_FUNC_IMAGE_SOURCE_CREATE, ImageSourceNapiCreate},
     {ENV_FUNC_IMAGE_SOURCE_CREATE_FROM_URI, ImageSourceNapiCreateFromUri},
@@ -766,7 +748,6 @@ static const std::map<int32_t, ImageSourceNapiFunc> g_Functions = {
     {CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY, ImageSourceNapiGetImageProperty},
     {CTX_FUNC_IMAGE_SOURCE_MODIFY_IMAGE_PROPERTY, ImageSourceNapiModifyImageProperty},
     {CTX_FUNC_IMAGE_SOURCE_UPDATE_DATA, ImageSourceNapiUpdateData},
-    {CTX_FUNC_IMAGE_SOURCE_GET_ENCODED_FORMAT, ImageSourceNapiGetEncodedFormat},
 };
 
 MIDK_EXPORT

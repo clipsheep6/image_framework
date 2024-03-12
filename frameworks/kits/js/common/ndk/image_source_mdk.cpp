@@ -281,20 +281,6 @@ int32_t OH_ImageSource_Release(ImageSourceNative* native)
     return IMAGE_RESULT_SUCCESS;
 }
 
-MIDK_EXPORT
-int32_t OH_ImageSource_GetEncodedFormat(const ImageSourceNative* native, char* res)
-{
-    if (native == nullptr || native->napi == nullptr || res == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
-    }
-    ImageSourceArgs args;
-    args.napi = native->napi;
-    std::string format(res);
-    args.encodedFormat = &format;
-    auto ret = ImageSourceNativeCall(CTX_FUNC_IMAGE_SOURCE_GET_ENCODED_FORMAT, &args);
-    return ret;
-}
-
 #ifdef __cplusplus
 };
 #endif
