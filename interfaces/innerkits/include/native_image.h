@@ -41,10 +41,12 @@ public:
 class NativeImage {
 public:
     NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser);
+    NativeImage(sptr<SurfaceBuffer> buffer, std::shared_ptr<IBufferProcessor> releaser, uint8_t frameMode);
     ~NativeImage() = default;
     int32_t GetSize(int32_t &width, int32_t &height);
     int32_t GetDataSize(uint64_t &size);
     int32_t GetFormat(int32_t &format);
+    int32_t IsCpuAccess(bool &isCpuAccess);
     NativeComponent* GetComponent(int32_t type);
     int32_t CombineYUVComponents();
     sptr<SurfaceBuffer> GetBuffer()
@@ -62,6 +64,7 @@ private:
     sptr<SurfaceBuffer> buffer_;
     std::shared_ptr<IBufferProcessor> releaser_;
     std::map<int32_t, std::unique_ptr<NativeComponent>> components_;
+    uint8_t frameMode_;
 };
 } // namespace Media
 } // namespace OHOS

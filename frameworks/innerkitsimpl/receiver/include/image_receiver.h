@@ -77,6 +77,7 @@ public:
     std::shared_ptr<IBufferProcessor> GetBufferProcessor();
     std::shared_ptr<NativeImage> NextNativeImage();
     std::shared_ptr<NativeImage> LastNativeImage();
+    uint32_t SetCpuAccess(bool isCpuAccess);
 private:
     std::shared_ptr<IBufferProcessor> bufferProcessor_;
 };
