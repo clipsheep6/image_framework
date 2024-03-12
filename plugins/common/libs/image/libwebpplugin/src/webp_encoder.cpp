@@ -18,6 +18,7 @@
 #include "image_trace.h"
 #include "media_errors.h"
 #include "pixel_convert_adapter.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -289,6 +290,7 @@ uint32_t WebpEncoder::DoEncode(Media::PixelMap &pixelMap, WebPConfig &webpConfig
         " rgbStride=%{public}d, rgbSize=%{public}d", width, height, componentsNum_, rgbStride, rgbSize);
 
     std::unique_ptr<uint8_t[]> rgb = std::make_unique<uint8_t[]>(rgbSize);
+    FaultExceededMemory("WebpEncoder", "DoEncode", rgbSize);
     if (!DoTransform(pixelMap, reinterpret_cast<char*>(&rgb[0]), componentsNum_)) {
         IMAGE_LOGE("DoEncode, transform issue.");
         return ERROR;

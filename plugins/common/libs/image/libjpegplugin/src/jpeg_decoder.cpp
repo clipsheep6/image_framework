@@ -25,6 +25,7 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
+#include "image_dfx.h"
 
 #ifndef _WIN32
 #include "securec.h"
@@ -361,6 +362,7 @@ uint32_t JpegDecoder::DoSwDecode(DecodeContext &context) __attribute__((no_sanit
     uint32_t rowStride = GetRowBytes();
     if (context.pixelsBuffer.buffer == nullptr) {
         uint64_t byteCount = static_cast<uint64_t>(rowStride) * decodeInfo_.output_height;
+        FaultExceededMemory("JpegDecoder", "DoSwDecode", byteCount);
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
             uint32_t id = context.pixelmapUniqueId_;

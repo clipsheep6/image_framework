@@ -28,6 +28,7 @@
 #include "media_errors.h"
 #include "securec.h"
 #include "string_ex.h"
+#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -608,9 +609,11 @@ bool ExtDecoder::ResetCodec()
 #ifdef JPEG_HW_DECODE_ENABLE
 uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 {
-    if (HardWareDecode(context) == SUCCESS) {
+    uint32_t ret = HardWareDecode(context);
+    if (ret == SUCCESS) {
         return SUCCESS;
     }
+    FaultHardWareDecode(info_.width(), info_.height(), sampleSize_, ret, "HardWareDecode failed");
     return ERROR;
 }
 #endif
@@ -618,20 +621,14 @@ uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
 #ifdef JPEG_HW_DECODE_ENABLE
+    
     if (IsSupportHardwareDecode() && DoHardWareDecode(context) == SUCCESS) {
         return SUCCESS;
     }
 #endif
-    context.outInfo.size.width = dstInfo_.width();
-    context.outInfo.size.height = dstInfo_.height();
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
-    }
-    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
-    bool isOutputYuv420Format = IsYuv420Format(context.info.pixelFormat);
-    if (isOutputYuv420Format && skEncodeFormat == SkEncodedImageFormat::kJPEG) {
-        return DecodeToYuv420(index, context);
     }
     uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
     uint8_t *dstBuffer = nullptr;
@@ -641,6 +638,8 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         byteCount = byteCount / NUM_4 * NUM_3;
     }
     if (context.pixelsBuffer.buffer == nullptr) {
+        IMAGE_LOGD("Decode alloc byte count.");
+        FaultExceededMemory("ExtDecoder", "Decode", byteCount);
         res = SetContextPixelsBuffer(byteCount, context);
         if (res != SUCCESS) {
             return res;
@@ -661,19 +660,22 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     ReportImageType(skEncodeFormat);
     IMAGE_LOGD("decode format %{public}d", skEncodeFormat);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
-        return GifDecode(index, context, rowStride);
+        res = GifDecode(index, context, rowStride);
+        return res;
     }
     SkCodec::Result ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_);
     if (ret != SkCodec::kSuccess && ResetCodec()) {
-        ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_); // Try again
+        ret = codec_->getPixels(    , dstBuffer, rowStride, &dstOptions_); // Try again
     }
     if (ret != SkCodec::kSuccess) {
         IMAGE_LOGE("Decode failed, get pixels failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
-        return RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), static_cast<uint8_t*>(context.pixelsBuffer.buffer),
+        res = RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), 
+		static_cast<uint8_t*>(context.pixelsBuffer.buffer),
             byteCount, dstInfo_.width() * dstInfo_.height());
+        return res;
     }
     return SUCCESS;
 }
@@ -1412,17 +1414,19 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
 
 bool ExtDecoder::IsSupportHardwareDecode() {
     if (info_.isEmpty() && !DecodeHeader()) {
+        InfoHardDecode(info_.width(), info_.height(), false);
         return false;
     }
     if (!(ImageSystemProperties::GetHardWareDecodeEnabled()
         && codec_->getEncodedFormat() == SkEncodedImageFormat::kJPEG)) {
+        InfoHardDecode(info_.width(), info_.height(), false);
         return false;
     }
     int width = info_.width();
     int height = info_.height();
-    return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
-        && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
-}
+    bool res = (width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
+        && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM);
+    InfoHardDecode(info_.width(), info_.height(), res);
 
 bool ExtDecoder::IsYuv420Format(PlPixelFormat format)
 {

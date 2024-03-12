@@ -32,6 +32,7 @@
 #include "image_utils.h"
 #include "media_errors.h"
 #include "string_ex.h"
+#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -103,6 +104,7 @@ static SkImageInfo ToSkInfo(Media::PixelMap *pixelMap)
 
 static uint32_t RGBToRGBx(Media::PixelMap *pixelMap, SkImageInfo &skInfo, TmpBufferHolder &holder)
 {
+    FaultExceededMemory("ExtEncoder", "RGBToRGBx",skInfo.computeMinByteSize());
     holder.buf = std::make_unique<uint8_t[]>(skInfo.computeMinByteSize());
     ExtPixels src = {
         static_cast<uint8_t*>(pixelMap->GetWritablePixels()),
@@ -158,7 +160,11 @@ uint32_t ExtEncoder::FinalizeEncode()
     if (pixelmap_ == nullptr || output_ == nullptr) {
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    ImageInfo imageInfo;
+    pixelmap_->GetImageInfo(imageInfo);
+    InfoEncode(opts_.format, opts_.quality, imageInfo.size.width, imageInfo.size.height,
+        static_cast<int32_t>(imageInfo.colorSpace), static_cast<int32_t>(imageInfo.alphaType),
+        static_cast<int32_t>(imageInfo.pixelFormat));
     if (IsAstc(opts_.format)) {
         AstcCodec astcEncoder;
         astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);

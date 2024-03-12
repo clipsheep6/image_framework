@@ -18,3 +18,111 @@ DECODED_IMAGE_TYPE_STATISTICS:
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   IMAGE_TYPE: {type: STRING, desc: Type of the decoded image for example png jpeg bmp gif ico and wbmp}
+
+FAULT_MEMORY_EXCEEDED:
+  __BASE: {type: FAULT, level: CRITICAL, desc: The actual memory usage exceeds the threshold, preserve: true}
+  OCCUPY_MEMORY: {type: UINT64, desc: The current occupied memory}
+  EXCEEDED_MEMORY: {type: UINT64, desc: The out of memory}
+  MODULE: {type: STRING, desc: module name}
+  MSG: {type: STRING, desc: message}
+
+
+FAULT_DECODE_TIME_EXCEEDED:
+  __BASE: {type: FAULT, level: CRITICAL, desc: The decoding time exceeds the threshold, preserve: true}
+  TAKE_TIME: {type: UINT64, desc: The current decoding time}
+  EXCEEDED_TIME: {type: UINT64, desc: The out of time}
+  MODULE: {type: STRING, desc: module name}
+  MSG: {type: STRING, desc: message}
+
+FAULT_ENCODE_TIME_EXCEEDED:
+  __BASE: {type: FAULT, level: CRITICAL, desc: The encoding time exceeds the threshold, preserve: true}
+  TAKE_TIME: {type: UINT64, desc: The current encoding time}
+  EXCEEDED_TIME: {type: UINT64, desc: The out of time}
+  MODULE: {type: STRING, desc: module name}
+  MSG: {type: STRING, desc: message}
+
+FAULT_HARDWARE_DECODE:
+  __BASE: {type: FAULT, level: CRITICAL, desc: Cause of the hardware decode failure, preserve: true}
+  SRC_WIDTH: {type: INT32, desc: The width of the source image}
+  SRC_HEIGHT: {type: INT32, desc: The height of the source image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+  ERROR_CODES: {type: UINT32, desc: error codes}
+  MSG: {type: STRING, desc: message}
+
+FAULT_SOFTWARE_DECODE:
+  __BASE: {type: FAULT, level: CRITICAL, desc: Cause of the software decode failure, preserve: true}
+  DES_WIDTH: {type: UINT32, desc: The width of the desired image}
+  DES_HEIGHT: {type: UINT32, desc: The height of the desired image}
+  DES_PIXEL_FORMAT: {type: INT32, desc: The pixel format of the desired image}
+  DES_COLOR_SPACE: {type: INT32, desc: The color space of the desired image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+  ERROR_CODES: {type: UINT32, desc: error codes}
+  MSG: {type: STRING, desc: message}
+
+
+INFO_DECODE_IMAGE:
+  __BASE: {type: BEHAVIOR, level: CRITICAL, desc: Cause of the software decode failure, preserve: true}
+  DES_WIDTH: {type: UINT32, desc: The width of the desired image}
+  DES_HEIGHT: {type: UINT32, desc: The height of the desired image}
+  DES_PIXEL_FORMAT: {type: INT32, desc: The pixel format of the desired image}
+  DES_COLOR_SPACE: {type: INT32, desc: The color space of the desired image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+  SOURCE: {type: STRING, desc: image source}
+
+
+INFO_ENCODE_IMAGE:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Encode image information, preserve: true}
+  ENCODE_FORMAT: {type: STRING, desc: The encoding format}
+  QUALITY: {type: UINT32, desc:  The quality of image}
+  WIDTH: {type: UINT32, desc: The width of image}
+  HEIGHT: {type: STRING, desc: The height of image}
+  COLOR_SPACE: {type: INT32, desc: The color space of the image}
+  COLOR_ALPHA: {type: INT32, desc: The alpha type of the image}
+  PIXEL_FORMAT: {type: INT32, desc: The pixel format of the image}
+
+
+INFO_HARDWARE_DECODE:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Hardware decoding information, preserve: true}
+  IMG_WIDTH: {type: UINT32, desc: The width of image}
+  IMG_HEIGHT: {type: UINT32, desc: The height of image}
+  HARD_DECODE: {type: BOOL, desc: Whether hard decoding is supported}
+
+INFO_INCREMENTAL_DECODE:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Incremental decoding information, preserve: true}
+  DES_WIDTH: {type: UINT32, desc: The width of the desired image}
+  DES_HEIGHT: {type: UINT32, desc: The height of the desired image}
+  DES_PIXEL_FORMAT: {type: INT32, desc: The pixel format of the desired image}
+  DES_COLOR_SPACE: {type: INT32, desc: The color space of the desirede image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+
+INFO_APPLICATION:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: application info (name and used), preserve: true}
+  APP_NAME: {type: STRING, desc: application name}
+  INTERFACE_TYPE: {type: STRING, desc: inside or outside interface}
+  APP_MODE: {type: STRING, desc: If the interface is an external interface, the mode can be ndk, ts and so on}
+
+
+STATISTIC_IMAGE_RECEIVER:
+  __BASE: {type: STATISTIC, level: MINOR, desc: ImageReceiver usage, preserve: true}
+  APP_NAME: {type: STRING, desc: application name}
+  IS_CALLED: {type: BOOL, desc: The number of times it is called}
+
+
+STATISTIC_IMAGE_CREATOR:
+  __BASE: {type: STATISTIC, level: MINOR, desc: ImageCreator usage, preserve: true}
+  APP_NAME: {type: STRING, desc: application name}
+  IS_CALLED: {type: BOOL, desc: The number of times it is called}
+
+
+DECODE_TIME:
+  __BASE: {type: STATISTIC, level: MINOR, desc: Current decoding time, preserve: true}
+  TAKE_TIME: {type: UINT64, desc: current encoding time}
+  MODULE: {type: STRING, desc: module name}
+  MSG: {type: STRING, desc: message}
+
+
+ENCODE_TIME:
+  __BASE: {type: STATISTIC, level: MINOR, desc: Current decoding time, preserve: true}
+  TAKE_TIME: {type: UINT64, desc: current encoding time}
+  MODULE: {type: STRING, desc: module name}
+  MSG: {type: STRING, desc: message}

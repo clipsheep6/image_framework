@@ -31,10 +31,12 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
+      "src/image_dfx.cpp",
     ]
 
     defines = image_decode_ios_defines
     sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
+    sources -= [ "src/image_dfx.cpp" ]
     include_dirs += [ "$image_subsystem/mock/native/include/log" ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
@@ -69,6 +71,7 @@ if (use_clang_ios) {
     sources = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_dfx.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
     ]
@@ -76,6 +79,7 @@ if (use_clang_ios) {
     if (use_mingw_win) {
       defines = image_decode_windows_defines
       sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
+      sources -= [ "src/image_dfx.cpp" ]
       include_dirs +=
           [ "//foundation/multimedia/image_framework/mock/native/include" ]
       deps = [
@@ -85,6 +89,7 @@ if (use_clang_ios) {
     } else if (use_clang_mac) {
       defines = image_decode_mac_defines
       sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
+      sources -= [ "src/image_dfx.cpp" ]
       include_dirs += [
         "//foundation/multimedia/image_framework/mock/native/include",
         "//third_party/bounds_checking_function/include",
@@ -97,6 +102,7 @@ if (use_clang_ios) {
     } else if (use_clang_android) {
       defines = image_decode_android_defines
       sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
+      sources -= [ "src/image_dfx.cpp" ]
       include_dirs += [ "$image_subsystem/mock/native/include/log" ]
       deps = [
         "//commonlibrary/c_utils/base:utils",
@@ -116,6 +122,7 @@ if (use_clang_ios) {
         "graphic_surface:surface",
         "hilog:libhilog",
         "hitrace:hitrace_meter",
+        "hisysevent:libhisysevent",
       ]
 
       if (is_standard_system) {
@@ -181,6 +188,7 @@ ohos_static_library("image_utils_static") {
     ]
   } else {
     sources += [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
+    sources += ["//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_dfx.cpp"]
     deps = [
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
@@ -189,6 +197,7 @@ ohos_static_library("image_utils_static") {
       "c_utils:utils",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
+      "hisysevent:libhisysevent",
     ]
 
     if (is_standard_system) {

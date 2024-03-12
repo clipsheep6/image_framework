@@ -27,6 +27,7 @@
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_encoder.h"
 #endif
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -230,6 +231,7 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 uint32_t ImagePacker::FinalizePacking()
 {
     ImageTrace imageTrace("ImagePacker::FinalizePacking");
+    ImageEvent imageEvent("ImagePacker", "FinalizePacking", "FAULT_ENCODE_TIME_EXCEEDED");
     return DoEncodingFunc([](ImagePlugin::AbsImageEncoder* encoder) {
         auto res = encoder->FinalizeEncode();
         if (res != SUCCESS) {
