@@ -548,6 +548,35 @@ static int32_t ImageSourceNapiGetDelayTime(struct ImageSourceArgs* args) __attri
     return IMAGE_RESULT_SUCCESS;
 }
 
+static int32_t ImageSourceNapiGetDisposalType(struct ImageSourceArgs* args)
+{
+    auto native = GetNativeImageSource(args);
+    if (native == nullptr || args->outSize == nullptr) {
+        IMAGE_LOGE("ImageSourceNapiGetDisposalType native image or out is nullptr");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
+    auto disposalType = native->GetDisposalType(errorCode);
+    if (disposalType == nullptr) {
+        IMAGE_LOGE("ImageSourceNapiGetDisposalType native failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    size_t actCount = (*disposalType).size();
+    if (args->outList == nullptr) {
+        IMAGE_LOGE("ImageSourceNapiGetDisposalType get types count only");
+        *(args->outSize) = actCount;
+        return IMAGE_RESULT_SUCCESS;
+    }
+    if (actCount > *(args->outSize)) {
+        actCount = *(args->outSize);
+    }
+    for (size_t i = SIZE_ZERO; i < actCount; i++) {
+        args->outList[i] = (*disposalType)[i];
+    }
+    IMAGE_LOGD("ImageSourceNapiGetDisposalType Success");
+    return IMAGE_RESULT_SUCCESS;
+}
+
 static int32_t ImageSourceNapiGetFrameCount(struct ImageSourceArgs* args)
 {
     auto native = GetNativeImageSource(args);
@@ -743,6 +772,7 @@ static const std::map<int32_t, ImageSourceNapiFunc> g_Functions = {
     {CTX_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP, ImageSourceNapiCreatePixelmap},
     {CTX_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP_LIST, ImageSourceNapiCreatePixelmapList},
     {CTX_FUNC_IMAGE_SOURCE_GET_DELAY_TIME, ImageSourceNapiGetDelayTime},
+    {CTX_FUNC_IMAGE_SOURCE_GET_DISPOSAL_TYPE, ImageSourceNapiGetDisposalType},
     {CTX_FUNC_IMAGE_SOURCE_GET_FRAME_COUNT, ImageSourceNapiGetFrameCount},
     {CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_INFO, ImageSourceNapiGetImageInfo},
     {CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY, ImageSourceNapiGetImageProperty},
