@@ -436,6 +436,10 @@ bool ExifMetadata::CreateExifdata()
     return true;
 }
 
+ExifMetadata::ExifMetadata()
+{
+}
+
 ExifMetadata::ExifMetadata(ExifData *exifData)
     : exifData_(exifData)
 {
