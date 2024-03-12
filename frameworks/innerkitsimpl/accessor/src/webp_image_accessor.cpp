@@ -3,8 +3,8 @@
 namespace OHOS {
 namespace Media {
 
-WebpImageAccessor::WebpImageAccessor(std::unique_ptr<ImageStream> &stream)
-    : AbstractImageAccessor(std::move(stream))
+WebpImageAccessor::WebpImageAccessor(std::shared_ptr<ImageStream> &stream)
+    : AbstractImageAccessor(stream)
 {
 
 }
@@ -14,9 +14,24 @@ WebpImageAccessor::~WebpImageAccessor()
 
 }
 
-int WebpImageAccessor::ReadMetadata() const
+int WebpImageAccessor::ReadMetadata()
 {
     return 0;
+}
+
+bool WebpImageAccessor::WriteMetadata()
+{
+    return false;
+}
+
+bool WebpImageAccessor::ReadExifBlob(DataBuf &blob) const
+{
+    return false;
+}
+
+bool WebpImageAccessor::WriteExifBlob(DataBuf &blob)
+{
+    return false;
 }
 
 } // namespace Media

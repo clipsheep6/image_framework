@@ -412,7 +412,6 @@ ExifEntry* ExifMetadata::GetExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, si
     return nullptr;
 }
 
-
 bool ExifMetadata::CreateExifdata()
 {
     if (exifData_ != nullptr) {
@@ -434,6 +433,10 @@ bool ExifMetadata::CreateExifdata()
     exif_data_fix(exifData_);
     IMAGE_LOGD("Create new exif data.");
     return true;
+}
+
+ExifMetadata::ExifMetadata()
+{
 }
 
 ExifMetadata::ExifMetadata(ExifData *exifData)
