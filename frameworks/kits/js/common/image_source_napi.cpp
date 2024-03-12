@@ -21,7 +21,7 @@
 #include "string_ex.h"
 #include "image_trace.h"
 #include "hitrace_meter.h"
-#include "exif_meta_data_validate.h"
+#include "exif_metadata_converter.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
 #endif

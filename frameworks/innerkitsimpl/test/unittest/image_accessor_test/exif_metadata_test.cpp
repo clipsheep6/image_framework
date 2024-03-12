@@ -34,11 +34,13 @@ public:
 };
 
 std::string MODIFYDATA[][3] = {
+    {"BitsPerSample", "9 9 8", "9, 9, 8"},
     {"BitsPerSample", "9,9,8", "9, 9, 8"},
     {"Orientation", "1", "Top-left"},
     {"ImageLength", "1000", "1000"},
     {"ImageWidth", "1001", "1001"},
     {"CompressedBitsPerPixel", "24/1", "24"},
+    {"GPSLatitude", "39,54,20", "39, 54, 20"},
     {"GPSLatitude", "39/1 54/1 20/1", "39, 54, 20"},
     {"GPSLongitude", "120,52,26", "120, 52, 26"},
     {"GPSLatitudeRef", "N", "N"},

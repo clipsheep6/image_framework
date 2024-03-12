@@ -1,5 +1,5 @@
 #include "exif_metadata.h"
-#include "exif_metadata_validate.h"
+#include "exif_metadata_converter.h"
 #include "image_log.h"
 #include "media_errors.h"
 #include "securec.h"
@@ -9,11 +9,17 @@
 #include <sstream>
 #include <stdint.h>
 
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "ExifMetadata"
+
 namespace OHOS {
 namespace Media {
 
 template <typename T>
-std::istream& fromStreamToRational(std::istream& is, T& r) {
+std::istream& streamToRational(std::istream& is, T& r) {
     int32_t nominator = 0;
     int32_t denominator = 0;
     char c('\0');
@@ -26,10 +32,10 @@ std::istream& fromStreamToRational(std::istream& is, T& r) {
 }
 
 std::istream& operator>>(std::istream& is, ExifRational& r) {
-    return fromStreamToRational(is, r);
+    return streamToRational(is, r);
 }
 std::istream& operator>>(std::istream& is, ExifSRational& r) {
-    return fromStreamToRational(is, r);
+    return streamToRational(is, r);
 }
 
 std::map<ExifTag, ExifIfd> TagIfdTable = {
@@ -138,14 +144,13 @@ void ExifMetadata::SetValue(const std::string &key, const std::string &value)
 
 int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value)
 {
-    std::string valuefix = value;
-    auto error = ExifMetaDataValidate::ExifValidateConvert(key, valuefix);
-    if(error){
-        IMAGE_LOGE("[SetValue_] ExifValidateConvert fail.");
-        return error;
+    auto result = ExifMetadataConverter::Convert(key, value);
+    if(result.first){
+        IMAGE_LOGE("[SetValue_] ValidateAndConvert fail.");
+        return result.first;
     }
-    IMAGE_LOGD("[SetValue_] valuefix is [%{public}s]", valuefix.c_str());
-    int valueLen = valuefix.length();
+    IMAGE_LOGD("[SetValue_] result.second is [%{public}s]", result.second.c_str());
+    int valueLen = result.second.length();
 
     ExifTag tag = exif_tag_from_name(key.c_str());
      /*需要特别处理 TagId冲突字段
@@ -234,7 +239,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
     switch (entry->format)
     {
     case EXIF_FORMAT_SHORT: {
-        std::istringstream is(valuefix);
+        std::istringstream is(result.second);
         unsigned long icount = 0;
         ExifShort tmp;
         while (!(is.eof()) && entry->components > icount) {
@@ -251,7 +256,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         break;
     }
     case EXIF_FORMAT_LONG: {
-        std::istringstream is(valuefix);
+        std::istringstream is(result.second);
         unsigned long icount = 0;
         ExifLong tmp;
         while (!(is.eof()) && entry->components > icount) {
@@ -268,7 +273,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         break;
     }
     case EXIF_FORMAT_SSHORT: {
-        std::istringstream is(valuefix);
+        std::istringstream is(result.second);
         unsigned long icount = 0;
         ExifSShort tmp;
         while (!(is.eof()) && entry->components > icount) {
@@ -285,7 +290,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         break;
     }
     case EXIF_FORMAT_SLONG: {
-        std::istringstream is(valuefix);
+        std::istringstream is(result.second);
         unsigned long icount = 0;
         ExifSLong tmp;
         while (!(is.eof()) && entry->components > icount) {
@@ -302,7 +307,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         break;
     }
     case EXIF_FORMAT_RATIONAL: {
-        std::istringstream is(valuefix);
+        std::istringstream is(result.second);
         unsigned long icount = 0;
         ExifRational rat;
         while (!(is.eof()) && entry->components > icount) {
@@ -320,7 +325,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
         break;
     }
     case EXIF_FORMAT_SRATIONAL: {
-        std::istringstream is(valuefix);
+        std::istringstream is(result.second);
         unsigned long icount = 0;
         ExifSRational rat;
         while (!(is.eof()) && entry->components > icount) {
@@ -339,7 +344,7 @@ int32_t ExifMetadata::SetValue_(const std::string &key, const std::string &value
     }
     case EXIF_FORMAT_UNDEFINED:
     case EXIF_FORMAT_ASCII:{
-        if (memcpy_s((entry)->data, valueLen, valuefix.c_str(), valueLen) != 0) {
+        if (memcpy_s((entry)->data, valueLen, result.second.c_str(), valueLen) != 0) {
             IMAGE_LOGE("[SetValue_] memcpy_s error tag is [%{public}d].", tag);
             return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
