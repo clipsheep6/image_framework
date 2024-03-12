@@ -124,7 +124,7 @@ static uint32_t RGBToRGBx(Media::PixelMap *pixelMap, SkImageInfo &skInfo, TmpBuf
     return ExtPixelConvert::RGBToRGBx(src, dst);
 }
 
-static bool isYUVImage(PixelFormat format)
+static bool IsYUVImage(PixelFormat format)
 {
     if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
         return true;
@@ -139,7 +139,7 @@ static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::Pixe
     uint32_t width  = image.info.size.width;
     uint32_t height = image.info.size.height;
     uint8_t *srcData = static_cast<uint8_t*>(pixelMap->GetWritablePixels());
-    if (isYUVImage(image.info.pixelFormat)) {
+    if (IsYUVImage(image.info.pixelFormat)) {
         if (!pixelMap->YUV420ToRGB888(srcData, image.dst, width, height, image.info.pixelFormat)) {
             IMAGE_LOGE("ExtEncoder::BuildSkBitmap Support YUV format RGB convert failed ");
             return ERR_IMAGE_ENCODE_FAILED;

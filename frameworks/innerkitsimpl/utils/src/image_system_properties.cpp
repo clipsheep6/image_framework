@@ -49,8 +49,7 @@ bool ImageSystemProperties::GetSurfaceBufferEnabled()
 bool ImageSystemProperties::GetDmaEnabled()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    static bool isPhone = system::GetParameter("const.product.devicetype", "pc") == "phone";
-    return system::GetBoolParameter("persist.multimedia.image.dma.enabled", true) && isPhone;
+    return system::GetBoolParameter("persist.multimedia.image.dma.enabled", false);
 #else
     return false;
 #endif
@@ -59,10 +58,7 @@ bool ImageSystemProperties::GetDmaEnabled()
 bool ImageSystemProperties::GetAntiAliasingEnabled()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    static bool isDeviceSupportsAA =
-        system::GetParameter("const.product.devicetype", "pc") == "pc" ||
-        system::GetParameter("const.product.devicetype", "pc") == "tablet";
-    return isDeviceSupportsAA && system::GetBoolParameter("persist.multimedia.image.AntiAliasing.enabled", true);
+    return system::GetBoolParameter("persist.multimedia.image.AntiAliasing.enabled", true);
 #else
     return false;
 #endif
@@ -86,6 +82,15 @@ bool ImageSystemProperties::GetAstcHardWareEncodeEnabled()
 {
 #if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.AstcHardWareEncode.enabled", false);
+#else
+    return false;
+#endif
+}
+
+bool ImageSystemProperties::GetSutEncodeEnabled()
+{
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    return system::GetBoolParameter("persist.multimedia.image.SutEncode.enabled", false);
 #else
     return false;
 #endif

@@ -74,8 +74,9 @@ public:
     void ScaleYuv420(std::string &srcjpg, PixelFormat outfmt, std::string &outname,
         ImageSize &imageSize, AntiAliasingOption option);
     void ResizeYuv420(std::string &srcjpg, PixelFormat outfmt, std::string &outname, ImageSize &imageSize);
+    void GetFlipAxis(size_t i, bool &xAxis, bool &yAxis);
     void FlipYuv420(std::string &srcjpg, PixelFormat outfmt, std::string &outname,
-        ImageSize &imageSize, bool xAxis, bool yAxis);
+        ImageSize &imageSize, size_t i);
     void ApplyColorSpaceYuv420(std::string &srcjpg, PixelFormat outfmt, std::string &outname,
         ImageSize &imageSize, const OHOS::ColorManager::ColorSpace &grColorSpace);
     void TranslateYuv420(std::string &srcjpg, PixelFormat outfmt, std::string &outname,
@@ -415,8 +416,22 @@ void JpgYuvTest::ResizeYuv420(std::string &srcjpg, PixelFormat outfmt, std::stri
     YuvWriteToFile(outpath, imageSize, outname, data, size);
 }
 
+void JpgYuvTest::GetFlipAxis(size_t i, bool &xAxis, bool &yAxis)
+{
+    if (i & 1) {
+        yAxis = false;
+    } else {
+        yAxis = true;
+    }
+    if ((i >> 1) & 1) {
+        xAxis = false;
+    } else {
+        xAxis = true;
+    }
+}
+
 void JpgYuvTest::FlipYuv420(std::string &srcjpg, PixelFormat outfmt, std::string &outname,
-    ImageSize &imageSize, bool xAxis, bool yAxis)
+    ImageSize &imageSize, size_t i)
 {
     GTEST_LOG_(INFO) << "JpgYuvTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
     uint32_t errorCode = 0;
@@ -434,6 +449,9 @@ void JpgYuvTest::FlipYuv420(std::string &srcjpg, PixelFormat outfmt, std::string
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
 
+    bool xAxis;
+    bool yAxis;
+    GetFlipAxis(i, xAxis, yAxis);
     pixelMap->flip(xAxis, yAxis);
 
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
@@ -1003,7 +1021,7 @@ HWTEST_F(JpgYuvTest, JpgYuvTest026, TestSize.Level3)
             }
             outname.append(outNamePart2[j]);
             ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
-            FlipYuv420(jpgpath, outfmt[j], outname, imageSize, flips[i][0], flips[i][1]);
+            FlipYuv420(jpgpath, outfmt[j], outname, imageSize, i);
         }
     }
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest026 end";

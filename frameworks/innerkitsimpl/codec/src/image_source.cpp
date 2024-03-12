@@ -562,6 +562,13 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         return nullptr;
     }
 
+    if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
+        // hardware decode success, update plInfo.size
+        IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
+            "(%{public}u, %{public}u)", plInfo.size.width, plInfo.size.height, context.outInfo.size.width,
+            context.outInfo.size.height);
+        plInfo.size = context.outInfo.size;
+    }
     if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
         context.yuvInfo.imageSize.width != 0) {
         plInfo.yuvDataInfo = context.yuvInfo;
@@ -612,13 +619,10 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
     }
 }
 
-static bool isYuvFormat(PlPixelFormat format)
+static bool IsYuvFormat(PlPixelFormat format)
 {
-    if (format == PlPixelFormat::YV12 || format == PlPixelFormat::YU12 ||
-        format == PlPixelFormat::NV21 || format == PlPixelFormat::NV12) {
-        return true;
-    }
-    return false;
+    return format == PlPixelFormat::NV21 || format == PlPixelFormat::NV12 ||
+        format == PlPixelFormat::YU12 || format == PlPixelFormat::YV12;
 }
 
 static void CopyYuvInfo(YUVDataInfo &yuvInfo, ImagePlugin::PlImageInfo &plInfo)
@@ -633,12 +637,28 @@ static void CopyYuvInfo(YUVDataInfo &yuvInfo, ImagePlugin::PlImageInfo &plInfo)
     yuvInfo.uv_stride = plInfo.yuvDataInfo.uv_stride;
 }
 
+static bool ResizePixelmap(std::unique_ptr<PixelMap>& pixelMap, uint64_t imageId, DecodeOptions &opts)
+{
+    ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId);
+    if (opts.desiredSize.height != pixelMap->GetHeight() ||
+        opts.desiredSize.width != pixelMap->GetWidth()) {
+        float xScale = static_cast<float>(opts.desiredSize.width)/pixelMap->GetWidth();
+        float yScale = static_cast<float>(opts.desiredSize.height)/pixelMap->GetHeight();
+        if (!pixelMap->resize(xScale, yScale)) {
+            return false;
+        }
+        // dump pixelMap after resize
+        ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId);
+    }
+    return true;
+}
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
     PixelMapAddrInfos &addrInfos, uint32_t &errorCode)
 {
     unique_ptr<PixelMap> pixelMap;
-    if (isYuvFormat(plInfo.pixelFormat)) {
-        pixelMap = make_unique<PixelYUV>();
+    if (IsYuvFormat(plInfo.pixelFormat)) {
+        pixelMap = make_unique<PixelYuv>();
     } else {
         pixelMap = make_unique<PixelMap>();
     }
@@ -684,16 +704,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     } else if (opts_.rotateNewDegrees != INT_ZERO) {
         pixelMap->rotate(opts_.rotateNewDegrees);
     }
-    ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
-    if (opts_.desiredSize.height != pixelMap->GetHeight() ||
-        opts_.desiredSize.width != pixelMap->GetWidth()) {
-        float xScale = static_cast<float>(opts_.desiredSize.width)/pixelMap->GetWidth();
-        float yScale = static_cast<float>(opts_.desiredSize.height)/pixelMap->GetHeight();
-        if (!pixelMap->resize(xScale, yScale)) {
-            return nullptr;
-        }
-        // dump pixelMap after resize
-        ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
+    if (!(ResizePixelmap(pixelMap, imageId_, opts_))) {
+        IMAGE_LOGE("[ImageSource]Resize pixelmap fail.");
+        return nullptr;
     }
     pixelMap->SetEditable(saveEditable);
     return pixelMap;

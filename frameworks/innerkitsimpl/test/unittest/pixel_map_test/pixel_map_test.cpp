@@ -1410,5 +1410,34 @@ HWTEST_F(PixelMapTest, ReadImageInfo, TestSize.Level3)
     ASSERT_EQ(ret, true);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ReadImageInfo  end";
 }
+
+/**
+ * @tc.name: PixelMapTest031
+ * @tc.desc: Marshalling
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, PixelMapTest031, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest031 start";
+    InitializationOptions opts;
+    opts.size.width = 200;
+    opts.size.height = 300;
+    opts.pixelFormat = PixelFormat::NV12;
+    opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
+    opts.useSourceIfMatch = true;
+    opts.editable = true;
+    std::unique_ptr<PixelMap> pixelMap1 = PixelMap::Create(opts);
+    EXPECT_TRUE(pixelMap1 != nullptr);
+    Parcel data;
+    auto ret = pixelMap1->Marshalling(data);
+    EXPECT_TRUE(ret);
+    PixelMap *pixelMap2 = PixelMap::Unmarshalling(data);
+    EXPECT_EQ(pixelMap1->GetHeight(), pixelMap2->GetHeight());
+    EXPECT_EQ(pixelMap1->GetPixelFormat(), PixelFormat::NV12);
+    EXPECT_EQ(PixelFormat::NV12, pixelMap2->GetPixelFormat());
+
+    GTEST_LOG_(INFO) << "PixelMapTest: PixelMapTest031 end";
+}
+
 }
 }

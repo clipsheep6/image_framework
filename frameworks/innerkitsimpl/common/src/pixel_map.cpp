@@ -2025,7 +2025,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
     delete tmpPixelMap;
     if (imgInfo.pixelFormat == PixelFormat::NV21 || imgInfo.pixelFormat == PixelFormat::NV12 ||
         imgInfo.pixelFormat == PixelFormat::YU12 || imgInfo.pixelFormat == PixelFormat::YV12) {
-        pixelMap = new PixelYUV();
+        pixelMap = new PixelYuv();
     } else {
         pixelMap = new PixelMap();
     }

@@ -239,7 +239,7 @@ if (use_clang_android) {
 
     if (defined(global_parts_info) &&
         defined(global_parts_info.open_source_libyuv)) {
-      cflags += [ "LIBYUV" ]
+      defines += [ "LIBYUV_ENABLE" ]
       external_deps += [ "libyuv:yuv" ]
     }
 
@@ -371,7 +371,7 @@ ohos_static_library("image_static") {
 
   if (defined(global_parts_info) &&
       defined(global_parts_info.open_source_libyuv)) {
-    cflags += [ "LIBYUV" ]
+    defines += [ "LIBYUV_ENABLE" ]
     external_deps += [ "libyuv:yuv" ]
   }
 
