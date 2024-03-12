@@ -63,9 +63,9 @@ public:
     ImageStreamTest() {}
     ~ImageStreamTest() {}
     std::string filePath = "/data/local/tmp/image/testfile.txt";
-    std::string filePathSource = "/data/local/tmp/image/testfile_source.png";
+    std::string filePathSource = "/data/local/tmp/image/test_exif_test.jpg";
     std::string filePathDest = "/data/local/tmp/image/testfile_dest.png";
-    std::string backupFilePathSource = filePathSource + ".bak";
+    std::string backupFilePathSource = "/data/local/tmp/image/test_exif.jpg";
 
     virtual void SetUp() {
         // Create the directory
@@ -80,14 +80,13 @@ public:
         }
         
         // Backup the files
-        std::filesystem::copy(filePathSource, backupFilePathSource, std::filesystem::copy_options::overwrite_existing);
+        std::filesystem::copy(backupFilePathSource,filePathSource, std::filesystem::copy_options::overwrite_existing);
     }
 
     const static std::string tmpDirectory;
     static bool alreadyExist;
 
     virtual void TearDown() {
-        std::filesystem::copy(backupFilePathSource, filePathSource, std::filesystem::copy_options::overwrite_existing);
         remove(filePath.c_str());
         remove(filePathDest.c_str());
     }
