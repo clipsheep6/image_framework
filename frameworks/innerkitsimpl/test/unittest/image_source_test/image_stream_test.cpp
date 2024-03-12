@@ -13,29 +13,36 @@
  * limitations under the License.
  */
 
-#include "gmock/gmock-actions.h"
-#include "gmock/gmock-cardinalities.h"
-#include "gmock/gmock-spec-builders.h"
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <fcntl.h>
-#include <memory>
-#include <stdint.h>
-#include <string>
-#include <sys/stat.h>
-#include <time.h>
-#include <unistd.h>
-#include <string.h>
-#include <pwd.h>
+// Standard library includes
+#include "image_stream.h"
 #include <csetjmp>
 #include <csignal>
 #include <dirent.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <iostream>
+#include <memory>
+#include <pwd.h>
+#include <stdint.h>
+#include <string>
+#include <string.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+
+// Google Test includes
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include "gmock/gmock-actions.h"
+#include "gmock/gmock-cardinalities.h"
+#include "gmock/gmock-spec-builders.h"
+
+// Macros
 #define private public
-#include "file_image_stream.h"
+
+// Local includes
 #include "buffer_image_stream.h"
 #include "data_buf.h"
+#include "file_image_stream.h"
 
 using namespace testing::ext;
 using namespace testing;
@@ -43,6 +50,13 @@ using namespace OHOS::Media;
 
 namespace OHOS {
 namespace Media {
+
+#define SIZE_1024   1024
+#define SIZE_512    512
+#define SIZE_255    255
+#define SIZE_20     20
+#define SIZE_10     10
+#define TEST_DIR_PERMISSIONS   0777
 
 class ImageStreamTest : public testing::Test {
 public:
@@ -57,9 +71,9 @@ public:
         // Create the directory
         std::string dirPath = "/data/local/tmp/image";
         if(access(dirPath.c_str(), F_OK) != 0){
-            int ret = mkdir(dirPath.c_str(), 0777);
+            int ret = mkdir(dirPath.c_str(), TEST_DIR_PERMISSIONS);
             if(ret != 0){
-                char buf[255];
+                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, buf, sizeof(buf));
                 GTEST_LOG_(ERROR) << "Failed to create directory: " << dirPath << ", error: " << buf;
             }
@@ -81,9 +95,9 @@ public:
     static void SetUpTestCase() {
         // Create the directory
         if(access(tmpDirectory.c_str(), F_OK) != 0){
-            int ret = mkdir(tmpDirectory.c_str(), 0777);
+            int ret = mkdir(tmpDirectory.c_str(), TEST_DIR_PERMISSIONS);
             if(ret != 0){
-                char buf[255];
+                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, buf, sizeof(buf));
                 GTEST_LOG_(ERROR) << "Failed to create directory: " << tmpDirectory << ", error: " << buf;
             }
@@ -104,20 +118,20 @@ const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
 
 class MockFileWrapper : public FileWrapper {
 public:
-    MOCK_METHOD(size_t, fwrite, (const void* src, size_t size, size_t nmemb, FILE* f), (override));
-    MOCK_METHOD(size_t, fread, (void* destv, size_t size, size_t nmemb, FILE* f), (override));
+    MOCK_METHOD(size_t, fwrite, (const void* src, size_t size, size_t nmemb, FILE* file), (override));
+    MOCK_METHOD(size_t, fread, (void* destv, size_t size, size_t nmemb, FILE* file), (override));
 
     MockFileWrapper() {
         // Set the default behavior of write to call the system's write function
         ON_CALL(*this, fwrite(_, _, _, _))
-            .WillByDefault(Invoke([](const void* src, size_t size, size_t nmemb, FILE* f) {
-                return ::fwrite(src, size, nmemb, f);
+            .WillByDefault(Invoke([](const void* src, size_t size, size_t nmemb, FILE* file) {
+                return ::fwrite(src, size, nmemb, file);
         }));
                 
         // Set the default behavior of read to call the system's read function
         ON_CALL(*this, fread(_, _, _, _))
-            .WillByDefault(Invoke([](void* destv, size_t size, size_t nmemb, FILE* f) {
-                return ::fread(destv, size, nmemb, f);
+            .WillByDefault(Invoke([](void* destv, size_t size, size_t nmemb, FILE* file) {
+                return ::fread(destv, size, nmemb, file);
         }));                
     }
 };
@@ -138,7 +152,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     ASSERT_TRUE(stream.Open());
 
     // Create some data to write
-    byte data[10];
+    byte data[SIZE_10];
     memset(data, 'a', sizeof(data));
     
     ASSERT_EQ(stream.Tell(), 0);
@@ -154,12 +168,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     stream.Flush();
 
     // Open the file again
-    int fd = open(filePath.c_str(), O_RDONLY);
-    ASSERT_NE(fd, -1);
+    int fileDescriptor = open(filePath.c_str(), O_RDONLY);
+    ASSERT_NE(fileDescriptor, -1);
 
     // Read the data from the file
-    byte buffer[10];
-    ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
+    byte buffer[SIZE_10];
+    ssize_t bytesRead = read(fileDescriptor, buffer, sizeof(buffer));
 
     // Check that the correct number of bytes were read
     ASSERT_EQ(bytesRead, sizeof(data));
@@ -168,7 +182,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     ASSERT_EQ(memcmp(data, buffer, sizeof(data)), 0);
 
     // Close the file
-    close(fd);
+    close(fileDescriptor);
 
     // GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 end";
 }
@@ -181,7 +195,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_Write002, TestSize.Level3)
 {
     FileImageStream stream(filePath);
-    byte data[10];
+    byte data[SIZE_10];
     memset(data, 'a', sizeof(data));
     ASSERT_EQ(stream.Write(data, sizeof(data)), -1);
 }
@@ -202,7 +216,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
     FileImageStream stream(filePath, std::move(mockFileWrapper));
 
     // Test the Write function
-    byte buffer[1024];
+    byte buffer[SIZE_1024];
     stream.Open();
     EXPECT_EQ(stream.Write(buffer, sizeof(buffer)), -1);
 }
@@ -219,7 +233,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
     ASSERT_TRUE(stream1.Open());
     ASSERT_TRUE(stream2.Open());
     // Read all data from stream1
-    byte buffer[4096];
+    byte buffer[IMAGE_STREAM_PAGE_SIZE];
     while (stream1.Read(buffer, sizeof(buffer)) > 0) {}
     // At this point, all data from stream1 has been read, so the write should return 0
     ASSERT_EQ(stream2.Write(stream1), 0);
@@ -292,12 +306,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
     stream.Flush();
 
     // Open the file again
-    int fd = open(filePath.c_str(), O_RDONLY);
-    ASSERT_NE(fd, -1);
+    int fileDescriptor = open(filePath.c_str(), O_RDONLY);
+    ASSERT_NE(fileDescriptor, -1);
 
     // Read the data from the file
-    byte buffer[20];
-    read(fd, buffer, sizeof(buffer));
+    byte buffer[SIZE_20];
+    read(fileDescriptor, buffer, sizeof(buffer));
     // ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
 
     // Check that the correct number of bytes were read
@@ -307,7 +321,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
     ASSERT_EQ(memcmp(data.c_str(), buffer, data.size()), 0);
 
     // Close the file
-    close(fd);
+    close(fileDescriptor);
 
     GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 end";
 }
@@ -327,7 +341,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
     std::string sourceData = "Hello, world!";
     stream1.Write((byte*)sourceData.c_str(), sourceData.size());
     // Read data from stream1
-    byte buffer[256];
+    byte buffer[SIZE_255];
     stream1.Seek(0, SeekPos::BEGIN);
     ssize_t bytesRead = stream1.Read(buffer, sourceData.size());
     ASSERT_EQ(bytesRead, sourceData.size());
@@ -347,12 +361,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
 {
     // Get the username of the current user
     uid_t uid = getuid();
-    struct passwd *pw = getpwuid(uid);
-    if (!pw) {
+    struct passwd *passwordEntry = getpwuid(uid);
+    if (passwordEntry == nullptr) {
         perror("getpwuid");
         return;
     }
-    std::string username(pw->pw_name);
+    std::string username(passwordEntry->pw_name);
 
     // Test the case where the file path exists but is not writable
     std::string nonWritableFilePath = "/data/local/tmp/image/non_writable_file.txt";
@@ -396,17 +410,28 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
 }
 
 /**
+ * @tc.name: FileImageStream_Open005
+ * @tc.desc: Test the Open twice
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_Open005, TestSize.Level3){    
+    FileImageStream stream(filePathSource);
+    ASSERT_TRUE(stream.Open(OpenMode::Read));
+    ASSERT_TRUE(stream.Open(OpenMode::Read));
+}
+
+/**
  * @tc.name: FileImageStream_Read001
  * @tc.desc: Test the Read function of FileImageStream, reading 512 bytes
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
     FileImageStream stream(filePathSource);
-    byte buffer[1024];
+    byte buffer[SIZE_1024];
     stream.Open();
     // Simulate reading 512 bytes
-    ssize_t bytesRead = stream.Read(buffer, 512);
-    EXPECT_EQ(512, bytesRead);
+    ssize_t bytesRead = stream.Read(buffer, SIZE_512);
+    EXPECT_EQ(SIZE_512, bytesRead);
 }
 
 /**
@@ -416,10 +441,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3) {
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3) {
     FileImageStream stream(filePathSource);
-    byte buffer[1024];
+    byte buffer[SIZE_1024];
     // Flush the stream to simulate an unopened file
     ASSERT_FALSE(stream.Flush());
-    ssize_t bytesRead = stream.Read(buffer, 512);
+    ssize_t bytesRead = stream.Read(buffer, SIZE_512);
     EXPECT_EQ(-1, bytesRead);
 }
 
@@ -518,18 +543,31 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3) {
     ASSERT_EQ(src.Tell(), 0);
     ASSERT_GE(src.Write((byte*)data.c_str(), data.size()), 0);
     // Call the Transfer function to transfer data from src to dest
-    dest.CopyFrom(src);
-    
     dest.Open();
+    ASSERT_TRUE(dest.CopyFrom(src));
     // Read data from dest and verify that it is the same as the data written to src
-    byte buffer[256];
-    memset(buffer, 0, 256);
+    byte buffer[SIZE_255];
+    memset(buffer, 0, SIZE_255);
     ASSERT_EQ(dest.Seek(0, SeekPos::BEGIN), 0);
     ASSERT_EQ(dest.Read(buffer, data.size()), data.size());
     ASSERT_EQ(std::string(buffer, buffer + data.size()), data);
 
     // Verify that src is empty
     ASSERT_EQ(dest.GetSize(), src.GetSize());
+}
+
+
+HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom002, TestSize.Level3) {
+    BufferImageStream src;
+    FileImageStream dest(filePathDest);
+    ASSERT_TRUE(src.Open());
+    ASSERT_EQ(dest.Open(), true);
+    src.Write((byte*)"Hello, world!", 13);
+    ASSERT_TRUE(dest.CopyFrom(src));
+    dest.Seek(0, SeekPos::BEGIN);
+    char buf[14] = {0};
+    dest.Read((byte*)buf, 13);
+    ASSERT_STREQ(buf, "Hello, world!");
 }
 
 /**
@@ -542,20 +580,20 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3) {
     stream.Open();
 
     // Read 10 bytes using Read function
-    byte buffer[10];
-    stream.Read(buffer, 10);
+    byte buffer[SIZE_10];
+    stream.Read(buffer, SIZE_10);
 
     // Reset the file offset
     stream.Seek(0, SeekPos::BEGIN);
 
     // Read 10 bytes using ReadByte function
-    byte byteBuffer[10];
-    for (int i = 0; i < 10; i++) {
+    byte byteBuffer[SIZE_10];
+    for (int i = 0; i < SIZE_10; i++) {
         byteBuffer[i] = stream.ReadByte();
     }
 
     // Compare the results
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < SIZE_10; i++) {
         EXPECT_EQ(buffer[i], byteBuffer[i]);
     }
 }
@@ -591,11 +629,11 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
     ASSERT_EQ(stream.Seek(5, SeekPos::BEGIN), 5);
     ASSERT_EQ(stream.Write((byte*)sourceData.c_str(), sourceData.size()), sourceData.size());
     
-    FileImageStream cloneStream(stream.fp);
+    FileImageStream cloneStream(stream.fp_);
     ASSERT_TRUE(stream.Flush());
     ASSERT_TRUE(cloneStream.Open());
     // Read the data from cloneStream
-    byte buffer[256];
+    byte buffer[SIZE_255];
     cloneStream.Seek(5, SeekPos::BEGIN);
     ssize_t bytesRead = cloneStream.Read(buffer, sourceData.size());
     ASSERT_EQ(bytesRead, sourceData.size());
@@ -625,21 +663,21 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3) {
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
     // Create and open a temporary file
     std::string tempFile = "/tmp/testfile";
-    int fd = open(tempFile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-    ASSERT_NE(fd,-1);
+    int fileDescription = open(tempFile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    ASSERT_NE(fileDescription,-1);
 
     // Use the file descriptor to create a new FileImageStream object
-    FileImageStream stream(fd);
+    FileImageStream stream(fileDescription);
     ASSERT_TRUE(stream.Open());
-    ASSERT_NE(stream.dupFD, -1);
+    ASSERT_NE(stream.dupFD_, -1);
     // Check the state of the FileImageStream object
-    ASSERT_TRUE(stream.fp != nullptr);
-    ASSERT_EQ(stream.fileSize, stream.GetSize());
-    ASSERT_EQ(stream.mappedMemory, nullptr);
+    ASSERT_TRUE(stream.fp_ != nullptr);
+    ASSERT_EQ(stream.fileSize_, stream.GetSize());
+    ASSERT_EQ(stream.mappedMemory_, nullptr);
     ASSERT_EQ(stream.Tell(), 0);
 
     // Write data
-    byte writeData[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    byte writeData[SIZE_10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ssize_t bytesWritten = stream.Write(writeData, sizeof(writeData));
     ASSERT_EQ(bytesWritten, sizeof(writeData));
 
@@ -647,7 +685,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
     stream.Seek(0, SeekPos::BEGIN);
 
     // Read data
-    byte readData[10] = {0};
+    byte readData[SIZE_10] = {0};
     ssize_t bytesRead = stream.Read(readData, sizeof(readData));
     ASSERT_EQ(bytesRead, sizeof(readData));
 
@@ -657,7 +695,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3){
     }
 
     // Close the file
-    close(fd);
+    close(fileDescription);
     remove(tempFile.c_str());
 }
 
@@ -687,39 +725,43 @@ int countOpenFileDescriptors() {
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
     // GTEST_LOG_(INFO) << "fd0: " << countOpenFileDescriptors();
     int fdCount = countOpenFileDescriptors();
-    int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int fileDescriptor = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     ASSERT_EQ(fdCount+1, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd1: " << countOpenFileDescriptors();
-    int dupFD = dup(fd);
+    int dupFD = dup(fileDescriptor);
     ASSERT_EQ(fdCount+2, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd2: " << countOpenFileDescriptors();
-    ASSERT_NE(fd,-1);
-    FILE *f = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
+    ASSERT_NE(fileDescriptor,-1);
+    FILE *fileStream = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
     ASSERT_EQ(fdCount+2, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd3: " << countOpenFileDescriptors();
-    ASSERT_NE(f, nullptr);
+    ASSERT_NE(fileStream, nullptr);
     std::string text = "Hello, world!";
-    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(), f); // Use sizeof(char) as the second argument
-    ASSERT_EQ(ferror(f), 0);
+    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(), fileStream); // Use sizeof(char) as the second argument
+    ASSERT_EQ(ferror(fileStream), 0);
     ASSERT_EQ(result, text.size());
 
     // Reset the file pointer to the beginning of the file
-    rewind(f);
+    rewind(fileStream);
+
+    ASSERT_EQ(fdCount+2, countOpenFileDescriptors());
+    fileno(fileStream);
+    ASSERT_EQ(fdCount+2, countOpenFileDescriptors());
 
     // Read and verify the data
-    char buffer[256];
-    result = fread(buffer, sizeof(char), text.size(), f);
+    char buffer[SIZE_255];
+    result = fread(buffer, sizeof(char), text.size(), fileStream);
     ASSERT_EQ(result, text.size());
     buffer[result] = '\0'; // Add string termination character
     ASSERT_STREQ(buffer, text.c_str());
 
     // GTEST_LOG_(INFO) << "fd5: " << countOpenFileDescriptors();
-    fclose(f);
+    fclose(fileStream);
     ASSERT_EQ(fdCount+1, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd6: " << countOpenFileDescriptors();
     // close(dupFD);
     // GTEST_LOG_(INFO) << "fd7: " << countOpenFileDescriptors();
-    close(fd);
+    close(fileDescriptor);
     ASSERT_EQ(fdCount, countOpenFileDescriptors());
     // GTEST_LOG_(INFO) << "fd8: " << countOpenFileDescriptors();
 }
@@ -730,32 +772,32 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3){
  * @tc.type: FUNC
  */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3){
-    int fd = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-    FileImageStream stream(fd);
-    int dupFD = stream.dupFD;
-    ASSERT_NE(fd,-1);
+    int fileDescriptor = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    FileImageStream stream(fileDescriptor);
+    int dupFD = stream.dupFD_;
+    ASSERT_NE(fileDescriptor,-1);
     ASSERT_TRUE(stream.Open());
-    FILE *f = stream.fp; // Change "rb" to "wb" for writing in binary mode
+    FILE *fileStream = stream.fp_; // Change "rb" to "wb" for writing in binary mode
     // FILE *f = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
-    ASSERT_NE(f, nullptr);
+    ASSERT_NE(fileStream, nullptr);
     std::string text = "Hello, world!";
-    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(), f); // Use sizeof(char) as the second argument
-    ASSERT_EQ(ferror(f), 0);
+    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(), fileStream); // Use sizeof(char) as the second argument
+    ASSERT_EQ(ferror(fileStream), 0);
     ASSERT_EQ(result, text.size());
 
     // Reset the file pointer to the beginning of the file
-    rewind(f);
+    rewind(fileStream);
 
     // Read and verify the data
-    char buffer[256];
-    result = fread(buffer, sizeof(char), text.size(), f);
+    char buffer[SIZE_255];
+    result = fread(buffer, sizeof(char), text.size(), fileStream);
     ASSERT_EQ(result, text.size());
     buffer[result] = '\0'; // Add string termination character
     ASSERT_STREQ(buffer, text.c_str());
 
-    fclose(f);
+    fclose(fileStream);
     close(dupFD);
-    close(fd);
+    close(fileDescriptor);
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3){
@@ -768,7 +810,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3){
     ASSERT_EQ(stream.Tell(), sourceData.size());
     stream.Seek(2, SeekPos::BEGIN);
     ASSERT_EQ(stream.Tell(), 2);
-    byte buffer[256];
+    byte buffer[SIZE_255];
     ssize_t bytesRead = stream.Read(buffer, 1);
     buffer[bytesRead] = '\0';  // Add string termination character
     ASSERT_STREQ((char*)buffer, "l");
@@ -807,7 +849,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3){
     stream.Write((byte*)sourceData.c_str(), sourceData.size());
 
     // Read the string
-    byte buffer[256];
+    byte buffer[SIZE_255];
     stream.Seek(0, SeekPos::BEGIN);
     size_t bytesRead = stream.Read(buffer, sourceData.size());
     buffer[bytesRead] = '\0';  // Add string termination character
@@ -853,7 +895,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
     BufferImageStream stream;
     stream.Open();
     stream.Write((byte*)"Hello, world!", 13);
-    ASSERT_EQ(stream.capacity, 4096);
+    ASSERT_EQ(stream.capacity_, 4096);
     ASSERT_EQ(stream.Tell(), 13);
 }
 
@@ -865,10 +907,10 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3){
 HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3){
     BufferImageStream stream;
     stream.Open();
-    byte data[4097] = {0};  // Create a 4097-byte data
-    stream.Write(data, 4097);  // Write 4097 bytes of data
-    ASSERT_GE(stream.capacity, 4096*2);  // Check if the buffer capacity is at least 4097
-    ASSERT_EQ(stream.Tell(), 4097);  // Check if the write position is correct
+    byte data[IMAGE_STREAM_PAGE_SIZE+1] = {0};  // Create a 4097-byte data
+    stream.Write(data, IMAGE_STREAM_PAGE_SIZE+1);  // Write 4097 bytes of data
+    ASSERT_GE(stream.capacity_, IMAGE_STREAM_PAGE_SIZE*2);  // Check if the buffer capacity is at least 4097
+    ASSERT_EQ(stream.Tell(), IMAGE_STREAM_PAGE_SIZE+1);  // Check if the write position is correct
 }
 
 /**
@@ -880,10 +922,10 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3){
     BufferImageStream stream;
     stream.Open();
 
-    byte data[4096] = {0};  // Create a 4096-byte data
-    stream.Write(data, 4096);  // Write 4096 bytes of data
-    ASSERT_EQ(stream.capacity, 4096);  // Check if the buffer capacity is 4096
-    ASSERT_EQ(stream.Tell(), 4096);  // Check if the write position is correct
+    byte data[IMAGE_STREAM_PAGE_SIZE] = {0};  // Create a 4096-byte data
+    stream.Write(data, IMAGE_STREAM_PAGE_SIZE);  // Write 4096 bytes of data
+    ASSERT_EQ(stream.capacity_, IMAGE_STREAM_PAGE_SIZE);  // Check if the buffer capacity is 4096
+    ASSERT_EQ(stream.Tell(), IMAGE_STREAM_PAGE_SIZE);  // Check if the write position is correct
 }
 
 /**
@@ -997,11 +1039,6 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Close007, TestSize.Level3){
     DataBuf dataBuf(10);
     dataBuf.WriteUInt8(0, 123);
     EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
-}
-
-HWTEST_F(ImageStreamTest, BufferImageStream_MemoryLeak001, TestSize.Level3){
-    char *p = new char[10];
-    p[0] = 1;
 }
 
 }

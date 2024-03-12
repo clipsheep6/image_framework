@@ -38,6 +38,9 @@ enum class OpenMode {
     ReadWrite   // Read-write mode
 };
 
+#define IMAGE_STREAM_PAGE_SIZE 4096
+#define IMAGE_STREAM_ERROR_BUFFER_SIZE 255
+
 class ImageStream {
 public:
     virtual ~ImageStream() {}
@@ -128,8 +131,9 @@ public:
     /**
      * Copy the entire content from the source ImageStream to the current ImageStream.
      * @param src The source ImageStream, this function will read data from this ImageStream.
+     * @return true if the copy is successful, false otherwise.
      */
-    virtual void CopyFrom(ImageStream& src) = 0;
+    virtual bool CopyFrom(ImageStream& src) = 0;
 
     /**
      * Get the size of the ImageStream

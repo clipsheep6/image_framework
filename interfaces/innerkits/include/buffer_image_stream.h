@@ -16,16 +16,20 @@
 #ifndef INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_H
 #define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_H
 
+// Standard library includes
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <vector>
-#include "image_type.h"
+
+// Project includes
 #include "image_stream.h"
+#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
 
+#define BUFFER_IMAGE_STREAM_PAGE_SIZE IMAGE_STREAM_PAGE_SIZE
 
 class BufferImageStream : public ImageStream {
 public:
@@ -162,7 +166,7 @@ public:
      * 
      * @param src The source ImageStream, this function will read data from this ImageStream.
      */
-    NATIVEEXPORT virtual void CopyFrom(ImageStream& src) override;
+    NATIVEEXPORT virtual bool CopyFrom(ImageStream& src) override;
 
     /**
      * After calling Release, BufferImageStream no longer manages the lifecycle of the pointer.
@@ -185,36 +189,36 @@ private:
     /**
      * @brief The memory buffer of the BufferImageStream.
      */
-    byte* buffer;
+    byte* buffer_;
 
     /**
      * @brief The original pointer saved when constructed with originData. 
      * It is needed when closing to determine whether to release the buffer.
      */
-    byte* originData;
+    byte* originData_;
 
     /**
      * @brief The pre-allocated memory capacity of the buffer.
      */
-    long capacity;
+    long capacity_;
 
     /**
      * @brief The data size of the buffer. 
      * Since it is in memory, bufferSize will not exceed the maximum length of memory, 
      * so size_t is not used here.
      */
-    long bufferSize;
+    long bufferSize_;
 
     /**
      * @brief The current offset in the BufferImageStream.
      */
-    long currentOffset;
+    long currentOffset_;
 
     /**
      * @brief The memory mode, which can be fixed memory or dynamic memory. 
      * See MemoryMode for details.
      */
-    MemoryMode memoryMode;
+    MemoryMode memoryMode_;
 };
 
 } // namespace MultimediaPlugin

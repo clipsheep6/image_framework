@@ -85,8 +85,7 @@ HWTEST_F(ExifMetadataTest, SetValue_001, TestSize.Level3)
     TiffParser::DecodeJpegExif(buf, len, &exifData_);
     ASSERT_NE(exifData_, nullptr);
 
-    std::shared_ptr<ExifData> ptr(exifData_);
-    ExifMetadata metadata(ptr);
+    ExifMetadata metadata(exifData_);
 
     int rows = sizeof(MODIFYDATA) / sizeof(MODIFYDATA[0]);
 
@@ -107,6 +106,28 @@ HWTEST_F(ExifMetadataTest, SetValue_001, TestSize.Level3)
     }
 
     GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue_001 end";
+}
+
+HWTEST_F(ExifMetadataTest, GetValue001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001 start";
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ExifMetadata *ptrExifMetadata = new ExifMetadata(exifData);
+    std::string key = "BitsPerSample";
+    std::string value;
+    ptrExifMetadata->GetValue(key,value);
+    GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001 end";
+}
+
+HWTEST_F(ExifMetadataTest, SetValue001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue001 start";
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ExifMetadata *ptrExifMetadata = new ExifMetadata(exifData);
+    std::string key = "BitsPerSample";
+    std::string value = "8,8,8";
+    ptrExifMetadata->SetValue(key,value);
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValue001 end";
 }
 
 } // namespace Multimedia

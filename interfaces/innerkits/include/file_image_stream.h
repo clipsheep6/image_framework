@@ -19,11 +19,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <vector>
-#include <sys/stat.h>
 #include <memory>
-#include "image_type.h"
+#include <sys/stat.h>
+#include <vector>
+
 #include "image_stream.h"
+#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
@@ -31,19 +32,17 @@ namespace Media {
 class FileWrapper{
 public:
     virtual ~FileWrapper(){}
-    virtual size_t fwrite(const void* src, size_t size, size_t nmemb, FILE* f);
-    virtual size_t fread(void* destv, size_t size, size_t nmemb, FILE* f);
+    virtual size_t fwrite(const void* src, size_t size, size_t nmemb, FILE* file);
+    virtual size_t fread(void* destv, size_t size, size_t nmemb, FILE* file);
 };
 
 class FileImageStream : public ImageStream {
 public:
-    //ToDo 加一个flush
-     
     /**
      * @brief Constructs a new FileImageStream object from a file descriptor.
-     * @param fd The file descriptor.
+     * @param fileDescriptor The file descriptor.
      */
-    NATIVEEXPORT FileImageStream(int fd);
+    NATIVEEXPORT FileImageStream(int fileDescriptor);
 
     /**
      * @brief Constructs a new FileImageStream object from a file path.
@@ -53,9 +52,9 @@ public:
 
     /**
      * @brief Constructs a new FileImageStream object from a FILE pointer.
-     * @param p The FILE pointer.
+     * @param filePointer The FILE pointer.
      */
-    NATIVEEXPORT FileImageStream(FILE *p);
+    NATIVEEXPORT FileImageStream(FILE *filePointer);
 
     /**
      * @brief Destructs the FileImageStream object.
@@ -118,13 +117,14 @@ public:
     NATIVEEXPORT virtual bool IsOpen() override;
 
     /**
-     * @brief Opens the FileImageStream.
+     * @brief Opens the FileImageStream. The default mode is "rb".
      * @return true if it opens successfully, false otherwise.
      */
     NATIVEEXPORT virtual bool Open() override;
 
     /**
-     * @brief Opens the FileImageStream with a specific mode.
+     * @brief Opens the FileImageStream with a specific mode.  
+     *        The Open operation will reset the read and write position of the file
      * @param mode The mode to open the FileImageStream.
      * @return true if it opens successfully, false otherwise.
      */
@@ -151,10 +151,10 @@ public:
     NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
 
     /**
-     * @brief Transfers the content of the source ImageStream to the current FileImageStream.
+     * @brief Should call Open first.Transfers the content of the source ImageStream to the current FileImageStream.
      * @param src The source ImageStream.
      */
-    NATIVEEXPORT void CopyFrom(ImageStream& src) override;
+    NATIVEEXPORT bool CopyFrom(ImageStream& src) override;
 
     /**
      * @brief Gets the size of the FileImageStream.
@@ -189,18 +189,18 @@ private:
      */
     bool OpenFromPath(const char* modeStr);
 
-    FILE *fp;               // File descriptor
-    int dupFD;              // Duplicated file descriptor
-    std::string filePath;   // File path
-    size_t fileSize;        // File size
-    byte* mappedMemory;     // Address of memory mapping
-    std::unique_ptr<FileWrapper> fileWrapper;   // File wrapper class, used for testing
+    FILE *fp_;               // File descriptor
+    int dupFD_;              // Duplicated file descriptor
+    std::string filePath_;   // File path
+    size_t fileSize_;        // File size
+    void* mappedMemory_;     // Address of memory mapping
+    std::unique_ptr<FileWrapper> fileWrapper_;   // File wrapper class, used for testing
 
     enum {
         INIT_FROM_FD,
         INIT_FROM_PATH,
         INIT_FROM_UNKNOWN,
-    } initPath;
+    } initPath_;
 };
 
 } // namespace MultimediaPlugin
