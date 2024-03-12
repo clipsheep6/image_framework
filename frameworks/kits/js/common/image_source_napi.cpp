@@ -1114,31 +1114,29 @@ napi_value ImageSourceNapi::GetImageInfoSync(napi_env env, napi_callback_info in
     return result;
 }
 
-static uint32_t CreatePixelMapInner(ImageSourceNapi *thisPtr, std::shared_ptr<ImageSource> imageSource,
-    uint32_t index, DecodeOptions decodeOpts, std::shared_ptr<PixelMap> pixelMap)
+static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
+    std::shared_ptr<ImageSource> imageSource, uint32_t index, DecodeOptions decodeOpts, uint32_t &status)
 {
-    uint32_t errorCode = SUCCESS;
-
     if (thisPtr == nullptr || imageSource == nullptr) {
         IMAGE_LOGE("Invailed args");
-        errorCode = ERROR;
-        return errorCode;
+        status = ERROR;
     }
 
+    std::shared_ptr<PixelMap> pixelMap;
     auto incPixelMap = thisPtr->GetIncrementalPixelMap();
     if (incPixelMap != nullptr) {
         IMAGE_LOGI("Get Incremental PixelMap!!!");
         pixelMap = incPixelMap;
     } else {
         pixelMap = imageSource->CreatePixelMapEx((index >= NUM_0) ? index : NUM_0,
-            decodeOpts, errorCode);
+            decodeOpts, status);
     }
 
-    if (errorCode != SUCCESS || !IMG_NOT_NULL(pixelMap)) {
+    if (status != SUCCESS || !IMG_NOT_NULL(pixelMap)) {
         IMAGE_LOGE("Create PixelMap error");
     }
 
-    return errorCode;
+    return pixelMap;
 }
 
 static void CreatePixelMapExecute(napi_env env, void *data)
@@ -1162,8 +1160,8 @@ static void CreatePixelMapExecute(napi_env env, void *data)
         return;
     }
 
-    context->status = CreatePixelMapInner(context->constructor_, context->rImageSource,
-        context->index, context->decodeOpts, context->rPixelMap);
+    context->rPixelMap = CreatePixelMapInner(context->constructor_, context->rImageSource,
+        context->index, context->decodeOpts, context->status);
 
     if (context->status != SUCCESS) {
         context->errMsg = "Create PixelMap error";
@@ -1292,8 +1290,8 @@ napi_value ImageSourceNapi::CreatePixelMapSync(napi_env env, napi_callback_info 
         }
     }
 
-    syncContext->status = CreatePixelMapInner(syncContext->constructor_, syncContext->rImageSource,
-        syncContext->index, syncContext->decodeOpts, syncContext->rPixelMap);
+    syncContext->rPixelMap = CreatePixelMapInner(syncContext->constructor_, syncContext->rImageSource,
+        syncContext->index, syncContext->decodeOpts, syncContext->status);
 
     if (syncContext->status != SUCCESS) {
         syncContext->errMsg = "Create PixelMap error";
