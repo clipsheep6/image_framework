@@ -1045,6 +1045,10 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     unsigned char *dataPtr;
     uint32_t datSize = 0;
     ExifData *exifData = imageAccessor->GetExifMetadata()->GetData();
+    if (exifData == nullptr) {
+        IMAGE_LOGE("[ImageSource]get valid exifmetadata on modify image property.");
+        return ERR_IMAGE_WRITE_EXIF_FAILED;
+    }
     TiffParser::Encode(&dataPtr, datSize, exifData);
     exifBlob_ = std::make_shared<DataBuf>(dataPtr, datSize);
 
