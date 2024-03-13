@@ -41,6 +41,7 @@ void TiffParser::Decode(const unsigned char *dataPtr, const uint32_t &size, Exif
     *exifData = exif_data_new();
     exif_data_unset_option(*exifData, EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS);
     exif_data_load_data_general(*exifData, dataPtr, size);
+    exif_data_unref(*exifData);
 }
 
 void TiffParser::Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifData)
@@ -62,6 +63,7 @@ void TiffParser::DecodeJpegExif(const unsigned char *dataPtr, const uint32_t &si
     *exifData = exif_data_new();
     exif_data_unset_option(*exifData, EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS);
     exif_data_load_data(*exifData, dataPtr, size);
+    exif_data_unref(*exifData);
 }
 
 void TiffParser::EncodeJpegExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData)
