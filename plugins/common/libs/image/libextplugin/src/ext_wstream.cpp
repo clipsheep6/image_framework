@@ -77,7 +77,7 @@ size_t TempStream::bytesWritten() const
 
 uint8_t* TempStream::GetAddr()
 {
-    return stream_->MMap();
+    return stream_->GetAddr();
 }
 
 } // namespace ImagePlugin

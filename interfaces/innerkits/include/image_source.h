@@ -26,7 +26,6 @@
 
 #include "decode_listener.h"
 #include "image_type.h"
-#include "image_accessor.h"
 #include "incremental_pixel_map.h"
 #include "peer_listener.h"
 #include "pixel_map.h"
@@ -138,6 +137,7 @@ struct ASTCInfo {
 };
 
 class SourceStream;
+class ImageAccessor;
 struct DataBuf;
 
 class ImageSource {

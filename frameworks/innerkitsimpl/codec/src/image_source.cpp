@@ -43,6 +43,7 @@
 #include "source_stream.h"
 #include "exif_metadata.h"
 #include "image_accessor_factory.h"
+#include "image_accessor.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
