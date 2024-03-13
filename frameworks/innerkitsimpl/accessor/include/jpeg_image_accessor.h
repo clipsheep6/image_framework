@@ -33,7 +33,7 @@ private:
     bool CopyRestData(BufferImageStream& bufStream);
     bool WriteData(BufferImageStream& bufStream, uint8_t* dataBlob, uint32_t size);
     bool UpdateExifMetadata(BufferImageStream& tempStream, uint8_t* dataBlob, uint32_t size);
-    bool UpdateData(uint8_t* dataBlob, uint32_t size);
+    uint32_t UpdateData(uint8_t* dataBlob, uint32_t size);
 };
 } // namespace Media
 } // namespace OHOS

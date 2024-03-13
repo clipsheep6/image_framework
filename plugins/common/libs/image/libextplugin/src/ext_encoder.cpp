@@ -194,7 +194,12 @@ uint32_t ExtEncoder::FinalizeEncode()
         uint8_t *buffer = wStream.GetAddr();
         uint32_t bufferSize = wStream.bytesWritten();
         auto destImageAccessor = ImageAccessorFactory::CreateImageAccessor(buffer, bufferSize);
-        destImageAccessor->WriteExifBlob(*exifBlob);
+        uint32_t ret = destImageAccessor->WriteExifBlob(*exifBlob);
+        if (ret != SUCCESS) {
+            IMAGE_LOGE("ExtEncoder::encode exifblob failed");
+            return ret;
+        }
+        
         destImageAccessor->WriteToOutput(*output_);
     } else {
         ExtWStream wStream(output_);

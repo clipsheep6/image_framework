@@ -70,7 +70,7 @@ void DataBuf::WriteUInt8(size_t offset, uint8_t value)
     pData_[offset] = value;
 }
 
-uint32_t getULong(const byte *buf, ByteOrder byteOrder)
+uint32_t GetULong(const byte *buf, ByteOrder byteOrder)
 {
     if (byteOrder == littleEndian) {
         return buf[3] << 24 | buf[2] << 16 | buf[1] << 8 | buf[0];
@@ -85,10 +85,10 @@ void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder)
         return;
         // throw std::out_of_range("Overflow in DataBuf::write_uint32");
     }
-    ul2Data(&pData_[offset], x, byteOrder);
+    UL2Data(&pData_[offset], x, byteOrder);
 }
 
-size_t ul2Data(byte *buf, uint32_t l, ByteOrder byteOrder)
+size_t UL2Data(byte *buf, uint32_t l, ByteOrder byteOrder)
 {
     if (byteOrder == littleEndian) {
         buf[0] = static_cast<byte>(l & 0x000000ffU);
@@ -111,7 +111,7 @@ uint32_t DataBuf::ReadUInt32(size_t offset, ByteOrder byteOrder)
         return 0;
         // throw std::out_of_range(s"Overflow in DataBuf::read_uint32");
     }
-    return getULong(&pData_[offset], byteOrder);
+    return GetULong(&pData_[offset], byteOrder);
 }
 
 int DataBuf::CmpBytes(size_t offset, const void *buf, size_t bufsize) const
@@ -140,15 +140,15 @@ const byte *DataBuf::C_Data(size_t offset) const
     return &pData_[offset];
 }
 
-uint16_t getUShort(const byte *buf, ByteOrder byteOrder)
+uint16_t GetUShort(const byte *buf, ByteOrder byteOrder)
 {
-    return getUShort(makeSliceUntil(buf, 2), byteOrder);
+    return GetUShort(makeSliceUntil(buf, 2), byteOrder);
 }
 
 const uint16_t LOWER_BYTE_MASK = 0x00ffU;
 const uint16_t UPPER_BYTE_MASK = 0xff00U;
 
-size_t us2Data(byte *buf, uint16_t value, ByteOrder byteOrder)
+size_t US2Data(byte *buf, uint16_t value, ByteOrder byteOrder)
 {
     if (byteOrder == littleEndian) {
         buf[0] = static_cast<byte>(value & LOWER_BYTE_MASK);
@@ -162,7 +162,7 @@ size_t us2Data(byte *buf, uint16_t value, ByteOrder byteOrder)
     return 2;
 }
 
-size_t s2Data(byte *buf, int16_t value, ByteOrder byteOrder)
+size_t S2Data(byte *buf, int16_t value, ByteOrder byteOrder)
 {
     if (byteOrder == littleEndian) {
         buf[0] = static_cast<byte>(value & LOWER_BYTE_MASK);

@@ -48,7 +48,7 @@ uint32_t JpegImageAccessor::ReadMetadata()
     }
 
     ExifData *exifData;
-    TiffParser::DecodeJpegExif(reinterpret_cast<const unsigned char *>(dataBuf.C_Data()), dataBuf.size(), &exifData);
+    TiffParser::DecodeJpegExif(reinterpret_cast<const unsigned char *>(dataBuf.C_Data()), dataBuf.Size(), &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Image stream doesnot have exifData");
         return ERR_IMAGE_DECODE_FAILED;
@@ -103,7 +103,7 @@ uint32_t JpegImageAccessor::WriteMetadata()
     uint32_t size = 0;
     if (!GetExifEncodeBlob(&dataBlob, size)) {
         IMAGE_LOGE("Encode Metadata failed");
-        return false;
+        return ERR_MEDIA_VALUE_INVALID;
     }
 
     return UpdateData(dataBlob, size);
@@ -115,7 +115,7 @@ uint32_t JpegImageAccessor::WriteExifBlob(DataBuf& blob)
     uint32_t size = 0;
     if (!GetExifBlob(blob, &dataBlob, size)) {
         IMAGE_LOGE("blob data empty");
-        return false;
+        return ERR_MEDIA_VALUE_INVALID;
     }
 
     return UpdateData(dataBlob, size);
@@ -158,7 +158,7 @@ std::pair<std::array<byte, 2>, uint16_t> JpegImageAccessor::ReadSegmentLength(ui
             IMAGE_LOGE("Image stream read failed");
             return {buf, size};
         }
-        size = getUShort(buf.data(), bigEndian);
+        size = GetUShort(buf.data(), bigEndian);
     }
     return {buf, size};
 }
@@ -169,7 +169,7 @@ DataBuf JpegImageAccessor::ReadNextSegment(byte marker)
     DataBuf buf(size);
     if (size > EXIF_ID_LENGTH) {
         imageStream_->Read(buf.Data(EXIF_ID_LENGTH), (size - EXIF_ID_LENGTH));
-        std::copy(sizebuf.begin(), sizebuf.end(), buf.begin());
+        std::copy(sizebuf.begin(), sizebuf.end(), buf.Begin());
     }
 
     return buf;
@@ -193,12 +193,12 @@ bool JpegImageAccessor::GetExifBlob(const DataBuf& blob, uint8_t** dataBlob, uin
         return false;
     }
 
-    if (blob.CmpBytes(EXIF_BLOB_OFFSET, EXIF_ID, EXIF_ID_SIZE) == 0) {
+    if (blob.CmpBytes(0, EXIF_ID, EXIF_ID_SIZE) == 0) {
         *dataBlob = (byte *)blob.C_Data(EXIF_ID_SIZE);
-        size = blob.size() - EXIF_ID_SIZE;
+        size = blob.Size() - EXIF_ID_SIZE;
     } else {
         *dataBlob = (byte *)blob.C_Data();
-        size = blob.size();
+        size = blob.Size();
     }
 
     return true;
@@ -241,7 +241,7 @@ std::tuple<size_t, size_t> JpegImageAccessor::GetInsertPosAndMarkerAPP1()
         DataBuf buf = ReadNextSegment(marker);
         if (marker == JPEG_MARKER_APP0) {
             insertPos = markerCount + 1;
-        } else if ((marker == JPEG_MARKER_APP1) && (buf.size() >= APP1_EXIF_LENGTH) &&
+        } else if ((marker == JPEG_MARKER_APP1) && (buf.Size() >= APP1_EXIF_LENGTH) &&
                    (buf.CmpBytes(EXIF_BLOB_OFFSET, EXIF_ID, EXIF_ID_LENGTH) == 0)) {
             skipExifSeqNum = markerCount;
         }
@@ -264,7 +264,7 @@ bool JpegImageAccessor::WriteData(BufferImageStream& bufStream, uint8_t* dataBlo
         return false;
     }
 
-    us2Data(tmpBuf.data() + EXIF_BLOB_OFFSET, static_cast<uint16_t>(size + APP1_EXIF_LENGTH), bigEndian);
+    US2Data(tmpBuf.data() + EXIF_BLOB_OFFSET, static_cast<uint16_t>(size + APP1_EXIF_LENGTH), bigEndian);
     std::copy_n(EXIF_ID, EXIF_ID_SIZE, tmpBuf.data() + MARKER_LENGTH_SIZE);
     if (bufStream.Write(tmpBuf.data(), APP1_HEADER_LENGTH) != APP1_HEADER_LENGTH) {
         IMAGE_LOGE("Write EXIF_ID temp stream failed");
@@ -288,7 +288,7 @@ bool JpegImageAccessor::WriteSegment(BufferImageStream& bufStream, uint8_t marke
         IMAGE_LOGE("Write marker and a copy of the segment failed");
         return false;
     }
-    if (bufStream.Write((byte*)buf.C_Data(), buf.size()) != buf.size()) {
+    if (bufStream.Write((byte*)buf.C_Data(), buf.Size()) != buf.Size()) {
         IMAGE_LOGE("Write buf failed");
         return false;
     }
@@ -299,13 +299,13 @@ bool JpegImageAccessor::WriteSegment(BufferImageStream& bufStream, uint8_t marke
 bool JpegImageAccessor::CopyRestData(BufferImageStream& bufStream)
 {
     DataBuf buf(READ_WRITE_BLOCK);
-    size_t readSize = imageStream_->Read(buf.Data(), buf.size());
+    size_t readSize = imageStream_->Read(buf.Data(), buf.Size());
     while (readSize != 0) {
         if (bufStream.Write((byte*)buf.C_Data(), readSize) != readSize) {
             IMAGE_LOGE("Write block data to temp stream failed");
             return false;
         }
-        readSize = imageStream_->Read(buf.Data(), buf.size());
+        readSize = imageStream_->Read(buf.Data(), buf.Size());
     }
 
     return true;
@@ -342,32 +342,32 @@ bool JpegImageAccessor::UpdateExifMetadata(BufferImageStream& bufStream, uint8_t
     return CopyRestData(bufStream);
 }
 
-bool JpegImageAccessor::UpdateData(uint8_t* dataBlob, uint32_t size)
+uint32_t JpegImageAccessor::UpdateData(uint8_t* dataBlob, uint32_t size)
 {
     BufferImageStream tmpBufStream;
     if (!tmpBufStream.Open(OpenMode::ReadWrite)) {
         IMAGE_LOGE("Image temp stream open failed");
-        return false;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     if (!OpenOrSeek()) {
         IMAGE_LOGE("Image stream open failed");
-        return false;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     if (!WriteHeader(tmpBufStream)) {
         IMAGE_LOGE("Output image stream write header failed");
-        return false;
+        return ERROR;
     }
 
     if (!UpdateExifMetadata(tmpBufStream, dataBlob, size)) {
         IMAGE_LOGE("Image temp stream write failed");
-        return false;
+        return ERROR;
     }
 
     imageStream_->CopyFrom(tmpBufStream);
 
-    return true;
+    return SUCCESS;
 }
 } // namespace Media
 } // namespace OHOS

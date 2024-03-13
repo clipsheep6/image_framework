@@ -94,35 +94,38 @@ struct DataBuf {
      * Get an iterator pointing to the beginning of the buffer
      * @return An iterator pointing to the beginning of the buffer
      */
-    iterator begin() noexcept { return pData_.begin(); }
+    iterator Begin() noexcept { return pData_.begin(); }
 
-  /**
-   * Get a const iterator pointing to the beginning of the buffer
-   * @return A const iterator pointing to the beginning of the buffer
-   */
-  const_iterator cbegin() const noexcept {
-    return pData_.cbegin();
-  }
+    /**
+     * Get a const iterator pointing to the beginning of the buffer
+     * @return A const iterator pointing to the beginning of the buffer
+     */
+    const_iterator CBegin() const noexcept { return pData_.cbegin(); }
 
     /**
      * Get an iterator pointing to the end of the buffer
      * @return An iterator pointing to the end of the buffer
      */
-    iterator end() noexcept;
+    iterator End() noexcept { return pData_.end(); }
 
-  /**
-   * Get a const iterator pointing to the end of the buffer
-   * @return A const iterator pointing to the end of the buffer
-   */
-  const_iterator cend() const noexcept {
-    return pData_.end();
-  }
+    /**
+     * Get a const iterator pointing to the end of the buffer
+     * @return A const iterator pointing to the end of the buffer
+     */
+    const_iterator CEnd() const noexcept { return pData_.cend(); }
 
     /**
      * Get the size of the buffer
      * @return The size of the buffer
      */
-    size_t size() const { return pData_.size(); }
+    size_t Size() const { return pData_.size(); }
+
+    /**
+     * Write a uint8_t value to the buffer at a specific offset
+     * @param offset The offset to write to
+     * @param value The value to write
+     */
+    void WriteUInt8(size_t offset, uint8_t value);
 
     /**
      * Read a uint8_t value from the buffer at a specific offset
@@ -131,15 +134,21 @@ struct DataBuf {
      */
     uint8_t ReadUInt8(size_t offset) const;
 
-  /**
-   * Write a uint8_t value to the buffer at a specific offset
-   * @param offset The offset to write to
-   * @param value The value to write
-   */
-  void WriteUInt8(size_t offset, uint8_t value);
+    /**
+     * Read a uint32_t value from the buffer at a specific offset
+     * @param offset The offset to read from
+     * @param byteOrder The byte order to use when reading the value
+     * @return The read value
+     */
+    uint32_t ReadUInt32(size_t offset, ByteOrder byteOrder);
 
-  uint32_t ReadUInt32(size_t offset, ByteOrder byteOrder);
-  void WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder);
+    /**
+     * Write a uint32_t value to the buffer at a specific offset
+     * @param offset The offset to write to
+     * @param x The value to write
+     * @param byteOrder The byte order to use when writing the value
+     */
+    void WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder);
 
     /**
      * Compare a sequence of bytes in the buffer with another sequence of bytes
@@ -175,34 +184,67 @@ struct DataBuf {
     ByteVector pData_;
 };
 
-//! Read a 4 byte unsigned long value from the data buffer
-uint32_t getULong(const byte* buf, ByteOrder byteOrder);
-size_t ul2Data(byte* buf, uint32_t l, ByteOrder byteOrder);
+/**
+ * Read a 4 byte unsigned long value from the data buffer
+ * @param buf The data buffer to read from
+ * @param byteOrder The byte order to use when reading the value
+ * @return The read value
+ */
+uint32_t GetULong(const byte *buf, ByteOrder byteOrder);
 
-//! Read a 2 byte unsigned short value from the data buffer
-uint16_t getUShort(const byte *buf, ByteOrder byteOrder);
-//! Read a 2 byte unsigned short value from a Slice
+/**
+ * Write a 4 byte unsigned long value to the data buffer
+ * @param buf The data buffer to write to
+ * @param l The value to write
+ * @param byteOrder The byte order to use when writing the value
+ * @return The number of bytes written
+ */
+size_t UL2Data(byte *buf, uint32_t l, ByteOrder byteOrder);
+
+/**
+ * Read a 2 byte unsigned short value from the data buffer
+ * @param buf The data buffer to read from
+ * @param byteOrder The byte order to use when reading the value
+ * @return The read value
+ */
+uint16_t GetUShort(const byte *buf, ByteOrder byteOrder);
+
+/**
+ * Read a 2 byte unsigned short value from a Slice
+ * @param buf The Slice to read from
+ * @param byteOrder The byte order to use when reading the value
+ * @return The read value
+ */
 template <typename T>
-uint16_t getUShort(const Slice<T> &buf, ByteOrder byteOrder)
+uint16_t GetUShort(const Slice<T> &buf, ByteOrder byteOrder)
 {
-    if (byteOrder == littleEndian) {
-        return static_cast<byte>(buf.at(1)) << DATA_BUF_BYTE_SIZE |
-               static_cast<byte>(buf.at(0));
-    }
-    return static_cast<byte>(buf.at(0)) << DATA_BUF_BYTE_SIZE |
-           static_cast<byte>(buf.at(1));
+  if (byteOrder == littleEndian) {
+    return static_cast<byte>(buf.at(1)) << DATA_BUF_BYTE_SIZE |
+         static_cast<byte>(buf.at(0));
+  }
+  return static_cast<byte>(buf.at(0)) << DATA_BUF_BYTE_SIZE |
+       static_cast<byte>(buf.at(1));
 }
 
-/*!
-  @brief Convert an unsigned short to data, write the data to the buffer,
-         return number of bytes written.
+/**
+ * Convert an unsigned short to data, write the data to the buffer,
+ * and return the number of bytes written.
+ * @param buf The buffer to write to
+ * @param value The value to write
+ * @param byteOrder The byte order to use when writing the value
+ * @return The number of bytes written
  */
-size_t us2Data(byte *buf, uint16_t value, ByteOrder byteOrder);
-/*!
-  @brief Convert a signed short to data, write the data to the buffer,
-         return number of bytes written.
+size_t US2Data(byte *buf, uint16_t value, ByteOrder byteOrder);
+
+/**
+ * Convert a signed short to data, write the data to the buffer,
+ * and return the number of bytes written.
+ * @param buf The buffer to write to
+ * @param value The value to write
+ * @param byteOrder The byte order to use when writing the value
+ * @return The number of bytes written
  */
-size_t s2Data(byte *buf, int16_t value, ByteOrder byteOrder);
+size_t S2Data(byte *buf, int16_t value, ByteOrder byteOrder);
 
 } // namespace Media
 } // namespace OHOS

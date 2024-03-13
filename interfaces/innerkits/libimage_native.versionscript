@@ -41,6 +41,7 @@
     *DataBuf*;
     *TiffParser*;
     *ImageAccessorFactory*;
+    *PngImageAccessor*;
   local:
     *;
 };
