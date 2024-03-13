@@ -1003,8 +1003,10 @@ std::multimap<std::string, std::string> ExifMetadataConverter::valueFormatValida
   {"BitsPerSample",  TRIBLEINTWITHCOMMAREGEX},
   {"ImageLength",  ONEINTREGEX},
   {"ImageWidth",  ONEINTREGEX},
+  {"GPSLatitude", DOUBLEINTWITHCOMMAREGEX},
   {"GPSLatitude", TRIBLEINTWITHCOMMAREGEX},
   {"GPSLatitude", TRIBLEDECIMALWITHCOMMAREGEX},
+  {"GPSLongitude", DOUBLEINTWITHCOMMAREGEX},
   {"GPSLongitude", TRIBLEINTWITHCOMMAREGEX},
   {"GPSLongitude", TRIBLEDECIMALWITHCOMMAREGEX}
 };

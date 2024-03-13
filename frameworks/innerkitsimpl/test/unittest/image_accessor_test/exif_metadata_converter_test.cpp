@@ -73,18 +73,29 @@ std::string MODIFYDATA[][3] = {
 
 HWTEST_F(MetadataConverterTest, Validate001, TestSize.Level3)
 {
-    IMAGE_LOGD("MetadataConverterTest: Validate001");
     GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 start";
-
     ASSERT_EQ(ExifMetadataConverter::Validate("BitsPerSample", "9,9,8"), 0);
     ASSERT_EQ(ExifMetadataConverter::Validate("Orientation", "1"), 0);
     ASSERT_EQ(ExifMetadataConverter::Validate("ImageLength", "100"), 0);
     ASSERT_EQ(ExifMetadataConverter::Validate("ImageWidth", "100"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitude", "39,54"), 0);
     ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitude", "39,54,20"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitude", "39,54"), 0);
     ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitude", "39,54,20"), 0);
-
+    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitudeRef", "N"), 0);
+    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitudeRef", "E"), 0);
     GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 end";
    
+}
+
+HWTEST_F(MetadataConverterTest, Validate002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate002 start";
+    ASSERT_NE(ExifMetadataConverter::Validate("BitsPerSample", "xx"), 0);
+    ASSERT_NE(ExifMetadataConverter::Validate("ImageLength", "XXX"), 0);
+    ASSERT_NE(ExifMetadataConverter::Validate("GPSLatitudeRef", "C"), 0);
+    ASSERT_NE(ExifMetadataConverter::Validate("GPSLongitudeRef", "C"), 0);
+    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate002 end";
 }
 
 } // namespace Multimedia
