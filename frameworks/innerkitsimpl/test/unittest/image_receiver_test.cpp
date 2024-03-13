@@ -568,5 +568,53 @@ HWTEST_F(ImageReceiverTest, IsCpuAccessTest002, TestSize.Level3)
     ASSERT_EQ(isCpuAccess, false);
     GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest002 end";
 }
+
+/**
+ * @tc.name: IsCpuAccessTest003
+ * @tc.desc: test LastNativeImage IsCpuAccess is true
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageReceiverTest, IsCpuAccessTest003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest003 start";
+    std::shared_ptr<ImageReceiver> imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
+        RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+    
+    auto res = imageReceiver->SetCpuAccess(true);
+    ASSERT_EQ(res, SUCCESS);
+    
+    PushBuffer(imageReceiver);
+
+    std::shared_ptr<NativeImage> image = imageReceiver->LastNativeImage();
+    ASSERT_NE(image, nullptr);
+    bool isCpuAccess = false;
+    image->IsCpuAccess(isCpuAccess);
+    ASSERT_EQ(isCpuAccess, true);
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest003 end";
+}
+
+/**
+ * @tc.name: IsCpuAccessTest004
+ * @tc.desc: test LastNativeImage IsCpuAccess is false
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageReceiverTest, IsCpuAccessTest004, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest004 start";
+    std::shared_ptr<ImageReceiver> imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
+        RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+    
+    auto res = imageReceiver->SetCpuAccess(true);
+    ASSERT_EQ(res, SUCCESS);
+    
+    PushBuffer(imageReceiver);
+
+    std::shared_ptr<NativeImage> image = imageReceiver->LastNativeImage();
+    ASSERT_NE(image, nullptr);
+    bool isCpuAccess = false;
+    image->IsCpuAccess(isCpuAccess);
+    ASSERT_EQ(isCpuAccess, true);
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest004 end";
+}
 }
 }
