@@ -40,7 +40,6 @@ namespace {
     constexpr uint32_t NUM_3 = 3;
     constexpr uint32_t NUM_4 = 4;
     constexpr uint32_t NUM_5 = 5;
-    constexpr uint32_t NUM_8 = 8;
 }
 
 namespace OHOS {
@@ -1334,32 +1333,6 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContext(napi_env env, napi
         }
     }
     return context;
-}
-
-static bool IsDoubleString(const std::string &str)
-{
-    char* end = nullptr;
-    double number = std::strtod(str.c_str(), &end);
-    return end != str.c_str() && *end == '\0' && number != HUGE_VAL;
-}
-
-static bool CheckExifDataValueOfBitsPerSample(const std::string &key, const std::string &value, std::string &errorInfo)
-{
-    std::vector<std::string> bitsVec;
-    SplitStr(value, ",", bitsVec);
-    if (bitsVec.size() > NUM_3) {
-        errorInfo = "BitsPerSample has invalid exif value: ";
-        errorInfo.append(value);
-        return false;
-    }
-    for (size_t i = 0; i < bitsVec.size(); i++) {
-        if (!IsNumericStr(bitsVec[i])) {
-            errorInfo = "BitsPerSample has invalid exif value: ";
-            errorInfo.append(bitsVec[i]);
-            return false;
-        }
-    }
-    return true;
 }
 
 static bool CheckExifDataValue(const std::string &key, const std::string &value, std::string &errorInfo)
