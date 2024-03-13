@@ -186,6 +186,14 @@ class BufferImageStream : public ImageStream {
      * @return Returns the pointer to the data.
      */
     NATIVEEXPORT byte *Release();
+
+    /**
+     * GetSize returns the size of the data managed by BufferImageStream.
+     * Please note that the size returned is the size of the data at the time
+     * of the call, and may change if more data is written to the stream.
+     *
+     * @return Returns the size of the data.
+     */
     NATIVEEXPORT virtual size_t GetSize() override;
 
   private:

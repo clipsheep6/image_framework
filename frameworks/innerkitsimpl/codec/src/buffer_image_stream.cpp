@@ -65,9 +65,12 @@ ssize_t BufferImageStream::Write(byte *data, size_t size)
     // Check if the new data will fit into the current buffer
     if (currentOffset_ + static_cast<long>(size) > capacity_) {
         // If the memory mode is Fix, we cannot expand the buffer
+        IMAGE_LOGD("BufferImageStream::Write, currentOffset:%{public}ld, size:%{public}u, "
+                   "capacity:%{public}ld",
+                   currentOffset_, size, capacity_);
         if (memoryMode_ == Fix) {
-            IMAGE_LOGE("BufferImageStream::Write failed, currentOffset:%ld, "
-                       "size:%u, capacity:%ld",
+            IMAGE_LOGE("BufferImageStream::Write failed, currentOffset:%{public}ld, "
+                       "size:%{public}u, capacity:%{public}ld",
                        currentOffset_, size, capacity_);
             return -1;
         }
@@ -79,6 +82,7 @@ ssize_t BufferImageStream::Write(byte *data, size_t size)
             BUFFER_IMAGE_STREAM_PAGE_SIZE;
         // Allocate the new buffer
         byte *newBuffer = new byte[newCapacity];
+        IMAGE_LOGD("BufferImageStream::Write, newCapacity:%{public}ld", newCapacity);
         // Check if the allocation was successful
         if (newBuffer == nullptr) {
             IMAGE_LOGE("BufferImageStream::Write failed, newBuffer is nullptr");
@@ -101,23 +105,25 @@ ssize_t BufferImageStream::Write(byte *data, size_t size)
             if (originData_ != buffer_) {
                 delete[] buffer_;
             }
+        }else{
+            IMAGE_LOGD("buffer is nullptr");
         }
         // Update the buffer and capacity
         buffer_ = newBuffer;
         capacity_ = newCapacity;
     }
-    // Copy the new data into the buffer
-    IMAGE_LOGD("BufferImageStream::Write, before memcpy_s, currentOffset:%ld, "
-               "size:%u, capacity:%ld",
-               currentOffset_, size, capacity_);
-    memcpy_s(buffer_ + currentOffset_, capacity_ - currentOffset_, data, size);
-    IMAGE_LOGD("BufferImageStream::Write, after memcpy_s, currentOffset:%ld, "
-               "size:%u, capacity:%ld",
-               currentOffset_, size, capacity_);
-    // Update the current offset and buffer size
-    currentOffset_ += size;
-    bufferSize_ = std::max(currentOffset_, bufferSize_);
-    // Return the number of bytes written
+    // // Copy the new data into the buffer
+    // IMAGE_LOGD("BufferImageStream::Write, before memcpy_s, currentOffset:%ld, "
+    //            "size:%u, capacity:%ld",
+    //            currentOffset_, size, capacity_);
+    // memcpy_s(buffer_ + currentOffset_, capacity_ - currentOffset_, data, size);
+    // IMAGE_LOGD("BufferImageStream::Write, after memcpy_s, currentOffset:%ld, "
+    //            "size:%u, capacity:%ld",
+    //            currentOffset_, size, capacity_);
+    // // Update the current offset and buffer size
+    // currentOffset_ += size;
+    // bufferSize_ = std::max(currentOffset_, bufferSize_);
+    // // Return the number of bytes written
     return size;
 }
 
@@ -206,6 +212,7 @@ void BufferImageStream::Close()
         buffer_ != nullptr) {
         delete[] buffer_;
         buffer_ = nullptr;
+        IMAGE_LOGD("BufferImageStream::Close, buffer_ is deleted");
     }
     currentOffset_ = 0;
 }

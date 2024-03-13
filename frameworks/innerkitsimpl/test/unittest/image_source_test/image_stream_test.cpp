@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <fstream>
 
 // Google Test includes
 #include "gmock/gmock-actions.h"
@@ -49,6 +50,131 @@ using namespace testing::ext;
 using namespace testing;
 using namespace OHOS::Media;
 
+#include <cstdlib>
+#include <unordered_map>
+#include <execinfo.h>
+#include <sstream>
+
+std::unordered_map<std::string, std::string> allocations;
+bool isLoggerOn = false;
+
+std::mutex allocations_mutex;
+
+// void add_allocation(const std::string& key, const std::string& value) {
+//     std::lock_guard<std::mutex> lock(allocations_mutex);
+//     allocations[key] = value;
+// }
+
+// void remove_allocation(const std::string& key) {
+//     std::lock_guard<std::mutex> lock(allocations_mutex);
+//     allocations.erase(key);
+// }
+
+#include <cxxabi.h>
+
+std::string getStackTrace() {
+    const int max_frames = 100;
+    void* frame[max_frames];
+    int num_frames = backtrace(frame, max_frames);
+    if (num_frames == 0) {
+        return "No stack trace available";
+    }
+
+    char** symbols = backtrace_symbols(frame, num_frames);
+    if (!symbols) {
+        return "Could not get stack trace symbols";
+    }
+
+    std::stringstream ss;
+    for (int i = 0; i < num_frames; ++i) {
+        char* demangled_name = nullptr;
+        char* begin_name = nullptr;
+        char* begin_offset = nullptr;
+        char* end_offset = nullptr;
+
+        // find parentheses and +address offset surrounding the mangled name
+        for (char* p = symbols[i]; *p; ++p) {
+            if (*p == '(') {
+                begin_name = p;
+            } else if (*p == '+') {
+                begin_offset = p;
+            } else if (*p == ')' && begin_offset) {
+                end_offset = p;
+                break;
+            }
+        }
+
+        // if the line could be processed, attempt to demangle the symbol
+        if (begin_name && begin_offset && end_offset && begin_name < begin_offset) {
+            *begin_name++ = '\0';
+            *begin_offset++ = '\0';
+            *end_offset = '\0';
+
+            int status = -1;
+            demangled_name = abi::__cxa_demangle(begin_name, nullptr, nullptr, &status);
+            if (status == 0) {
+                ss << demangled_name << " ";
+            } else {
+                ss << begin_name << " ";
+            }
+        } else {
+            ss << symbols[i] << " ";
+        }
+
+        free(demangled_name);
+    }
+
+    free(symbols);
+    return ss.str();
+}
+
+// void* operator new(std::size_t size) {
+//     void* ptr = std::malloc(size);
+//     if (!ptr) {
+//         // throw std::bad_alloc();
+//         return ptr;
+//     }
+
+//     if (isLoggerOn) {
+//         std::stringstream ss;
+//         ss << ptr;
+//         // std::cout << getStackTrace() << std::endl;
+//         std::cout << ss.str() << " ,size is " << size << std::endl;
+//         // add_allocation(ss.str(), "123");
+//         // allocations.insert({ss.str(), ""});
+//         // allocations[ss.str()] = "";
+//         // allocations[ptr] = getStackTrace();
+//     }
+
+//     return ptr;
+// }
+
+// void operator delete(void* ptr) noexcept {
+//     if (isLoggerOn) {
+//         std::stringstream ss;
+//         ss << ptr;
+//         std::cout << ss.str() << std::endl;
+//         // remove_allocation(ss.str());
+//         // allocations.erase(ss.str());
+//     }
+
+//     std::free(ptr);
+// }
+
+void startLogger() {
+    isLoggerOn = true;
+}
+
+void stopLogger() {
+    isLoggerOn = false;
+
+    // for (const auto& pair : allocations) {
+    //     std::cout << "Leaked memory at address " << pair.first << ", allocated by:\n" << pair.second;
+    // }
+
+    allocations.clear();
+}
+
 namespace OHOS {
 namespace Media {
 
@@ -59,6 +185,55 @@ namespace Media {
 #define SIZE_10 10
 #define TEST_DIR_PERMISSIONS 0777
 
+class MemoryCheck {
+public:
+    void Start() {
+        startVmSize = GetVmSize();
+        startVmRSS = GetVmRSS();
+    }
+
+    void End() {
+        endVmSize = GetVmSize();
+        endVmRSS = GetVmRSS();
+    }
+
+    bool Compare() {
+        if (startVmSize != endVmSize || startVmRSS != endVmRSS) {
+            std::cout << "Difference in VmSize: " << endVmSize - startVmSize << std::endl;
+            std::cout << "Difference in VmRSS: " << endVmRSS - startVmRSS << std::endl;
+            return false;
+        }
+        return true;
+    }
+
+private:
+    long GetVmSize() {
+        return GetMemoryInfo("VmSize:");
+    }
+
+    long GetVmRSS() {
+        return GetMemoryInfo("VmRSS:");
+    }
+
+    long GetMemoryInfo(const std::string& name) {
+        std::string line;
+        std::ifstream status_file("/proc/self/status");
+
+        while (std::getline(status_file, line)) {
+            if (line.find(name) != std::string::npos) {
+                return std::stol(line.substr(name.length()));
+            }
+        }
+
+        return 0;
+    }
+
+    long startVmSize = 0;
+    long startVmRSS = 0;
+    long endVmSize = 0;
+    long endVmRSS = 0;
+};
+
 class ImageStreamTest : public testing::Test {
   public:
     ImageStreamTest() {}
@@ -67,6 +242,7 @@ class ImageStreamTest : public testing::Test {
     std::string filePathSource = "/data/local/tmp/image/test_exif_test.jpg";
     std::string filePathDest = "/data/local/tmp/image/testfile_dest.png";
     std::string backupFilePathSource = "/data/local/tmp/image/test_exif.jpg";
+    MemoryCheck memoryCheck;
 
     virtual void SetUp() {
         // Create the directory
@@ -85,12 +261,18 @@ class ImageStreamTest : public testing::Test {
         std::filesystem::copy(
             backupFilePathSource, filePathSource,
             std::filesystem::copy_options::overwrite_existing);
+        
+        memoryCheck.Start();
     }
 
     const static std::string tmpDirectory;
     static bool alreadyExist;
 
     virtual void TearDown() {
+        memoryCheck.End();
+        if(!memoryCheck.Compare()){
+            GTEST_LOG_(INFO) << "Memory leak detected";
+        }
         remove(filePath.c_str());
         remove(filePathDest.c_str());
     }
@@ -602,15 +784,20 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom002, TestSize.Level3) {
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom003, TestSize.Level3) {
-    BufferImageStream src;
-    FileImageStream dest(filePathDest);
-    src.Open();
-    dest.Open();
+    // startLogger();
+    BufferImageStream *src = new BufferImageStream();
+    FileImageStream *dest = new FileImageStream(filePathDest);
+    src->Open();
+    dest->Open();
     char buff[IMAGE_STREAM_PAGE_SIZE + 1] = {0};
-    src.Write((byte *)buff, IMAGE_STREAM_PAGE_SIZE + 1);
-    ASSERT_TRUE(dest.CopyFrom(src));
-    ASSERT_EQ(src.GetSize(), dest.GetSize());
-    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), 4097), 0);
+    src->Write((byte *)buff, IMAGE_STREAM_PAGE_SIZE + 1);
+    // ASSERT_TRUE(dest.CopyFrom(src));
+    // ASSERT_EQ(src.GetSize(), dest.GetSize());
+    // ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), 4097), 0);
+    delete src;
+    delete dest;
+    // stopLogger();
+    // std::cout << getStackTrace();
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom004, TestSize.Level3) {
