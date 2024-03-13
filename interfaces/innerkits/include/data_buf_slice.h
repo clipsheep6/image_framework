@@ -28,14 +28,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "image_log.h"
-
-#undef LOG_DOMAIN
-#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
-
-#undef LOG_TAG
-#define LOG_TAG "DataBufferSlice"
-
 namespace OHOS {
 namespace Media {
 /*!
@@ -49,11 +41,7 @@ struct SliceBase {
    * @param end The end of the slice
    * @throw std::out_of_range when `begin` is not smaller than `end`
    */
-  SliceBase(size_t begin, size_t end) : begin_(begin), end_(end) {
-    if (begin >= end) {
-      IMAGE_LOGE("Begin must be smaller than end");
-    }
-  }
+  SliceBase(size_t begin, size_t end);
 
   /*!
    * Return the number of elements in the slice.
@@ -69,11 +57,7 @@ struct SliceBase {
    * @param index The index to check
    * @throw std::out_of_range when `index` will access an element outside of the slice
    */
-  void rangeCheck(size_t index) const {
-    if (index >= size()) {
-      IMAGE_LOGE("Index outside of the slice");
-    }
-  }
+  void rangeCheck(size_t index) const;
 
   size_t begin_;  //!< Lower bound of the slice
   size_t end_;    //!< Upper bound of the slice
@@ -318,9 +302,9 @@ struct ContainerStorage {
     // we are screwed if the container got changed => try to catch it
     assert(index <= data_.size());
 
-    auto it = data_.begin();
-    std::advance(it, index);
-    return it;
+    auto iterator = data_.begin();
+    std::advance(iterator, index);
+    return iterator;
   }
 
   const_iterator unsafeGetIteratorAt(size_t index) const {

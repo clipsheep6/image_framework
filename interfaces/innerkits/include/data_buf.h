@@ -24,7 +24,7 @@
 #include <vector>
 
 // included header files
-#include "data_buf_slice.hpp"
+#include "data_buf_slice.h"
 
 namespace OHOS {
 namespace Media {
@@ -102,7 +102,9 @@ struct DataBuf {
    * Get a const iterator pointing to the beginning of the buffer
    * @return A const iterator pointing to the beginning of the buffer
    */
-  const_iterator cbegin() const noexcept;
+  const_iterator cbegin() const noexcept {
+    return pData_.cbegin();
+  }
 
   /**
    * Get an iterator pointing to the end of the buffer
@@ -114,7 +116,9 @@ struct DataBuf {
    * Get a const iterator pointing to the end of the buffer
    * @return A const iterator pointing to the end of the buffer
    */
-  const_iterator cend() const noexcept;
+  const_iterator cend() const noexcept {
+    return pData_.end();
+  }
 
   /**
    * Get the size of the buffer
