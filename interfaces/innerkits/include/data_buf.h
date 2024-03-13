@@ -138,6 +138,9 @@ struct DataBuf {
    */
   void WriteUInt8(size_t offset, uint8_t value);
 
+  uint32_t ReadUInt32(size_t offset, ByteOrder byteOrder);
+  void WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder);
+
   /**
    * Compare a sequence of bytes in the buffer with another sequence of bytes
    * @param offset The offset in the buffer to start the comparison
@@ -172,6 +175,10 @@ struct DataBuf {
  private:
   ByteVector pData_;
 };
+
+//! Read a 4 byte unsigned long value from the data buffer
+uint32_t getULong(const byte* buf, ByteOrder byteOrder);
+size_t ul2Data(byte* buf, uint32_t l, ByteOrder byteOrder);
 
 //! Read a 2 byte unsigned short value from the data buffer
  uint16_t getUShort(const byte* buf, ByteOrder byteOrder);

@@ -86,6 +86,46 @@ void DataBuf::WriteUInt8(size_t offset, uint8_t value) {
   pData_[offset] = value;
 }
 
+uint32_t DataBuf::ReadUInt32(size_t offset, ByteOrder byteOrder) {
+  if (pData_.size() < 4 || offset > (pData_.size() - 4)) {
+    IMAGE_LOGE("Overflow in DataBuf::read_uint32");
+    return 0;
+    // throw std::out_of_range(s"Overflow in DataBuf::read_uint32");
+  }
+  return getULong(&pData_[offset], byteOrder);
+}
+
+uint32_t getULong(const byte* buf, ByteOrder byteOrder) {
+  if (byteOrder == littleEndian) {
+    return buf[3] << 24 | buf[2] << 16 | buf[1] << 8 | buf[0];
+  }
+  return buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+}
+
+void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder) {
+  if (pData_.size() < 4 || offset > (pData_.size() - 4)) {
+    IMAGE_LOGE("Overflow in DataBuf::write_uint32");
+    return;
+    // throw std::out_of_range("Overflow in DataBuf::write_uint32");
+  }
+  ul2Data(&pData_[offset], x, byteOrder);
+}
+
+size_t ul2Data(byte* buf, uint32_t l, ByteOrder byteOrder) {
+  if (byteOrder == littleEndian) {
+    buf[0] = static_cast<byte>(l & 0x000000ffU);
+    buf[1] = static_cast<byte>((l & 0x0000ff00U) >> 8);
+    buf[2] = static_cast<byte>((l & 0x00ff0000U) >> 16);
+    buf[3] = static_cast<byte>((l & 0xff000000U) >> 24);
+  } else {
+    buf[0] = static_cast<byte>((l & 0xff000000U) >> 24);
+    buf[1] = static_cast<byte>((l & 0x00ff0000U) >> 16);
+    buf[2] = static_cast<byte>((l & 0x0000ff00U) >> 8);
+    buf[3] = static_cast<byte>(l & 0x000000ffU);
+  }
+  return 4;
+}
+
 int DataBuf::CmpBytes(size_t offset, const void* buf, size_t bufsize) const {
   if (pData_.size() < bufsize || offset > pData_.size() - bufsize) {
     IMAGE_LOGE("Overflow in DataBuf::cmpBytes");
