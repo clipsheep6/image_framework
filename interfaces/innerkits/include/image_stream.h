@@ -16,38 +16,35 @@
 #ifndef INTERFACES_INNERKITS_INCLUDE_IMAGE_STREAM_H
 #define INTERFACES_INNERKITS_INCLUDE_IMAGE_STREAM_H
 
+#include "image_type.h"
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <vector>
-#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
 
-enum SeekPos { 
-    BEGIN, 
-    CURRENT, 
-    END 
-};
+enum SeekPos { BEGIN, CURRENT, END };
 
 typedef uint8_t byte;
 
 enum class OpenMode {
-    Read,       // Read mode
-    ReadWrite   // Read-write mode
+    Read,     // Read mode
+    ReadWrite // Read-write mode
 };
 
 #define IMAGE_STREAM_PAGE_SIZE 4096
 #define IMAGE_STREAM_ERROR_BUFFER_SIZE 255
 
 class ImageStream {
-public:
+  public:
     virtual ~ImageStream() {}
 
     /**
      * Open the image stream
      * @return true if it opens successfully, false otherwise
+     * todo 移走
      */
     virtual bool Open() = 0;
 
@@ -76,14 +73,15 @@ public:
      * @param size The size of the data to be written
      * @return The actual size of the data written
      */
-    virtual ssize_t Write(byte* data, size_t size) = 0;
+    virtual ssize_t Write(byte *data, size_t size) = 0;
 
     /**
      * Write data from another image stream
      * @param src The image stream where the data comes from
      * @return The actual size of the data written
+     * ToDo delete
      */
-    virtual ssize_t Write(ImageStream& src) = 0;
+    virtual ssize_t Write(ImageStream &src) = 0;
 
     /**
      * Read data from the image stream
@@ -91,13 +89,14 @@ public:
      * @param size The size of the data to be read
      * @return The actual size of the data read
      */
-    virtual ssize_t Read(byte* buf, size_t size) = 0;
+    virtual ssize_t Read(byte *buf, size_t size) = 0;
     virtual int ReadByte() = 0;
 
     /**
      * Seek a specific position in the image stream
      * @param offset The offset
-     * @param pos The starting position of the offset (from the head, current position, or tail)
+     * @param pos The starting position of the offset (from the head, current
+     * position, or tail)
      * @return The new position
      */
     virtual long Seek(int offset, SeekPos pos) = 0;
@@ -116,24 +115,29 @@ public:
 
     /**
      * Create a memory map
-     * @param isWriteable If true, the created memory map will be writable; otherwise, the created memory map will be read-only.
-     * @return If the memory map is created successfully, return a pointer to the memory map; otherwise, return nullptr.
+     * @param isWriteable If true, the created memory map will be writable;
+     * otherwise, the created memory map will be read-only.
+     * @return If the memory map is created successfully, return a pointer to
+     * the memory map; otherwise, return nullptr.
      */
-    virtual byte* MMap(bool isWriteable = false) = 0;
+    virtual byte *MMap(bool isWriteable = false) = 0;
 
     /**
      * Release a memory map
      * @param mmap The pointer to the memory map that needs to be released.
-     * @return If the memory map is released successfully, return true; otherwise, return false.
+     * @return If the memory map is released successfully, return true;
+     * otherwise, return false.
      */
-    virtual bool MUnmap(byte* mmap) = 0;
+    virtual bool MUnmap(byte *mmap) = 0;
 
     /**
-     * Copy the entire content from the source ImageStream to the current ImageStream.
-     * @param src The source ImageStream, this function will read data from this ImageStream.
+     * Copy the entire content from the source ImageStream to the current
+     * ImageStream.
+     * @param src The source ImageStream, this function will read data from this
+     * ImageStream.
      * @return true if the copy is successful, false otherwise.
      */
-    virtual bool CopyFrom(ImageStream& src) = 0;
+    virtual bool CopyFrom(ImageStream &src) = 0;
 
     /**
      * Get the size of the ImageStream
@@ -141,13 +145,13 @@ public:
      */
     virtual size_t GetSize() = 0;
 
-private:
+  private:
     /**
      * Close the image stream
      */
     virtual void Close() = 0;
 };
 
-} // namespace MultimediaPlugin
+} // namespace Media
 } // namespace OHOS
 #endif // INTERFACES_INNERKITS_INCLUDE_IMAGE_STREAM_H
