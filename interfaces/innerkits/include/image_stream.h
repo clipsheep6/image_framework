@@ -123,14 +123,6 @@ class ImageStream {
     virtual byte *MMap(bool isWriteable = false) = 0;
 
     /**
-     * Release a memory map
-     * @param mmap The pointer to the memory map that needs to be released.
-     * @return If the memory map is released successfully, return true;
-     * otherwise, return false.
-     */
-    virtual bool MUnmap(byte *mmap) = 0;
-
-    /**
      * Copy the entire content from the source ImageStream to the current
      * ImageStream.
      * @param src The source ImageStream, this function will read data from this

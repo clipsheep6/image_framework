@@ -489,6 +489,9 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
     byte *result = stream.MMap(false);
     // Assume that checking whether result is not nullptr, or there is another
     // appropriate verification method
+    ASSERT_EQ(result, nullptr);
+    stream.Open();
+    result = stream.MMap(false);
     ASSERT_NE(result, nullptr);
 
     // Set the signal handler function
@@ -511,6 +514,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
 HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
     // Test the behavior of the MMap function when isWriteable is true
     FileImageStream stream(filePathSource);
+    ASSERT_TRUE(stream.Open());
     byte *result = stream.MMap(true);
     ASSERT_NE(result, nullptr);
     // Try to write data
@@ -529,6 +533,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
 HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
     // Test whether MMap can actually modify the content of the file
     FileImageStream stream(filePathSource);
+    ASSERT_TRUE(stream.Open());
     byte *result = stream.MMap(true);
     ASSERT_NE(result, nullptr);
 

@@ -163,15 +163,6 @@ class BufferImageStream : public ImageStream {
     NATIVEEXPORT virtual byte *MMap(bool isWriteable = false) override;
 
     /**
-     * Release a memory map.
-     *
-     * @param mmap The pointer to the memory map that needs to be released.
-     * @return Returns true if the memory map is released successfully;
-     * otherwise, returns false.
-     */
-    NATIVEEXPORT virtual bool MUnmap(byte *mmap) override;
-
-    /**
      * Transfer the content of the source ImageStream to the current
      * BufferImageStream. This function first clears the current buffer and sets
      * the current offset to 0. Then, this function reads data from the source

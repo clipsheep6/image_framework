@@ -149,13 +149,6 @@ class FileImageStream : public ImageStream {
     NATIVEEXPORT virtual byte *MMap(bool isWriteable = false) override;
 
     /**
-     * @brief Releases a memory map.
-     * @param mmap The pointer to the memory map that needs to be released.
-     * @return true if the memory map is released successfully, false otherwise.
-     */
-    NATIVEEXPORT virtual bool MUnmap(byte *mmap) override;
-
-    /**
      * @brief Should call Open first.Transfers the content of the source
      * ImageStream to the current FileImageStream.
      * @param src The source ImageStream.
@@ -172,7 +165,14 @@ class FileImageStream : public ImageStream {
     /**
      * @brief Closes the FileImageStream.
      */
-    NATIVEEXPORT virtual void Close() override;
+    virtual void Close() override;
+
+    /**
+     * @brief Releases a memory map.
+     * @param mmap The pointer to the memory map that needs to be released.
+     * @return true if the memory map is released successfully, false otherwise.
+     */
+    bool MUnmap();
 
     /**
      * @brief Constructs a new FileImageStream object from a file path and a

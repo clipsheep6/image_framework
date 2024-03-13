@@ -216,8 +216,6 @@ bool BufferImageStream::Flush() { return true; }
 
 byte *BufferImageStream::MMap(bool isWriteable) { return buffer_; }
 
-bool BufferImageStream::MUnmap(byte *mmap) { return true; }
-
 bool BufferImageStream::CopyFrom(ImageStream &src)
 {
     IMAGE_LOGD("BufferImageStream::CopyFrom come in");

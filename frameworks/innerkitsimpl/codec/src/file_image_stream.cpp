@@ -299,16 +299,7 @@ bool FileImageStream::IsOpen() { return fp_ != nullptr; }
 void FileImageStream::Close()
 {
     // If there is a memory map, delete it
-    if (mappedMemory_ != nullptr) {
-        if (munmap(mappedMemory_, fileSize_) == -1) {
-            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-            strerror_r(errno, buf, sizeof(buf));
-            IMAGE_LOGE(
-                "munmap: Memory mapping failed: %{public}s, reason: %{public}s",
-                filePath_.c_str(), buf);
-        }
-        mappedMemory_ = nullptr;
-    }
+    MUnmap();
 
     // If the file is not open, return directly
     if (fp_ != nullptr) {
@@ -469,22 +460,16 @@ bool FileImageStream::Flush()
 
 byte *FileImageStream::MMap(bool isWriteable)
 {
-    // If the file is not open, open it first
-    if (fp_ == nullptr) {
-        if (!Open()) {
-            // Failed to open the file
-            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-            strerror_r(errno, buf, sizeof(buf));
-            IMAGE_LOGE("mmap: Open file failed: %{public}s, reason: %{public}s",
-                       filePath_.c_str(), buf);
-            return nullptr;
-        }
+    // If there is already a memory map, return it directly
+    if (mappedMemory_ != nullptr) {
+        IMAGE_LOGE("mmap: There is already a memory mapping, return it directly");
+        return (byte *)mappedMemory_;
     }
 
-    // If there is already a memory map, delete it first
-    if (mappedMemory_ != nullptr) {
-        IMAGE_LOGW("mmap: There is already a memory mapping, remove it first");
-        munmap(mappedMemory_, fileSize_);
+    // If the file is not open, open it first
+    if (fp_ == nullptr) {
+        IMAGE_LOGE("mmap: File is not open: %{public}s", filePath_.c_str());
+        return nullptr;
     }
 
     // Get the file descriptor from the file pointer
@@ -508,15 +493,15 @@ byte *FileImageStream::MMap(bool isWriteable)
     return (byte *)mappedMemory_;
 }
 
-bool FileImageStream::MUnmap(byte *mmap)
+bool FileImageStream::MUnmap()
 {
-    if (mmap == nullptr) {
+    if (mappedMemory_ == nullptr) {
         // The memory map is nullptr
-        return false;
+        return true;
     }
 
     // Delete the memory map
-    if (munmap(mmap, fileSize_) == -1) {
+    if (munmap(mappedMemory_, fileSize_) == -1) {
         // Memory mapping failed
         char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, buf, sizeof(buf));
@@ -527,6 +512,8 @@ bool FileImageStream::MUnmap(byte *mmap)
     }
     IMAGE_LOGD("munmap: Memory mapping removed: %{public}s, size: %{public}zu",
                filePath_.c_str(), fileSize_);
+
+    mappedMemory_ = nullptr;
     return true;
 }
 
