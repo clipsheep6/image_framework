@@ -18,7 +18,8 @@ const byte pngHeader[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
 std::shared_ptr<ImageAccessor> ImageAccessorFactory::CreateImageAccessor(uint8_t *buffer, const uint32_t size)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<BufferImageStream>(buffer, size, BufferImageStream::MemoryMode::Dynamic);
+    std::shared_ptr<ImageStream> stream = std::make_shared<BufferImageStream>();
+    stream->Write(buffer, size);
     return CreateImageAccessor(stream);
 }
 
