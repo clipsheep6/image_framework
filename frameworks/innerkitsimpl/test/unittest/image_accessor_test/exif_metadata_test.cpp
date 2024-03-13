@@ -185,7 +185,7 @@ HWTEST_F(ExifMetadataTest, GetValue001, TestSize.Level3)
     ASSERT_EQ(metadata.SetValue("LightSource", "2"),true);
     ASSERT_EQ(metadata.SetValue("Flash", "5"),true);
     ASSERT_EQ(metadata.SetValue("FocalLength", "31/1"),true);
-    ASSERT_EQ(metadata.SetValue("UserComment", "comm"),true);
+    ASSERT_EQ(metadata.SetValue("UserComment", "comm2"),true);
     ASSERT_EQ(metadata.SetValue("PixelXDimension", "1000"),true);
     ASSERT_EQ(metadata.SetValue("PixelYDimension", "2000"),true);
     ASSERT_EQ(metadata.SetValue("WhiteBalance", "1"),true);
@@ -274,7 +274,7 @@ HWTEST_F(ExifMetadataTest, GetValue001, TestSize.Level3)
     ASSERT_EQ(value,"31.0 mm"); 
     metadata.GetValue("UserComment",value);
     GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001" << "key: " << "UserComment" << " value: " << value; 
-    ASSERT_EQ(value,"comm");
+    ASSERT_EQ(value,"comm2");
     metadata.GetValue("PixelXDimension",value);
     GTEST_LOG_(INFO) << "ExifMetadataTest: GetValue001" << "key: " << "PixelXDimension" << " value: " << value; 
     ASSERT_EQ(value,"1000");

@@ -7,6 +7,7 @@
 #include "securec.h"
 #include <iostream>
 #include <map>
+#include <ostream>
 #include <set>
 #include <sstream>
 #include <stdint.h>
@@ -358,10 +359,12 @@ static bool ConvertGpsDataToRationals(const std::vector<std::string> &dataVec,
     exifRationals[CONSTANT_2].denominator = static_cast<ExifSLong>(GPS_DIGIT_NUMBER);
     return true;
 }
+
 static void EXIFInfoBufferCheck(ExifEntry *exifEntry, size_t len)
 {
     IMAGE_LOGD("EXIFInfoBufferCheck len is [%{public}d]", len);
-    if (exifEntry == nullptr || (exifEntry->size >= len)) {
+    if (exifEntry == nullptr || (exifEntry->size == len)) {
+        IMAGE_LOGD("[EXIFInfoBufferCheck] exifEntry is nullptr or size>=len len is [%{public}d]", len);
         return;
     }
     /* Create a memory allocator to manage this ExifEntry */
@@ -374,6 +377,9 @@ static void EXIFInfoBufferCheck(ExifEntry *exifEntry, size_t len)
     if (buf != nullptr) {
         exifEntry->data = static_cast<unsigned char*>(buf);
         exifEntry->size = len;
+        if (exifEntry->format == EXIF_FORMAT_UNDEFINED || exifEntry->format == EXIF_FORMAT_ASCII) {
+            exifEntry->components = len;
+        }
         IMAGE_LOGD("EXIFInfoBufferCheck exif_mem_realloc success. size is [%{public}d]", len);
     }
     exif_mem_unref(exifMem);
@@ -573,9 +579,9 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
     static std::vector intProps{EXIF_TAG_ORIENTATION, EXIF_TAG_IMAGE_LENGTH, EXIF_TAG_IMAGE_WIDTH,
         EXIF_TAG_WHITE_BALANCE, EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM, EXIF_TAG_FLASH, EXIF_TAG_ISO_SPEED_RATINGS,
         EXIF_TAG_ISO_SPEED, EXIF_TAG_LIGHT_SOURCE, EXIF_TAG_METERING_MODE, EXIF_TAG_PIXEL_X_DIMENSION,
-        EXIF_TAG_PIXEL_Y_DIMENSION, EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX, EXIF_TAG_SENSITIVITY_TYPE};
+        EXIF_TAG_PIXEL_Y_DIMENSION, EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX, EXIF_TAG_SENSITIVITY_TYPE, EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY};
     static std::vector strProps{EXIF_TAG_GPS_DATE_STAMP, EXIF_TAG_IMAGE_DESCRIPTION, EXIF_TAG_MAKE, EXIF_TAG_MODEL,
-        EXIF_TAG_SCENE_TYPE, EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY, EXIF_TAG_USER_COMMENT, EXIF_TAG_DATE_TIME_ORIGINAL,
+        EXIF_TAG_SCENE_TYPE, EXIF_TAG_USER_COMMENT, EXIF_TAG_DATE_TIME_ORIGINAL,
         EXIF_TAG_DATE_TIME, EXIF_TAG_GPS_LATITUDE_REF, EXIF_TAG_GPS_LONGITUDE_REF};
     static std::vector rationalProps{EXIF_TAG_APERTURE_VALUE, EXIF_TAG_EXPOSURE_BIAS_VALUE, EXIF_TAG_EXPOSURE_TIME,
         EXIF_TAG_FNUMBER, EXIF_TAG_FOCAL_LENGTH};
@@ -593,11 +599,12 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         ExifIntValueByFormat((ptrEntry)->data, order, (ptrEntry)->format, atoi(value.c_str()));
         return true;
     } else if (std::find(strProps.begin(), strProps.end(), tag) != strProps.end()) {
-        ptrEntry = CreateExifTag(exifData_, GetExifIfdByExifTag(tag), tag, value.length(), GetExifFormatByExifTag(tag));
-        if ((ptrEntry) == nullptr || (ptrEntry)->size < value.length()) {
+        int valuesize = value.length();
+        ptrEntry = CreateExifTag(exifData_, GetExifIfdByExifTag(tag), tag, valuesize, GetExifFormatByExifTag(tag));
+        if ((ptrEntry) == nullptr || (ptrEntry)->size < valuesize) {
             IMAGE_LOGD("Get %{public}s exif entry failed.", GetExifNameByExifTag(tag).c_str());
         }
-        if (memcpy_s((ptrEntry)->data, value.length(), value.c_str(), value.length()) != 0) {
+        if (memcpy_s((ptrEntry)->data, valuesize, value.c_str(), valuesize) != 0) {
             IMAGE_LOGD("%{public}s memcpy error", GetExifNameByExifTag(tag).c_str());
         }
         return true;
@@ -873,6 +880,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     }
 
     IMAGE_LOGD("[CreateExifTag] exifEntry is nullptr. go to initilize new entry!");
+
     /* Create a memory allocator to manage this ExifEntry */
     ExifMem *exifMem = exif_mem_new_default();
     if (exifMem == nullptr) {
