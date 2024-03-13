@@ -63,6 +63,7 @@ config("image_external_config") {
     "$skia_root/skia/third_party/externals/libjpeg-turbo",
     "$skia_root/skia/third_party/skcms",
     "//third_party/libexif",
+    "//third_party/zlib",
   ]
 
   if (use_mingw_win) {
@@ -153,6 +154,7 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/image_accessor_factory.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_chunk.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
@@ -275,6 +277,7 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/image_accessor_factory.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_chunk.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
