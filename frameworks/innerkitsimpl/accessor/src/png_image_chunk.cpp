@@ -44,9 +44,9 @@ int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType type, 
         return 1;
     }
 
-    DataBuf rawText = GetRawTextFromChunk(chunkData, keyword.size(), type);
+    DataBuf rawText = GetRawTextFromChunk(chunkData, keyword.Size(), type);
     if (!rawText.empty()) {
-        int ret = GetTiffDataFromRawText(keyword.C_Data(), keyword.size(), rawText, tiffData);
+        int ret = GetTiffDataFromRawText(keyword.C_Data(), keyword.Size(), rawText, tiffData);
         return ret;
     }
     IMAGE_LOGE("Error:failed to read the raw text from chunk.");
@@ -55,18 +55,18 @@ int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType type, 
 
 DataBuf PngImageChunk::GetKeyFromChunk(const DataBuf &chunkData)
 {
-    if (chunkData.size() <= 0) {
+    if (chunkData.Size() <= 0) {
         IMAGE_LOGE("Error:check data size failed: offset bigger than data size.");
         return {};
     }
 
-    auto it = std::find(chunkData.cbegin(), chunkData.cend(), 0);
-    if (it == chunkData.cend()) {
+    auto it = std::find(chunkData.CBegin(), chunkData.CEnd(), 0);
+    if (it == chunkData.CEnd()) {
         IMAGE_LOGE("Error:lookup key failed: not found key.");
         return {};
     }
 
-    return {chunkData.C_Data(), std::distance(chunkData.cbegin(), it)};
+    return {chunkData.C_Data(), std::distance(chunkData.CBegin(), it)};
 }
 
 DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t keysize, TextChunkType type, DataBuf &rawText)
@@ -76,7 +76,7 @@ DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t 
         return {};
     }
 
-    size_t compressedTextSize = chunkData.size() - keysize - nullSeparators;
+    size_t compressedTextSize = chunkData.Size() - keysize - nullSeparators;
     if (compressedTextSize) {
         const byte* compressedText = chunkData.C_Data(keysize + nullSeparators);
         int ret = DecompressText(compressedText, static_cast<uint32_t>(compressedTextSize), rawText);
@@ -90,7 +90,7 @@ DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t 
 
 DataBuf PngImageChunk::GetRawTextFromTextChunk(const DataBuf &chunkData, size_t keysize, TextChunkType type, DataBuf &rawText)
 {
-    size_t rawTextsize = chunkData.size() - keysize - 1;
+    size_t rawTextsize = chunkData.Size() - keysize - 1;
     if (rawTextsize) {
         const byte* textPosition = chunkData.C_Data(keysize + 1);
         rawText = DataBuf(textPosition, rawTextsize);
@@ -110,7 +110,7 @@ std::string FetchStringWithNullCharEnd(const char* chunkData, size_t data_length
 
 DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t keysize, TextChunkType type, DataBuf &rawText)
 {
-    const size_t nullCount = std::count(chunkData.C_Data(keysize + 3), chunkData.C_Data(chunkData.size() - 1), '\0');
+    const size_t nullCount = std::count(chunkData.C_Data(keysize + 3), chunkData.C_Data(chunkData.Size() - 1), '\0');
     if (nullCount < nullSeparators) {
         IMAGE_LOGE("Error:corrupted Metadata: the null character after Language tag is less then 2");
         return {};
@@ -129,16 +129,16 @@ DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t 
     }
 
     const size_t languageTextPos = keysize + 3;
-    const size_t languageTextMaxLen = chunkData.size() - keysize - 3;
+    const size_t languageTextMaxLen = chunkData.Size() - keysize - 3;
     std::string languageText = FetchStringWithNullCharEnd(reinterpret_cast<const char*>(chunkData.C_Data(languageTextPos)), languageTextMaxLen);
     const size_t languageTextLen = languageText.size();
 
     const size_t translatedKeyPos = languageTextPos + languageTextLen + 1;
     std::string translatedKeyText = FetchStringWithNullCharEnd(reinterpret_cast<const char*>(chunkData.C_Data(translatedKeyPos)),
-                                                             chunkData.size() - translatedKeyPos);
+                                                             chunkData.Size() - translatedKeyPos);
     const size_t translatedKeyTextLen = translatedKeyText.size();
 
-    const size_t textLen = chunkData.size() - (keysize + 3 + languageTextLen + 1 + translatedKeyTextLen + 1);
+    const size_t textLen = chunkData.Size() - (keysize + 3 + languageTextLen + 1 + translatedKeyTextLen + 1);
     if (textLen) {
         const size_t textPosition = translatedKeyPos + translatedKeyTextLen + 1;
         const byte* textPtr = chunkData.C_Data(textPosition);
@@ -218,7 +218,7 @@ int PngImageChunk::GetTiffDataFromRawText(const byte* key, size_t keySize, const
             IMAGE_LOGE("Error:failed to parse Exif metadata: cannot convert text to hex");
             return 1;
         }
-        size_t exifInfoLength = exifInfo.size();
+        size_t exifInfoLength = exifInfo.Size();
 
         if (exifInfoLength < EXIF_HEADER_SIZE) {
             IMAGE_LOGE("Error:failed to parse Exif metadata: data length is too short");
@@ -333,12 +333,12 @@ int PngImageChunk::AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsi
 
 DataBuf PngImageChunk::ConvertRawTextToExifInfo(const DataBuf &rawText)
 {
-    if (rawText.size() <= 1) {
+    if (rawText.Size() <= 1) {
         IMAGE_LOGE("Error:raw profile text size is too small.");
         return {};
     }
     const char* sourcePtr = reinterpret_cast<const char*>(rawText.C_Data(1));
-    const char* endPtr = reinterpret_cast<const char*>(rawText.C_Data(rawText.size() - 1));
+    const char* endPtr = reinterpret_cast<const char*>(rawText.C_Data(rawText.Size() - 1));
 
     if (sourcePtr >= endPtr) {
         IMAGE_LOGE("Error:source pointer is invalid.");
@@ -357,14 +357,14 @@ DataBuf PngImageChunk::ConvertRawTextToExifInfo(const DataBuf &rawText)
         return {};
     }
 
-    if ((exifInfoLength == 0) || (exifInfoLength > rawText.size())) {
+    if ((exifInfoLength == 0) || (exifInfoLength > rawText.Size())) {
         IMAGE_LOGE("Error:failed to copy raw profile text: invalid text length.");
         return {};
     }
 
     DataBuf exifInfo;
     exifInfo.Alloc(exifInfoLength);
-    if (exifInfo.size() != exifInfoLength) {
+    if (exifInfo.Size() != exifInfoLength) {
         IMAGE_LOGE("Error:failed to copy raw profile text: cannot allocate memory.");
         return {};
     }

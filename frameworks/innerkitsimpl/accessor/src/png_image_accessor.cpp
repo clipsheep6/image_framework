@@ -51,7 +51,7 @@ bool PngImageAccessor::IsPngType() const
 
 size_t PngImageAccessor::ReadChunk(DataBuf &buffer) const
 {
-    return imageStream_->Read(buffer.Data(), buffer.size());
+    return imageStream_->Read(buffer.Data(), buffer.Size());
 }
 
 int32_t PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
@@ -90,7 +90,7 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
     DataBuf chunkHead(PNG_CHUNK_HEAD_SIZE);
 
     while (!imageStream_->IsEof()) {
-        if (ReadChunk(chunkHead) != chunkHead.size()) {
+        if (ReadChunk(chunkHead) != chunkHead.Size()) {
             IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk head error.");
             return false;
         }
@@ -104,7 +104,7 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
             chunkType == PNG_CHUNK_EXIF || chunkType == PNG_CHUNK_ITXT) {
             DataBuf chunkData(chunkLength);
             if (chunkLength > 0) {
-                if (ReadChunk(chunkData) != chunkData.size()) {
+                if (ReadChunk(chunkData) != chunkData.Size()) {
                     IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk data error.");
                     return false;
                 }
@@ -140,12 +140,12 @@ uint32_t PngImageAccessor::ReadMetadata()
         return ERR_IMAGE_SOURCE_DATA;
     }
     ExifData *exifData;
-    size_t byteOrderPos = PngImageChunk::FindTiffPos(tiffBuf, tiffBuf.size());
+    size_t byteOrderPos = PngImageChunk::FindTiffPos(tiffBuf, tiffBuf.Size());
     if (byteOrderPos == std::numeric_limits<size_t>::max()) {
         IMAGE_LOGE("Error:failed to parse Exif metadata: cannot find tiff byte order");
         return ERR_IMAGE_SOURCE_DATA;
     }
-    TiffParser::Decode(tiffBuf.C_Data(), tiffBuf.size(), &exifData);
+    TiffParser::Decode(tiffBuf.C_Data(), tiffBuf.Size(), &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Decode tiffBuf error.");
         return ERR_IMAGE_DECODE_FAILED;
