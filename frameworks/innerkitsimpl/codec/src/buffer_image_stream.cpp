@@ -214,7 +214,7 @@ bool BufferImageStream::Open(OpenMode mode) { return true; }
 
 bool BufferImageStream::Flush() { return true; }
 
-byte *BufferImageStream::MMap(bool isWriteable) { return buffer_; }
+byte *BufferImageStream::GetAddr(bool isWriteable) { return buffer_; }
 
 bool BufferImageStream::CopyFrom(ImageStream &src)
 {

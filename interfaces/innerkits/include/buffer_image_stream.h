@@ -160,7 +160,7 @@ class BufferImageStream : public ImageStream {
      * BufferImageStream is always writable.
      * @return Returns a pointer to the data of BufferImageStream.
      */
-    NATIVEEXPORT virtual byte *MMap(bool isWriteable = false) override;
+    NATIVEEXPORT virtual byte *GetAddr(bool isWriteable = false) override;
 
     /**
      * Transfer the content of the source ImageStream to the current

@@ -25,7 +25,7 @@ bool AbstractImageAccessor::WriteToOutput(ImagePlugin::OutputDataStream &output)
         return false;
     }
 
-    output.Write(imageStream_->MMap(), imageStream_->GetSize());
+    output.Write(imageStream_->GetAddr(), imageStream_->GetSize());
     return true;
 }
 

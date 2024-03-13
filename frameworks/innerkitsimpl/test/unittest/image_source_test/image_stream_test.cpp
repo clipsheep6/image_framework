@@ -486,12 +486,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3) {
     // needed for the test YourResource test_resource; Test the behavior of the
     // MMap function when isWriteable is false
     FileImageStream stream(filePathSource);
-    byte *result = stream.MMap(false);
+    byte *result = stream.GetAddr(false);
     // Assume that checking whether result is not nullptr, or there is another
     // appropriate verification method
     ASSERT_EQ(result, nullptr);
     stream.Open();
-    result = stream.MMap(false);
+    result = stream.GetAddr(false);
     ASSERT_NE(result, nullptr);
 
     // Set the signal handler function
@@ -515,7 +515,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3) {
     // Test the behavior of the MMap function when isWriteable is true
     FileImageStream stream(filePathSource);
     ASSERT_TRUE(stream.Open());
-    byte *result = stream.MMap(true);
+    byte *result = stream.GetAddr(true);
     ASSERT_NE(result, nullptr);
     // Try to write data
     result[0] = 123;
@@ -534,7 +534,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3) {
     // Test whether MMap can actually modify the content of the file
     FileImageStream stream(filePathSource);
     ASSERT_TRUE(stream.Open());
-    byte *result = stream.MMap(true);
+    byte *result = stream.GetAddr(true);
     ASSERT_NE(result, nullptr);
 
     // Try to write data
@@ -598,7 +598,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom002, TestSize.Level3) {
     char buf[14] = {0};
     dest.Read((byte *)buf, 13);
     ASSERT_STREQ(buf, "Hello, world!");
-    ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), 13), 0);
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), 13), 0);
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom003, TestSize.Level3) {
@@ -610,7 +610,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom003, TestSize.Level3) {
     src.Write((byte *)buff, IMAGE_STREAM_PAGE_SIZE + 1);
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
-    ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), 4097), 0);
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), 4097), 0);
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom004, TestSize.Level3) {
@@ -622,7 +622,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom004, TestSize.Level3) {
     src.Write((byte *)buff, sizeof(buff));
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
-    ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), src.GetSize()), 0);
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom005, TestSize.Level3) {
@@ -638,7 +638,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom005, TestSize.Level3) {
     ASSERT_EQ(src.GetSize(), sizeof(buff));
     ASSERT_TRUE(dest.CopyFrom(src));
     // ASSERT_EQ(src.GetSize(), dest.GetSize());
-    // ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), src.GetSize()), 0);
+    // ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_IsEof001, TestSize.Level3) {
@@ -1077,7 +1077,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write006, TestSize.Level3) {
     stream.Seek(0, SeekPos::BEGIN);
     ASSERT_EQ(stream.Write((byte *)"this is a very long text", 24), 24);
     // GTEST_LOG_(INFO) << "text: " << text;
-    ASSERT_STREQ((char *)stream.MMap(false), "this is a very long text");
+    ASSERT_STREQ((char *)stream.GetAddr(false), "this is a very long text");
 }
 
 /**
@@ -1174,7 +1174,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom001, TestSize.Level3) {
     dest.Open();
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
-    ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), src.GetSize()), 0);
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
 HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom002, TestSize.Level3) {
@@ -1185,7 +1185,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom002, TestSize.Level3) {
     src.Write((byte *)"Hello, world!", 13);
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
-    ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), src.GetSize()), 0);
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
 HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom003, TestSize.Level3) {
@@ -1197,7 +1197,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom003, TestSize.Level3) {
     src.Write((byte *)buff, IMAGE_STREAM_PAGE_SIZE + 1);
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
-    ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), src.GetSize()), 0);
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
 HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom004, TestSize.Level3) {
@@ -1209,7 +1209,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom004, TestSize.Level3) {
     src.Write((byte *)buff, IMAGE_STREAM_PAGE_SIZE - 1);
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
-    ASSERT_EQ(memcmp(src.MMap(), dest.MMap(), src.GetSize()), 0);
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
 } // namespace Media

@@ -146,7 +146,7 @@ class FileImageStream : public ImageStream {
      * @return A pointer to the memory map if it is created successfully,
      * nullptr otherwise.
      */
-    NATIVEEXPORT virtual byte *MMap(bool isWriteable = false) override;
+    NATIVEEXPORT virtual byte *GetAddr(bool isWriteable = false) override;
 
     /**
      * @brief Should call Open first.Transfers the content of the source
@@ -172,7 +172,7 @@ class FileImageStream : public ImageStream {
      * @param mmap The pointer to the memory map that needs to be released.
      * @return true if the memory map is released successfully, false otherwise.
      */
-    bool MUnmap();
+    bool ReleaseAddr();
 
     /**
      * @brief Constructs a new FileImageStream object from a file path and a

@@ -299,7 +299,7 @@ bool FileImageStream::IsOpen() { return fp_ != nullptr; }
 void FileImageStream::Close()
 {
     // If there is a memory map, delete it
-    MUnmap();
+    ReleaseAddr();
 
     // If the file is not open, return directly
     if (fp_ != nullptr) {
@@ -458,7 +458,7 @@ bool FileImageStream::Flush()
     return true;
 }
 
-byte *FileImageStream::MMap(bool isWriteable)
+byte *FileImageStream::GetAddr(bool isWriteable)
 {
     // If there is already a memory map, return it directly
     if (mappedMemory_ != nullptr) {
@@ -493,7 +493,7 @@ byte *FileImageStream::MMap(bool isWriteable)
     return (byte *)mappedMemory_;
 }
 
-bool FileImageStream::MUnmap()
+bool FileImageStream::ReleaseAddr()
 {
     if (mappedMemory_ == nullptr) {
         // The memory map is nullptr

@@ -120,7 +120,7 @@ class ImageStream {
      * @return If the memory map is created successfully, return a pointer to
      * the memory map; otherwise, return nullptr.
      */
-    virtual byte *MMap(bool isWriteable = false) = 0;
+    virtual byte *GetAddr(bool isWriteable = false) = 0;
 
     /**
      * Copy the entire content from the source ImageStream to the current
