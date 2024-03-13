@@ -44,14 +44,14 @@ uint32_t JpegImageAccessor::ReadMetadata()
     DataBuf dataBuf;
     if (!ReadExifBlob(dataBuf)) {
         IMAGE_LOGE("Image stream doesnot have dataBuf");
-        return 0;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     ExifData *exifData;
     TiffParser::DecodeJpegExif(reinterpret_cast<const unsigned char *>(dataBuf.C_Data()), dataBuf.size(), &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Image stream doesnot have exifData");
-        return 0;
+        return ERR_IMAGE_DECODE_FAILED;
     }
 
     exifMetadata_ = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
