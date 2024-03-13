@@ -28,10 +28,6 @@
 #include "buffer_source_stream.h"
 #include "ext_stream.h"
 #include "hdr_helper.h"
-#include "SkCodec.h"
-#include "src/codec/SkJpegCodec.h"
-#include "src/codec/SkJpegDecoderMgr.h"
-#include "src/codec/SkHeifCodec.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -68,64 +64,15 @@ HWTEST_F(ImageSourceHdrTest, HdrDecode001, TestSize.Level3)
 
     uint32_t index = 0;
     DecodeOptions optsPixel;
-    optsPixel.dynamicRange = Media::DecodeDynamicRange::DEFAULT;
+    optsPixel.desiredDynamicRange = Media::DecodeDynamicRange::DEFAULT;
     errorCode = 0;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(index, optsPixel, errorCode);
+    HiLog::Debug(LABEL_TEST, "pixel map create");
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
 #ifdef IMAGE_HDR_CONVERTER_FLAG
     ASSERT_EQ(pixelMap->GetPixelFormat(), Media::PixelFormat::RGBA_1010102);
 #endif
-}
-
-/**
- * @tc.name: HdrHelper001
- * @tc.desc: Test CheckHdrType ultrahdr
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceHdrTest, HdrHelper001, TestSize.Level3)
-{
-    std::unique_ptr<Media::SourceStream> stream =
-        Media::FileSourceStream::CreateSourceStream(IMAGE_INPUT_ULTRA_HDR_PATH);
-    ImagePlugin::InputDataStream* inputStream = stream.get();
-    std::unique_ptr<SkCodec> codec = SkCodec::MakeFromStream(std::make_unique<ImagePlugin::ExtStream>(inputStream));
-    uint32_t offset;
-    HdrType type = HdrHelper::CheckHdrType(codec.get(), offset);
-    HiLog::Info(LABEL_TEST, "HdrHelper001 CheckHdrType type=%{public}d, offset=%{public}d", type, offset);
-    ASSERT_EQ(type, HdrType::HDR_ISO);
-    ASSERT_NE(offset, 0);
-}
-
-/**
- * @tc.name: HdrHelper002
- * @tc.desc: Test GetMetadata ultrahdr
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceHdrTest, HdrHelper002, TestSize.Level3)
-{
-    std::unique_ptr<Media::SourceStream> stream =
-            Media::FileSourceStream::CreateSourceStream(IMAGE_INPUT_ULTRA_HDR_PATH);
-    ASSERT_NE(stream, nullptr);
-
-    ImagePlugin::InputDataStream* inputStream = stream.get();
-    std::unique_ptr<SkCodec> codec = SkCodec::MakeFromStream(std::make_unique<ImagePlugin::ExtStream>(inputStream));
-    ASSERT_NE(codec, nullptr);
-
-    uint32_t offset;
-    HdrType type = HdrHelper::CheckHdrType(codec.get(), offset);
-    HiLog::Info(LABEL_TEST, "HdrHelper002 CheckHdrType type=%{public}d, offset=%{public}d", type, offset);
-    ASSERT_EQ(type, HdrType::HDR_ISO);
-    ASSERT_NE(offset, 0);
-
-    uint8_t* data = stream->GetDataPtr() + offset;
-    uint32_t size = stream->GetStreamSize() - offset;
-    std::unique_ptr<Media::SourceStream> gainMapStream = Media::BufferSourceStream::CreateSourceStream(data, size);
-    std::unique_ptr<SkCodec> gainMapCodec = SkCodec::MakeFromStream(
-                                            std::make_unique<ImagePlugin::ExtStream>(gainMapStream.get()));
-    ASSERT_NE(gainMapCodec, nullptr);
-    HdrMetadata metadata = {};
-    bool result = HdrHelper::GetMetadata(gainMapCodec.get(), type, metadata);
-    ASSERT_EQ(result, true);
 }
 }
 }

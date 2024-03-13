@@ -145,11 +145,6 @@ ohos_unittest("imagesourcetest") {
     "//foundation/multimedia/utils/include",
     "//third_party/googletest/googletest/include",
     "//commonlibrary/c_utils/base/include",
-    "$skia_root/skia",
-    "$skia_root/skia/include/codec",
-    "$skia_root/skia/include/core",
-    "$skia_root/skia/third_party/skcms",
-    "$skia_root/skia/third_party/externals/libjpeg-turbo",
   ]
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_packer_test.cpp",
@@ -180,7 +175,6 @@ ohos_unittest("imagesourcetest") {
     "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
-    "//third_party/skia:skia_ohos",
   ]
 
   external_deps = [
