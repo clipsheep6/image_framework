@@ -10,10 +10,10 @@ public:
     WebpImageAccessor(std::shared_ptr<ImageStream> &stream);
     ~WebpImageAccessor();
 
-    virtual int ReadMetadata() override;
-    virtual bool WriteMetadata() override;
+    virtual uint32_t ReadMetadata() override;
+    virtual uint32_t WriteMetadata() override;
     virtual bool ReadExifBlob(DataBuf &blob) const override;
-    virtual bool WriteExifBlob(DataBuf &blob) override;
+    virtual uint32_t WriteExifBlob(DataBuf &blob) override;
 };
 } // namespace Media
 } // namespace OHOS

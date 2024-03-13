@@ -1,4 +1,11 @@
 #include "abstract_image_accessor.h"
+#include <optional>
+
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "AbstractImageAccessor"
 
 namespace OHOS {
 namespace Media {
@@ -33,11 +40,6 @@ std::shared_ptr<ExifMetadata> AbstractImageAccessor::GetExifMetadata()
 {
     return exifMetadata_;
 }
-
-// void AbstractImageAccessor::WriteExifBlob(DataBuf& blob)
-// {
-//     (void)blob;
-// }
 
 } // namespace Media
 } // namespace OHOS

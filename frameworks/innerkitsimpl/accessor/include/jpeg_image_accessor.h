@@ -15,10 +15,10 @@ public:
     JpegImageAccessor(std::shared_ptr<ImageStream>& stream);
     ~JpegImageAccessor();
 
-    virtual int ReadMetadata() override;
+    virtual uint32_t ReadMetadata() override;
     virtual bool ReadExifBlob(DataBuf& blob) const override;
-    bool WriteMetadata() override;
-    bool WriteExifBlob(DataBuf& blob) override;
+    virtual uint32_t WriteMetadata() override;
+    virtual uint32_t WriteExifBlob(DataBuf& blob) override;
 
 private:
     int FindNextMarker() const;

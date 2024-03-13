@@ -144,10 +144,6 @@ const uint32_t IMAGE_RESULT_ALLOCATER_TYPE_ERROR = BASE_MEDIA_ERR_OFFSET + 174; 
 const uint32_t IMAGE_RESULT_ALPHA_TYPE_ERROR = BASE_MEDIA_ERR_OFFSET + 175; // hard decode failed
 const uint32_t IMAGE_RESULT_INDEX_INVALID = BASE_MEDIA_ERR_OFFSET + 176; // invalid index
 const uint32_t IMAGE_RESULT_SAVE_DATA_TO_FILE_FAILED = BASE_MEDIA_ERR_OFFSET + 177; // save data to file failed
-const int32_t IMAGE_GET_ACCESSOR_FAILED = BASE_MEDIA_ERR_OFFSET + 178; // get exif image error
-const uint32_t IMAGE_RESULT_READ_EXIFBLOB_FAILED = BASE_MEDIA_ERR_OFFSET + 179; // read exifBlob failed
-const uint32_t IMAGE_RESULT_DENCODE_EXIF_FAILED = BASE_MEDIA_ERR_OFFSET + 180; // decode Exif failed
-const uint32_t ERR_IMAGE_WRITE_EXIF_FAILED = BASE_MEDIA_ERR_OFFSET + 181; // write pixelmap failed
 
 const int32_t ERR_MEDIA_UNKNOWN = BASE_MEDIA_ERR_OFFSET + 200;  // media unknown error
 const int32_t ERR_RESOURCE_UNAVAILABLE = 501; // Resource Unavailable

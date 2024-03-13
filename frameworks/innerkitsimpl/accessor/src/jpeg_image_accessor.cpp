@@ -39,19 +39,19 @@ JpegImageAccessor::JpegImageAccessor(std::shared_ptr<ImageStream>& stream)
 
 JpegImageAccessor::~JpegImageAccessor() {}
 
-int JpegImageAccessor::ReadMetadata()
+uint32_t JpegImageAccessor::ReadMetadata()
 {
     DataBuf dataBuf;
     if (!ReadExifBlob(dataBuf)) {
         IMAGE_LOGE("Image stream doesnot have dataBuf");
-        return IMAGE_RESULT_READ_EXIFBLOB_FAILED;
+        return 0;
     }
 
     ExifData *exifData;
     TiffParser::DecodeJpegExif(reinterpret_cast<const unsigned char *>(dataBuf.C_Data()), dataBuf.size(), &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Image stream doesnot have exifData");
-        return IMAGE_RESULT_DENCODE_EXIF_FAILED;
+        return 0;
     }
 
     exifMetadata_ = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
@@ -97,7 +97,7 @@ bool JpegImageAccessor::ReadExifBlob(DataBuf& blob) const
     return false;
 }
 
-bool JpegImageAccessor::WriteMetadata()
+uint32_t JpegImageAccessor::WriteMetadata()
 {
     uint8_t* dataBlob = nullptr;
     uint32_t size = 0;
@@ -109,7 +109,7 @@ bool JpegImageAccessor::WriteMetadata()
     return UpdateData(dataBlob, size);
 }
 
-bool JpegImageAccessor::WriteExifBlob(DataBuf& blob)
+uint32_t JpegImageAccessor::WriteExifBlob(DataBuf& blob)
 {
     byte* dataBlob = nullptr;
     uint32_t size = 0;

@@ -1,5 +1,11 @@
 #include "heif_image_accessor.h"
 
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "HeifImageAccessor"
+
 namespace OHOS {
 namespace Media {
 
@@ -14,14 +20,14 @@ HeifImageAccessor::~HeifImageAccessor()
 
 }
 
-int HeifImageAccessor::ReadMetadata()
+uint32_t HeifImageAccessor::ReadMetadata()
 {
     return 0;
 }
 
-bool HeifImageAccessor::WriteMetadata()
+uint32_t HeifImageAccessor::WriteMetadata()
 {
-    return false;
+    return 0;
 }
 
 bool HeifImageAccessor::ReadExifBlob(DataBuf &blob) const
@@ -29,9 +35,9 @@ bool HeifImageAccessor::ReadExifBlob(DataBuf &blob) const
     return false;
 }
 
-bool HeifImageAccessor::WriteExifBlob(DataBuf &blob)
+uint32_t HeifImageAccessor::WriteExifBlob(DataBuf &blob)
 {
-    return false;
+    return 0;
 }
 
 } // namespace Media

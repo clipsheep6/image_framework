@@ -9,6 +9,12 @@
 #include "png_image_accessor.h"
 #include "webp_image_accessor.h"
 
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "ImageAccessorFactory"
+
 namespace OHOS {
 namespace Media {
 

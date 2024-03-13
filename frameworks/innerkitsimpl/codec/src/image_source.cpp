@@ -971,26 +971,26 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessor> imageAc
 {
     if (imageAccessor == nullptr) {
         IMAGE_LOGE("[ImageSource]Create image accessor fail on modify image property.");
-        return IMAGE_GET_ACCESSOR_FAILED;
+        return ERR_IMAGE_SOURCE_DATA;
     }
-
-    if (!imageAccessor->ReadMetadata()) {
+    uint32_t ret = imageAccessor->ReadMetadata();
+    if (ret != SUCCESS) {
         IMAGE_LOGE("[ImageSource]Read meta data fail on modify image property.");
-        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        return ret;
     }
 
     auto exifDataPtr = imageAccessor->GetExifMetadata();
     if (exifDataPtr == nullptr) {
         if (!imageAccessor->CreateExifMetadata()) {
             IMAGE_LOGE("[ImageSource]Create ExifMetadata failed.");
-            return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            return ERR_IMAGE_SOURCE_DATA;
         }
     }
 
     exifDataPtr = imageAccessor->GetExifMetadata();
     exifDataPtr->SetValue(key, value);
     if (!imageAccessor->WriteMetadata()) {
-        return ERR_IMAGE_WRITE_EXIF_FAILED;
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
     return SUCCESS;
@@ -1048,7 +1048,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     ExifData *exifData = imageAccessor->GetExifMetadata()->GetData();
     if (exifData == nullptr) {
         IMAGE_LOGE("[ImageSource]get valid exifmetadata on modify image property.");
-        return ERR_IMAGE_WRITE_EXIF_FAILED;
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     TiffParser::Encode(&dataPtr, datSize, exifData);
     exifBlob_ = std::make_shared<DataBuf>(dataPtr, datSize);
@@ -1063,7 +1063,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
     uint32_t size = sourceStreamPtr_->GetStreamSize();
     auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
     if (imageAccessor == nullptr) {
-        return IMAGE_GET_ACCESSOR_FAILED;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     imageAccessor->ReadMetadata();
@@ -1087,11 +1087,14 @@ uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &
     uint32_t size = sourceStreamPtr_->GetStreamSize();
     auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
     if (imageAccessor == nullptr) {
-        return IMAGE_GET_ACCESSOR_FAILED;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     imageAccessor->ReadMetadata();
-    imageAccessor->GetExifMetadata()->GetValue(key, value);
+    auto exifMetadata = imageAccessor->GetExifMetadata();
+    if (exifMetadata != nullptr) {
+        exifMetadata->GetValue(key, value);
+    }
 
     return SUCCESS;
 }

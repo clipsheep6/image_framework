@@ -1,5 +1,11 @@
 #include "webp_image_accessor.h"
 
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "WebpImageAccessor"
+
 namespace OHOS {
 namespace Media {
 
@@ -14,14 +20,14 @@ WebpImageAccessor::~WebpImageAccessor()
 
 }
 
-int WebpImageAccessor::ReadMetadata()
+uint32_t WebpImageAccessor::ReadMetadata()
 {
     return 0;
 }
 
-bool WebpImageAccessor::WriteMetadata()
+uint32_t WebpImageAccessor::WriteMetadata()
 {
-    return false;
+    return 0;
 }
 
 bool WebpImageAccessor::ReadExifBlob(DataBuf &blob) const
@@ -29,9 +35,9 @@ bool WebpImageAccessor::ReadExifBlob(DataBuf &blob) const
     return false;
 }
 
-bool WebpImageAccessor::WriteExifBlob(DataBuf &blob)
+uint32_t WebpImageAccessor::WriteExifBlob(DataBuf &blob)
 {
-    return false;
+    return 0;
 }
 
 } // namespace Media

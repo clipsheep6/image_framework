@@ -1,5 +1,11 @@
 #include "dng_image_accessor.h"
 
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "DngImageAccessor"
+
 namespace OHOS {
 namespace Media {
 
@@ -14,14 +20,14 @@ DngImageAccessor::~DngImageAccessor()
 
 }
 
-int DngImageAccessor::ReadMetadata()
+uint32_t DngImageAccessor::ReadMetadata()
 {
     return 0;
 }
 
-bool DngImageAccessor::WriteMetadata()
+uint32_t DngImageAccessor::WriteMetadata()
 {
-    return false;
+    return 0;
 }
 
 bool DngImageAccessor::ReadExifBlob(DataBuf &blob) const
@@ -29,9 +35,9 @@ bool DngImageAccessor::ReadExifBlob(DataBuf &blob) const
     return false;
 }
 
-bool DngImageAccessor::WriteExifBlob(DataBuf &blob)
+uint32_t DngImageAccessor::WriteExifBlob(DataBuf &blob)
 {
-    return false;
+    return 0;
 }
 
 } // namespace Media
