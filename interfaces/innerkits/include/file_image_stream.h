@@ -29,15 +29,16 @@
 namespace OHOS {
 namespace Media {
 
-class FileWrapper{
-public:
-    virtual ~FileWrapper(){}
-    virtual size_t fwrite(const void* src, size_t size, size_t nmemb, FILE* file);
-    virtual size_t fread(void* destv, size_t size, size_t nmemb, FILE* file);
+class FileWrapper {
+  public:
+    virtual ~FileWrapper() {}
+    virtual size_t fwrite(const void *src, size_t size, size_t nmemb,
+                          FILE *file);
+    virtual size_t fread(void *destv, size_t size, size_t nmemb, FILE *file);
 };
 
 class FileImageStream : public ImageStream {
-public:
+  public:
     /**
      * @brief Constructs a new FileImageStream object from a file descriptor.
      * @param fileDescriptor The file descriptor.
@@ -48,7 +49,7 @@ public:
      * @brief Constructs a new FileImageStream object from a file path.
      * @param filePath The file path.
      */
-    NATIVEEXPORT FileImageStream(const std::string& filePath);
+    NATIVEEXPORT FileImageStream(const std::string &filePath);
 
     /**
      * @brief Constructs a new FileImageStream object from a FILE pointer.
@@ -67,14 +68,15 @@ public:
      * @param size The size of the data.
      * @return The number of bytes written.
      */
-    NATIVEEXPORT virtual ssize_t Write(byte* data, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Write(byte *data, size_t size) override;
 
     /**
-     * @brief Writes the content of the source ImageStream to the current FileImageStream.
+     * @brief Writes the content of the source ImageStream to the current
+     * FileImageStream.
      * @param src The source ImageStream.
      * @return The number of bytes written.
      */
-    NATIVEEXPORT virtual ssize_t Write(ImageStream& src) override;
+    NATIVEEXPORT virtual ssize_t Write(ImageStream &src) override;
 
     /**
      * @brief Reads data from the FileImageStream.
@@ -82,7 +84,7 @@ public:
      * @param size The size of the data.
      * @return The number of bytes read.
      */
-    NATIVEEXPORT virtual ssize_t Read(byte* buf, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Read(byte *buf, size_t size) override;
 
     /**
      * @brief Reads a byte from the FileImageStream.
@@ -123,8 +125,9 @@ public:
     NATIVEEXPORT virtual bool Open() override;
 
     /**
-     * @brief Opens the FileImageStream with a specific mode.  
-     *        The Open operation will reset the read and write position of the file
+     * @brief Opens the FileImageStream with a specific mode.
+     *        The Open operation will reset the read and write position of the
+     * file
      * @param mode The mode to open the FileImageStream.
      * @return true if it opens successfully, false otherwise.
      */
@@ -138,23 +141,19 @@ public:
 
     /**
      * @brief Creates a memory map of the file.
-     * @param isWriteable If true, the created memory map will be writable; otherwise, it will be read-only.
-     * @return A pointer to the memory map if it is created successfully, nullptr otherwise.
+     * @param isWriteable If true, the created memory map will be writable;
+     * otherwise, it will be read-only.
+     * @return A pointer to the memory map if it is created successfully,
+     * nullptr otherwise.
      */
-    NATIVEEXPORT virtual byte* MMap(bool isWriteable = false) override;
+    NATIVEEXPORT virtual byte *GetAddr(bool isWriteable = false) override;
 
     /**
-     * @brief Releases a memory map.
-     * @param mmap The pointer to the memory map that needs to be released.
-     * @return true if the memory map is released successfully, false otherwise.
-     */
-    NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
-
-    /**
-     * @brief Should call Open first.Transfers the content of the source ImageStream to the current FileImageStream.
+     * @brief Should call Open first.Transfers the content of the source
+     * ImageStream to the current FileImageStream.
      * @param src The source ImageStream.
      */
-    NATIVEEXPORT bool CopyFrom(ImageStream& src) override;
+    NATIVEEXPORT bool CopyFrom(ImageStream &src) override;
 
     /**
      * @brief Gets the size of the FileImageStream.
@@ -162,39 +161,49 @@ public:
      */
     NATIVEEXPORT size_t GetSize() override;
 
-private:
+  private:
     /**
      * @brief Closes the FileImageStream.
      */
-    NATIVEEXPORT virtual void Close() override;
+    virtual void Close() override;
 
     /**
-     * @brief Constructs a new FileImageStream object from a file path and a file wrapper.
+     * @brief Releases a memory map.
+     * @param mmap The pointer to the memory map that needs to be released.
+     * @return true if the memory map is released successfully, false otherwise.
+     */
+    bool ReleaseAddr();
+
+    /**
+     * @brief Constructs a new FileImageStream object from a file path and a
+     * file wrapper.
      * @param filePath The file path.
      * @param fileWrapper The file wrapper.
      */
-    FileImageStream(const std::string& filePath, std::unique_ptr<FileWrapper> fileWrapper);
+    FileImageStream(const std::string &filePath,
+                    std::unique_ptr<FileWrapper> fileWrapper);
 
     /**
      * @brief Opens the FileImageStream from a file descriptor.
      * @param modeStr The mode string.
      * @return true if it opens successfully, false otherwise.
      */
-    bool OpenFromFD(const char* modeStr);
+    bool OpenFromFD(const char *modeStr);
 
     /**
      * @brief Opens the FileImageStream from a file path.
      * @param modeStr The mode string.
      * @return true if it opens successfully, false otherwise.
      */
-    bool OpenFromPath(const char* modeStr);
+    bool OpenFromPath(const char *modeStr);
 
-    FILE *fp_;               // File descriptor
-    int dupFD_;              // Duplicated file descriptor
-    std::string filePath_;   // File path
-    size_t fileSize_;        // File size
-    void* mappedMemory_;     // Address of memory mapping
-    std::unique_ptr<FileWrapper> fileWrapper_;   // File wrapper class, used for testing
+    FILE *fp_;             // File descriptor
+    int dupFD_;            // Duplicated file descriptor
+    std::string filePath_; // File path
+    size_t fileSize_;      // File size
+    void *mappedMemory_;   // Address of memory mapping
+    std::unique_ptr<FileWrapper>
+        fileWrapper_; // File wrapper class, used for testing
 
     enum {
         INIT_FROM_FD,
@@ -203,6 +212,6 @@ private:
     } initPath_;
 };
 
-} // namespace MultimediaPlugin
+} // namespace Media
 } // namespace OHOS
 #endif // INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_H

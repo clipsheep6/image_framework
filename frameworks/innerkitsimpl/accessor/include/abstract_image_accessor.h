@@ -7,19 +7,16 @@ namespace OHOS {
 namespace Media {
 class AbstractImageAccessor : public ImageAccessor {
 public:
-    AbstractImageAccessor(std::unique_ptr<ImageStream> &&stream);
+    AbstractImageAccessor(std::shared_ptr<ImageStream> &stream);
     virtual ~AbstractImageAccessor();
 
-    virtual int ReadMetadata() const override;
-    virtual bool WriteMetadata() override;
-    virtual bool ReadExifBlob(DataBuf &blob) const override;
-    virtual bool WriteExifBlob(DataBuf &blob) override;
+    virtual bool CreateExifMetadata() override;
+    virtual std::shared_ptr<ExifMetadata> GetExifMetadata() override;
+    virtual bool WriteToOutput(ImagePlugin::OutputDataStream &soutput) override;
 
 protected:
-    std::unique_ptr<ImageStream> imageStream_ = nullptr;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
-
-    virtual std::shared_ptr<ExifMetadata> GetExifMetadata() override;
+    std::shared_ptr<ImageStream> imageStream_ = nullptr;
 };
 } // namespace Media
 } // namespace OHOS

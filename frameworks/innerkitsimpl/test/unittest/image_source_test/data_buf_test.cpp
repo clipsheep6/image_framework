@@ -13,9 +13,8 @@
  * limitations under the License.
  */
 
- #include "data_buf.h"
+#include "data_buf.h"
 #include <gtest/gtest.h>
-
 
 using namespace testing::ext;
 using namespace testing;
@@ -24,7 +23,7 @@ using namespace OHOS::Media;
 namespace OHOS {
 namespace Media {
 class DataBufTest : public testing::Test {
-public:
+  public:
     DataBufTest() {}
     ~DataBufTest() {}
 };
@@ -34,11 +33,11 @@ public:
  * @tc.desc: 验证DataBuf的write_uint8函数
  * @tc.type: FUNC
  */
-HWTEST_F(DataBufTest, DataBufTest_Write001, TestSize.Level3){
+HWTEST_F(DataBufTest, DataBufTest_Write001, TestSize.Level3) {
     DataBuf dataBuf(10);
     dataBuf.WriteUInt8(0, 123);
     EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
 }
 
-}
-}
+} // namespace Media
+} // namespace OHOS

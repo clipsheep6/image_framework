@@ -18,8 +18,8 @@ public:
     static std::shared_ptr<ImageAccessor> CreateImageAccessor(const std::string &path);
 
 private:
-    static std::shared_ptr<ImageAccessor> GetImageAccessor(std::unique_ptr<ImageStream> &stream);
-    static EncodedFormat GetImageType(std::unique_ptr<ImageStream> &stream);
+    static std::shared_ptr<ImageAccessor> CreateImageAccessor(std::shared_ptr<ImageStream> &stream);
+    static EncodedFormat GetImageType(std::shared_ptr<ImageStream> &stream);
 };
 } // namespace Media
 } // namespace OHOS

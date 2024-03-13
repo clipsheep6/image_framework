@@ -87,6 +87,8 @@ struct PixelMemInfo {
     AllocatorType allocatorType = AllocatorType::SHARE_MEM_ALLOC;
 };
 
+struct DataBuf;
+
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
 public:
     static std::atomic<uint32_t> currentId;
@@ -271,6 +273,16 @@ public:
         isAstc_ = isAstc;
     }
 
+    NATIVEEXPORT std::shared_ptr<DataBuf> GetExifBlob()
+    {
+        return exifBlob_;
+    }
+
+    NATIVEEXPORT void SetExifBlob(std::shared_ptr<DataBuf> &ptr)
+    {
+        exifBlob_ = ptr;
+    }
+
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
     static constexpr uint8_t TLV_VARINT_MASK = 0x7F;
@@ -401,6 +413,8 @@ private:
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
     YUVDataInfo yuvDataInfo_;
+
+    std::shared_ptr<DataBuf> exifBlob_;
 };
 } // namespace Media
 } // namespace OHOS

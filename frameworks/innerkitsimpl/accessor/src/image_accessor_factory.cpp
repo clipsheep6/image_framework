@@ -1,50 +1,49 @@
-#include <map>
-#include <vector>
 #include "buffer_image_stream.h"
 #include "dng_image_accessor.h"
 #include "file_image_stream.h"
 #include "heif_image_accessor.h"
 #include "image_accessor_factory.h"
+#include "image_log.h"
 #include "image_type.h"
 #include "jpeg_image_accessor.h"
-#include "media_errors.h"
 #include "png_image_accessor.h"
 #include "webp_image_accessor.h"
 
 namespace OHOS {
 namespace Media {
 
-uint8_t jpegHeader[] = { 0xFF, 0xD8, 0xFF };
-uint8_t pngHeader[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+const int IMAGE_HEADER_SIZE = 10;
+const byte jpegHeader[] = { 0xff, 0xd8, 0xff };
+const byte pngHeader[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
 std::shared_ptr<ImageAccessor> ImageAccessorFactory::CreateImageAccessor(uint8_t *buffer, const uint32_t size)
 {
-    std::unique_ptr<ImageStream> stream(new BufferImageStream());
+    std::shared_ptr<ImageStream> stream = std::make_shared<BufferImageStream>();
     stream->Write(buffer, size);
-    return GetImageAccessor(stream);
+    return CreateImageAccessor(stream);
 }
 
 std::shared_ptr<ImageAccessor> ImageAccessorFactory::CreateImageAccessor(const int fd)
 {
-    // todo: 改为从fd获取
-    std::string path("");
-    std::unique_ptr<ImageStream> stream(new FileImageStream(path));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(fd);
     if (!stream->Open(OpenMode::ReadWrite)) {
-        return nullptr; // IMAGE_RESULT_FILE_FD_ERROR
+        IMAGE_LOGE("Failed to open stream by fd");
+        return nullptr;
     }
-    return GetImageAccessor(stream);
+    return CreateImageAccessor(stream);
 }
 
 std::shared_ptr<ImageAccessor> ImageAccessorFactory::CreateImageAccessor(const std::string &path)
 {
-    std::unique_ptr<ImageStream> stream(new FileImageStream(path));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(path);
     if (!stream->Open(OpenMode::ReadWrite)) {
-        return nullptr; // IMAGE_RESULT_FREAD_FAILED
+        IMAGE_LOGE("Failed to open stream by path");
+        return nullptr;
     }
-    return GetImageAccessor(stream);
+    return CreateImageAccessor(stream);
 }
 
-std::shared_ptr<ImageAccessor> ImageAccessorFactory::GetImageAccessor(std::unique_ptr<ImageStream> &stream)
+std::shared_ptr<ImageAccessor> ImageAccessorFactory::CreateImageAccessor(std::shared_ptr<ImageStream> &stream)
 {
     EncodedFormat type = GetImageType(stream);
 
@@ -64,16 +63,17 @@ std::shared_ptr<ImageAccessor> ImageAccessorFactory::GetImageAccessor(std::uniqu
     }
 }
 
-EncodedFormat ImageAccessorFactory::GetImageType(std::unique_ptr<ImageStream> &stream)
+EncodedFormat ImageAccessorFactory::GetImageType(std::shared_ptr<ImageStream> &stream)
 {
-    uint8_t buff[10] = {0};
-    stream->Read(buff, 10);
+    byte buff[IMAGE_HEADER_SIZE] = {0};
+    stream->Seek(0, SeekPos::BEGIN);
+    stream->Read(buff, IMAGE_HEADER_SIZE * sizeof(byte));
 
-    if (memcmp(buff, jpegHeader, sizeof(jpegHeader)) != 0) {
+    if (memcmp(buff, jpegHeader, sizeof(jpegHeader) * sizeof(byte)) == 0) {
         return EncodedFormat::JPEG;
     }
 
-    if (memcmp(buff, pngHeader, sizeof(pngHeader)) != 0) {
+    if (memcmp(buff, pngHeader, sizeof(pngHeader) * sizeof(byte)) == 0) {
         return EncodedFormat::PNG;
     }
 

@@ -3,8 +3,8 @@
 namespace OHOS {
 namespace Media {
 
-HeifImageAccessor::HeifImageAccessor(std::unique_ptr<ImageStream> &stream)
-    : AbstractImageAccessor(std::move(stream))
+HeifImageAccessor::HeifImageAccessor(std::shared_ptr<ImageStream> &stream)
+    : AbstractImageAccessor(stream)
 {
 
 }
@@ -14,9 +14,24 @@ HeifImageAccessor::~HeifImageAccessor()
 
 }
 
-int HeifImageAccessor::ReadMetadata() const
+int HeifImageAccessor::ReadMetadata()
 {
     return 0;
+}
+
+bool HeifImageAccessor::WriteMetadata()
+{
+    return false;
+}
+
+bool HeifImageAccessor::ReadExifBlob(DataBuf &blob) const
+{
+    return false;
+}
+
+bool HeifImageAccessor::WriteExifBlob(DataBuf &blob)
+{
+    return false;
 }
 
 } // namespace Media

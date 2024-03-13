@@ -27,6 +27,7 @@
 #endif
 #include "ext_pixel_convert.h"
 #include "ext_wstream.h"
+#include "image_accessor_factory.h"
 #include "image_log.h"
 #include "image_type_converter.h"
 #include "image_utils.h"
@@ -181,11 +182,28 @@ uint32_t ExtEncoder::FinalizeEncode()
         IMAGE_LOGE("ExtEncoder::FinalizeEncode BuildSkBitmap failed");
         return errorCode;
     }
-    ExtWStream wStream(output_);
-    if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
-        IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
-        return ERR_IMAGE_ENCODE_FAILED;
+
+    auto exifBlob = pixelmap_->GetExifBlob();
+    if (exifBlob != nullptr) {
+        TempStream wStream;
+        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
+            IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
+            return ERR_IMAGE_ENCODE_FAILED;
+        }
+
+        uint8_t *buffer = wStream.GetAddr();
+        uint32_t bufferSize = wStream.bytesWritten();
+        auto destImageAccessor = ImageAccessorFactory::CreateImageAccessor(buffer, bufferSize);
+        destImageAccessor->WriteExifBlob(*exifBlob);
+        destImageAccessor->WriteToOutput(*output_);
+    } else {
+        ExtWStream wStream(output_);
+        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
+            IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
+            return ERR_IMAGE_ENCODE_FAILED;
+        }
     }
+
     return SUCCESS;
 }
 } // namespace ImagePlugin
