@@ -1,6 +1,7 @@
 #include "exif_metadata.h"
 #include "exif_metadata_validate.h"
 #include "image_log.h"
+#include "libexif/exif-format.h"
 #include "media_errors.h"
 #include "string_ex.h"
 #include "securec.h"
@@ -359,19 +360,21 @@ static bool ConvertGpsDataToRationals(const std::vector<std::string> &dataVec,
 }
 static void EXIFInfoBufferCheck(ExifEntry *exifEntry, size_t len)
 {
+    IMAGE_LOGD("EXIFInfoBufferCheck len is [%{public}d]", len);
     if (exifEntry == nullptr || (exifEntry->size >= len)) {
         return;
     }
     /* Create a memory allocator to manage this ExifEntry */
     ExifMem *exifMem = exif_mem_new_default();
     if (exifMem == nullptr) {
-        IMAGE_LOGD("Create mem failed!");
+        IMAGE_LOGD("EXIFInfoBufferCheck Create mem failed!");
         return;
     }
     auto buf = exif_mem_realloc(exifMem, exifEntry->data, len);
     if (buf != nullptr) {
         exifEntry->data = static_cast<unsigned char*>(buf);
         exifEntry->size = len;
+        IMAGE_LOGD("EXIFInfoBufferCheck exif_mem_realloc success. size is [%{public}d]", len);
     }
     exif_mem_unref(exifMem);
 }
@@ -396,6 +399,7 @@ bool ExifMetadata::SetGpsRationals(ExifData *data, ExifEntry **ptrEntry, ExifByt
         IMAGE_LOGD("Get exif entry failed.");
         return false;
     }
+
     exif_set_rational((*ptrEntry)->data, order, exifRationals[CONSTANT_0]);
     exif_set_rational((*ptrEntry)->data + MOVE_OFFSET_8, order, exifRationals[CONSTANT_1]);
     exif_set_rational((*ptrEntry)->data + MOVE_OFFSET_16, order, exifRationals[CONSTANT_2]);
@@ -404,12 +408,26 @@ bool ExifMetadata::SetGpsRationals(ExifData *data, ExifEntry **ptrEntry, ExifByt
 
 ExifEntry* ExifMetadata::GetExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len)
 {
+    IMAGE_LOGD("[GetExifTag] tag is %{public}d.",tag);
     ExifEntry *exifEntry;
     if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
+        IMAGE_LOGD("[GetExifTag] exif_content_get_entryfailed. tag is [%{public}d]", tag);
         EXIFInfoBufferCheck(exifEntry, len);
         return exifEntry;
+    }else {
+        // initial ExifEntry  EXIF_TAG_GPS_LATITUDE = 0x0002, /* INTEROPERABILITY_VERSION */
+        exifEntry = exif_entry_new();
+        if (exifEntry == nullptr) {
+            IMAGE_LOGD("[GetExifTag] exif_entry_new fail.");
+            return nullptr;
+        }
+        exifEntry->tag = tag; // tag must be set before calling exif_content_add_entry
+        exif_content_add_entry(exif->ifd[TagIfdTable[tag]], exifEntry);
+        exif_entry_initialize(exifEntry, tag);
+        exif_entry_unref(exifEntry);
+        IMAGE_LOGD("[GetExifTag] initilize SUCCESS.");
     }
-    return nullptr;
+    return exifEntry;
 }
 
 
@@ -455,7 +473,9 @@ ExifMetadata::~ExifMetadata()
 
 int ExifMetadata::GetValue(const std::string &key, std::string &value) const
 {
+    IMAGE_LOGD("[GetValue] key is [%{public}s]",key.c_str());
     if (exifData_ == nullptr) {
+        IMAGE_LOGD("[GetValue] exifData_ is nullptr");
         value = "";
         return 1;
     }
@@ -463,14 +483,15 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     auto tag = exif_tag_from_name(key.c_str());
     auto entry = exif_data_get_entry(exifData_, tag);
     if (entry == nullptr) {
-        IMAGE_LOGD("exif_data_get_entry leave");
+        IMAGE_LOGD("[GetValue] exif_data_get_entry leave");
         value = "";
         return 1;
     }
+    IMAGE_LOGD("[GetValue] goint to use exif_entry_get_value tag is [%{public}d]", entry->tag);
     char tagValueChar[1024];
     exif_entry_get_value(entry, tagValueChar, sizeof(tagValueChar));
     value = tagValueChar;
-    return 0;
+    return SUCCESS;
 }
 
 static void ExifIntValueByFormat(unsigned char *b, ExifByteOrder order, ExifFormat format, long value)
@@ -516,6 +537,7 @@ static bool IsValidGpsData(const std::vector<std::string> &dataVec, const ExifTa
     }
     constexpr uint32_t timePeriod = 60;
     double latOrLong = degree + minute / timePeriod + second / (timePeriod * timePeriod);
+    IMAGE_LOGD("latOrLong is [%{public}f]", latOrLong);
     if ((tag == EXIF_TAG_GPS_LATITUDE && (latOrLong > GPS_MAX_LATITUDE || latOrLong < GPS_MIN_LATITUDE)) ||
         (tag == EXIF_TAG_GPS_LONGITUDE && (latOrLong > GPS_MAX_LONGITUDE || latOrLong < GPS_MIN_LONGITUDE))) {
         IMAGE_LOGD("Gps latitude or longitude is out of range.");
@@ -847,10 +869,12 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     ExifEntry *exifEntry;
 
     if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
+        IMAGE_LOGD("[CreateExifTag] contains exifENtry. going to ExifInfoBufferCheck!");
         EXIFInfoBufferCheck(exifEntry, len);
         return exifEntry;
     }
 
+    IMAGE_LOGD("[CreateExifTag] exifEntry is nullptr. go to initilize new entry!");
     /* Create a memory allocator to manage this ExifEntry */
     ExifMem *exifMem = exif_mem_new_default();
     if (exifMem == nullptr) {
@@ -872,12 +896,26 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
         return nullptr;
     }
 
-    /* Fill in the entry */
-    exifEntry->data = static_cast<unsigned char*>(buf);
-    exifEntry->size = len;
-    exifEntry->tag = tag;
-    exifEntry->components = len;
-    exifEntry->format = format;
+    if(format == EXIF_FORMAT_UNDEFINED || format == EXIF_FORMAT_ASCII){
+        IMAGE_LOGD("[CreateExifTag] format is [%{public}d] size is [%{public}d]. allocate size manually", format, len);
+        /* Fill in the entry */
+        exifEntry->data = static_cast<unsigned char*>(buf);
+        exifEntry->size = len;
+        exifEntry->tag = tag;
+        exifEntry->components = len;
+        exifEntry->format = format;
+    }else{
+        IMAGE_LOGD("[CreateExifTag] format is rational. to use exif_entry_initilalize");
+        exifEntry = exif_entry_new();
+        if (exifEntry == nullptr) {
+            IMAGE_LOGD("[CreateExifTag] exif_entry_new fail.");
+            return nullptr;
+        }
+        exifEntry->tag = tag; // tag must be set before calling exif_content_add_entry
+        exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], exifEntry);
+        exif_entry_initialize(exifEntry, tag);
+        exif_entry_unref(exifEntry);
+    }
 
     /* Attach the ExifEntry to an IFD */
     exif_content_add_entry (exif->ifd[ifd], exifEntry);
@@ -886,6 +924,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     exif_mem_unref(exifMem);
     exif_entry_unref(exifEntry);
 
+    IMAGE_LOGD("[CreateExifTag] CreateExifTag SUCCESS and Return.");
     return exifEntry;
 }
 
