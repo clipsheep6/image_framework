@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "securec.h"
+
 // Project includes
 #include "buffer_image_stream.h"
 #include "image_log.h"
@@ -87,12 +89,12 @@ ssize_t BufferImageStream::Write(byte *data, size_t size)
         // If there is existing data, copy it to the new buffer
         if (buffer_ != nullptr) {
             IMAGE_LOGD(
-                "BufferImageStream::Write, before memcpy1, currentOffset:%ld, "
+                "BufferImageStream::Write, before memcpy_s, currentOffset:%ld, "
                 "size:%u, capacity:%ld, newCapacity:%ld",
                 currentOffset_, size, capacity_, newCapacity);
-            memcpy(newBuffer, buffer_, capacity_);
+            memcpy_s(newBuffer, newCapacity, buffer_, capacity_);
             IMAGE_LOGD(
-                "BufferImageStream::Write, after memcpy1, currentOffset:%ld, "
+                "BufferImageStream::Write, after memcpy_s, currentOffset:%ld, "
                 "size:%u, capacity:%ld, newCapacity:%ld",
                 currentOffset_, size, capacity_, newCapacity);
             // If the old buffer was not externally allocated, delete it
@@ -105,11 +107,11 @@ ssize_t BufferImageStream::Write(byte *data, size_t size)
         capacity_ = newCapacity;
     }
     // Copy the new data into the buffer
-    IMAGE_LOGD("BufferImageStream::Write, before memcpy2, currentOffset:%ld, "
+    IMAGE_LOGD("BufferImageStream::Write, before memcpy_s, currentOffset:%ld, "
                "size:%u, capacity:%ld",
                currentOffset_, size, capacity_);
-    memmove(buffer_ + currentOffset_, data, size);
-    IMAGE_LOGD("BufferImageStream::Write, after memcpy2, currentOffset:%ld, "
+    memcpy_s(buffer_ + currentOffset_, capacity_ - currentOffset_, data, size);
+    IMAGE_LOGD("BufferImageStream::Write, after memcpy_s, currentOffset:%ld, "
                "size:%u, capacity:%ld",
                currentOffset_, size, capacity_);
     // Update the current offset and buffer size
@@ -149,7 +151,7 @@ ssize_t BufferImageStream::Read(byte *buf, size_t size)
 
     long bytesToRead =
         std::min(static_cast<long>(size), bufferSize_ - currentOffset_);
-    memcpy(buf, buffer_ + currentOffset_, bytesToRead);
+    memcpy_s(buf, size, buffer_ + currentOffset_, bytesToRead);
     currentOffset_ += bytesToRead;
     return bytesToRead;
 }
