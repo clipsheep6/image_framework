@@ -123,7 +123,6 @@ void RemoveFile(const std::string &filePath)
     if (result != 0) {
         char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, errstr, sizeof(errstr));
-        GTEST_LOG_(INFO) << "Failed to remove the file: " << filePath << ", reason: " << errstr;
     }
 }
 

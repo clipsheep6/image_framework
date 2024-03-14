@@ -51,7 +51,6 @@ const uint32_t BYTE_3_POSITION = 2;
 const uint32_t BYTE_4_POSITION = 3;
 
 const size_t UINT32_SIZE = 4;
-const size_t UINT16_SIZE = 2;
 
 const uint16_t LOWER_BYTE_MASK = 0x00ffU;
 const uint16_t UPPER_BYTE_MASK = 0xff00U;
@@ -169,10 +168,11 @@ const byte *DataBuf::CData(size_t offset) const
     return &pData_[offset];
 }
 
-uint16_t GetUShort(const byte *buf, ByteOrder byteOrder)
-{
-    Slice<const byte*> slice{buf, 0, UINT16_SIZE};
-    return GetUShort(slice, byteOrder);
+uint16_t GetUShort(const byte *buf, ByteOrder byteOrder) {
+    if (byteOrder == littleEndian) {
+        return static_cast<byte>(buf[1]) << DATA_BUF_BYTE_SIZE | static_cast<byte>(buf[0]);
+    }
+    return static_cast<byte>(buf[0]) << DATA_BUF_BYTE_SIZE | static_cast<byte>(buf[1]);
 }
 
 void US2Data(byte *buf, uint16_t value, ByteOrder byteOrder)

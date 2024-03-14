@@ -23,9 +23,6 @@
 #include <sstream>
 #include <vector>
 
-// included header files
-#include "data_buf_slice.h"
-
 namespace OHOS {
 namespace Media {
 using byte = uint8_t;
@@ -192,7 +189,7 @@ struct DataBuf {
      * Check if the buffer is empty
      * @return true if the buffer is empty, false otherwise
      */
-    bool empty() const
+    bool Empty() const
     {
         return pData_.empty();
     }
@@ -225,20 +222,6 @@ size_t UL2Data(byte *buf, uint32_t l, ByteOrder byteOrder);
  * @return The read value
  */
 uint16_t GetUShort(const byte *buf, ByteOrder byteOrder);
-
-/**
- * Read a 2 byte unsigned short value from a Slice
- * @param buf The Slice to read from
- * @param byteOrder The byte order to use when reading the value
- * @return The read value
- */
-template <typename T> uint16_t GetUShort(const Slice<T> &buf, ByteOrder byteOrder)
-{
-    if (byteOrder == littleEndian) {
-        return static_cast<byte>(buf.at(1)) << DATA_BUF_BYTE_SIZE | static_cast<byte>(buf.at(0));
-    }
-    return static_cast<byte>(buf.at(0)) << DATA_BUF_BYTE_SIZE | static_cast<byte>(buf.at(1));
-}
 
 /**
  * Convert an unsigned short to data, write the data to the buffer,

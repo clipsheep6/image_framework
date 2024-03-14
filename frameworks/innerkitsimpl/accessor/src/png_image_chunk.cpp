@@ -35,13 +35,13 @@ namespace Media {
 int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkType, DataBuf &tiffData)
 {
     DataBuf keyword = GetKeywordFromChunk(chunkData);
-    if (keyword.empty()) {
+    if (keyword.Empty()) {
         IMAGE_LOGE("Error:failed to read the keyword from chunk.");
         return 1;
     }
 
     DataBuf rawText = GetRawTextFromChunk(chunkData, keyword.Size(), chunkType);
-    if (rawText.empty()) {
+    if (rawText.Empty()) {
         IMAGE_LOGE("Error:failed to read the raw text from chunk.");
         return 1;
     }
@@ -228,7 +228,7 @@ size_t PngImageChunk::FindTiffPos(DataBuf &exifInfo, size_t exifInfoLength)
 int PngImageChunk::GetTiffDataFromRawText(const DataBuf &rawText, DataBuf &tiffData)
 {
     DataBuf exifInfo = ConvertRawTextToExifInfo(rawText);
-    if (exifInfo.empty()) {
+    if (exifInfo.Empty()) {
         IMAGE_LOGE("Error:failed to parse Exif metadata: cannot convert text to hex");
         return 1;
     }
@@ -382,7 +382,7 @@ DataBuf PngImageChunk::ConvertRawTextToExifInfo(const DataBuf &rawText)
         IMAGE_LOGE("Error:failed to copy raw profile text: cannot allocate memory.");
         return {};
     }
-    if (exifInfo.empty()) {
+    if (exifInfo.Empty()) {
         return exifInfo;
     }
     unsigned char* destPtr = exifInfo.Data();

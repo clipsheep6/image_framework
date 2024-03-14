@@ -45,7 +45,6 @@ image_native_ios_sources = [
   "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
-  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/data_buf_slice.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/file_image_stream.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",

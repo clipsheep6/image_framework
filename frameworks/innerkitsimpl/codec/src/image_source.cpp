@@ -2416,7 +2416,7 @@ std::shared_ptr<DataBuf> ImageSource::GetExifBlob()
     if (imageAccessor != nullptr) {
         DataBuf dataBlob;
         imageAccessor->ReadExifBlob(dataBlob);
-        if (!dataBlob.empty()) {
+        if (!dataBlob.Empty()) {
             return std::make_shared<DataBuf>(dataBlob.Data(), dataBlob.Size());
         }
     }

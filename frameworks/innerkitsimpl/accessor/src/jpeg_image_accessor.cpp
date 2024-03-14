@@ -205,7 +205,7 @@ bool JpegImageAccessor::GetExifEncodeBlob(uint8_t** dataBlob, uint32_t& size)
 
 bool JpegImageAccessor::GetExifBlob(const DataBuf& blob, uint8_t** dataBlob, uint32_t& size)
 {
-    if (blob.empty()) {
+    if (blob.Empty()) {
         return false;
     }
 
