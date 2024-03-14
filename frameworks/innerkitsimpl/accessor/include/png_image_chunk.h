@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PNG_IMAGE_CHUNK_H_
-#define PNG_IMAGE_CHUNK_H_
+#ifndef PNG_IMAGE_CHUNK_H
+#define PNG_IMAGE_CHUNK_H
 
 #include <libexif/exif-data.h>
 #include <algorithm>
@@ -38,16 +38,14 @@ namespace Media {
 #define PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE 21
 #define HEX_BASE                         16
 #define DECIMAL_BASE                     10
-#define ASCII_0                          '0'
-#define ASCII_9                          '9'
-#define ASCII_a                          'a'
-#define ASCII_f                          'f'
 #define PNG_PROFILE_EXIF                 "Raw profile type exif"
 #define PNG_PROFILE_APP1                 "Raw profile type APP1"
 
-#define TEXT_CHUNK_COMPRESS_METHOD_VALID_VALUE 0
-#define TEXT_CHUNK_COMPRESS_FLAG_UNCOMPRESSED  0
-#define TEXT_CHUNK_COMPRESS_FLAG_COMPRESSED    1
+#define CHUNK_COMPRESS_METHOD_VALID 0
+#define CHUNK_FLAG_COMPRESS_NO      0
+#define CHUNK_FLAG_COMPRESS_YES     1
+#define NULL_CHAR_AMOUNT            2
+#define HEX_STRING_UNIT_SIZE        2
 
 class PngImageChunk {
 public:
@@ -103,4 +101,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif  // PNG_IMAGE_CHUNK_H_
+#endif  // PNG_IMAGE_CHUNK_H

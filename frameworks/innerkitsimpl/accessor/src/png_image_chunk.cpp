@@ -32,10 +32,6 @@
 namespace OHOS {
 namespace Media {
 
-namespace {
-constexpr size_t nullSeparators = 2;
-}
-
 int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkType, DataBuf &tiffData)
 {
     DataBuf keyword = GetKeywordFromChunk(chunkData);
@@ -53,7 +49,7 @@ int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkT
     int foundExifKeyword = FindExifKeyword(keyword.CData());
     if (foundExifKeyword == true) {
         return GetTiffDataFromRawText(rawText, tiffData);
-    }else{
+    } else {
         IMAGE_LOGI("ignore the text chunk which without exif keyword");
         return 1;
     }
@@ -71,20 +67,20 @@ DataBuf PngImageChunk::GetKeywordFromChunk(const DataBuf &chunkData)
         IMAGE_LOGE("Error:lookup key failed: not found key.");
         return {};
     }
-
-    return {chunkData.CData(), std::distance(chunkData.CBegin(), keyword)};
+    const size_t keywordLength = std::distance(chunkData.CBegin(), keyword);
+    return {chunkData.CData(), keywordLength};
 }
 
 DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
 {
-    if (*(chunkData.CData(keySize + 1)) != TEXT_CHUNK_COMPRESS_METHOD_VALID_VALUE) {
+    if (*(chunkData.CData(keySize + 1)) != CHUNK_COMPRESS_METHOD_VALID) {
         IMAGE_LOGE("Error:corrupted Metadata: invalid compression method.");
         return {};
     }
 
-    size_t compressedTextSize = chunkData.Size() - keySize - nullSeparators;
+    size_t compressedTextSize = chunkData.Size() - keySize - NULL_CHAR_AMOUNT;
     if (compressedTextSize) {
-        const byte* compressedText = chunkData.CData(keySize + nullSeparators);
+        const byte* compressedText = chunkData.CData(keySize + NULL_CHAR_AMOUNT);
         int ret = DecompressText(compressedText, static_cast<uint32_t>(compressedTextSize), rawText);
         if (ret != 0) {
             IMAGE_LOGE("Error:decompress text failed.");
@@ -104,58 +100,62 @@ DataBuf PngImageChunk::GetRawTextFromTextChunk(const DataBuf &chunkData, size_t 
     return rawText;
 }
 
-std::string FetchStringWithNullCharEnd(const char* chunkData, size_t data_length)
+std::string FetchString(const char* chunkData, size_t data_length)
 {
     if (data_length == 0) {
         IMAGE_LOGE("Error:data_length is 0.");
         return {};
     }
-    const size_t StringLength = strnlen(chunkData, data_length);
-    return {chunkData, StringLength};
+    const size_t stringLength = strnlen(chunkData, data_length);
+    return {chunkData, stringLength};
 }
 
 DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
 {
     const size_t nullCount = std::count(chunkData.CData(keySize + 3), chunkData.CData(chunkData.Size() - 1), '\0');
-    if (nullCount < nullSeparators) {
+    if (nullCount < NULL_CHAR_AMOUNT) {
         IMAGE_LOGE("Error:corrupted Metadata: the null character after Language tag is less then 2");
         return {};
     }
 
     const byte compressionFlag = chunkData.ReadUInt8(keySize + 1);
     const byte compressionMethod = chunkData.ReadUInt8(keySize + 2);
-    if ((compressionFlag != TEXT_CHUNK_COMPRESS_FLAG_UNCOMPRESSED) && (compressionFlag != TEXT_CHUNK_COMPRESS_FLAG_COMPRESSED)) {
+    if ((compressionFlag != CHUNK_FLAG_COMPRESS_NO) && (compressionFlag != CHUNK_FLAG_COMPRESS_YES)) {
         IMAGE_LOGE("Error:corrupted Metadata: the compression flag is invalid");
         return {};
     }
 
-    if ((compressionFlag == TEXT_CHUNK_COMPRESS_FLAG_COMPRESSED) && (compressionMethod != TEXT_CHUNK_COMPRESS_METHOD_VALID_VALUE)){
+    if ((compressionFlag == CHUNK_FLAG_COMPRESS_YES) && (compressionMethod != CHUNK_COMPRESS_METHOD_VALID)) {
         IMAGE_LOGE("Error:corrupted Metadata: invalid compression method.");
         return {};
     }
 
     const size_t languageTextPos = keySize + 3;
     const size_t languageTextMaxLen = chunkData.Size() - keySize - 3;
-    std::string languageText = FetchStringWithNullCharEnd(reinterpret_cast<const char*>(chunkData.CData(languageTextPos)), languageTextMaxLen);
+    std::string languageText = FetchString(reinterpret_cast<const char*>(chunkData.CData(languageTextPos)),
+                                           languageTextMaxLen);
     const size_t languageTextLen = languageText.size();
 
     const size_t translatedKeyPos = languageTextPos + languageTextLen + 1;
-    std::string translatedKeyText = FetchStringWithNullCharEnd(reinterpret_cast<const char*>(chunkData.CData(translatedKeyPos)),
-                                                             chunkData.Size() - translatedKeyPos);
+    std::string translatedKeyText = FetchString(reinterpret_cast<const char*>(chunkData.CData(translatedKeyPos)),
+                                                chunkData.Size() - translatedKeyPos);
     const size_t translatedKeyTextLen = translatedKeyText.size();
 
     const size_t textLen = chunkData.Size() - (keySize + 3 + languageTextLen + 1 + translatedKeyTextLen + 1);
-    if (textLen) {
-        const size_t textPosition = translatedKeyPos + translatedKeyTextLen + 1;
-        const byte* textPtr = chunkData.CData(textPosition);
-        if (compressionFlag == TEXT_CHUNK_COMPRESS_FLAG_UNCOMPRESSED) {
-            rawText = DataBuf(textPtr, textLen);
-        } else {
-            int ret = DecompressText(textPtr, textLen, rawText);
-            if (ret != 0) {
-                IMAGE_LOGE("Error:decompress text failed.");
-                return {};
-            }
+    if (textLen <= 0) {
+        return {};
+
+    }
+
+    const size_t textPosition = translatedKeyPos + translatedKeyTextLen + 1;
+    const byte* textPtr = chunkData.CData(textPosition);
+    if (compressionFlag == CHUNK_FLAG_COMPRESS_NO) {
+        rawText = DataBuf(textPtr, textLen);
+    } else {
+        int ret = DecompressText(textPtr, textLen, rawText);
+        if (ret != 0) {
+            IMAGE_LOGE("Error:decompress text failed.");
+            return {};
         }
     }
     return rawText;
@@ -233,7 +233,6 @@ int PngImageChunk::GetTiffDataFromRawText(const DataBuf &rawText, DataBuf &tiffD
         return 1;
     }
     size_t exifInfoLength = exifInfo.Size();
-
     if (exifInfoLength < EXIF_HEADER_SIZE) {
         IMAGE_LOGE("Error:failed to parse Exif metadata: data length is too short");
         return 1;
@@ -289,44 +288,47 @@ const char* PngImageChunk::StepOverNewLine(const char* sourcePtr, const char* en
 
 const char* PngImageChunk::GetExifInfoLen(const char* sourcePtr, size_t *lengthOut, const char* endPtr)
 {
-      while (*sourcePtr == '\0' || *sourcePtr == ' ' || *sourcePtr == '\n') {
-          sourcePtr++;
-          if (sourcePtr == endPtr) {
-              IMAGE_LOGE("Error:exif info don't exist.");
-              return NULL;
-          }
-      }
+    while ((*sourcePtr == '\0') || (*sourcePtr == ' ') || (*sourcePtr == '\n')) {
+        sourcePtr++;
+        if (sourcePtr == endPtr) {
+            IMAGE_LOGE("Error:exif info don't exist.");
+            return NULL;
+        }
+    }
 
-      size_t exifLength = 0;
-      while (('0' <= *sourcePtr) && (*sourcePtr <= '9')) {
-          const size_t newlength = (DECIMAL_BASE * exifLength) + (*sourcePtr - '0');
-          exifLength = newlength;
-          sourcePtr++;
-          if (sourcePtr == endPtr) {
-              IMAGE_LOGE("Error:exif info don't exist.");
-              return NULL;
-          }
-      }
-      sourcePtr++;  // ignore '\n'
-      if (sourcePtr == endPtr) {
-          IMAGE_LOGE("Error:exif info don't exist.");
-          return NULL;
-      }
-      *lengthOut = exifLength;
-      return sourcePtr;
+    size_t exifLength = 0;
+    while (('0' <= *sourcePtr) && (*sourcePtr <= '9')) {
+        const size_t newlength = (DECIMAL_BASE * exifLength) + (*sourcePtr - '0');
+        exifLength = newlength;
+        sourcePtr++;
+        if (sourcePtr == endPtr) {
+            IMAGE_LOGE("Error:exif info don't exist.");
+            return NULL;
+        }
+    }
+    sourcePtr++; // ignore the '\n' character
+    if (sourcePtr == endPtr) {
+        IMAGE_LOGE("Error:exif info don't exist.");
+        return NULL;
+    }
+    *lengthOut = exifLength;
+    return sourcePtr;
 }
 
 int PngImageChunk::AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsigned char *destPtr)
 {
-    static const unsigned char asciiToInt[ASCII_TO_HEX_MAP_SIZE] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 11, 12, 13, 14, 15,
+    static const unsigned char hexAsciiToInt[ASCII_TO_HEX_MAP_SIZE] = {
+        0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,    0, 0, 0, 0, 1,    2, 3, 4, 5, 6,    7, 8, 9, 0, 0,
+        0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 10, 11, 12,
+        13, 14, 15,
     };
 
     size_t sourceLength = exifInfoLength * 2;
     for (size_t i = 0; i < sourceLength; i++) {
-        while ((*sourcePtr < ASCII_0) || ((*sourcePtr > ASCII_9) && (*sourcePtr < ASCII_a)) || (*sourcePtr > ASCII_f)) {
+        while ((*sourcePtr < '0') || ((*sourcePtr > '9') && (*sourcePtr < 'a')) || (*sourcePtr > 'f')) {
             if (*sourcePtr == '\0') {
                 IMAGE_LOGE("Error:failed to convert exif ascii string: unexpected null character.");
                 return 1;
@@ -334,10 +336,10 @@ int PngImageChunk::AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsi
             sourcePtr++;
         }
 
-        if ((i % 2) == 0) {
-            *destPtr = static_cast<unsigned char>(HEX_BASE * asciiToInt[static_cast<size_t>(*sourcePtr++)]);
+        if ((i % HEX_STRING_UNIT_SIZE) == 0) {
+            *destPtr = static_cast<unsigned char>(HEX_BASE * hexAsciiToInt[static_cast<size_t>(*sourcePtr++)]);
         } else {
-            (*destPtr++) += asciiToInt[static_cast<size_t>(*sourcePtr++)];
+            (*destPtr++) += hexAsciiToInt[static_cast<size_t>(*sourcePtr++)];
         }
     }
     return 0;

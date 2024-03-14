@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,7 @@ namespace Multimedia {
 static const std::string IMAGE_INPUT_NOEXIF_PNG_PATH = "/data/local/tmp/image/test_noexif.png";
 static const std::string IMAGE_INPUT_EXIF_PNG_PATH = "/data/local/tmp/image/test_exif.png";
 static const std::string IMAGE_INPUT_TEXTCHUNK_PNG_PATH = "/data/local/tmp/image/test_textchunk.png";
+static const std::string IMAGE_INPUT_CHUNKTYPETEXT_PNG_PATH = "/data/local/tmp/image/test_chunktypetext.png";
 static const std::string IMAGE_INPUT_NOEXIST_PATH = "";
 
 class PngImageAccessorTest : public testing::Test {
@@ -52,7 +53,7 @@ std::string PngImageAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata
  */
 HWTEST_F(PngImageAccessorTest, ReadMetadata001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT_NOEXIF_PNG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_NOEXIF_PNG_PATH);
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, ERR_IMAGE_SOURCE_DATA);
@@ -65,7 +66,7 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata001, TestSize.Level3)
  */
 HWTEST_F(PngImageAccessorTest, ReadMetadata002, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT_EXIF_PNG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_EXIF_PNG_PATH);
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, SUCCESS);
@@ -88,7 +89,7 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata002, TestSize.Level3)
  */
 HWTEST_F(PngImageAccessorTest, ReadMetadata003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT_TEXTCHUNK_PNG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_TEXTCHUNK_PNG_PATH);
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, SUCCESS);
@@ -151,13 +152,66 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata003, TestSize.Level3)
 }
 
 /**
+ * @tc.name: ReadMetadata004
+ * @tc.desc: test ReadMetadata
+ * @tc.type: FUNC
+ */
+HWTEST_F(PngImageAccessorTest, ReadMetadata004, TestSize.Level3)
+{
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_CHUNKTYPETEXT_PNG_PATH);
+    PngImageAccessor imageAccessor(stream);
+    int result = imageAccessor.ReadMetadata();
+    ASSERT_EQ(result, SUCCESS);
+
+    auto exifMetadata = imageAccessor.GetExifMetadata();
+    ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "320");
+    ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "211");
+    ASSERT_EQ(GetProperty(exifMetadata, "Make"), "NIKON CORPORATION");
+    ASSERT_EQ(GetProperty(exifMetadata, "Model"), "NIKON D70");
+    ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Top-left");
+    ASSERT_EQ(GetProperty(exifMetadata, "XResolution"), "300");
+    ASSERT_EQ(GetProperty(exifMetadata, "YResolution"), "300");
+    ASSERT_EQ(GetProperty(exifMetadata, "ResolutionUnit"), "Inch");
+    ASSERT_EQ(GetProperty(exifMetadata, "Software"), "digiKam-0.9.0-svn");
+    ASSERT_EQ(GetProperty(exifMetadata, "DateTime"), "2006:02:04 16:09:30");
+    ASSERT_EQ(GetProperty(exifMetadata, "ExposureTime"), "1/4 sec.");
+    ASSERT_EQ(GetProperty(exifMetadata, "FNumber"), "f/22.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "ExposureProgram"), "Shutter priority");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedRatings"), "200");
+    ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2006:02:04 16:09:30");
+    ASSERT_EQ(GetProperty(exifMetadata, "DateTimeDigitized"), "2006:02:04 16:09:30");
+    ASSERT_EQ(GetProperty(exifMetadata, "ShutterSpeedValue"), "2.00 EV (1/4 sec.)");
+    ASSERT_EQ(GetProperty(exifMetadata, "ApertureValue"), "8.92 EV (f/22.0)");
+    ASSERT_EQ(GetProperty(exifMetadata, "ExposureBiasValue"), "0.33 EV");
+    ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "2.97 EV (f/2.8)");
+    ASSERT_EQ(GetProperty(exifMetadata, "LightSource"), "Unknown");
+    ASSERT_EQ(GetProperty(exifMetadata, "Flash"), "Flash did not fire");
+    ASSERT_EQ(GetProperty(exifMetadata, "FocalLength"), "50.0 mm");
+    ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "6989 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "WhiteBalance"), "Auto white balance");
+    ASSERT_EQ(GetProperty(exifMetadata, "LightSource"), "Unknown");
+    ASSERT_EQ(GetProperty(exifMetadata, "PixelXDimension"), "320");
+    ASSERT_EQ(GetProperty(exifMetadata, "PixelYDimension"), "211");
+    ASSERT_EQ(GetProperty(exifMetadata, "SensingMethod"), "One-chip color area sensor");
+    ASSERT_EQ(GetProperty(exifMetadata, "ExposureMode"), "Auto exposure");
+    ASSERT_EQ(GetProperty(exifMetadata, "WhiteBalance"), "Auto white balance");
+    ASSERT_EQ(GetProperty(exifMetadata, "FocalLengthIn35mmFilm"), "75");
+    ASSERT_EQ(GetProperty(exifMetadata, "SceneCaptureType"), "Standard");
+    ASSERT_EQ(GetProperty(exifMetadata, "Contrast"), "Normal");
+    ASSERT_EQ(GetProperty(exifMetadata, "Saturation"), "Normal");
+    ASSERT_EQ(GetProperty(exifMetadata, "Sharpness"), "Normal");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistanceRange"), "Unknown");
+    ASSERT_EQ(GetProperty(exifMetadata, "Compression"), "JPEG compression");
+}
+
+/**
  * @tc.name: ReadExifBlob001
  * @tc.desc: test ReadExifBlob using PNG with exif
  * @tc.type: FUNC
  */
 HWTEST_F(PngImageAccessorTest, ReadExifBlob001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT_EXIF_PNG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_EXIF_PNG_PATH);
     PngImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -172,7 +226,7 @@ HWTEST_F(PngImageAccessorTest, ReadExifBlob001, TestSize.Level3)
  */
 HWTEST_F(PngImageAccessorTest, ReadExifBlob002, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT_NOEXIF_PNG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_NOEXIF_PNG_PATH);
     PngImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -186,7 +240,7 @@ HWTEST_F(PngImageAccessorTest, ReadExifBlob002, TestSize.Level3)
  */
 HWTEST_F(PngImageAccessorTest, ReadExifBlob003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT_NOEXIST_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_NOEXIST_PATH);
     PngImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
