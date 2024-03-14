@@ -43,6 +43,10 @@ image_native_ios_sources = [
 
   # image_native
   "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/data_buf_slice.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/file_image_stream.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
@@ -65,6 +69,15 @@ image_native_ios_sources = [
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
   "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+
+  # accessor
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/dng_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/heif_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/accessor/src/webp_image_accessor.cpp",
 
   # image_napi
   "//foundation/multimedia/image_framework/frameworks/kits/js/common/image_napi_utils.cpp",

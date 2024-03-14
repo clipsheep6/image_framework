@@ -17,10 +17,11 @@
 #define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_EXT_WSTREAM_H
 
 #include <cstddef>
-
+#include <vector>
 #include "SkStream.h"
 #include "output_data_stream.h"
 #include "nocopyable.h"
+#include "buffer_image_stream.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -38,6 +39,23 @@ public:
 private:
     ImagePlugin::OutputDataStream *stream_;
 };
+
+class TempStream : public SkWStream, NoCopyable {
+public:
+    TempStream() {stream_ = new Media::BufferImageStream();};
+    virtual ~TempStream() override
+    {
+        delete stream_;
+        stream_ = nullptr;
+    }
+    bool write(const void* buffer, size_t size) override;
+    void flush() override{};
+    size_t bytesWritten() const override;
+    uint8_t* GetAddr();
+private:
+    Media::BufferImageStream *stream_;
+};
+
 } // namespace ImagePlugin
 } // namespace OHOS
 

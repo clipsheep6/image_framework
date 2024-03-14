@@ -41,6 +41,9 @@
 #include "post_proc.h"
 #include "securec.h"
 #include "source_stream.h"
+#include "exif_metadata.h"
+#include "image_accessor_factory.h"
+#include "image_accessor.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -51,6 +54,7 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
+#include "tiff_parser.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -816,6 +820,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
             listener->OnEvent((int)DecodeEvent::EVENT_COMPLETE_DECODE);
         }
     }
+
     // not ext decode, dump pixelMap while decoding svg here
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
     return pixelMap;
@@ -976,6 +981,36 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
     return SUCCESS;
 }
 
+uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessor> imageAccessor,
+    const std::string &key, const std::string &value)
+{
+    if (imageAccessor == nullptr) {
+        IMAGE_LOGE("[ImageSource]Create image accessor fail on modify image property.");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    uint32_t ret = imageAccessor->ReadMetadata();
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]Read meta data fail on modify image property.");
+        return ret;
+    }
+
+    auto exifDataPtr = imageAccessor->GetExifMetadata();
+    if (exifDataPtr == nullptr) {
+        if (!imageAccessor->CreateExifMetadata()) {
+            IMAGE_LOGE("[ImageSource]Create ExifMetadata failed.");
+            return ERR_IMAGE_SOURCE_DATA;
+        }
+    }
+
+    exifDataPtr = imageAccessor->GetExifMetadata();
+    exifDataPtr->SetValue(key, value);
+    if (!imageAccessor->WriteMetadata()) {
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+
+    return SUCCESS;
+}
+
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const std::string &path)
 {
@@ -983,15 +1018,12 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
     if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on modify image property, ret:%{public}u.", ret);
+        IMAGE_LOGE("[ImageSource]Get valid image status fail on modify image property, ret:%{public}u.", ret);
         return ret;
     }
-    ret = mainDecoder_->ModifyImageProperty(index, key, value, path);
-    if (ret != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] ModifyImageProperty fail, ret:%{public}u", ret);
-        return ret;
-    }
-    return SUCCESS;
+
+    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(path);
+    return ModifyImageProperty(imageAccessor, key, value);
 }
 
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
@@ -1004,12 +1036,9 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
         IMAGE_LOGE("[ImageSource]get valid image status fail on modify image property, ret:%{public}u.", ret);
         return ret;
     }
-    ret = mainDecoder_->ModifyImageProperty(index, key, value, fd);
-    if (ret != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] ModifyImageProperty fail, ret:%{public}u", ret);
-        return ret;
-    }
-    return SUCCESS;
+
+    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(fd);
+    return ModifyImageProperty(imageAccessor, key, value);
 }
 
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
@@ -1022,48 +1051,69 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
         IMAGE_LOGE("[ImageSource]get valid image status fail on modify image property, ret:%{public}u.", ret);
         return ret;
     }
-    ret = mainDecoder_->ModifyImageProperty(index, key, value, data, size);
+
+    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(data, size);
+    ret = ModifyImageProperty(imageAccessor, key, value);
     if (ret != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] ModifyImageProperty fail, ret:%{public}u", ret);
         return ret;
     }
+
+    unsigned char *dataPtr;
+    uint32_t datSize = 0;
+    ExifData *exifData = imageAccessor->GetExifMetadata()->GetData();
+    if (exifData == nullptr) {
+        IMAGE_LOGE("[ImageSource]get valid exifmetadata on modify image property.");
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+    TiffParser::Encode(&dataPtr, datSize, exifData);
+    exifBlob_ = std::make_shared<DataBuf>(dataPtr, datSize);
+
     return SUCCESS;
 }
 
 uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on get image property, ret:%{public}u.", ret);
-        return ret;
+    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
+    uint32_t size = sourceStreamPtr_->GetStreamSize();
+    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
+    if (imageAccessor == nullptr) {
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
-    ret = mainDecoder_->GetImagePropertyInt(index, key, value);
-    if (ret != SUCCESS) {
-        IMAGE_LOGD("[ImageSource] GetImagePropertyInt fail, ret:%{public}u", ret);
-        return ret;
+    imageAccessor->ReadMetadata();
+    std::string strValue;
+    auto exifMetadata = imageAccessor->GetExifMetadata();
+    if (exifMetadata != nullptr) {
+        exifMetadata->GetValue(key, strValue);
     }
+
+    if (!strValue.empty()) {
+        value = std::stoi(strValue);
+    }
+
     return SUCCESS;
 }
 
 uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on get image property, ret:%{public}u.", ret);
-        return ret;
+    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
+    uint32_t size = sourceStreamPtr_->GetStreamSize();
+    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
+    if (imageAccessor == nullptr) {
+        return ERR_IMAGE_SOURCE_DATA;
     }
-    ret = mainDecoder_->GetImagePropertyString(index, key, value);
-    if (ret != SUCCESS) {
-        IMAGE_LOGD("[ImageSource] GetImagePropertyString fail, ret:%{public}u", ret);
-        return ret;
+
+    imageAccessor->ReadMetadata();
+    auto exifMetadata = imageAccessor->GetExifMetadata();
+    if (exifMetadata != nullptr) {
+        exifMetadata->GetValue(key, value);
     }
+
     return SUCCESS;
 }
+
 const SourceInfo &ImageSource::GetSourceInfo(uint32_t &errorCode)
 {
     std::lock_guard<std::mutex> guard(decodingMutex_);
@@ -2370,5 +2420,26 @@ bool ImageSource::IsSupportGenAstc()
 {
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
+
+std::shared_ptr<DataBuf> ImageSource::GetExifBlob()
+{
+    if (exifBlob_ != nullptr) {
+        return exifBlob_;
+    }
+
+    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
+    uint32_t size = sourceStreamPtr_->GetStreamSize();
+    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
+    if (imageAccessor != nullptr) {
+        DataBuf dataBlob;
+        imageAccessor->ReadExifBlob(dataBlob);
+        if (!dataBlob.empty()) {
+            return std::make_shared<DataBuf>(dataBlob.Data(), dataBlob.Size());
+        }
+    }
+
+    return nullptr;
+}
+
 } // namespace Media
 } // namespace OHOS
