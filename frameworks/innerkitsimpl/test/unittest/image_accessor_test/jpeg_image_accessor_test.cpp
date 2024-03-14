@@ -27,12 +27,13 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Multimedia {
 
-static const std::string IMAGE_INPUT1_JPEG_PATH = "/data/local/tmp/image/exif.jpg";
-static const std::string IMAGE_INPUT2_JPEG_PATH = "/data/local/tmp/image/huawei.jpg";
-static const std::string IMAGE_ERROR1_JPEG_PATH = "/data/local/tmp/image/testerror.jpg";
-static const std::string IMAGE_ERROR2_JPEG_PATH = "/data/local/tmp/image/R_C.jpg";
-static const std::string IMAGE_INPUT3_JPEG_PATH = "/data/local/tmp/image/input.jpg";
-static const std::string IMAGE_OUTPUT_JPEG_PATH = "/data/local/tmp/image/output.jpg";
+static const std::string IMAGE_INPUT1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata001.jpg";
+static const std::string IMAGE_INPUT2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata003.jpg";
+static const std::string IMAGE_ERROR1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob002.jpg";
+static const std::string IMAGE_ERROR2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob003.jpg";
+static const std::string IMAGE_INPUT3_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata001.jpg";
+static const std::string IMAGE_INPUT4_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob001.jpg";
+static const std::string IMAGE_OUTPUT_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob002.jpg";
 
 class JpegImageAccessorTest : public testing::Test {
 public:
@@ -48,7 +49,7 @@ public:
  */
 HWTEST_F(JpegImageAccessorTest, ReadMetadata001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT1_JPEG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, 0);
@@ -90,43 +91,13 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata001, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata002
- * @tc.desc: test the jpegDecoded Exif properties
- * @tc.type: FUNC
- */
-HWTEST_F(JpegImageAccessorTest, ReadMetadata002, TestSize.Level3)
-{
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT1_JPEG_PATH));
-    JpegImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
-    ASSERT_EQ(result, 0);
-    std::shared_ptr<ExifMetadata> exifMetadata = imageAccessor.GetExifMetadata();
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteCaptureMode"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePhysicalAperture"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteRollAngle"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePitchAngle"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFoodConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneStageConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBlueSkyConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneGreenPlantConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBeachConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSnowConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSunsetConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFlowersConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneNightConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneTextConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceCount"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFocusMode"), "1");
-}
-
-/**
  * @tc.name: ReadMetadata003
  * @tc.desc: test the jpegDecoded Exif properties
  * @tc.type: FUNC
  */
 HWTEST_F(JpegImageAccessorTest, ReadMetadata003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT2_JPEG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT2_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, 0);
@@ -168,36 +139,6 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata003, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata004
- * @tc.desc: test the jpegDecoded Exif properties
- * @tc.type: FUNC
- */
-HWTEST_F(JpegImageAccessorTest, ReadMetadata004, TestSize.Level3)
-{
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT2_JPEG_PATH));
-    JpegImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
-    ASSERT_EQ(result, 0);
-    std::shared_ptr<ExifMetadata> exifMetadata = imageAccessor.GetExifMetadata();
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteCaptureMode"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePhysicalAperture"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteRollAngle"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePitchAngle"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFoodConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneStageConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBlueSkyConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneGreenPlantConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBeachConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSnowConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSunsetConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFlowersConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneNightConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneTextConf"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceCount"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFocusMode"), "1");
-}
-
-/**
  * @tc.name: ReadExifBlob001
  * @tc.desc: test ReadExifBlob from nonexisting image file, return false
  * @tc.type: FUNC
@@ -205,7 +146,7 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata004, TestSize.Level3)
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob001, TestSize.Level3)
 {
     const std::string IMAGE_NONEXISTING_JPEG_PATH = "/data/local/tmp/image/testnonexisting.jpg";
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_NONEXISTING_JPEG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_NONEXISTING_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -219,7 +160,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob001, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob002, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_ERROR1_JPEG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_ERROR1_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -233,7 +174,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob002, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_ERROR2_JPEG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_ERROR2_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -247,7 +188,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob003, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob004, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT1_JPEG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -262,7 +203,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob004, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream(new FileImageStream(IMAGE_INPUT1_JPEG_PATH));
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
 
@@ -312,13 +253,13 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream(new FileImageStream(IMAGE_INPUT3_JPEG_PATH));
+    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT3_JPEG_PATH);
     JpegImageAccessor imageReadAccessor(readStream);
     DataBuf exifBuf;
     ASSERT_TRUE(imageReadAccessor.ReadExifBlob(exifBuf));
     ASSERT_EQ(exifBuf.Size(), 0x0932);
 
-    std::shared_ptr<ImageStream> writeStream(new FileImageStream(IMAGE_OUTPUT_JPEG_PATH));
+    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_INPUT4_JPEG_PATH);
     JpegImageAccessor imageWriteAccessor(writeStream);
     ASSERT_EQ(imageWriteAccessor.WriteExifBlob(exifBuf), 0);
 

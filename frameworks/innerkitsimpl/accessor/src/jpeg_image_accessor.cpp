@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "jpeg_image_accessor.h"
 
 #include "file_image_stream.h"
@@ -25,6 +40,7 @@ namespace {
     constexpr auto EXIF_ID = "Exif\0\0";
     constexpr auto EXIF_BLOB_OFFSET = 2;
     constexpr auto EXIF_ID_LENGTH = 2;
+    constexpr auto READ_BYTES = 2;
     constexpr auto EXIF_ID_SIZE = 6;
     constexpr auto APP1_EXIF_LENGTH = 8;
     constexpr auto APP1_HEADER_LENGTH = 10;
@@ -129,21 +145,21 @@ int JpegImageAccessor::FindNextMarker() const
         if (marker == EOF) {
             return marker;
         }
-    } while(marker != JPEG_MARKER_HEADER);
+    } while (marker != JPEG_MARKER_HEADER);
 
     do {
         marker = imageStream_->ReadByte();
         if (marker == EOF) {
             return marker;
         }
-    } while(marker == JPEG_MARKER_HEADER);
+    } while (marker == JPEG_MARKER_HEADER);
 
     return marker;
 }
 
 bool HasLength(byte marker)
 {
-    if ( (marker >= JPEG_MARKER_RST1) && (marker <= JPEG_MARKER_EOI) ) {
+    if ((marker >= JPEG_MARKER_RST1) && (marker <= JPEG_MARKER_EOI)) {
         return false;
     }
     return true;
@@ -151,7 +167,7 @@ bool HasLength(byte marker)
 
 std::pair<std::array<byte, 2>, uint16_t> JpegImageAccessor::ReadSegmentLength(uint8_t marker) const
 {
-    std::array<byte, 2> buf{0, 0};
+    std::array<byte, READ_BYTES> buf{0, 0};
     uint16_t size{0};
     if (HasLength(marker)) {
         if (imageStream_->Read(buf.data(), buf.size()) == -1) {
