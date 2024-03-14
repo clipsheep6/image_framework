@@ -220,13 +220,8 @@ bool JpegImageAccessor::GetExifBlob(const DataBuf& blob, uint8_t** dataBlob, uin
         return false;
     }
 
-    if (blob.CmpBytes(0, EXIF_ID, EXIF_ID_SIZE) == 0) {
-        *dataBlob = (byte *)blob.CData(EXIF_ID_SIZE);
-        size = blob.Size() - EXIF_ID_SIZE;
-    } else {
-        *dataBlob = (byte *)blob.CData();
-        size = blob.Size();
-    }
+    *dataBlob = (byte *)blob.CData();
+    size = blob.Size();
 
     return true;
 }

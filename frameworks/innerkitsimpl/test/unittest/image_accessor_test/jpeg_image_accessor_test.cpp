@@ -203,7 +203,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob004, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT3_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
 
@@ -253,13 +253,13 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT3_JPEG_PATH);
+    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT4_JPEG_PATH);
     JpegImageAccessor imageReadAccessor(readStream);
     DataBuf exifBuf;
     ASSERT_TRUE(imageReadAccessor.ReadExifBlob(exifBuf));
     ASSERT_EQ(exifBuf.Size(), 0x0932);
 
-    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_INPUT4_JPEG_PATH);
+    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_JPEG_PATH);
     JpegImageAccessor imageWriteAccessor(writeStream);
     ASSERT_EQ(imageWriteAccessor.WriteExifBlob(exifBuf), 0);
 
