@@ -33,6 +33,7 @@
 #include "media_errors.h"
 #include "pixel_map.h"
 #include "plugin_service.h"
+#include "hdr_type.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -73,6 +74,8 @@ struct DecodeContext {
     PlYuvDataInfo yuvInfo;
     // Out: output the final pixelMap Info, only size is used now.
     PlImageInfo outInfo;
+    // Out: hdr type
+    Media::HdrType hdrType = Media::HdrType::UNKNOWN;
 };
 
 struct ProgDecodeContext {
@@ -112,6 +115,7 @@ class AbsImageDecoder {
 public:
     static constexpr uint32_t DEFAULT_IMAGE_NUM = 1;
     static constexpr uint32_t E_NO_EXIF = 1;
+    static constexpr uint32_t DEFAULT_GAINMAP_OFFSET = 0;
 
     AbsImageDecoder() = default;
 
@@ -200,6 +204,20 @@ public:
     }
 #endif
 
+    virtual Media::HdrType CheckHdrType()
+    {
+        return Media::HdrType::SDR;
+    }
+
+    virtual uint32_t GetGainMapOffset()
+    {
+        return DEFAULT_GAINMAP_OFFSET;
+    }
+
+    virtual Media::HdrMetadata GetHdrMetadata(Media::HdrType type)
+    {
+        return {};
+    }
     // define multiple subservices for this interface
     static constexpr uint16_t SERVICE_DEFAULT = 0;
 };
