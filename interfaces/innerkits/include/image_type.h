@@ -112,6 +112,19 @@ enum class PixelFormat : int32_t {
     ASTC_4x4 = 11,
     ASTC_6x6 = 12,
     ASTC_8x8 = 13,
+    RGBA_1010102 = 14,
+};
+
+enum class DecodeDynamicRange : int32_t {
+    DEFAULT = 0,
+    SDR = 1,
+};
+
+enum class EncodeDynamicRange : int32_t {
+    DEFAULT = 0, //10bit jpeg and heif will be encode as HDR_VIVID_DUAL, others will be encode as SDR
+    SDR,
+    HDR_VIVID_DUAL,
+    HDR_VIVID_SINGLE,
 };
 
 enum class AlphaType : int32_t {
@@ -208,6 +221,7 @@ struct DecodeOptions {
     SVGDecodeOptions SVGOpts;
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
+    DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::DEFAULT;
 };
 
 enum class ScaleMode : int32_t {
