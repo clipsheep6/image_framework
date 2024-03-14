@@ -203,7 +203,8 @@ public:
     MockFileWrapper()
     {
         // Set the default behavior of write to call the system's write function
-        ON_CALL(*this, fwrite(_, _, _, _)).WillByDefault(Invoke([](const void *src, size_t size, size_t nmemb, FILE *file) {
+        ON_CALL(*this, fwrite(_, _, _, _)).WillByDefault(
+            Invoke([](const void *src, size_t size, size_t nmemb, FILE *file) {
             size_t result = ::fwrite(src, size, nmemb, file);
             if (result != nmemb) {
                 char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
@@ -880,9 +881,7 @@ int CountOpenFileDescriptors()
 {
     DIR *dir;
     int fdCount = 0;
-
     std::string dirPath = "/proc/" + std::to_string(getpid()) + "/fd/";
-
     if ((dir = opendir(dirPath.c_str())) != nullptr) {
         while (readdir(dir) != nullptr) {
             fdCount++;
