@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "data_buf.h"
 #include <gtest/gtest.h>
+#include "data_buf.h"
 
 using namespace testing::ext;
 using namespace testing;
@@ -25,7 +25,7 @@ namespace Media {
 class DataBufTest : public testing::Test {
   public:
     DataBufTest() {}
-    ~DataBufTest() {}
+    ~DataBufTest() override {}
 };
 
 /**
@@ -37,6 +37,24 @@ HWTEST_F(DataBufTest, DataBufTest_Write001, TestSize.Level3) {
     DataBuf dataBuf(10);
     dataBuf.WriteUInt8(0, 123);
     EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
+}
+
+/**
+ * @tc.name: DataBufTest_GetUShort001
+ * @tc.desc: Validate the GetUShort function of DataBuf
+ * @tc.type: FUNC
+ */
+HWTEST_F(DataBufTest, DataBufTest_GetUShort001, TestSize.Level3) {
+  // Define test data
+  byte buf[2] = {0x01, 0x02};
+
+  // Test the littleEndian case
+  uint16_t result = GetUShort(buf, littleEndian);
+  ASSERT_EQ(result, 0x0201);
+
+  // Test the bigEndian case
+  result = GetUShort(buf, bigEndian);
+  ASSERT_EQ(result, 0x0102);
 }
 
 } // namespace Media
