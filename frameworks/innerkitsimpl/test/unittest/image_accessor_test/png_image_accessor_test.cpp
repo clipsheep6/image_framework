@@ -124,6 +124,21 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata003, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "LightSource"), "Cloudy weather");
     ASSERT_EQ(GetProperty(exifMetadata, "Flash"), "Flash did not fire");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalLength"), "42.0 mm");
+}
+
+/**
+ * @tc.name: ReadMetadata004
+ * @tc.desc: test ReadMetadata
+ * @tc.type: FUNC
+ */
+HWTEST_F(PngImageAccessorTest, ReadMetadata004, TestSize.Level3)
+{
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_TEXTCHUNK_PNG_PATH);
+    PngImageAccessor imageAccessor(stream);
+    int result = imageAccessor.ReadMetadata();
+    ASSERT_EQ(result, SUCCESS);
+
+    auto exifMetadata = imageAccessor.GetExifMetadata();
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTime"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "06");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "06");
@@ -152,11 +167,11 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata003, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata004
+ * @tc.name: ReadMetadata005
  * @tc.desc: test ReadMetadata
  * @tc.type: FUNC
  */
-HWTEST_F(PngImageAccessorTest, ReadMetadata004, TestSize.Level3)
+HWTEST_F(PngImageAccessorTest, ReadMetadata005, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_CHUNKTYPETEXT_PNG_PATH);
     PngImageAccessor imageAccessor(stream);
