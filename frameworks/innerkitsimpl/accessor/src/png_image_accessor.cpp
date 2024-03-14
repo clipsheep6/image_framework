@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "png_image_accessor.h"
 #include "image_stream.h"
 #include "image_log.h"
@@ -20,12 +35,10 @@ namespace Media {
 PngImageAccessor::PngImageAccessor(std::shared_ptr<ImageStream> &stream)
     : AbstractImageAccessor(stream)
 {
-
 }
 
 PngImageAccessor::~PngImageAccessor()
 {
-
 }
 
 bool PngImageAccessor::IsPngType() const
@@ -64,6 +77,26 @@ int32_t PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string ch
     return PngImageChunk::ParseTextChunk(data, txtType, tiffData);
 }
 
+bool PngImageAccessor::ExifDataDeal(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const
+{
+    DataBuf chunkData(chunkLength);
+    if (chunkLength > 0) {
+        if (ReadChunk(chunkData) != chunkData.Size()) {
+            IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk data error.");
+            return false;
+        }
+    }
+
+    if (chunkType == PNG_CHUNK_EXIF) {
+        blob = chunkData;
+    } else {
+        if (TextFindTiff(chunkData, chunkType, blob) != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
 {
     if (!imageStream_->IsOpen()) {
@@ -93,30 +126,18 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
             IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk length error.");
             return false;
         }
-        std::string chunkType(reinterpret_cast<const char*>(chunkHead.CData(PNG_CHUNK_LENGTH_SIZE)), PNG_CHUNK_TYPE_SIZE);
-        if (chunkType == PNG_CHUNK_IEND || chunkType == PNG_CHUNK_TEXT || chunkType == PNG_CHUNK_ZTXT ||
+        std::string chunkType(reinterpret_cast<const char*>(chunkHead.CData(PNG_CHUNK_LENGTH_SIZE)),
+                              PNG_CHUNK_TYPE_SIZE);
+        if (chunkType == PNG_CHUNK_IEND) {
+            return false;
+        }
+        if (chunkType == PNG_CHUNK_TEXT || chunkType == PNG_CHUNK_ZTXT ||
             chunkType == PNG_CHUNK_EXIF || chunkType == PNG_CHUNK_ITXT) {
-            DataBuf chunkData(chunkLength);
-            if (chunkLength > 0) {
-                if (ReadChunk(chunkData) != chunkData.Size()) {
-                    IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk data error.");
-                    return false;
-                }
-            }
-
-            if (chunkType == PNG_CHUNK_EXIF) {
-                blob = chunkData;
+            if (ExifDataDeal(blob, chunkType, chunkLength)) {
                 break;
-            } else if (chunkType == PNG_CHUNK_IEND) {
-                return false;
-            } else {
-                if (TextFindTiff(chunkData, chunkType, blob) == 0) {
-                   break;
-                }
             }
             chunkLength = 0;
         }
-
         imageStream_->Seek(chunkLength + PNG_CHUNK_CRC_SIZE, CURRENT);
         if (imageStream_->IsEof()) {
             IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read file error.");
