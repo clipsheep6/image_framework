@@ -318,11 +318,10 @@ ImageFormatConvertNapi::ImageFormatConvertNapi():env_(nullptr)
 napi_value ImageFormatConvertNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
-        DECLARE_NAPI_FUNCTION("rgbToYuv", RGBToYUV),
-        DECLARE_NAPI_FUNCTION("yuvToRgb", YUVToRGB),
     };
     napi_property_descriptor static_prop[] = {
-        DECLARE_NAPI_STATIC_FUNCTION("createImageConvert", CreateImageConvert),
+        DECLARE_NAPI_STATIC_FUNCTION("imageConvertYuvToRgb", YUVToRGB),
+        DECLARE_NAPI_STATIC_FUNCTION("imageConvertRgbToYuv", RGBToYUV),
     };
 
     napi_value constructor = nullptr;
@@ -343,33 +342,6 @@ napi_value ImageFormatConvertNapi::Init(napi_env env, napi_value exports)
         IMG_ARRAY_SIZE(static_prop), static_prop);
 
     HiLog::Debug(LABEL, "Init success");
-    return result;
-}
-
-napi_value ImageFormatConvertNapi::CreateImageConvert(napi_env env, napi_callback_info info)
-{
-    if (ImageFormatConvertNapi::GetConstructor() == nullptr) {
-        napi_value exports = nullptr;
-        napi_create_object(env, &exports);
-        ImageFormatConvertNapi::Init(env, exports);
-    }
-
-    napi_value constructor = nullptr;
-    napi_value result = nullptr;
-    napi_get_undefined(env, &result);
-    napi_status status;
-
-    HiLog::Debug(LABEL, "CreateImageConvert IN");
-    status = napi_get_reference_value(env, sConstructor_, &constructor);
-
-    if (IMG_IS_OK(status)) {
-        status = napi_new_instance(env, constructor, 0, nullptr, &result);
-    }
-
-    if (!IMG_IS_OK(status)) {
-        HiLog::Error(LABEL, "CreateImageConvert or new instance could not be obtained");
-    }
-
     return result;
 }
 

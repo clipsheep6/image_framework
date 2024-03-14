@@ -1,26 +1,10 @@
 [
     {
         "first_introduced": "12",
-        "name": "OH_ImageCovnertNative_InitNative"
-    },
-    {
-        "first_introduced": "12",
-        "name": "OH_ImageCovnertNative_ReleaseNative"
-    },
-    {
-        "first_introduced": "12",
         "name": "OH_ImageConvert_YuvToRgb"
     },
     {
         "first_introduced": "12",
         "name": "OH_ImageConvert_RgbToYuv"
-    },
-    {
-        "first_introduced": "12",
-        "name": "OH_ImageConvert_JsToC_PixelMap"
-    },
-    {
-        "first_introduced": "12",
-        "name": "OH_ImageConvert_CToJs_PixelMap"
     }
 ]

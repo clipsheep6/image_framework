@@ -29,7 +29,6 @@ public:
     ImageFormatConvertNapi();
 
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateImageConvert(napi_env env, napi_callback_info info);
     static napi_ref GetConstructor() {
         return sConstructor_; 
     }

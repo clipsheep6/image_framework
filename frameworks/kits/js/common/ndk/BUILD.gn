@@ -102,7 +102,8 @@ ohos_shared_library("image_format_convert_ndk") {
 
   sources = [ "image_format_convert_mdk.cpp" ]
   public_configs = [ ":native_public_config" ]
-  deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
+  deps = [ "$image_subsystem/interfaces/kits/js/common:image",
+           "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap_ndk2" ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
