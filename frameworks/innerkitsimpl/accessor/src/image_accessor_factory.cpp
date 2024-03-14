@@ -14,15 +14,12 @@
  */
 
 #include "buffer_image_stream.h"
-#include "dng_image_accessor.h"
 #include "file_image_stream.h"
-#include "heif_image_accessor.h"
 #include "image_accessor_factory.h"
 #include "image_log.h"
 #include "image_type.h"
 #include "jpeg_image_accessor.h"
 #include "png_image_accessor.h"
-#include "webp_image_accessor.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -73,12 +70,6 @@ std::shared_ptr<ImageAccessor> ImageAccessorFactory::CreateImageAccessor(std::sh
             return std::make_shared<JpegImageAccessor>(stream);
         case EncodedFormat::PNG:
             return std::make_shared<PngImageAccessor>(stream);
-        case EncodedFormat::HEIF:
-            return std::make_shared<HeifImageAccessor>(stream);
-        case EncodedFormat::WEBP:
-            return std::make_shared<WebpImageAccessor>(stream);
-        case EncodedFormat::DNG:
-            return std::make_shared<DngImageAccessor>(stream);
         default:
             return nullptr;
     }

@@ -55,10 +55,5 @@ std::shared_ptr<ExifMetadata> AbstractImageAccessor::GetExifMetadata()
     return exifMetadata_;
 }
 
-// void AbstractImageAccessor::WriteExifBlob(DataBuf& blob)
-// {
-//     (void)blob;
-// }
-
 } // namespace Media
 } // namespace OHOS
