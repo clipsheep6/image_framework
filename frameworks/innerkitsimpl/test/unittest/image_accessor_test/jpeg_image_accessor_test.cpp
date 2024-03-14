@@ -316,7 +316,7 @@ HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
     JpegImageAccessor imageReadAccessor(readStream);
     DataBuf exifBuf;
     ASSERT_TRUE(imageReadAccessor.ReadExifBlob(exifBuf));
-    ASSERT_EQ(exifBuf.size(), 0x0932);
+    ASSERT_EQ(exifBuf.Size(), 0x0932);
 
     std::shared_ptr<ImageStream> writeStream(new FileImageStream(IMAGE_OUTPUT_JPEG_PATH));
     JpegImageAccessor imageWriteAccessor(writeStream);
@@ -324,7 +324,7 @@ HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
 
     DataBuf outputBuf;
     ASSERT_TRUE(imageWriteAccessor.ReadExifBlob(outputBuf));
-    ASSERT_EQ(outputBuf.size(), 0x0932);
+    ASSERT_EQ(outputBuf.Size(), 0x0932);
 }
 
 std::string JpegImageAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop)
