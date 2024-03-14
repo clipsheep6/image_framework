@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +23,6 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace Multimedia {
-
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
 
 class MetadataConverterTest : public testing::Test {
@@ -85,7 +84,7 @@ HWTEST_F(MetadataConverterTest, Validate001, TestSize.Level3)
     ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitudeRef", "N"), 0);
     ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitudeRef", "E"), 0);
     GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 end";
-   
+
 }
 
 HWTEST_F(MetadataConverterTest, Validate002, TestSize.Level3)
@@ -97,6 +96,5 @@ HWTEST_F(MetadataConverterTest, Validate002, TestSize.Level3)
     ASSERT_NE(ExifMetadataConverter::Validate("GPSLongitudeRef", "C"), 0);
     GTEST_LOG_(INFO) << "MetadataConverterTest: Validate002 end";
 }
-
 } // namespace Multimedia
 } // namespace OHOS

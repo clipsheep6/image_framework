@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <errno.h>
 #include <string>
 
 #undef LOG_DOMAIN
@@ -32,7 +31,6 @@
 
 namespace OHOS {
 namespace Media {
-
 void TiffParser::Decode(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData)
 {
     if (dataPtr == nullptr) {
@@ -50,7 +48,6 @@ void TiffParser::Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifD
     }
     exif_data_save_data_general(exifData, dataPtr, &size);
     IMAGE_LOGE("[Encode] Encode dataPtr size is [%{public}u].", size);
-
 }
 
 void TiffParser::DecodeJpegExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData)
@@ -72,6 +69,5 @@ void TiffParser::EncodeJpegExif(unsigned char **dataPtr, uint32_t &size, ExifDat
     }
     exif_data_save_data(exifData, dataPtr, &size);
 }
-
 } // namespace Media
 } // namespace OHOS
