@@ -203,13 +203,24 @@ public:
     MockFileWrapper()
     {
         // Set the default behavior of write to call the system's write function
-        ON_CALL(*this, fwrite(_, _, _, _))
-            .WillByDefault(Invoke(
-            [](const void *src, size_t size, size_t nmemb, FILE *file) { return ::fwrite(src, size, nmemb, file); }));
-
+        ON_CALL(*this, fwrite(_, _, _, _)).WillByDefault(Invoke([](const void *src, size_t size, size_t nmemb, FILE *file) {
+            size_t result = ::fwrite(src, size, nmemb, file);
+            if (result != nmemb) {
+                char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+                strerror_r(errno, errstr, sizeof(errstr));
+                std::cerr << "Failed to write to the file: " << errstr << std::endl;
+            }
+            return result;
+        }));
         // Set the default behavior of read to call the system's read function
         ON_CALL(*this, fread(_, _, _, _)).WillByDefault(Invoke([](void *destv, size_t size, size_t nmemb, FILE *file) {
-            return ::fread(destv, size, nmemb, file);
+            size_t result = ::fread(destv, size, nmemb, file);
+            if (result != nmemb) {
+                char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+                strerror_r(errno, errstr, sizeof(errstr));
+                std::cerr << "Failed to read from the file: " << errstr << std::endl;
+            }
+            return result;
         }));
     }
 };
@@ -269,8 +280,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_Write002, TestSize.Level3)
 {
     FileImageStream stream(filePath);
-    byte data[SIZE_10];
-    memset(data, 'a', sizeof(data));
+    byte data[SIZE_10] = {0};
     ASSERT_EQ(stream.Write(data, sizeof(data)), -1);
 }
 

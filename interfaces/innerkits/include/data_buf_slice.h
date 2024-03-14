@@ -517,7 +517,6 @@ template <typename T> struct Slice<const T *> : public ConstSliceBase<PtrSliceSt
      */
     Slice(const T *ptr, size_t begin, size_t end) : ConstSliceBase<PtrSliceStorage, const T *>(ptr, begin, end)
     {
-        // TODO: use using in C++11
     }
 
     Slice<const T *> subSlice(size_t begin, size_t end) const
