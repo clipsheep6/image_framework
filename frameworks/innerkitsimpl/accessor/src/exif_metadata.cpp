@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 #include "exif_metadata.h"
 #include "exif_metadata_converter.h"
 #include "image_log.h"
@@ -10,7 +25,6 @@
 #include <ostream>
 #include <set>
 #include <sstream>
-#include <stdint.h>
 #include <vector>
 
 #undef LOG_DOMAIN
@@ -395,13 +409,13 @@ bool ExifMetadata::SetGpsRationals(ExifData *data, ExifEntry **ptrEntry, ExifByt
 
 ExifEntry* ExifMetadata::GetExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len)
 {
-    IMAGE_LOGD("[GetExifTag] tag is %{public}d.",tag);
+    IMAGE_LOGD("[GetExifTag] tag is %{public}d.", tag);
     ExifEntry *exifEntry;
     if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
         IMAGE_LOGD("[GetExifTag] exif_content_get_entryfailed. tag is [%{public}d]", tag);
         EXIFInfoBufferCheck(exifEntry, len);
         return exifEntry;
-    }else {
+    } else {
         // initial ExifEntry  EXIF_TAG_GPS_LATITUDE = 0x0002, /* INTEROPERABILITY_VERSION */
         exifEntry = exif_entry_new();
         if (exifEntry == nullptr) {
@@ -459,7 +473,7 @@ ExifMetadata::~ExifMetadata()
 
 int ExifMetadata::GetValue(const std::string &key, std::string &value) const
 {
-    IMAGE_LOGD("[GetValue] key is [%{public}s]",key.c_str());
+    IMAGE_LOGD("[GetValue] key is [%{public}s]", key.c_str());
     if (exifData_ == nullptr) {
         IMAGE_LOGD("[GetValue] exifData_ is nullptr");
         value = "";
@@ -560,7 +574,8 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
     static std::vector intProps{EXIF_TAG_ORIENTATION, EXIF_TAG_IMAGE_LENGTH, EXIF_TAG_IMAGE_WIDTH,
         EXIF_TAG_WHITE_BALANCE, EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM, EXIF_TAG_FLASH, EXIF_TAG_ISO_SPEED_RATINGS,
         EXIF_TAG_ISO_SPEED, EXIF_TAG_LIGHT_SOURCE, EXIF_TAG_METERING_MODE, EXIF_TAG_PIXEL_X_DIMENSION,
-        EXIF_TAG_PIXEL_Y_DIMENSION, EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX, EXIF_TAG_SENSITIVITY_TYPE, EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY};
+        EXIF_TAG_PIXEL_Y_DIMENSION, EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX, EXIF_TAG_SENSITIVITY_TYPE,
+        EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY};
     static std::vector strProps{EXIF_TAG_GPS_DATE_STAMP, EXIF_TAG_IMAGE_DESCRIPTION, EXIF_TAG_MAKE, EXIF_TAG_MODEL,
         EXIF_TAG_SCENE_TYPE, EXIF_TAG_USER_COMMENT, EXIF_TAG_DATE_TIME_ORIGINAL,
         EXIF_TAG_DATE_TIME, EXIF_TAG_GPS_LATITUDE_REF, EXIF_TAG_GPS_LONGITUDE_REF};
@@ -569,7 +584,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
 
     ExifEntry *ptrEntry = nullptr;
     auto tag = exif_tag_from_name(key.c_str());
-    ExifByteOrder order = exif_data_get_byte_order(exifData_);//获取图片的字节序
+    ExifByteOrder order = exif_data_get_byte_order(exifData_);
     if (tag == EXIF_TAG_BITS_PER_SAMPLE) {
         return CreateExifEntryOfBitsPerSample(tag, exifData_, value, order, &ptrEntry);
     } else if (std::find(intProps.begin(), intProps.end(), tag) != intProps.end()) {
@@ -609,6 +624,10 @@ ExifData* ExifMetadata::GetData()
 ExifEntry* ExifMetadata::InitExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag)
 {
     ExifEntry *entry;
+    if (exif == nullptr) {
+        IMAGE_LOGD("exif is nullptr InitExifTag failed!");
+        return nullptr;
+    }
     /* Return an existing tag if one exists */
     if (!(entry = exif_content_get_entry(exif->ifd[ifd], tag))) {
         /* Allocate a new entry */
@@ -638,7 +657,10 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
 {
     void *buf;
     ExifEntry *exifEntry;
-
+    if (exif == nullptr) {
+        IMAGE_LOGD("exif is nullptr CreateExifTag failed!");
+        return nullptr;
+    }
     if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
         IMAGE_LOGD("[CreateExifTag] contains exifENtry. going to ExifInfoBufferCheck!");
         EXIFInfoBufferCheck(exifEntry, len);
@@ -668,7 +690,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
         return nullptr;
     }
 
-    if(format == EXIF_FORMAT_UNDEFINED || format == EXIF_FORMAT_ASCII){
+    if (format == EXIF_FORMAT_UNDEFINED || format == EXIF_FORMAT_ASCII) {
         IMAGE_LOGD("[CreateExifTag] format is [%{public}d] size is [%{public}d]. allocate size manually", format, len);
         /* Fill in the entry */
         exifEntry->data = static_cast<unsigned char*>(buf);
@@ -676,7 +698,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
         exifEntry->tag = tag;
         exifEntry->components = len;
         exifEntry->format = format;
-    }else{
+    } else {
         IMAGE_LOGD("[CreateExifTag] format is rational. to use exif_entry_initilalize");
         exifEntry = exif_entry_new();
         if (exifEntry == nullptr) {
