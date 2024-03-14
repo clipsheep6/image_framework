@@ -988,9 +988,10 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessor> imageAc
         IMAGE_LOGE("[ImageSource]Create image accessor fail on modify image property.");
         return ERR_IMAGE_SOURCE_DATA;
     }
+
     uint32_t ret = imageAccessor->ReadMetadata();
-    if (ret != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]Read meta data fail on modify image property.");
+    if (ret == ERR_IMAGE_DECODE_FAILED) {
+        IMAGE_LOGE("[ImageSource]Decode image exif failed.");
         return ret;
     }
 
@@ -1015,12 +1016,6 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     const std::string &value, const std::string &path)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]Get valid image status fail on modify image property, ret:%{public}u.", ret);
-        return ret;
-    }
 
     auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(path);
     return ModifyImageProperty(imageAccessor, key, value);
@@ -1030,13 +1025,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     const std::string &value, const int fd)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on modify image property, ret:%{public}u.", ret);
-        return ret;
-    }
-
+    
     auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(fd);
     return ModifyImageProperty(imageAccessor, key, value);
 }
@@ -1045,15 +1034,9 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     const std::string &value, uint8_t *data, uint32_t size)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on modify image property, ret:%{public}u.", ret);
-        return ret;
-    }
-
+    
     auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(data, size);
-    ret = ModifyImageProperty(imageAccessor, key, value);
+    uint32_t ret = ModifyImageProperty(imageAccessor, key, value);
     if (ret != SUCCESS) {
         return ret;
     }
