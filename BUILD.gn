@@ -36,6 +36,8 @@ group("image_framework") {
       "interfaces/innerkits:image_native",
       "interfaces/kits/js/common:image",
       "interfaces/kits/js/common:image_napi",
+      "frameworks/kits/native/common/ndk:ohimage",
+      "frameworks/kits/native/common/ndk:image_receiver",
     ]
   }
 }
