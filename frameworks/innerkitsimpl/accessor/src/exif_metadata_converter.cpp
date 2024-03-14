@@ -32,8 +32,6 @@
 #undef LOG_TAG
 #define LOG_TAG "ExifMetadataConverter"
 
-#define N_(String) (String)
-
 namespace OHOS {
 namespace Media {
 enum PropertyPermision {
@@ -217,319 +215,317 @@ const std::map<std::string, PropertyPermision> SUPPORTKEYS = {
 
 //! Orientation, tag 0x0112
 constexpr TagDetails exifOrientation[] = {
-    {1, N_("top, left")},     {2, N_("top, right")},   {3, N_("bottom, right")},
-    {4, N_("bottom, left")},  {5, N_("left, top")},    {6, N_("right, top")},
-    { 7, N_("right, bottom") }, { 8, N_("left, bottom") }, { 8, N_("left, bottom") }  // To silence compiler warning
+    {1, "top, left"},     {2, "top, right"},   {3, "bottom, right"},
+    {4, "bottom, left"},  {5, "left, top"},    {6, "right, top"},
+    { 7, "right, bottom"}, { 8, "left, bottom"}, { 8, "left, bottom"}  // To silence compiler warning
 };
 
 //! GPS latitude reference, tag 0x0001; also GPSDestLatitudeRef, tag 0x0013
 constexpr TagDetails exifGPSLatitudeRef[] = {
-    {78, N_("North")},
-    {83, N_("South")},
+    {78, "North"},
+    {83, "South"},
 };
 
 constexpr TagDetails exifGPSLongitudeRef[] = {
-    {69, N_("East")},
-    {87, N_("West")},
+    {69, "East"},
+    {87, "West"},
 };
 
 //! WhiteBalance, tag 0xa403
 constexpr TagDetails exifWhiteBalance[] = {
-    {0, N_("Auto")},
-    {1, N_("Manual")},
+    {0, "Auto"},
+    {1, "Manual"},
 };
 
 //! Flash, Exif tag 0x9209
 constexpr TagDetails exifFlash[] = {
-    {0x00, N_("No flash")},
-    {0x01, N_("Fired")},
-    {0x05, N_("Fired, return light not detected")},
-    {0x07, N_("Fired, return light detected")},
-    {0x08, N_("Yes, did not fire")},
-    {0x09, N_("Yes, compulsory")},
-    {0x0d, N_("Yes, compulsory, return light not detected")},
-    {0x0f, N_("Yes, compulsory, return light detected")},
-    {0x10, N_("No, compulsory")},
-    {0x14, N_("No, did not fire, return light not detected")},
-    {0x18, N_("No, auto")},
-    {0x19, N_("Yes, auto")},
-    {0x1d, N_("Yes, auto, return light not detected")},
-    {0x1f, N_("Yes, auto, return light detected")},
-    {0x20, N_("No flash function")},
-    {0x20, N_("No, no flash function")},
-    {0x41, N_("Yes, red-eye reduction")},
-    {0x45, N_("Yes, red-eye reduction, return light not detected")},
-    {0x47, N_("Yes, red-eye reduction, return light detected")},
-    {0x49, N_("Yes, compulsory, red-eye reduction")},
-    {0x4d, N_("Yes, compulsory, red-eye reduction, return light not detected")},
-    {0x4f, N_("Yes, compulsory, red-eye reduction, return light detected")},
-    {0x50, N_("No, red-eye reduction")},
-    {0x58, N_("No, auto, red-eye reduction")},
-    {0x59, N_("Yes, auto, red-eye reduction")},
-    {0x5d, N_("Yes, auto, red-eye reduction, return light not detected")},
-    {0x5f, N_("Yes, auto, red-eye reduction, return light detected")},
+    {0x00, "No flash"},
+    {0x01, "Fired"},
+    {0x05, "Fired, return light not detected"},
+    {0x07, "Fired, return light detected"},
+    {0x08, "Yes, did not fire"},
+    {0x09, "Yes, compulsory"},
+    {0x0d, "Yes, compulsory, return light not detected"},
+    {0x0f, "Yes, compulsory, return light detected"},
+    {0x10, "No, compulsory"},
+    {0x14, "No, did not fire, return light not detected"},
+    {0x18, "No, auto"},
+    {0x19, "Yes, auto"},
+    {0x1d, "Yes, auto, return light not detected"},
+    {0x1f, "Yes, auto, return light detected"},
+    {0x20, "No flash function"},
+    {0x20, "No, no flash function"},
+    {0x41, "Yes, red-eye reduction"},
+    {0x45, "Yes, red-eye reduction, return light not detected"},
+    {0x47, "Yes, red-eye reduction, return light detected"},
+    {0x49, "Yes, compulsory, red-eye reduction"},
+    {0x4d, "Yes, compulsory, red-eye reduction, return light not detected"},
+    {0x4f, "Yes, compulsory, red-eye reduction, return light detected"},
+    {0x50, "No, red-eye reduction"},
+    {0x58, "No, auto, red-eye reduction"},
+    {0x59, "Yes, auto, red-eye reduction"},
+    {0x5d, "Yes, auto, red-eye reduction, return light not detected"},
+    {0x5f, "Yes, auto, red-eye reduction, return light detected"},
 };
 
 //! ColorSpace, tag 0xa001
 constexpr TagDetails exifColorSpace[] = {
-    {1, N_("sRGB")},
-    { 2, N_("Adobe RGB") },  // Not defined to Exif 2.2 spec. But used by a lot of cameras.
-    {0xffff, N_("Uncalibrated")},
+    {1, "sRGB"},
+    { 2, "Adobe RGB"},  // Not defined to Exif 2.2 spec. But used by a lot of cameras.
+    {0xffff, "Uncalibrated"},
 };
 
 //! LightSource, tag 0x9208
 constexpr TagDetails exifLightSource[] = {
-    {0, N_("Unknown")},
-    {1, N_("Daylight")},
-    {2, N_("Fluorescent")},
-    {3, N_("Tungsten (incandescent light)")},
-    {4, N_("Flash")},
-    {9, N_("Fine weather")},
-    {10, N_("Cloudy weather")},
-    {11, N_("Shade")},
-    {12, N_("Daylight fluorescent (D 5700 - 7100K)")},
-    {13, N_("Day white fluorescent (N 4600 - 5400K)")},
-    {14, N_("Cool white fluorescent (W 3900 - 4500K)")},
-    {15, N_("White fluorescent (WW 3200 - 3700K)")},
-    {17, N_("Standard light A")},
-    {18, N_("Standard light B")},
-    {19, N_("Standard light C")},
-    {20, N_("D55")},
-    {21, N_("D65")},
-    {22, N_("D75")},
-    {23, N_("D50")},
-    {24, N_("ISO studio tungsten")},
-    {255, N_("Other light source")},
+    {0, "Unknown"},
+    {1, "Daylight"},
+    {2, "Fluorescent"},
+    {3, "Tungsten (incandescent light)"},
+    {4, "Flash"},
+    {9, "Fine weather"},
+    {10, "Cloudy weather"},
+    {11, "Shade"},
+    {12, "Daylight fluorescent (D 5700 - 7100K)"},
+    {13, "Day white fluorescent (N 4600 - 5400K)"},
+    {14, "Cool white fluorescent (W 3900 - 4500K)"},
+    {15, "White fluorescent (WW 3200 - 3700K)"},
+    {17, "Standard light A"},
+    {18, "Standard light B"},
+    {19, "Standard light C"},
+    {20, "D55"},
+    {21, "D65"},
+    {22, "D75"},
+    {23, "D50"},
+    {24, "ISO studio tungsten"},
+    {255, "Other light source"},
 };
 
 //! MeteringMode, tag 0x9207
 constexpr TagDetails exifMeteringMode[] = {
-    {0, N_("Unknown")}, {1, N_("Average")},    {2, N_("Center weighted average")},
-    {3, N_("Spot")},    {4, N_("Multi-spot")}, {5, N_("Multi-segment")},
-    { 6, N_("Partial") }, { 255, N_("Other") },    { 255, N_("Other") }
+    {0, "Unknown"}, {1, "Average"},    {2, "Center weighted average"},
+    {3, "Spot"},    {4, "Multi-spot"}, {5, "Multi-segment"},
+    { 6, "Partial"}, { 255, "Other"},    { 255, "Other"}
 };
 
 //! SceneType, tag 0xa301
 constexpr TagDetails exifSceneType[] = {
-    {1, N_("Directly photographed")},
+    {1, "Directly photographed"},
 };
 
 //! Compression, tag 0x0103
 constexpr TagDetails exifCompression[] = {
-    {1, N_("Uncompressed")},
-    {2, N_("CCITT RLE")},
-    {3, N_("T4/Group 3 Fax")},
-    {4, N_("T6/Group 4 Fax")},
-    {5, N_("LZW")},
-    {6, N_("JPEG (old-style)")},
-    {7, N_("JPEG")},
-    {8, N_("Adobe Deflate")},
-    {9, N_("JBIG B&W")},
-    {10, N_("JBIG Color")},
-    {32766, N_("Next 2-bits RLE")},
-    {32767, N_("Sony ARW Compressed")},
-    {32769, N_("Epson ERF Compressed")},
-    {32770, N_("Samsung SRW Compressed")},
-    {32771, N_("CCITT RLE 1-word")},
-    {32773, N_("PackBits (Macintosh RLE)")},
-    {32809, N_("Thunderscan RLE")},
-    {32895, N_("IT8 CT Padding")},
-    {32896, N_("IT8 Linework RLE")},
-    {32897, N_("IT8 Monochrome Picture")},
-    {32898, N_("IT8 Binary Lineart")},
-    {32908, N_("Pixar Film (10-bits LZW)")},
-    {32909, N_("Pixar Log (11-bits ZIP)")},
-    {32946, N_("Pixar Deflate")},
-    {32947, N_("Kodak DCS Encoding")},
-    {34661, N_("ISO JBIG")},
-    {34676, N_("SGI Log Luminance RLE")},
-    {34677, N_("SGI Log 24-bits packed")},
-    {34712, N_("Leadtools JPEG 2000")},
-    {34713, N_("Nikon NEF Compressed")},
-    { 34892, N_("JPEG (lossy)") },  // DNG 1.4
-    { 52546, N_("JPEG XL") },       // DNG 1.7
-    {65000, N_("Kodak DCR Compressed")},
-    {65535, N_("Pentax PEF Compressed")},
+    {1, "Uncompressed"},
+    {2, "CCITT RLE"},
+    {3, "T4/Group 3 Fax"},
+    {4, "T6/Group 4 Fax"},
+    {5, "LZW"},
+    {6, "JPEG (old-style)"},
+    {7, "JPEG"},
+    {8, "Adobe Deflate"},
+    {9, "JBIG B&W"},
+    {10, "JBIG Color"},
+    {32766, "Next 2-bits RLE"},
+    {32767, "Sony ARW Compressed"},
+    {32769, "Epson ERF Compressed"},
+    {32770, "Samsung SRW Compressed"},
+    {32771, "CCITT RLE 1-word"},
+    {32773, "PackBits (Macintosh RLE)"},
+    {32809, "Thunderscan RLE"},
+    {32895, "IT8 CT Padding"},
+    {32896, "IT8 Linework RLE"},
+    {32897, "IT8 Monochrome Picture"},
+    {32898, "IT8 Binary Lineart"},
+    {32908, "Pixar Film (10-bits LZW)"},
+    {32909, "Pixar Log (11-bits ZIP)"},
+    {32946, "Pixar Deflate"},
+    {32947, "Kodak DCS Encoding"},
+    {34661, "ISO JBIG"},
+    {34676, "SGI Log Luminance RLE"},
+    {34677, "SGI Log 24-bits packed"},
+    {34712, "Leadtools JPEG 2000"},
+    {34713, "Nikon NEF Compressed"},
+    { 34892, "JPEG (lossy)"},  // DNG 1.4
+    { 52546, "JPEG XL"},       // DNG 1.7
+    {65000, "Kodak DCR Compressed"},
+    {65535, "Pentax PEF Compressed"},
 };
 
 //! PhotometricInterpretation, tag 0x0106
 constexpr TagDetails exifPhotometricInterpretation[] = {
-    {0, N_("White Is Zero")},
-    {1, N_("Black Is Zero")},
-    {2, N_("RGB")},
-    {3, N_("RGB Palette")},
-    {4, N_("Transparency Mask")},
-    {5, N_("CMYK")},
-    {6, N_("YCbCr")},
-    {8, N_("CIELab")},
-    {9, N_("ICCLab")},
-    {10, N_("ITULab")},
-    {32803, N_("Color Filter Array")},
-    {32844, N_("Pixar LogL")},
-    {32845, N_("Pixar LogLuv")},
-    {34892, N_("Linear Raw")},
-    { 51177, N_("Depth Map") },         // DNG 1.5
-    { 52527, N_("Photometric Mask") },  // DNG 1.6
+    {0, "White Is Zero"},
+    {1, "Black Is Zero"},
+    {2, "RGB"},
+    {3, "RGB Palette"},
+    {4, "Transparency Mask"},
+    {5, "CMYK"},
+    {6, "YCbCr"},
+    {8, "CIELab"},
+    {9, "ICCLab"},
+    {10, "ITULab"},
+    {32803, "Color Filter Array"},
+    {32844, "Pixar LogL"},
+    {32845, "Pixar LogLuv"},
+    {34892, "Linear Raw"},
+    { 51177, "Depth Map"},         // DNG 1.5
+    { 52527, "Photometric Mask"},  // DNG 1.6
 };
 
 //! PlanarConfiguration, tag 0x011c
 constexpr TagDetails exifPlanarConfiguration[] = {
-    {1, N_("Chunky")},
-    {2, N_("Planar")},
+    {1, "Chunky"},
+    {2, "Planar"},
 };
 
 //! Units for measuring X and Y resolution, tags 0x0128, 0xa210
 constexpr TagDetails exifUnit[] = {
-    {1, N_("none")},
-    {2, N_("inch")},
-    {3, N_("cm")},
+    {1, "none"},
+    {2, "inch"},
+    {3, "cm"},
 };
 
 //! YCbCrPositioning, tag 0x0213
 constexpr TagDetails exifYCbCrPositioning[] = {
-    {1, N_("Centered")},
-    {2, N_("Co-sited")},
+    {1, "Centered"},
+    {2, "Co-sited"},
 };
 
 //! ExposureProgram, tag 0x8822
 constexpr TagDetails exifExposureProgram[] = {
-    {0, N_("Not defined")},       {1, N_("Manual")},           {2, N_("Auto")},
-    {3, N_("Aperture priority")}, {4, N_("Shutter priority")}, {5, N_("Creative program")},
-    {6, N_("Action program")},    {7, N_("Portrait mode")},    {8, N_("Landscape mode")},
+    {0, "Not defined"},       {1, "Manual"},           {2, "Auto"},
+    {3, "Aperture priority"}, {4, "Shutter priority"}, {5, "Creative program"},
+    {6, "Action program"},    {7, "Portrait mode"},    {8, "Landscape mode"},
 };
 
 //! SensingMethod, TIFF/EP tag 0x9217
 constexpr TagDetails tiffSensingMethod[] = {
-    {0, N_("Undefined")},           {1, N_("Monochrome area")},       {2, N_("One-chip color area")},
-    {3, N_("Two-chip color area")}, {4, N_("Three-chip color area")}, {5, N_("Color sequential area")},
-    {6, N_("Monochrome linear")},   {7, N_("Trilinear sensor")},      {8, N_("Color sequential linear")},
+    {0, "Undefined"},           {1, "Monochrome area"},       {2, "One-chip color area"},
+    {3, "Two-chip color area"}, {4, "Three-chip color area"}, {5, "Color sequential area"},
+    {6, "Monochrome linear"},   {7, "Trilinear sensor"},      {8, "Color sequential linear"},
 };
 
 //! CustomRendered, tag 0xa401
 constexpr TagDetails exifCustomRendered[] = {
-    {0, N_("Normal process")},
-    {1, N_("Custom process")},
+    {0, "Normal process"},
+    {1, "Custom process"},
 };
 
 //! ExposureMode, tag 0xa402
 constexpr TagDetails exifExposureMode[] = {
-    {0, N_("Auto")},
-    {1, N_("Manual")},
-    {2, N_("Auto bracket")},
+    {0, "Auto"},
+    {1, "Manual"},
+    {2, "Auto bracket"},
 };
 
 //! SceneCaptureType, tag 0xa406
 constexpr TagDetails exifSceneCaptureType[] = {
-    {0, N_("Standard")},
-    {1, N_("Landscape")},
-    {2, N_("Portrait")},
-    {3, N_("Night scene")},
-    { 3, N_("Night scene") }  // To silence compiler warning
+    {0, "Standard"},
+    {1, "Landscape"},
+    {2, "Portrait"},
+    {3, "Night scene"}
 };
 
 //! GainControl, tag 0xa407
 constexpr TagDetails exifGainControl[] = {
-    {0, N_("None")},          {1, N_("Low gain up")},    {2, N_("High gain up")},
-    {3, N_("Low gain down")}, {4, N_("High gain down")},
+    {0, "None"},          {1, "Low gain up"},    {2, "High gain up"},
+    {3, "Low gain down"}, {4, "High gain down"},
 };
 
 //! Contrast, tag 0xa408 and Sharpness, tag 0xa40a
 constexpr TagDetails exifNormalSoftHard[] = {
-    {0, N_("Normal")},
-    {1, N_("Soft")},
-    {2, N_("Hard")},
+    {0, "Normal"},
+    {1, "Soft"},
+    {2, "Hard"},
 };
 
 //! Saturation, tag 0xa409
 constexpr TagDetails exifSaturation[] = {
-    {0, N_("Normal")},
-    {1, N_("Low")},
-    {2, N_("High")},
+    {0, "Normal"},
+    {1, "Low"},
+    {2, "High"},
 };
 
 //! SubjectDistanceRange, tag 0xa40c
 constexpr TagDetails exifSubjectDistanceRange[] = {
-    {0, N_("Unknown")},
-    {1, N_("Macro")},
-    {2, N_("Close view")},
-    {3, N_("Distant view")},
-    { 3, N_("Distant view") }  // To silence compiler warning
+    {0, "Unknown"},
+    {1, "Macro"},
+    {2, "Close view"},
+    {3, "Distant view"}
 };
 
 //! GPS altitude reference, tag 0x0005
 constexpr TagDetails exifGPSAltitudeRef[] = {
-    {0, N_("Above sea level")},
-    {1, N_("Below sea level")},
+    {0, "Above sea level"},
+    {1, "Below sea level"},
 };
 
 //! NewSubfileType, TIFF tag 0x00fe - this is actually a bitmask
 constexpr TagDetails exifNewSubfileType[] = {
-    {0, N_("Primary image")},
-    {1, N_("Thumbnail/Preview image")},
-    {2, N_("Primary image, Multi page file")},
-    {3, N_("Thumbnail/Preview image, Multi page file")},
-    {4, N_("Primary image, Transparency mask")},
-    {5, N_("Thumbnail/Preview image, Transparency mask")},
-    {6, N_("Primary image, Multi page file, Transparency mask")},
-    {7, N_("Thumbnail/Preview image, Multi page file, Transparency mask")},
-    { 8, N_("Primary image, Depth map") },                  // DNG 1.5
-    { 9, N_("Thumbnail/Preview image, Depth map") },        // DNG 1.5
-    { 16, N_("Enhanced image") },                           // DNG 1.5 (clashes w/ TIFF-FX)
-    { 65537, N_("Thumbnail/Preview image, Alternative") },  // DNG 1.2
-    { 65540, N_("Primary image, Semantic mask") }           // DNG 1.6
+    {0, "Primary image"},
+    {1, "Thumbnail/Preview image"},
+    {2, "Primary image, Multi page file"},
+    {3, "Thumbnail/Preview image, Multi page file"},
+    {4, "Primary image, Transparency mask"},
+    {5, "Thumbnail/Preview image, Transparency mask"},
+    {6, "Primary image, Multi page file, Transparency mask"},
+    {7, "Thumbnail/Preview image, Multi page file, Transparency mask"},
+    { 8, "Primary image, Depth map"},                  // DNG 1.5
+    { 9, "Thumbnail/Preview image, Depth map"},        // DNG 1.5
+    { 16, "Enhanced image"},                           // DNG 1.5 (clashes w/ TIFF-FX)
+    { 65537, "Thumbnail/Preview image, Alternative"},  // DNG 1.2
+    { 65540, "Primary image, Semantic mask"}           // DNG 1.6
 };
 
 //! SubfileType, TIFF tag 0x00ff
 constexpr TagDetails exifSubfileType[] = {
-    {1, N_("Full-resolution image data")},
-    {2, N_("Reduced-resolution image data")},
-    {3, N_("A single page of a multi-page image")},
+    {1, "Full-resolution image data"},
+    {2, "Reduced-resolution image data"},
+    {3, "A single page of a multi-page image"},
 };
 
 //! GPS status, tag 0x0009
 constexpr TagDetails exifGPSStatus[] = {
-    {'A', N_("Measurement in progress")},
-    {'V', N_("Measurement interrupted")},
+    {'A', "Measurement in progress"},
+    {'V', "Measurement interrupted"},
 };
 
 //! GPS measurement mode, tag 0x000a
 constexpr TagDetails exifGPSMeasureMode[] = {
-    {2, N_("2-dimensional measurement")},
-    {3, N_("3-dimensional measurement")},
+    {2, "2-dimensional measurement"},
+    {3, "3-dimensional measurement"},
 };
 
 //! GPS speed reference, tag 0x000c
 constexpr TagDetails exifGPSSpeedRef[] = {
-    {'K', N_("km/h")},
-    {'M', N_("mph")},
-    {'N', N_("knots")},
+    {'K', "km/h"},
+    {'M', "mph"},
+    {'N', "knots"},
 };
 
 //! GPS direction reference, tags 0x000e, 0x0010, 0x0017
 constexpr TagDetails exifGPSDirRef[] = {
-    {'T', N_("True direction")},
-    {'M', N_("Magnetic direction")},
+    {'T', "True direction"},
+    {'M', "Magnetic direction"},
 };
 
 //! GPS destination distance reference, tag 0x0019
 constexpr TagDetails exifGPSDestDistanceRef[] = {
-    {'K', N_("km")},
-    {'M', N_("miles")},
-    {'N', N_("nautical miles")},
+    {'K', "km"},
+    {'M', "miles"},
+    {'N', "nautical miles"},
 };
 
 //! GPS differential correction, tag 0x001e
 constexpr TagDetails exifGPSDifferential[] = {
-    {0, N_("Without correction")},
-    {1, N_("Correction applied")},
+    {0, "Without correction"},
+    {1, "Correction applied"},
 };
 
 //! CompositeImage, tag 0xa460
 constexpr TagDetails exifCompositeImage[] = {
-    {0, N_("Unknown")},
-    {1, N_("NonComposite")},
-    {2, N_("GeneralComposite")},
-    {3, N_("CompositeCapturedWhenShooting")},
+    {0, "Unknown"},
+    {1, "NonComposite"},
+    {2, "GeneralComposite"},
+    {3, "CompositeCapturedWhenShooting"},
 };
 
 // configuratioin for value range validation. For example GPSLatitudeRef the value must be 'N' or 'S'.
@@ -543,7 +539,8 @@ std::map<std::string, std::tuple<const TagDetails *, const size_t>> ExifMetadata
     {"MeteringMode", std::make_tuple(exifMeteringMode, std::size(exifMeteringMode))},
     {"SceneType", std::make_tuple(exifSceneType, std::size(exifSceneType))},
     {"Compression", std::make_tuple(exifCompression, std::size(exifCompression))},
-    {"PhotometricInterpretation", std::make_tuple(exifPhotometricInterpretation, std::size(exifPhotometricInterpretation))},
+    {"PhotometricInterpretation", std::make_tuple(exifPhotometricInterpretation, 
+        std::size(exifPhotometricInterpretation))},
     {"PlanarConfiguration", std::make_tuple(exifPlanarConfiguration, std::size(exifPlanarConfiguration))},
     {"ResolutionUnit", std::make_tuple(exifUnit, std::size(exifUnit))},
     {"YCbCrPositioning", std::make_tuple(exifYCbCrPositioning, std::size(exifYCbCrPositioning))},
@@ -571,7 +568,6 @@ std::map<std::string, std::tuple<const TagDetails *, const size_t>> ExifMetadata
     {"CompositeImage", std::make_tuple(exifCompositeImage, std::size(exifCompositeImage))},
 };
 
-const std::set<std::string> HWALLOWMODIFYKEY = {"Exif.Huawei.CaptureMode"};
 const std::string COMMAREGEX("\\,"), COLONREGEX("\\:"), DOTREGEX("\\.");
 
 auto ONERATIONALREGEX = R"(^[0-9]+/[1-9][0-9]*$)";
@@ -582,7 +578,7 @@ auto DOUBLEINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+$)";
 auto TRIBLEINTWITHBLANKREGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+$)";
 auto TRIBLEINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+,[0-9]+$)";
 auto TRIBLERATIONALWITHBLANKREGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
-auto TRIBLEINTWITHBLANKREGEX_ = R"(^[1-9][0-9]*\s[1-9][0-9]*\s[1-9][0-9]*$)";
+auto TRIBLEINTNZWITHBLANKREGEX = R"(^[1-9][0-9]*\s[1-9][0-9]*\s[1-9][0-9]*$)";
 auto TRIBLEINTWITHCOMMAREGEX_ = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
 auto TRIBLEDECIMALWITHBLANKREGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 auto TRIBLEDECIMALWITHCOMMAREGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
@@ -590,7 +586,7 @@ auto TRIBLEINTWITHCOLONREGEX = R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*$)";
 auto TRIBLEINTWITHDOTREGEX = R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)";
 auto FOURINTWITHBLANKREGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)";
 auto FOURINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)";
-auto FOURINTWITHCOMMAREGEX_ = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
+auto FOURINTNZWITHCOMMAREGEX = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
 auto FOURRATIONALWITHBLANKREGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
 auto FOURDECIMALWITHBLANKREGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 auto FOURDECIMALWITHCOMMAREGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
@@ -608,8 +604,7 @@ bool ExifMetadataConverter::IsValidValue(const TagDetails *array, const size_t &
     }
 
     for (size_t i = 0; i < size; i++) {
-        if (array[i].val_ == key)
-        {
+        if (array[i].val_ == key) {
             return true;
         }
     }
@@ -663,8 +658,7 @@ void ExifMetadataConverter::RationalFormat(std::string &value)
             result += match.str() + "/1"; // appending '/1' to integer
             value = match.suffix().str(); // skip handled value part
             icount++;
-        }
-        else {
+        } else {
             break; // break since there is no matched value
         }
     }
@@ -698,10 +692,8 @@ void ExifMetadataConverter::DecimalRationalFormat(std::string &value)
     std::string result;
     int icount = 0;
     std::regex parPattern("(\\d+)(\\.\\d+)?");
-    /*
-     * handle each segment with partial regex. 
-     * For 2.5 26 1.2 to iterator each segment 2.5->5/2  segment 26->26/1 segment 1.2->6/5
-     */
+    /* handle each segment with partial regex. 
+       For 2.5 26 1.2 to iterator each segment 2.5->5/2  segment 26->26/1 segment 1.2->6/5 */
     for (std::sregex_iterator it = std::sregex_iterator(value.begin(), value.end(), parPattern);
          it != std::sregex_iterator(); ++it) {
         std::smatch match = *it;
@@ -711,11 +703,9 @@ void ExifMetadataConverter::DecimalRationalFormat(std::string &value)
         if (icount != 0) {
             result += " ";
         }
-        /*
-         * handle each segment 
-         * 1.if segment is integer type 123->123/1  
-         * 2.if segment is decimal call decimalToFraction 2.5 -> 5/2
-         */
+        /* handle each segment 
+         1.if segment is integer type 123->123/1  
+         2.if segment is decimal call decimalToFraction 2.5 -> 5/2 */
         if (ValidRegex(match[0], "\\d+")) {
             // append '/1' to integer 23 -> 23/1
             result += match.str() + "/1";
@@ -808,11 +798,7 @@ bool ExifMetadataConverter::ValidRegexWithDecimalRationalFormat(std::string &val
     return true;
 }
 
-/* regex validation for two integer like DefaultCropSize 9 9 the format is [0-9]+ [0-9]+
-   For example for DefaultCropSize, Raw images often store extra pixels around the edges of the final image. 
-   These extra pixels help prevent interpolation artifacts near the edges of the final image. 
-   DefaultCropSize specifies the size of the final image area, in raw image coordinates (i.e., before the DefaultScale has been applied).
-   */
+// regex validation for two integer like DefaultCropSize 9 9 the format is [0-9]+ [0-9]+
 ValueFormatDelegate ExifMetadataConverter::doubleIntWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, DOUBLEINTWITHBLANKREGEX);
 // regex validation for two integer with comma like BitPerSample 9,9 the format is [0-9]+,[0-9]+,[0-9]+
@@ -841,59 +827,43 @@ ValueFormatDelegate ExifMetadataConverter::oneIntToRational =
     std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, ONEINTREGEX);
 ValueFormatDelegate ExifMetadataConverter::oneDecimalToRational =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, ONEDECIMALREGEX);
-/*
- * regex validation for three rational like GPSLatitude 39/1 54/1 20/1 
- * the format is [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9]
- */
+/* regex validation for three rational like GPSLatitude 39/1 54/1 20/1 
+   the format is [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] */
 ValueFormatDelegate ExifMetadataConverter::tribleRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, TRIBLERATIONALWITHBLANKREGEX);
 // regex validation for three integer and convert to three rational like GPSLatitude 39 54 20 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, TRIBLEINTWITHBLANKREGEX_);
-/* 
- * regex validation for three integer with comma and convert to three rational
- * like GPSLatitude 39,54,20 --> 39/1 54/1 20/1
- */
+    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, TRIBLEINTNZWITHBLANKREGEX);
+/* regex validation for three integer with comma and convert to three rational
+   like GPSLatitude 39,54,20 --> 39/1 54/1 20/1 */
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, TRIBLEINTWITHCOMMAREGEX_);
-/*
- * regex validation for three decimal or integer and convert to three rational
- * like YCbCrCoefficients 39.0 54 20.0 --> 39/1 54/1 20/1
- */
+/* regex validation for three decimal or integer and convert to three rational
+   like YCbCrCoefficients 39.0 54 20.0 --> 39/1 54/1 20/1 */
 ValueFormatDelegate ExifMetadataConverter::tribleDecimalToRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, TRIBLEDECIMALWITHBLANKREGEX);
-/* 
- * regex validation for three decimal or integer and convert to three rational 
- * like YCbCrCoefficients 39.0,54,20.0 --> 39.0 54 20.0 --> 39/1 54/1 20/1
- */
+/* regex validation for three decimal or integer and convert to three rational 
+   like YCbCrCoefficients 39.0,54,20.0 --> 39.0 54 20.0 --> 39/1 54/1 20/1 */
 ValueFormatDelegate ExifMetadataConverter::tribleDecimalToRatiionalWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, TRIBLEDECIMALWITHCOMMAREGEX);
-/*
- * regex validation for four rational 
- * like LensSpecification 1/1 3/2 1/1 2/1 
- * the format is [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9]
- */
+/* regex validation for four rational 
+   like LensSpecification 1/1 3/2 1/1 2/1 
+   the format is [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] [0-9]+/[1-9][0-9] */
 ValueFormatDelegate ExifMetadataConverter::fourRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, FOURRATIONALWITHBLANKREGEX);
 // regex validation for four integer and convert to four rational like LensSpecification 1 3 1 2 --> 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, FOURINTWITHBLANKREGEX);
-/*
- * regex validation for four integer with comma and convert to four rational
- * like LensSpecification 1,3,1,2 --> 1/1 3/2 1/1 2/1
- */
+/* regex validation for four integer with comma and convert to four rational
+   like LensSpecification 1,3,1,2 --> 1/1 3/2 1/1 2/1 */
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithComma =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, FOURINTWITHCOMMAREGEX_);
-/*
- * regex validation for four decimal or integer and convert to four rational
- * like LensSpecification 1.0 3.0 1.0 2.0 --> 39/1 54/1 20/1
- */
+    std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, FOURINTNZWITHCOMMAREGEX);
+/* regex validation for four decimal or integer and convert to four rational
+   like LensSpecification 1.0 3.0 1.0 2.0 --> 39/1 54/1 20/1 */
 ValueFormatDelegate ExifMetadataConverter::decimal4Ratiional4 =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, FOURDECIMALWITHBLANKREGEX);
-/*
- * regex validation for four decimal or integer and convert to four rational
- * like LensSpecification 1.0,3.0,1.0,2.0 --> 39/1 54/1 20/1
- */
+/* regex validation for four decimal or integer and convert to four rational
+   like LensSpecification 1.0,3.0,1.0,2.0 --> 39/1 54/1 20/1 */
 ValueFormatDelegate ExifMetadataConverter::decimal4Ratiional4Comma =
     std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, FOURDECIMALWITHCOMMAREGEX);
 // regex validation for datetime format like DateTimeOriginal 2022:06:02 15:51:34
@@ -902,14 +872,13 @@ ValueFormatDelegate ExifMetadataConverter::dateTimeValidation =
 // regex validation for datetime format like DateTimeOriginal 2022:06:02
 ValueFormatDelegate ExifMetadataConverter::dateValidation =
     std::make_pair(ExifMetadataConverter::ValidRegex, DATEREGEX);
-/*
- * regex validation for three integer with colon and convert to three rational
- * like GPSLatitude 39,54,21 --> 39/1 54/1 21/1
- */
+/* regex validation for three integer with colon and convert to three rational
+   like GPSLatitude 39,54,21 --> 39/1 54/1 21/1 */
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithColon =
     std::make_pair(ExifMetadataConverter::ValidRegexWithColonRationalFormat, TRIBLEINTWITHCOLONREGEX);
 // regex validation for fou integer with pointer like GPSVersionID
-ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithDot = std::make_pair(ExifMetadataConverter::ValidRegexWithDot, TRIBLEINTWITHDOTREGEX);
+ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithDot = 
+    std::make_pair(ExifMetadataConverter::ValidRegexWithDot, TRIBLEINTWITHDOTREGEX);
 
 // configuration for value format validation. For example BitPerSample the value format should be 9 9 9 or 9,9,9
 std::multimap<std::string, ValueFormatDelegate> ExifMetadataConverter::valueFormatValidateConfig = {
@@ -1071,33 +1040,33 @@ int32_t ExifMetadataConverter::ValidateValueRange(const std::string &keyName, co
             if (std::regex_match(value, regNum)) {
                 // convert string to integer such as "15" -> 15
                 ivalue = std::stoll(value);
-                IMAGE_LOGD("isValueRangeValidate convert to integer. value string is [%{public}s] ivalue is[%{public}d].",
+                IMAGE_LOGD("convert to integer. value string is [%{public}s] ivalue is[%{public}d].",
                     value.c_str(), ivalue);
             }
             else if (std::regex_match(value, regChar)) {
                 // convert char to integer such as "N" -> 78
                 ivalue = static_cast<int32_t>(value[0]);
-                IMAGE_LOGD("isValueRangeValidate convert char to integer. value char is [%{public}s] ivalue is[%{public}d].",
+                IMAGE_LOGD("convert char to integer. value char is [%{public}s] ivalue is[%{public}d].",
                     value.c_str(), ivalue);
             }
 
             // if ivalue is not converted then return FAIL
             if (ivalue == -1) {
-                IMAGE_LOGD("isValueRangeValidate input does not match regex invalid value is [%{public}s].", value.c_str());
+                IMAGE_LOGD("input does not match regex invalid value is [%{public}s].",
+                     value.c_str());
                 return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
             }
             // validate the ivalue is in value range array.
             auto isValid = IsValidValue(arrRef, arrSize, ivalue);
             if (!isValid) {
-                IMAGE_LOGD("isValueRangeValidate input is not in range array. invalid value is [%{public}s].", value.c_str());
+                IMAGE_LOGD("isValueRangeValidate input is not in range array. invalid value is [%{public}s].", 
+                    value.c_str());
                 return Media::ERR_MEDIA_OUT_OF_RANGE;
-            }
-            else {
+            } else {
                 IMAGE_LOGD("isValueRangeValidate valid value is [%{public}s].", value.c_str());
                 return Media::SUCCESS;
             }
-        }
-        else {
+        } else {
             // return FAIL if the value range array nullptr.
             return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
@@ -1167,7 +1136,6 @@ bool ExifMetadataConverter::IsKeySupported(const std::string &keyName)
     return !(it == SUPPORTKEYS.end());
 }
 
-// disable modify huawei exif tag except for Exif.Huawei.CaptureMode
 bool ExifMetadataConverter::IsModifyAllowed(const std::string &keyName)
 {
     auto it = SUPPORTKEYS.find(keyName);
@@ -1187,12 +1155,12 @@ std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, nullptr);
     }
 
-    // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
     if (!ExifMetadataConverter::IsModifyAllowed(keyName)) {
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, nullptr);
     }
 
-    IMAGE_LOGD("[ValidateAndConvert] keyName is [%{public}s] value is [%{public}s].", keyName.c_str(), value.c_str());
+    IMAGE_LOGD("[ValidateAndConvert] keyName is [%{public}s] value is [%{public}s].",
+        keyName.c_str(), value.c_str());
     // 1.validate value format
     IMAGE_LOGD("[ValidateAndConvert] hasValueFormatValidate is [%{public}d].",
         ExifMetadataConverter::IsFormatValidationConfigExisting(keyName));
@@ -1225,7 +1193,6 @@ int32_t ExifMetadataConverter::Validate(const std::string &keyName, const std::s
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
-    // disable modify huawei exif tag except for Exif.Huawei.CaptureMode
     if (!ExifMetadataConverter::IsModifyAllowed(keyName)) {
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }

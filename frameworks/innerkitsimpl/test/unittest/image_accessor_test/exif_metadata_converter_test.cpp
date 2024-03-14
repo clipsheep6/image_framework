@@ -31,7 +31,6 @@ public:
     ~MetadataConverterTest() {}
 };
 
-
 std::string MODIFYDATA[][3] = {
     {"BitsPerSample", "9 9 8", "9, 9, 8"},
     {"BitsPerSample", "9,9,8", "9, 9, 8"},
@@ -84,7 +83,6 @@ HWTEST_F(MetadataConverterTest, Validate001, TestSize.Level3)
     ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitudeRef", "N"), 0);
     ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitudeRef", "E"), 0);
     GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 end";
-
 }
 
 HWTEST_F(MetadataConverterTest, Validate002, TestSize.Level3)

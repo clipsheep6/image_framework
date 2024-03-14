@@ -24,12 +24,7 @@ namespace OHOS {
 namespace Media {
 struct TagDetails {
     int64_t val_;       //!< Tag value
-    const char *label_; //!< Translation of the tag value
-
-    //! Comparison operator for use with the find template
-    bool operator==(int64_t key) const {
-        return val_ == key;
-    }
+    const char *label_;
 }; // struct TagDetails
 
 using ValueFormatDelegate = std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string>;
@@ -42,7 +37,8 @@ private:
     static bool IsKeySupported(const std::string &keyName);
     static bool IsModifyAllowed(const std::string &keyName);
     static bool IsFormatValidationConfigExisting(const std::string &keyName);
-    static int Gcd(int a, int b) {
+    static int Gcd(int a, int b)
+    {
         if (b == 0) {
             return a;
         }
