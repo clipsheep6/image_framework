@@ -14,12 +14,6 @@
 #undef LOG_TAG
 #define LOG_TAG "PngImageAccessor"
 
-#undef LOG_DOMAIN
-#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
-
-#undef LOG_TAG
-#define LOG_TAG "PngImageAccessor"
-
 namespace OHOS {
 namespace Media {
 

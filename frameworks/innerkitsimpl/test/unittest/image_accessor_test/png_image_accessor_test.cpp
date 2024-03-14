@@ -162,7 +162,7 @@ HWTEST_F(PngImageAccessorTest, ReadExifBlob001, TestSize.Level3)
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
     ASSERT_EQ(result, true);
-    ASSERT_EQ(exifBuf.size(), 4244);
+    ASSERT_EQ(exifBuf.Size(), 4244);
 }
 
 /**
