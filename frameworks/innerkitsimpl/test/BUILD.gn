@@ -1272,9 +1272,9 @@ ohos_unittest("imagestreamtest") {
   ]
 
   sources = [
+    "${image_subsystem}/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_source_test/data_buf_test.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_source_test/image_stream_test.cpp",
-    "${image_subsystem}/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
   ]
 
   deps = [
