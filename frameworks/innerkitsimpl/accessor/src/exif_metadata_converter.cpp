@@ -306,7 +306,7 @@ constexpr TagDetails exifLightSource[] = {
 constexpr TagDetails exifMeteringMode[] = {
     {0, N_("Unknown")}, {1, N_("Average")},    {2, N_("Center weighted average")},
     {3, N_("Spot")},    {4, N_("Multi-spot")}, {5, N_("Multi-segment")},
-    { 6, N_("Partial") }, { 255, N_("Other") },    { 255, N_("Other") }  // To silence compiler warning
+    { 6, N_("Partial") }, { 255, N_("Other") },    { 255, N_("Other") }
 };
 
 //! SceneType, tag 0xa301
