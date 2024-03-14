@@ -108,7 +108,6 @@ struct ImageSourceSyncContext {
     uint32_t status;
     uint32_t index = 0;
     DecodeOptions decodeOpts;
-    std::shared_ptr<ImageSource> rImageSource;
     std::shared_ptr<PixelMap> rPixelMap;
     std::string errMsg;
 };
@@ -1085,6 +1084,7 @@ napi_value ImageSourceNapi::GetImageInfoSync(napi_env env, napi_callback_info in
     napi_value argValue[NUM_1] = {0};
     size_t argCount = NUM_1;
     uint32_t index = 0;
+    uint32_t ret = SUCCESS;
 
     IMAGE_LOGD("GetImageInfoSync IN");
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
@@ -1105,8 +1105,10 @@ napi_value ImageSourceNapi::GetImageInfoSync(napi_env env, napi_callback_info in
 
     if (imageSourceNapi->nativeImgSrc != nullptr) {
         ImageInfo imageinfo;
-        imageSourceNapi->nativeImgSrc->GetImageInfo(index, imageinfo);
-        result = GetImageInfoNapiValue(env, &imageinfo, nullptr);
+        ret = imageSourceNapi->nativeImgSrc->GetImageInfo(index, imageinfo);
+        if (ret == SUCCESS) {
+            result = GetImageInfoNapiValue(env, &imageinfo, nullptr);
+        }
     } else {
         IMAGE_LOGE("native imageSourceNapi is nullptr!");
     }
@@ -1125,7 +1127,7 @@ static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
     std::shared_ptr<PixelMap> pixelMap;
     auto incPixelMap = thisPtr->GetIncrementalPixelMap();
     if (incPixelMap != nullptr) {
-        IMAGE_LOGI("Get Incremental PixelMap!!!");
+        IMAGE_LOGD("Get Incremental PixelMap!!!");
         pixelMap = incPixelMap;
     } else {
         pixelMap = imageSource->CreatePixelMapEx((index >= NUM_0) ? index : NUM_0,
@@ -1147,7 +1149,6 @@ static void CreatePixelMapExecute(napi_env env, void *data)
         IMAGE_LOGE("data is nullptr");
         return;
     }
-
     auto context = static_cast<ImageSourceAsyncContext*>(data);
     if (context == nullptr) {
         IMAGE_LOGE("empty context");
@@ -1188,7 +1189,7 @@ static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
 
 static napi_value CreatePixelMapCompleteSync(napi_env env, napi_status status, ImageSourceSyncContext *context)
 {
-    IMAGE_LOGI("CreatePixelMapCompleteSync IN");
+    IMAGE_LOGD("CreatePixelMapCompleteSync IN");
     napi_value result = nullptr;
 
     if (context->status == SUCCESS) {
@@ -1196,7 +1197,7 @@ static napi_value CreatePixelMapCompleteSync(napi_env env, napi_status status, I
     } else {
         napi_get_undefined(env, &result);
     }
-    IMAGE_LOGI("CreatePixelMapCompleteSync OUT");
+    IMAGE_LOGD("CreatePixelMapCompleteSync OUT");
     return result;
 }
 
@@ -1275,7 +1276,6 @@ napi_value ImageSourceNapi::CreatePixelMapSync(napi_env env, napi_callback_info 
         nullptr, IMAGE_LOGE("fail to unwrap context"));
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, syncContext->constructor_->nativeImgSrc),
         nullptr, IMAGE_LOGE("fail to unwrap nativeImgSrc"));
-    syncContext->rImageSource = syncContext->constructor_->nativeImgSrc;
 
     if (argCount == NUM_0) {
         IMAGE_LOGD("CreatePixelMap with no arg");
@@ -1290,7 +1290,7 @@ napi_value ImageSourceNapi::CreatePixelMapSync(napi_env env, napi_callback_info 
         }
     }
 
-    syncContext->rPixelMap = CreatePixelMapInner(syncContext->constructor_, syncContext->rImageSource,
+    syncContext->rPixelMap = CreatePixelMapInner(syncContext->constructor_, syncContext->constructor_->nativeImgSrc,
         syncContext->index, syncContext->decodeOpts, syncContext->status);
 
     if (syncContext->status != SUCCESS) {
