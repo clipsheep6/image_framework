@@ -357,8 +357,6 @@ template <typename storage_type> struct PtrSliceStorage {
         if (!ptr) {
             printf("Null pointer passed to slice constructor\n");
             return;
-            // throw std::invalid_argument("Null pointer passed to slice
-            // constructor");
         }
     }
 
@@ -534,7 +532,6 @@ template <typename T> struct Slice<const T *> : public ConstSliceBase<PtrSliceSt
 template <typename T> struct Slice<T *> : public MutableSliceBase<PtrSliceStorage, T *> {
     Slice(T *ptr, size_t begin, size_t end) : MutableSliceBase<PtrSliceStorage, T *>(ptr, begin, end)
     {
-        // TODO: use using in C++11
     }
 
     Slice<T *> subSlice(size_t begin, size_t end)

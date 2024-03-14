@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,60 +13,52 @@
  * limitations under the License.
  */
 
-// Standard library includes
-#include "image_stream.h"
-#include "out/rk3568/obj/third_party/musl/intermidiates/linux/musl_src_ported/include/stdio.h"
-#include <csetjmp>
-#include <csignal>
-#include <dirent.h>
-#include <fcntl.h>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <sstream>
+#include <unordered_map>
+
+#include <csetjmp>
+#include <csignal>
+#include <cstring>
+#include <dirent.h>
+#include <execinfo.h>
+#include <fcntl.h>
 #include <pwd.h>
-#include <stdint.h>
-#include <string.h>
-#include <string>
 #include <sys/stat.h>
-#include <time.h>
 #include <unistd.h>
 
-// Google Test includes
-#include "gmock/gmock-actions.h"
-#include "gmock/gmock-cardinalities.h"
-#include "gmock/gmock-spec-builders.h"
+#include <gmock/gmock-actions.h>
+#include <gmock/gmock-cardinalities.h>
+#include <gmock/gmock-spec-builders.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-// Macros
 #define private public
-
-// Local includes
 #include "buffer_image_stream.h"
 #include "data_buf.h"
 #include "file_image_stream.h"
+#include "image_stream.h"
 
 using namespace testing::ext;
 using namespace testing;
 using namespace OHOS::Media;
 
-#include <cstdlib>
-#include <execinfo.h>
-#include <sstream>
-#include <unordered_map>
-
 namespace OHOS {
 namespace Media {
-
-#define SIZE_1024 1024
-#define SIZE_512 512
-#define SIZE_255 255
-#define SIZE_20 20
-#define SIZE_10 10
-#define TEST_DIR_PERMISSIONS 0777
+const int SIZE_1024 = 1024;
+const int SIZE_512 = 512;
+const int SIZE_255 = 255;
+const int SIZE_20 = 20;
+const int SIZE_10 = 10;
+const int TEST_DIR_PERMISSIONS = 0777;
 
 class MemoryCheck {
-  public:
+public:
     void Start()
     {
         startVmSize = GetVmSize();
@@ -81,26 +73,30 @@ class MemoryCheck {
 
     bool check = true;
 
-    bool Compare()
+    bool Compare() const
     {
         if (check) {
             if (startVmSize != endVmSize || startVmRSS != endVmRSS) {
-                std::cout << "Difference in VmSize: " << endVmSize - startVmSize
-                          << std::endl;
-                std::cout << "Difference in VmRSS: " << endVmRSS - startVmRSS
-                          << std::endl;
+                std::cout << "Difference in VmSize: " << endVmSize - startVmSize << std::endl;
+                std::cout << "Difference in VmRSS: " << endVmRSS - startVmRSS << std::endl;
                 return false;
             }
         }
         return true;
     }
 
-  private:
-    long GetVmSize() { return GetMemoryInfo("VmSize:"); }
+private:
+    long GetVmSize() const
+    {
+        return GetMemoryInfo("VmSize:");
+    }
 
-    long GetVmRSS() { return GetMemoryInfo("VmRSS:"); }
+    long GetVmRSS() const
+    {
+        return GetMemoryInfo("VmRSS:");
+    }
 
-    long GetMemoryInfo(const std::string &name)
+    long GetMemoryInfo(const std::string &name) const
     {
         std::string line;
         std::ifstream status_file("/proc/self/status");
@@ -120,17 +116,28 @@ class MemoryCheck {
     long endVmRSS = 0;
 };
 
+
+void RemoveFile(const std::string &filePath)
+{
+    int result = remove(filePath.c_str());
+    if (result != 0) {
+        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        strerror_r(errno, errstr, sizeof(errstr));
+        GTEST_LOG_(INFO) << "Failed to remove the file: " << filePath << ", reason: " << errstr;
+    }
+}
+
 class ImageStreamTest : public testing::Test {
-  public:
+public:
     ImageStreamTest() {}
-    ~ImageStreamTest() {}
+    ~ImageStreamTest() override {}
     std::string filePath = "/data/local/tmp/image/testfile.txt";
     std::string filePathSource = "/data/local/tmp/image/test_exif_test.jpg";
     std::string filePathDest = "/data/local/tmp/image/testfile_dest.png";
     std::string backupFilePathSource = "/data/local/tmp/image/test_exif.jpg";
     MemoryCheck memoryCheck;
 
-    virtual void SetUp()
+    void SetUp() override
     {
         // Create the directory
         std::string dirPath = "/data/local/tmp/image";
@@ -139,15 +146,12 @@ class ImageStreamTest : public testing::Test {
             if (ret != 0) {
                 char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, buf, sizeof(buf));
-                GTEST_LOG_(ERROR) << "Failed to create directory: " << dirPath
-                                  << ", error: " << buf;
+                GTEST_LOG_(ERROR) << "Failed to create directory: " << dirPath << ", error: " << buf;
             }
         }
 
         // Backup the files
-        std::filesystem::copy(
-            backupFilePathSource, filePathSource,
-            std::filesystem::copy_options::overwrite_existing);
+        std::filesystem::copy(backupFilePathSource, filePathSource, std::filesystem::copy_options::overwrite_existing);
         memoryCheck.check = true;
         memoryCheck.Start();
     }
@@ -155,14 +159,14 @@ class ImageStreamTest : public testing::Test {
     const static std::string tmpDirectory;
     static bool alreadyExist;
 
-    virtual void TearDown()
+    void TearDown() override
     {
         memoryCheck.End();
         if (!memoryCheck.Compare()) {
             GTEST_LOG_(INFO) << "Memory leak detected";
         }
-        remove(filePath.c_str());
-        remove(filePathDest.c_str());
+        RemoveFile(filePath.c_str());
+        RemoveFile(filePathDest.c_str());
     }
 
     static void SetUpTestCase()
@@ -173,9 +177,7 @@ class ImageStreamTest : public testing::Test {
             if (ret != 0) {
                 char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, buf, sizeof(buf));
-                GTEST_LOG_(ERROR)
-                    << "Failed to create directory: " << tmpDirectory
-                    << ", error: " << buf;
+                GTEST_LOG_(ERROR) << "Failed to create directory: " << tmpDirectory << ", error: " << buf;
             }
             alreadyExist = false;
         } else {
@@ -194,29 +196,21 @@ bool ImageStreamTest::alreadyExist = false;
 const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
 
 class MockFileWrapper : public FileWrapper {
-  public:
-    MOCK_METHOD(size_t, fwrite,
-                (const void *src, size_t size, size_t nmemb, FILE *file),
-                (override));
-    MOCK_METHOD(size_t, fread,
-                (void *destv, size_t size, size_t nmemb, FILE *file),
-                (override));
+public:
+    MOCK_METHOD(size_t, fwrite, (const void *src, size_t size, size_t nmemb, FILE *file), (override));
+    MOCK_METHOD(size_t, fread, (void *destv, size_t size, size_t nmemb, FILE *file), (override));
 
     MockFileWrapper()
     {
         // Set the default behavior of write to call the system's write function
         ON_CALL(*this, fwrite(_, _, _, _))
             .WillByDefault(Invoke(
-                [](const void *src, size_t size, size_t nmemb, FILE *file) {
-                    return ::fwrite(src, size, nmemb, file);
-                }));
+            [](const void *src, size_t size, size_t nmemb, FILE *file) { return ::fwrite(src, size, nmemb, file); }));
 
         // Set the default behavior of read to call the system's read function
-        ON_CALL(*this, fread(_, _, _, _))
-            .WillByDefault(
-                Invoke([](void *destv, size_t size, size_t nmemb, FILE *file) {
-                    return ::fread(destv, size, nmemb, file);
-                }));
+        ON_CALL(*this, fread(_, _, _, _)).WillByDefault(Invoke([](void *destv, size_t size, size_t nmemb, FILE *file) {
+            return ::fread(destv, size, nmemb, file);
+        }));
     }
 };
 
@@ -228,8 +222,6 @@ class MockFileWrapper : public FileWrapper {
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 {
-    // GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 start";
-
     // Create a FileImageStream object
     FileImageStream stream(filePath);
 
@@ -237,8 +229,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     ASSERT_TRUE(stream.Open());
 
     // Create some data to write
-    byte data[SIZE_10];
-    memset(data, 'a', sizeof(data));
+    byte data[SIZE_10] = {0};
 
     ASSERT_EQ(stream.Tell(), 0);
 
@@ -247,7 +238,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 
     // Check that the correct number of bytes were written
     ASSERT_EQ(bytesWritten, sizeof(data));
-    ASSERT_EQ(bytesWritten, 10);
 
     // Flush the file
     stream.Flush();
@@ -268,8 +258,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 
     // Close the file
     close(fileDescriptor);
-
-    // GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 end";
 }
 
 /**
@@ -299,8 +287,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
     auto mockFileWrapper = std::make_unique<MockFileWrapper>();
     // Set the behavior of the write function to always return -1, simulating a
     // write failure
-    EXPECT_CALL(*mockFileWrapper.get(), fwrite(_, _, _, _))
-        .WillOnce(Return(-1));
+    EXPECT_CALL(*mockFileWrapper.get(), fwrite(_, _, _, _)).WillOnce(Return(-1));
 
     FileImageStream stream(filePath, std::move(mockFileWrapper));
 
@@ -348,13 +335,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 
     // Set the behavior of the write function to always return -1, simulating a
     // write failure
-    EXPECT_CALL(*mockDestFileWrapper.get(), fwrite(_, _, _, _))
-        .Times(Exactly(0));
-    EXPECT_CALL(*mockSourceFileWrapper.get(), fread(_, _, _, _))
-        .WillOnce(Return(-1));
+    EXPECT_CALL(*mockDestFileWrapper.get(), fwrite(_, _, _, _)).Times(Exactly(0));
+    EXPECT_CALL(*mockSourceFileWrapper.get(), fread(_, _, _, _)).WillOnce(Return(-1));
 
-    FileImageStream sourceStream(filePathSource,
-                                 std::move(mockSourceFileWrapper));
+    FileImageStream sourceStream(filePathSource, std::move(mockSourceFileWrapper));
     FileImageStream destStream(filePath, std::move(mockDestFileWrapper));
 
     // Test the Write function
@@ -385,8 +369,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write006, TestSize.Level3)
  */
 HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
 {
-    // GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 start";
-
     // Create a FileImageStream object
     FileImageStream stream(filePath);
 
@@ -411,18 +393,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
     // Read the data from the file
     byte buffer[SIZE_20];
     read(fileDescriptor, buffer, sizeof(buffer));
-    // ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
-
-    // Check that the correct number of bytes were read
-    // ASSERT_EQ(bytesRead, data.size());
 
     // Check that the data read is the same as the data written
     ASSERT_EQ(memcmp(data.c_str(), buffer, data.size()), 0);
 
     // Close the file
     close(fileDescriptor);
-
-    // GTEST_LOG_(INFO) << "ImageStreamTest: FileImageStream_Write001 end";
 }
 
 /**
@@ -435,7 +411,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
 {
     // Test the case where the file path does not exist
     std::string nonExistFilePath = "/data/local/tmp/image/non_exist_file.txt";
-    remove(nonExistFilePath.c_str());
+    RemoveFile(nonExistFilePath.c_str());
     FileImageStream stream1(nonExistFilePath);
     ASSERT_TRUE(stream1.Open());
     std::string sourceData = "Hello, world!";
@@ -449,7 +425,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
     // Check if the read data is the same as the written data
     ASSERT_STREQ((char *)buffer, sourceData.c_str());
     ASSERT_TRUE(stream1.Flush());
-    remove(nonExistFilePath.c_str());
+    RemoveFile(nonExistFilePath.c_str());
 }
 
 /**
@@ -470,8 +446,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
     std::string username(passwordEntry->pw_name);
 
     // Test the case where the file path exists but is not writable
-    std::string nonWritableFilePath =
-        "/data/local/tmp/image/non_writable_file.txt";
+    std::string nonWritableFilePath = "/data/local/tmp/image/non_writable_file.txt";
     close(open(nonWritableFilePath.c_str(), O_CREAT, S_IRUSR));
     FileImageStream stream2(nonWritableFilePath);
     if (username == "root") {
@@ -481,7 +456,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
         // If the current user is not root, then it cannot be opened
         ASSERT_FALSE(stream2.Open());
     }
-    remove(nonWritableFilePath.c_str());
+    RemoveFile(nonWritableFilePath.c_str());
 }
 
 /**
@@ -560,7 +535,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3)
 static sigjmp_buf jmpbuf;
 
 // Define a signal handler function
-static void handle_sigsegv(int sig) { siglongjmp(jmpbuf, 1); }
+static void HandleSigsegv(int sig)
+{
+    siglongjmp(jmpbuf, 1);
+}
 
 /**
  * @tc.name: FileImageStream_MMap001
@@ -585,7 +563,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3)
     ASSERT_NE(result, nullptr);
 
     // Set the signal handler function
-    signal(SIGSEGV, handle_sigsegv);
+    signal(SIGSEGV, HandleSigsegv);
 
     // Try to write data
     if (sigsetjmp(jmpbuf, 1) == 0) {
@@ -670,8 +648,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3)
     ASSERT_TRUE(dest.CopyFrom(src));
     // Read data from dest and verify that it is the same as the data written to
     // src
-    byte buffer[SIZE_255];
-    memset(buffer, 0, SIZE_255);
+    byte buffer[SIZE_255] = {0};
+
     ASSERT_EQ(dest.Seek(0, SeekPos::BEGIN), 0);
     ASSERT_EQ(dest.Read(buffer, data.size()), data.size());
     ASSERT_EQ(std::string(buffer, buffer + data.size()), data);
@@ -723,7 +701,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom004, TestSize.Level3)
 
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom005, TestSize.Level3)
 {
-    remove(filePath.c_str());
+    RemoveFile(filePath.c_str());
     FileImageStream src(filePathDest);
     BufferImageStream dest;
     src.Open();
@@ -734,8 +712,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom005, TestSize.Level3)
     ASSERT_EQ(src.Tell(), sizeof(buff));
     ASSERT_EQ(src.GetSize(), sizeof(buff));
     ASSERT_TRUE(dest.CopyFrom(src));
-    // ASSERT_EQ(src.GetSize(), dest.GetSize());
-    // ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
+    ASSERT_EQ(src.GetSize(), dest.GetSize());
+    ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
 HWTEST_F(ImageStreamTest, FileImageStream_IsEof001, TestSize.Level3)
@@ -814,8 +792,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3)
     ASSERT_TRUE(stream.Open());
     std::string sourceData = "Hello, world!";
     ASSERT_EQ(stream.Seek(5, SeekPos::BEGIN), 5);
-    ASSERT_EQ(stream.Write((byte *)sourceData.c_str(), sourceData.size()),
-              sourceData.size());
+    ASSERT_EQ(stream.Write((byte *)sourceData.c_str(), sourceData.size()), sourceData.size());
 
     FileImageStream cloneStream(stream.fp_);
     ASSERT_TRUE(stream.Flush());
@@ -853,8 +830,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3)
 {
     // Create and open a temporary file
     std::string tempFile = "/tmp/testfile";
-    int fileDescription =
-        open(tempFile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int fileDescription = open(tempFile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     ASSERT_NE(fileDescription, -1);
 
     // Use the file descriptor to create a new FileImageStream object
@@ -887,18 +863,18 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3)
 
     // Close the file
     close(fileDescription);
-    remove(tempFile.c_str());
+    RemoveFile(tempFile.c_str());
 }
 
-int countOpenFileDescriptors()
+int CountOpenFileDescriptors()
 {
     DIR *dir;
     int fdCount = 0;
 
     std::string dirPath = "/proc/" + std::to_string(getpid()) + "/fd/";
 
-    if ((dir = opendir(dirPath.c_str())) != NULL) {
-        while (readdir(dir) != NULL) {
+    if ((dir = opendir(dirPath.c_str())) != nullptr) {
+        while (readdir(dir) != nullptr) {
             fdCount++;
         }
         closedir(dir);
@@ -918,34 +894,28 @@ int countOpenFileDescriptors()
  */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3)
 {
-    // GTEST_LOG_(INFO) << "fd0: " << countOpenFileDescriptors();
-    int fdCount = countOpenFileDescriptors();
-    int fileDescriptor =
-        open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-    ASSERT_EQ(fdCount + 1, countOpenFileDescriptors());
-    // GTEST_LOG_(INFO) << "fd1: " << countOpenFileDescriptors();
+    int fdCount = CountOpenFileDescriptors();
+    int fileDescriptor = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    ASSERT_EQ(fdCount + 1, CountOpenFileDescriptors());
     int dupFD = dup(fileDescriptor);
-    ASSERT_EQ(fdCount + 2, countOpenFileDescriptors());
-    // GTEST_LOG_(INFO) << "fd2: " << countOpenFileDescriptors();
+    ASSERT_EQ(fdCount + 2, CountOpenFileDescriptors());
     ASSERT_NE(fileDescriptor, -1);
-    FILE *fileStream =
-        fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
-    ASSERT_EQ(fdCount + 2, countOpenFileDescriptors());
-    // GTEST_LOG_(INFO) << "fd3: " << countOpenFileDescriptors();
+    FILE *fileStream = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in binary mode
+    ASSERT_EQ(fdCount + 2, CountOpenFileDescriptors());
+    ;
     ASSERT_NE(fileStream, nullptr);
     std::string text = "Hello, world!";
-    ssize_t result =
-        fwrite(text.c_str(), sizeof(char), text.size(),
-               fileStream); // Use sizeof(char) as the second argument
+    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(),
+        fileStream); // Use sizeof(char) as the second argument
     ASSERT_EQ(ferror(fileStream), 0);
     ASSERT_EQ(result, text.size());
 
     // Reset the file pointer to the beginning of the file
     rewind(fileStream);
 
-    ASSERT_EQ(fdCount + 2, countOpenFileDescriptors());
+    ASSERT_EQ(fdCount + 2, CountOpenFileDescriptors());
     fileno(fileStream);
-    ASSERT_EQ(fdCount + 2, countOpenFileDescriptors());
+    ASSERT_EQ(fdCount + 2, CountOpenFileDescriptors());
 
     // Read and verify the data
     char buffer[SIZE_255];
@@ -954,15 +924,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3)
     buffer[result] = '\0'; // Add string termination character
     ASSERT_STREQ(buffer, text.c_str());
 
-    // GTEST_LOG_(INFO) << "fd5: " << countOpenFileDescriptors();
     fclose(fileStream);
-    ASSERT_EQ(fdCount + 1, countOpenFileDescriptors());
-    // GTEST_LOG_(INFO) << "fd6: " << countOpenFileDescriptors();
-    // close(dupFD);
-    // GTEST_LOG_(INFO) << "fd7: " << countOpenFileDescriptors();
+    ASSERT_EQ(fdCount + 1, CountOpenFileDescriptors());
     close(fileDescriptor);
-    ASSERT_EQ(fdCount, countOpenFileDescriptors());
-    // GTEST_LOG_(INFO) << "fd8: " << countOpenFileDescriptors();
+    ASSERT_EQ(fdCount, CountOpenFileDescriptors());
 }
 
 /**
@@ -974,21 +939,17 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3)
  */
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3)
 {
-    int fileDescriptor =
-        open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int fileDescriptor = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     FileImageStream stream(fileDescriptor);
     int dupFD = stream.dupFD_;
     ASSERT_NE(fileDescriptor, -1);
     ASSERT_TRUE(stream.Open());
-    FILE *fileStream =
-        stream.fp_; // Change "rb" to "wb" for writing in binary mode
-    // FILE *f = fdopen(dupFD, "r+"); // Change "rb" to "wb" for writing in
+    FILE *fileStream = stream.fp_; // Change "rb" to "wb" for writing in binary mode
     // binary mode
     ASSERT_NE(fileStream, nullptr);
     std::string text = "Hello, world!";
-    ssize_t result =
-        fwrite(text.c_str(), sizeof(char), text.size(),
-               fileStream); // Use sizeof(char) as the second argument
+    ssize_t result = fwrite(text.c_str(), sizeof(char), text.size(),
+        fileStream); // Use sizeof(char) as the second argument
     ASSERT_EQ(ferror(fileStream), 0);
     ASSERT_EQ(result, text.size());
 
@@ -1009,7 +970,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3)
 
 HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3)
 {
-    remove(filePath.c_str());
+    RemoveFile(filePath.c_str());
     FileImageStream stream(filePath);
     stream.Open();
     std::string sourceData = "Hello, world!";
@@ -1125,13 +1086,11 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3)
 {
     BufferImageStream stream;
     stream.Open();
-    byte data[IMAGE_STREAM_PAGE_SIZE + 1] = {0};    // Create a 4097-byte data
+    byte data[IMAGE_STREAM_PAGE_SIZE + 1] = {0};  // Create a 4097-byte data
     stream.Write(data, IMAGE_STREAM_PAGE_SIZE + 1); // Write 4097 bytes of data
     ASSERT_GE(stream.buffer_.capacity(),
-              IMAGE_STREAM_PAGE_SIZE *
-                  2); // Check if the buffer capacity is at least 4097
-    ASSERT_EQ(stream.Tell(), IMAGE_STREAM_PAGE_SIZE +
-                                 1); // Check if the write position is correct
+        IMAGE_STREAM_PAGE_SIZE * 2);                      // Check if the buffer capacity is at least 4097
+    ASSERT_EQ(stream.Tell(), IMAGE_STREAM_PAGE_SIZE + 1); // Check if the write position is correct
 }
 
 /**
@@ -1145,12 +1104,12 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3)
     BufferImageStream stream;
     stream.Open();
 
-    byte data[IMAGE_STREAM_PAGE_SIZE] = {0};    // Create a 4096-byte data
+    byte data[IMAGE_STREAM_PAGE_SIZE] = {0};  // Create a 4096-byte data
     stream.Write(data, IMAGE_STREAM_PAGE_SIZE); // Write 4096 bytes of data
     ASSERT_EQ(stream.buffer_.capacity(),
-              IMAGE_STREAM_PAGE_SIZE); // Check if the buffer capacity is 4096
+        IMAGE_STREAM_PAGE_SIZE); // Check if the buffer capacity is 4096
     ASSERT_EQ(stream.Tell(),
-              IMAGE_STREAM_PAGE_SIZE); // Check if the write position is correct
+        IMAGE_STREAM_PAGE_SIZE); // Check if the write position is correct
 }
 
 /**
@@ -1166,28 +1125,6 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3)
     ASSERT_EQ(stream.Write((byte *)"Hi", 2), 2);
     ASSERT_EQ(stream.Tell(), 2);
     ASSERT_EQ(stream.Write((byte *)"this is a very long text", 24), 24);
-}
-
-/**
- * @tc.name: BufferImageStream_Write006
- * @tc.desc: Test the Write function of BufferImageStream, checking if it can
- * correctly handle dynamic buffer size
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, BufferImageStream_Write006, TestSize.Level3)
-{
-    // char text[] = "Hello, world!";
-    // BufferImageStream stream((byte *)text, sizeof(text),
-    //                          BufferImageStream::Dynamic);
-    // ASSERT_TRUE(stream.Open());
-    // ASSERT_EQ(stream.Write((byte *)"Hi", 2), 2);
-    // // GTEST_LOG_(INFO) << "text: " << text;
-    // ASSERT_EQ(stream.Tell(), 2);
-    // ASSERT_STREQ(text, "Hillo, world!");
-    // stream.Seek(0, SeekPos::BEGIN);
-    // ASSERT_EQ(stream.Write((byte *)"this is a very long text", 24), 24);
-    // // GTEST_LOG_(INFO) << "text: " << text;
-    // ASSERT_STREQ((char *)stream.GetAddr(false), "this is a very long text");
 }
 
 /**
@@ -1213,19 +1150,6 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Close002, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Close003
- * @tc.desc: Test the Close function of BufferImageStream after releasing the
- * stream
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, BufferImageStream_Close003, TestSize.Level3)
-{
-    // BufferImageStream stream;
-    // stream.Write((byte *)"Hello, world!", 13);
-    // delete[] stream.Release();
-}
-
-/**
  * @tc.name: BufferImageStream_Close004
  * @tc.desc: Test the Close function of BufferImageStream after closing the
  * stream
@@ -1236,52 +1160,6 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Close004, TestSize.Level3)
     BufferImageStream stream;
     stream.Write((byte *)"Hello, world!", 13);
     stream.Close();
-}
-
-/**
- * @tc.name: BufferImageStream_Close005
- * @tc.desc: Test the Close function of BufferImageStream with a fixed size
- * buffer
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, BufferImageStream_Close005, TestSize.Level3)
-{
-    // char text[] = "Hello, world!";
-    // BufferImageStream stream((byte *)text, sizeof(text),
-    //                          BufferImageStream::Fix);
-}
-
-/**
- * @tc.name: BufferImageStream_Close006
- * @tc.desc: Test the Close function of BufferImageStream with a fixed size
- * buffer after releasing the stream
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, BufferImageStream_Close006, TestSize.Level3)
-{
-    // char text[] = "Hello, world!";
-    // BufferImageStream stream((byte *)text, sizeof(text),
-    //                          BufferImageStream::Fix);
-    // stream.Release();
-}
-
-/**
- * @tc.name: BufferImageStream_Close007
- * @tc.desc: Test the Close function of BufferImageStream with a dynamic size
- * buffer after writing and releasing the stream
- * @tc.type: FUNC
- */
-HWTEST_F(ImageStreamTest, BufferImageStream_Close007, TestSize.Level3)
-{
-    // char text[] = "Hello, world!";
-    // BufferImageStream stream((byte *)text, sizeof(text),
-    //                          BufferImageStream::Dynamic);
-    // stream.Write((byte *)"this is a very very long text", 28);
-    // delete[] stream.Release();
-
-    // DataBuf dataBuf(10);
-    // dataBuf.WriteUInt8(0, 123);
-    // EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
 }
 
 HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom001, TestSize.Level3)
@@ -1332,6 +1210,5 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom004, TestSize.Level3)
     ASSERT_EQ(src.GetSize(), dest.GetSize());
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
-
 } // namespace Media
 } // namespace OHOS
