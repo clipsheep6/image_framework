@@ -1,0 +1,9 @@
+diff a/interfaces/innerkits/include/image_type.h b/interfaces/innerkits/include/image_type.h	(rejected hunks)
+@@ -157,6 +159,7 @@ struct ImageInfo {
+     ColorSpace colorSpace = ColorSpace::SRGB;
+     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
+     int32_t baseDensity = 0;
++    int32_t stride = 1;
+ };
+ 
+ struct FillColor {

@@ -86,7 +86,8 @@
                 "incremental_pixel_map.h",
                 "pixel_map_manager.h",
                 "decode_listener.h",
-                "pixel_map_parcel.h"
+                "pixel_map_parcel.h",
+                "image_format_convert.h"
               ],
               "header_base": "//foundation/multimedia/image_framework/interfaces/innerkits/include"
             },
@@ -98,7 +99,8 @@
                 "image_packer_napi.h",
                 "image_source_napi.h",
                 "native_module_ohos_image.h",
-                "pixel_map_napi.h"
+                "pixel_map_napi.h",
+                "image_format_convert_napi.h"
               ],
               "header_base": "//foundation/multimedia/image_framework/interfaces/kits/js/common/include"
             },
@@ -160,6 +162,15 @@
               ]
             },
             "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_packer_ndk"
+          },
+          {
+            "header": {
+              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/",
+              "header_files": [
+                "image_format_convert_mdk.h"
+              ]
+            },
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_format_convert_ndk"          
           },
           {
             "header":{
