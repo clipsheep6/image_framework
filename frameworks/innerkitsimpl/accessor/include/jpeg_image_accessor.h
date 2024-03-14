@@ -45,6 +45,7 @@ private:
     bool WriteHeader(BufferImageStream& tempStream);
     std::tuple<size_t, size_t> GetInsertPosAndMarkerAPP1();
     bool WriteSegment(BufferImageStream& bufStream, uint8_t marker, const DataBuf& buf);
+    bool WriteFinalMarker(BufferImageStream& bufStream);
     bool CopyRestData(BufferImageStream& bufStream);
     bool WriteData(BufferImageStream& bufStream, uint8_t* dataBlob, uint32_t size);
     bool UpdateExifMetadata(BufferImageStream& tempStream, uint8_t* dataBlob, uint32_t size);

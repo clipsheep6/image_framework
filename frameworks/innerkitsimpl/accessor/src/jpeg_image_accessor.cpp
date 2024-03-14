@@ -122,7 +122,14 @@ uint32_t JpegImageAccessor::WriteMetadata()
         return ERR_MEDIA_VALUE_INVALID;
     }
 
-    return UpdateData(dataBlob, size);
+    uint32_t result = UpdateData(dataBlob, size);
+
+     if (dataBlob != nullptr) {
+        free(dataBlob);
+        dataBlob = nullptr;
+    }
+
+    return result;
 }
 
 uint32_t JpegImageAccessor::WriteExifBlob(DataBuf& blob)
@@ -199,6 +206,10 @@ bool JpegImageAccessor::GetExifEncodeBlob(uint8_t** dataBlob, uint32_t& size)
 
     ExifData* exifData = this->GetExifMetadata()->GetData();
     TiffParser::EncodeJpegExif(dataBlob, size, exifData);
+
+    if (dataBlob == nullptr || *dataBlob == nullptr) {
+        return false;
+    }
 
     return (size > 0);
 }
@@ -280,9 +291,17 @@ bool JpegImageAccessor::WriteData(BufferImageStream& bufStream, uint8_t* dataBlo
         return false;
     }
 
-    US2Data(tmpBuf.data() + EXIF_BLOB_OFFSET, static_cast<uint16_t>(size + APP1_EXIF_LENGTH), bigEndian);
-    std::copy_n(EXIF_ID, EXIF_ID_SIZE, tmpBuf.data() + MARKER_LENGTH_SIZE);
-    if (bufStream.Write(tmpBuf.data(), APP1_HEADER_LENGTH) != APP1_HEADER_LENGTH) {
+    uint32_t writeHeaderLength = 4;
+    uint32_t exifHeaderLength = 2;
+
+    if (memcmp((char*)dataBlob, EXIF_ID, EXIF_ID_SIZE) != 0) {
+        writeHeaderLength = EXIF_ID_LENGTH;
+        exifHeaderLength = APP1_EXIF_LENGTH;
+        std::copy_n(EXIF_ID, EXIF_ID_SIZE, tmpBuf.data() + MARKER_LENGTH_SIZE);
+    }
+
+    US2Data(tmpBuf.data() + EXIF_BLOB_OFFSET, static_cast<uint16_t>(size + exifHeaderLength), bigEndian);
+    if (bufStream.Write(tmpBuf.data(), writeHeaderLength) != writeHeaderLength) {
         IMAGE_LOGE("Write EXIF_ID temp stream failed");
         return false;
     }
@@ -306,6 +325,19 @@ bool JpegImageAccessor::WriteSegment(BufferImageStream& bufStream, uint8_t marke
     }
     if (bufStream.Write((byte*)buf.CData(), buf.Size()) != buf.Size()) {
         IMAGE_LOGE("Write buf failed");
+        return false;
+    }
+
+    return true;
+}
+
+bool JpegImageAccessor::WriteFinalMarker(BufferImageStream& bufStream)
+{
+    std::array<byte, EXIF_ID_LENGTH> tmpBuf;
+    tmpBuf[0] = JPEG_MARKER_HEADER;
+    tmpBuf[1] = JPEG_MARKER_SOS;
+    if (bufStream.Write(tmpBuf.data(), EXIF_ID_LENGTH) != EXIF_ID_LENGTH) {
+        IMAGE_LOGE("Write the final marker failed");
         return false;
     }
 
@@ -345,7 +377,7 @@ bool JpegImageAccessor::UpdateExifMetadata(BufferImageStream& bufStream, uint8_t
             break;
         }
 
-        if (markerCount != skipExifSeqNum) {
+        if ((markerCount != skipExifSeqNum) && (marker != JPEG_MARKER_SOI)) {
             WriteSegment(bufStream, marker, buf);
         } else {
             IMAGE_LOGE("skip existing exifApp segment no:[%{public}u]", skipExifSeqNum);
@@ -354,6 +386,8 @@ bool JpegImageAccessor::UpdateExifMetadata(BufferImageStream& bufStream, uint8_t
         marker = FindNextMarker();
         ++markerCount;
     }
+
+    WriteFinalMarker(bufStream);
 
     return CopyRestData(bufStream);
 }
