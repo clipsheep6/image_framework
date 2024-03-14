@@ -1264,23 +1264,24 @@ ohos_unittest("imagestreamtest") {
     # "${image_subsystem}/frameworks/innerkitsimpl/stream/include",
     # "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
     "${image_subsystem}/interfaces/innerkits/include",
+
     # "${image_subsystem}/plugins/common/libs/image/libextplugin/include/jpeg_yuv_decoder",
     # "${image_subsystem}/plugins/manager/include",
     # "${image_subsystem}/../../../foundation/multimedia/utils/include",
     "${image_subsystem}/../../../third_party/googletest/googletest/include",
   ]
 
-  sources = [ 
-    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_source_test/image_stream_test.cpp",
+  sources = [
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_source_test/data_buf_test.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_source_test/image_stream_test.cpp",
   ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
-      ]
+  ]
 
   resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
 
@@ -1302,11 +1303,11 @@ ohos_unittest("imageaccessortest") {
   sources = [
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_accessor_test/jpeg_image_accessor_test.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_accessor_test/png_image_accessor_test.cpp",
-    ]
+  ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
@@ -1329,14 +1330,14 @@ ohos_unittest("imagetiffparsertest") {
     "${image_subsystem}/../../../third_party/googletest/googletest/include",
   ]
 
-  sources = [ 
+  sources = [
     # "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_accessor_test/tiff_parser_test.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_accessor_test/exif_metadata_converter_test.cpp",
   ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//third_party/libexif:libexif",
@@ -1359,12 +1360,11 @@ ohos_unittest("exifmetadatatest") {
     "${image_subsystem}/../../../third_party/googletest/googletest/include",
   ]
 
-  sources = [ "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_accessor_test/exif_metadata_test.cpp"
-   ]
+  sources = [ "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_accessor_test/exif_metadata_test.cpp" ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//third_party/libexif:libexif",
@@ -1389,6 +1389,7 @@ group("unittest") {
     ":creatortest",
     ":eglimagetest",
     ":exifmakernotetest",
+    ":exifmetadatatest",
     ":format_agent_plugin_src_test",
     ":formatagentplugintest",
     ":gstpluginfwtest",
@@ -1396,6 +1397,7 @@ group("unittest") {
     ":imagepixelmapparceltest",
     ":imagepixelmaptest",
     ":imagesourcetest",
+    ":imagestreamtest",
     ":imageutilstest",
     ":interfacetest",
     ":jpeg_yuv_decoder_test",
@@ -1415,8 +1417,6 @@ group("unittest") {
     ":textureencodetest",
     ":transformtest",
     ":webpplugintest",
-    ":imagestreamtest",
-    ":exifmetadatatest"
   ]
 
   if (enable_jpeg_hw_decode) {
