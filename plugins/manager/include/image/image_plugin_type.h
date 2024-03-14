@@ -96,6 +96,8 @@ enum class PlPixelFormat {
     ASTC_4X4 = 11,
     ASTC_6X6 = 12,
     ASTC_8X8 = 13,
+    YU12 = 14,
+    YV12 = 15,
 };
 
 enum class PlAlphaType : int32_t {
