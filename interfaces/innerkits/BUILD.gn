@@ -143,9 +143,6 @@ if (use_clang_android) {
     ]
 
     sources = [
-      "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
-      "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
-      "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_converter.cpp",
@@ -157,10 +154,13 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/codec/src/data_buf_slice.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/codec/src/file_image_stream.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
-      "${image_subsystem}/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
@@ -265,7 +265,6 @@ ohos_static_library("image_static") {
   public_configs = [ ":image_external_config" ]
 
   sources = [
-    "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_converter.cpp",
@@ -277,10 +276,11 @@ ohos_static_library("image_static") {
     "${image_subsystem}/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/codec/src/data_buf_slice.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/codec/src/file_image_stream.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
-    "${image_subsystem}/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
