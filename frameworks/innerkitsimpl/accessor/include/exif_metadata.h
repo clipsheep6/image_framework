@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef EXIF_METADATA_H_
-#define EXIF_METADATA_H_
+#ifndef EXIF_METADATA_H
+#define EXIF_METADATA_H
 
 #include <string>
 #include <libexif/exif-data.h>
