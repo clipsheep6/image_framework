@@ -31,8 +31,8 @@ namespace Media {
 class FileWrapper {
 public:
     virtual ~FileWrapper() {}
-    virtual size_t fwrite(const void *src, size_t size, size_t nmemb, FILE *file);
-    virtual size_t fread(void *destv, size_t size, size_t nmemb, FILE *file);
+    virtual size_t FWrite(const void *src, size_t size, size_t nmemb, FILE *file);
+    virtual size_t FRead(void *destv, size_t size, size_t nmemb, FILE *file);
 };
 
 class FileImageStream : public ImageStream {

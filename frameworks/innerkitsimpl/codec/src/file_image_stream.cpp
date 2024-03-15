@@ -33,12 +33,12 @@
 
 namespace OHOS {
 namespace Media {
-size_t FileWrapper::fwrite(const void *src, size_t size, size_t nmemb, FILE *file)
+size_t FileWrapper::FWrite(const void *src, size_t size, size_t nmemb, FILE *file)
 {
     return ::fwrite(src, size, nmemb, file);
 }
 
-size_t FileWrapper::fread(void *destv, size_t size, size_t nmemb, FILE *file)
+size_t FileWrapper::FRead(void *destv, size_t size, size_t nmemb, FILE *file)
 {
     return ::fread(destv, size, nmemb, file);
 }
@@ -107,7 +107,7 @@ ssize_t FileImageStream::Write(byte *data, size_t size)
         return -1;
     }
 
-    size_t result = fileWrapper_->fwrite(data, 1, size, fp_);
+    size_t result = fileWrapper_->FWrite(data, 1, size, fp_);
     if (result != size || (ferror(fp_) != 0)) {
         char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, buf, sizeof(buf));
@@ -195,7 +195,7 @@ ssize_t FileImageStream::Read(byte *buf, size_t size)
         return 0;
     }
 
-    size_t result = fileWrapper_->fread(buf, 1, size, fp_);
+    size_t result = fileWrapper_->FRead(buf, 1, size, fp_);
     if (result == 0 && ferror(fp_) != 0) {
         // Read failed
         char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];

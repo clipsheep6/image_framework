@@ -196,24 +196,24 @@ const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
 
 class MockFileWrapper : public FileWrapper {
 public:
-    MOCK_METHOD(size_t, fwrite, (const void *src, size_t size, size_t nmemb, FILE *file), (override));
-    MOCK_METHOD(size_t, fread, (void *destv, size_t size, size_t nmemb, FILE *file), (override));
+    MOCK_METHOD(size_t, FWrite, (const void *src, size_t size, size_t nmemb, FILE *file), (override));
+    MOCK_METHOD(size_t, FRead, (void *destv, size_t size, size_t nmemb, FILE *file), (override));
 
     MockFileWrapper()
     {
         // Set the default behavior of write to call the system's write function
-        ON_CALL(*this, fwrite(_, _, _, _)).WillByDefault(
-            Invoke([](const void *src, size_t size, size_t nmemb, FILE *file) {
-            size_t result = ::fwrite(src, size, nmemb, file);
-            if (result != nmemb) {
-                char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-                strerror_r(errno, errstr, sizeof(errstr));
-                std::cerr << "Failed to write to the file: " << errstr << std::endl;
-            }
-            return result;
-        }));
+        ON_CALL(*this, FWrite(_, _, _, _))
+            .WillByDefault(Invoke([](const void *src, size_t size, size_t nmemb, FILE *file) {
+                size_t result = ::fwrite(src, size, nmemb, file);
+                if (result != nmemb) {
+                    char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+                    strerror_r(errno, errstr, sizeof(errstr));
+                    std::cerr << "Failed to write to the file: " << errstr << std::endl;
+                }
+                return result;
+            }));
         // Set the default behavior of read to call the system's read function
-        ON_CALL(*this, fread(_, _, _, _)).WillByDefault(Invoke([](void *destv, size_t size, size_t nmemb, FILE *file) {
+        ON_CALL(*this, FRead(_, _, _, _)).WillByDefault(Invoke([](void *destv, size_t size, size_t nmemb, FILE *file) {
             size_t result = ::fread(destv, size, nmemb, file);
             if (result != nmemb) {
                 char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
@@ -297,7 +297,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
     auto mockFileWrapper = std::make_unique<MockFileWrapper>();
     // Set the behavior of the write function to always return -1, simulating a
     // write failure
-    EXPECT_CALL(*mockFileWrapper.get(), fwrite(_, _, _, _)).WillOnce(Return(-1));
+    EXPECT_CALL(*mockFileWrapper.get(), FWrite(_, _, _, _)).WillOnce(Return(-1));
 
     FileImageStream stream(filePath, std::move(mockFileWrapper));
 
@@ -345,8 +345,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 
     // Set the behavior of the write function to always return -1, simulating a
     // write failure
-    EXPECT_CALL(*mockDestFileWrapper.get(), fwrite(_, _, _, _)).Times(Exactly(0));
-    EXPECT_CALL(*mockSourceFileWrapper.get(), fread(_, _, _, _)).WillOnce(Return(-1));
+    EXPECT_CALL(*mockDestFileWrapper.get(), FWrite(_, _, _, _)).Times(Exactly(0));
+    EXPECT_CALL(*mockSourceFileWrapper.get(), FRead(_, _, _, _)).WillOnce(Return(-1));
 
     FileImageStream sourceStream(filePathSource, std::move(mockSourceFileWrapper));
     FileImageStream destStream(filePath, std::move(mockDestFileWrapper));
