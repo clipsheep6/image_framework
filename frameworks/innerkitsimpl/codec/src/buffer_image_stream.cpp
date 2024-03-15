@@ -38,9 +38,9 @@ BufferImageStream::~BufferImageStream()
     Close();
 }
 
-ssize_t BufferImageStream::Write(uint8_t *data, size_t size)
+ssize_t BufferImageStream::Write(uint8_t *data, ssize_t size)
 {
-    if (buffer_.capacity() < currentOffset_ + size) {
+    if (buffer_.capacity() < static_cast<unsigned int>(currentOffset_ + size)) {
         // Calculate the required memory size, ensuring it is a multiple of 4k
         size_t newCapacity =
             ((currentOffset_ + size + IMAGE_STREAM_PAGE_SIZE - 1) / IMAGE_STREAM_PAGE_SIZE) * IMAGE_STREAM_PAGE_SIZE;
@@ -72,9 +72,13 @@ ssize_t BufferImageStream::Write(ImageStream &src)
     return totalBytesWritten;
 }
 
-ssize_t BufferImageStream::Read(uint8_t *buf, size_t size)
+ssize_t BufferImageStream::Read(uint8_t *buf, ssize_t size)
 {
-    size_t bytesToRead = std::min(size, buffer_.size() - static_cast<size_t>(currentOffset_));
+    if (buf == nullptr) {
+        IMAGE_LOGE("BufferImageStream::Read buf is nullptr");
+        return -1;
+    }
+    ssize_t bytesToRead = std::min(size, static_cast<ssize_t>(buffer_.size() - static_cast<size_t>(currentOffset_)));
     std::copy(buffer_.begin() + currentOffset_, buffer_.begin() + currentOffset_ + bytesToRead, buf);
     currentOffset_ += bytesToRead;
     return bytesToRead;
@@ -89,7 +93,7 @@ int BufferImageStream::ReadByte()
     return buffer_[currentOffset_++];
 }
 
-long BufferImageStream::Seek(int offset, SeekPos pos)
+long BufferImageStream::Seek(long offset, SeekPos pos)
 {
     switch (pos) {
         case SeekPos::BEGIN:
@@ -105,7 +109,9 @@ long BufferImageStream::Seek(int offset, SeekPos pos)
             return -1;
     }
 
-    if (static_cast<size_t>(currentOffset_) > buffer_.size()) {
+    // If the new current offset is greater than the size of the buffer, set the current offset to the size of the
+    // buffer.
+    if (static_cast<std::vector<uint8_t>::size_type>(currentOffset_) > buffer_.size()) {
         currentOffset_ = buffer_.size();
     }
 
@@ -176,7 +182,7 @@ bool BufferImageStream::CopyFrom(ImageStream &src)
     return true;
 }
 
-size_t BufferImageStream::GetSize()
+ssize_t BufferImageStream::GetSize()
 {
     return buffer_.size();
 }

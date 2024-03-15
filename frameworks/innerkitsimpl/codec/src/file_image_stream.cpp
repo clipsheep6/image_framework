@@ -33,12 +33,12 @@
 
 namespace OHOS {
 namespace Media {
-size_t FileWrapper::FWrite(const void *src, size_t size, size_t nmemb, FILE *file)
+ssize_t FileWrapper::FWrite(const void *src, size_t size, size_t nmemb, FILE *file)
 {
     return ::fwrite(src, size, nmemb, file);
 }
 
-size_t FileWrapper::FRead(void *destv, size_t size, size_t nmemb, FILE *file)
+ssize_t FileWrapper::FRead(void *destv, size_t size, size_t nmemb, FILE *file)
 {
     return ::fread(destv, size, nmemb, file);
 }
@@ -100,14 +100,14 @@ FileImageStream::~FileImageStream()
     Close();
 }
 
-ssize_t FileImageStream::Write(byte *data, size_t size)
+ssize_t FileImageStream::Write(byte *data, ssize_t size)
 {
     if (fp_ == nullptr) {
         IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath_.c_str(), "fp is nullptr");
         return -1;
     }
 
-    size_t result = fileWrapper_->FWrite(data, 1, size, fp_);
+    ssize_t result = fileWrapper_->FWrite(data, 1, size, fp_);
     if (result != size || (ferror(fp_) != 0)) {
         char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, buf, sizeof(buf));
@@ -185,17 +185,18 @@ ssize_t FileImageStream::Write(ImageStream &src)
     return totalBytesWritten;
 }
 
-ssize_t FileImageStream::Read(byte *buf, size_t size)
+ssize_t FileImageStream::Read(byte *buf, ssize_t size)
 {
     if (fp_ == nullptr) {
         // File is not open
+        IMAGE_LOGE("File is not open: %{public}s", filePath_.c_str());
         return -1;
     }
     if (size == 0) {
         return 0;
     }
 
-    size_t result = fileWrapper_->FRead(buf, 1, size, fp_);
+    ssize_t result = fileWrapper_->FRead(buf, 1, size, fp_);
     if (result == 0 && ferror(fp_) != 0) {
         // Read failed
         char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
@@ -211,6 +212,7 @@ int FileImageStream::ReadByte()
 {
     if (fp_ == nullptr) {
         // File is not open
+        IMAGE_LOGE("Read file failed: %{public}s, reason: %{public}s", filePath_.c_str(), "fp is nullptr");
         return -1;
     }
 
@@ -226,7 +228,7 @@ int FileImageStream::ReadByte()
     return byte;
 }
 
-long FileImageStream::Seek(int offset, SeekPos pos)
+long FileImageStream::Seek(long offset, SeekPos pos)
 {
     if (fp_ == nullptr) {
         // File is not open
@@ -537,8 +539,8 @@ bool FileImageStream::ReleaseAddr()
     return true;
 }
 
-bool FileImageStream::CopyDataFromSource(ImageStream &src, byte *tempBuffer, size_t buffer_size,
-    size_t &totalBytesWritten)
+bool FileImageStream::CopyDataFromSource(ImageStream &src, byte *tempBuffer, ssize_t buffer_size,
+    ssize_t &totalBytesWritten)
 {
     ssize_t src_cur = src.Tell(); // Temporarily store the position of src
 
@@ -546,7 +548,7 @@ bool FileImageStream::CopyDataFromSource(ImageStream &src, byte *tempBuffer, siz
     src.Seek(0, SeekPos::BEGIN); // Set the position of src to 0
 
     while (!src.IsEof()) {
-        size_t bytesRead = src.Read(tempBuffer, buffer_size);
+        ssize_t bytesRead = src.Read(tempBuffer, buffer_size);
         if (bytesRead > 0) {
             size_t bytesWritten = Write(tempBuffer, bytesRead);
             if (bytesWritten == static_cast<size_t>(-1)) {
@@ -614,9 +616,9 @@ bool FileImageStream::CopyFrom(ImageStream &src)
     }
 
     // Read data from the source ImageStream and write it to the current file
-    size_t buffer_size = std::min((size_t)IMAGE_STREAM_PAGE_SIZE, src.GetSize());
+    ssize_t buffer_size = std::min((ssize_t)IMAGE_STREAM_PAGE_SIZE, src.GetSize());
     byte tempBuffer[buffer_size];
-    size_t totalBytesWritten = 0;
+    ssize_t totalBytesWritten = 0;
     ssize_t src_cur = src.Tell(); // Temporarily store the position of src
 
     if (!CopyDataFromSource(src, tempBuffer, buffer_size, totalBytesWritten)) {
@@ -641,7 +643,7 @@ bool FileImageStream::CopyFrom(ImageStream &src)
     return true;
 }
 
-size_t FileImageStream::GetSize()
+ssize_t FileImageStream::GetSize()
 {
     return fileSize_;
 }

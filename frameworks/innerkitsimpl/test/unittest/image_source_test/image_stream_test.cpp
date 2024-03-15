@@ -63,12 +63,14 @@ public:
     {
         startVmSize = GetVmSize();
         startVmRSS = GetVmRSS();
+        startFdCount = CountOpenFileDescriptors();
     }
 
     void End()
     {
         endVmSize = GetVmSize();
         endVmRSS = GetVmRSS();
+        endFdCount = CountOpenFileDescriptors();
     }
 
     bool check = true;
@@ -76,9 +78,10 @@ public:
     bool Compare() const
     {
         if (check) {
-            if (startVmSize != endVmSize || startVmRSS != endVmRSS) {
+            if (startVmSize != endVmSize || startVmRSS != endVmRSS || startFdCount != endFdCount) {
                 std::cout << "Difference in VmSize: " << endVmSize - startVmSize << std::endl;
                 std::cout << "Difference in VmRSS: " << endVmRSS - startVmRSS << std::endl;
+                std::cout << "Difference in File Descriptors: " << endFdCount - startFdCount << std::endl;
                 return false;
             }
         }
@@ -94,6 +97,23 @@ private:
     long GetVmRSS() const
     {
         return GetMemoryInfo("VmRSS:");
+    }
+
+    int CountOpenFileDescriptors() const
+    {
+        DIR *dir;
+        int fdCount = 0;
+        std::string dirPath = "/proc/" + std::to_string(getpid()) + "/fd/";
+        if ((dir = opendir(dirPath.c_str())) != nullptr) {
+            while (readdir(dir) != nullptr) {
+                fdCount++;
+            }
+            closedir(dir);
+        } else {
+            std::cerr << "Could not open " << dirPath << std::endl;
+        }
+
+        return fdCount;
     }
 
     long GetMemoryInfo(const std::string &name) const
@@ -114,7 +134,26 @@ private:
     long startVmRSS = 0;
     long endVmSize = 0;
     long endVmRSS = 0;
+    int startFdCount = 0;
+    int endFdCount = 0;
 };
+
+int CountOpenFileDescriptors()
+{
+    DIR *dir;
+    int fdCount = 0;
+    std::string dirPath = "/proc/" + std::to_string(getpid()) + "/fd/";
+    if ((dir = opendir(dirPath.c_str())) != nullptr) {
+        while (readdir(dir) != nullptr) {
+            fdCount++;
+        }
+        closedir(dir);
+    } else {
+        std::cerr << "Could not open " << dirPath << std::endl;
+    }
+
+    return fdCount;
+}
 
 
 void RemoveFile(const std::string &filePath)
@@ -197,8 +236,8 @@ const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
 
 class MockFileWrapper : public FileWrapper {
 public:
-    MOCK_METHOD(size_t, FWrite, (const void *src, size_t size, size_t nmemb, FILE *file), (override));
-    MOCK_METHOD(size_t, FRead, (void *destv, size_t size, size_t nmemb, FILE *file), (override));
+    MOCK_METHOD(ssize_t, FWrite, (const void *src, size_t size, size_t nmemb, FILE *file), (override));
+    MOCK_METHOD(ssize_t, FRead, (void *destv, size_t size, size_t nmemb, FILE *file), (override));
 
     MockFileWrapper()
     {
@@ -875,23 +914,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3)
     // Close the file
     close(fileDescription);
     RemoveFile(tempFile.c_str());
-}
-
-int CountOpenFileDescriptors()
-{
-    DIR *dir;
-    int fdCount = 0;
-    std::string dirPath = "/proc/" + std::to_string(getpid()) + "/fd/";
-    if ((dir = opendir(dirPath.c_str())) != nullptr) {
-        while (readdir(dir) != nullptr) {
-            fdCount++;
-        }
-        closedir(dir);
-    } else {
-        std::cerr << "Could not open " << dirPath << std::endl;
-    }
-
-    return fdCount;
 }
 
 /**

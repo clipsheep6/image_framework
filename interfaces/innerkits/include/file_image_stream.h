@@ -31,8 +31,8 @@ namespace Media {
 class FileWrapper {
 public:
     virtual ~FileWrapper() {}
-    virtual size_t FWrite(const void *src, size_t size, size_t nmemb, FILE *file);
-    virtual size_t FRead(void *destv, size_t size, size_t nmemb, FILE *file);
+    virtual ssize_t FWrite(const void *src, size_t size, size_t nmemb, FILE *file);
+    virtual ssize_t FRead(void *destv, size_t size, size_t nmemb, FILE *file);
 };
 
 class FileImageStream : public ImageStream {
@@ -63,10 +63,14 @@ public:
     /* *
      * @brief Writes data to the FileImageStream.
      * @param data The data to be written.
-     * @param size The size of the data.
-     * @return The number of bytes written.
+     * @param size The size of the data. On a 32-bit system, the maximum size
+     * that can be written at once is 2GB. On a 64-bit system, the maximum size
+     * depends on the type of ssize_t. If ssize_t is 32-bit, the maximum size
+     * is 2GB. If ssize_t is 64-bit, the maximum size is 8ZB.
+     * @return The number of bytes written. Returns -1 if an error occurred
+     * during writing.
      */
-    NATIVEEXPORT virtual ssize_t Write(byte *data, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Write(byte *data, ssize_t size) override;
 
     /* *
      * @brief Writes the content of the source ImageStream to the current
@@ -80,9 +84,10 @@ public:
      * @brief Reads data from the FileImageStream.
      * @param buf The buffer to store the data.
      * @param size The size of the data.
-     * @return The number of bytes read.
+     * @return The number of bytes read. Returns -1 if a read error occurred
+     * or the pointer was not initialized.
      */
-    NATIVEEXPORT virtual ssize_t Read(byte *buf, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Read(byte *buf, ssize_t size) override;
 
     /* *
      * @brief Reads a byte from the FileImageStream.
@@ -94,9 +99,9 @@ public:
      * @brief Seeks to a specific position in the FileImageStream.
      * @param offset The offset.
      * @param pos The starting position of the offset.
-     * @return The new position.
+     * @return The new position in the stream. Returns -1 if an error occurred during seeking.
      */
-    NATIVEEXPORT virtual long Seek(int offset, SeekPos pos) override;
+    NATIVEEXPORT virtual long Seek(long offset, SeekPos pos) override;
 
     /* *
      * @brief Gets the current position in the FileImageStream.
@@ -151,7 +156,7 @@ public:
      * @brief Gets the size of the FileImageStream.
      * @return The size of the FileImageStream.
      */
-    NATIVEEXPORT size_t GetSize() override;
+    NATIVEEXPORT ssize_t GetSize() override;
 
 private:
     /* *
@@ -196,7 +201,7 @@ private:
      * @param totalBytesWritten The total number of bytes written to the current file.
      * @return true if the data is copied successfully, false otherwise.
      */
-    bool CopyDataFromSource(ImageStream &src, byte *tempBuffer, size_t buffer_size, size_t &totalBytesWritten);
+    bool CopyDataFromSource(ImageStream &src, byte *tempBuffer, ssize_t buffer_size, ssize_t &totalBytesWritten);
 
     /* *
      * @brief Handles the error when writing data to the current file fails.
@@ -225,7 +230,7 @@ private:
     FILE *fp_;                                 // File descriptor
     int dupFD_;                                // Duplicated file descriptor
     std::string filePath_;                     // File path
-    size_t fileSize_;                          // File size
+    ssize_t fileSize_;                         // File size
     void *mappedMemory_;                       // Address of memory mapping
     std::unique_ptr<FileWrapper> fileWrapper_; // File wrapper class, used for testing
 

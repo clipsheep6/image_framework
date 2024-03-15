@@ -26,6 +26,16 @@
 
 namespace OHOS {
 namespace Media {
+/**
+ * @class BufferImageStream
+ * @brief A class for handling image streams in memory.
+ *
+ * This class provides methods for reading from and seeking within an image
+ * stream in memory. The maximum size of the stream is limited by
+ * std::vector<uint8_t>::size_type, which is 4GB. Although ImageStream can
+ * address a maximum space of 'long', in memory mode, the maximum space is
+ * limited by std::vector<uint8_t>::size_type.
+ */
 class BufferImageStream : public ImageStream {
 public:
     /* *
@@ -41,10 +51,12 @@ public:
     /* *
      * @brief Writes data to the BufferImageStream.
      * @param data The data to be written.
-     * @param size The size of the data.
-     * @return The number of bytes written.
+     * @param size The size of the data. On a 32-bit system, the maximum size
+     * that can be written at once is 2GB or 4GB.
+     * @return The number of bytes written. Returns -1 if an error occurred
+     * during writing.
      */
-    NATIVEEXPORT virtual ssize_t Write(uint8_t *data, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Write(uint8_t *data, ssize_t size) override;
 
     /* *
      * @brief Writes the content of the source ImageStream to the current
@@ -58,9 +70,9 @@ public:
      * @brief Reads data from the BufferImageStream.
      * @param buf The buffer to store the data.
      * @param size The size of the data.
-     * @return The number of bytes read.
+     * @return The number of bytes read. Returns -1 if the buffer pointer is null.
      */
-    NATIVEEXPORT virtual ssize_t Read(uint8_t *buf, size_t size) override;
+    NATIVEEXPORT virtual ssize_t Read(uint8_t *buf, ssize_t size) override;
 
     /* *
      * @brief Reads a byte from the BufferImageStream.
@@ -69,12 +81,12 @@ public:
     NATIVEEXPORT virtual int ReadByte() override;
 
     /* *
-     * @brief Seeks to a specific position in the BufferImageStream.
-     * @param offset The offset.
-     * @param pos The starting position of the offset.
-     * @return The new position.
+     * @brief Seeks to a specific position in the image stream.
+     * @param offset The offset to seek to. This can be positive or negative.
+     * @param pos The position to seek from. This can be the beginning, current position, or end of the stream.
+     * @return The new position in the stream. Returns -1 if an invalid seek position is provided.
      */
-    NATIVEEXPORT virtual long Seek(int offset, SeekPos pos) override;
+    NATIVEEXPORT virtual long Seek(long offset, SeekPos pos) override;
 
     /* *
      * @brief Gets the current position in the BufferImageStream.
@@ -132,15 +144,6 @@ public:
     NATIVEEXPORT virtual byte *GetAddr(bool isWriteable = false) override;
 
     /* *
-     * Release a memory map.
-     *
-     * @param mmap The pointer to the memory map that needs to be released.
-     * @return Returns true if the memory map is released successfully;
-     * otherwise, returns false.
-     */
-    // NATIVEEXPORT virtual bool MUnmap(byte* mmap) override;
-
-    /* *
      * Transfer the content of the source ImageStream to the current
      * BufferImageStream. This function first clears the current buffer and sets
      * the current offset to 0. Then, this function reads data from the source
@@ -158,7 +161,7 @@ public:
      *
      * @return Returns the size of the BufferImageStream.
      */
-    NATIVEEXPORT virtual size_t GetSize() override;
+    NATIVEEXPORT virtual ssize_t GetSize() override;
 
 private:
     /* *

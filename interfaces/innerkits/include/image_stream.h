@@ -41,6 +41,17 @@ enum class OpenMode {
 #define IMAGE_STREAM_PAGE_SIZE 4096
 #define IMAGE_STREAM_ERROR_BUFFER_SIZE 255
 
+/**
+ * @class ImageStream
+ * @brief A class for handling image streams.
+ *
+ * This class provides methods for reading from and seeking within an image stream.
+ * The maximum file size that can be handled depends on the system and compiler:
+ * - On a 32-bit system, the maximum file size is 2GB.
+ * - On a 64-bit system, the maximum file size depends on whether 'long' is compiled as 32-bit or 64-bit.
+ * If 'long' is 32-bit, the maximum file size is 2GB.
+ * If 'long' is 64-bit, the maximum file size is 8ZB (Zettabytes).
+ */
 class ImageStream {
 public:
     virtual ~ImageStream() {}
@@ -65,12 +76,15 @@ public:
     virtual bool Flush() = 0;
 
     /* *
-     * Write data to the image stream
-     * @param data The data to be written
-     * @param size The size of the data to be written
-     * @return The actual size of the data written
+     * @brief Writes data to the image stream.
+     * @param data The data to be written.
+     * @param size The size of the data. The maximum size that can be written
+     * at once depends on the implementation. On 32-bit systems and above,
+     * a safe value is 2GB.
+     * @return The actual size of the data written. Returns -1 if an error
+     * occurred during writing.
      */
-    virtual ssize_t Write(byte *data, size_t size) = 0;
+    virtual ssize_t Write(byte *data, ssize_t size) = 0;
 
     /* *
      * Write data from another image stream
@@ -84,13 +98,13 @@ public:
      * Read data from the image stream
      * @param buf The buffer to store the data read
      * @param size The size of the data to be read
-     * @return The actual size of the data read
+     * @return The actual size of the data read, or -1 if an error occurred
      */
-    virtual ssize_t Read(byte *buf, size_t size) = 0;
+    virtual ssize_t Read(byte *buf, ssize_t size) = 0;
 
     /* *
-     * Read a byte from the image stream and move the pointer to the next position
-     * @return The byte read from the stream
+     * @brief Reads a byte from the image stream and moves the pointer to the next position.
+     * @return The byte read from the stream as a uint8_t. Returns -1 if an error occurred.
      */
     virtual int ReadByte() = 0;
 
@@ -99,9 +113,9 @@ public:
      * @param offset The offset
      * @param pos The starting position of the offset (from the head, current
      * position, or tail)
-     * @return The new position
+     * @return The new position. Returns -1 if an error occurred during seeking.
      */
-    virtual long Seek(int offset, SeekPos pos) = 0;
+    virtual long Seek(long offset, SeekPos pos) = 0;
 
     /* *
      * Get the current position in the image stream
@@ -137,7 +151,7 @@ public:
      * Get the size of the ImageStream
      * @return The size of the ImageStream
      */
-    virtual size_t GetSize() = 0;
+    virtual ssize_t GetSize() = 0;
 
 private:
     /* *
