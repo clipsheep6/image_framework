@@ -706,7 +706,7 @@ void ExifMetadataConverter::DecimalRationalFormat(std::string &value)
         if (ValidRegex(match[0], "\\d+")) {
             // append '/1' to integer 23 -> 23/1
             result += match.str() + "/1";
-            IMAGE_LOGD("match integer value is [%{public}s].",((std::string)match[0]).c_str());
+            IMAGE_LOGD("match integer value is [%{public}s].", ((std::string)match[0]).c_str());
         } else if (ValidRegex(match[0], "\\d+\\.\\d+")) {
             // segment is decimal call decimalToFraction 2.5 -> 5/2
             result += GetFractionFromStr(match[0]);
@@ -1036,7 +1036,7 @@ int32_t ExifMetadataConverter::ValidateValueRange(const std::string &keyName, co
             // validate the ivalue is in value range array.
             auto isValid = IsValidValue(arrRef, arrSize, ivalue);
             if (!isValid) {
-                IMAGE_LOGD("invalid value is [%{public}s].",value.c_str());
+                IMAGE_LOGD("invalid value is [%{public}s].", value.c_str());
                 return Media::ERR_MEDIA_OUT_OF_RANGE;
             } else {
                 IMAGE_LOGD("isValueRangeValidate valid value is [%{public}s].", value.c_str());
