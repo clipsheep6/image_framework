@@ -13,12 +13,15 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
+
 #include <memory>
+#include <gtest/gtest.h>
+
 #include "png_image_accessor.h"
 #include "file_image_stream.h"
 #include "image_log.h"
 #include "media_errors.h"
+#include "png_image_accessor.h"
 
 using namespace OHOS::Media;
 using namespace testing::ext;
@@ -54,6 +57,7 @@ std::string PngImageAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata
 HWTEST_F(PngImageAccessorTest, ReadMetadata001, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_NOEXIF_PNG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, ERR_IMAGE_SOURCE_DATA);
@@ -67,6 +71,7 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata001, TestSize.Level3)
 HWTEST_F(PngImageAccessorTest, ReadMetadata002, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_EXIF_PNG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, SUCCESS);
@@ -90,6 +95,7 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata002, TestSize.Level3)
 HWTEST_F(PngImageAccessorTest, ReadMetadata003, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_TEXTCHUNK_PNG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, SUCCESS);
@@ -134,6 +140,7 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata003, TestSize.Level3)
 HWTEST_F(PngImageAccessorTest, ReadMetadata004, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_TEXTCHUNK_PNG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, SUCCESS);
@@ -174,6 +181,7 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata004, TestSize.Level3)
 HWTEST_F(PngImageAccessorTest, ReadMetadata005, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_CHUNKTYPETEXT_PNG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, SUCCESS);
@@ -227,6 +235,7 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata005, TestSize.Level3)
 HWTEST_F(PngImageAccessorTest, ReadExifBlob001, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_EXIF_PNG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -242,6 +251,7 @@ HWTEST_F(PngImageAccessorTest, ReadExifBlob001, TestSize.Level3)
 HWTEST_F(PngImageAccessorTest, ReadExifBlob002, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_NOEXIF_PNG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -256,6 +266,7 @@ HWTEST_F(PngImageAccessorTest, ReadExifBlob002, TestSize.Level3)
 HWTEST_F(PngImageAccessorTest, ReadExifBlob003, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_NOEXIST_PATH);
+    ASSERT_FALSE(stream->Open(OpenMode::ReadWrite));
     PngImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);

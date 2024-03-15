@@ -112,10 +112,8 @@ bool PngImageAccessor::ExifDataDeal(DataBuf &blob, std::string chunkType, uint32
 bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
 {
     if (!imageStream_->IsOpen()) {
-        if (!imageStream_->Open(OpenMode::ReadWrite)) {
-            IMAGE_LOGE("Output image stream open failed");
-            return false;
-        }
+        IMAGE_LOGE("Output image stream is not open.");
+        return false;
     } else {
         imageStream_->Seek(0, SeekPos::BEGIN);
     }
