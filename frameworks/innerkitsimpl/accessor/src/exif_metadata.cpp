@@ -611,7 +611,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         return CreateExifEntryOfGpsLatitudeOrLongitude(tag, exifData_, value, order, &ptrEntry);
     } else if (std::find(rationalProps.begin(), rationalProps.end(), tag) != rationalProps.end()) {
         return CreateExifEntryOfRationalExif(tag, exifData_, value, order, &ptrEntry, "/",
-         static_cast<size_t>(CONSTANT_2));
+                                    static_cast<size_t>(CONSTANT_2));
     } else if (tag == EXIF_TAG_COMPRESSED_BITS_PER_PIXEL) {
         return CreateExifEntryOfCompressedBitsPerPixel(tag, exifData_, value, order, &ptrEntry);
     } else if (tag == EXIF_TAG_GPS_TIME_STAMP) {
@@ -666,24 +666,19 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
         return nullptr;
     }
     if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
-        IMAGE_LOGD("[CreateExifTag] contains exifENtry. going to ExifInfoBufferCheck!");
         EXIFInfoBufferCheck(exifEntry, len);
         return exifEntry;
     }
-    IMAGE_LOGD("[CreateExifTag] exifEntry is nullptr. go to initilize new entry!");
-    /* Create a memory allocator to manage this ExifEntry */
     ExifMem *exifMem = exif_mem_new_default();
     if (exifMem == nullptr) {
         IMAGE_LOGD("Create mem failed!");
         return nullptr;
     }
-    /* Create a new ExifEntry using our allocator */
     exifEntry = exif_entry_new_mem (exifMem);
     if (exifEntry == nullptr) {
         IMAGE_LOGD("Create entry by mem failed!");
         return nullptr;
     }
-    /* Allocate memory to use for holding the tag data */
     buf = exif_mem_alloc(exifMem, len);
     if (buf == nullptr) {
         IMAGE_LOGD("Allocate memory failed!");
@@ -691,14 +686,12 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     }
     if (format == EXIF_FORMAT_UNDEFINED || format == EXIF_FORMAT_ASCII) {
         IMAGE_LOGD("[CreateExifTag] format is [%{public}d] size is [%{public}d]. allocate size manually", format, len);
-        /* Fill in the entry */
         exifEntry->data = static_cast<unsigned char*>(buf);
         exifEntry->size = len;
         exifEntry->tag = tag;
         exifEntry->components = len;
         exifEntry->format = format;
     } else {
-        IMAGE_LOGD("[CreateExifTag] format is rational. to use exif_entry_initilalize");
         exifEntry = exif_entry_new();
         if (exifEntry == nullptr) {
             IMAGE_LOGD("[CreateExifTag] exif_entry_new fail.");
@@ -709,9 +702,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
         exif_entry_initialize(exifEntry, tag);
         exif_entry_unref(exifEntry);
     }
-    /* Attach the ExifEntry to an IFD */
     exif_content_add_entry (exif->ifd[ifd], exifEntry);
-    /* The ExifMem and ExifEntry are now owned elsewhere */
     exif_mem_unref(exifMem);
     exif_entry_unref(exifEntry);
     IMAGE_LOGD("[CreateExifTag] CreateExifTag SUCCESS and Return.");
