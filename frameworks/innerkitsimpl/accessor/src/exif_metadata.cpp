@@ -611,7 +611,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         return CreateExifEntryOfGpsLatitudeOrLongitude(tag, exifData_, value, order, &ptrEntry);
     } else if (std::find(rationalProps.begin(), rationalProps.end(), tag) != rationalProps.end()) {
         return CreateExifEntryOfRationalExif(tag, exifData_, value, order, &ptrEntry, "/",
-                                    static_cast<size_t>(CONSTANT_2));
+                                             static_cast<size_t>(CONSTANT_2));
     } else if (tag == EXIF_TAG_COMPRESSED_BITS_PER_PIXEL) {
         return CreateExifEntryOfCompressedBitsPerPixel(tag, exifData_, value, order, &ptrEntry);
     } else if (tag == EXIF_TAG_GPS_TIME_STAMP) {
