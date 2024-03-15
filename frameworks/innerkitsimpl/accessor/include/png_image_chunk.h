@@ -16,37 +16,20 @@
 #ifndef PNG_IMAGE_CHUNK_H
 #define PNG_IMAGE_CHUNK_H
 
-#include <libexif/exif-data.h>
 #include <algorithm>
-#include <map>
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <map>
 #include <stdint.h>
 #include <vector>
+
+#include <libexif/exif-data.h>
 
 #include "data_buf.h"
 
 namespace OHOS {
 namespace Media {
-
-#define PNG_IMAGE_CHUNK_DEBUG            0
-#define ASCII_TO_HEX_MAP_SIZE            103
-#define IMAGE_SEG_MAX_SIZE               65536
-#define EXIF_HEADER_SIZE                 6
-#define EXIF_BYTEORDER_SIZE              4
-#define PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE 21
-#define HEX_BASE                         16
-#define DECIMAL_BASE                     10
-#define PNG_PROFILE_EXIF                 "Raw profile type exif"
-#define PNG_PROFILE_APP1                 "Raw profile type APP1"
-
-#define CHUNK_COMPRESS_METHOD_VALID 0
-#define CHUNK_FLAG_COMPRESS_NO      0
-#define CHUNK_FLAG_COMPRESS_YES     1
-#define NULL_CHAR_AMOUNT            2
-#define HEX_STRING_UNIT_SIZE        2
-
 class PngImageChunk {
 public:
     // type of png text chunk

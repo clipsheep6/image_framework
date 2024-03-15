@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
-#include "png_image_accessor.h"
-#include "image_stream.h"
-#include "image_log.h"
 #include "data_buf.h"
-#include "tiff_parser.h"
 #include "exif_metadata.h"
+#include "image_log.h"
+#include "image_stream.h"
 #include "libexif/exif-data.h"
-#include "png_image_chunk.h"
 #include "media_errors.h"
+#include "png_image_accessor.h"
+#include "png_image_chunk.h"
+#include "tiff_parser.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -31,6 +31,18 @@
 
 namespace OHOS {
 namespace Media {
+namespace {
+    constexpr auto PNG_CHUNK_IEND = "IEND";
+    constexpr auto PNG_CHUNK_TEXT = "tEXt";
+    constexpr auto PNG_CHUNK_ZTXT = "zTXt";
+    constexpr auto PNG_CHUNK_ITXT = "iTXt";
+    constexpr auto PNG_CHUNK_EXIF = "eXIf";
+    constexpr auto PNG_CHUNK_HEAD_SIZE = 8;
+    constexpr auto PNG_CHUNK_LENGTH_SIZE = 4;
+    constexpr auto PNG_CHUNK_TYPE_SIZE = 4;
+    constexpr auto PNG_CHUNK_CRC_SIZE = 4;
+    constexpr auto PNG_SIGN_SIZE = 8;
+}
 
 PngImageAccessor::PngImageAccessor(std::shared_ptr<ImageStream> &stream)
     : AbstractImageAccessor(stream)

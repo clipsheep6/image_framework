@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-#include "png_image_chunk.h"
+#include "data_buf.h"
+#include "exif_metadata.h"
 #include "image_stream.h"
 #include "image_log.h"
-#include "data_buf.h"
-#include "tiff_parser.h"
-#include "exif_metadata.h"
 #include "libexif/exif-data.h"
+#include "png_image_chunk.h"
+#include "tiff_parser.h"
 
 #include "zlib.h"
 
@@ -31,6 +31,22 @@
 
 namespace OHOS {
 namespace Media {
+namespace {
+    constexpr auto ASCII_TO_HEX_MAP_SIZE = 103;
+    constexpr auto IMAGE_SEG_MAX_SIZE = 65536;
+    constexpr auto EXIF_HEADER_SIZE = 6;
+    constexpr auto EXIF_BYTEORDER_SIZE = 4;
+    constexpr auto PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE = 21;
+    constexpr auto HEX_BASE = 16;
+    constexpr auto DECIMAL_BASE = 10;
+    constexpr auto PNG_PROFILE_EXIF = "Raw profile type exif";
+    constexpr auto PNG_PROFILE_APP1 = "Raw profile type APP1";
+    constexpr auto CHUNK_COMPRESS_METHOD_VALID = 0;
+    constexpr auto CHUNK_FLAG_COMPRESS_NO = 0;
+    constexpr auto CHUNK_FLAG_COMPRESS_YES = 1;
+    constexpr auto NULL_CHAR_AMOUNT = 2;
+    constexpr auto HEX_STRING_UNIT_SIZE = 2;
+}
 
 int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkType, DataBuf &tiffData)
 {
@@ -144,7 +160,6 @@ DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t 
     const size_t textLen = chunkData.Size() - (keySize + 3 + languageTextLen + 1 + translatedKeyTextLen + 1);
     if (textLen <= 0) {
         return {};
-
     }
 
     const size_t textPosition = translatedKeyPos + translatedKeyTextLen + 1;
