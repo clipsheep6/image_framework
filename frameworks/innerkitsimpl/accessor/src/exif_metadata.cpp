@@ -583,7 +583,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         EXIF_TAG_DATE_TIME, EXIF_TAG_GPS_LATITUDE_REF, EXIF_TAG_GPS_LONGITUDE_REF};
     static std::vector rationalProps{EXIF_TAG_APERTURE_VALUE, EXIF_TAG_EXPOSURE_BIAS_VALUE, EXIF_TAG_EXPOSURE_TIME,
         EXIF_TAG_FNUMBER, EXIF_TAG_FOCAL_LENGTH};
-
+    IMAGE_LOGD("Setvalue key:%{public}s ,value:%{public}s", key.c_str(), value.c_str());
     ExifEntry *ptrEntry = nullptr;
     auto tag = exif_tag_from_name(key.c_str());
     ExifByteOrder order = exif_data_get_byte_order(exifData_);
@@ -602,7 +602,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         if ((ptrEntry) == nullptr || (ptrEntry)->size < valuesize) {
             IMAGE_LOGD("Get %{public}s exif entry failed.", GetExifNameByExifTag(tag).c_str());
         }
-        IMAGE_LOGD("Setvalue valuesize:%{}d ,value:%{public}s", valuesize, value.c_str());
+        IMAGE_LOGD("Setvalue valuesize:%{public}d ,value:%{public}s", valuesize, value.c_str());
         if (memcpy_s((ptrEntry)->data, valuesize, value.c_str(), valuesize) != 0) {
             IMAGE_LOGD("%{public}s memcpy error", GetExifNameByExifTag(tag).c_str());
         }
