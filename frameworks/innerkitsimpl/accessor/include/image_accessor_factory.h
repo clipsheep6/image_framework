@@ -18,7 +18,7 @@
 
 #include <string>
 #include <memory>
-#include "image_accessor.h"
+#include "image_accessor_interface.h"
 #include "image_stream.h"
 
 

@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#ifndef ABSTRACT_IMAGE_ACCESSOR_H_
-#define ABSTRACT_IMAGE_ACCESSOR_H_
+#ifndef ABSTRACT_IMAGE_ACCESSOR_H
+#define ABSTRACT_IMAGE_ACCESSOR_H
 
-#include "image_accessor.h"
+#include "image_accessor_interface.h"
 
 namespace OHOS {
 namespace Media {

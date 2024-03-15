@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_ACCESSOR_H_
-#define IMAGE_ACCESSOR_H_
+#ifndef IMAGE_ACCESSOR_INTERFACE_H
+#define IMAGE_ACCESSOR_INTERFACE_H
 
 #define MOCK_NATIVE_INCLUDE_HILOG_LOG_C_H 1
 
