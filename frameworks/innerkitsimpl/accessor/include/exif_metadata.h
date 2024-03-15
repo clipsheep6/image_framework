@@ -17,6 +17,7 @@
 #define EXIF_METADATA_H
 
 #include <string>
+
 #include <libexif/exif-data.h>
 #include <libexif/exif-entry.h>
 #include <libexif/exif-tag.h>
@@ -30,8 +31,9 @@ public:
     ~ExifMetadata();
     int GetValue(const std::string &key, std::string &value) const;
     bool SetValue(const std::string &key, const std::string &value);
-    ExifData* GetData();
+    ExifData* GetExifData();
     bool CreateExifdata();
+
 private:
     ExifEntry* InitExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag);
     ExifEntry* CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len, ExifFormat format);
@@ -53,6 +55,7 @@ private:
     const std::vector<std::string> &dataVec);
     bool SetGpsRationals(ExifData *data, ExifEntry **ptrEntry, ExifByteOrder order, const ExifTag &tag,
         const std::vector<ExifRational> &exifRationals);
+
 private:
     ExifData *exifData_;
 };

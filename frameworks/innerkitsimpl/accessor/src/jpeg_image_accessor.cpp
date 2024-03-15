@@ -204,7 +204,7 @@ bool JpegImageAccessor::GetExifEncodeBlob(uint8_t** dataBlob, uint32_t& size)
         return false;
     }
 
-    ExifData* exifData = this->GetExifMetadata()->GetData();
+    ExifData* exifData = this->GetExifMetadata()->GetExifData();
     TiffParser::EncodeJpegExif(dataBlob, size, exifData);
 
     if (dataBlob == nullptr || *dataBlob == nullptr) {
