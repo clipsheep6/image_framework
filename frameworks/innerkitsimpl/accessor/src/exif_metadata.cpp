@@ -361,7 +361,7 @@ static void EXIFInfoBufferCheck(ExifEntry *exifEntry, size_t len)
 {
     IMAGE_LOGD("EXIFInfoBufferCheck len is [%{public}d]", len);
     if (exifEntry == nullptr || (exifEntry->size == len)) {
-        IMAGE_LOGD("[EXIFInfoBufferCheck] exifEntry is nullptr or size>=len len is [%{public}d]", len);
+        IMAGE_LOGD("[EXIFInfoBufferCheck] exifEntry is nullptr or size==len len is [%{public}d]", len);
         return;
     }
     /* Create a memory allocator to manage this ExifEntry */
