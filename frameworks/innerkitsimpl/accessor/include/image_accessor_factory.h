@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_ACCESSOR_FACTORY
-#define IMAGE_ACCESSOR_FACTORY
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_FACTORY
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_FACTORY
 
 #include <string>
 #include <memory>
@@ -28,12 +28,12 @@ class ImageAccessorFactory {
 public:
     ~ImageAccessorFactory() {}
 
-    static std::shared_ptr<ImageAccessor> CreateImageAccessor(uint8_t *buffer, const uint32_t size);
-    static std::shared_ptr<ImageAccessor> CreateImageAccessor(const int fd);
-    static std::shared_ptr<ImageAccessor> CreateImageAccessor(const std::string &path);
+    static std::shared_ptr<ImageAccessorInterface> CreateImageAccessor(uint8_t *buffer, const uint32_t size);
+    static std::shared_ptr<ImageAccessorInterface> CreateImageAccessor(const int fd);
+    static std::shared_ptr<ImageAccessorInterface> CreateImageAccessor(const std::string &path);
 
 private:
-    static std::shared_ptr<ImageAccessor> CreateImageAccessor(std::shared_ptr<ImageStream> &stream);
+    static std::shared_ptr<ImageAccessorInterface> CreateImageAccessor(std::shared_ptr<ImageStream> &stream);
     static EncodedFormat GetImageType(std::shared_ptr<ImageStream> &stream);
 };
 } // namespace Media

@@ -137,7 +137,7 @@ struct ASTCInfo {
 };
 
 class SourceStream;
-class ImageAccessor;
+class ImageAccessorInterface;
 struct DataBuf;
 
 class ImageSource {
@@ -267,7 +267,7 @@ private:
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
-    uint32_t ModifyImageProperty(std::shared_ptr<ImageAccessor> imageAccessor,
+    uint32_t ModifyImageProperty(std::shared_ptr<ImageAccessorInterface> imageAccessor,
                                  const std::string &key, const std::string &value);
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";

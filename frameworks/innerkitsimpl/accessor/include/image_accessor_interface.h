@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_ACCESSOR_INTERFACE_H
-#define IMAGE_ACCESSOR_INTERFACE_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_INTERFACE_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_INTERFACE_H
 
 #define MOCK_NATIVE_INCLUDE_HILOG_LOG_C_H 1
 
@@ -26,7 +26,7 @@
 
 namespace OHOS {
 namespace Media {
-class ImageAccessor {
+class ImageAccessorInterface {
 public:
     virtual uint32_t ReadMetadata() = 0;
     virtual uint32_t WriteMetadata() = 0;

@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef ABSTRACT_IMAGE_ACCESSOR_H
-#define ABSTRACT_IMAGE_ACCESSOR_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_ABSTRACT_IMAGE_ACCESSOR_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_ABSTRACT_IMAGE_ACCESSOR_H
 
 #include "image_accessor_interface.h"
 
 namespace OHOS {
 namespace Media {
-class AbstractImageAccessor : public ImageAccessor {
+class AbstractImageAccessor : public ImageAccessorInterface {
 public:
     AbstractImageAccessor(std::shared_ptr<ImageStream> &stream);
     virtual ~AbstractImageAccessor();

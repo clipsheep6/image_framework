@@ -981,7 +981,7 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
     return SUCCESS;
 }
 
-uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessor> imageAccessor,
+uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessorInterface> imageAccessor,
     const std::string &key, const std::string &value)
 {
     if (imageAccessor == nullptr) {
