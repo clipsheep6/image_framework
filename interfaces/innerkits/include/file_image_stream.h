@@ -144,15 +144,20 @@ public:
 
     /* *
      * @brief Opens the FileImageStream with a specific mode.
-     * The Open operation will reset the read and write position of the
-     * file
-     * @param mode The mode to open the FileImageStream.
+     * The Open operation will reset the read and write position of the file.
+     * A file object can only be opened and closed once.
+     * If the file fails to open from the file descriptor or path, it will
+     * return false. If it fails to seek to the end of the file or restore
+     * the file position, it will return false.
+     * @param mode The mode to open the FileImageStream. It can be OpenMode::Read
+     * or OpenMode::ReadWrite.
      * @return true if it opens successfully, false otherwise.
      */
     NATIVEEXPORT virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
 
     /* *
      * @brief Flushes the FileImageStream.
+     * The scenarios for using Flush are described in ImageStream::Flush.
      * @return true if it flushes successfully, false otherwise.
      */
     NATIVEEXPORT virtual bool Flush() override;
@@ -160,15 +165,20 @@ public:
     /* *
      * @brief Creates a memory map of the file.
      * @param isWriteable If true, the created memory map will be writable;
-     * otherwise, it will be read-only.
+     * otherwise, it will be read-only. Writing to a read-only pointer will
+     * result in a segmentation fault.
      * @return A pointer to the memory map if it is created successfully,
      * nullptr otherwise.
      */
     NATIVEEXPORT virtual byte *GetAddr(bool isWriteable = false) override;
 
     /* *
-     * @brief Should call Open first.Transfers the content of the source
+     * @brief Should call Open first. Transfers the content of the source
      * ImageStream to the current FileImageStream.
+     * Note the buffer size in CopyFrom is currently 4K. When reading from SSDs,
+     * reading only 4K at a time may not fully utilize the IO transfer capabilities.
+     * If performance issues are identified in later testing, this can be adjusted
+     * to a multiple of 4K.
      * @param src The source ImageStream.
      */
     NATIVEEXPORT bool CopyFrom(ImageStream &src) override;

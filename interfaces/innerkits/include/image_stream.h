@@ -57,15 +57,20 @@ public:
     virtual ~ImageStream() {}
 
     /* *
-     * Open the image stream with a specific mode
-     * @param mode The mode to open the image stream
-     * @return true if it opens successfully, false otherwise
+     * Open the image stream with a specific mode.
+     * For FileImageStream, OpenMode::ReadWrite and OpenMode::Read have distinct behaviors.
+     * For BufferImageStream, only OpenMode::ReadWrite is applicable. If OpenMode::Read is
+     * passed, it will be ignored as there is no specific read-only mode implemented.
+     * @param mode The mode to open the image stream.
+     * @return true if it opens successfully, false otherwise.
      */
     virtual bool Open(OpenMode mode = OpenMode::ReadWrite) = 0;
 
     /* *
-     * Check if the image stream is open
-     * @return true if it is open, false otherwise
+     * Check if the image stream is open.
+     * For FileImageStream, this function is meaningful and checks if the file is open.
+     * For BufferImageStream, this function always returns true.
+     * @return true if it is open, false otherwise.
      */
     virtual bool IsOpen() = 0;
 
