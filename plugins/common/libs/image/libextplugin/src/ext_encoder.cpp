@@ -174,10 +174,10 @@ uint32_t ExtEncoder::FinalizeEncode()
         IMAGE_LOGE("ExtEncoder::FinalizeEncode unsupported format %{public}s", opts_.format.c_str());
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-    auto encodeFormat = iter->first;
+
     SkBitmap bitmap;
     TmpBufferHolder holder;
-    auto errorCode = BuildSkBitmap(pixelmap_, bitmap, encodeFormat, holder);
+    auto errorCode = BuildSkBitmap(pixelmap_, bitmap, iter->first, holder);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("ExtEncoder::FinalizeEncode BuildSkBitmap failed");
         return errorCode;
@@ -191,15 +191,13 @@ uint32_t ExtEncoder::FinalizeEncode()
             return ERR_IMAGE_ENCODE_FAILED;
         }
 
-        uint8_t *buffer = wStream.GetAddr();
-        uint32_t bufferSize = wStream.bytesWritten();
-        auto destImageAccessor = ImageAccessorFactory::CreateImageAccessor(buffer, bufferSize);
+        auto destImageAccessor = ImageAccessorFactory::CreateImageAccessor(wStream.GetAddr(), wStream.bytesWritten());
         uint32_t ret = destImageAccessor->WriteExifBlob(*exifBlob);
         if (ret != SUCCESS) {
             IMAGE_LOGE("ExtEncoder::encode exifblob failed");
             return ret;
         }
-        
+
         destImageAccessor->WriteToOutput(*output_);
     } else {
         ExtWStream wStream(output_);
