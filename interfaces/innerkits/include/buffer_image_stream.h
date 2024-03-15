@@ -95,12 +95,6 @@ public:
     NATIVEEXPORT virtual bool IsOpen() override;
 
     /* *
-     * @brief Opens the BufferImageStream.
-     * @return true if it opens successfully, false otherwise.
-     */
-    NATIVEEXPORT virtual bool Open() override;
-
-    /* *
      * For BufferImageStream, the Open function with a mode is not applicable,
      * as the data for BufferImageStream is already in memory and there are no
      * read-only scenarios.
@@ -110,7 +104,7 @@ public:
      * @return Returns false, as this function is not applicable for
      * BufferImageStream.
      */
-    NATIVEEXPORT virtual bool Open(OpenMode mode) override;
+    NATIVEEXPORT virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
 
     /* *
      * For BufferImageStream, the Flush function is not applicable,

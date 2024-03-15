@@ -46,18 +46,11 @@ public:
     virtual ~ImageStream() {}
 
     /* *
-     * Open the image stream
-     * @return true if it opens successfully, false otherwise
-     * todo 移走
-     */
-    virtual bool Open() = 0;
-
-    /* *
      * Open the image stream with a specific mode
      * @param mode The mode to open the image stream
      * @return true if it opens successfully, false otherwise
      */
-    virtual bool Open(OpenMode mode) = 0;
+    virtual bool Open(OpenMode mode = OpenMode::ReadWrite) = 0;
 
     /* *
      * Check if the image stream is open
@@ -94,6 +87,11 @@ public:
      * @return The actual size of the data read
      */
     virtual ssize_t Read(byte *buf, size_t size) = 0;
+
+    /* *
+     * Read a byte from the image stream and move the pointer to the next position
+     * @return The byte read from the stream
+     */
     virtual int ReadByte() = 0;
 
     /* *

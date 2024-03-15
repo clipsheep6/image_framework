@@ -348,12 +348,6 @@ void FileImageStream::Close()
     initPath_ = INIT_FROM_UNKNOWN;
 }
 
-// Todo 移走
-bool FileImageStream::Open()
-{
-    return Open(OpenMode::ReadWrite);
-}
-
 bool FileImageStream::OpenFromFD(const char *modeStr)
 {
     if (dupFD_ == -1) {

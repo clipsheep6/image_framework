@@ -161,6 +161,7 @@ public:
     void TearDown() override
     {
         memoryCheck.End();
+        memoryCheck.check = false;
         if (!memoryCheck.Compare()) {
             GTEST_LOG_(INFO) << "Memory leak detected";
         }
@@ -237,7 +238,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
     FileImageStream stream(filePath);
 
     // Open the file
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
 
     // Create some data to write
     byte data[SIZE_10] = {0};
@@ -303,7 +304,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
 
     // Test the Write function
     byte buffer[SIZE_1024];
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
     EXPECT_EQ(stream.Write(buffer, sizeof(buffer)), -1);
 }
 
@@ -317,8 +318,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
 {
     FileImageStream stream1(filePathSource);
     FileImageStream stream2(filePathDest);
-    ASSERT_TRUE(stream1.Open());
-    ASSERT_TRUE(stream2.Open());
+    ASSERT_TRUE(stream1.Open(OpenMode::ReadWrite));
+    ASSERT_TRUE(stream2.Open(OpenMode::ReadWrite));
     // Read all data from stream1
     byte buffer[IMAGE_STREAM_PAGE_SIZE];
     while (stream1.Read(buffer, sizeof(buffer)) > 0) {
@@ -383,7 +384,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
     FileImageStream stream(filePath);
 
     // Open the file
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
 
     // Create some data to write
     std::string data = "1Hello, world!";
@@ -519,7 +520,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3)
 {
     FileImageStream stream(filePathSource);
     byte buffer[SIZE_1024];
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
     // Simulate reading 512 bytes
     ssize_t bytesRead = stream.Read(buffer, SIZE_512);
     EXPECT_EQ(SIZE_512, bytesRead);
@@ -568,7 +569,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3)
     // Assume that checking whether result is not nullptr, or there is another
     // appropriate verification method
     ASSERT_EQ(result, nullptr);
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
     result = stream.GetAddr(false);
     ASSERT_NE(result, nullptr);
 
@@ -593,7 +594,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3)
 {
     // Test the behavior of the MMap function when isWriteable is true
     FileImageStream stream(filePathSource);
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     byte *result = stream.GetAddr(true);
     ASSERT_NE(result, nullptr);
     // Try to write data
@@ -613,7 +614,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3)
 {
     // Test whether MMap can actually modify the content of the file
     FileImageStream stream(filePathSource);
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     byte *result = stream.GetAddr(true);
     ASSERT_NE(result, nullptr);
 
@@ -628,7 +629,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3)
     // Flush stream
     ASSERT_TRUE(stream.Flush());
     FileImageStream checkStream(filePathSource);
-    checkStream.Open();
+    checkStream.Open(OpenMode::ReadWrite);
     byte checkBuffer[1];
     ASSERT_EQ(checkStream.Read(checkBuffer, 1), 1);
 
@@ -748,7 +749,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_IsEof001, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3)
 {
     FileImageStream stream(filePathSource);
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
 
     // Read 10 bytes using Read function
     byte buffer[SIZE_10];
@@ -778,7 +779,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3)
 {
     FileImageStream stream(filePathSource);
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
 
     // Set the file offset to the end of the file
     EXPECT_EQ(stream.Seek(0, SeekPos::END), stream.GetSize());
@@ -799,14 +800,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3)
 {
     FileImageStream stream(filePath);
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     std::string sourceData = "Hello, world!";
     ASSERT_EQ(stream.Seek(5, SeekPos::BEGIN), 5);
     ASSERT_EQ(stream.Write((byte *)sourceData.c_str(), sourceData.size()), sourceData.size());
 
     FileImageStream cloneStream(stream.fp_);
     ASSERT_TRUE(stream.Flush());
-    ASSERT_TRUE(cloneStream.Open());
+    ASSERT_TRUE(cloneStream.Open(OpenMode::ReadWrite));
     // Read the data from cloneStream
     byte buffer[SIZE_255];
     cloneStream.Seek(5, SeekPos::BEGIN);
@@ -845,7 +846,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3)
 
     // Use the file descriptor to create a new FileImageStream object
     FileImageStream stream(fileDescription);
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     ASSERT_NE(stream.dupFD_, -1);
     // Check the state of the FileImageStream object
     ASSERT_TRUE(stream.fp_ != nullptr);
@@ -951,7 +952,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3)
     FileImageStream stream(fileDescriptor);
     int dupFD = stream.dupFD_;
     ASSERT_NE(fileDescriptor, -1);
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     FILE *fileStream = stream.fp_; // Change "rb" to "wb" for writing in binary mode
     // binary mode
     ASSERT_NE(fileStream, nullptr);
@@ -980,7 +981,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3)
 {
     RemoveFile(filePath.c_str());
     FileImageStream stream(filePath);
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
     std::string sourceData = "Hello, world!";
     ASSERT_EQ(stream.Tell(), 0);
     stream.Write((byte *)sourceData.c_str(), sourceData.size());
@@ -1010,7 +1011,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3)
 HWTEST_F(ImageStreamTest, BufferImageStream_Open001, TestSize.Level3)
 {
     BufferImageStream stream;
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
 }
 
 /**
@@ -1022,7 +1023,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Open001, TestSize.Level3)
 HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3)
 {
     BufferImageStream stream;
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
 
     // Write a string
     std::string sourceData = "Hello, world!";
@@ -1049,7 +1050,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3)
 {
     BufferImageStream stream;
     byte data[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
     size_t size = sizeof(data) / sizeof(data[0]);
     int offset = 0;
     stream.Seek(0, SeekPos::BEGIN);
@@ -1078,7 +1079,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3)
 HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3)
 {
     BufferImageStream stream;
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
     stream.Write((byte *)"Hello, world!", 13);
     ASSERT_EQ(stream.buffer_.capacity(), 4096);
     ASSERT_EQ(stream.Tell(), 13);
@@ -1093,7 +1094,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3)
 HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3)
 {
     BufferImageStream stream;
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
     byte data[IMAGE_STREAM_PAGE_SIZE + 1] = {0};  // Create a 4097-byte data
     stream.Write(data, IMAGE_STREAM_PAGE_SIZE + 1); // Write 4097 bytes of data
     ASSERT_GE(stream.buffer_.capacity(),
@@ -1110,7 +1111,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3)
 HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3)
 {
     BufferImageStream stream;
-    stream.Open();
+    stream.Open(OpenMode::ReadWrite);
 
     byte data[IMAGE_STREAM_PAGE_SIZE] = {0};  // Create a 4096-byte data
     stream.Write(data, IMAGE_STREAM_PAGE_SIZE); // Write 4096 bytes of data
@@ -1129,7 +1130,7 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3)
 HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3)
 {
     BufferImageStream stream;
-    ASSERT_TRUE(stream.Open());
+    ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     ASSERT_EQ(stream.Write((byte *)"Hi", 2), 2);
     ASSERT_EQ(stream.Tell(), 2);
     ASSERT_EQ(stream.Write((byte *)"this is a very long text", 24), 24);

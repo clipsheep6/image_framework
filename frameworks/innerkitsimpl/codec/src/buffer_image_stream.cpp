@@ -133,11 +133,6 @@ void BufferImageStream::Close()
     currentOffset_ = 0;
 }
 
-bool BufferImageStream::Open()
-{
-    return true;
-}
-
 bool BufferImageStream::Open(OpenMode mode)
 {
     return true;

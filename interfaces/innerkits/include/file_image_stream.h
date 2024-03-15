@@ -117,19 +117,13 @@ public:
     NATIVEEXPORT virtual bool IsOpen() override;
 
     /* *
-     * @brief Opens the FileImageStream. The default mode is "rb".
-     * @return true if it opens successfully, false otherwise.
-     */
-    NATIVEEXPORT virtual bool Open() override;
-
-    /* *
      * @brief Opens the FileImageStream with a specific mode.
      * The Open operation will reset the read and write position of the
      * file
      * @param mode The mode to open the FileImageStream.
      * @return true if it opens successfully, false otherwise.
      */
-    NATIVEEXPORT virtual bool Open(OpenMode mode) override;
+    NATIVEEXPORT virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
 
     /* *
      * @brief Flushes the FileImageStream.
