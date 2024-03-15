@@ -58,5 +58,72 @@ HWTEST_F(DataBufTest, DataBufTest_GetUShort001, TestSize.Level3)
     result = GetUShort(buf, bigEndian);
     ASSERT_EQ(result, 0x0102);
 }
+
+/**
+ * @tc.name: DataBufTest_US2Data001
+ * @tc.desc: Validate the US2Data function of DataBuf
+ * @tc.type: FUNC
+ */
+HWTEST_F(DataBufTest, DataBufTest_US2Data001, TestSize.Level3)
+{
+    // Define test data
+    byte buf[2];
+    uint16_t value = 0x0201;
+
+    // Test the littleEndian case
+    US2Data(buf, value, littleEndian);
+    ASSERT_EQ(buf[0], 0x01);
+    ASSERT_EQ(buf[1], 0x02);
+
+    // Test the bigEndian case
+    US2Data(buf, value, bigEndian);
+    ASSERT_EQ(buf[0], 0x02);
+    ASSERT_EQ(buf[1], 0x01);
+}
+
+/**
+ * @tc.name: DataBufTest_UL2Data001
+ * @tc.desc: Validate the UL2Data function of DataBuf
+ * @tc.type: FUNC
+ */
+HWTEST_F(DataBufTest, DataBufTest_UL2Data001, TestSize.Level3)
+{
+    // Define test data
+    byte buf[4];
+    uint32_t value = 0x04030201;
+
+    // Test the littleEndian case
+    UL2Data(buf, value, littleEndian);
+    ASSERT_EQ(buf[0], 0x01);
+    ASSERT_EQ(buf[1], 0x02);
+    ASSERT_EQ(buf[2], 0x03);
+    ASSERT_EQ(buf[3], 0x04);
+
+    // Test the bigEndian case
+    UL2Data(buf, value, bigEndian);
+    ASSERT_EQ(buf[0], 0x04);
+    ASSERT_EQ(buf[1], 0x03);
+    ASSERT_EQ(buf[2], 0x02);
+    ASSERT_EQ(buf[3], 0x01);
+}
+
+/**
+ * @tc.name: DataBufTest_GetULong001
+ * @tc.desc: Validate the GetULong function of DataBuf
+ * @tc.type: FUNC
+ */
+HWTEST_F(DataBufTest, DataBufTest_GetULong001, TestSize.Level3)
+{
+    // Define test data
+    byte buf[4] = {0x01, 0x02, 0x03, 0x04};
+
+    // Test the littleEndian case
+    uint32_t result = GetULong(buf, littleEndian);
+    ASSERT_EQ(result, 0x04030201);
+
+    // Test the bigEndian case
+    result = GetULong(buf, bigEndian);
+    ASSERT_EQ(result, 0x01020304);
+}
 } // namespace Media
 } // namespace OHOS

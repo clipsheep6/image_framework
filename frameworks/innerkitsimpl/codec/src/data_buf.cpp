@@ -95,16 +95,6 @@ void DataBuf::WriteUInt8(size_t offset, uint8_t value)
     pData_[offset] = value;
 }
 
-uint32_t GetULong(const byte *buf, ByteOrder byteOrder)
-{
-    if (byteOrder == littleEndian) {
-        return (buf[BYTE_4_POSITION] << BYTE_4_SHIFT) | (buf[BYTE_3_POSITION] << BYTE_3_SHIFT) |
-            (buf[BYTE_2_POSITION] << BYTE_2_SHIFT) | (buf[BYTE_1_POSITION] << BYTE_1_SHIFT);
-    }
-    return (buf[BYTE_1_POSITION] << BYTE_4_SHIFT) | (buf[BYTE_2_POSITION] << BYTE_3_SHIFT) |
-        (buf[BYTE_3_POSITION] << BYTE_2_SHIFT) | (buf[BYTE_4_POSITION] << BYTE_1_SHIFT);
-}
-
 void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder)
 {
     if (pData_.size() < UINT32_SIZE || offset > (pData_.size() - UINT32_SIZE)) {
@@ -113,23 +103,6 @@ void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder)
         // throw std::out_of_range("Overflow in DataBuf::write_uint32");
     }
     UL2Data(&pData_[offset], x, byteOrder);
-}
-
-
-size_t UL2Data(byte *buf, uint32_t l, ByteOrder byteOrder)
-{
-    if (byteOrder == littleEndian) {
-        buf[BYTE_1_POSITION] = static_cast<byte>(l & BYTE_1_MASK);
-        buf[BYTE_2_POSITION] = static_cast<byte>((l & BYTE_2_MASK) >> BYTE_2_SHIFT);
-        buf[BYTE_3_POSITION] = static_cast<byte>((l & BYTE_3_MASK) >> BYTE_3_SHIFT);
-        buf[BYTE_4_POSITION] = static_cast<byte>((l & BYTE_4_MASK) >> BYTE_4_SHIFT);
-    } else {
-        buf[BYTE_1_POSITION] = static_cast<byte>((l & BYTE_4_MASK) >> BYTE_4_SHIFT);
-        buf[BYTE_2_POSITION] = static_cast<byte>((l & BYTE_3_MASK) >> BYTE_3_SHIFT);
-        buf[BYTE_3_POSITION] = static_cast<byte>((l & BYTE_2_MASK) >> BYTE_2_SHIFT);
-        buf[BYTE_4_POSITION] = static_cast<byte>(l & BYTE_1_MASK);
-    }
-    return UINT32_SIZE;
 }
 
 uint32_t DataBuf::ReadUInt32(size_t offset, ByteOrder byteOrder)
@@ -186,5 +159,32 @@ void US2Data(byte *buf, uint16_t value, ByteOrder byteOrder)
         buf[1] = static_cast<byte>(value & LOWER_BYTE_MASK);
     }
 }
+
+size_t UL2Data(byte *buf, uint32_t l, ByteOrder byteOrder)
+{
+    if (byteOrder == littleEndian) {
+        buf[BYTE_1_POSITION] = static_cast<byte>(l & BYTE_1_MASK);
+        buf[BYTE_2_POSITION] = static_cast<byte>((l & BYTE_2_MASK) >> BYTE_2_SHIFT);
+        buf[BYTE_3_POSITION] = static_cast<byte>((l & BYTE_3_MASK) >> BYTE_3_SHIFT);
+        buf[BYTE_4_POSITION] = static_cast<byte>((l & BYTE_4_MASK) >> BYTE_4_SHIFT);
+    } else {
+        buf[BYTE_1_POSITION] = static_cast<byte>((l & BYTE_4_MASK) >> BYTE_4_SHIFT);
+        buf[BYTE_2_POSITION] = static_cast<byte>((l & BYTE_3_MASK) >> BYTE_3_SHIFT);
+        buf[BYTE_3_POSITION] = static_cast<byte>((l & BYTE_2_MASK) >> BYTE_2_SHIFT);
+        buf[BYTE_4_POSITION] = static_cast<byte>(l & BYTE_1_MASK);
+    }
+    return UINT32_SIZE;
+}
+
+uint32_t GetULong(const byte *buf, ByteOrder byteOrder)
+{
+    if (byteOrder == littleEndian) {
+        return (buf[BYTE_4_POSITION] << BYTE_4_SHIFT) | (buf[BYTE_3_POSITION] << BYTE_3_SHIFT) |
+            (buf[BYTE_2_POSITION] << BYTE_2_SHIFT) | (buf[BYTE_1_POSITION] << BYTE_1_SHIFT);
+    }
+    return (buf[BYTE_1_POSITION] << BYTE_4_SHIFT) | (buf[BYTE_2_POSITION] << BYTE_3_SHIFT) |
+        (buf[BYTE_3_POSITION] << BYTE_2_SHIFT) | (buf[BYTE_4_POSITION] << BYTE_1_SHIFT);
+}
+
 } // namespace Media
 } // namespace OHOS
