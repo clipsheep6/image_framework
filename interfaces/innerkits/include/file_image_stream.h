@@ -71,12 +71,6 @@ public:
     NATIVEEXPORT FileImageStream(const std::string &filePath);
 
     /* *
-     * @brief Constructs a new FileImageStream object from a FILE pointer.
-     * @param filePointer The FILE pointer.
-     */
-    NATIVEEXPORT FileImageStream(FILE *filePointer);
-
-    /* *
      * @brief Destructs the FileImageStream object.
      */
     NATIVEEXPORT virtual ~FileImageStream();
@@ -227,12 +221,15 @@ private:
     /* *
      * @brief Copies data from the source ImageStream to the current file.
      * @param src The source ImageStream.
-     * @param tempBuffer The temporary buffer to store the data.
-     * @param buffer_size The size of the temporary buffer.
      * @param totalBytesWritten The total number of bytes written to the current file.
+     * This function reads data from the source ImageStream and writes it to the current file.
+     * It uses a temporary buffer of size min(IMAGE_STREAM_PAGE_SIZE, src.GetSize()).
+     * The function continues to read and write data until it reaches the end of the source ImageStream.
+     * If a write operation fails, it handles the error and returns false.
+     * If a read operation fails and it's not because of reaching the end of the source ImageStream, it returns false.
      * @return true if the data is copied successfully, false otherwise.
      */
-    bool CopyDataFromSource(ImageStream &src, byte *tempBuffer, ssize_t buffer_size, ssize_t &totalBytesWritten);
+    bool CopyDataFromSource(ImageStream &src, ssize_t &totalBytesWritten);
 
     /* *
      * @brief Handles the error when writing data to the current file fails.
@@ -240,14 +237,6 @@ private:
      * @param src_cur The current position of the source ImageStream.
      */
     void HandleWriteError(ImageStream &src, ssize_t src_cur);
-
-    /* *
-     * @brief Flushes the current file.
-     * @param src The source ImageStream.
-     * @param src_cur The current position of the source ImageStream.
-     * @return true if the file is flushed successfully, false otherwise.
-     */
-    bool FlushFile(ImageStream &src, ssize_t src_cur);
 
     /* *
      * @brief Truncates the current file to the specified size.

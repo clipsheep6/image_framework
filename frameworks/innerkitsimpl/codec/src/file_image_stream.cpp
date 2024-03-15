@@ -60,22 +60,6 @@ FileImageStream::FileImageStream(int fileDescriptor)
     this->fileWrapper_ = std::make_unique<FileWrapper>();
 }
 
-FileImageStream::FileImageStream(FILE *filePointer)
-{
-    dupFD_ = dup(fileno(filePointer));
-    if (dupFD_ == -1) {
-        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("fileno: Get file descriptor failed: %{public}s, reason: "
-            "%{public}s",
-            filePath_.c_str(), buf);
-    }
-    fileSize_ = 0;
-    mappedMemory_ = nullptr;
-    this->fileWrapper_ = std::make_unique<FileWrapper>();
-    initPath_ = INIT_FROM_FD;
-}
-
 FileImageStream::FileImageStream(const std::string &filePath)
     : fp_(nullptr), filePath_(filePath), fileSize_(0), mappedMemory_(nullptr)
 {
@@ -463,30 +447,6 @@ bool FileImageStream::Open(OpenMode mode)
     return true;
 }
 
-bool FileImageStream::Flush()
-{
-    if (fp_ == nullptr) {
-        if (initPath_ == INIT_FROM_FD) {
-            IMAGE_LOGE("Flush file failed: %{public}d, reason: %{public}s", dupFD_, "fp is nullptr");
-        } else if (initPath_ == INIT_FROM_PATH) {
-            IMAGE_LOGE("Flush file failed: %{public}s, reason: %{public}s", filePath_.c_str(), "fp is nullptr");
-        } else if (initPath_ == INIT_FROM_UNKNOWN) {
-            IMAGE_LOGE("Flush file failed: %{public}s, reason: %{public}s", "initPath is INIT_FROM_UNKNOWN",
-                "fp is nullptr");
-        }
-        return false;
-    }
-
-    if (fflush(fp_) != 0) {
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, errstr, sizeof(errstr));
-        IMAGE_LOGE("Flush file failed: %{public}s", errstr);
-        return false;
-    }
-
-    return true;
-}
-
 byte *FileImageStream::GetAddr(bool isWriteable)
 {
     // If there is already a memory map, return it directly
@@ -539,9 +499,60 @@ bool FileImageStream::ReleaseAddr()
     return true;
 }
 
-bool FileImageStream::CopyDataFromSource(ImageStream &src, byte *tempBuffer, ssize_t buffer_size,
-    ssize_t &totalBytesWritten)
+void FileImageStream::HandleWriteError(ImageStream &src, ssize_t src_cur)
 {
+    char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+    strerror_r(errno, buf, sizeof(buf));
+    IMAGE_LOGE("transfer: Write file failed: %{public}s, reason: "
+        "%{public}s",
+        filePath_.c_str(), buf);
+    src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
+}
+
+bool FileImageStream::Flush()
+{
+    if (fp_ == nullptr) {
+        if (initPath_ == INIT_FROM_FD) {
+            IMAGE_LOGE("Flush file failed: %{public}d, reason: %{public}s", dupFD_, "fp is nullptr");
+        } else if (initPath_ == INIT_FROM_PATH) {
+            IMAGE_LOGE("Flush file failed: %{public}s, reason: %{public}s", filePath_.c_str(), "fp is nullptr");
+        } else if (initPath_ == INIT_FROM_UNKNOWN) {
+            IMAGE_LOGE("Flush file failed: %{public}s, reason: %{public}s", "initPath is INIT_FROM_UNKNOWN",
+                "fp is nullptr");
+        }
+        return false;
+    }
+
+    if (fflush(fp_) != 0) {
+        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        strerror_r(errno, errstr, sizeof(errstr));
+        IMAGE_LOGE("Flush file failed: %{public}s", errstr);
+        return false;
+    }
+
+    return true;
+}
+
+bool FileImageStream::TruncateFile(size_t totalBytesWritten, ImageStream &src, ssize_t src_cur)
+{
+    int fileDescriptor = fileno(fp_);
+    if (ftruncate(fileDescriptor, totalBytesWritten) == -1) {
+        // Failed to truncate the file
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        strerror_r(errno, buf, sizeof(buf));
+        IMAGE_LOGE("transfer: Truncate file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
+        src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
+        return false;
+    }
+    return true;
+}
+
+bool FileImageStream::CopyDataFromSource(ImageStream &src, ssize_t &totalBytesWritten)
+{
+    // Read data from the source ImageStream and write it to the current file
+    ssize_t buffer_size = std::min((ssize_t)IMAGE_STREAM_PAGE_SIZE, src.GetSize());
+    byte tempBuffer[buffer_size];
+
     ssize_t src_cur = src.Tell(); // Temporarily store the position of src
 
     Seek(0, SeekPos::BEGIN);
@@ -566,43 +577,6 @@ bool FileImageStream::CopyDataFromSource(ImageStream &src, byte *tempBuffer, ssi
     return true;
 }
 
-void FileImageStream::HandleWriteError(ImageStream &src, ssize_t src_cur)
-{
-    char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-    strerror_r(errno, buf, sizeof(buf));
-    IMAGE_LOGE("transfer: Write file failed: %{public}s, reason: "
-        "%{public}s",
-        filePath_.c_str(), buf);
-    src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
-}
-
-bool FileImageStream::FlushFile(ImageStream &src, ssize_t src_cur)
-{
-    if (fflush(fp_) != 0) {
-        // Failed to flush the file
-        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("transfer: Flush file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
-        src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
-        return false;
-    }
-    return true;
-}
-
-bool FileImageStream::TruncateFile(size_t totalBytesWritten, ImageStream &src, ssize_t src_cur)
-{
-    int fileDescriptor = fileno(fp_);
-    if (ftruncate(fileDescriptor, totalBytesWritten) == -1) {
-        // Failed to truncate the file
-        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("transfer: Truncate file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
-        src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
-        return false;
-    }
-    return true;
-}
-
 bool FileImageStream::CopyFrom(ImageStream &src)
 {
     if (!src.IsOpen()) {
@@ -615,20 +589,17 @@ bool FileImageStream::CopyFrom(ImageStream &src)
         return false;
     }
 
-    // Read data from the source ImageStream and write it to the current file
-    ssize_t buffer_size = std::min((ssize_t)IMAGE_STREAM_PAGE_SIZE, src.GetSize());
-    byte tempBuffer[buffer_size];
     ssize_t totalBytesWritten = 0;
     ssize_t src_cur = src.Tell(); // Temporarily store the position of src
 
-    if (!CopyDataFromSource(src, tempBuffer, buffer_size, totalBytesWritten)) {
+    if (!CopyDataFromSource(src, totalBytesWritten)) {
         return false;
     }
 
     IMAGE_LOGD("transfer: Write file done: %{public}s, size: %{public}zu", filePath_.c_str(), totalBytesWritten);
 
     // Flush the file
-    if (!FlushFile(src, src_cur)) {
+    if (!Flush()) {
         return false;
     }
 

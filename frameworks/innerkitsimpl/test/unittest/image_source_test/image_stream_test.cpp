@@ -844,7 +844,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3)
     ASSERT_EQ(stream.Seek(5, SeekPos::BEGIN), 5);
     ASSERT_EQ(stream.Write((byte *)sourceData.c_str(), sourceData.size()), sourceData.size());
 
-    FileImageStream cloneStream(stream.fp_);
+    FileImageStream cloneStream(fileno(stream.fp_));
     ASSERT_TRUE(stream.Flush());
     ASSERT_TRUE(cloneStream.Open(OpenMode::ReadWrite));
     // Read the data from cloneStream
