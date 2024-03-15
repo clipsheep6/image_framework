@@ -168,7 +168,8 @@ const byte *DataBuf::CData(size_t offset) const
     return &pData_[offset];
 }
 
-uint16_t GetUShort(const byte *buf, ByteOrder byteOrder) {
+uint16_t GetUShort(const byte *buf, ByteOrder byteOrder)
+{
     if (byteOrder == littleEndian) {
         return static_cast<byte>(buf[1]) << DATA_BUF_BYTE_SIZE | static_cast<byte>(buf[0]);
     }
@@ -185,6 +186,5 @@ void US2Data(byte *buf, uint16_t value, ByteOrder byteOrder)
         buf[1] = static_cast<byte>(value & LOWER_BYTE_MASK);
     }
 }
-
 } // namespace Media
 } // namespace OHOS

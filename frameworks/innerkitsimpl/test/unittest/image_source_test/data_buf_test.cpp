@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,7 @@ using namespace OHOS::Media;
 namespace OHOS {
 namespace Media {
 class DataBufTest : public testing::Test {
-  public:
+public:
     DataBufTest() {}
     ~DataBufTest() override {}
 };
@@ -33,7 +33,8 @@ class DataBufTest : public testing::Test {
  * @tc.desc: 验证DataBuf的write_uint8函数
  * @tc.type: FUNC
  */
-HWTEST_F(DataBufTest, DataBufTest_Write001, TestSize.Level3) {
+HWTEST_F(DataBufTest, DataBufTest_Write001, TestSize.Level3)
+{
     DataBuf dataBuf(10);
     dataBuf.WriteUInt8(0, 123);
     EXPECT_EQ(dataBuf.ReadUInt8(0), 123);
@@ -44,18 +45,18 @@ HWTEST_F(DataBufTest, DataBufTest_Write001, TestSize.Level3) {
  * @tc.desc: Validate the GetUShort function of DataBuf
  * @tc.type: FUNC
  */
-HWTEST_F(DataBufTest, DataBufTest_GetUShort001, TestSize.Level3) {
-  // Define test data
-  byte buf[2] = {0x01, 0x02};
+HWTEST_F(DataBufTest, DataBufTest_GetUShort001, TestSize.Level3)
+{
+    // Define test data
+    byte buf[2] = {0x01, 0x02};
 
-  // Test the littleEndian case
-  uint16_t result = GetUShort(buf, littleEndian);
-  ASSERT_EQ(result, 0x0201);
+    // Test the littleEndian case
+    uint16_t result = GetUShort(buf, littleEndian);
+    ASSERT_EQ(result, 0x0201);
 
-  // Test the bigEndian case
-  result = GetUShort(buf, bigEndian);
-  ASSERT_EQ(result, 0x0102);
+    // Test the bigEndian case
+    result = GetUShort(buf, bigEndian);
+    ASSERT_EQ(result, 0x0102);
 }
-
 } // namespace Media
 } // namespace OHOS
