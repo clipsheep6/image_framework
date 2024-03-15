@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include <gtest/gtest.h>
 #define private public
 #include <fstream>
@@ -537,7 +537,7 @@ HWTEST_F(ImageReceiverTest, IsCpuAccessTest001, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest001 start";
     std::shared_ptr<ImageReceiver> imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
         RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
-    
+
     PushBuffer(imageReceiver);
 
     std::shared_ptr<NativeImage> image = imageReceiver->LastNativeImage();

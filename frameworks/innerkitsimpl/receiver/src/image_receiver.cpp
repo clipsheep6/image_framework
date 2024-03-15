@@ -33,7 +33,6 @@ using namespace OHOS::HDI::Display::Graphic::Common::V1_1;
 
 namespace OHOS {
 namespace Media {
-
 ImageReceiver::~ImageReceiver()
 {
     std::lock_guard<std::mutex> guard(imageReceiverMutex_);
@@ -248,7 +247,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage(int64_t &timestamp)
     } else {
         IMAGE_LOGD("buffer is null");
     }
-    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
+    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", static_cast<long long>(timestamp));
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -265,7 +264,6 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage()
     } else {
         IMAGE_LOGD("buffer is null");
     }
-    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -283,7 +281,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage(int64_t &timestamp)
     }
 
     iraContext_->currentBuffer_ = bufferBefore;
-    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
+    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", static_cast<long long>(timestamp));
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -302,7 +300,6 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage()
     }
 
     iraContext_->currentBuffer_ = bufferBefore;
-    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -360,11 +357,11 @@ std::shared_ptr<NativeImage> ImageReceiver::LastNativeImage()
     if (surfaceBuffer == nullptr) {
         return nullptr;
     }
-    
+
     std::vector<uint8_t> values;
     surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
     if (values.size() == 1) {
-        if (values[0] ==HEBC_ACCESS_CPU_ACCESS) {
+        if (values[0] == HEBC_ACCESS_CPU_ACCESS) {
             IMAGE_LOGD("ImageReceiver::LastNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE HEBC_ACCESS_CPU_ACCESS");
             return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(),
                         timestamp, HEBC_ACCESS_CPU_ACCESS);
