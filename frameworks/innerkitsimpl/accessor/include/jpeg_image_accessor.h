@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef JPEG_IMAGE_ACCESSOR_H
-#define JPEG_IMAGE_ACCESSOR_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_JPEG_IMAGE_ACCESSOR_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_JPEG_IMAGE_ACCESSOR_H
 
 #include <tuple>
 
@@ -27,29 +27,28 @@ namespace OHOS {
 namespace Media {
 class JpegImageAccessor : public AbstractImageAccessor {
 public:
-    JpegImageAccessor(std::shared_ptr<ImageStream>& stream);
+    JpegImageAccessor(std::shared_ptr<ImageStream> &stream);
     ~JpegImageAccessor();
 
     virtual uint32_t ReadMetadata() override;
-    virtual bool ReadExifBlob(DataBuf& blob) const override;
+    virtual bool ReadExifBlob(DataBuf &blob) const override;
     virtual uint32_t WriteMetadata() override;
-    virtual uint32_t WriteExifBlob(DataBuf& blob) override;
+    virtual uint32_t WriteExifBlob(DataBuf &blob) override;
 
 private:
     int FindNextMarker() const;
     std::pair<std::array<byte, 2>, uint16_t> ReadSegmentLength(uint8_t marker) const;
     DataBuf ReadNextSegment(byte marker);
-    bool GetExifEncodeBlob(uint8_t** dataBlob, uint32_t& size);
-    bool GetExifBlob(const DataBuf& blob, uint8_t** dataBlob, uint32_t& size);
-    bool OpenOrSeek();
-    bool WriteHeader(BufferImageStream& tempStream);
+    bool GetExifEncodeBlob(uint8_t **dataBlob, uint32_t &size);
+    bool GetExifBlob(const DataBuf &blob, uint8_t **dataBlob, uint32_t &size);
+    bool WriteHeader(BufferImageStream &tempStream);
     std::tuple<size_t, size_t> GetInsertPosAndMarkerAPP1();
-    bool WriteSegment(BufferImageStream& bufStream, uint8_t marker, const DataBuf& buf);
-    bool WriteFinalMarker(BufferImageStream& bufStream);
-    bool CopyRestData(BufferImageStream& bufStream);
-    bool WriteData(BufferImageStream& bufStream, uint8_t* dataBlob, uint32_t size);
-    bool UpdateExifMetadata(BufferImageStream& tempStream, uint8_t* dataBlob, uint32_t size);
-    uint32_t UpdateData(uint8_t* dataBlob, uint32_t size);
+    bool WriteSegment(BufferImageStream &bufStream, uint8_t marker, const DataBuf &buf);
+    bool WriteTail(BufferImageStream &bufStream);
+    bool CopyRestData(BufferImageStream &bufStream);
+    bool WriteData(BufferImageStream &bufStream, uint8_t *dataBlob, uint32_t size);
+    bool UpdateExifMetadata(BufferImageStream &tempStream, uint8_t *dataBlob, uint32_t size);
+    uint32_t UpdateData(uint8_t *dataBlob, uint32_t size);
 };
 } // namespace Media
 } // namespace OHOS
