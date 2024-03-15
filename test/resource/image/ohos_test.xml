@@ -203,9 +203,14 @@
             <option name="push" value="images/test_jpeg_readmetadata003.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_jpeg_readexifblob002.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_jpeg_readexifblob003.jpg -> /data/local/tmp/image" src="res"/>
-            <option name="push" value="images/test_jpeg_writeexifblob001.jpg -> /data/local/tmp/image" src="res"/>
-            <option name="push" value="images/test_jpeg_writeexifblob002.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_jpeg_writemetadata001.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_jpeg_writemetadata003.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_jpeg_writeexifblob001.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_jpeg_writeexifblob003.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_jpeg_writemetadata002.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_jpeg_writeexifblob002.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_jpeg_writeexifblob004.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_jpeg_writeexifblob006.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_exif.png -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_noexif.png -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_textchunk.png -> /data/local/tmp/image" src="res"/>

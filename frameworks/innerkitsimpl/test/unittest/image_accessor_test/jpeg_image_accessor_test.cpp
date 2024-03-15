@@ -20,6 +20,7 @@
 #include "jpeg_image_accessor.h"
 #include "file_image_stream.h"
 #include "log_tags.h"
+#include "media_errors.h"
 
 using namespace OHOS::Media;
 using namespace testing::ext;
@@ -27,13 +28,22 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Multimedia {
 
-static const std::string IMAGE_INPUT1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata001.jpg";
-static const std::string IMAGE_INPUT2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata003.jpg";
-static const std::string IMAGE_ERROR1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob002.jpg";
-static const std::string IMAGE_ERROR2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob003.jpg";
-static const std::string IMAGE_INPUT3_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata001.jpg";
-static const std::string IMAGE_INPUT4_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob001.jpg";
-static const std::string IMAGE_OUTPUT_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob002.jpg";
+namespace {
+    static const std::string IMAGE_INPUT1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata001.jpg";
+    static const std::string IMAGE_INPUT2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata003.jpg";
+    static const std::string IMAGE_ERROR1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob002.jpg";
+    static const std::string IMAGE_ERROR2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob003.jpg";
+    static const std::string IMAGE_INPUT_WRITE1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata001.jpg";
+    static const std::string IMAGE_INPUT_WRITE3_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata003.jpg";
+    static const std::string IMAGE_INPUT_WRITE2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob001.jpg";
+    static const std::string IMAGE_INPUT_WRITE4_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob003.jpg";
+    static const std::string IMAGE_OUTPUT_WRITE1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata002.jpg";
+    static const std::string IMAGE_OUTPUT_WRITE2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob002.jpg";
+    static const std::string IMAGE_OUTPUT_WRITE4_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob004.jpg";
+    static const std::string IMAGE_OUTPUT_WRITE6_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob006.jpg";
+    constexpr auto EXIF_ID = "Exif\0\0";
+    constexpr auto EXIF_ID_SIZE = 6;
+}
 
 class JpegImageAccessorTest : public testing::Test {
 public:
@@ -50,6 +60,7 @@ public:
 HWTEST_F(JpegImageAccessorTest, ReadMetadata001, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, 0);
@@ -98,6 +109,7 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata001, TestSize.Level3)
 HWTEST_F(JpegImageAccessorTest, ReadMetadata003, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT2_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageAccessor(stream);
     int result = imageAccessor.ReadMetadata();
     ASSERT_EQ(result, 0);
@@ -140,13 +152,12 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata003, TestSize.Level3)
 
 /**
  * @tc.name: ReadExifBlob001
- * @tc.desc: test ReadExifBlob from nonexisting image file, return false
+ * @tc.desc: test ReadExifBlob from image file not open, return false
  * @tc.type: FUNC
  */
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob001, TestSize.Level3)
 {
-    const std::string IMAGE_NONEXISTING_JPEG_PATH = "/data/local/tmp/image/testnonexisting.jpg";
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_NONEXISTING_JPEG_PATH);
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -161,6 +172,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob001, TestSize.Level3)
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob002, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_ERROR1_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -175,6 +187,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob002, TestSize.Level3)
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob003, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_ERROR2_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -189,6 +202,7 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob003, TestSize.Level3)
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob004, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -203,7 +217,8 @@ HWTEST_F(JpegImageAccessorTest, ReadExifBlob004, TestSize.Level3)
  */
 HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT3_JPEG_PATH);
+    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE1_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageAccessor(stream);
     ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
 
@@ -247,25 +262,90 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
 }
 
 /**
+ * @tc.name: WriteMetadata002
+ * @tc.desc: test WriteMetadata from nonexisting image file, return error number
+ * @tc.type: FUNC
+ */
+HWTEST_F(JpegImageAccessorTest, WriteMetadata002, TestSize.Level3)
+{
+    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE3_JPEG_PATH);
+    ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
+    JpegImageAccessor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+
+    auto exifMetadata = imageAccessor.GetExifMetadata();
+    ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "9, 7, 8");
+
+    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE1_JPEG_PATH);
+    ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
+    JpegImageAccessor imageWriteAccessor(writeStream);
+    ASSERT_EQ(imageWriteAccessor.WriteMetadata(), ERR_MEDIA_VALUE_INVALID);
+}
+
+/**
  * @tc.name: WriteExifBlob001
  * @tc.desc: test WriteExifBlob from right jpeg image, modify propert
  * @tc.type: FUNC
  */
 HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT4_JPEG_PATH);
+    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE2_JPEG_PATH);
+    ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageReadAccessor(readStream);
-    DataBuf exifBuf;
-    ASSERT_TRUE(imageReadAccessor.ReadExifBlob(exifBuf));
-    ASSERT_EQ(exifBuf.Size(), 0x0932);
+    DataBuf inputBuf;
+    ASSERT_TRUE(imageReadAccessor.ReadExifBlob(inputBuf));
 
-    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_JPEG_PATH);
+    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE2_JPEG_PATH);
+    ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageWriteAccessor(writeStream);
-    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(exifBuf), 0);
+    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(inputBuf), 0);
 
     DataBuf outputBuf;
     ASSERT_TRUE(imageWriteAccessor.ReadExifBlob(outputBuf));
-    ASSERT_EQ(outputBuf.Size(), 0x0932);
+    ASSERT_EQ(outputBuf.Size(), inputBuf.Size());
+}
+
+/**
+ * @tc.name: WriteExifBlob003
+ * @tc.desc: test WriteExifBlob from empty data buffer, return error number
+ * @tc.type: FUNC
+ */
+HWTEST_F(JpegImageAccessorTest, WriteExifBlob002, TestSize.Level3)
+{
+    DataBuf inputBuf;
+    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE4_JPEG_PATH);
+    ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
+    JpegImageAccessor imageWriteAccessor(writeStream);
+    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(inputBuf), ERR_MEDIA_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: WriteExifBlob003
+ * @tc.desc: test WriteExifBlob from right jpeg image, Data buffer not container "EXIF\0\0"
+ * @tc.type: FUNC
+ */
+HWTEST_F(JpegImageAccessorTest, WriteExifBlob003, TestSize.Level3)
+{
+    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE2_JPEG_PATH);
+    ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
+    JpegImageAccessor imageReadAccessor(readStream);
+    DataBuf inputBuf;
+    ASSERT_TRUE(imageReadAccessor.ReadExifBlob(inputBuf));
+
+    auto length = 0;
+    if (inputBuf.CmpBytes(0, EXIF_ID, EXIF_ID_SIZE) == 0) {
+        length = EXIF_ID_SIZE;
+    }
+
+    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE6_JPEG_PATH);
+    ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
+    JpegImageAccessor imageWriteAccessor(writeStream);
+    DataBuf dataBlob(inputBuf.CData(length), (inputBuf.Size() - length));
+    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(dataBlob), 0);
+
+    DataBuf outputBuf;
+    ASSERT_TRUE(imageWriteAccessor.ReadExifBlob(outputBuf));
+    ASSERT_EQ(outputBuf.Size(), inputBuf.Size());
 }
 
 std::string JpegImageAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop)
