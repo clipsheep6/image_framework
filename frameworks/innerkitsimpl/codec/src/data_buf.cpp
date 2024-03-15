@@ -185,6 +185,5 @@ uint32_t GetULong(const byte *buf, ByteOrder byteOrder)
     return (buf[BYTE_1_POSITION] << BYTE_4_SHIFT) | (buf[BYTE_2_POSITION] << BYTE_3_SHIFT) |
         (buf[BYTE_3_POSITION] << BYTE_2_SHIFT) | (buf[BYTE_4_POSITION] << BYTE_1_SHIFT);
 }
-
 } // namespace Media
 } // namespace OHOS

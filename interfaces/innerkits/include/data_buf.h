@@ -231,7 +231,6 @@ uint16_t GetUShort(const byte *buf, ByteOrder byteOrder);
  * @param byteOrder The byte order to use when writing the value
  */
 void US2Data(byte *buf, uint16_t value, ByteOrder byteOrder);
-
 } // namespace Media
 } // namespace OHOS
 
