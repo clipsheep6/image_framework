@@ -13,6 +13,13 @@
  * limitations under the License.
  */
  
+#include <iostream>
+#include <map>
+#include <ostream>
+#include <set>
+#include <sstream>
+#include <vector>
+
 #include "exif_metadata.h"
 #include "exif_metadata_converter.h"
 #include "image_log.h"
@@ -22,12 +29,6 @@
 #include "string_ex.h"
 #include "securec.h"
 
-#include <iostream>
-#include <map>
-#include <ostream>
-#include <set>
-#include <sstream>
-#include <vector>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -438,7 +439,19 @@ bool ExifMetadata::CreateExifdata()
     if (exifData_ != nullptr) {
         exif_data_unref(exifData_);
         exifData_ = nullptr;
-        return false;
+        exifData_ = exif_data_new();
+        if (!(exifData_)) {
+            IMAGE_LOGD("Create exif data failed.");
+            return false;
+        }
+        /* Set the image options */
+        exif_data_set_option(exifData_, EXIF_DATA_OPTION_FOLLOW_SPECIFICATION);
+        exif_data_set_data_type(exifData_, EXIF_DATA_TYPE_COMPRESSED);
+        exif_data_set_byte_order(exifData_, EXIF_BYTE_ORDER_INTEL);
+
+        /* Create the mandatory EXIF fields with default data */
+        exif_data_fix(exifData_);
+        return true;
     }
     exifData_ = exif_data_new();
     if (!(exifData_)) {
@@ -479,7 +492,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     if (exifData_ == nullptr) {
         IMAGE_LOGD("[GetValue] exifData_ is nullptr");
         value = "";
-        return ERR_MEDIA_INVALID_VALUE;
+        return ERR_MEDIA_NO_EXIF_DATA;
     }
 
     auto tag = exif_tag_from_name(key.c_str());
@@ -487,7 +500,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     if (entry == nullptr) {
         IMAGE_LOGD("[GetValue] exif_data_get_entry leave");
         value = "";
-        return  ERR_MEDIA_INVALID_VALUE;
+        return  ERR_MEDIA_NO_EXIF_DATA;
     }
     IMAGE_LOGD("[GetValue] goint to use exif_entry_get_value tag is [%{public}d]", entry->tag);
     char tagValueChar[1024];
