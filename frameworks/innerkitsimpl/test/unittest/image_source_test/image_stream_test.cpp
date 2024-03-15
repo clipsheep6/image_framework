@@ -236,16 +236,16 @@ const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
 
 class MockFileWrapper : public FileWrapper {
 public:
-    MOCK_METHOD(ssize_t, FWrite, (const void *src, size_t size, size_t nmemb, FILE *file), (override));
-    MOCK_METHOD(ssize_t, FRead, (void *destv, size_t size, size_t nmemb, FILE *file), (override));
+    MOCK_METHOD(ssize_t, FWrite, (const void *src, size_t size, ssize_t nmemb, FILE *file), (override));
+    MOCK_METHOD(ssize_t, FRead, (void *destv, size_t size, ssize_t nmemb, FILE *file), (override));
 
     MockFileWrapper()
     {
         // Set the default behavior of write to call the system's write function
         ON_CALL(*this, FWrite(_, _, _, _))
-            .WillByDefault(Invoke([](const void *src, size_t size, size_t nmemb, FILE *file) {
+            .WillByDefault(Invoke([](const void *src, size_t size, ssize_t nmemb, FILE *file) {
                 size_t result = ::fwrite(src, size, nmemb, file);
-                if (result != nmemb) {
+                if (result != static_cast<size_t>(nmemb)) {
                     char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
                     strerror_r(errno, errstr, sizeof(errstr));
                     std::cerr << "Failed to write to the file: " << errstr << std::endl;
@@ -253,9 +253,9 @@ public:
                 return result;
             }));
         // Set the default behavior of read to call the system's read function
-        ON_CALL(*this, FRead(_, _, _, _)).WillByDefault(Invoke([](void *destv, size_t size, size_t nmemb, FILE *file) {
+        ON_CALL(*this, FRead(_, _, _, _)).WillByDefault(Invoke([](void *destv, size_t size, ssize_t nmemb, FILE *file) {
             size_t result = ::fread(destv, size, nmemb, file);
-            if (result != nmemb) {
+            if (result != static_cast<size_t>(nmemb)) {
                 char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, errstr, sizeof(errstr));
                 std::cerr << "Failed to read from the file: " << errstr << std::endl;

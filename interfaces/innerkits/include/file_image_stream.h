@@ -28,11 +28,32 @@
 
 namespace OHOS {
 namespace Media {
+/**
+ * This is a helper class for FileImageStream. It is used for testing whether exceptions are
+ * properly handled during file read/write errors.
+ */
 class FileWrapper {
 public:
     virtual ~FileWrapper() {}
-    virtual ssize_t FWrite(const void *src, size_t size, size_t nmemb, FILE *file);
-    virtual ssize_t FRead(void *destv, size_t size, size_t nmemb, FILE *file);
+    /* *
+     * @brief Simulates the fwrite function.
+     * @param src Pointer to the array of elements to be written.
+     * @param size Size in bytes of each element to be written.
+     * @param nmemb Number of elements, each one with a size of 'size' bytes.
+     * @param file Pointer to a FILE object that specifies an output stream.
+     * @return The total number of elements successfully written.
+     */
+    virtual ssize_t FWrite(const void *src, size_t size, ssize_t nmemb, FILE *file);
+
+    /* *
+     * @brief Simulates the fread function.
+     * @param destv Pointer to a block of memory with a size of at least (size*nmemb) bytes.
+     * @param size Size in bytes of each element to be read.
+     * @param nmemb Number of elements, each one with a size of 'size' bytes.
+     * @param file Pointer to a FILE object that specifies an input stream.
+     * @return The total number of elements successfully read.
+     */
+    virtual ssize_t FRead(void *destv, size_t size, ssize_t nmemb, FILE *file);
 };
 
 class FileImageStream : public ImageStream {

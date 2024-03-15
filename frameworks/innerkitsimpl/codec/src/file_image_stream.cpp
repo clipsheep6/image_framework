@@ -33,12 +33,12 @@
 
 namespace OHOS {
 namespace Media {
-ssize_t FileWrapper::FWrite(const void *src, size_t size, size_t nmemb, FILE *file)
+ssize_t FileWrapper::FWrite(const void *src, size_t size, ssize_t nmemb, FILE *file)
 {
     return ::fwrite(src, size, nmemb, file);
 }
 
-ssize_t FileWrapper::FRead(void *destv, size_t size, size_t nmemb, FILE *file)
+ssize_t FileWrapper::FRead(void *destv, size_t size, ssize_t nmemb, FILE *file)
 {
     return ::fread(destv, size, nmemb, file);
 }

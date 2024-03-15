@@ -70,7 +70,13 @@ public:
     virtual bool IsOpen() = 0;
 
     /* *
-     * Flush the image stream
+     * Flush the image stream. For FileImageStream, this function is used to clear the buffer and
+     * write the buffered data into the file. This operation ensures that all modifications are
+     * written to the file, so other FileImageStream objects opening the same file can see these
+     * modifications. For BufferImageStream, this function may not have a specific use as it might
+     * only operate data in memory and does not involve any file operations. However, it could still
+     * be used to trigger certain behaviors, such as notifying other objects that data has been
+     * modified, or releasing resources that are no longer needed.
      * @return true if it flushes successfully, false otherwise
      */
     virtual bool Flush() = 0;
