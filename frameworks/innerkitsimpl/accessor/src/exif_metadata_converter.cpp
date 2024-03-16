@@ -17,14 +17,15 @@
 #include <iostream>
 #include <regex>
 #include <string_view>
-#include "exif_metadata_converter.h"
+#include <set>
+#include <utility>
+
 #include "hilog/log_cpp.h"
 #include "string_ex.h"
 #include "media_errors.h"
 #include "hilog/log.h"
 #include "image_log.h"
-#include <set>
-#include <utility>
+#include "exif_metadata_converter.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -213,14 +214,14 @@ const std::map<std::string, PropertyPermision> SUPPORTKEYS = {
     {"HwMnoteFaceMouthCenter", READ_ONLY},
 };
 
-//! Orientation, tag 0x0112
+// Orientation, tag 0x0112
 constexpr TagDetails exifOrientation[] = {
     {1, "top, left"},     {2, "top, right"},   {3, "bottom, right"},
     {4, "bottom, left"},  {5, "left, top"},    {6, "right, top"},
-    {7, "right, bottom" }, { 8, "left, bottom" }, { 8, "left, bottom"}  // To silence compiler warning
+    {7, "right, bottom" }, {8, "left, bottom"}, {8, "left, bottom"}
 };
 
-//! GPS latitude reference, tag 0x0001; also GPSDestLatitudeRef, tag 0x0013
+// GPS latitude reference, tag 0x0001; also GPSDestLatitudeRef, tag 0x0013
 constexpr TagDetails exifGPSLatitudeRef[] = {
     {78, "North"},
     {83, "South"},
@@ -231,13 +232,13 @@ constexpr TagDetails exifGPSLongitudeRef[] = {
     {87, "West"},
 };
 
-//! WhiteBalance, tag 0xa403
+// WhiteBalance, tag 0xa403
 constexpr TagDetails exifWhiteBalance[] = {
     {0, "Auto"},
     {1, "Manual"},
 };
 
-//! Flash, Exif tag 0x9209
+// Flash, Exif tag 0x9209
 constexpr TagDetails exifFlash[] = {
     {0x00, "No flash"},
     {0x01, "Fired"},
@@ -268,14 +269,14 @@ constexpr TagDetails exifFlash[] = {
     {0x5f, "Yes, auto, red-eye reduction, return light detected"},
 };
 
-//! ColorSpace, tag 0xa001
+// ColorSpace, tag 0xa001
 constexpr TagDetails exifColorSpace[] = {
     {1, "sRGB"},
     {2, "Adobe RGB"},  // Not defined to Exif 2.2 spec. But used by a lot of cameras.
     {0xffff, "Uncalibrated"},
 };
 
-//! LightSource, tag 0x9208
+// LightSource, tag 0x9208
 constexpr TagDetails exifLightSource[] = {
     {0, "Unknown"},
     {1, "Daylight"},
@@ -300,19 +301,19 @@ constexpr TagDetails exifLightSource[] = {
     {255, "Other light source"},
 };
 
-//! MeteringMode, tag 0x9207
+// MeteringMode, tag 0x9207
 constexpr TagDetails exifMeteringMode[] = {
     {0, "Unknown"}, {1, "Average"},    {2, "Center weighted average"},
     {3, "Spot"},    {4, "Multi-spot"}, {5, "Multi-segment"},
     { 6, "Partial"}, { 255, "Other"},    { 255, "Other"}
 };
 
-//! SceneType, tag 0xa301
+// SceneType, tag 0xa301
 constexpr TagDetails exifSceneType[] = {
     {1, "Directly photographed"},
 };
 
-//! Compression, tag 0x0103
+// Compression, tag 0x0103
 constexpr TagDetails exifCompression[] = {
     {1, "Uncompressed"},
     {2, "CCITT RLE"},
@@ -350,7 +351,7 @@ constexpr TagDetails exifCompression[] = {
     {65535, "Pentax PEF Compressed"},
 };
 
-//! PhotometricInterpretation, tag 0x0106
+// PhotometricInterpretation, tag 0x0106
 constexpr TagDetails exifPhotometricInterpretation[] = {
     {0, "White Is Zero"},
     {1, "Black Is Zero"},
@@ -370,53 +371,53 @@ constexpr TagDetails exifPhotometricInterpretation[] = {
     {52527, "Photometric Mask"},  // DNG 1.6
 };
 
-//! PlanarConfiguration, tag 0x011c
+// PlanarConfiguration, tag 0x011c
 constexpr TagDetails exifPlanarConfiguration[] = {
     {1, "Chunky"},
     {2, "Planar"},
 };
 
-//! Units for measuring X and Y resolution, tags 0x0128, 0xa210
+// Units for measuring X and Y resolution, tags 0x0128, 0xa210
 constexpr TagDetails exifUnit[] = {
     {1, "none"},
     {2, "inch"},
     {3, "cm"},
 };
 
-//! YCbCrPositioning, tag 0x0213
+// YCbCrPositioning, tag 0x0213
 constexpr TagDetails exifYCbCrPositioning[] = {
     {1, "Centered"},
     {2, "Co-sited"},
 };
 
-//! ExposureProgram, tag 0x8822
+// ExposureProgram, tag 0x8822
 constexpr TagDetails exifExposureProgram[] = {
     {0, "Not defined"},       {1, "Manual"},           {2, "Auto"},
     {3, "Aperture priority"}, {4, "Shutter priority"}, {5, "Creative program"},
     {6, "Action program"},    {7, "Portrait mode"},    {8, "Landscape mode"},
 };
 
-//! SensingMethod, TIFF/EP tag 0x9217
+// SensingMethod, TIFF/EP tag 0x9217
 constexpr TagDetails tiffSensingMethod[] = {
     {0, "Undefined"},           {1, "Monochrome area"},       {2, "One-chip color area"},
     {3, "Two-chip color area"}, {4, "Three-chip color area"}, {5, "Color sequential area"},
     {6, "Monochrome linear"},   {7, "Trilinear sensor"},      {8, "Color sequential linear"},
 };
 
-//! CustomRendered, tag 0xa401
+// CustomRendered, tag 0xa401
 constexpr TagDetails exifCustomRendered[] = {
     {0, "Normal process"},
     {1, "Custom process"},
 };
 
-//! ExposureMode, tag 0xa402
+// ExposureMode, tag 0xa402
 constexpr TagDetails exifExposureMode[] = {
     {0, "Auto"},
     {1, "Manual"},
     {2, "Auto bracket"},
 };
 
-//! SceneCaptureType, tag 0xa406
+// SceneCaptureType, tag 0xa406
 constexpr TagDetails exifSceneCaptureType[] = {
     {0, "Standard"},
     {1, "Landscape"},
@@ -424,27 +425,27 @@ constexpr TagDetails exifSceneCaptureType[] = {
     {3, "Night scene"}
 };
 
-//! GainControl, tag 0xa407
+// GainControl, tag 0xa407
 constexpr TagDetails exifGainControl[] = {
     {0, "None"},          {1, "Low gain up"},    {2, "High gain up"},
     {3, "Low gain down"}, {4, "High gain down"},
 };
 
-//! Contrast, tag 0xa408 and Sharpness, tag 0xa40a
+// Contrast, tag 0xa408 and Sharpness, tag 0xa40a
 constexpr TagDetails exifNormalSoftHard[] = {
     {0, "Normal"},
     {1, "Soft"},
     {2, "Hard"},
 };
 
-//! Saturation, tag 0xa409
+// Saturation, tag 0xa409
 constexpr TagDetails exifSaturation[] = {
     {0, "Normal"},
     {1, "Low"},
     {2, "High"},
 };
 
-//! SubjectDistanceRange, tag 0xa40c
+// SubjectDistanceRange, tag 0xa40c
 constexpr TagDetails exifSubjectDistanceRange[] = {
     {0, "Unknown"},
     {1, "Macro"},
@@ -452,13 +453,13 @@ constexpr TagDetails exifSubjectDistanceRange[] = {
     {3, "Distant view"}
 };
 
-//! GPS altitude reference, tag 0x0005
+// GPS altitude reference, tag 0x0005
 constexpr TagDetails exifGPSAltitudeRef[] = {
     {0, "Above sea level"},
     {1, "Below sea level"},
 };
 
-//! NewSubfileType, TIFF tag 0x00fe - this is actually a bitmask
+// NewSubfileType, TIFF tag 0x00fe - this is actually a bitmask
 constexpr TagDetails exifNewSubfileType[] = {
     {0, "Primary image"},
     {1, "Thumbnail/Preview image"},
@@ -475,52 +476,52 @@ constexpr TagDetails exifNewSubfileType[] = {
     {65540, "Primary image, Semantic mask"}           // DNG 1.6
 };
 
-//! SubfileType, TIFF tag 0x00ff
+// SubfileType, TIFF tag 0x00ff
 constexpr TagDetails exifSubfileType[] = {
     {1, "Full-resolution image data"},
     {2, "Reduced-resolution image data"},
     {3, "A single page of a multi-page image"},
 };
 
-//! GPS status, tag 0x0009
+// GPS status, tag 0x0009
 constexpr TagDetails exifGPSStatus[] = {
     {'A', "Measurement in progress"},
     {'V', "Measurement interrupted"},
 };
 
-//! GPS measurement mode, tag 0x000a
+// GPS measurement mode, tag 0x000a
 constexpr TagDetails exifGPSMeasureMode[] = {
     {2, "2-dimensional measurement"},
     {3, "3-dimensional measurement"},
 };
 
-//! GPS speed reference, tag 0x000c
+// GPS speed reference, tag 0x000c
 constexpr TagDetails exifGPSSpeedRef[] = {
     {'K', "km/h"},
     {'M', "mph"},
     {'N', "knots"},
 };
 
-//! GPS direction reference, tags 0x000e, 0x0010, 0x0017
+// GPS direction reference, tags 0x000e, 0x0010, 0x0017
 constexpr TagDetails exifGPSDirRef[] = {
     {'T', "True direction"},
     {'M', "Magnetic direction"},
 };
 
-//! GPS destination distance reference, tag 0x0019
+// GPS destination distance reference, tag 0x0019
 constexpr TagDetails exifGPSDestDistanceRef[] = {
     {'K', "km"},
     {'M', "miles"},
     {'N', "nautical miles"},
 };
 
-//! GPS differential correction, tag 0x001e
+// GPS differential correction, tag 0x001e
 constexpr TagDetails exifGPSDifferential[] = {
     {0, "Without correction"},
     {1, "Correction applied"},
 };
 
-//! CompositeImage, tag 0xa460
+// CompositeImage, tag 0xa460
 constexpr TagDetails exifCompositeImage[] = {
     {0, "Unknown"},
     {1, "NonComposite"},
@@ -643,7 +644,7 @@ bool ExifMetadataConverter::ValidRegexWithComma(std::string &value, const std::s
     return true;
 }
 
-// convert integer to rational format. For example 23 15 83 --> 23/1 15/1 83
+// convert integer to rational format. For example 23 15 83 --> 23/1 15/1 83/1
 void ExifMetadataConverter::RationalFormat(std::string &value)
 {
     std::regex pattern("\\d+"); // regex for integer
@@ -651,16 +652,15 @@ void ExifMetadataConverter::RationalFormat(std::string &value)
     int icount = 0;
     while (std::regex_search(value, pattern)) {
         std::smatch match;
-        if (std::regex_search(value, match, pattern)) {
-            if (icount != 0) {
-                result += " ";
-            }
-            result += match.str() + "/1"; // appending '/1' to integer
-            value = match.suffix().str(); // skip handled value part
-            icount++;
-        } else {
+        if (!std::regex_search(value, match, pattern)) {
             break; // break since there is no matched value
         }
+        if (icount != 0) {
+            result += " ";
+        }
+        result += match.str() + "/1"; // appending '/1' to integer
+        value = match.suffix().str(); // skip handled value part
+        icount++;
     }
     value = result;
 }
@@ -707,7 +707,8 @@ void ExifMetadataConverter::DecimalRationalFormat(std::string &value)
             // append '/1' to integer 23 -> 23/1
             result += match.str() + "/1";
             IMAGE_LOGD("match integer value is [%{public}s].", ((std::string)match[0]).c_str());
-        } else if (ValidRegex(match[0], "\\d+\\.\\d+")) {
+        }
+        if (ValidRegex(match[0], "\\d+\\.\\d+")) {
             // segment is decimal call decimalToFraction 2.5 -> 5/2
             result += GetFractionFromStr(match[0]);
             IMAGE_LOGD("match decimal value is [%{public}s].", ((std::string)match[0]).c_str());
@@ -795,74 +796,96 @@ bool ExifMetadataConverter::ValidRegexWithDecimalRationalFormat(std::string &val
 // regex validation for two integer like DefaultCropSize 9 9 the format is [0-9]+ [0-9]+
 ValueFormatDelegate ExifMetadataConverter::doubleIntWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, DOUBLEINTWITHBLANKREGEX);
+
 // regex validation for two integer with comma like BitPerSample 9,9 the format is [0-9]+,[0-9]+,[0-9]+
 ValueFormatDelegate ExifMetadataConverter::doubleIntWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegexWithComma, DOUBLEINTWITHCOMMAREGEX);
+
 // regex validation for three integer like BitPerSample 9 9 9 the format is [0-9]+ [0-9]+ [0-9]+
 ValueFormatDelegate ExifMetadataConverter::tribleIntWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, TRIBLEINTWITHBLANKREGEX);
+
 // regex validation for three integer with comma like BitPerSample 9,9,0 the format is [0-9]+,[0-9]+,[0-9]+,[0-9]+
 ValueFormatDelegate ExifMetadataConverter::tribleIntWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegexWithComma, TRIBLEINTWITHCOMMAREGEX);
+
 // regex validation for four integer like DNGVersion 9 9 9 9 the format is [0-9]+ [0-9]+ [0-9]+ [0-9]+
 ValueFormatDelegate ExifMetadataConverter::fourIntWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, FOURINTWITHBLANKREGEX);
+
 // regex validation for four integer with comma like DNGVersion tag encodes the DNG four-tier version number
 ValueFormatDelegate ExifMetadataConverter::fourIntWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegexWithComma, FOURINTWITHCOMMAREGEX);
+
 // regex validation for one rational like ApertureValue 4/1 the format is [0-9]+/[1-9][0-9]
 ValueFormatDelegate ExifMetadataConverter::oneRational =
     std::make_pair(ExifMetadataConverter::ValidRegex, ONERATIONALREGEX);
+
 // regex validation for integer and convert it to rational like ApertureValue 4 --> 4/1
 ValueFormatDelegate ExifMetadataConverter::oneIntToRational =
     std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, ONEINTREGEX);
+
 ValueFormatDelegate ExifMetadataConverter::oneDecimalToRational =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, ONEDECIMALREGEX);
+
 // regex validation for three rational like GPSLatitude 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, TRIBLERATIONALWITHBLANKREGEX);
+
 // regex validation for three integer and convert to three rational like GPSLatitude 39 54 20 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, TRIBLEINTNZWITHBLANKREGEX);
+
 // regex validation for three integer with comma like GPSLatitude 39,54,20 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, TRIBLEINTNZWITHCOMMAREGEX);
+
 // regex validation for three decimal like YCbCrCoefficients 39.0 54 20.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleDecimalToRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, TRIBLEDECIMALWITHBLANKREGEX);
+
 // regex validation for three decimal like YCbCrCoefficients 39.0,54,20.0 --> 39.0 54 20.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleDecimalToRatiionalWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, TRIBLEDECIMALWITHCOMMAREGEX);
+
 // regex validation for four rational like LensSpecification 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadataConverter::fourRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegex, FOURRATIONALWITHBLANKREGEX);
+
 // regex validation for four integer and convert to four rational like LensSpecification 1 3 1 2 --> 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithBlank =
     std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, FOURINTWITHBLANKREGEX);
+
 // regex validation for four integer like LensSpecification 1,3,1,2 --> 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithComma =
     std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, FOURINTNZWITHCOMMAREGEX);
+
 // regex validation for four decimal like LensSpecification 1.0 3.0 1.0 2.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::decimal4Ratiional4 =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, FOURDECIMALWITHBLANKREGEX);
+
 // regex validation for four decimal like LensSpecification 1.0,3.0,1.0,2.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::decimal4Ratiional4Comma =
     std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, FOURDECIMALWITHCOMMAREGEX);
+
 // regex validation for datetime format like DateTimeOriginal 2022:06:02 15:51:34
 ValueFormatDelegate ExifMetadataConverter::dateTimeValidation =
     std::make_pair(ExifMetadataConverter::ValidRegex, DATETIMEREGEX);
+
 // regex validation for datetime format like DateTimeOriginal 2022:06:02
 ValueFormatDelegate ExifMetadataConverter::dateValidation =
     std::make_pair(ExifMetadataConverter::ValidRegex, DATEREGEX);
+
 // regex validation for three integer like GPSLatitude 39,54,21 --> 39/1 54/1 21/1
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithColon =
     std::make_pair(ExifMetadataConverter::ValidRegexWithColonRationalFormat, TRIBLEINTWITHCOLONREGEX);
+
 // regex validation for fou integer with pointer like GPSVersionID
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithDot =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDot, TRIBLEINTWITHDOTREGEX);
 
 // configuration for value format validation. For example BitPerSample the value format should be 9 9 9 or 9,9,9
-std::multimap<std::string, ValueFormatDelegate> ExifMetadataConverter::valueFormatValidateConfig = {
+std::multimap<std::string, ValueFormatDelegate> ExifMetadataConverter::valueFormatConvertConfig = {
     {"BitsPerSample", tribleIntWithBlank},
     {"BitsPerSample", tribleIntWithComma},
     {"CompressedBitsPerPixel", oneRational},
@@ -993,7 +1016,7 @@ std::multimap<std::string, ValueFormatDelegate> ExifMetadataConverter::valueForm
     {"LensSpecification", decimal4Ratiional4Comma},
 };
 
-std::multimap<std::string, std::string> ExifMetadataConverter::valueFormatValidateConfig_ = {
+std::multimap<std::string, std::string> ExifMetadataConverter::valueFormatValidateConfig = {
     {"BitsPerSample", TRIBLEINTWITHCOMMAREGEX},
     {"ImageLength", ONEINTREGEX},
     {"ImageWidth", ONEINTREGEX},
@@ -1010,42 +1033,44 @@ int32_t ExifMetadataConverter::ValidateValueRange(const std::string &keyName, co
 {
     // 1. to find if any value range validation configuratiion according to exif tag in std::map container
     auto iter = valueRangeValidateConfig.find(keyName);
-    if (iter != valueRangeValidateConfig.end()) {
-        // get value range array & size
-        auto &[arrRef, arrSize] = iter->second;
-        if (arrRef != nullptr) {
-            int32_t ivalue = -1;
-            // validate value if integer or char 2.char ascii
-            std::regex regNum(R"(^[0-9]+$)");    // regex for integer value. For example WhiteBalance support 0 or 1
-            std::regex regChar(R"(^[a-zA-Z]$)"); // regex for char value. For example GPSLatitudeRef support N or S
-            if (std::regex_match(value, regNum)) {
-                // convert string to integer such as "15" -> 15
-                ivalue = std::stoll(value);
-                IMAGE_LOGD("convert to integer ivalue is[%{public}d].", ivalue);
-            } else if (std::regex_match(value, regChar)) {
-                // convert char to integer such as "N" -> 78
-                ivalue = static_cast<int32_t>(value[0]);
-                IMAGE_LOGD("convert char to integer ivalue is[%{public}d].", ivalue);
-            }
+    if (iter == valueRangeValidateConfig.end()) {
+        // return FAIL if the value range array nullptr.
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+    // get value range array & size
+    auto &[arrRef, arrSize] = iter->second;
+    if (arrRef == nullptr) {
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
 
-            // if ivalue is not converted then return FAIL
-            if (ivalue == -1) {
-                IMAGE_LOGD("invalid value is [%{public}s].", value.c_str());
-                return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
-            }
-            // validate the ivalue is in value range array.
-            auto isValid = IsValidValue(arrRef, arrSize, ivalue);
-            if (!isValid) {
-                IMAGE_LOGD("invalid value is [%{public}s].", value.c_str());
-                return Media::ERR_MEDIA_OUT_OF_RANGE;
-            } else {
-                IMAGE_LOGD("isValueRangeValidate valid value is [%{public}s].", value.c_str());
-                return Media::SUCCESS;
-            }
-        } else {
-            // return FAIL if the value range array nullptr.
-            return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
-        }
+    int32_t ivalue = -1;
+    // validate value if integer or char 2.char ascii
+    std::regex regNum(R"(^[0-9]+$)");    // regex for integer value. For example WhiteBalance support 0 or 1
+    std::regex regChar(R"(^[a-zA-Z]$)"); // regex for char value. For example GPSLatitudeRef support N or S
+    if (std::regex_match(value, regNum)) {
+        // convert string to integer such as "15" -> 15
+        ivalue = std::stoll(value);
+        IMAGE_LOGD("convert to integer ivalue is[%{public}d].", ivalue);
+    } 
+    if (std::regex_match(value, regChar)) {
+        // convert char to integer such as "N" -> 78
+        ivalue = static_cast<int32_t>(value[0]);
+        IMAGE_LOGD("convert char to integer ivalue is[%{public}d].", ivalue);
+    }
+
+    // if ivalue is not converted then return FAIL
+    if (ivalue == -1) {
+        IMAGE_LOGD("invalid value is [%{public}s].", value.c_str());
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+    // validate the ivalue is in value range array.
+    auto isValid = IsValidValue(arrRef, arrSize, ivalue);
+    if (!isValid) {
+        IMAGE_LOGD("invalid value is [%{public}s].", value.c_str());
+        return Media::ERR_MEDIA_OUT_OF_RANGE;
+    } else {
+        IMAGE_LOGD("isValueRangeValidate valid value is [%{public}s].", value.c_str());
+        return Media::SUCCESS;
     }
     // Default is SUCCESS if there is no value range configuration
     return Media::SUCCESS; // SUCCESS
@@ -1055,8 +1080,8 @@ int32_t ExifMetadataConverter::ValidateValueRange(const std::string &keyName, co
 bool ExifMetadataConverter::IsFormatValidationConfigExisting(const std::string &keyName)
 {
     IMAGE_LOGD("hasValueFormatValidate keyName is [%{public}s].", keyName.c_str());
-    auto it = ExifMetadataConverter::valueFormatValidateConfig.find(keyName);
-    return it != ExifMetadataConverter::valueFormatValidateConfig.end();
+    auto it = ExifMetadataConverter::valueFormatConvertConfig.find(keyName);
+    return it != ExifMetadataConverter::valueFormatConvertConfig.end();
 }
 
 // validate value format. For example BitPerSample the value format should be 9 9 9 or 9,9,9
@@ -1065,9 +1090,9 @@ int32_t ExifMetadataConverter::ValidateValueFormat(const std::string &keyName, s
     IMAGE_LOGD("isValueFormatValidate keyName is [%{public}s] value is [%{public}s].",
         keyName.c_str(), value.c_str());
     // get first iterator according to keyName
-    for (auto iterator = ExifMetadataConverter::valueFormatValidateConfig.find(keyName);
-        iterator != ExifMetadataConverter::valueFormatValidateConfig.end() &&
-        iterator != ExifMetadataConverter::valueFormatValidateConfig.upper_bound(keyName);
+    for (auto iterator = ExifMetadataConverter::valueFormatConvertConfig.find(keyName);
+        iterator != ExifMetadataConverter::valueFormatConvertConfig.end() &&
+        iterator != ExifMetadataConverter::valueFormatConvertConfig.upper_bound(keyName);
         iterator++) {
         IMAGE_LOGD("isValueFormatValidate forloop keyName is [%{public}s] regex string is [%{public}s].",
             (iterator->first).c_str(), (iterator->second).second.c_str());
@@ -1090,9 +1115,9 @@ int32_t ExifMetadataConverter::ValidateValueFormat_(const std::string &keyName, 
     IMAGE_LOGD("isValueFormatValidate keyName is [%{public}s] value is [%{public}s].",
         keyName.c_str(), value.c_str());
     // get first iterator according to keyName
-    for (auto iterator = ExifMetadataConverter::valueFormatValidateConfig_.find(keyName);
-        iterator != ExifMetadataConverter::valueFormatValidateConfig_.end() &&
-        iterator != ExifMetadataConverter::valueFormatValidateConfig_.upper_bound(keyName);
+    for (auto iterator = ExifMetadataConverter::valueFormatValidateConfig.find(keyName);
+        iterator != ExifMetadataConverter::valueFormatValidateConfig.end() &&
+        iterator != ExifMetadataConverter::valueFormatValidateConfig.upper_bound(keyName);
         iterator++) {
         bool isValidated = ExifMetadataConverter::ValidRegex(value, iterator->second);
         IMAGE_LOGD("isValueFormatValidate ret i is [%{public}d].", isValidated);
@@ -1125,7 +1150,7 @@ bool ExifMetadataConverter::IsModifyAllowed(const std::string &keyName)
 std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string &keyName, const std::string &value)
 {
     std::string value_ = "";
-    IMAGE_LOGD("[ValidateAndConvert] in exifValidate.");
+    IMAGE_LOGD("ExifMetadataConverter.");
     // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
     if (!ExifMetadataConverter::IsKeySupported(keyName)) {
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, nullptr);
@@ -1135,24 +1160,24 @@ std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, nullptr);
     }
 
-    IMAGE_LOGD("[ValidateAndConvert] keyName is [%{public}s] value is [%{public}s].",
+    IMAGE_LOGD("ExifMetadataConverter keyName is [%{public}s] value is [%{public}s].",
         keyName.c_str(), value.c_str());
     // 1.validate value format
-    IMAGE_LOGD("[ValidateAndConvert] hasValueFormatValidate is [%{public}d].",
+    IMAGE_LOGD("ExifMetadataConverter hasValueFormatValidate is [%{public}d].",
         ExifMetadataConverter::IsFormatValidationConfigExisting(keyName));
     auto r = ExifMetadataConverter::ValidateValueFormat(keyName, value_);
-    IMAGE_LOGD("[ValidateAndConvert] isValueFormatValidate is [%{public}d].", r);
+    IMAGE_LOGD("ExifMetadataConverter isValueFormatValidate is [%{public}d].", r);
     if (ExifMetadataConverter::IsFormatValidationConfigExisting(keyName) && r) {
-        IMAGE_LOGD("[ValidateAndConvert] value formate is invalid. keyName is [%{public}s] value is [%{public}s].",
+        IMAGE_LOGD("ExifMetadataConverter value formate is invalid. keyName is [%{public}s] value is [%{public}s].",
             keyName.c_str(), value.c_str());
         // value format validate does not pass
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, nullptr);
     }
-    IMAGE_LOGD("[ValidateAndConvert] processed formate value is [%{public}s] value is [%{public}s].",
+    IMAGE_LOGD("ExifMetadataConverter processed formate value is [%{public}s] value is [%{public}s].",
         keyName.c_str(), value.c_str());
     // 2.validate value range
     if (ExifMetadataConverter::ValidateValueRange(keyName, value)) {
-        IMAGE_LOGD("[ValidateAndConvert] value range is invalid. value is [%{public}s] value is [%{public}s].",
+        IMAGE_LOGD("ExifMetadataConverter value range is invalid. value is [%{public}s] value is [%{public}s].",
             keyName.c_str(), value.c_str());
         // value range validate does not pass
         return std::make_pair(Media::ERR_MEDIA_OUT_OF_RANGE, nullptr);
@@ -1179,8 +1204,8 @@ int32_t ExifMetadataConverter::Validate(const std::string &keyName, const std::s
         ExifMetadataConverter::IsFormatValidationConfigExisting(keyName));
     auto r = ExifMetadataConverter::ValidateValueFormat_(keyName, value);
     IMAGE_LOGD("[ValidateAndConvert] isValueFormatValidate is [%{public}d].", r);
-    auto it = ExifMetadataConverter::valueFormatValidateConfig_.find(keyName);
-    bool isFormatExisting = (it != ExifMetadataConverter::valueFormatValidateConfig_.end());
+    auto it = ExifMetadataConverter::valueFormatValidateConfig.find(keyName);
+    bool isFormatExisting = (it != ExifMetadataConverter::valueFormatValidateConfig.end());
     if (isFormatExisting && r) {
         IMAGE_LOGD("[ValidateAndConvert] value formate is invalid. keyName is [%{public}s] value is [%{public}s].",
             keyName.c_str(), value.c_str());

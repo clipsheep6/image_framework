@@ -80,8 +80,8 @@ private:
     static ValueFormatDelegate dateValidation;
     static ValueFormatDelegate tribleIntToRationalWithColon;
     static ValueFormatDelegate fourIntToRationalWithDot;
-    static std::multimap<std::string, ValueFormatDelegate> valueFormatValidateConfig;
-    static std::multimap<std::string, std::string> valueFormatValidateConfig_;
+    static std::multimap<std::string, ValueFormatDelegate> valueFormatConvertConfig;
+    static std::multimap<std::string, std::string> valueFormatValidateConfig;
     static std::map<std::string, std::tuple<const TagDetails*, const size_t>> valueRangeValidateConfig;
 public:
     static std::pair<int32_t, std::string> Convert(const std::string &keyName, const std::string &value);
