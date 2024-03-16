@@ -28,6 +28,12 @@
 
 namespace OHOS {
 namespace Media {
+#if defined(INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_TESTS_PRIVATE)
+#define INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED public
+#else
+#define INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED private
+#endif
+
 /**
  * This is a helper class for FileImageStream. It is used for testing whether exceptions are
  * properly handled during file read/write errors.
@@ -56,6 +62,12 @@ public:
     virtual ssize_t FRead(void *destv, size_t size, ssize_t nmemb, FILE *file);
 };
 
+/**
+ * @class FileImageStream
+ * @brief A class that represents a file-based image stream.
+ * @note This class is not thread-safe. If you need to use the same FileImageStream instance from multiple threads,
+ * you must ensure that all access to the instance is properly synchronized.
+ */
 class FileImageStream : public ImageStream {
 public:
     /* *
@@ -183,11 +195,12 @@ public:
      */
     NATIVEEXPORT ssize_t GetSize() override;
 
-private:
-    /* *
-     * @brief Closes the FileImageStream.
-     */
-    virtual void Close() override;
+    INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED :
+        /* *
+         * @brief Closes the FileImageStream.
+         */
+        virtual void
+        Close() override;
 
     /* *
      * @brief Releases a memory map.

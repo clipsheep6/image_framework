@@ -216,6 +216,7 @@ long FileImageStream::Seek(long offset, SeekPos pos)
 {
     if (fp_ == nullptr) {
         // File is not open
+        IMAGE_LOGE("Seek file failed: %{public}s, reason: %{public}s", filePath_.c_str(), "fp is nullptr");
         return -1;
     }
 
@@ -280,10 +281,7 @@ bool FileImageStream::IsEof()
     }
 
     long currentPos = ftell(fp_);
-    if (fseek(fp_, 0, SEEK_END) != 0) {
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, errstr, sizeof(errstr));
-        IMAGE_LOGE("Failed to seek to the end of the file: %{public}s", errstr);
+    if (Seek(0, SeekPos::END) == -1) {
         return true;
     }
 
@@ -291,10 +289,7 @@ bool FileImageStream::IsEof()
 
     bool isEof = currentPos == fileSize;
 
-    if (fseek(fp_, currentPos, SEEK_SET) != 0) { // Restore the file pointer to its original position after comparison
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, errstr, sizeof(errstr));
-        IMAGE_LOGE("Failed to restore the file position: %{public}s", errstr);
+    if (Seek(currentPos, SeekPos::BEGIN) == -1) { // Restore the file pointer to its original position after comparison
         return true;
     }
 

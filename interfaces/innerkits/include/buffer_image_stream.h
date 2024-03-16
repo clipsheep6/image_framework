@@ -26,6 +26,12 @@
 
 namespace OHOS {
 namespace Media {
+#if defined(INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_TESTS_PRIVATE)
+    #define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_PRIVATE_UNLESS_TESTED public
+#else
+    #define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_PRIVATE_UNLESS_TESTED private
+#endif
+
 /**
  * @class BufferImageStream
  * @brief A class for handling image streams in memory.
@@ -163,7 +169,7 @@ public:
      */
     NATIVEEXPORT virtual ssize_t GetSize() override;
 
-private:
+INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
     /* *
      * @brief Closes the BufferImageStream.
      */

@@ -38,11 +38,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#define private public
-#include "buffer_image_stream.h"
-#include "data_buf.h"
-#include "file_image_stream.h"
+#define INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_TESTS_PRIVATE
+#define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_TESTS_PRIVATE
 #include "image_stream.h"
+#include "buffer_image_stream.h"
+#include "file_image_stream.h"
+#include "data_buf.h"
 
 using namespace testing::ext;
 using namespace testing;
