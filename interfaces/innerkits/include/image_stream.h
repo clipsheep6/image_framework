@@ -98,14 +98,6 @@ public:
     virtual ssize_t Write(byte *data, ssize_t size) = 0;
 
     /* *
-     * Write data from another image stream
-     * @param src The image stream where the data comes from
-     * @return The actual size of the data written
-     * ToDo delete
-     */
-    virtual ssize_t Write(ImageStream &src) = 0;
-
-    /* *
      * Read data from the image stream
      * @param buf The buffer to store the data read
      * @param size The size of the data to be read
@@ -151,7 +143,8 @@ public:
 
     /* *
      * Copy the entire content from the source ImageStream to the current
-     * ImageStream.
+     * ImageStream. After the copy operation, the current position of both the source
+     * ImageStream and the current ImageStream will be at their respective ends.
      * @param src The source ImageStream, this function will read data from this
      * ImageStream.
      * @return true if the copy is successful, false otherwise.

@@ -65,14 +65,6 @@ public:
     NATIVEEXPORT virtual ssize_t Write(uint8_t *data, ssize_t size) override;
 
     /* *
-     * @brief Writes the content of the source ImageStream to the current
-     * BufferImageStream.
-     * @param src The source ImageStream.
-     * @return The number of bytes written.
-     */
-    NATIVEEXPORT virtual ssize_t Write(ImageStream &src) override;
-
-    /* *
      * @brief Reads data from the BufferImageStream.
      * @param buf The buffer to store the data.
      * @param size The size of the data.

@@ -52,26 +52,6 @@ ssize_t BufferImageStream::Write(uint8_t *data, ssize_t size)
     return size;
 }
 
-ssize_t BufferImageStream::Write(ImageStream &src)
-{
-    // Determine the size of the buffer
-    size_t bufferSize = std::min<size_t>(src.GetSize(), IMAGE_STREAM_PAGE_SIZE);
-    std::vector<uint8_t> buffer(bufferSize);
-    size_t totalBytesWritten = 0;
-
-    while (!src.IsEof()) {
-        size_t bytesRead = src.Read(buffer.data(), buffer.size());
-        if (bytesRead == 0) {
-            break;
-        }
-
-        size_t bytesWritten = Write(buffer.data(), bytesRead);
-        totalBytesWritten += bytesWritten;
-    }
-
-    return totalBytesWritten;
-}
-
 ssize_t BufferImageStream::Read(uint8_t *buf, ssize_t size)
 {
     if (buf == nullptr) {
@@ -179,6 +159,7 @@ bool BufferImageStream::CopyFrom(ImageStream &src)
             buffer_.insert(buffer_.end(), tempBuffer.begin(), tempBuffer.begin() + bytesRead);
         }
     }
+    Seek(0, SeekPos::END);
     return true;
 }
 

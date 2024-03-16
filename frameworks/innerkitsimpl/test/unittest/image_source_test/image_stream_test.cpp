@@ -366,9 +366,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
     }
     // At this point, all data from stream1 has been read, so the write should
     // return 0
-    ASSERT_EQ(stream2.Write(stream1), 0);
+    byte *buf = new byte[stream1.GetSize()];
+    stream1.Read(buf, stream1.GetSize());
+    ASSERT_EQ(stream2.Write(buf, stream1.GetSize()), stream1.GetSize());
     stream1.Flush();
     stream2.Flush();
+    delete[] buf;
 }
 
 /**
@@ -395,7 +398,9 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
     // Test the Write function
     sourceStream.Open();
     destStream.Open();
-    EXPECT_EQ(destStream.Write(sourceStream), -1);
+    byte *buf = new byte[sourceStream.GetSize()];
+    EXPECT_EQ(sourceStream.Read(buf, sourceStream.GetSize()), -1);
+    delete []buf;
 }
 
 /**

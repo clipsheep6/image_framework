@@ -100,14 +100,6 @@ public:
     NATIVEEXPORT virtual ssize_t Write(byte *data, ssize_t size) override;
 
     /* *
-     * @brief Writes the content of the source ImageStream to the current
-     * FileImageStream.
-     * @param src The source ImageStream.
-     * @return The number of bytes written.
-     */
-    NATIVEEXPORT virtual ssize_t Write(ImageStream &src) override;
-
-    /* *
      * @brief Reads data from the FileImageStream.
      * @param buf The buffer to store the data.
      * @param size The size of the data.
@@ -195,12 +187,11 @@ public:
      */
     NATIVEEXPORT ssize_t GetSize() override;
 
-    INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED :
-        /* *
-         * @brief Closes the FileImageStream.
-         */
-        virtual void
-        Close() override;
+INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
+    /* *
+     * @brief Closes the FileImageStream.
+     */
+    virtual void Close() override;
 
     /* *
      * @brief Releases a memory map.

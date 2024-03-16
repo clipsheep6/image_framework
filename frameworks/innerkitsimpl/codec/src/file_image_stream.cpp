@@ -134,41 +134,6 @@ ssize_t FileImageStream::Write(byte *data, ssize_t size)
     return result;
 }
 
-ssize_t FileImageStream::Write(ImageStream &src)
-{
-    // Create a buffer
-    byte buffer[IMAGE_STREAM_PAGE_SIZE];
-    ssize_t totalBytesWritten = 0;
-
-    while (!src.IsEof()) {
-        // Read data from the source image stream
-        ssize_t bytesRead = src.Read(buffer, sizeof(buffer));
-        if (bytesRead == 0) {
-            break;
-        }
-
-        // If reading fails, return the error immediately
-        if (bytesRead == -1) {
-            IMAGE_LOGE("Read from source stream failed.");
-            return -1;
-        }
-
-        // Write the data to the current image stream
-        ssize_t bytesWritten = Write(buffer, bytesRead);
-        if (bytesWritten == -1) {
-            // Write failed
-            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-            strerror_r(errno, buf, sizeof(buf));
-            IMAGE_LOGE("Write file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
-            return -1;
-        }
-
-        totalBytesWritten += bytesWritten;
-    }
-
-    return totalBytesWritten;
-}
-
 ssize_t FileImageStream::Read(byte *buf, ssize_t size)
 {
     if (fp_ == nullptr) {
@@ -598,14 +563,15 @@ bool FileImageStream::CopyFrom(ImageStream &src)
         return false;
     }
 
-    // Truncate the file
-    if (!TruncateFile(totalBytesWritten, src, src_cur)) {
-        return false;
+    // Truncate the file only if totalBytesWritten is less than fileSize_
+    if (totalBytesWritten < fileSize_) {
+        if (!TruncateFile(totalBytesWritten, src, src_cur)) {
+            return false;
+        }
     }
 
     // Set the file size to the new size
     fileSize_ = totalBytesWritten;
-    src.Seek(src_cur, SeekPos::BEGIN);
     return true;
 }
 
