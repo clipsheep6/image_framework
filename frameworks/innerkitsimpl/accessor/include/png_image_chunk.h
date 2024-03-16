@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PNG_IMAGE_CHUNK_H
-#define PNG_IMAGE_CHUNK_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_PNG_IMAGE_CHUNK_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_PNG_IMAGE_CHUNK_H
 
 #include <algorithm>
 #include <cstddef>
@@ -58,7 +58,7 @@ private:
     static DataBuf GetRawTextFromChunk(const DataBuf &chunkData, size_t keySize, TextChunkType chunkType);
 
     // lookup exif keyword
-    static int FindExifKeyword(const byte* keyword);
+    static bool FindExifKeyword(const byte* keyword);
 
     // lookup exif marker
     static size_t VerifyExifIdCode(DataBuf &exifInfo, size_t exifInfoLength);
@@ -84,4 +84,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif  // PNG_IMAGE_CHUNK_H
+#endif  // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_PNG_IMAGE_CHUNK_H

@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
+#include <zlib.h>
+#include <libexif/exif-data.h>
 #include "data_buf.h"
 #include "exif_metadata.h"
 #include "image_stream.h"
 #include "image_log.h"
-#include "libexif/exif-data.h"
+#include "media_errors.h"
 #include "png_image_chunk.h"
 #include "tiff_parser.h"
-
-#include "zlib.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -52,35 +52,34 @@ int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkT
 {
     DataBuf keyword = GetKeywordFromChunk(chunkData);
     if (keyword.Empty()) {
-        IMAGE_LOGE("Error:failed to read the keyword from chunk.");
-        return 1;
+        IMAGE_LOGE("Failed to read the keyword from chunk.");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
 
     DataBuf rawText = GetRawTextFromChunk(chunkData, keyword.Size(), chunkType);
     if (rawText.Empty()) {
-        IMAGE_LOGE("Error:failed to read the raw text from chunk.");
-        return 1;
+        IMAGE_LOGE("Failed to read the raw text from chunk.");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
 
-    int foundExifKeyword = FindExifKeyword(keyword.CData());
-    if (foundExifKeyword == true) {
-        return GetTiffDataFromRawText(rawText, tiffData);
-    } else {
-        IMAGE_LOGI("ignore the text chunk which without exif keyword");
-        return 1;
+    bool foundExifKeyword = FindExifKeyword(keyword.CData());
+    if (!foundExifKeyword) {
+        IMAGE_LOGI("Ignore the text chunk which without exif keyword");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
+    return GetTiffDataFromRawText(rawText, tiffData);
 }
 
 DataBuf PngImageChunk::GetKeywordFromChunk(const DataBuf &chunkData)
 {
     if (chunkData.Size() <= 0) {
-        IMAGE_LOGE("Error:check data size failed: offset bigger than data size.");
+        IMAGE_LOGE("Check data size failed: offset bigger than data size.");
         return {};
     }
 
     auto keyword = std::find(chunkData.CBegin(), chunkData.CEnd(), 0);
     if (keyword == chunkData.CEnd()) {
-        IMAGE_LOGE("Error:lookup key failed: not found key.");
+        IMAGE_LOGE("Lookup key failed: not found key.");
         return {};
     }
     const size_t keywordLength = std::distance(chunkData.CBegin(), keyword);
@@ -90,16 +89,16 @@ DataBuf PngImageChunk::GetKeywordFromChunk(const DataBuf &chunkData)
 DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
 {
     if (*(chunkData.CData(keySize + 1)) != CHUNK_COMPRESS_METHOD_VALID) {
-        IMAGE_LOGE("Error:corrupted Metadata: invalid compression method.");
+        IMAGE_LOGE("Corrupted Metadata: invalid compression method.");
         return {};
     }
 
     size_t compressedTextSize = chunkData.Size() - keySize - NULL_CHAR_AMOUNT;
-    if (compressedTextSize) {
+    if (compressedTextSize > 0) {
         const byte* compressedText = chunkData.CData(keySize + NULL_CHAR_AMOUNT);
         int ret = DecompressText(compressedText, static_cast<uint32_t>(compressedTextSize), rawText);
         if (ret != 0) {
-            IMAGE_LOGE("Error:decompress text failed.");
+            IMAGE_LOGE("Decompress text failed.");
             return {};
         }
     }
@@ -119,7 +118,7 @@ DataBuf PngImageChunk::GetRawTextFromTextChunk(const DataBuf &chunkData, size_t 
 std::string FetchString(const char* chunkData, size_t data_length)
 {
     if (data_length == 0) {
-        IMAGE_LOGE("Error:data_length is 0.");
+        IMAGE_LOGE("Data_length is 0.");
         return {};
     }
     const size_t stringLength = strnlen(chunkData, data_length);
@@ -130,19 +129,19 @@ DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t 
 {
     const size_t nullCount = std::count(chunkData.CData(keySize + 3), chunkData.CData(chunkData.Size() - 1), '\0');
     if (nullCount < NULL_CHAR_AMOUNT) {
-        IMAGE_LOGE("Error:corrupted Metadata: the null character after Language tag is less then 2");
+        IMAGE_LOGE("Corrupted Metadata: the null character after Language tag is less then 2");
         return {};
     }
 
     const byte compressionFlag = chunkData.ReadUInt8(keySize + 1);
     const byte compressionMethod = chunkData.ReadUInt8(keySize + 2);
     if ((compressionFlag != CHUNK_FLAG_COMPRESS_NO) && (compressionFlag != CHUNK_FLAG_COMPRESS_YES)) {
-        IMAGE_LOGE("Error:corrupted Metadata: the compression flag is invalid");
+        IMAGE_LOGE("Corrupted Metadata: the compression flag is invalid");
         return {};
     }
 
     if ((compressionFlag == CHUNK_FLAG_COMPRESS_YES) && (compressionMethod != CHUNK_COMPRESS_METHOD_VALID)) {
-        IMAGE_LOGE("Error:corrupted Metadata: invalid compression method.");
+        IMAGE_LOGE("Corrupted Metadata: invalid compression method.");
         return {};
     }
 
@@ -169,7 +168,7 @@ DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t 
     } else {
         int ret = DecompressText(textPtr, textLen, rawText);
         if (ret != 0) {
-            IMAGE_LOGE("Error:decompress text failed.");
+            IMAGE_LOGE("Decompress text failed.");
             return {};
         }
     }
@@ -187,20 +186,19 @@ DataBuf PngImageChunk::GetRawTextFromChunk(const DataBuf &chunkData, size_t keyS
     } else if (chunkType == iTXt_Chunk) {
         GetRawTextFromItxtChunk(chunkData, keySize, rawText);
     } else {
-        IMAGE_LOGE("Error:unexpected chunk.");
+        IMAGE_LOGE("Unexpected chunk.");
         return {};
     }
     return rawText;
 }
 
-int PngImageChunk::FindExifKeyword(const byte* keyword)
+bool PngImageChunk::FindExifKeyword(const byte* keyword)
 {
     if ((memcmp(PNG_PROFILE_EXIF, keyword, PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE) == 0) ||
         (memcmp(PNG_PROFILE_APP1, keyword, PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE) == 0)) {
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 size_t PngImageChunk::VerifyExifIdCode(DataBuf &exifInfo, size_t exifInfoLength)
@@ -244,46 +242,46 @@ int PngImageChunk::GetTiffDataFromRawText(const DataBuf &rawText, DataBuf &tiffD
 {
     DataBuf exifInfo = ConvertRawTextToExifInfo(rawText);
     if (exifInfo.Empty()) {
-        IMAGE_LOGE("Error:failed to parse Exif metadata: cannot convert text to hex");
-        return 1;
+        IMAGE_LOGE("Failed to parse Exif metadata: cannot convert text to hex");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
     size_t exifInfoLength = exifInfo.Size();
     if (exifInfoLength < EXIF_HEADER_SIZE) {
-        IMAGE_LOGE("Error:failed to parse Exif metadata: data length is too short");
-        return 1;
+        IMAGE_LOGE("Failed to parse Exif metadata: data length is too short");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
 
     size_t exifHeadPos = VerifyExifIdCode(exifInfo, exifInfoLength);
-    if (exifHeadPos != std::numeric_limits<size_t>::max()) {
-        size_t byteOrderPos = FindTiffPos(exifInfo, exifInfoLength);
-        if (byteOrderPos == std::numeric_limits<size_t>::max()) {
-            IMAGE_LOGE("Error:failed to parse Exif metadata: cannot find tiff byte order");
-            return 1;
-        }
-        tiffData = DataBuf(exifInfo.CData(byteOrderPos), exifInfoLength - byteOrderPos);
-        return 0;
-    } else {
-        IMAGE_LOGE("Error:failed to decode parse metadata: cannot found exif header");
-        return 1;
+    if (exifHeadPos == std::numeric_limits<size_t>::max()) {
+        IMAGE_LOGE("Failed to decode parse metadata: cannot found exif header");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
+
+    size_t byteOrderPos = FindTiffPos(exifInfo, exifInfoLength);
+    if (byteOrderPos == std::numeric_limits<size_t>::max()) {
+        IMAGE_LOGE("Failed to parse Exif metadata: cannot find tiff byte order");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
+    }
+    tiffData = DataBuf(exifInfo.CData(byteOrderPos), exifInfoLength - byteOrderPos);
+    return SUCCESS;
 }
 
 int PngImageChunk::DecompressText(const byte* sourceData, unsigned int sourceDataLen, DataBuf &textOut)
 {
     if (sourceDataLen > IMAGE_SEG_MAX_SIZE) {
-        IMAGE_LOGE("Error:failed to uncompress: data is too huge.");
-        return 1;
+        IMAGE_LOGE("Failed to uncompress: data is too huge.");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
     uLongf destDataLen = IMAGE_SEG_MAX_SIZE;
 
     textOut.Alloc(destDataLen);
     int result = uncompress(textOut.Data(), &destDataLen, sourceData, sourceDataLen);
     if (result != Z_OK) {
-        IMAGE_LOGE("Error:failed to uncompress: the uncompress job abort.");
-        return 1;
+        IMAGE_LOGE("Failed to uncompress: the uncompress job abort.");
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
     textOut.Resize(destDataLen);
-    return 0;
+    return SUCCESS;
 }
 
 const char* PngImageChunk::StepOverNewLine(const char* sourcePtr, const char* endPtr)
@@ -306,7 +304,7 @@ const char* PngImageChunk::GetExifInfoLen(const char* sourcePtr, size_t *lengthO
     while ((*sourcePtr == '\0') || (*sourcePtr == ' ') || (*sourcePtr == '\n')) {
         sourcePtr++;
         if (sourcePtr == endPtr) {
-            IMAGE_LOGE("Error:exif info don't exist.");
+            IMAGE_LOGE("Failed to get exif length: only blank content.");
             return NULL;
         }
     }
@@ -317,13 +315,13 @@ const char* PngImageChunk::GetExifInfoLen(const char* sourcePtr, size_t *lengthO
         exifLength = newlength;
         sourcePtr++;
         if (sourcePtr == endPtr) {
-            IMAGE_LOGE("Error:exif info don't exist.");
+            IMAGE_LOGE("Failed to get exif length: no digit content.");
             return NULL;
         }
     }
     sourcePtr++; // ignore the '\n' character
     if (sourcePtr == endPtr) {
-        IMAGE_LOGE("Error:exif info don't exist.");
+        IMAGE_LOGE("Failed to get exif length: exif info don't exist.");
         return NULL;
     }
     *lengthOut = exifLength;
@@ -345,8 +343,8 @@ int PngImageChunk::AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsi
     for (size_t i = 0; i < sourceLength; i++) {
         while ((*sourcePtr < '0') || ((*sourcePtr > '9') && (*sourcePtr < 'a')) || (*sourcePtr > 'f')) {
             if (*sourcePtr == '\0') {
-                IMAGE_LOGE("Error:failed to convert exif ascii string: unexpected null character.");
-                return 1;
+                IMAGE_LOGE("Failed to convert exif ascii string: unexpected null character.");
+                return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
             }
             sourcePtr++;
         }
@@ -357,44 +355,44 @@ int PngImageChunk::AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsi
             (*destPtr++) += hexAsciiToInt[static_cast<size_t>(*sourcePtr++)];
         }
     }
-    return 0;
+    return SUCCESS;
 }
 
 DataBuf PngImageChunk::ConvertRawTextToExifInfo(const DataBuf &rawText)
 {
     if (rawText.Size() <= 1) {
-        IMAGE_LOGE("Error:raw profile text size is too small.");
+        IMAGE_LOGE("Raw profile text size is too small.");
         return {};
     }
     const char* sourcePtr = reinterpret_cast<const char*>(rawText.CData(1));
     const char* endPtr = reinterpret_cast<const char*>(rawText.CData(rawText.Size() - 1));
 
     if (sourcePtr >= endPtr) {
-        IMAGE_LOGE("Error:source pointer is invalid.");
+        IMAGE_LOGE("Source pointer is invalid.");
         return {};
     }
     sourcePtr = StepOverNewLine(sourcePtr, endPtr);
     if (sourcePtr == NULL) {
-        IMAGE_LOGE("Error:failed to copy raw profile text: meet error when step over new line.");
+        IMAGE_LOGE("Failed to copy raw profile text: meet error when step over new line.");
         return {};
     }
 
     size_t exifInfoLength = 0;
     sourcePtr = GetExifInfoLen(sourcePtr, &exifInfoLength, endPtr);
     if (sourcePtr == NULL) {
-        IMAGE_LOGE("Error:failed to copy raw profile text: meet error when get string len.");
+        IMAGE_LOGE("Failed to copy raw profile text: meet error when get string len.");
         return {};
     }
 
     if ((exifInfoLength == 0) || (exifInfoLength > rawText.Size())) {
-        IMAGE_LOGE("Error:failed to copy raw profile text: invalid text length.");
+        IMAGE_LOGE("Failed to copy raw profile text: invalid text length.");
         return {};
     }
 
     DataBuf exifInfo;
     exifInfo.Alloc(exifInfoLength);
     if (exifInfo.Size() != exifInfoLength) {
-        IMAGE_LOGE("Error:failed to copy raw profile text: cannot allocate memory.");
+        IMAGE_LOGE("Failed to copy raw profile text: cannot allocate memory.");
         return {};
     }
     if (exifInfo.Empty()) {
@@ -403,7 +401,7 @@ DataBuf PngImageChunk::ConvertRawTextToExifInfo(const DataBuf &rawText)
     unsigned char* destPtr = exifInfo.Data();
     int ret = AsciiToInt(sourcePtr, exifInfoLength, destPtr);
     if (ret != 0) {
-        IMAGE_LOGE("Error:failed to convert exif string ascii to int.");
+        IMAGE_LOGE("Failed to convert exif string ascii to int.");
         return {};
     }
 
