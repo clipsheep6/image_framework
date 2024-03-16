@@ -17,7 +17,6 @@
 #include <memory>
 #include <gtest/gtest.h>
 
-#include "png_image_accessor.h"
 #include "file_image_stream.h"
 #include "image_log.h"
 #include "media_errors.h"
@@ -28,13 +27,13 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace Multimedia {
-
-static const std::string IMAGE_INPUT_NOEXIF_PNG_PATH = "/data/local/tmp/image/test_noexif.png";
-static const std::string IMAGE_INPUT_EXIF_PNG_PATH = "/data/local/tmp/image/test_exif.png";
-static const std::string IMAGE_INPUT_TEXTCHUNK_PNG_PATH = "/data/local/tmp/image/test_textchunk.png";
-static const std::string IMAGE_INPUT_CHUNKTYPETEXT_PNG_PATH = "/data/local/tmp/image/test_chunktypetext.png";
-static const std::string IMAGE_INPUT_NOEXIST_PATH = "";
-
+namespace {
+    static const std::string IMAGE_INPUT_NOEXIF_PNG_PATH = "/data/local/tmp/image/test_noexif.png";
+    static const std::string IMAGE_INPUT_EXIF_PNG_PATH = "/data/local/tmp/image/test_exif.png";
+    static const std::string IMAGE_INPUT_TEXTCHUNK_PNG_PATH = "/data/local/tmp/image/test_textchunk.png";
+    static const std::string IMAGE_INPUT_CHUNKTYPETEXT_PNG_PATH = "/data/local/tmp/image/test_chunktypetext.png";
+    static const std::string IMAGE_INPUT_NOEXIST_PATH = "";
+}
 class PngImageAccessorTest : public testing::Test {
 public:
     PngImageAccessorTest() {}

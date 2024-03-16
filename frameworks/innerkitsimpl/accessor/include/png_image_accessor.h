@@ -37,7 +37,7 @@ public:
 private:
     bool IsPngType() const;
     size_t ReadChunk(DataBuf &buffer) const;
-    int32_t TextFindTiff(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const;
+    bool TextFindTiff(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const;
     bool ExifDataDeal(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const;
 };
 } // namespace Media

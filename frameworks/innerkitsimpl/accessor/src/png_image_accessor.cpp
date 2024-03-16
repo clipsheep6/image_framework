@@ -17,7 +17,6 @@
 #include "exif_metadata.h"
 #include "image_log.h"
 #include "image_stream.h"
-#include "libexif/exif-data.h"
 #include "media_errors.h"
 #include "png_image_accessor.h"
 #include "png_image_chunk.h"
@@ -73,7 +72,7 @@ size_t PngImageAccessor::ReadChunk(DataBuf &buffer) const
     return imageStream_->Read(buffer.Data(), buffer.Size());
 }
 
-int32_t PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
+bool PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
 {
     PngImageChunk::TextChunkType txtType;
     if (chunkType == PNG_CHUNK_TEXT) {
@@ -83,10 +82,12 @@ int32_t PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string ch
     } else if (chunkType == PNG_CHUNK_ITXT) {
         txtType = PngImageChunk::iTXt_Chunk;
     } else {
-        return -1;
+        return false;
     }
-
-    return PngImageChunk::ParseTextChunk(data, txtType, tiffData);
+    if(PngImageChunk::ParseTextChunk(data, txtType, tiffData) != 0) {
+        return false;
+    }
+    return true;
 }
 
 bool PngImageAccessor::ExifDataDeal(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const
@@ -94,18 +95,14 @@ bool PngImageAccessor::ExifDataDeal(DataBuf &blob, std::string chunkType, uint32
     DataBuf chunkData(chunkLength);
     if (chunkLength > 0) {
         if (ReadChunk(chunkData) != chunkData.Size()) {
-            IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk data error.");
+            IMAGE_LOGE("ReadMetadata: Read chunk data error.");
             return false;
         }
     }
-
-    if (chunkType == PNG_CHUNK_EXIF) {
-        blob = chunkData;
-    } else {
-        if (TextFindTiff(chunkData, chunkType, blob) != 0) {
-            return false;
-        }
+    if (chunkType != PNG_CHUNK_EXIF) {
+        return TextFindTiff(chunkData, chunkType, blob);
     }
+    blob = chunkData;
     return true;
 }
 
@@ -114,12 +111,11 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
     if (!imageStream_->IsOpen()) {
         IMAGE_LOGE("Output image stream is not open.");
         return false;
-    } else {
-        imageStream_->Seek(0, SeekPos::BEGIN);
     }
+    imageStream_->Seek(0, SeekPos::BEGIN);
 
     if (!IsPngType()) {
-        IMAGE_LOGE("PngImageAccessor::ReadMetadata: Is not a PNG file.");
+        IMAGE_LOGE("Is not a PNG file.");
         return false;
     }
 
@@ -128,12 +124,12 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
 
     while (!imageStream_->IsEof()) {
         if (ReadChunk(chunkHead) != chunkHead.Size()) {
-            IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk head error.");
+            IMAGE_LOGE("Read chunk head error.");
             return false;
         }
         uint32_t chunkLength = chunkHead.ReadUInt32(0, bigEndian);
         if (chunkLength > imgSize - imageStream_->Tell()) {
-            IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read chunk length error.");
+            IMAGE_LOGE("Read chunk length error.");
             return false;
         }
         std::string chunkType(reinterpret_cast<const char*>(chunkHead.CData(PNG_CHUNK_LENGTH_SIZE)),
@@ -150,7 +146,7 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
         }
         imageStream_->Seek(chunkLength + PNG_CHUNK_CRC_SIZE, CURRENT);
         if (imageStream_->IsEof()) {
-            IMAGE_LOGE("PngImageAccessor::ReadMetadata: Read file error.");
+            IMAGE_LOGE("Read file error.");
             return false;
         }
     }
@@ -167,13 +163,13 @@ uint32_t PngImageAccessor::ReadMetadata()
     ExifData *exifData;
     size_t byteOrderPos = PngImageChunk::FindTiffPos(tiffBuf, tiffBuf.Size());
     if (byteOrderPos == std::numeric_limits<size_t>::max()) {
-        IMAGE_LOGE("Error:failed to parse Exif metadata: cannot find tiff byte order");
+        IMAGE_LOGE("Failed to parse Exif metadata: cannot find tiff byte order");
         return ERR_IMAGE_SOURCE_DATA;
     }
     TiffParser::Decode(tiffBuf.CData(), tiffBuf.Size(), &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Decode tiffBuf error.");
-        return ERR_IMAGE_DECODE_FAILED;
+        return ERR_EXIF_DECODE_FAILED;
     }
 
     exifMetadata_ = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
