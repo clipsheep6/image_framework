@@ -184,6 +184,7 @@ public:
     /* *
      * @brief Gets the size of the FileImageStream.
      * @return The size of the FileImageStream.
+     * @note If this function is called frequently, it is recommended to cache the size to improve performance.
      */
     NATIVEEXPORT ssize_t GetSize() override;
 
@@ -254,7 +255,6 @@ INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
     FILE *fp_;                                 // File descriptor
     int dupFD_;                                // Duplicated file descriptor
     std::string filePath_;                     // File path
-    ssize_t fileSize_;                         // File size
     void *mappedMemory_;                       // Address of memory mapping
     std::unique_ptr<FileWrapper> fileWrapper_; // File wrapper class, used for testing
 

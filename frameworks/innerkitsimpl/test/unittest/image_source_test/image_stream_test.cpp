@@ -400,7 +400,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
     destStream.Open();
     byte *buf = new byte[sourceStream.GetSize()];
     EXPECT_EQ(sourceStream.Read(buf, sourceStream.GetSize()), -1);
-    delete []buf;
+    delete[] buf;
 }
 
 /**
@@ -895,7 +895,6 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3)
     ASSERT_NE(stream.dupFD_, -1);
     // Check the state of the FileImageStream object
     ASSERT_TRUE(stream.fp_ != nullptr);
-    ASSERT_EQ(stream.fileSize_, stream.GetSize());
     ASSERT_EQ(stream.mappedMemory_, nullptr);
     ASSERT_EQ(stream.Tell(), 0);
 

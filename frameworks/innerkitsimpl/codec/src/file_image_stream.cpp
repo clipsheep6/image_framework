@@ -19,6 +19,7 @@
 #include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "image_log.h"
@@ -55,13 +56,12 @@ FileImageStream::FileImageStream(int fileDescriptor)
     }
     initPath_ = INIT_FROM_FD;
 
-    fileSize_ = 0;
     mappedMemory_ = nullptr;
     this->fileWrapper_ = std::make_unique<FileWrapper>();
 }
 
 FileImageStream::FileImageStream(const std::string &filePath)
-    : fp_(nullptr), filePath_(filePath), fileSize_(0), mappedMemory_(nullptr)
+    : fp_(nullptr), filePath_(filePath), mappedMemory_(nullptr)
 {
     this->fileWrapper_ = std::make_unique<FileWrapper>();
     dupFD_ = -1;
@@ -69,7 +69,7 @@ FileImageStream::FileImageStream(const std::string &filePath)
 }
 
 FileImageStream::FileImageStream(const std::string &filePath, std::unique_ptr<FileWrapper> fileWrapper)
-    : fp_(nullptr), filePath_(filePath), fileSize_(0), mappedMemory_(nullptr)
+    : fp_(nullptr), filePath_(filePath), mappedMemory_(nullptr)
 {
     if (fileWrapper == nullptr) {
         this->fileWrapper_ = std::make_unique<FileWrapper>();
@@ -104,30 +104,6 @@ ssize_t FileImageStream::Write(byte *data, ssize_t size)
                 "%{public}s。result is %{public}d, size is %{public}d",
                 filePath_.c_str(), buf, result, size);
         }
-        return -1;
-    }
-
-    long currentPos = ftell(fp_);
-    if (currentPos == -1) {
-        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("Failed to get the current file position: %{public}s", buf);
-        return -1;
-    }
-
-    if (fseek(fp_, 0, SEEK_END) != 0) {
-        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("Failed to seek to the end of the file: %{public}s", buf);
-        return -1;
-    }
-
-    fileSize_ = ftell(fp_);
-
-    if (fseek(fp_, currentPos, SEEK_SET) != 0) { // Restore the file pointer to its original position
-        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, buf, sizeof(buf));
-        IMAGE_LOGE("Failed to restore the file position: %{public}s", buf);
         return -1;
     }
 
@@ -285,7 +261,6 @@ void FileImageStream::Close()
     }
 
     // Reset all member variables
-    fileSize_ = 0;
     if (initPath_ == INIT_FROM_FD) {
         IMAGE_LOGD("File closed: %{public}d", tmpFD);
     } else if (initPath_ == INIT_FROM_PATH) {
@@ -387,23 +362,6 @@ bool FileImageStream::Open(OpenMode mode)
         return false;
     }
 
-    // Get the file size
-    if (fseek(fp_, 0, SEEK_END) != 0) {
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, errstr, sizeof(errstr));
-        IMAGE_LOGE("Failed to seek to the end of the file: %{public}s", errstr);
-        return false;
-    }
-
-    fileSize_ = ftell(fp_);
-
-    if (fseek(fp_, 0, SEEK_SET) != 0) { // Restore the file pointer to its original position
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, errstr, sizeof(errstr));
-        IMAGE_LOGE("Failed to restore the file position: %{public}s", errstr);
-        return false;
-    }
-
     return true;
 }
 
@@ -426,7 +384,7 @@ byte *FileImageStream::GetAddr(bool isWriteable)
 
     // Create a memory map
     mappedMemory_ =
-        ::mmap(nullptr, fileSize_, isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fileDescriptor, 0);
+        ::mmap(nullptr, GetSize(), isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fileDescriptor, 0);
     if (mappedMemory_ == (void *)MAP_FAILED) {
         // Memory mapping failed
         char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
@@ -434,7 +392,7 @@ byte *FileImageStream::GetAddr(bool isWriteable)
         IMAGE_LOGE("mmap: Memory mapping failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
         mappedMemory_ = nullptr;
     }
-    IMAGE_LOGD("mmap: Memory mapping created: %{public}s, size: %{public}zu", filePath_.c_str(), fileSize_);
+    IMAGE_LOGD("mmap: Memory mapping created: %{public}s, size: %{public}zu", filePath_.c_str(), GetSize());
     return (byte *)mappedMemory_;
 }
 
@@ -446,14 +404,14 @@ bool FileImageStream::ReleaseAddr()
     }
 
     // Delete the memory map
-    if (munmap(mappedMemory_, fileSize_) == -1) {
+    if (munmap(mappedMemory_, GetSize()) == -1) {
         // Memory mapping failed
         char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, buf, sizeof(buf));
         IMAGE_LOGE("munmap: Memory mapping failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
         return false;
     }
-    IMAGE_LOGD("munmap: Memory mapping removed: %{public}s, size: %{public}zu", filePath_.c_str(), fileSize_);
+    IMAGE_LOGD("munmap: Memory mapping removed: %{public}s, size: %{public}zu", filePath_.c_str(), GetSize());
 
     mappedMemory_ = nullptr;
     return true;
@@ -539,6 +497,7 @@ bool FileImageStream::CopyDataFromSource(ImageStream &src, ssize_t &totalBytesWr
 
 bool FileImageStream::CopyFrom(ImageStream &src)
 {
+    ssize_t oldSize = GetSize();
     if (!src.IsOpen()) {
         IMAGE_LOGE("transfer: Source file is not open");
         return false;
@@ -563,21 +522,36 @@ bool FileImageStream::CopyFrom(ImageStream &src)
         return false;
     }
 
-    // Truncate the file only if totalBytesWritten is less than fileSize_
-    if (totalBytesWritten < fileSize_) {
+    // Truncate the file only if totalBytesWritten is less than oldSize
+    if (totalBytesWritten < oldSize) {
         if (!TruncateFile(totalBytesWritten, src, src_cur)) {
             return false;
         }
     }
 
-    // Set the file size to the new size
-    fileSize_ = totalBytesWritten;
     return true;
 }
 
 ssize_t FileImageStream::GetSize()
 {
-    return fileSize_;
+    ssize_t oldPos = Tell();
+    if (fseek(fp_, 0, SEEK_END) != 0) {
+        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        strerror_r(errno, errstr, sizeof(errstr));
+        IMAGE_LOGE("Failed to seek to the end of the file: %{public}s", errstr);
+        return -1;
+    }
+
+    ssize_t fileSize = ftell(fp_);
+
+    if (fseek(fp_, oldPos, SEEK_SET) != 0) { // Restore the file pointer to its original position
+        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        strerror_r(errno, errstr, sizeof(errstr));
+        IMAGE_LOGE("Failed to restore the file position: %{public}s", errstr);
+        return -1;
+    }
+
+    return fileSize;
 }
 } // namespace Media
 } // namespace OHOS
