@@ -296,34 +296,11 @@ bool FileImageStream::OpenFromPath(const char *modeStr)
 {
     fp_ = fopen(filePath_.c_str(), modeStr);
     if (fp_ == nullptr) {
-        if (strcmp(modeStr, "r+") == 0) {
-            // If opening the file in read-write mode fails, try creating a new
-            // file
-            fp_ = fopen(filePath_.c_str(), "w");
-            if (fp_ == nullptr) {
-                // Failed to create file
-                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-                strerror_r(errno, buf, sizeof(buf));
-                IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
-                return false;
-            }
-            // Close the file, then reopen it in "r+" mode
-            fclose(fp_);
-            fp_ = fopen(filePath_.c_str(), "r+");
-            if (fp_ == nullptr) {
-                // Failed to reopen the file
-                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-                strerror_r(errno, buf, sizeof(buf));
-                IMAGE_LOGE("Reopen file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
-                return false;
-            }
-        } else {
-            // Open failed
-            char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
-            strerror_r(errno, buf, sizeof(buf));
-            IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
-            return false;
-        }
+        // Open failed
+        char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        strerror_r(errno, buf, sizeof(buf));
+        IMAGE_LOGE("Open file failed: %{public}s, reason: %{public}s", filePath_.c_str(), buf);
+        return false;
     }
     IMAGE_LOGD("File opened: %{public}s", filePath_.c_str());
     return true;
