@@ -84,7 +84,7 @@ bool PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string chunk
     } else {
         return false;
     }
-    if(PngImageChunk::ParseTextChunk(data, txtType, tiffData) != 0) {
+    if (PngImageChunk::ParseTextChunk(data, txtType, tiffData) != 0) {
         return false;
     }
     return true;

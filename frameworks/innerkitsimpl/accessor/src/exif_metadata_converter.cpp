@@ -1051,7 +1051,7 @@ int32_t ExifMetadataConverter::ValidateValueRange(const std::string &keyName, co
         // convert string to integer such as "15" -> 15
         ivalue = std::stoll(value);
         IMAGE_LOGD("convert to integer ivalue is[%{public}d].", ivalue);
-    } 
+    }
     if (std::regex_match(value, regChar)) {
         // convert char to integer such as "N" -> 78
         ivalue = static_cast<int32_t>(value[0]);
