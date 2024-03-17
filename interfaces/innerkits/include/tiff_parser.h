@@ -16,7 +16,6 @@
 #ifndef INTERFACES_INNERKITS_INCLUDE_FILE_TIFF_PARSER_H
 #define INTERFACES_INNERKITS_INCLUDE_FILE_TIFF_PARSER_H
 
-#include <libexif/exif-data.h>
 #include <algorithm>
 #include <map>
 #include <cstddef>
@@ -24,6 +23,8 @@
 #include <fstream>
 #include <stdint.h>
 #include <vector>
+
+#include <libexif/exif-data.h>
 
 namespace OHOS {
 namespace Media {

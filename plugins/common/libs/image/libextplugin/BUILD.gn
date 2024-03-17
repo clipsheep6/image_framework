@@ -37,13 +37,14 @@ ohos_static_library("exifhelper") {
     "${image_subsystem}/interfaces/innerkits/include",
     "//third_party/libexif",
   ]
+
   #deps = [ "//third_party/libexif:libexif" ]
   external_deps = [
     "c_utils:utils",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
-    "libexif:libexif"
+    "libexif:libexif",
   ]
   part_name = "image_framework"
   subsystem_name = "multimedia"
