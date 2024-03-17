@@ -571,28 +571,10 @@ std::map<std::string, std::tuple<const TagDetails *, const size_t>> ExifMetadata
 
 const std::string COMMAREGEX("\\,"), COLONREGEX("\\:"), DOTREGEX("\\.");
 
-auto ONERATIONALREGEX_ = R"(^[0-9]+/[1-9][0-9]*$)";
-auto ONEINTREGEX_ = R"(^[0-9]+$)";
-auto ONEDECIMALREGEX_ = "(\\d+)(\\.\\d+)?";
-auto DOUBLEINTWITHBLANKREGEX_ = R"(^[0-9]+\s[0-9]+$)";
-auto DOUBLEINTWITHCOMMAREGEX_ = R"(^[0-9]+,[0-9]+$)";
-auto TRIBLEINTWITHBLANKREGEX_ = R"(^[0-9]+\s[0-9]+\s[0-9]+$)";
-auto TRIBLEINTWITHCOMMAREGEX_ = R"(^[0-9]+,[0-9]+,[0-9]+$)";
-auto TRIBLERATIONALWITHBLANKREGEX_ = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
-auto TRIBLEINTNZWITHBLANKREGEX_ = R"(^[1-9][0-9]*\s[1-9][0-9]*\s[1-9][0-9]*$)";
-auto TRIBLEINTNZWITHCOMMAREGEX_ = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
-auto TRIBLEDECIMALWITHBLANKREGEX_ = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
-auto TRIBLEDECIMALWITHCOMMAREGEX_ = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
-auto TRIBLEINTWITHCOLONREGEX_ = R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*$)";
-auto TRIBLEINTWITHDOTREGEX_ = R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)";
-auto FOURINTWITHBLANKREGEX_ = R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)";
-auto FOURINTWITHCOMMAREGEX_ = R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)";
-auto FOURINTNZWITHCOMMAREGEX_ = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
-auto FOURRATIONALWITHBLANKREGEX_ = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
-auto FOURDECIMALWITHBLANKREGEX_ = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
-auto FOURDECIMALWITHCOMMAREGEX_ = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
-auto DATETIMEREGEX_ = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$)";
-auto DATEREGEX_ = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}$)";
+const auto ONEINTREGEX = R"(^[0-9]+$)";
+const auto DOUBLEINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+$)";
+const auto TRIBLEINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+,[0-9]+$)";
+const auto TRIBLEDECIMALWITHCOMMAREGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
 
 /*
  * validate the key is in value range array.
@@ -625,15 +607,15 @@ bool ExifMetadataConverter::ValidRegex(const std::string &value, const std::stri
 }
 
 std::multimap<std::string, std::string> ExifMetadataConverter::valueFormatValidateConfig = {
-    {"BitsPerSample", TRIBLEINTWITHCOMMAREGEX_},
-    {"ImageLength", ONEINTREGEX_},
-    {"ImageWidth", ONEINTREGEX_},
-    {"GPSLatitude", DOUBLEINTWITHCOMMAREGEX_},
-    {"GPSLatitude", TRIBLEINTWITHCOMMAREGEX_},
-    {"GPSLatitude", TRIBLEDECIMALWITHCOMMAREGEX_},
-    {"GPSLongitude", DOUBLEINTWITHCOMMAREGEX_},
-    {"GPSLongitude", TRIBLEINTWITHCOMMAREGEX_},
-    {"GPSLongitude", TRIBLEDECIMALWITHCOMMAREGEX_}
+    {"BitsPerSample", TRIBLEINTWITHCOMMAREGEX},
+    {"ImageLength", ONEINTREGEX},
+    {"ImageWidth", ONEINTREGEX},
+    {"GPSLatitude", DOUBLEINTWITHCOMMAREGEX},
+    {"GPSLatitude", TRIBLEINTWITHCOMMAREGEX},
+    {"GPSLatitude", TRIBLEDECIMALWITHCOMMAREGEX},
+    {"GPSLongitude", DOUBLEINTWITHCOMMAREGEX},
+    {"GPSLongitude", TRIBLEINTWITHCOMMAREGEX},
+    {"GPSLongitude", TRIBLEDECIMALWITHCOMMAREGEX}
 };
 
 // validate the value range. For example GPSLatitudeRef the value must be 'N' or 'S'.
@@ -695,8 +677,7 @@ bool ExifMetadataConverter::IsFormatValidationConfigExisting(const std::string &
 int32_t ExifMetadataConverter::ValidateValueFormat(const std::string &keyName, const std::string &value)
 {
     auto it = ExifMetadataConverter::valueFormatValidateConfig.find(keyName);
-    if (it == ExifMetadataConverter::valueFormatValidateConfig.end())
-    {
+    if (it == ExifMetadataConverter::valueFormatValidateConfig.end()) {
         IMAGE_LOGD("no format validate default success.");
         // if no format validation config default success
         return Media::SUCCESS;
