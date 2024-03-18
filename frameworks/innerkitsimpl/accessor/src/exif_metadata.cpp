@@ -470,6 +470,7 @@ bool ExifMetadata::CreateExifdata()
 }
 
 ExifMetadata::ExifMetadata()
+    : exifData_(nullptr)
 {
 }
 
