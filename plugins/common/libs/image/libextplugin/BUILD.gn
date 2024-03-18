@@ -217,6 +217,7 @@ ohos_shared_library("extplugin") {
     external_deps = [
       "c_utils:utils",
       "graphic_2d:color_manager",
+      "graphic_surface:surface",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "libjpeg-turbo:turbojpeg",

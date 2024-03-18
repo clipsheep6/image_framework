@@ -217,7 +217,8 @@ uint32_t ExtDecoder::DmaMemAlloc(DecodeContext &context, uint64_t count, SkImage
         return ERR_DMA_DATA_ABNORMAL;
     }
 
-    IMAGE_LOGD("ExtDecoder::DmaMemAlloc stride is %{public}d", sb->GetStride());
+    IMAGE_LOGD("ExtDecoder::DmaMemAlloc sb stride is %{public}d, height is %{public}d, size is %{public}d",
+        sb->GetStride(), sb->GetHeight(), sb->GetSize());
     SetDecodeContextBuffer(context,
         AllocatorType::DMA_ALLOC, static_cast<uint8_t*>(sb->GetVirAddr()), count, nativeBuffer);
     return SUCCESS;
@@ -452,9 +453,6 @@ uint32_t ExtDecoder::CheckDecodeOptions(uint32_t index, const PixelDecodeOptions
 #ifdef IMAGE_COLORSPACE_FLAG
     dstColorSpace_ = opts.plDesiredColorSpace;
 #endif
-    if (IsSupportCropOnDecode(dstSubset_)) {
-        dstOptions_.fSubset = &dstSubset_;
-    }
     return SUCCESS;
 }
 
@@ -979,8 +977,10 @@ bool ExtDecoder::CheckCodec()
         IMAGE_LOGE("create codec: input stream size is zero.");
         return false;
     }
+    uint32_t src_offset = stream_->Tell();
     codec_ = SkCodec::MakeFromStream(make_unique<ExtStream>(stream_));
     if (codec_ == nullptr) {
+        stream_->Seek(src_offset);
         IMAGE_LOGE("create codec from stream failed");
         return false;
     }
