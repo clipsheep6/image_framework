@@ -32,6 +32,7 @@ static constexpr int32_t RECEIVER_TEST_WIDTH = 8192;
 static constexpr int32_t RECEIVER_TEST_HEIGHT = 8;
 static constexpr int32_t RECEIVER_TEST_CAPACITY = 8;
 static constexpr int32_t RECEIVER_TEST_FORMAT = 4;
+static constexpr int32_t RECEIVER_TEST_TIMESTAMP = 1504919349;
 
 class ImageReceiverTest : public testing::Test {
 public:
@@ -506,7 +507,7 @@ void PushBuffer(std::shared_ptr<ImageReceiver> imageReceiver)
             .w = RECEIVER_TEST_WIDTH,
             .h = RECEIVER_TEST_HEIGHT,
         },
-        .timestamp = 0,
+        .timestamp = RECEIVER_TEST_TIMESTAMP,
     };
     std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
     auto receiverSurface = imageReceiver->getSurfaceById(receiveKey);

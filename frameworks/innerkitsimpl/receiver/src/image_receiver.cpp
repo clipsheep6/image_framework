@@ -338,11 +338,7 @@ std::shared_ptr<NativeImage> ImageReceiver::NextNativeImage()
             IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE HEBC_ACCESS_CPU_ACCESS");
             return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(),
                         timestamp, HEBC_ACCESS_CPU_ACCESS);
-        } else {
-            IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE HW_ONLY");
         }
-    } else {
-        IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE not found");
     }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }
@@ -365,11 +361,7 @@ std::shared_ptr<NativeImage> ImageReceiver::LastNativeImage()
             IMAGE_LOGD("ImageReceiver::LastNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE HEBC_ACCESS_CPU_ACCESS");
             return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(),
                         timestamp, HEBC_ACCESS_CPU_ACCESS);
-        } else {
-            IMAGE_LOGD("ImageReceiver::LastNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE HW_ONLY");
         }
-    } else {
-        IMAGE_LOGD("ImageReceiver::LastNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE not found");
     }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }
