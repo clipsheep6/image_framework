@@ -38,7 +38,6 @@ ohos_static_library("exifhelper") {
     "//third_party/libexif",
   ]
 
-  #deps = [ "//third_party/libexif:libexif" ]
   external_deps = [
     "c_utils:utils",
     "graphic_surface:surface",
