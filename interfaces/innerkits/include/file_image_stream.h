@@ -252,6 +252,13 @@ INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
      */
     bool TruncateFile(size_t totalBytesWritten, ImageStream &src, ssize_t src_cur);
 
+    /* *
+     * @brief Initializes the FileImageStream with a file path and a file descriptor.
+     * @param filePath The path of the file to be opened. Default is an empty string.
+     * @param fileDescriptor The file descriptor of the file to be opened. Default is -1.
+     */
+    void Initialize(const std::string &filePath = "", int fileDescriptor = -1);
+
     FILE *fp_;                                 // File descriptor
     int dupFD_;                                // Duplicated file descriptor
     std::string filePath_;                     // File path

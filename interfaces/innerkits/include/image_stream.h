@@ -21,8 +21,6 @@
 #include <fstream>
 #include <vector>
 
-#include "image_type.h"
-
 namespace OHOS {
 namespace Media {
 enum SeekPos {

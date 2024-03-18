@@ -20,8 +20,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "image_log.h"
 #include "buffer_image_stream.h"
+#include "image_log.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE

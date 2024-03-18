@@ -20,6 +20,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 
 #include <csetjmp>
@@ -166,13 +167,17 @@ void RemoveFile(const std::string &filePath)
     }
 }
 
-string CreateIfNotExit(const std::string &filePath)
+std::string CreateIfNotExit(const std::string &filePath)
 {
-    std::ofstream file(filePath);
-    if (!file) {
-        std::cerr << "Failed to create file: " << filePath << std::endl;
+    struct stat buffer;
+    if (stat(filePath.c_str(), &buffer) != 0) { // 文件不存在
+        std::ofstream file(filePath);
+        if (!file) {
+            std::cerr << "Failed to create file: " << filePath << std::endl;
+        } else {
+            file.close();
+        }
     }
-    file.close();
     return filePath;
 }
 
@@ -481,8 +486,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write008, TestSize.Level3)
         ASSERT_TRUE(stream.Open());
         byte *buf = new byte[size](); // Dynamically allocate the buffer with the current test size
         ASSERT_EQ(stream.Write(buf, size), size);
-        ASSERT_EQ(stream.GetSize(), size);
         ASSERT_EQ(stream.Flush(), true);
+        ASSERT_EQ(stream.GetSize(), size);
 
         // Open the file in binary mode and move the file pointer to the end to get the file size
         std::ifstream file(filePath, std::ios::binary | std::ios::ate);
@@ -817,7 +822,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom005, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom006, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
-        RemoveFile(filePath.c_str());
+        RemoveFile(filePathDest.c_str());
         FileImageStream src(CreateIfNotExit(filePathDest));
         BufferImageStream dest;
         src.Open();
@@ -857,9 +862,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom007, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom008, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
-        RemoveFile(filePath.c_str());
-        FileImageStream dest(CreateIfNotExit(filePathDest));
+        RemoveFile(filePathDest.c_str());
+        RemoveFile(filePathSource.c_str());
         FileImageStream src(CreateIfNotExit(filePathSource));
+        FileImageStream dest(CreateIfNotExit(filePathDest));
         src.Open();
         dest.Open();
         byte *buf = new byte[size]();
@@ -897,7 +903,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom009, TestSize.Level3)
 HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom010, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
-        RemoveFile(filePath.c_str());
+        RemoveFile(filePathDest.c_str());
+        std::filesystem::copy(backupFilePathSource, filePathSource, std::filesystem::copy_options::overwrite_existing);
         FileImageStream src(CreateIfNotExit(filePathDest));
         FileImageStream dest(CreateIfNotExit(filePathSource));
         src.Open();
