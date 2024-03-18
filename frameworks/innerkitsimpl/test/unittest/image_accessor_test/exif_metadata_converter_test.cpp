@@ -23,7 +23,7 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace Multimedia {
-static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
+static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test_exif.jpg";
 
 class MetadataConverterTest : public testing::Test {
 public:
