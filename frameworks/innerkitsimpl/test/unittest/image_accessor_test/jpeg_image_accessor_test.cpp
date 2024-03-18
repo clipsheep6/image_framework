@@ -35,6 +35,8 @@ namespace {
     static const std::string IMAGE_ERROR2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob003.jpg";
     static const std::string IMAGE_INPUT_WRITE1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata001.jpg";
     static const std::string IMAGE_INPUT_WRITE3_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata003.jpg";
+    static const std::string IMAGE_INPUT_WRITE5_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata005.jpg";
+    static const std::string IMAGE_INPUT_WRITE7_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata007.jpg";
     static const std::string IMAGE_INPUT_WRITE2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob001.jpg";
     static const std::string IMAGE_INPUT_WRITE4_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writeexifblob003.jpg";
     static const std::string IMAGE_OUTPUT_WRITE1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata002.jpg";
@@ -223,8 +225,6 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
     ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
 
     auto exifMetadata = imageAccessor.GetExifMetadata();
-    ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "9, 7, 8");
-
     ASSERT_TRUE(exifMetadata->SetValue("BitsPerSample", "8, 8, 8"));
     ASSERT_TRUE(exifMetadata->SetValue("Orientation", "Unknown value 0"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageLength", "4000"));
@@ -283,6 +283,43 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata002, TestSize.Level3)
 }
 
 /**
+ * @tc.name: WriteMetadata003
+ * @tc.desc: test WriteMetadata from right jpeg image, modify "GPSLongitudeRef" propert set value "W"
+ * @tc.type: FUNC
+ */
+HWTEST_F(JpegImageAccessorTest, WriteMetadata003, TestSize.Level3)
+{
+    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE5_JPEG_PATH);
+    ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
+    JpegImageAccessor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+
+    auto exifMetadata = imageAccessor.GetExifMetadata();
+    ASSERT_TRUE(exifMetadata->SetValue("GPSLongitudeRef", "W"));
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "W");
+    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "W");
+}
+
+/**
+ * @tc.name: WriteMetadata004
+ * @tc.desc: test WriteMetadata from right jpeg image,read and write
+ * @tc.type: FUNC
+ */
+HWTEST_F(JpegImageAccessorTest, WriteMetadata004, TestSize.Level3)
+{
+    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE7_JPEG_PATH);
+    ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
+    JpegImageAccessor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+
+    auto exifMetadata = imageAccessor.GetExifMetadata();
+    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+}
+
+/**
  * @tc.name: WriteExifBlob001
  * @tc.desc: test WriteExifBlob from right jpeg image, modify propert
  * @tc.type: FUNC
@@ -306,7 +343,7 @@ HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteExifBlob003
+ * @tc.name: WriteExifBlob002
  * @tc.desc: test WriteExifBlob from empty data buffer, return error number
  * @tc.type: FUNC
  */

@@ -246,13 +246,15 @@ std::tuple<size_t, size_t> JpegImageAccessor::GetInsertPosAndMarkerAPP1()
     size_t skipExifSeqNum = -1;
     size_t insertPos = 0;
 
+    imageStream_->Seek(0, SeekPos::BEGIN);
+
     byte marker = FindNextMarker();
     while ((marker != JPEG_MARKER_SOS) && (marker != JPEG_MARKER_EOI)) {
         DataBuf buf = ReadNextSegment(marker);
         if (marker == JPEG_MARKER_APP0) {
             insertPos = markerCount + 1;
         } else if ((marker == JPEG_MARKER_APP1) && (buf.Size() >= APP1_EXIF_LENGTH) &&
-                   (buf.CmpBytes(EXIF_BLOB_OFFSET, EXIF_ID, EXIF_ID_LENGTH) == 0)) {
+                   (buf.CmpBytes(EXIF_BLOB_OFFSET, EXIF_ID, EXIF_ID_SIZE) == 0)) {
             skipExifSeqNum = markerCount;
         }
 
@@ -357,7 +359,7 @@ bool JpegImageAccessor::UpdateExifMetadata(BufferImageStream &bufStream, uint8_t
     byte marker = FindNextMarker();
     while (marker != JPEG_MARKER_SOS) {
         DataBuf buf = ReadNextSegment(marker);
-        if (insertPos == markerCount) {
+        if (markerCount == insertPos) {
             WriteData(bufStream, dataBlob, size);
         }
 
