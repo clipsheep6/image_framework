@@ -276,8 +276,8 @@ bool JpegImageAccessor::WriteData(BufferImageStream &bufStream, uint8_t *dataBlo
         return false;
     }
 
-    uint32_t writeHeaderLength = 4;
-    uint32_t exifHeaderLength = 2;
+    uint32_t writeHeaderLength = MARKER_LENGTH_SIZE;
+    uint32_t exifHeaderLength = EXIF_ID_LENGTH;
 
     if (memcmp((char*)dataBlob, EXIF_ID, EXIF_ID_SIZE) != 0) {
         writeHeaderLength = APP1_HEADER_LENGTH;
