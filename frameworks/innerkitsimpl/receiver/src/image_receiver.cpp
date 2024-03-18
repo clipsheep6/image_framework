@@ -30,7 +30,6 @@
 
 namespace OHOS {
 namespace Media {
-
 ImageReceiver::~ImageReceiver()
 {
     std::lock_guard<std::mutex> guard(imageReceiverMutex_);
@@ -231,7 +230,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage(int64_t &timestamp)
     } else {
         IMAGE_LOGD("buffer is null");
     }
-    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
+    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", static_cast<long long>(timestamp));
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -248,7 +247,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage()
     } else {
         IMAGE_LOGD("buffer is null");
     }
-    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
+
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -266,7 +265,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage(int64_t &timestamp)
     }
 
     iraContext_->currentBuffer_ = bufferBefore;
-    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
+    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", static_cast<long long>(timestamp));
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -285,7 +284,6 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage()
     }
 
     iraContext_->currentBuffer_ = bufferBefore;
-    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
     return iraContext_->GetCurrentBuffer();
 }
 
