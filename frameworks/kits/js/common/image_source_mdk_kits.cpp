@@ -747,7 +747,7 @@ static const std::map<int32_t, ImageSourceNapiFunc> g_Functions = {
     {CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_INFO, ImageSourceNapiGetImageInfo},
     {CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY, ImageSourceNapiGetImageProperty},
     {CTX_FUNC_IMAGE_SOURCE_MODIFY_IMAGE_PROPERTY, ImageSourceNapiModifyImageProperty},
-    {CTX_FUNC_IMAGE_SOURCE_UPDATE_DATA, ImageSourceNapiUpdateData},
+    {CTX_FUNC_IMAGE_SOURCE_UPDATE_DATA, ImageSourceNapiUpdateData}
 };
 
 MIDK_EXPORT

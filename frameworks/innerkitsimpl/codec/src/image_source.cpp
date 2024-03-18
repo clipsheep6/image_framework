@@ -2354,12 +2354,6 @@ uint32_t ImageSource::GetEncodedFormat(string &format)
         IMAGE_LOGE("[ImageSource]GetEncodedFormat get source info error.");
         return errorCode;
     }
-
-    if (InitMainDecoder() != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]GetEncodedFormat image decode plugin is null.");
-        errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
-        return errorCode;
-    }
     format = encodedFormat;
     return SUCCESS;
 }
