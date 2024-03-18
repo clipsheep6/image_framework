@@ -89,6 +89,7 @@ EncodedFormat ImageAccessorFactory::GetImageType(std::shared_ptr<ImageStream> &s
         return EncodedFormat::PNG;
     }
 
+    stream->Seek(0, SeekPos::BEGIN);
     return EncodedFormat::UNKNOWN;
 }
 

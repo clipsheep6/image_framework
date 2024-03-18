@@ -16,18 +16,16 @@
 #ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_FACTORY
 #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_FACTORY
 
-#include <string>
 #include <memory>
+#include <string>
+
 #include "image_accessor_interface.h"
 #include "image_stream.h"
-
 
 namespace OHOS {
 namespace Media {
 class ImageAccessorFactory {
 public:
-    ~ImageAccessorFactory() {}
-
     static std::shared_ptr<ImageAccessorInterface> CreateImageAccessor(uint8_t *buffer, const uint32_t size);
     static std::shared_ptr<ImageAccessorInterface> CreateImageAccessor(const int fd);
     static std::shared_ptr<ImageAccessorInterface> CreateImageAccessor(const std::string &path);

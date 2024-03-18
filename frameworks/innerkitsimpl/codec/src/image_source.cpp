@@ -1005,11 +1005,7 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessorInterface
 
     exifDataPtr = imageAccessor->GetExifMetadata();
     exifDataPtr->SetValue(key, value);
-    if (!imageAccessor->WriteMetadata()) {
-        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
-    }
-
-    return SUCCESS;
+    return imageAccessor->WriteMetadata();
 }
 
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
