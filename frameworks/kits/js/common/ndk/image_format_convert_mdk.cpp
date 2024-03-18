@@ -40,7 +40,7 @@ int32_t OH_ImageConvert_YuvToRgb(OH_PixelMap2 *srcPixelMap, OH_PixelMap2 **destP
         if (*destPixelMap != nullptr) {
             delete *destPixelMap;
         }
-        *destPixelMap = new OH_PixelMap2(args.destPixelMap); 
+        *destPixelMap = new OH_PixelMap2(args.destPixelMap);
     }
     return ret;
 }
