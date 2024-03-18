@@ -245,6 +245,7 @@ private:
                                    IncrementalDecodingContext &recordContext);
     void SetIncrementalSource(const bool isIncrementalSource);
     bool IsStreamCompleted();
+    uint32_t GetImagePropertyCommon(uint32_t index, const std::string &key, std::string &value);
     FinalOutputStep GetFinalOutputStep(const DecodeOptions &opts, PixelMap &pixelMap, bool hasNinePatch);
     bool HasDensityChange(const DecodeOptions &opts, ImageInfo &srcImageInfo, bool hasNinePatch);
     bool ImageSizeChange(int32_t width, int32_t height, int32_t desiredWidth, int32_t desiredHeight);

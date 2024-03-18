@@ -16,6 +16,7 @@
 #include "image_source.h"
 
 #include <algorithm>
+#include <charconv>
 #include <chrono>
 #include <cstring>
 #include <vector>
@@ -1001,9 +1002,9 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessorInterface
             IMAGE_LOGE("[ImageSource]Create ExifMetadata failed.");
             return ERR_IMAGE_SOURCE_DATA;
         }
+        exifDataPtr = imageAccessor->GetExifMetadata();
     }
 
-    exifDataPtr = imageAccessor->GetExifMetadata();
     exifDataPtr->SetValue(key, value);
     return imageAccessor->WriteMetadata();
 }
@@ -1050,33 +1051,8 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     return SUCCESS;
 }
 
-uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
+uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &key, std::string &value)
 {
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
-    uint32_t size = sourceStreamPtr_->GetStreamSize();
-    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
-    if (imageAccessor == nullptr) {
-        return ERR_IMAGE_SOURCE_DATA;
-    }
-
-    imageAccessor->ReadMetadata();
-    std::string strValue;
-    auto exifMetadata = imageAccessor->GetExifMetadata();
-    if (exifMetadata != nullptr) {
-        exifMetadata->GetValue(key, strValue);
-    }
-
-    if (!strValue.empty()) {
-        value = std::stoi(strValue);
-    }
-
-    return SUCCESS;
-}
-
-uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
-{
-    std::unique_lock<std::mutex> guard(decodingMutex_);
     uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
     uint32_t size = sourceStreamPtr_->GetStreamSize();
     auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
@@ -1091,6 +1067,26 @@ uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &
     }
 
     return SUCCESS;
+}
+
+uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
+{
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    std::string strValue;
+    uint32_t ret = GetImagePropertyCommon(index, key, strValue);
+
+    std::from_chars_result res = std::from_chars(strValue.data(), strValue.data() + strValue.size(), value);
+    if (res.ec != std::errc()) {
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+
+    return ret;
+}
+
+uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
+{
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    return GetImagePropertyCommon(index, key, value);
 }
 
 const SourceInfo &ImageSource::GetSourceInfo(uint32_t &errorCode)

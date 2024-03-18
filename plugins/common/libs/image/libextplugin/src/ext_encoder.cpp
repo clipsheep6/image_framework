@@ -198,7 +198,10 @@ uint32_t ExtEncoder::FinalizeEncode()
             return ret;
         }
 
-        destImageAccessor->WriteToOutput(*output_);
+        if (!(destImageAccessor->WriteToOutput(*output_))) {
+            IMAGE_LOGE("ExtEncoder::FinalizeEncode write failed");
+            return ERR_IMAGE_ENCODE_FAILED;
+        }
     } else {
         ExtWStream wStream(output_);
         if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {

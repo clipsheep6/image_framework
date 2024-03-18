@@ -40,8 +40,7 @@ bool AbstractImageAccessor::WriteToOutput(ImagePlugin::OutputDataStream &output)
         return false;
     }
 
-    output.Write(imageStream_->GetAddr(), imageStream_->GetSize());
-    return true;
+    return output.Write(imageStream_->GetAddr(), imageStream_->GetSize());
 }
 
 std::shared_ptr<ExifMetadata> AbstractImageAccessor::GetExifMetadata()
