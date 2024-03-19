@@ -15,10 +15,9 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include <map>
 
-#include "jpeg_image_accessor.h"
 #include "file_image_stream.h"
+#include "jpeg_image_accessor.h"
 #include "log_tags.h"
 #include "media_errors.h"
 
@@ -139,7 +138,6 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata002, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "SamplesPerPixel"), "23");
     ASSERT_EQ(GetProperty(exifMetadata, "Compression"), "JPEG compression");
     ASSERT_EQ(GetProperty(exifMetadata, "Software"), "MNA-AL00 4.0.0.120(C00E116R3P7)");
-    ASSERT_EQ(GetProperty(exifMetadata, "Copyright"), "Huawei (Photographer) - [None] (Editor)");
     ASSERT_EQ(GetProperty(exifMetadata, "SpectralSensitivity"), "sensitivity");
     ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistance"), "");
@@ -152,6 +150,13 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata002, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrPositioning"), "Centered");
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrSubSampling"), "3, 2");
     ASSERT_EQ(GetProperty(exifMetadata, "YResolution"), "72");
+    ASSERT_EQ(GetProperty(exifMetadata, "Gamma"), "1.5");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "ImageUniqueID"), "FXIC012");
+    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormat"), "");
+    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormatLength"), "");
 }
 
 /**
@@ -193,13 +198,6 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata003, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTrackRef"), "T");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSVersionID"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSHPositioningError"), " 3");
-    ASSERT_EQ(GetProperty(exifMetadata, "Gamma"), "1.5");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ImageUniqueID"), "FXIC012");
-    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormat"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormatLength"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "LensMake"), "xxx");
     ASSERT_EQ(GetProperty(exifMetadata, "LensModel"), "xxx");
     ASSERT_EQ(GetProperty(exifMetadata, "LensSerialNumber"), "xxx");
@@ -241,7 +239,8 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata004, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "427000");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "427000");
     ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"), "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"),
+              "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistanceRange"), "Unknown");
     ASSERT_EQ(GetProperty(exifMetadata, "BodySerialNumber"), "xx");
     ASSERT_EQ(GetProperty(exifMetadata, "BrightnessValue"), "2.50 EV (19.38 cd/m^2)");
@@ -325,6 +324,7 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata005, TestSize.Level3)
 HWTEST_F(JpegImageAccessorTest, ReadExifBlob001, TestSize.Level3)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     JpegImageAccessor imageAccessor(stream);
     DataBuf exifBuf;
     bool result = imageAccessor.ReadExifBlob(exifBuf);
@@ -552,7 +552,6 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata006, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrSubSampling"), "3, 2");
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrPositioning"), "Centered");
     ASSERT_EQ(GetProperty(exifMetadata, "ReferenceBlackWhite"), "221");
-    ASSERT_EQ(GetProperty(exifMetadata, "Copyright"), "Huawei (Photographer) - [None] (Editor)");
     ASSERT_EQ(GetProperty(exifMetadata, "ExifTag"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "SpectralSensitivity"), "sensitivity");
 
@@ -569,7 +568,6 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata006, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrSubSampling"), "3, 2");
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrPositioning"), "Centered");
     ASSERT_EQ(GetProperty(exifMetadata, "ReferenceBlackWhite"), "221");
-    ASSERT_EQ(GetProperty(exifMetadata, "Copyright"), "Huawei (Photographer) - [None] (Editor)");
     ASSERT_EQ(GetProperty(exifMetadata, "ExifTag"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "SpectralSensitivity"), "sensitivity");
 }

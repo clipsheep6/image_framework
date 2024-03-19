@@ -20,8 +20,8 @@
 
 #include "abstract_image_accessor.h"
 #include "buffer_image_stream.h"
-#include "image_stream.h"
 #include "data_buf.h"
+#include "image_stream.h"
 
 namespace OHOS {
 namespace Media {
