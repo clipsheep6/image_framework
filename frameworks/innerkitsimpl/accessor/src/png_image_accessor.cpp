@@ -72,7 +72,7 @@ size_t PngImageAccessor::ReadChunk(DataBuf &buffer) const
     return imageStream_->Read(buffer.Data(), buffer.Size());
 }
 
-bool PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
+bool PngImageAccessor::FindTiffFromText(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
 {
     PngImageChunk::TextChunkType txtType;
     if (chunkType == PNG_CHUNK_TEXT) {
@@ -90,7 +90,7 @@ bool PngImageAccessor::TextFindTiff(const DataBuf &data, const std::string chunk
     return true;
 }
 
-bool PngImageAccessor::ExifDataDeal(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const
+bool PngImageAccessor::ProcessExifData(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const
 {
     DataBuf chunkData(chunkLength);
     if (chunkLength > 0) {
@@ -100,7 +100,7 @@ bool PngImageAccessor::ExifDataDeal(DataBuf &blob, std::string chunkType, uint32
         }
     }
     if (chunkType != PNG_CHUNK_EXIF) {
-        return TextFindTiff(chunkData, chunkType, blob);
+        return FindTiffFromText(chunkData, chunkType, blob);
     }
     blob = chunkData;
     return true;
@@ -139,7 +139,7 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
         }
         if (chunkType == PNG_CHUNK_TEXT || chunkType == PNG_CHUNK_ZTXT ||
             chunkType == PNG_CHUNK_EXIF || chunkType == PNG_CHUNK_ITXT) {
-            if (ExifDataDeal(blob, chunkType, chunkLength)) {
+            if (ProcessExifData(blob, chunkType, chunkLength)) {
                 break;
             }
             chunkLength = 0;

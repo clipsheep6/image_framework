@@ -20,7 +20,7 @@
 
 namespace OHOS {
 namespace Media {
-constexpr unsigned char pngSignature[] = {
+static unsigned char pngSignature[] = {
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 };
 
@@ -37,8 +37,8 @@ public:
 private:
     bool IsPngType() const;
     size_t ReadChunk(DataBuf &buffer) const;
-    bool TextFindTiff(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const;
-    bool ExifDataDeal(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const;
+    bool FindTiffFromText(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const;
+    bool ProcessExifData(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const;
 };
 } // namespace Media
 } // namespace OHOS
