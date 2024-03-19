@@ -100,7 +100,6 @@ void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder)
     if (pData_.size() < UINT32_SIZE || offset > (pData_.size() - UINT32_SIZE)) {
         IMAGE_LOGE("Overflow in DataBuf::write_uint32");
         return;
-        // throw std::out_of_range("Overflow in DataBuf::write_uint32");
     }
     UL2Data(&pData_[offset], x, byteOrder);
 }
@@ -110,7 +109,6 @@ uint32_t DataBuf::ReadUInt32(size_t offset, ByteOrder byteOrder)
     if (pData_.size() < UINT32_SIZE || offset > (pData_.size() - UINT32_SIZE)) {
         IMAGE_LOGE("Overflow in DataBuf::read_uint32");
         return 0;
-        // throw std::out_of_range(s"Overflow in DataBuf::read_uint32");
     }
     return GetULong(&pData_[offset], byteOrder);
 }
