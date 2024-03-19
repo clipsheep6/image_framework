@@ -173,7 +173,6 @@ bool ImageFormatConvert::CheckConvertDataInfo(const ConvertDataInfo &convertData
 size_t ImageFormatConvert::GetBufferSizeByFormat(PixelFormat format, const Size &size)
 {
     switch (format) {
-        
         case PixelFormat::RGB_565:{
             return size.width * size.height * NUM_2;
         }

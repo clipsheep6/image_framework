@@ -29,8 +29,9 @@ public:
     ImageFormatConvertNapi();
 
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_ref GetConstructor() {
-        return sConstructor_; 
+    static napi_ref GetConstructor()
+    {
+        return sConstructor_;
     }
 
 private:

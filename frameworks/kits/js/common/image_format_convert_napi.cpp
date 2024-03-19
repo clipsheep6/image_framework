@@ -15,19 +15,19 @@
 
 #include "image_format_convert_napi.h"
 #include <memory>
-#include <string>
+#include <cstring>
 #include <securec.h>
 #include "image_napi_utils.h"
 #include "media_errors.h"
 #include "hilog/log.h"
 #include "log_tags.h"
-#include <stdio.h>
+#include <cstdio>
 #include <ctime>
 
 using OHOS::HiviewDFX::HiLog;
 namespace {
-    static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE,
-    LOG_TAG_DOMAIN_ID_IMAGE_FORAMT_CONVERT_NAPI, "ImageFormatConvertNapi" };
+    static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE_FORAMT_CONVERT_NAPI,
+        "ImageFormatConvertNapi" };
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
     constexpr uint32_t NUM_2 = 2;
@@ -113,8 +113,6 @@ static bool ParsePixelMap(napi_env &env, napi_value &root, std::shared_ptr<Pixel
     }
     return true;
 }
-
-
 
 static void BuildContextError(napi_env env, napi_ref &error, const std::string errMsg, const int32_t errCode)
 {
@@ -304,8 +302,8 @@ static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType sr
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
         GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
         result);
-    IMG_CREATE_CREATE_ASYNC_WORK(env, status, workName.c_str(),
-    ConvertWithPixelMapExec, ConvertWithPixelMapComplete, asyncContext, asyncContext->work);
+    IMG_CREATE_CREATE_ASYNC_WORK(env, status, workName.c_str(), ConvertWithPixelMapExec, ConvertWithPixelMapComplete,
+        asyncContext, asyncContext->work);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, HiLog::Error(LABEL, "fail to create async work"));
     return result;
