@@ -26,6 +26,7 @@ namespace OHOS {
 namespace Multimedia {
 
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test_metadata.jpg";
+static const std::string IMAGE_INPUT_JPEG_BLANKEXIF_PATH = "/data/local/tmp/image/test_exif_blank.jpg";
 
 class ExifMetadataTest : public testing::Test {
 public:
@@ -389,6 +390,159 @@ HWTEST_F(ExifMetadataTest, GetValue032, TestSize.Level3)
     ASSERT_EQ(metadata.SetValue("FocalLengthIn35mmFilm", "2"), true);
     metadata.GetValue("FocalLengthIn35mmFilm", value);
     ASSERT_EQ(value, "2");
+}
+
+HWTEST_F(ExifMetadataTest, SetExifValue001, TestSize.Level3)
+{
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ExifMetadata metadata(exifData);
+    ASSERT_EQ(metadata.SetExifValue("BitsPerSample", "9,9,8"), true);
+    ASSERT_EQ(metadata.SetExifValue("Orientation", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("ImageLength", "1000"), true);
+    ASSERT_EQ(metadata.SetExifValue("ImageWidth", "1001"), true);
+    ASSERT_EQ(metadata.SetExifValue("GPSLatitude", "39,54,20"), true);
+    ASSERT_EQ(metadata.SetExifValue("GPSLongitude", "120,52,26"), true);
+    ASSERT_EQ(metadata.SetExifValue("GPSLatitudeRef", "N"), true);
+    ASSERT_EQ(metadata.SetExifValue("GPSLongitudeRef", "E"), true);
+    ASSERT_EQ(metadata.SetExifValue("WhiteBalance", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("FocalLengthIn35mmFilm", "2"), true);
+    ASSERT_EQ(metadata.SetExifValue("Flash", "5"), true);
+    ASSERT_EQ(metadata.SetExifValue("ApertureValue", "4/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("DateTimeOriginal", "2024:01:25 05:51:34"), true);
+    ASSERT_EQ(metadata.SetExifValue("DateTime", "2024:01:25 05:51:34"), true);
+    ASSERT_EQ(metadata.SetExifValue("ExposureBiasValue", "23/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("ExposureTime", "1/34"), true);
+    ASSERT_EQ(metadata.SetExifValue("FNumber", "3/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("FocalLength", "31/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("GPSTimeStamp", "11:37:56"), true);
+    ASSERT_EQ(metadata.SetExifValue("GPSDateStamp", "2024:01:25"), true);
+    ASSERT_EQ(metadata.SetExifValue("ImageDescription", "_cuva"), true);
+    ASSERT_EQ(metadata.SetExifValue("ISOSpeedRatings", "160"), true);
+    ASSERT_EQ(metadata.SetExifValue("ISOSpeedRatings", "160"), true);
+    ASSERT_EQ(metadata.SetExifValue("LightSource", "2"), true);
+    ASSERT_EQ(metadata.SetExifValue("Make", "5"), true);
+    ASSERT_EQ(metadata.SetExifValue("MeteringMode", "5"), true);
+    ASSERT_EQ(metadata.SetExifValue("Model", "TNY-AL00"), true);
+    ASSERT_EQ(metadata.SetExifValue("PixelXDimension", "1000"), true);
+    ASSERT_EQ(metadata.SetExifValue("PixelYDimension", "2000"), true);
+    ASSERT_EQ(metadata.SetExifValue("RecommendedExposureIndex", "241"), true);
+    ASSERT_EQ(metadata.SetExifValue("SceneType", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("SensitivityType", "5"), true);
+    ASSERT_EQ(metadata.SetExifValue("StandardOutputSensitivity", "5"), true);
+    ASSERT_EQ(metadata.SetExifValue("UserComment", "comm"), true);
+
+    ASSERT_EQ(metadata.SetExifValue("JPEGProc", "252"), true);
+    ASSERT_EQ(metadata.SetExifValue("Compression", "6"), true);
+    ASSERT_EQ(metadata.SetExifValue("PhotometricInterpretation", "0"), true);
+    ASSERT_EQ(metadata.SetExifValue("StripOffsets", "11"), true);
+    ASSERT_EQ(metadata.SetExifValue("SamplesPerPixel", "23"), true);
+    ASSERT_EQ(metadata.SetExifValue("RowsPerStrip", "252"), true);
+    ASSERT_EQ(metadata.SetExifValue("StripByteCounts", "252"), true);
+    ASSERT_EQ(metadata.SetExifValue("XResolution", "72/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("YResolution", "252/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("PlanarConfiguration", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("ResolutionUnit", "2"), true);
+    ASSERT_EQ(metadata.SetExifValue("TransferFunction", "2"), true);
+    ASSERT_EQ(metadata.SetExifValue("Software", "MNA-AL00 4.0.0.120(C00E116R3P7)"), true);
+    ASSERT_EQ(metadata.SetExifValue("Artist", "Joseph.Xu"), true);
+    ASSERT_EQ(metadata.SetExifValue("WhitePoint", "252/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("PrimaryChromaticities", "124/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("YCbCrCoefficients", "299/1000 587/1000 114/1000"), true);
+    ASSERT_EQ(metadata.SetExifValue("YCbCrSubSampling", "3 2"), true);
+    ASSERT_EQ(metadata.SetExifValue("YCbCrPositioning", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("ReferenceBlackWhite", "221/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("Copyright", "Huawei"), true);
+
+    ASSERT_EQ(metadata.SetExifValue("JPEGInterchangeFormat", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("JPEGInterchangeFormatLength", "111"), true);
+    ASSERT_EQ(metadata.SetExifValue("ExposureProgram", "2"), true);
+    ASSERT_EQ(metadata.SetExifValue("SpectralSensitivity", "sensitivity"), true);
+    ASSERT_EQ(metadata.SetExifValue("OECF", "45"), true);
+    ASSERT_EQ(metadata.SetExifValue("ExifVersion", "0210"), true);
+    ASSERT_EQ(metadata.SetExifValue("DateTimeDigitized", "2023:01:19 10:39:58"), true);
+    ASSERT_EQ(metadata.SetExifValue("ComponentsConfiguration", "1 5 6"), true);
+    ASSERT_EQ(metadata.SetExifValue("ShutterSpeedValue", "13/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("BrightnessValue", "13/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("MaxApertureValue", "1/12"), true);
+    ASSERT_EQ(metadata.SetExifValue("SubjectDistance", "25/1"), true);
+    ASSERT_EQ(metadata.SetExifValue("SubjectArea", "10 20 183 259"), true);
+    ASSERT_EQ(metadata.SetExifValue("SubsecTime", "427000"), true);
+    ASSERT_EQ(metadata.SetExifValue("SubSecTimeOriginal", "427000"), true);
+    ASSERT_EQ(metadata.SetExifValue("SubSecTimeDigitized", "427000"), true);
+    ASSERT_EQ(metadata.SetExifValue("FlashpixVersion", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("ColorSpace", "1"), true);
+    ASSERT_EQ(metadata.SetExifValue("RelatedSoundFile", "/usr/home/sound/sea.wav"), true);
+
+
+
+}
+
+std::string MODIFYDATA[][3] = {
+    {"BitsPerSample", "9 9 8", "9, 9, 8"},
+    {"BitsPerSample", "9,9,8", "9, 9, 8"},
+    {"Orientation", "1", "Top-left"},
+    {"ImageLength", "1000", "1000"},
+    {"ImageWidth", "1001", "1001"},
+    {"CompressedBitsPerPixel", "24/1", "24"},
+    // GPSLatitude显示数值有问题 39, 54, 20, 0.1649189067, 0.7691442537, 1755226327/0, 0.0000000000, 553648128/0
+    {"GPSLatitude", "39,54,20", "39, 54, 20"},
+    {"GPSLatitude", "39/1 54/1 20/1", "39, 54, 20"},
+    {"GPSLongitude", "120,52,26", "120, 52, 26"},
+    {"GPSLatitudeRef", "N", "N"},
+    {"GPSLongitudeRef", "E", "E"},
+    {"WhiteBalance", "1", "Manual white balance"},
+    {"FocalLengthIn35mmFilm", "2", "2"},
+    {"Flash", "5", "Strobe return light not detected"},
+    {"ApertureValue", "4/1", "4.00 EV (f/4.0)"},
+    {"DateTimeOriginal", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
+    {"DateTime", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
+    {"DateTime", "2024:01:25", "2024:01:25"},
+    {"ExposureBiasValue", "23/1", "23.00 EV"},
+    {"ExposureTime", "1/34", "1/34 sec."},
+    {"FNumber", "3/1", "f/3.0"},
+    {"FocalLength", "31/1", "31.0 mm"},
+    {"GPSTimeStamp", "11/1 37/1 56/1", "11:37:56.00"},
+    {"ImageDescription", "_cuva", "_cuva"},
+    {"ISOSpeedRatings", "160", "160"},
+    {"LightSource", "2", "Fluorescent"},
+    {"MeteringMode", "5", "Pattern"},
+    {"Model", "TNY-AL00", "TNY-AL00"},
+    {"PixelXDimension", "1000", "1000"},
+    {"PixelYDimension", "2000", "2000"},
+    {"RecommendedExposureIndex", "241", "241"},
+    {"SceneType", "1", "Internal error (unknown value 49)"},
+    {"SensitivityType", "5", "Standard output sensitivity (SOS) and ISO speed"},
+    {"StandardOutputSensitivity", "5", "5"},
+    {"UserComment", "comm", "comm"},
+};
+
+HWTEST_F(ExifMetadataTest, SetExifValue002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetExifValue002 start";
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_BLANKEXIF_PATH.c_str());
+    if (exifData == nullptr)
+    {
+        GTEST_LOG_(INFO) << "ExifMetadataTest SetExifValue002 exifData is nullptr ";
+    }
+    
+    std::string value;
+    ExifMetadata metadata(exifData);
+
+    int rows = sizeof(MODIFYDATA) / sizeof(MODIFYDATA[0]);
+    // int cols = sizeof(MODIFYDATA[0]) / sizeof(MODIFYDATA[0][0]);
+    for (int i = 0; i < rows; ++i) {
+        std::string key = MODIFYDATA[i][0];
+        std::string modifyvalue = MODIFYDATA[i][1];
+        GTEST_LOG_(INFO) << "ExifMetadataTest: modifyvalue: "<< modifyvalue;
+        ASSERT_EQ(metadata.SetExifValue(key, modifyvalue), true);
+
+        std::string retvalue;
+        metadata.GetValue(key, retvalue);
+        GTEST_LOG_(INFO) << "ExifMetadataTest: SetExifValue002" << "key: " << key << " modifyvalue: " << modifyvalue 
+            << " retvalue: " << retvalue;
+        ASSERT_EQ(retvalue, MODIFYDATA[i][2]);
+    }
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetExifValue002 end";
 }
 
 } // namespace Multimedia

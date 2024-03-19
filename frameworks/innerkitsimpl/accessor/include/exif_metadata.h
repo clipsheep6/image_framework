@@ -31,6 +31,7 @@ public:
     ~ExifMetadata();
     int GetValue(const std::string &key, std::string &value) const;
     bool SetValue(const std::string &key, const std::string &value);
+    bool SetExifValue(const std::string &key, const std::string &value);
     ExifData* GetExifData();
     bool CreateExifdata();
 
@@ -55,6 +56,16 @@ private:
     const std::vector<std::string> &dataVec);
     bool SetGpsRationals(ExifData *data, ExifEntry **ptrEntry, ExifByteOrder order, const ExifTag &tag,
         const std::vector<ExifRational> &exifRationals);
+    ExifEntry* CreateEntry(const ExifTag &tag ,const size_t len);
+    ExifEntry* GetEntry(const std::string &key, const size_t len);
+    void ReallocEntry(ExifEntry *ptrEntry, const size_t len);
+    bool SetShort(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
+    bool SetSShort(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
+    bool SetLong(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
+    bool SetSLong(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
+    bool SetRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
+    bool SetSRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
+    bool SetMemcpy(ExifEntry *ptrEntry, const std::string &value, const size_t len);
 
 private:
     ExifData *exifData_;

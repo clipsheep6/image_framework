@@ -263,6 +263,29 @@ static const struct TagEntry {
         {static_cast<ExifTag>(0xffff), "", 0xffff}};
 }
 
+
+template <typename T>
+std::istream& streamToRational(std::istream& is, T& r) {
+    int32_t nominator = 0;
+    int32_t denominator = 0;
+    char c('\0');
+    is >> nominator >> c >> denominator;
+    if (c != '/')
+        is.setstate(std::ios::failbit);
+    if (is)
+        r = { nominator, denominator };
+    return is;
+}
+
+// TODO: streamToRational->StreamToRational
+// 暂时不适用template 可能有其他类型的重载
+std::istream& operator>>(std::istream& is, ExifRational& r) {
+    return streamToRational(is, r);
+}
+std::istream& operator>>(std::istream& is, ExifSRational& r) {
+    return streamToRational(is, r);
+}
+
 std::map<ExifTag, ExifIfd> TagIfdTable = {
     {EXIF_TAG_ORIENTATION, EXIF_IFD_0},
     {EXIF_TAG_BITS_PER_SAMPLE, EXIF_IFD_0},
@@ -611,7 +634,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         ExifIntValueByFormat((ptrEntry)->data, order, (ptrEntry)->format, atoi(value.c_str()));
         return true;
     } else if (std::find(strProps.begin(), strProps.end(), tag) != strProps.end()) {
-        int valuesize = value.length();
+        size_t valuesize = value.length();
         ptrEntry = CreateExifTag(exifData_, GetExifIfdByExifTag(tag), tag, valuesize, GetExifFormatByExifTag(tag));
         if ((ptrEntry) == nullptr || (ptrEntry)->size < valuesize) {
             IMAGE_LOGD("Get %{public}s exif entry failed.", GetExifNameByExifTag(tag).c_str());
@@ -894,6 +917,328 @@ bool ExifMetadata::SetGpsDegreeRational(ExifData *data, ExifEntry **ptrEntry, Ex
     exif_set_rational((*ptrEntry)->data, order, exifRational);
     return true;
 }
+
+ExifEntry* ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
+{
+    //TODO: CreateEntry
+    std::cout << "entry is nullptr. try to new entry." << std::endl;
+    IMAGE_LOGD("SetExifValue entry is nullptr.");
+    // 需要判断是否为undefined tag
+    if (UndefinedFormat.find(tag) != UndefinedFormat.end()) {
+        std::cout << "tag is undefined type for tag" << std::endl;
+        // IMAGE_LOGD("SetExifValue key name is [%{public}s] format is Undefined.", key.c_str());
+        /* Create a memory allocator to manage this ExifEntry */
+        ExifMem* exifMem = exif_mem_new_default();
+        if (exifMem == nullptr) {
+            IMAGE_LOGD("SetExifValue exif_mem_new_default fail.");
+            return nullptr;
+        }
+        /* Create a new ExifEntry using our allocator */
+        ExifEntry *entry = exif_entry_new_mem(exifMem);
+        if (entry == nullptr) {
+            IMAGE_LOGD("SetExifValue exif_entry_new_mem fail.");
+            return nullptr;
+        }
+        /* Allocate memory to use for holding the tag data */
+        void* buffer = exif_mem_alloc(exifMem, valueLen);
+        if (buffer == nullptr) {
+            IMAGE_LOGD("SetExifValue allocate memory exif_mem_alloc fail.");
+            return nullptr;
+        }
+        std::cout << "assign data size tag components format to entry of undefined tag" << std::endl;
+        /* Fill in the entry */
+        entry->data = static_cast<unsigned char*>(buffer);
+        entry->size = valueLen;
+        entry->tag = tag;
+        entry->components = valueLen;
+        entry->format = EXIF_FORMAT_UNDEFINED;
+        /* Attach the ExifEntry to an IFD */
+        exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
+        /* The ExifMem and ExifEntry are now owned elsewhere */
+        exif_mem_unref(exifMem);
+        exif_entry_unref(entry);
+        return entry;
+    } else {
+        std::cout << "try to initialize entry of normal tag." << std::endl;
+        ExifEntry *entry = exif_entry_new();
+        if (entry == nullptr) {
+            IMAGE_LOGD("SetExifValue exif_entry_new fail.");
+            return nullptr;
+        }
+        entry->tag = tag; // tag must be set before calling exif_content_add_entry
+        exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
+        exif_entry_initialize(entry, tag);
+        exif_entry_unref(entry);
+        return entry;
+    }
+}
+
+void ExifMetadata::ReallocEntry(ExifEntry *ptrEntry, const size_t valueLen)
+{
+    std::cout << "reassign size commponents for undefined ascii tag." << std::endl;
+    /* Create a memory allocator to manage this ExifEntry */
+    ExifMem* exifMem = exif_mem_new_default();
+    if (exifMem == nullptr) {
+        IMAGE_LOGD("SetExifValue undeinfed or ascii exif_mem_new_default fail.");
+        return;
+    }
+    std::cout << "realloc memory for buf" << std::endl;
+    auto buf = exif_mem_realloc(exifMem, ptrEntry->data, valueLen);
+    if (buf != nullptr) {
+        ptrEntry->data = static_cast<unsigned char*>(buf);
+        ptrEntry->size = exif_format_get_size(ptrEntry->format) * valueLen;
+        ptrEntry->components = exif_format_get_size(ptrEntry->format) * valueLen; 
+    }
+    exif_mem_unref(exifMem);
+}
+
+ExifEntry* ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
+{
+    ExifTag tag = exif_tag_from_name(key.c_str());
+     /*需要特别处理 TagId冲突字段
+     EXIF_TAG_GPS_LATITUDE vs INTEROPERABILITY_VERSION 0x0002
+     EXIF_TAG_GPS_LATITUDE_REF vs INTEROPERABILITY_INDEX 0x0001*/
+    ExifEntry* entry;
+    if (tag == 0x0001 || tag == 0x0002) {
+        std::cout << "special tag 0x0001 or 0x0002" << std::endl;
+        ExifIfd ifd = exif_ifd_from_name(key.c_str());
+        entry = exif_content_get_entry(exifData_->ifd[ifd], tag);
+    } else {
+        std::cout << "to get entry in exif data for normal tag" << std::endl;
+        entry = exif_data_get_entry(exifData_, tag);
+    }
+
+    // 如果原有exifData不存在此tag需要初始化
+    if (entry == nullptr)
+    {
+        entry = CreateEntry(tag, valueLen);
+    }
+
+    if (entry == nullptr)
+    {
+        std::cout << "create entry nullptr fail." << std::endl;
+        return nullptr;
+    }
+    
+    //TODO: new function
+    // 如果空间不一致需重新分配
+    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII) && (entry->size != (unsigned int)valueLen)) {
+        std::cout << "entry is undefined | ascii ready to relloc." << std::endl;
+        ReallocEntry(entry, valueLen);
+    }
+    return entry;
+}
+
+bool ExifMetadata::SetShort(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value)
+{
+    //TODO: new function for each case
+    std::cout << "handle short format value is " << value << std::endl;
+    std::istringstream is(value);
+    unsigned long icount = 0;
+    ExifShort tmp;
+    std::cout << "go to loop istringstream components is " << ptrEntry->components << std::endl;
+    while (!(is.eof()) && ptrEntry->components > icount) {
+        std::cout << "ready to >> assigin to tmp" << std::endl;
+        is >> tmp;
+        std::cout << "ready to check is fail?" << std::endl;
+        if (is.fail()) {
+            std::cout << "istringstream read short fail." << std::endl;
+            IMAGE_LOGE("SetExifValue istringstream read ExifShort fail.");
+            return false;
+        }
+        std::cout << "ready to exif_set_short tmp is " << tmp << " icount is " << icount << std::endl;
+        exif_set_short(
+            ptrEntry->data + icount * exif_format_get_size(ptrEntry->format),
+            o, tmp);
+        icount++;
+    }
+    std::cout << "succes set short value & break" << std::endl;
+    return true;
+}
+
+bool ExifMetadata::SetLong(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value)
+{
+    std::cout << "handle long format" << std::endl;
+    std::istringstream is(value);
+    unsigned long icount = 0;
+    ExifLong tmp;
+    while (!(is.eof()) && ptrEntry->components > icount) {
+        is >> tmp;
+        if (is.fail()) {
+            std::cout << "istringstream read long fail." << std::endl;
+            IMAGE_LOGE("SetExifValue istringstream read ExifLong fail.");
+            return false;
+        }
+        exif_set_long(
+            ptrEntry->data + icount * exif_format_get_size(ptrEntry->format),
+            o, tmp);
+        icount++;
+    }
+    return true;
+}
+
+bool ExifMetadata::SetSShort(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value)
+{
+    std::cout << "handle sshort format" << std::endl;
+    std::istringstream is(value);
+    unsigned long icount = 0;
+    ExifSShort tmp;
+    while (!(is.eof()) && ptrEntry->components > icount) {
+        is >> tmp;
+        if (is.fail()) {
+            std::cout << "istringstream read sshort fail." << std::endl;
+            IMAGE_LOGE("SetExifValue istringstream read ExifShort fail.");
+            return false;
+        }
+        exif_set_sshort(
+            ptrEntry->data + icount * exif_format_get_size(ptrEntry->format),
+            o, tmp);
+        icount++;
+    }
+    return true;
+}
+
+bool ExifMetadata::SetSLong(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value)
+{
+    std::cout << "handle slong format" << std::endl;
+    std::istringstream is(value);
+    unsigned long icount = 0;
+    ExifSLong tmp;
+    while (!(is.eof()) && ptrEntry->components > icount) {
+        is >> tmp;
+        if (is.fail()) {
+            std::cout << "istringstream read slong fail." << std::endl;
+            IMAGE_LOGE("SetExifValue istringstream read ExifSLong fail.");
+            return false;
+        }
+        exif_set_slong(
+            ptrEntry->data + icount * exif_format_get_size(ptrEntry->format),
+            o, tmp);
+        icount++;
+    }
+    return true;
+}
+
+bool ExifMetadata::SetRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value)
+{
+    std::cout << "handle rational format" << std::endl;
+    std::istringstream is(value);
+    unsigned long icount = 0;
+    // convert -> 2/3 4/5 6/5
+    ExifRational rat;
+    while (!(is.eof()) && ptrEntry->components > icount) {
+        is >> rat;
+        if (is.fail()) {
+            std::cout << "istringstream read rational fail." << std::endl;
+            IMAGE_LOGE("SetExifValue istringstream read ExifRational fail.");
+            return false;
+        }
+        int offset = icount * exif_format_get_size(ptrEntry->format);
+        exif_set_rational(
+            ptrEntry->data + offset,
+            o, rat);
+        icount++;
+    }
+    return true;
+}
+
+bool ExifMetadata::SetSRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value)
+{
+    std::cout << "handle srational format" << std::endl;
+    std::istringstream is(value);
+    unsigned long icount = 0;
+    ExifSRational rat;
+    while (!(is.eof()) && ptrEntry->components > icount) {
+        is >> rat;
+        if (is.fail()) {
+            std::cout << "istringstream read srational fail." << std::endl;
+            IMAGE_LOGE("SetExifValue istringstream read ExifSRational fail.");
+            return false;
+        }
+        int offset = icount * exif_format_get_size(ptrEntry->format);
+        exif_set_srational(
+            ptrEntry->data + offset,
+            o, rat);
+        icount++;
+    }
+    return true;
+}
+
+bool ExifMetadata::SetMemcpy(ExifEntry *ptrEntry, const std::string &value, const size_t valueLen)
+{
+    std::cout << "handle undefined ascii format" << std::endl;
+    if (memcpy_s((ptrEntry)->data, valueLen, value.c_str(), valueLen) != 0) {
+        std::cout << "istringstream memcpy fail for undefined ascii tag." << std::endl;
+        // IMAGE_LOGE("SetExifValue memcpy_s error tag is [%{public}d].", tag);
+        return false;
+    }
+    return true;
+}
+
+bool ExifMetadata::SetExifValue(const std::string &key, const std::string &value)
+{
+    if (exifData_ == nullptr) {
+        std::cout << "exifData_ is nullptr" << std::endl;
+        return false;
+    }
+    
+    std::cout << "SetExifValue call Convert to validate & convert" << std::endl;
+    auto result = ExifMetadataConverter::Convert(key, value);
+    if(result.first) {
+        std::cout << "Convert fail" << std::endl;
+        IMAGE_LOGE("SetExifValue ValidateAndConvert fail.");
+        return false;
+    }
+    std::cout << "convert key is: " << key << " value is: " << result.second << std::endl;
+    IMAGE_LOGD("SetExifValue result.second is [%{public}s]", result.second.c_str());
+    size_t valueLen = result.second.length();
+
+    ExifEntry *ptrEntry = GetEntry(key, valueLen);
+    if (ptrEntry == nullptr) {
+        return false;
+    }
+    
+    ExifByteOrder o = exif_data_get_byte_order(ptrEntry->parent->parent);
+
+    bool isSetSuccess = false;
+    switch (ptrEntry->format) {
+    case EXIF_FORMAT_SHORT: {
+        isSetSuccess = SetShort(ptrEntry, o, result.second);
+        break;
+    }
+    case EXIF_FORMAT_LONG: {
+        isSetSuccess = SetLong(ptrEntry, o, result.second);
+        break;
+    }
+    case EXIF_FORMAT_SSHORT: {
+        isSetSuccess = SetSShort(ptrEntry, o, result.second);
+        break;
+    }
+    case EXIF_FORMAT_SLONG: {
+        isSetSuccess = SetSLong(ptrEntry, o, result.second);
+        break;
+    }
+    case EXIF_FORMAT_RATIONAL: {
+        isSetSuccess = SetRational(ptrEntry, o, result.second);
+        break;
+    }
+    case EXIF_FORMAT_SRATIONAL: {
+        isSetSuccess = SetSRational(ptrEntry, o, result.second);
+        break;
+    }
+    case EXIF_FORMAT_UNDEFINED:
+    case EXIF_FORMAT_ASCII: {
+        isSetSuccess = SetMemcpy(ptrEntry, result.second, valueLen);
+        break;
+    }
+    default:
+        break;
+    }
+    
+    std::cout << "SetExifValue return true value is " << value << std::endl;
+    return isSetSuccess;
+}
+
 
 } // namespace Media
 } // namespace OHOS
