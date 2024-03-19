@@ -30,10 +30,10 @@
 
 namespace OHOS {
 namespace Media {
-class PngImageChunk {
+class PngImageChunkUtils {
 public:
     // type of png text chunk
-    enum TextChunkType { tEXt_Chunk = 0, zTXt_Chunk = 1, iTXt_Chunk = 2 };
+    enum TextChunkType { tEXtChunk = 0, zTXtChunk = 1, iTXtChunk = 2 };
 
     // parse exif meta data from text type chunk (tEXt/zTXt/iTXt)
     static int ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkType, DataBuf &tiffData);
@@ -58,7 +58,7 @@ private:
     static DataBuf GetRawTextFromChunk(const DataBuf &chunkData, size_t keySize, TextChunkType chunkType);
 
     // lookup exif keyword
-    static bool FindExifKeyword(const byte* keyword);
+    static bool FindExifKeyword(const byte *keyword);
 
     // lookup exif marker
     static size_t VerifyExifIdCode(DataBuf &exifInfo, size_t exifInfoLength);
@@ -67,16 +67,16 @@ private:
     static int GetTiffDataFromRawText(const DataBuf &rawText, DataBuf &tiffData);
 
     // decompress with zlib
-    static int DecompressText(const byte* sourceData, unsigned int sourceDataLen, DataBuf &textOut);
+    static int DecompressText(const byte *sourceData, unsigned int sourceDataLen, DataBuf &textOut);
 
     // step over newline character
-    static const char* StepOverNewLine(const char* sourcePtr, const char* endPtr);
+    static const char *StepOverNewLine(const char *sourcePtr, const char *endPtr);
 
     // get exif length
-    static const char* GetExifInfoLen(const char* sourcePtr, size_t *lengthOut, const char* endPtr);
+    static const char *GetExifInfoLen(const char *sourcePtr, size_t *lengthOut, const char *endPtr);
 
     // convert sting to digit
-    static int AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsigned char *destPtr);
+    static int ConvertAsciiToInt(const char *sourcePtr, size_t exifInfoLength, unsigned char *destPtr);
 
     // convert Exif metadata from Ascii char to hex
     static DataBuf ConvertRawTextToExifInfo(const DataBuf &rawText);

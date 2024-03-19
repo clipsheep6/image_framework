@@ -19,7 +19,7 @@
 #include "image_stream.h"
 #include "media_errors.h"
 #include "png_image_accessor.h"
-#include "png_image_chunk.h"
+#include "png_image_chunk_utils.h"
 #include "tiff_parser.h"
 
 #undef LOG_DOMAIN
@@ -74,17 +74,17 @@ size_t PngImageAccessor::ReadChunk(DataBuf &buffer) const
 
 bool PngImageAccessor::FindTiffFromText(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
 {
-    PngImageChunk::TextChunkType txtType;
+    PngImageChunkUtils::TextChunkType txtType;
     if (chunkType == PNG_CHUNK_TEXT) {
-        txtType = PngImageChunk::tEXt_Chunk;
+        txtType = PngImageChunkUtils::tEXtChunk;
     } else if (chunkType == PNG_CHUNK_ZTXT) {
-        txtType = PngImageChunk::zTXt_Chunk;
+        txtType = PngImageChunkUtils::zTXtChunk;
     } else if (chunkType == PNG_CHUNK_ITXT) {
-        txtType = PngImageChunk::iTXt_Chunk;
+        txtType = PngImageChunkUtils::iTXtChunk;
     } else {
         return false;
     }
-    if (PngImageChunk::ParseTextChunk(data, txtType, tiffData) != 0) {
+    if (PngImageChunkUtils::ParseTextChunk(data, txtType, tiffData) != 0) {
         return false;
     }
     return true;
@@ -161,7 +161,7 @@ uint32_t PngImageAccessor::ReadMetadata()
         return ERR_IMAGE_SOURCE_DATA;
     }
     ExifData *exifData;
-    size_t byteOrderPos = PngImageChunk::FindTiffPos(tiffBuf, tiffBuf.Size());
+    size_t byteOrderPos = PngImageChunkUtils::FindTiffPos(tiffBuf, tiffBuf.Size());
     if (byteOrderPos == std::numeric_limits<size_t>::max()) {
         IMAGE_LOGE("Failed to parse Exif metadata: cannot find tiff byte order");
         return ERR_IMAGE_SOURCE_DATA;

@@ -20,14 +20,14 @@
 #include "image_stream.h"
 #include "image_log.h"
 #include "media_errors.h"
-#include "png_image_chunk.h"
+#include "png_image_chunk_utils.h"
 #include "tiff_parser.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "PngImageChunk"
+#define LOG_TAG "PngImageChunkUtils"
 
 namespace OHOS {
 namespace Media {
@@ -48,7 +48,7 @@ namespace {
     constexpr auto HEX_STRING_UNIT_SIZE = 2;
 }
 
-int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkType, DataBuf &tiffData)
+int PngImageChunkUtils::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkType, DataBuf &tiffData)
 {
     DataBuf keyword = GetKeywordFromChunk(chunkData);
     if (keyword.Empty()) {
@@ -70,7 +70,7 @@ int PngImageChunk::ParseTextChunk(const DataBuf &chunkData, TextChunkType chunkT
     return GetTiffDataFromRawText(rawText, tiffData);
 }
 
-DataBuf PngImageChunk::GetKeywordFromChunk(const DataBuf &chunkData)
+DataBuf PngImageChunkUtils::GetKeywordFromChunk(const DataBuf &chunkData)
 {
     if (chunkData.Size() <= 0) {
         IMAGE_LOGE("Check data size failed: offset bigger than data size.");
@@ -86,7 +86,7 @@ DataBuf PngImageChunk::GetKeywordFromChunk(const DataBuf &chunkData)
     return {chunkData.CData(), keywordLength};
 }
 
-DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
+DataBuf PngImageChunkUtils::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
 {
     if (*(chunkData.CData(keySize + 1)) != CHUNK_COMPRESS_METHOD_VALID) {
         IMAGE_LOGE("Corrupted Metadata: invalid compression method.");
@@ -95,7 +95,7 @@ DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t 
 
     size_t compressedTextSize = chunkData.Size() - keySize - NULL_CHAR_AMOUNT;
     if (compressedTextSize > 0) {
-        const byte* compressedText = chunkData.CData(keySize + NULL_CHAR_AMOUNT);
+        const byte *compressedText = chunkData.CData(keySize + NULL_CHAR_AMOUNT);
         int ret = DecompressText(compressedText, static_cast<uint32_t>(compressedTextSize), rawText);
         if (ret != 0) {
             IMAGE_LOGE("Decompress text failed.");
@@ -105,17 +105,17 @@ DataBuf PngImageChunk::GetRawTextFromZtxtChunk(const DataBuf &chunkData, size_t 
     return rawText;
 }
 
-DataBuf PngImageChunk::GetRawTextFromTextChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
+DataBuf PngImageChunkUtils::GetRawTextFromTextChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
 {
     size_t rawTextsize = chunkData.Size() - keySize - 1;
     if (rawTextsize) {
-        const byte* textPosition = chunkData.CData(keySize + 1);
+        const byte *textPosition = chunkData.CData(keySize + 1);
         rawText = DataBuf(textPosition, rawTextsize);
     }
     return rawText;
 }
 
-std::string FetchString(const char* chunkData, size_t data_length)
+std::string FetchString(const char *chunkData, size_t data_length)
 {
     if (data_length == 0) {
         IMAGE_LOGE("Data_length is 0.");
@@ -125,7 +125,7 @@ std::string FetchString(const char* chunkData, size_t data_length)
     return {chunkData, stringLength};
 }
 
-DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
+DataBuf PngImageChunkUtils::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t keySize, DataBuf &rawText)
 {
     const size_t nullCount = std::count(chunkData.CData(keySize + 3), chunkData.CData(chunkData.Size() - 1), '\0');
     if (nullCount < NULL_CHAR_AMOUNT) {
@@ -162,7 +162,7 @@ DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t 
     }
 
     const size_t textPosition = translatedKeyPos + translatedKeyTextLen + 1;
-    const byte* textPtr = chunkData.CData(textPosition);
+    const byte *textPtr = chunkData.CData(textPosition);
     if (compressionFlag == CHUNK_FLAG_COMPRESS_NO) {
         rawText = DataBuf(textPtr, textLen);
     } else {
@@ -175,15 +175,15 @@ DataBuf PngImageChunk::GetRawTextFromItxtChunk(const DataBuf &chunkData, size_t 
     return rawText;
 }
 
-DataBuf PngImageChunk::GetRawTextFromChunk(const DataBuf &chunkData, size_t keySize, TextChunkType chunkType)
+DataBuf PngImageChunkUtils::GetRawTextFromChunk(const DataBuf &chunkData, size_t keySize, TextChunkType chunkType)
 {
     DataBuf rawText;
 
-    if (chunkType == zTXt_Chunk) {
+    if (chunkType == zTXtChunk) {
         GetRawTextFromZtxtChunk(chunkData, keySize, rawText);
-    } else if (chunkType == tEXt_Chunk) {
+    } else if (chunkType == tEXtChunk) {
         GetRawTextFromTextChunk(chunkData, keySize, rawText);
-    } else if (chunkType == iTXt_Chunk) {
+    } else if (chunkType == iTXtChunk) {
         GetRawTextFromItxtChunk(chunkData, keySize, rawText);
     } else {
         IMAGE_LOGE("Unexpected chunk.");
@@ -192,7 +192,7 @@ DataBuf PngImageChunk::GetRawTextFromChunk(const DataBuf &chunkData, size_t keyS
     return rawText;
 }
 
-bool PngImageChunk::FindExifKeyword(const byte* keyword)
+bool PngImageChunkUtils::FindExifKeyword(const byte *keyword)
 {
     if ((memcmp(PNG_PROFILE_EXIF, keyword, PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE) == 0) ||
         (memcmp(PNG_PROFILE_APP1, keyword, PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE) == 0)) {
@@ -201,7 +201,7 @@ bool PngImageChunk::FindExifKeyword(const byte* keyword)
     return false;
 }
 
-size_t PngImageChunk::VerifyExifIdCode(DataBuf &exifInfo, size_t exifInfoLength)
+size_t PngImageChunkUtils::VerifyExifIdCode(DataBuf &exifInfo, size_t exifInfoLength)
 {
     static const std::array<byte, EXIF_HEADER_SIZE> exifIdCode{0x45, 0x78, 0x69, 0x66, 0x00, 0x00};
     size_t exifIdPos = std::numeric_limits<size_t>::max();
@@ -215,7 +215,7 @@ size_t PngImageChunk::VerifyExifIdCode(DataBuf &exifInfo, size_t exifInfoLength)
     return exifIdPos;
 }
 
-size_t PngImageChunk::FindTiffPos(DataBuf &exifInfo, size_t exifInfoLength)
+size_t PngImageChunkUtils::FindTiffPos(DataBuf &exifInfo, size_t exifInfoLength)
 {
     static const std::array<byte, EXIF_BYTEORDER_SIZE> tiffByteOrderII{0x49, 0x49, 0x2a, 0x00};
     static const std::array<byte, EXIF_BYTEORDER_SIZE> tiffByteOrderMM{0x4d, 0x4d, 0x00, 0x2a};
@@ -238,7 +238,7 @@ size_t PngImageChunk::FindTiffPos(DataBuf &exifInfo, size_t exifInfoLength)
     return byteOrderPos;
 }
 
-int PngImageChunk::GetTiffDataFromRawText(const DataBuf &rawText, DataBuf &tiffData)
+int PngImageChunkUtils::GetTiffDataFromRawText(const DataBuf &rawText, DataBuf &tiffData)
 {
     DataBuf exifInfo = ConvertRawTextToExifInfo(rawText);
     if (exifInfo.Empty()) {
@@ -253,23 +253,19 @@ int PngImageChunk::GetTiffDataFromRawText(const DataBuf &rawText, DataBuf &tiffD
 
     size_t exifHeadPos = VerifyExifIdCode(exifInfo, exifInfoLength);
     if (exifHeadPos == std::numeric_limits<size_t>::max()) {
-        IMAGE_LOGE("Failed to decode parse metadata: cannot found exif header");
+        IMAGE_LOGE("Failed to parse metadata: cannot found exif header");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
 
-    size_t byteOrderPos = FindTiffPos(exifInfo, exifInfoLength);
-    if (byteOrderPos == std::numeric_limits<size_t>::max()) {
-        IMAGE_LOGE("Failed to parse Exif metadata: cannot find tiff byte order");
-        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
-    }
-    tiffData = DataBuf(exifInfo.CData(byteOrderPos), exifInfoLength - byteOrderPos);
+    size_t tiffOffset = EXIF_HEADER_SIZE;
+    tiffData = DataBuf(exifInfo.CData(tiffOffset), exifInfoLength - tiffOffset);
     return SUCCESS;
 }
 
-int PngImageChunk::DecompressText(const byte* sourceData, unsigned int sourceDataLen, DataBuf &textOut)
+int PngImageChunkUtils::DecompressText(const byte *sourceData, unsigned int sourceDataLen, DataBuf &textOut)
 {
     if (sourceDataLen > IMAGE_SEG_MAX_SIZE) {
-        IMAGE_LOGE("Failed to uncompress: data is too huge.");
+        IMAGE_LOGE("Failed to decompress: data is too huge.");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
     uLongf destDataLen = IMAGE_SEG_MAX_SIZE;
@@ -277,14 +273,14 @@ int PngImageChunk::DecompressText(const byte* sourceData, unsigned int sourceDat
     textOut.Alloc(destDataLen);
     int result = uncompress(textOut.Data(), &destDataLen, sourceData, sourceDataLen);
     if (result != Z_OK) {
-        IMAGE_LOGE("Failed to uncompress: the uncompress job abort.");
+        IMAGE_LOGE("Failed to decompress: the decompress job abort.");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
     textOut.Resize(destDataLen);
     return SUCCESS;
 }
 
-const char* PngImageChunk::StepOverNewLine(const char* sourcePtr, const char* endPtr)
+const char *PngImageChunkUtils::StepOverNewLine(const char *sourcePtr, const char *endPtr)
 {
     while (*sourcePtr != '\n') {
         sourcePtr++;
@@ -299,7 +295,7 @@ const char* PngImageChunk::StepOverNewLine(const char* sourcePtr, const char* en
     return sourcePtr;
 }
 
-const char* PngImageChunk::GetExifInfoLen(const char* sourcePtr, size_t *lengthOut, const char* endPtr)
+const char *PngImageChunkUtils::GetExifInfoLen(const char *sourcePtr, size_t *lengthOut, const char *endPtr)
 {
     while ((*sourcePtr == '\0') || (*sourcePtr == ' ') || (*sourcePtr == '\n')) {
         sourcePtr++;
@@ -328,7 +324,7 @@ const char* PngImageChunk::GetExifInfoLen(const char* sourcePtr, size_t *lengthO
     return sourcePtr;
 }
 
-int PngImageChunk::AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsigned char *destPtr)
+int PngImageChunkUtils::ConvertAsciiToInt(const char *sourcePtr, size_t exifInfoLength, unsigned char *destPtr)
 {
     static const unsigned char hexAsciiToInt[ASCII_TO_HEX_MAP_SIZE] = {
         0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,    0, 0, 0, 0, 0,
@@ -358,14 +354,14 @@ int PngImageChunk::AsciiToInt(const char* sourcePtr, size_t exifInfoLength, unsi
     return SUCCESS;
 }
 
-DataBuf PngImageChunk::ConvertRawTextToExifInfo(const DataBuf &rawText)
+DataBuf PngImageChunkUtils::ConvertRawTextToExifInfo(const DataBuf &rawText)
 {
     if (rawText.Size() <= 1) {
         IMAGE_LOGE("Raw profile text size is too small.");
         return {};
     }
-    const char* sourcePtr = reinterpret_cast<const char*>(rawText.CData(1));
-    const char* endPtr = reinterpret_cast<const char*>(rawText.CData(rawText.Size() - 1));
+    const char *sourcePtr = reinterpret_cast<const char*>(rawText.CData(1));
+    const char *endPtr = reinterpret_cast<const char*>(rawText.CData(rawText.Size() - 1));
 
     if (sourcePtr >= endPtr) {
         IMAGE_LOGE("Source pointer is invalid.");
@@ -398,8 +394,8 @@ DataBuf PngImageChunk::ConvertRawTextToExifInfo(const DataBuf &rawText)
     if (exifInfo.Empty()) {
         return exifInfo;
     }
-    unsigned char* destPtr = exifInfo.Data();
-    int ret = AsciiToInt(sourcePtr, exifInfoLength, destPtr);
+    unsigned char *destPtr = exifInfo.Data();
+    int ret = ConvertAsciiToInt(sourcePtr, exifInfoLength, destPtr);
     if (ret != 0) {
         IMAGE_LOGE("Failed to convert exif string ascii to int.");
         return {};
