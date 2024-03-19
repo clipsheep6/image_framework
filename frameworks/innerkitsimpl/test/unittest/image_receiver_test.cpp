@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include <gtest/gtest.h>
 #define private public
 #include <fstream>
@@ -32,6 +32,7 @@ static constexpr int32_t RECEIVER_TEST_WIDTH = 8192;
 static constexpr int32_t RECEIVER_TEST_HEIGHT = 8;
 static constexpr int32_t RECEIVER_TEST_CAPACITY = 8;
 static constexpr int32_t RECEIVER_TEST_FORMAT = 4;
+static constexpr int32_t RECEIVER_TEST_TIMESTAMP = 1504919349;
 
 class ImageReceiverTest : public testing::Test {
 public:
@@ -472,6 +473,101 @@ HWTEST_F(ImageReceiverTest, ReleaseReceiverTest001, TestSize.Level3)
         RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
     imageReceiver->ReleaseReceiver();
     GTEST_LOG_(INFO) << "ImageReceiverTest: ReleaseReceiverTest001 end";
+}
+
+/**
+ * @tc.name: SetCpuAccessTest001
+ * @tc.desc: test SetCpuAccess
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageReceiverTest, SetCpuAccessTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageReceiverTest: SetCpuAccessTest001 start";
+    std::shared_ptr<ImageReceiver> imageReceiver;
+    imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
+        RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+    auto res = imageReceiver->SetCpuAccess(true);
+    ASSERT_EQ(res, SUCCESS);
+    GTEST_LOG_(INFO) << "ImageReceiverTest: SetCpuAccessTest001 end";
+}
+
+void PushBuffer(std::shared_ptr<ImageReceiver> imageReceiver)
+{
+    OHOS::BufferRequestConfig requestConfig = {
+        .width = RECEIVER_TEST_WIDTH,
+        .height = RECEIVER_TEST_HEIGHT,
+        .strideAlignment = 0x8,
+        .format = PIXEL_FMT_RGBA_8888,
+        .usage = HBM_USE_CPU_READ | HBM_USE_CPU_WRITE | HBM_USE_MEM_DMA | BUFFER_USAGE_CPU_HW_BOTH,
+        .timeout = 0,
+    };
+
+    OHOS::BufferFlushConfig flushConfig = {
+        .damage = {
+            .w = RECEIVER_TEST_WIDTH,
+            .h = RECEIVER_TEST_HEIGHT,
+        },
+        .timestamp = RECEIVER_TEST_TIMESTAMP,
+    };
+    std::string receiveKey = imageReceiver->iraContext_->GetReceiverKey();
+    auto receiverSurface = imageReceiver->getSurfaceById(receiveKey);
+    ASSERT_NE(receiverSurface, nullptr);
+
+    int32_t releaseFence;
+    OHOS::sptr<OHOS::SurfaceBuffer> buffer;
+    receiverSurface->RequestBuffer(buffer, releaseFence, requestConfig);
+    ASSERT_NE(buffer, nullptr);
+
+    int32_t *p = reinterpret_cast<int32_t *>(buffer->GetVirAddr());
+    int32_t size = static_cast<int32_t>(buffer->GetSize() / 4);
+    if (p != nullptr) {
+        for (int32_t i = 0; i < size; i++) {
+            p[i] = i;
+        }
+    }
+    receiverSurface->FlushBuffer(buffer, -1, flushConfig);
+}
+
+/**
+ * @tc.name: IsCpuAccessTest001
+ * @tc.desc: test LastNativeImage IsCpuAccess is false
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageReceiverTest, IsCpuAccessTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest001 start";
+    std::shared_ptr<ImageReceiver> imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
+        RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+
+    PushBuffer(imageReceiver);
+
+    std::shared_ptr<NativeImage> image = imageReceiver->LastNativeImage();
+    ASSERT_NE(image, nullptr);
+    bool isCpuAccess = false;
+    image->IsCpuAccess(isCpuAccess);
+    ASSERT_EQ(isCpuAccess, false);
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest001 end";
+}
+
+/**
+ * @tc.name: IsCpuAccessTest002
+ * @tc.desc: test NextNativeImage IsCpuAccess is false
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageReceiverTest, IsCpuAccessTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest002 start";
+    std::shared_ptr<ImageReceiver> imageReceiver = ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH,
+        RECEIVER_TEST_HEIGHT, RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+
+    PushBuffer(imageReceiver);
+
+    std::shared_ptr<NativeImage> image = imageReceiver->NextNativeImage();
+    ASSERT_NE(image, nullptr);
+    bool isCpuAccess = false;
+    image->IsCpuAccess(isCpuAccess);
+    ASSERT_EQ(isCpuAccess, false);
+    GTEST_LOG_(INFO) << "ImageReceiverTest: IsCpuAccessTest002 end";
 }
 }
 }

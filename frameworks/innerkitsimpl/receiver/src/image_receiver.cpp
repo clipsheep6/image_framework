@@ -21,6 +21,9 @@
 #include "image_utils.h"
 #include "image_receiver_buffer_processor.h"
 #include "image_receiver_manager.h"
+#include "v1_1/buffer_handle_meta_key_type.h"
+
+using namespace OHOS::HDI::Display::Graphic::Common::V1_1;
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -30,7 +33,6 @@
 
 namespace OHOS {
 namespace Media {
-
 ImageReceiver::~ImageReceiver()
 {
     std::lock_guard<std::mutex> guard(imageReceiverMutex_);
@@ -196,6 +198,9 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
 
     iva->receiverConsumerSurface_->SetDefaultWidthAndHeight(width, height);
     iva->receiverConsumerSurface_->SetQueueSize(capicity);
+
+    iva->receiverConsumerSurface_->SetDefaultUsage(BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE |
+            BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_CPU_HW_BOTH);
     auto p = iva->receiverConsumerSurface_->GetProducer();
     iva->receiverProducerSurface_ = Surface::CreateSurfaceAsProducer(p);
     if (iva->receiverProducerSurface_ == nullptr) {
@@ -219,6 +224,17 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
     return iva;
 }
 
+uint32_t ImageReceiver::SetCpuAccess(bool isCpuAccess)
+{
+    if (receiverConsumerSurface_ == nullptr) {
+        IMAGE_LOGD("SurfaceAsConsumer == nullptr");
+        return IMAGE_RESULT_GET_SURFAC_FAILED;
+    }
+    receiverConsumerSurface_->ConsumerRequestCpuAccess(isCpuAccess);
+    IMAGE_LOGD("ImageReceiver::SetCpuAccess %{public}d", isCpuAccess);
+    return SUCCESS;
+}
+
 OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage(int64_t &timestamp)
 {
     int32_t flushFence = 0;
@@ -231,7 +247,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage(int64_t &timestamp)
     } else {
         IMAGE_LOGD("buffer is null");
     }
-    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
+    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", static_cast<long long>(timestamp));
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -248,7 +264,6 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage()
     } else {
         IMAGE_LOGD("buffer is null");
     }
-    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", timestamp);
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -266,7 +281,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage(int64_t &timestamp)
     }
 
     iraContext_->currentBuffer_ = bufferBefore;
-    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
+    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", static_cast<long long>(timestamp));
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -285,7 +300,6 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage()
     }
 
     iraContext_->currentBuffer_ = bufferBefore;
-    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", timestamp);
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -317,6 +331,15 @@ std::shared_ptr<NativeImage> ImageReceiver::NextNativeImage()
     if (surfaceBuffer == nullptr) {
         return nullptr;
     }
+    std::vector<uint8_t> values;
+    surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+    if (values.size() == 1) {
+        if (values[0] == HEBC_ACCESS_CPU_ACCESS) {
+            IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE HEBC_ACCESS_CPU_ACCESS");
+            return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(),
+                        timestamp, HEBC_ACCESS_CPU_ACCESS);
+        }
+    }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }
 
@@ -329,6 +352,16 @@ std::shared_ptr<NativeImage> ImageReceiver::LastNativeImage()
     auto surfaceBuffer = ReadLastImage(timestamp);
     if (surfaceBuffer == nullptr) {
         return nullptr;
+    }
+
+    std::vector<uint8_t> values;
+    surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+    if (values.size() == 1) {
+        if (values[0] == HEBC_ACCESS_CPU_ACCESS) {
+            IMAGE_LOGD("ImageReceiver::LastNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE HEBC_ACCESS_CPU_ACCESS");
+            return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(),
+                        timestamp, HEBC_ACCESS_CPU_ACCESS);
+        }
     }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }

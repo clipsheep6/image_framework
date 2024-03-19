@@ -138,6 +138,8 @@ napi_value ImageReceiverNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("readNextImage", JsReadNextImage),
         DECLARE_NAPI_FUNCTION("on", JsOn),
         DECLARE_NAPI_FUNCTION("release", JsRelease),
+        DECLARE_NAPI_FUNCTION("setCpuAccess", JsSetCpuAccess),
+
 #ifdef IMAGE_DEBUG_FLAG
         DECLARE_NAPI_GETTER("test", JsTest),
         DECLARE_NAPI_GETTER("checkDeviceTest", JsCheckDeviceTest),
@@ -520,6 +522,48 @@ napi_value ImageReceiverNapi::JsGetFormat(napi_env env, napi_callback_info info)
             return false;
         }
         napi_create_int32(args.env, native->iraContext_->GetFormat(), &(ic.result));
+        return true;
+    };
+
+    return JSCommonProcess(args);
+}
+
+napi_value ImageReceiverNapi::JsSetCpuAccess(napi_env env, napi_callback_info info)
+{
+    IMAGE_FUNCTION_IN();
+
+    ImageReceiverCommonArgs args = {
+        .env = env, .info = info,
+        .async = CallType::GETTER,
+    };
+
+    args.nonAsyncBack = [](ImageReceiverCommonArgs &args, ImageReceiverInnerContext &ic) -> bool {
+        napi_value thisVar = nullptr;
+        size_t argc = ARGS1;
+        napi_value argv[ARGS1] = {0};
+        napi_get_undefined(args.env, &(ic.result));
+
+        napi_status status = napi_get_cb_info(args.env, args.info, &argc, argv, &thisVar, nullptr);
+        if (status != napi_ok) {
+            IMAGE_ERR("fail to napi_get_cb_info %{public}d", status);
+            return false;
+        }
+        bool isCpuAccess = false;
+        auto argType0 = ImageNapiUtils::getType(args.env, argv[PARAM0]);
+        if (argType0 != napi_boolean) {
+            return false;
+        }
+
+        if (napi_ok != napi_get_value_bool(args.env, argv[PARAM0], &isCpuAccess)) {
+            return false;
+        }
+
+        auto native = ic.context->constructor_->imageReceiver_;
+        if (native == nullptr) {
+            IMAGE_ERR("Native instance is nullptr");
+            return false;
+        }
+        napi_create_int32(args.env, native->SetCpuAccess(isCpuAccess), &(ic.result));
         return true;
     };
 
