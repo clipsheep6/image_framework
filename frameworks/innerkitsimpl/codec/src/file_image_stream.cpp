@@ -468,6 +468,10 @@ bool FileImageStream::CopyFrom(ImageStream &src)
 
 ssize_t FileImageStream::GetSize()
 {
+    if (fp_ == nullptr) {
+        HandleFileError("GetSize", filePath_, -1, -1, -1);
+        return -1;
+    }
     ssize_t oldPos = Tell();
     if (fseek(fp_, 0, SEEK_END) != 0) {
         char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
