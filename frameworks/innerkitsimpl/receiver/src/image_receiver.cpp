@@ -247,7 +247,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadNextImage()
     } else {
         IMAGE_LOGD("buffer is null");
     }
-
+    IMAGE_LOGD("[ImageReceiver] ReadNextImage %{public}lld", static_cast<long long>(timestamp));
     return iraContext_->GetCurrentBuffer();
 }
 
@@ -282,7 +282,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage()
         bufferBefore = buffer;
         surfaceError = listenerConsumerSurface->AcquireBuffer(buffer, flushFence, timestamp, damage);
     }
-
+    IMAGE_LOGD("[ImageReceiver] ReadLastImage %{public}lld", static_cast<long long>(timestamp));
     iraContext_->currentBuffer_ = bufferBefore;
     return iraContext_->GetCurrentBuffer();
 }
