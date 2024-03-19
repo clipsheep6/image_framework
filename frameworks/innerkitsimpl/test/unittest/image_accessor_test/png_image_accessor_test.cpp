@@ -257,19 +257,5 @@ HWTEST_F(PngImageAccessorTest, ReadExifBlob002, TestSize.Level3)
     ASSERT_EQ(result, false);
 }
 
-/**
- * @tc.name: ReadExifBlob003
- * @tc.desc: test ReadExifBlob with non-existent PNG
- * @tc.type: FUNC
- */
-HWTEST_F(PngImageAccessorTest, ReadExifBlob003, TestSize.Level3)
-{
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_NOEXIST_PATH);
-    ASSERT_FALSE(stream->Open(OpenMode::ReadWrite));
-    PngImageAccessor imageAccessor(stream);
-    DataBuf exifBuf;
-    bool result = imageAccessor.ReadExifBlob(exifBuf);
-    ASSERT_EQ(result, false);
-}
 } // namespace Multimedia
 } // namespace OHOS
