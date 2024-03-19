@@ -76,6 +76,7 @@ void FileImageStream::Initialize(const std::string &filePath, int fileDescriptor
     if (!fileWrapper_) {
         this->fileWrapper_ = std::make_unique<FileWrapper>();
     }
+    mappedMemory_ = nullptr;
 }
 
 // Error handling function

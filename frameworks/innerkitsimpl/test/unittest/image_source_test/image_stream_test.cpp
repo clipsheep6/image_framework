@@ -1153,6 +1153,28 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3)
     close(fileDescriptor);
 }
 
+/**
+ * @tc.name: FileImageStream_DESTRUCTOR001
+ * @tc.desc: Test the destructor of FileImageStream, checking if it can
+ * correctly handle the deletion of a non-existing file
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageStreamTest, FileImageStream_DESTRUCTOR001, TestSize.Level3)
+{
+    FileImageStream *stream = new FileImageStream("/data/fileNotExist");
+    ASSERT_FALSE(stream->Open());
+    ASSERT_EQ(stream->Write((byte *)"Hello, the world", 16), -1);
+    stream->GetAddr();
+    ASSERT_FALSE(stream->Flush());
+    delete stream;
+}
+
+/**
+ * @tc.name: FileImageStream_Seek001
+ * @tc.desc: Test the Seek function of FileImageStream, checking if it can
+ * correctly change the position of the file pointer
+ * @tc.type: FUNC
+ */
 HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3)
 {
     RemoveFile(filePath.c_str());
