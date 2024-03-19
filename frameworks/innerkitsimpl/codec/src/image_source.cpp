@@ -26,6 +26,7 @@
 #include "hitrace_meter.h"
 #include "image_trace.h"
 #endif
+#include "exif_metadata.h"
 #include "file_source_stream.h"
 #include "image/abs_image_decoder.h"
 #include "image/abs_image_format_agent.h"
@@ -42,7 +43,6 @@
 #include "post_proc.h"
 #include "securec.h"
 #include "source_stream.h"
-#include "exif_metadata.h"
 #include "image_accessor_factory.h"
 #include "image_accessor_interface.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
@@ -1014,7 +1014,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
 
-    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(path);
+    auto imageAccessor = ImageAccessorFactory::Create(path);
     return ModifyImageProperty(imageAccessor, key, value);
 }
 
@@ -1022,8 +1022,8 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     const std::string &value, const int fd)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    
-    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(fd);
+
+    auto imageAccessor = ImageAccessorFactory::Create(fd);
     return ModifyImageProperty(imageAccessor, key, value);
 }
 
@@ -1031,8 +1031,8 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     const std::string &value, uint8_t *data, uint32_t size)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    
-    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(data, size);
+
+    auto imageAccessor = ImageAccessorFactory::Create(data, size);
     uint32_t ret = ModifyImageProperty(imageAccessor, key, value);
     if (ret != SUCCESS) {
         return ret;
@@ -1055,7 +1055,7 @@ uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &
 {
     uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
     uint32_t size = sourceStreamPtr_->GetStreamSize();
-    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
+    auto imageAccessor = ImageAccessorFactory::Create(ptr, size);
     if (imageAccessor == nullptr) {
         return ERR_IMAGE_SOURCE_DATA;
     }
@@ -2404,7 +2404,7 @@ std::shared_ptr<DataBuf> ImageSource::GetExifBlob()
 
     uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
     uint32_t size = sourceStreamPtr_->GetStreamSize();
-    auto imageAccessor = ImageAccessorFactory::CreateImageAccessor(ptr, size);
+    auto imageAccessor = ImageAccessorFactory::Create(ptr, size);
     if (imageAccessor != nullptr) {
         DataBuf dataBlob;
         imageAccessor->ReadExifBlob(dataBlob);

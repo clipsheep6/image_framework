@@ -34,34 +34,34 @@ const int IMAGE_HEADER_SIZE = 10;
 const byte jpegHeader[] = { 0xff, 0xd8, 0xff };
 const byte pngHeader[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::CreateImageAccessor(uint8_t *buffer, const uint32_t size)
+std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::Create(uint8_t *buffer, const uint32_t size)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<BufferImageStream>();
     stream->Write(buffer, size);
-    return CreateImageAccessor(stream);
+    return Create(stream);
 }
 
-std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::CreateImageAccessor(const int fd)
+std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::Create(const int fd)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(fd);
     if (!stream->Open(OpenMode::ReadWrite)) {
         IMAGE_LOGE("Failed to open stream by fd");
         return nullptr;
     }
-    return CreateImageAccessor(stream);
+    return Create(stream);
 }
 
-std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::CreateImageAccessor(const std::string &path)
+std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::Create(const std::string &path)
 {
     std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(path);
     if (!stream->Open(OpenMode::ReadWrite)) {
         IMAGE_LOGE("Failed to open stream by path");
         return nullptr;
     }
-    return CreateImageAccessor(stream);
+    return Create(stream);
 }
 
-std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::CreateImageAccessor(std::shared_ptr<ImageStream> &stream)
+std::shared_ptr<ImageAccessorInterface> ImageAccessorFactory::Create(std::shared_ptr<ImageStream> &stream)
 {
     EncodedFormat type = GetImageType(stream);
 

@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,7 +31,6 @@
 #include "image_accessor_factory.h"
 #include "image_accessor_interface.h"
 
-
 using namespace OHOS::Media;
 using namespace testing::ext;
 using namespace OHOS::ImagePlugin;
@@ -41,7 +39,6 @@ namespace OHOS {
 namespace Multimedia {
 constexpr uint32_t NUM_1 = 1;
 constexpr uint32_t NUM_100 = 100;
-constexpr int32_t LOS_NOK = 1;
 constexpr int64_t BUFFER_SIZE = 2 * 1024 * 1024;
 constexpr uint32_t MAX_IMAGE_SIZE = 100 * 1024;
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test_packing.jpg";
@@ -356,62 +353,42 @@ HWTEST_F(ImagePackerTest, FinalizePacking002, TestSize.Level3)
 
 /**
  * @tc.name: StartPacking013
- * @tc.desc: test StartPacking013 StartPacking(uint8_t *outputData, uint32_t maxSize, const PackOption &option) jpeg ==> jpeg
+ * @tc.desc: test StartPacking013 StartPacking(uint8_t *outputData, uint32_t maxSize, const PackOption &option)
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePackerTest, StartPacking013, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking013 start";
-    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_SRC);
+    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc = ImageAccessorFactory::Create(IMAGE_JPG_SRC);
     DataBuf blobSrc;
     bool retReadSrc = imageAccessorSrc->ReadExifBlob(blobSrc);
     ASSERT_TRUE(retReadSrc);
     ASSERT_EQ(blobSrc.Size(), 0x0932);
 
-    uint32_t errorCode = 0;
+    uint32_t errorCode = -1;
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
-    opts.baseDensity = 100;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_JPG_SRC, opts, errorCode);
     ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
-
     ImagePacker pack;
-    int64_t bufferSize = MAX_IMAGE_SIZE;
-    uint8_t *outputData = static_cast<uint8_t *>(malloc(bufferSize));
-    ASSERT_NE(outputData, nullptr);
-    memset(outputData, 0, bufferSize);
+    // uint8_t *outputData = static_cast<uint8_t *>(malloc(bufferSize));
+    uint8_t outputData[MAX_IMAGE_SIZE] = {0};
     PackOption option;
     option.format = "image/jpeg";
     uint32_t startpc = pack.StartPacking(outputData, MAX_IMAGE_SIZE, option);
-    ASSERT_EQ(startpc, OHOS::Media::SUCCESS) << [&]()->int {
-        free(outputData);
-        outputData = nullptr;
-        return LOS_NOK;
-    }();
-
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
     std::ofstream fileDestJpg(IMAGE_JPG_DEST, std::ios::binary);
-    ASSERT_TRUE(fileDestJpg.is_open()) << [&]()->int {
-        free(outputData);
-        outputData = nullptr;
-        fileDestJpg.close();
-        return LOS_NOK;
-    }();
+    ASSERT_TRUE(fileDestJpg.is_open());
     uint32_t retAddimgae = pack.AddImage(*imageSource);
     ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
     uint32_t retFinalizePacking = pack.FinalizePacking();
     ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
 
     fileDestJpg.write(reinterpret_cast<char*>(outputData), MAX_IMAGE_SIZE);
-    ASSERT_FALSE(fileDestJpg.bad()) << [&]()->int {
-        free(outputData);
-        outputData = nullptr;
-        fileDestJpg.close();
-        return LOS_NOK;
-    }();
-
-    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_DEST);
+    ASSERT_FALSE(fileDestJpg.bad());
+    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::Create(IMAGE_JPG_DEST);
     ASSERT_NE(imageAccessorDest, nullptr);
     DataBuf blobDest;
     bool retReadDest = imageAccessorDest->ReadExifBlob(blobDest);
@@ -419,9 +396,6 @@ HWTEST_F(ImagePackerTest, StartPacking013, TestSize.Level3)
     ASSERT_EQ(blobDest.Size(), blobSrc.Size());
     bool retExifBlob = std::equal(blobDest.CBegin(), blobDest.CEnd(), blobSrc.CBegin());
     ASSERT_TRUE(retExifBlob);
-
-    free(outputData);
-    outputData = nullptr;
     fileDestJpg.close();
 }
 
@@ -432,7 +406,7 @@ HWTEST_F(ImagePackerTest, StartPacking013, TestSize.Level3)
  */
 HWTEST_F(ImagePackerTest, StartPacking014, TestSize.Level3)
 {
-    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_SRC);
+    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc = ImageAccessorFactory::Create(IMAGE_JPG_SRC);
     DataBuf blobSrc;
     bool retReadSrc = imageAccessorSrc->ReadExifBlob(blobSrc);
     ASSERT_TRUE(retReadSrc);
@@ -456,10 +430,10 @@ HWTEST_F(ImagePackerTest, StartPacking014, TestSize.Level3)
     uint32_t retFinalizePacking = pack.FinalizePacking();
     ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
 
-    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_DEST);
+    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::Create(IMAGE_JPG_DEST);
     ASSERT_NE(imageAccessorDest, nullptr);
     DataBuf blobDest;
-    bool retReadDest= imageAccessorDest->ReadExifBlob(blobDest);
+    bool retReadDest = imageAccessorDest->ReadExifBlob(blobDest);
     ASSERT_TRUE(retReadDest);
     ASSERT_EQ(blobDest.Size(), blobSrc.Size());
     bool retExifBlob = std::equal(blobDest.CBegin(), blobDest.CEnd(), blobSrc.CBegin());
@@ -475,7 +449,7 @@ HWTEST_F(ImagePackerTest, StartPacking014, TestSize.Level3)
 HWTEST_F(ImagePackerTest, StartPacking015, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking015 start";
-    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_SRC);
+    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc = ImageAccessorFactory::Create(IMAGE_JPG_SRC);
     DataBuf blobSrc;
     bool retReadSrc = imageAccessorSrc->ReadExifBlob(blobSrc);
     ASSERT_TRUE(retReadSrc);
@@ -502,10 +476,10 @@ HWTEST_F(ImagePackerTest, StartPacking015, TestSize.Level3)
     ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
 
 
-    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_DEST);
+    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::Create(IMAGE_JPG_DEST);
     ASSERT_NE(imageAccessorDest, nullptr);
     DataBuf blobDest;
-    bool retReadDest= imageAccessorDest->ReadExifBlob(blobDest);
+    bool retReadDest = imageAccessorDest->ReadExifBlob(blobDest);
     ASSERT_TRUE(retReadDest);
     ASSERT_EQ(blobDest.Size(), blobSrc.Size());
     bool retExifBlob = std::equal(blobDest.CBegin(), blobDest.CEnd(), blobSrc.CBegin());
@@ -521,7 +495,8 @@ HWTEST_F(ImagePackerTest, StartPacking015, TestSize.Level3)
 HWTEST_F(ImagePackerTest, StartPacking016, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking016 start";
-    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_SRC);
+    std::shared_ptr<ImageAccessorInterface> imageAccessorSrc =
+        ImageAccessorFactory::Create(IMAGE_JPG_SRC);
     DataBuf blobSrc;
     bool retReadSrc = imageAccessorSrc->ReadExifBlob(blobSrc);
     ASSERT_TRUE(retReadSrc);
@@ -546,10 +521,10 @@ HWTEST_F(ImagePackerTest, StartPacking016, TestSize.Level3)
     uint32_t retFinalizePacking = pack.FinalizePacking();
     ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
 
-    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::CreateImageAccessor(IMAGE_JPG_DEST);
+    std::shared_ptr<ImageAccessorInterface> imageAccessorDest = ImageAccessorFactory::Create(IMAGE_JPG_DEST);
     ASSERT_NE(imageAccessorDest, nullptr);
     DataBuf blobDest;
-    bool retReadDest= imageAccessorDest->ReadExifBlob(blobDest);
+    bool retReadDest = imageAccessorDest->ReadExifBlob(blobDest);
     ASSERT_TRUE(retReadDest);
     ASSERT_EQ(blobDest.Size(), blobSrc.Size());
     bool retExifBlob = std::equal(blobDest.CBegin(), blobDest.CEnd(), blobSrc.CBegin());

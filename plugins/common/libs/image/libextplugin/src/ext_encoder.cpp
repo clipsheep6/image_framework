@@ -154,18 +154,8 @@ bool IsAstc(const std::string &format)
     return format.find("image/astc") == 0;
 }
 
-uint32_t ExtEncoder::FinalizeEncode()
+uint32_t ExtEncoder::DoFinalizeEncode()
 {
-    if (pixelmap_ == nullptr || output_ == nullptr) {
-        return ERR_IMAGE_INVALID_PARAMETER;
-    }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
-    if (IsAstc(opts_.format)) {
-        AstcCodec astcEncoder;
-        astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);
-        return astcEncoder.ASTCEncode();
-    }
-#endif
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
             return IsSameTextStr(item.second, opts_.format);
@@ -191,7 +181,7 @@ uint32_t ExtEncoder::FinalizeEncode()
             return ERR_IMAGE_ENCODE_FAILED;
         }
 
-        auto destImageAccessor = ImageAccessorFactory::CreateImageAccessor(wStream.GetAddr(), wStream.bytesWritten());
+        auto destImageAccessor = ImageAccessorFactory::Create(wStream.GetAddr(), wStream.bytesWritten());
         uint32_t ret = destImageAccessor->WriteExifBlob(*exifBlob);
         if (ret != SUCCESS) {
             IMAGE_LOGE("ExtEncoder::encode exifblob failed");
@@ -211,6 +201,22 @@ uint32_t ExtEncoder::FinalizeEncode()
     }
 
     return SUCCESS;
+}
+
+uint32_t ExtEncoder::FinalizeEncode()
+{
+    if (pixelmap_ == nullptr || output_ == nullptr) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (IsAstc(opts_.format)) {
+        AstcCodec astcEncoder;
+        astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);
+        return astcEncoder.ASTCEncode();
+    }
+#endif
+
+    return DoFinalizeEncode();
 }
 } // namespace ImagePlugin
 } // namespace OHOS

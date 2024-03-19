@@ -2174,7 +2174,8 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty008, TestSize.Level3)
     auto outSize = std::filesystem::file_size(IMAGE_OUTPUT_JPEG_PATH);
     ASSERT_EQ(outSize, inSize);
     std::string value;
-    std::unique_ptr<ImageSource> imageSourceOut = ImageSource::CreateImageSource(IMAGE_OUTPUT_JPEG_PATH, opts, errorCode);
+    std::unique_ptr<ImageSource> imageSourceOut =
+        ImageSource::CreateImageSource(IMAGE_OUTPUT_JPEG_PATH, opts, errorCode);
     ASSERT_NE(imageSourceOut, nullptr);
     uint32_t retGet = imageSourceOut->GetImagePropertyString(index, key, value);
     ASSERT_EQ(retGet, OHOS::Media::SUCCESS);

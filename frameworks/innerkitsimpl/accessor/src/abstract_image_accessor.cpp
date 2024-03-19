@@ -30,7 +30,10 @@ AbstractImageAccessor::~AbstractImageAccessor() {}
 
 bool AbstractImageAccessor::CreateExifMetadata()
 {
-    exifMetadata_ = std::make_shared<ExifMetadata>();
+    if (exifMetadata_ == nullptr) {
+        exifMetadata_ = std::make_shared<ExifMetadata>();
+    }
+
     return exifMetadata_->CreateExifdata();
 }
 

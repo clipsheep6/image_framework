@@ -27,7 +27,7 @@ public:
 
     virtual bool CreateExifMetadata() override;
     virtual std::shared_ptr<ExifMetadata> GetExifMetadata() override;
-    virtual bool WriteToOutput(ImagePlugin::OutputDataStream &soutput) override;
+    virtual bool WriteToOutput(ImagePlugin::OutputDataStream &output) override;
 
 protected:
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
