@@ -20,12 +20,12 @@
 #include <set>
 #include <utility>
 
+#include "exif_metadata_converter.h"
 #include "hilog/log_cpp.h"
-#include "string_ex.h"
-#include "media_errors.h"
 #include "hilog/log.h"
 #include "image_log.h"
-#include "exif_metadata_converter.h"
+#include "media_errors.h"
+#include "string_ex.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -218,7 +218,7 @@ const std::map<std::string, PropertyPermision> SUPPORTKEYS = {
 constexpr TagDetails exifOrientation[] = {
     {1, "top, left"},     {2, "top, right"},   {3, "bottom, right"},
     {4, "bottom, left"},  {5, "left, top"},    {6, "right, top"},
-    {7, "right, bottom" }, {8, "left, bottom"}, {8, "left, bottom"}
+    {7, "right, bottom" }, {8, "left, bottom"},
 };
 
 // GPS latitude reference, tag 0x0001; also GPSDestLatitudeRef, tag 0x0013
@@ -305,7 +305,7 @@ constexpr TagDetails exifLightSource[] = {
 constexpr TagDetails exifMeteringMode[] = {
     {0, "Unknown"}, {1, "Average"},    {2, "Center weighted average"},
     {3, "Spot"},    {4, "Multi-spot"}, {5, "Multi-segment"},
-    { 6, "Partial"}, { 255, "Other"},    { 255, "Other"}
+    {6, "Partial"}, {255, "Other"},
 };
 
 // SceneType, tag 0xa301
@@ -484,7 +484,7 @@ constexpr TagDetails exifSubfileType[] = {
 };
 
 // GPS status, tag 0x0009
-constexpr TagDetails exifGPSStatus[] = {
+constexpr TagDetails exifGpsStatus[] = {
     {'A', "Measurement in progress"},
     {'V', "Measurement interrupted"},
 };
@@ -560,7 +560,7 @@ std::map<std::string, std::tuple<const TagDetails *, const size_t>> ExifMetadata
     {"GPSAltitudeRef", std::make_tuple(exifGPSAltitudeRef, std::size(exifGPSAltitudeRef))},
     {"NewSubfileType", std::make_tuple(exifNewSubfileType, std::size(exifNewSubfileType))},
     {"SubfileType", std::make_tuple(exifSubfileType, std::size(exifSubfileType))},
-    {"GPSStatus", std::make_tuple(exifGPSStatus, std::size(exifGPSStatus))},
+    {"GPSStatus", std::make_tuple(exifGpsStatus, std::size(exifGpsStatus))},
     {"GPSMeasureMode", std::make_tuple(exifGPSMeasureMode, std::size(exifGPSMeasureMode))},
     {"GPSSpeedRef", std::make_tuple(exifGPSSpeedRef, std::size(exifGPSSpeedRef))},
     {"GPSImgDirectionRef", std::make_tuple(exifGPSDirRef, std::size(exifGPSDirRef))},
@@ -571,28 +571,28 @@ std::map<std::string, std::tuple<const TagDetails *, const size_t>> ExifMetadata
 
 const std::string COMMAREGEX("\\,"), COLONREGEX("\\:"), DOTREGEX("\\.");
 
-const auto ONERATIONALREGEX = R"(^[0-9]+/[1-9][0-9]*$)";
-const auto ONEINTREGEX = R"(^[0-9]+$)";
+const auto ONE_RATIONAL_REGEX = R"(^[0-9]+/[1-9][0-9]*$)";
+const auto ONE_INT_REGEX = R"(^[0-9]+$)";
 const auto ONEDECIMALREGEX = "(\\d+)(\\.\\d+)?";
-const auto DOUBLEINTWITHBLANKREGEX = R"(^[0-9]+\s[0-9]+$)";
-const auto DOUBLEINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+$)";
-const auto TRIBLEINTWITHBLANKREGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+$)";
-const auto TRIBLEINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+,[0-9]+$)";
-const auto TRIBLERATIONALWITHBLANKREGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
-const auto TRIBLEINTNZWITHBLANKREGEX = R"(^[1-9][0-9]*\s[1-9][0-9]*\s[1-9][0-9]*$)";
-const auto TRIBLEINTNZWITHCOMMAREGEX = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
-const auto TRIBLEDECIMALWITHBLANKREGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
-const auto TRIBLEDECIMALWITHCOMMAREGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
-const auto TRIBLEINTWITHCOLONREGEX = R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*$)";
-const auto TRIBLEINTWITHDOTREGEX = R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)";
-const auto FOURINTWITHBLANKREGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)";
-const auto FOURINTWITHCOMMAREGEX = R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)";
-const auto FOURINTNZWITHCOMMAREGEX = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
-const auto FOURRATIONALWITHBLANKREGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
-const auto FOURDECIMALWITHBLANKREGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
-const auto FOURDECIMALWITHCOMMAREGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
-const auto DATETIMEREGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$)";
-const auto DATEREGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}$)";
+const auto DOUBLE_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+$)";
+const auto DOUBLE_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+$)";
+const auto TRIBLE_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+$)";
+const auto TRIBLE_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+,[0-9]+$)";
+const auto TRIBLE_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
+const auto TRIBLE_INT_NZ_WITH_BLANK_REGEX = R"(^[1-9][0-9]*\s[1-9][0-9]*\s[1-9][0-9]*$)";
+const auto TRIBLE_INT_NZ_WITH_COMMA_REGEX = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
+const auto TRIBLE_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
+const auto TRIBLE_DECIMAL_WITH_COMMA_REGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
+const auto TRIBLE_INT_WITH_COLON_REGEX = R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*$)";
+const auto TRIBLE_INT_WITH_DOT_REGEX = R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)";
+const auto FOUR_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)";
+const auto FOUR_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)";
+const auto FOUR_INT_NZ_WITH_COMMA_REGEX = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
+const auto FOUR_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
+const auto FOUR_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
+const auto FOUR_DECIMAL_WITH_COMMA_REGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
+const auto DATETIME_REGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$)";
+const auto DATE_REGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}$)";
 
 /*
  * validate the key is in value range array.
@@ -615,15 +615,12 @@ bool ExifMetadataConverter::IsValidValue(const TagDetails *array, const size_t &
 // validate regex only
 bool ExifMetadataConverter::ValidRegex(const std::string &value, const std::string &regex)
 {
-    std::cout << "valid regex value is " << value << " regex is " << regex << std::endl;
     IMAGE_LOGD("[validRegex] value is [%{public}s] regex is [%{public}s].", value.c_str(), regex.c_str());
     std::regex ratPattern(regex);
     if (!std::regex_match(value, ratPattern)) {
         IMAGE_LOGD("validRegex fail. value is [%{public}s] regex is [%{public}s].", value.c_str(), regex.c_str());
-        std::cout << "valid regex fail return false." << std::endl;
         return false;
     }
-    std::cout << "valid regex return true value is " << value << " regex is " << regex << std::endl;
     return true;
 }
 
@@ -639,14 +636,11 @@ void ExifMetadataConverter::ReplaceAsSpace(std::string &value, const std::string
 // validate the regex & replace comma as space
 bool ExifMetadataConverter::ValidRegexWithComma(std::string &value, const std::string &regex)
 {
-    std::cout << "valid regex with comma value is " << value << std::endl;
     IMAGE_LOGD("[validRegexWithComma] value is [%{public}s] regex is [%{public}s].", value.c_str(), regex.c_str());
     if (!ValidRegex(value, regex)) {
         return false;
     }
-    std::cout << "ready to replace as space " << std::endl;
     ReplaceAsSpace(value, COMMAREGEX);
-    std::cout << "replace success value is " << value << std::endl;
     return true;
 }
 
@@ -801,94 +795,94 @@ bool ExifMetadataConverter::ValidRegexWithDecimalRationalFormat(std::string &val
 
 // regex validation for two integer like DefaultCropSize 9 9 the format is [0-9]+ [0-9]+
 ValueFormatDelegate ExifMetadataConverter::doubleIntWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegex, DOUBLEINTWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, DOUBLE_INT_WITH_BLANK_REGEX);
 
 // regex validation for two integer with comma like BitPerSample 9,9 the format is [0-9]+,[0-9]+,[0-9]+
 ValueFormatDelegate ExifMetadataConverter::doubleIntWithComma =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithComma, DOUBLEINTWITHCOMMAREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithComma, DOUBLE_INT_WITH_COMMA_REGEX);
 
 // regex validation for three integer like BitPerSample 9 9 9 the format is [0-9]+ [0-9]+ [0-9]+
 ValueFormatDelegate ExifMetadataConverter::tribleIntWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegex, TRIBLEINTWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, TRIBLE_INT_WITH_BLANK_REGEX);
 
 // regex validation for three integer with comma like BitPerSample 9,9,0 the format is [0-9]+,[0-9]+,[0-9]+,[0-9]+
 ValueFormatDelegate ExifMetadataConverter::tribleIntWithComma =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithComma, TRIBLEINTWITHCOMMAREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithComma, TRIBLE_INT_WITH_COMMA_REGEX);
 
 // regex validation for four integer like DNGVersion 9 9 9 9 the format is [0-9]+ [0-9]+ [0-9]+ [0-9]+
 ValueFormatDelegate ExifMetadataConverter::fourIntWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegex, FOURINTWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, FOUR_INT_WITH_BLANK_REGEX);
 
 // regex validation for four integer with comma like DNGVersion tag encodes the DNG four-tier version number
 ValueFormatDelegate ExifMetadataConverter::fourIntWithComma =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithComma, FOURINTWITHCOMMAREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithComma, FOUR_INT_WITH_COMMA_REGEX);
 
 // regex validation for one rational like ApertureValue 4/1 the format is [0-9]+/[1-9][0-9]
 ValueFormatDelegate ExifMetadataConverter::oneRational =
-    std::make_pair(ExifMetadataConverter::ValidRegex, ONERATIONALREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, ONE_RATIONAL_REGEX);
 
 // regex validation for integer and convert it to rational like ApertureValue 4 --> 4/1
 ValueFormatDelegate ExifMetadataConverter::oneIntToRational =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, ONEINTREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, ONE_INT_REGEX);
 
 ValueFormatDelegate ExifMetadataConverter::oneDecimalToRational =
     std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, ONEDECIMALREGEX);
 
 // regex validation for three rational like GPSLatitude 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleRationalWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegex, TRIBLERATIONALWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, TRIBLE_RATIONAL_WITH_BLANK_REGEX);
 
 // regex validation for three integer and convert to three rational like GPSLatitude 39 54 20 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, TRIBLEINTNZWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, TRIBLE_INT_NZ_WITH_BLANK_REGEX);
 
 // regex validation for three integer with comma like GPSLatitude 39,54,20 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithComma =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, TRIBLEINTNZWITHCOMMAREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, TRIBLE_INT_NZ_WITH_COMMA_REGEX);
 
 // regex validation for three decimal like YCbCrCoefficients 39.0 54 20.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleDecimalToRationalWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, TRIBLEDECIMALWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, TRIBLE_DECIMAL_WITH_BLANK_REGEX);
 
 // regex validation for three decimal like YCbCrCoefficients 39.0,54,20.0 --> 39.0 54 20.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::tribleDecimalToRatiionalWithComma =
-    std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, TRIBLEDECIMALWITHCOMMAREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, TRIBLE_DECIMAL_WITH_COMMA_REGEX);
 
 // regex validation for four rational like LensSpecification 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadataConverter::fourRationalWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegex, FOURRATIONALWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, FOUR_RATIONAL_WITH_BLANK_REGEX);
 
 // regex validation for four integer and convert to four rational like LensSpecification 1 3 1 2 --> 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithBlank =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, FOURINTWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithRationalFormat, FOUR_INT_WITH_BLANK_REGEX);
 
 // regex validation for four integer like LensSpecification 1,3,1,2 --> 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithComma =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, FOURINTNZWITHCOMMAREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithCommaRationalFormat, FOUR_INT_NZ_WITH_COMMA_REGEX);
 
 // regex validation for four decimal like LensSpecification 1.0 3.0 1.0 2.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::decimal4Ratiional4 =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, FOURDECIMALWITHBLANKREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithDecimalRationalFormat, FOUR_DECIMAL_WITH_BLANK_REGEX);
 
 // regex validation for four decimal like LensSpecification 1.0,3.0,1.0,2.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadataConverter::decimal4Ratiional4Comma =
-    std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, FOURDECIMALWITHCOMMAREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegxWithCommaDecimalRationalFormat, FOUR_DECIMAL_WITH_COMMA_REGEX);
 
 // regex validation for datetime format like DateTimeOriginal 2022:06:02 15:51:34
 ValueFormatDelegate ExifMetadataConverter::dateTimeValidation =
-    std::make_pair(ExifMetadataConverter::ValidRegex, DATETIMEREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, DATETIME_REGEX);
 
 // regex validation for datetime format like DateTimeOriginal 2022:06:02
 ValueFormatDelegate ExifMetadataConverter::dateValidation =
-    std::make_pair(ExifMetadataConverter::ValidRegex, DATEREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegex, DATE_REGEX);
 
 // regex validation for three integer like GPSLatitude 39,54,21 --> 39/1 54/1 21/1
 ValueFormatDelegate ExifMetadataConverter::tribleIntToRationalWithColon =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithColonRationalFormat, TRIBLEINTWITHCOLONREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithColonRationalFormat, TRIBLE_INT_WITH_COLON_REGEX);
 
 // regex validation for fou integer with pointer like GPSVersionID
 ValueFormatDelegate ExifMetadataConverter::fourIntToRationalWithDot =
-    std::make_pair(ExifMetadataConverter::ValidRegexWithDot, TRIBLEINTWITHDOTREGEX);
+    std::make_pair(ExifMetadataConverter::ValidRegexWithDot, TRIBLE_INT_WITH_DOT_REGEX);
 
 // configuration for value format validation. For example BitPerSample the value format should be 9 9 9 or 9,9,9
 std::multimap<std::string, ValueFormatDelegate> ExifMetadataConverter::valueFormatConvertConfig = {
@@ -1023,15 +1017,15 @@ std::multimap<std::string, ValueFormatDelegate> ExifMetadataConverter::valueForm
 };
 
 std::multimap<std::string, std::string> ExifMetadataConverter::valueFormatValidateConfig = {
-    {"BitsPerSample", TRIBLEINTWITHCOMMAREGEX},
-    {"ImageLength", ONEINTREGEX},
-    {"ImageWidth", ONEINTREGEX},
-    {"GPSLatitude", DOUBLEINTWITHCOMMAREGEX},
-    {"GPSLatitude", TRIBLEINTWITHCOMMAREGEX},
-    {"GPSLatitude", TRIBLEDECIMALWITHCOMMAREGEX},
-    {"GPSLongitude", DOUBLEINTWITHCOMMAREGEX},
-    {"GPSLongitude", TRIBLEINTWITHCOMMAREGEX},
-    {"GPSLongitude", TRIBLEDECIMALWITHCOMMAREGEX}
+    {"BitsPerSample", TRIBLE_INT_WITH_COMMA_REGEX},
+    {"ImageLength", ONE_INT_REGEX},
+    {"ImageWidth", ONE_INT_REGEX},
+    {"GPSLatitude", DOUBLE_INT_WITH_COMMA_REGEX},
+    {"GPSLatitude", TRIBLE_INT_WITH_COMMA_REGEX},
+    {"GPSLatitude", TRIBLE_DECIMAL_WITH_COMMA_REGEX},
+    {"GPSLongitude", DOUBLE_INT_WITH_COMMA_REGEX},
+    {"GPSLongitude", TRIBLE_INT_WITH_COMMA_REGEX},
+    {"GPSLongitude", TRIBLE_DECIMAL_WITH_COMMA_REGEX}
 };
 
 // validate the value range. For example GPSLatitudeRef the value must be 'N' or 'S'.
@@ -1093,9 +1087,7 @@ bool ExifMetadataConverter::IsFormatValidationConfigExisting(const std::string &
 // validate value format. For example BitPerSample the value format should be 9 9 9 or 9,9,9
 int32_t ExifMetadataConverter::ConvertValueFormat(const std::string &keyName, std::string &value)
 {
-    std::cout << "convert value format" << std::endl;
     auto it = ExifMetadataConverter::valueFormatConvertConfig.find(keyName);
-    std::cout << "find key iterator" << std::endl;
     if (it == ExifMetadataConverter::valueFormatConvertConfig.end()) {
         IMAGE_LOGD("no format validate default success.");
         // if no format validation config default success
@@ -1108,7 +1100,6 @@ int32_t ExifMetadataConverter::ConvertValueFormat(const std::string &keyName, st
         iterator != ExifMetadataConverter::valueFormatConvertConfig.end() &&
         iterator != ExifMetadataConverter::valueFormatConvertConfig.upper_bound(keyName);
         iterator++) {
-        std::cout << "looping value format convert config" << std::endl;
         IMAGE_LOGD("isValueFormatValidate forloop keyName is [%{public}s] regex string is [%{public}s].",
             (iterator->first).c_str(), (iterator->second).second.c_str());
         auto func = (iterator->second).first;
@@ -1117,7 +1108,6 @@ int32_t ExifMetadataConverter::ConvertValueFormat(const std::string &keyName, st
         IMAGE_LOGD("isValueFormatValidate ret isValid is [%{public}d].", isValid);
         if (isValid) {
             IMAGE_LOGD("isValueFormatValidate ret SUCCESS.");
-            std::cout << "format valid success & return for value " << value << std::endl;
             return Media::SUCCESS; // SUCCESS
         }
     }
@@ -1172,7 +1162,6 @@ bool ExifMetadataConverter::IsModifyAllowed(const std::string &keyName)
 // exif validation portal when modify exif
 std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string &keyName, const std::string &value)
 {
-    std::cout << "convert key: " << keyName << " value: " << value << std::endl;
     std::string value_ = value;
     IMAGE_LOGD("ExifMetadataConverter.");
     // translate exif tag. For example translate "BitsPerSample" to "Exif.Image.BitsPerSample"
@@ -1183,7 +1172,6 @@ std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string
     if (!ExifMetadataConverter::IsModifyAllowed(keyName)) {
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, nullptr);
     }
-    std::cout << "validate value format" << std::endl;
     IMAGE_LOGD("ExifMetadataConverter keyName is [%{public}s] value is [%{public}s].",
         keyName.c_str(), value.c_str());
     // 1.validate value format
@@ -1193,7 +1181,6 @@ std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string
         // value format validate does not pass
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, nullptr);
     }
-    std::cout << "ready to valudate value range" << std::endl;
     IMAGE_LOGD("ExifMetadataConverter processed formate value is [%{public}s] value is [%{public}s].",
         keyName.c_str(), value.c_str());
     // 2.validate value range
@@ -1203,7 +1190,6 @@ std::pair<int32_t, std::string> ExifMetadataConverter::Convert(const std::string
         // value range validate does not pass
         return std::make_pair(Media::ERR_MEDIA_OUT_OF_RANGE, nullptr);
     }
-    std::cout << "validate success and value: " << value_ << std::endl;
     return std::make_pair(Media::SUCCESS, value_);
 }
 

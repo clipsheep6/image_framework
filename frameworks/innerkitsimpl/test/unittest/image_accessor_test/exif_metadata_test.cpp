@@ -27,7 +27,7 @@ namespace Multimedia {
 
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test_metadata.jpg";
 static const std::string IMAGE_INPUT_JPEG_BLANKEXIF_PATH = "/data/local/tmp/image/test_exif_blank.jpg";
-static const std::string IMAGE_INPUT_JPEG_HUAWEI_PATH = "/data/local/tmp/image/test_huawei.jpg";
+static const std::string IMAGE_INPUT_JPEG_HW_PATH = "/data/local/tmp/image/test_huawei.jpg";
 
 class ExifMetadataTest : public testing::Test {
 public:
@@ -395,7 +395,7 @@ HWTEST_F(ExifMetadataTest, GetValue032, TestSize.Level3)
 
 HWTEST_F(ExifMetadataTest, GetValue033, TestSize.Level3)
 {
-    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_HUAWEI_PATH.c_str());
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_HW_PATH.c_str());
     std::string value;
     ExifMetadata metadata(exifData);
     metadata.GetValue("HwScenePointer", value);
@@ -426,7 +426,7 @@ HWTEST_F(ExifMetadataTest, GetValue033, TestSize.Level3)
 
 HWTEST_F(ExifMetadataTest, GetValue034, TestSize.Level3)
 {
-    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_HUAWEI_PATH.c_str());
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_HW_PATH.c_str());
     std::string value;
     ExifMetadata metadata(exifData);
     metadata.GetValue("HwFacePointer", value);
@@ -633,8 +633,8 @@ std::string MODIFYDATA[][3] = {
     {"DeviceSettingDescription", "2", "2"},
     {"SubjectDistanceRange", "0", "Unknown"},
     {"ImageUniqueID", "FXIC012", "7 bytes undefined data"},
-    // {"GPSVersionID", "2 2 0 0", "2 2 0 0"},
-    // {"GPSAltitudeRef", "1", "1"},
+    {"GPSVersionID", "2 2 0 0", "2 2 0 0"}, //TODO fix
+    {"GPSAltitudeRef", "1", "1"}, //TODO fix
     {"GPSAltitude", "0/100", "0.00"},
     {"GPSSatellites", "xxx", "xxx"},
     {"GPSStatus", "A", "A"},

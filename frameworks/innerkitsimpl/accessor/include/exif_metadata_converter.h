@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_EXIF_META_DATA_VALIDATE_H
-#define INTERFACES_INNERKITS_INCLUDE_EXIF_META_DATA_VALIDATE_H
+#ifndef INTERFACES_INNERKITS_INCLUDE_EXIF_METADATA_CONVERTER_H
+#define INTERFACES_INNERKITS_INCLUDE_EXIF_METADATA_CONVERTER_H
 
 #include <map>
 #include <string>
@@ -30,6 +30,10 @@ struct TagDetails {
 using ValueFormatDelegate = std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string>;
 
 class ExifMetadataConverter {
+public:
+    static std::pair<int32_t, std::string> Convert(const std::string &keyName, const std::string &value);
+    static int32_t Validate(const std::string &keyName, const std::string &value);
+
 private:
     static int32_t ValidateValueRange(const std::string &keyName, const std::string &value);
     static int32_t ConvertValueFormat(const std::string &keyName, std::string &value);
@@ -83,9 +87,6 @@ private:
     static std::multimap<std::string, ValueFormatDelegate> valueFormatConvertConfig;
     static std::multimap<std::string, std::string> valueFormatValidateConfig;
     static std::map<std::string, std::tuple<const TagDetails*, const size_t>> valueRangeValidateConfig;
-public:
-    static std::pair<int32_t, std::string> Convert(const std::string &keyName, const std::string &value);
-    static int32_t Validate(const std::string &keyName, const std::string &value);
 };
 } // namespace Media
 } // namespace OHOS
