@@ -37,6 +37,10 @@ ImageReceiver::~ImageReceiver()
     if (receiverConsumerSurface_ != nullptr) {
         receiverConsumerSurface_->UnregisterConsumerListener();
     }
+    for (auto iter : numbersAPICalledMap_) {
+        CountImageReceiverCalledNums(iter.first, iter.second, static_cast<uint32_t>(invocationMode_),
+            reinterpret_cast<uint64_t>(this));
+    }
     receiverConsumerSurface_ = nullptr;
     receiverProducerSurface_ = nullptr;
     iraContext_ = nullptr;
@@ -292,6 +296,21 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageReceiver::ReadLastImage()
 sptr<Surface> ImageReceiver::GetReceiverSurface()
 {
     return iraContext_->GetReceiverBufferProducer();
+}
+
+void ImageReceiver::SetNumsAPICalled(std::string funcName)
+{
+    auto iter = numbersAPICalledMap_.find(funcName);
+    if (iter == numbersAPICalledMap_.end()) {
+        numbersAPICalledMap_.insert(pair<std::string, uint32_t>(funcName, 1));
+        return;
+    }
+    iter->second++;
+}
+
+void ImageReceiver::SetAPICalledType(InvocationMode type)
+{
+    invocationMode_ = type;
 }
 
 void ImageReceiver::ReleaseReceiver()

@@ -24,6 +24,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 #include "__config"
 #include "image_log.h"
@@ -417,6 +418,12 @@ void ImageUtils::DumpDataIfDumpEnabled(const char* data, const size_t& totalSize
         return;
     }
     IMAGE_LOGI("ImageUtils::DumpDataIfDumpEnabled success, path = %{public}s", fileName.c_str());
+}
+
+uint64_t ImageUtils::GetNowTimeMicroSeconds()
+{
+    auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 }
 
 uint32_t ImageUtils::SaveDataToFile(const std::string& fileName, const char* data, const size_t& totalSize)

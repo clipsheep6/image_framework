@@ -19,31 +19,56 @@
 #include <string>
 namespace OHOS {
 namespace Media {
-void FaultExceededMemory(std::string msg, std::string module, uint64_t memory);
-void FaultHardWareDecode(int32_t width, int32_t height, uint32_t samplesize, uint32_t errcode, std::string msg);
-void FaultSoftWareDecode(int32_t width, int32_t height, int32_t pixelformat, int32_t colorspace, uint32_t samplesize,
-    uint32_t code, std::string msg);
-void InfoDecode(int32_t width, int32_t height, int32_t pixelformat, int32_t colorspace, uint32_t samplesize);
-void InfoEncode(std::string format, uint32_t quality, uint32_t width, uint32_t height, int32_t space, int32_t type, int32_t pixelformat);
-void InfoHardDecode(uint32_t width, uint32_t height, bool supportHardDecode);
-void InfoIncrementalDecode(int32_t width, int32_t height, int32_t pixelFormat, int32_t colorspace, uint32_t sampleSize);
-void StatisticWithJson(std::string eventName, uint32_t count);
+enum class InvocationMode : uint32_t {
+    INTERNAL_CALL = 0,
+    TS_CALL,
+    Native_Development_Kit_CALL
+};
 
+struct ReportImageoptions {
+    uint32_t srcWidth;
+    uint32_t srcHeight;
+    uint32_t dstWidth;
+    uint32_t dstHeight;
+    int32_t pixelFormat;
+    int32_t colorSpace;
+    uint32_t sampleSize;
+    std::string encodeFormat;
+    uint8_t quality;
+};
 
 class ImageEvent {
 public:
     ImageEvent() = delete;
-    ImageEvent(const std::string &module, const std::string &msg, const std::string &eventNameFault);
+    ImageEvent(const std::string &module, const std::string &eventNameFault);
     ~ImageEvent();
+    void SetImageInfo(const ReportImageoptions &opts)
+    {
+        codecInfo_ = opts;
+    }
+    void ReportEncodeIfTimeOverFlow(uint64_t times);
+    void ReportDecodeIfTimeOverFlow(uint64_t times);
+    void ReportEncodeInfo(uint64_t times);
+    void ReportDecodeInfo(uint64_t times);
+    void ReportDecodeFailed();
+    void SetErrorCode(uint32_t code, std::string message);
+
 private:
-    std::string module_;
     std::string msg_;
     std::string eventNameFault_;
-    std::string eventNameStatics_ = "STATISTIC_DECODE_TIME";
-    std::string function_;
-    uint64_t start_time_;
-    uint64_t end_time_;
+    uint64_t startTime_;
+    ReportImageoptions codecInfo_;
+    uint32_t errorCode_;
 };
+
+void ReportIfMemoryOverflow(std::string msg, uint64_t memory);
+void ReportHardWareDecodeError(int32_t width, int32_t height, int32_t pixelFormat, uint32_t sampleSize,
+    std::string msg);
+void CountImageSourceCalledNums(std::string keyName, uint32_t num, uint32_t incocationMode, uint64_t addr);
+void CountImageReceiverCalledNums(std::string keyName, uint32_t num, uint32_t incocationMode, uint64_t addr);
+void CountImageCreatorCalledNums(std::string keyName, uint32_t num, uint32_t incocationMode, uint64_t addr);
+void CountImagePackerCalledNums(std::string keyName, uint32_t num, uint32_t incocationMode, uint64_t addr);
+void CountPixelMapCalledNums(std::string keyName, uint32_t num, uint32_t incocationMode, uint64_t addr);
 } // namespace Media
 } // namespace OHOS
-#endif // IMAGE_DFX_H 
+#endif // IMAGE_DFX_H

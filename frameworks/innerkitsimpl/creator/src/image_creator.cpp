@@ -41,6 +41,10 @@ ImageCreator::~ImageCreator()
     iraContext_ = nullptr;
     surfaceBufferReleaseListener_ = nullptr;
     surfaceBufferAvaliableListener_ = nullptr;
+    for (auto iter : numbersAPICalledMap_) {
+        CountImageCreatorCalledNums(iter.first, iter.second, static_cast<uint32_t>(invocationMode_),
+            reinterpret_cast<uint64_t>(this));
+    }
 }
 
 GSError ImageCreator::OnBufferRelease(sptr<SurfaceBuffer> &buffer)
@@ -323,6 +327,21 @@ void ImageCreator::QueueNativeImage(std::shared_ptr<NativeImage> image)
     }
     auto buffer = image->GetBuffer();
     QueueImage(buffer);
+}
+
+void ImageCreator::SetNumsAPICalled(std::string funcName)
+{
+    auto iter = numbersAPICalledMap_.find(funcName);
+    if (iter == numbersAPICalledMap_.end()) {
+        numbersAPICalledMap_.insert(pair<std::string, uint32_t>(funcName, 1));
+        return;
+    }
+    iter->second++;
+}
+
+void ImageCreator::SetAPICalledType(InvocationMode type)
+{
+    invocationMode_ = type;
 }
 } // namespace Media
 } // namespace OHOS

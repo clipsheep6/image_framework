@@ -51,6 +51,7 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -679,8 +680,34 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     return pixelMap;
 }
 
+void ImageSource::SetReportDecodeInfoParam(const DecodeOptions &opts, ReportImageoptions &codecInfo)
+{
+    codecInfo.dstWidth = opts.desiredSize.width;
+    codecInfo.dstHeight = opts.desiredSize.height;
+    codecInfo.pixelFormat = static_cast<int32_t>(opts.desiredPixelFormat);
+    codecInfo.colorSpace = static_cast<int32_t>(opts.desiredColorSpace);
+    codecInfo.sampleSize = opts.sampleSize;
+    codecInfo.encodeFormat = sourceInfo_.encodedFormat;
+}
+
+void ImageSource::SetNumsAPICalled(std::string funcName)
+{
+    auto iter = numbersAPICalledMap_.find(funcName);
+    if (iter == numbersAPICalledMap_.end()) {
+        numbersAPICalledMap_.insert(pair<std::string, uint32_t>(funcName, 1));
+        return;
+    }
+    iter->second++;
+}
+
+void ImageSource::SetAPICalledType(InvocationMode type)
+{
+    invocationMode_ = type;
+}
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
+    SetNumsAPICalled("CreatePixelMap");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     opts_ = opts;
     bool useSkia = opts_.sampleSize != 1;
@@ -693,6 +720,10 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         IMAGE_LOGE("[ImageSource]get valid image status fail on create pixel map, ret:%{public}u.", errorCode);
         return nullptr;
     }
+    ImageEvent imageEvent("ImageSource::CreatePixelMap", "DECODE_TIME_OVER_FLOW");
+    ReportImageoptions codecInfo;
+    SetReportDecodeInfoParam(opts, codecInfo);
+    imageEvent.SetImageInfo(codecInfo);
     if (ImageSystemProperties::GetSkiaEnabled()) {
         if (IsExtendedCodec(mainDecoder_.get())) {
             guard.unlock();
@@ -707,12 +738,14 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     if (InitMainDecoder() != SUCCESS) {
         IMAGE_LOGE("[ImageSource]image decode plugin is null.");
         errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
+        imageEvent.SetErrorCode(errorCode, "image decode plugin is null");
         return nullptr;
     }
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
     if (pixelMap == nullptr || pixelMap.get() == nullptr) {
         IMAGE_LOGE("[ImageSource]create the pixel map unique_ptr fail.");
         errorCode = ERR_IMAGE_MALLOC_ABNORMAL;
+        imageEvent.SetErrorCode(errorCode, "create the pixel map unique_ptr fail");
         return nullptr;
     }
 
@@ -721,6 +754,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index,
             errorCode);
+        imageEvent.SetErrorCode(errorCode, "set decode options error");
         return nullptr;
     }
 
@@ -738,6 +772,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()));
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
+        imageEvent.SetErrorCode(errorCode, "update pixelmap info error");
         return nullptr;
     }
 
@@ -772,6 +807,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     guard.unlock();
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
+        imageEvent.SetErrorCode(errorCode, "decode source fail");
         if (context.pixelsBuffer.buffer != nullptr) {
             if (context.freeFunc != nullptr) {
                 context.freeFunc(context.pixelsBuffer.buffer, context.pixelsBuffer.context,
@@ -800,6 +836,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     PostProc postProc;
     errorCode = postProc.DecodePostProc(procOpts, *(pixelMap.get()), finalOutputStep);
     if (errorCode != SUCCESS) {
+        imageEvent.SetErrorCode(errorCode, "DecodePostProc failed");
         return nullptr;
     }
 
@@ -949,6 +986,7 @@ DecodeEvent ImageSource::GetDecodeEvent()
 uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
 {
     ImageTrace imageTrace("GetImageInfo by index");
+    SetNumsAPICalled("GetImageInfoByIndex");
     uint32_t ret = SUCCESS;
     std::unique_lock<std::mutex> guard(decodingMutex_);
     auto iter = GetValidImageStatus(index, ret);
@@ -971,6 +1009,7 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const std::string &path)
 {
+    SetNumsAPICalled("ModifyImagePropertyByPath");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -989,6 +1028,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, const int fd)
 {
+    SetNumsAPICalled("ModifyImagePropertyByfd");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -1007,6 +1047,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
     const std::string &value, uint8_t *data, uint32_t size)
 {
+    SetNumsAPICalled("ModifyImagePropertyByData");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -1024,6 +1065,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 
 uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
+    SetNumsAPICalled("GetImagePropertyInt");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -1042,6 +1084,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
 
 uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
+    SetNumsAPICalled("GetImagePropertyString");
     std::unique_lock<std::mutex> guard(decodingMutex_);
     uint32_t ret;
     auto iter = GetValidImageStatus(0, ret);
@@ -1116,6 +1159,11 @@ ImageSource::~ImageSource()
     std::lock_guard<std::mutex> guard(listenerMutex_);
     for (const auto &listener : listeners_) {
         listener->OnPeerDestory();
+    }
+
+    for (auto iter : numbersAPICalledMap_) {
+        CountImageSourceCalledNums(iter.first, iter.second, static_cast<uint32_t>(invocationMode_),
+            reinterpret_cast<uint64_t>(this));
     }
 }
 

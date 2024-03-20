@@ -21,6 +21,7 @@
 #include "image_creator_context.h"
 #include "image_napi.h"
 #include "image_creator_manager.h"
+#include "image_dfx.h"
 
 using std::string;
 using std::shared_ptr;
@@ -249,6 +250,7 @@ napi_value ImageCreatorNapi::JSCreateImageCreator(napi_env env, napi_callback_in
             staticInstance_ = ImageCreator::CreateImageCreator(args[PARAM0],
                 args[PARAM1], args[PARAM2], args[PARAM3]);
         }
+        staticInstance_->SetAPICalledType(InvocationMode::TS_CALL);
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok) {
             IMAGE_FUNCTION_OUT();

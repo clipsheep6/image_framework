@@ -24,6 +24,7 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
 #endif
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -906,6 +907,7 @@ napi_value ImageSourceNapi::CreateImageSource(napi_env env, napi_callback_info i
     fileBuffer_ = asyncContext->sourceBuffer;
     fileBufferSize_ = asyncContext->sourceBufferSize;
 
+    imageSource->SetAPICalledType(InvocationMode::TS_CALL);
     napi_value constructor = nullptr;
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
@@ -984,6 +986,7 @@ napi_value ImageSourceNapi::CreateIncrementalSource(napi_env env, napi_callback_
         napi_get_undefined(env, &result);
         return result;
     }
+    imageSource->SetAPICalledType(InvocationMode::TS_CALL);
     napi_value constructor = nullptr;
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {

@@ -20,6 +20,7 @@
 
 #include "abs_image_encoder.h"
 #include "plugin_class_base.h"
+#include "image_dfx.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -30,6 +31,7 @@ public:
     uint32_t StartEncode(OutputDataStream &outputStream, PlEncodeOptions &option) override;
     uint32_t AddImage(Media::PixelMap &pixelMap) override;
     uint32_t FinalizeEncode() override;
+    void SetReportEecodeInfoParam(Media::ReportImageoptions& codecInfo);
 
 private:
     DISALLOW_COPY_AND_MOVE(ExtEncoder);

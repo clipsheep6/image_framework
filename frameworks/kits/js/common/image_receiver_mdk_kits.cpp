@@ -16,7 +16,7 @@
 #include "image_receiver_mdk_kits.h"
 #include "image_receiver_napi_listener.h"
 #include "image_napi.h"
-
+#include "image_dfx.h"
 #include <map>
 
 namespace OHOS {
@@ -31,6 +31,7 @@ static ImageReceiver* GetNativeReceiver(ImageReceiverNapi* napi)
     if (napi == nullptr) {
         return nullptr;
     }
+    napi->GetNative()->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     return napi->GetNative();
 }
 
