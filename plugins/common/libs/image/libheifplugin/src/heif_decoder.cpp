@@ -18,6 +18,7 @@
 #include "image_log.h"
 #include "media_errors.h"
 #include "securec.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -133,6 +134,7 @@ bool HeifDecoder::AllocHeapBuffer(DecodeContext &context)
             return false;
         }
         uint64_t byteCount = static_cast<uint64_t>(heifSize_.width) * heifSize_.height * bytesPerPixel_;
+        FaultExceededMemory("HeifDecoder", "AllocHeapBuffer", byteCount);
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
             return AllocShareMem(context, byteCount);
         } else {

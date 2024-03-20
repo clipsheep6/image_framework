@@ -24,6 +24,7 @@
 #if !defined(_WIN32) && !defined(_APPLE)
 #include "hitrace_meter.h"
 #include "image_trace.h"
+#include "image_dfx.h"
 #endif
 #include "file_source_stream.h"
 #include "image/abs_image_decoder.h"
@@ -51,6 +52,7 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
+
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -557,6 +559,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     guard.unlock();
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
+        FaultSoftWareDecode(opts.desiredSize.width, opts.desiredSize.height,
+            static_cast<int32_t>(opts.desiredPixelFormat), static_cast<int32_t>(opts.desiredColorSpace),
+            opts.sampleSize, errorCode, "[ImageSource]decode source fail");
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         return nullptr;
     }
@@ -757,6 +762,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         }
     }
 
+    InfoDecode(opts.desiredSize.width, opts.desiredSize.height,
+            static_cast<int32_t>(opts.desiredPixelFormat), static_cast<int32_t>(opts.desiredColorSpace),
+            opts.sampleSize);
     errorCode = mainDecoder_->Decode(index, context);
     if (context.ifPartialOutput) {
         for (auto partialListener : decodeListeners_) {
@@ -772,6 +780,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
     guard.unlock();
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
+        FaultSoftWareDecode(opts.desiredSize.width, opts.desiredSize.height,
+            static_cast<int32_t>(opts.desiredPixelFormat), static_cast<int32_t>(opts.desiredColorSpace),
+            opts.sampleSize, errorCode, "[ImageSource]decode source fail");
         if (context.pixelsBuffer.buffer != nullptr) {
             if (context.freeFunc != nullptr) {
                 context.freeFunc(context.pixelsBuffer.buffer, context.pixelsBuffer.context,
@@ -1729,6 +1740,8 @@ uint32_t ImageSource::DoIncrementalDecoding(uint32_t index, const DecodeOptions 
                                             IncrementalDecodingContext &recordContext)
 {
     IMAGE_LOGD("[ImageSource]do incremental decoding: begin.");
+    InfoIncrementalDecode(opts.desiredSize.width, opts.desiredSize.height, static_cast<int32_t>(opts.desiredPixelFormat),
+        static_cast<int32_t>(opts.desiredColorSpace), opts.sampleSize);
     uint8_t *pixelAddr = static_cast<uint8_t *>(pixelMap.GetWritablePixels());
     ProgDecodeContext context;
     context.decodeContext.pixelsBuffer.buffer = pixelAddr;

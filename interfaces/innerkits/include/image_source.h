@@ -105,6 +105,11 @@ enum class SourceInfoState : int32_t {
     FILE_INFO_PARSED = 5
 };
 
+enum class SourceOfImage : int32_t {
+    LOCAL = 0,
+    INTERNET = 1
+};
+
 struct ImageDecodingStatus {
     ImageInfo imageInfo;
     ImageDecodingState imageState = ImageDecodingState::UNRESOLVED;
@@ -291,6 +296,8 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
+    SourceOfImage imageSource_ = SourceOfImage::LOCAL;
+    std::string sourceOfImage_ = "LOCAL";
 };
 } // namespace Media
 } // namespace OHOS

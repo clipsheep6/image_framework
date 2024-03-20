@@ -24,6 +24,7 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -513,6 +514,7 @@ bool WebpDecoder::AllocOutputBuffer(DecodeContext &context, bool isIncremental)
     }
     if (context.pixelsBuffer.buffer == nullptr) {
         uint64_t byteCount = static_cast<uint64_t>(webpSize_.width * webpSize_.height * bytesPerPixel_);
+        FaultExceededMemory("WebpDecoder", "AllocOutputBuffer", byteCount);
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
             return SharedMemoryCreate(context, byteCount);
         } else if (context.allocatorType == Media::AllocatorType::HEAP_ALLOC) {

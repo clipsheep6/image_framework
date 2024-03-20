@@ -30,6 +30,7 @@
 #else
 #include "memory.h"
 #endif
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -359,6 +360,7 @@ uint8_t *PngDecoder::AllocOutputBuffer(DecodeContext &context)
 {
     if (context.pixelsBuffer.buffer == nullptr) {
         uint64_t byteCount = static_cast<uint64_t>(pngImageInfo_.rowDataSize) * pngImageInfo_.height;
+        FaultExceededMemory("PngDecoder", "AllocOutputBuffer", byteCount);
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(A_PLATFORM) && !defined(IOS_PLATFORM)
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
             if (!AllocBufferForShareType(context, byteCount)) {
