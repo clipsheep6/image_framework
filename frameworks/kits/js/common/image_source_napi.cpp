@@ -576,7 +576,7 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
     napi_value encodedFormatValue = nullptr;
     napi_create_string_utf8(env, context->imageInfo.encodedFormat.c_str(), NAPI_AUTO_LENGTH,
         &encodedFormatValue);
-    napi_set_named_property(env, result, "format", encodedFormatValue);
+    napi_set_named_property(env, result, "mimeType", encodedFormatValue);
     return result;
 }
 
