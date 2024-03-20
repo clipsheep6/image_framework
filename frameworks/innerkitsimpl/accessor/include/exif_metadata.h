@@ -31,31 +31,10 @@ public:
     ~ExifMetadata();
     int GetValue(const std::string &key, std::string &value) const;
     bool SetValue(const std::string &key, const std::string &value);
-    bool SetExifValue(const std::string &key, const std::string &value);
     ExifData* GetExifData();
     bool CreateExifdata();
 
 private:
-    ExifEntry* InitExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag);
-    ExifEntry* CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len, ExifFormat format);
-    ExifEntry* GetExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, size_t len);
-    ExifIfd GetExifIfdByExifTag(const ExifTag &tag);
-    ExifFormat GetExifFormatByExifTag(const ExifTag &tag);
-    std::string GetExifNameByExifTag(const ExifTag &tag);
-    bool CreateExifEntryOfBitsPerSample(const ExifTag &tag, ExifData *data, const std::string &value,
-        ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateExifEntryOfRationalExif(const ExifTag &tag, ExifData *data, const std::string &value,
-        ExifByteOrder order, ExifEntry **ptrEntry, const std::string& separator, size_t sepSize);
-    bool CreateExifEntryOfGpsTimeStamp(const ExifTag &tag, ExifData *data, const std::string &value,
-        ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateExifEntryOfCompressedBitsPerPixel(const ExifTag &tag, ExifData *data, const std::string &value,
-        ExifByteOrder order, ExifEntry **ptrEntry);
-    bool CreateExifEntryOfGpsLatitudeOrLongitude(const ExifTag &tag, ExifData *data, const std::string &value,
-        ExifByteOrder order, ExifEntry **ptrEntry);
-    bool SetGpsDegreeRational(ExifData *data, ExifEntry **ptrEntry, ExifByteOrder order, const ExifTag &tag,
-    const std::vector<std::string> &dataVec);
-    bool SetGpsRationals(ExifData *data, ExifEntry **ptrEntry, ExifByteOrder order, const ExifTag &tag,
-        const std::vector<ExifRational> &exifRationals);
     ExifEntry* CreateEntry(const ExifTag &tag ,const size_t len);
     ExifEntry* GetEntry(const std::string &key, const size_t len);
     void ReallocEntry(ExifEntry *ptrEntry, const size_t len);
