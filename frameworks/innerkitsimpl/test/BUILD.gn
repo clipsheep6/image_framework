@@ -145,6 +145,16 @@ ohos_unittest("imagesourcetest") {
     "//commonlibrary/c_utils/base/include",
   ]
   sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/image_accessor_factory.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/codec/src/file_image_stream.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_packer_test.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_gif_ex_test.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_gif_test.cpp",
@@ -176,6 +186,8 @@ ohos_unittest("imagesourcetest") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "libexif:libexif",
+    "zlib:libz",
   ]
 
   if (purgeable_ashmem_enable && defined(global_parts_info) &&
