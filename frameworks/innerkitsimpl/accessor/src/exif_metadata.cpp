@@ -26,9 +26,8 @@
 #include "libexif/exif-format.h"
 #include "libexif/exif-tag.h"
 #include "media_errors.h"
-#include "string_ex.h"
 #include "securec.h"
-
+#include "string_ex.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -388,7 +387,8 @@ static void EXIFInfoBufferCheck(ExifEntry *exifEntry, size_t len)
         IMAGE_LOGD("[EXIFInfoBufferCheck] exifEntry is nullptr or size==len len is [%{public}d]", len);
         return;
     }
-    /* Create a memory allocator to manage this ExifEntry */
+
+    // Create a memory allocator to manage this ExifEntry
     ExifMem *exifMem = exif_mem_new_default();
     if (exifMem == nullptr) {
         IMAGE_LOGD("EXIFInfoBufferCheck Create mem failed!");
@@ -438,21 +438,21 @@ ExifEntry* ExifMetadata::GetExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag, si
     IMAGE_LOGD("[GetExifTag] tag is %{public}d.", tag);
     ExifEntry *exifEntry;
     if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
-        IMAGE_LOGD("[GetExifTag] exif_content_get_entryfailed. tag is [%{public}d]", tag);
+        IMAGE_LOGD("[GetExifTag] exif_content_get_entry failed. tag is [%{public}d]", tag);
         EXIFInfoBufferCheck(exifEntry, len);
         return exifEntry;
     } else {
         // initial ExifEntry  EXIF_TAG_GPS_LATITUDE = 0x0002, /* INTEROPERABILITY_VERSION */
         exifEntry = exif_entry_new();
         if (exifEntry == nullptr) {
-            IMAGE_LOGD("[GetExifTag] exif_entry_new fail.");
+            IMAGE_LOGD("[GetExifTag] exif_entry_new failed.");
             return nullptr;
         }
         exifEntry->tag = tag; // tag must be set before calling exif_content_add_entry
         exif_content_add_entry(exif->ifd[TagIfdTable[tag]], exifEntry);
         exif_entry_initialize(exifEntry, tag);
         exif_entry_unref(exifEntry);
-        IMAGE_LOGD("[GetExifTag] initilize SUCCESS.");
+        IMAGE_LOGD("[GetExifTag] exif entry initialization succeeded.");
     }
     return exifEntry;
 }
@@ -463,7 +463,7 @@ bool ExifMetadata::CreateExifdata()
         exif_data_unref(exifData_);
         exifData_ = nullptr;
         exifData_ = exif_data_new();
-        if (!(exifData_)) {
+        if (exifData_ == nullptr) {
             IMAGE_LOGD("Create exif data failed.");
             return false;
         }
@@ -477,7 +477,7 @@ bool ExifMetadata::CreateExifdata()
         return true;
     }
     exifData_ = exif_data_new();
-    if (!(exifData_)) {
+    if (exifData_ == nullptr) {
         IMAGE_LOGD("Create exif data failed.");
         return false;
     }
@@ -514,7 +514,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
 {
     IMAGE_LOGD("[GetValue] key is [%{public}s]", key.c_str());
     if (exifData_ == nullptr) {
-        IMAGE_LOGD("[GetValue] exifData_ is nullptr");
+        IMAGE_LOGD("[GetValue] exifData is nullptr");
         value = "";
         return ERR_MEDIA_NO_EXIF_DATA;
     }
@@ -522,14 +522,14 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     auto tag = exif_tag_from_name(key.c_str());
     auto entry = exif_data_get_entry(exifData_, tag);
     if (entry == nullptr) {
-        IMAGE_LOGD("[GetValue] exif_data_get_entry leave");
+        IMAGE_LOGD("[GetValue] exif_data_get_entry failed");
         value = "";
         return  ERR_MEDIA_NO_EXIF_DATA;
     }
-    IMAGE_LOGD("[GetValue] goint to use exif_entry_get_value tag is [%{public}d]", entry->tag);
     char tagValueChar[1024];
     exif_entry_get_value(entry, tagValueChar, sizeof(tagValueChar));
     value = tagValueChar;
+    IMAGE_LOGD("[GetValue] exif_entry_get_value value is [%{public}s]", value.c_str());
     return SUCCESS;
 }
 
@@ -575,8 +575,9 @@ static bool IsValidGpsData(const std::vector<std::string> &dataVec, const ExifTa
         return false;
     }
     constexpr uint32_t timePeriod = 60;
-    double latOrLong = degree + minute / timePeriod + second / (timePeriod * timePeriod);
+    double latOrLong = degree + (minute / timePeriod) + (second / (timePeriod * timePeriod));
     IMAGE_LOGD("latOrLong is [%{public}f]", latOrLong);
+
     if ((tag == EXIF_TAG_GPS_LATITUDE && (latOrLong > GPS_MAX_LATITUDE || latOrLong < GPS_MIN_LATITUDE)) ||
         (tag == EXIF_TAG_GPS_LONGITUDE && (latOrLong > GPS_MAX_LONGITUDE || latOrLong < GPS_MIN_LONGITUDE))) {
         IMAGE_LOGD("Gps latitude or longitude is out of range.");
@@ -610,6 +611,7 @@ static bool GetFractionFromStr(const std::string &decimal, ExifRational &result)
 
 bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
 {
+    IMAGE_LOGD("Setvalue key:%{public}s ,value:%{public}s", key.c_str(), value.c_str());
     static std::vector intProps{EXIF_TAG_ORIENTATION, EXIF_TAG_IMAGE_LENGTH, EXIF_TAG_IMAGE_WIDTH,
         EXIF_TAG_WHITE_BALANCE, EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM, EXIF_TAG_FLASH, EXIF_TAG_ISO_SPEED_RATINGS,
         EXIF_TAG_ISO_SPEED, EXIF_TAG_LIGHT_SOURCE, EXIF_TAG_METERING_MODE, EXIF_TAG_PIXEL_X_DIMENSION,
@@ -620,7 +622,6 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         EXIF_TAG_DATE_TIME, EXIF_TAG_GPS_LATITUDE_REF, EXIF_TAG_GPS_LONGITUDE_REF};
     static std::vector rationalProps{EXIF_TAG_APERTURE_VALUE, EXIF_TAG_EXPOSURE_BIAS_VALUE, EXIF_TAG_EXPOSURE_TIME,
         EXIF_TAG_FNUMBER, EXIF_TAG_FOCAL_LENGTH};
-    IMAGE_LOGD("Setvalue key:%{public}s ,value:%{public}s", key.c_str(), value.c_str());
     ExifEntry *ptrEntry = nullptr;
     auto tag = exif_tag_from_name(key.c_str());
     ExifByteOrder order = exif_data_get_byte_order(exifData_);
@@ -628,20 +629,23 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         return CreateExifEntryOfBitsPerSample(tag, exifData_, value, order, &ptrEntry);
     } else if (std::find(intProps.begin(), intProps.end(), tag) != intProps.end()) {
         ptrEntry = InitExifTag(exifData_, GetExifIfdByExifTag(tag), tag);
-        if ((ptrEntry) == nullptr) {
+        if (ptrEntry == nullptr) {
             IMAGE_LOGD("Get %{public}s exif entry failed.", GetExifNameByExifTag(tag).c_str());
+            return false;
         }
-        ExifIntValueByFormat((ptrEntry)->data, order, (ptrEntry)->format, atoi(value.c_str()));
+        ExifIntValueByFormat(ptrEntry->data, order, ptrEntry->format, atoi(value.c_str()));
         return true;
     } else if (std::find(strProps.begin(), strProps.end(), tag) != strProps.end()) {
-        size_t valuesize = value.length();
-        ptrEntry = CreateExifTag(exifData_, GetExifIfdByExifTag(tag), tag, valuesize, GetExifFormatByExifTag(tag));
-        if ((ptrEntry) == nullptr || (ptrEntry)->size < valuesize) {
+        size_t valueSize = value.length();
+        ptrEntry = CreateExifTag(exifData_, GetExifIfdByExifTag(tag), tag, valueSize, GetExifFormatByExifTag(tag));
+        if (ptrEntry == nullptr || ptrEntry->size < valueSize) {
             IMAGE_LOGD("Get %{public}s exif entry failed.", GetExifNameByExifTag(tag).c_str());
+            return false;
         }
-        IMAGE_LOGD("Setvalue valuesize:%{public}d ,value:%{public}s", valuesize, value.c_str());
-        if (memcpy_s((ptrEntry)->data, valuesize, value.c_str(), valuesize) != 0) {
+        IMAGE_LOGD("Setvalue valuesize:%{public}d ,value:%{public}s", valueSize, value.c_str());
+        if (memcpy_s(ptrEntry->data, valueSize, value.c_str(), valueSize) != 0) {
             IMAGE_LOGD("%{public}s memcpy error", GetExifNameByExifTag(tag).c_str());
+            return false;
         }
         return true;
     } else if (tag == EXIF_TAG_GPS_LATITUDE || tag == EXIF_TAG_GPS_LONGITUDE) {
@@ -666,7 +670,7 @@ ExifEntry* ExifMetadata::InitExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag)
 {
     ExifEntry *entry;
     if (exif == nullptr) {
-        IMAGE_LOGD("exif is nullptr InitExifTag failed!");
+        IMAGE_LOGD("InitExifTag failed,exif is nullptr.");
         return nullptr;
     }
     /* Return an existing tag if one exists */
@@ -699,7 +703,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     void *buf;
     ExifEntry *exifEntry;
     if (exif == nullptr) {
-        IMAGE_LOGD("exif is nullptr CreateExifTag failed!");
+        IMAGE_LOGD("CreateExifTag failed, exif is nullptr.");
         return nullptr;
     }
     if ((exifEntry = exif_content_get_entry(exif->ifd[ifd], tag)) != nullptr) {
@@ -722,7 +726,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
         return nullptr;
     }
     if (format == EXIF_FORMAT_UNDEFINED || format == EXIF_FORMAT_ASCII) {
-        IMAGE_LOGD("[CreateExifTag] format is [%{public}d] size is [%{public}d]. allocate size manually", format, len);
+        IMAGE_LOGD("[CreateExifTag] allocate size manually, format is [%{public}d], size is [%{public}d].", format, len);
         exifEntry->data = static_cast<unsigned char*>(buf);
         exifEntry->size = len;
         exifEntry->tag = tag;
@@ -731,7 +735,8 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     } else {
         exifEntry = exif_entry_new();
         if (exifEntry == nullptr) {
-            IMAGE_LOGD("[CreateExifTag] exif_entry_new fail.");
+            IMAGE_LOGD("exif_entry_new failed.");
+            exif_mem_unref(exifMem);
             return nullptr;
         }
         exifEntry->tag = tag; // tag must be set before calling exif_content_add_entry
@@ -742,7 +747,7 @@ ExifEntry* ExifMetadata::CreateExifTag(ExifData *exif, ExifIfd ifd, ExifTag tag,
     exif_content_add_entry (exif->ifd[ifd], exifEntry);
     exif_mem_unref(exifMem);
     exif_entry_unref(exifEntry);
-    IMAGE_LOGD("[CreateExifTag] CreateExifTag SUCCESS and Return.");
+    IMAGE_LOGD("[CreateExifTag] CreateExifTag succeeded.");
     return exifEntry;
 }
 
