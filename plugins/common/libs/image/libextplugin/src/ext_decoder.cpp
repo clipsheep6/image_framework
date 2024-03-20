@@ -28,7 +28,6 @@
 #include "media_errors.h"
 #include "securec.h"
 #include "string_ex.h"
-#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -136,7 +135,7 @@ static const map<SkEncodedImageFormat, string> FORMAT_NAME = {
     { SkEncodedImageFormat::kPKM, "" },
     { SkEncodedImageFormat::kKTX, "" },
     { SkEncodedImageFormat::kASTC, "" },
-    { SkEncodedImageFormat::kDNG, "" },
+    { SkEncodedImageFormat::kDNG, "image/raw" },
     { SkEncodedImageFormat::kHEIF, "image/heif" },
 };
 
@@ -218,7 +217,8 @@ uint32_t ExtDecoder::DmaMemAlloc(DecodeContext &context, uint64_t count, SkImage
         return ERR_DMA_DATA_ABNORMAL;
     }
 
-    IMAGE_LOGD("ExtDecoder::DmaMemAlloc stride is %{public}d", sb->GetStride());
+    IMAGE_LOGD("ExtDecoder::DmaMemAlloc sb stride is %{public}d, height is %{public}d, size is %{public}d",
+        sb->GetStride(), sb->GetHeight(), sb->GetSize());
     SetDecodeContextBuffer(context,
         AllocatorType::DMA_ALLOC, static_cast<uint8_t*>(sb->GetVirAddr()), count, nativeBuffer);
     return SUCCESS;
@@ -453,9 +453,6 @@ uint32_t ExtDecoder::CheckDecodeOptions(uint32_t index, const PixelDecodeOptions
 #ifdef IMAGE_COLORSPACE_FLAG
     dstColorSpace_ = opts.plDesiredColorSpace;
 #endif
-    if (IsSupportCropOnDecode(dstSubset_)) {
-        dstOptions_.fSubset = &dstSubset_;
-    }
     return SUCCESS;
 }
 
@@ -609,11 +606,9 @@ bool ExtDecoder::ResetCodec()
 #ifdef JPEG_HW_DECODE_ENABLE
 uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 {
-    uint32_t ret = HardWareDecode(context);
-    if (ret == SUCCESS) {
+    if (HardWareDecode(context) == SUCCESS) {
         return SUCCESS;
     }
-    FaultHardWareDecode(info_.width(), info_.height(), sampleSize_, ret, "HardWareDecode failed");
     return ERROR;
 }
 #endif
@@ -621,14 +616,20 @@ uint32_t ExtDecoder::DoHardWareDecode(DecodeContext &context)
 uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 {
 #ifdef JPEG_HW_DECODE_ENABLE
-    
     if (IsSupportHardwareDecode() && DoHardWareDecode(context) == SUCCESS) {
         return SUCCESS;
     }
 #endif
+    context.outInfo.size.width = dstInfo_.width();
+    context.outInfo.size.height = dstInfo_.height();
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
+    }
+    SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+    bool isOutputYuv420Format = IsYuv420Format(context.info.pixelFormat);
+    if (isOutputYuv420Format && skEncodeFormat == SkEncodedImageFormat::kJPEG) {
+        return DecodeToYuv420(index, context);
     }
     uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
     uint8_t *dstBuffer = nullptr;
@@ -638,8 +639,6 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         byteCount = byteCount / NUM_4 * NUM_3;
     }
     if (context.pixelsBuffer.buffer == nullptr) {
-        IMAGE_LOGD("Decode alloc byte count.");
-        FaultExceededMemory("ExtDecoder", "Decode", byteCount);
         res = SetContextPixelsBuffer(byteCount, context);
         if (res != SUCCESS) {
             return res;
@@ -660,22 +659,19 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     ReportImageType(skEncodeFormat);
     IMAGE_LOGD("decode format %{public}d", skEncodeFormat);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
-        res = GifDecode(index, context, rowStride);
-        return res;
+        return GifDecode(index, context, rowStride);
     }
     SkCodec::Result ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_);
     if (ret != SkCodec::kSuccess && ResetCodec()) {
-        ret = codec_->getPixels(    , dstBuffer, rowStride, &dstOptions_); // Try again
+        ret = codec_->getPixels(dstInfo_, dstBuffer, rowStride, &dstOptions_); // Try again
     }
     if (ret != SkCodec::kSuccess) {
         IMAGE_LOGE("Decode failed, get pixels failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
-        res = RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), 
-		static_cast<uint8_t*>(context.pixelsBuffer.buffer),
+        return RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), static_cast<uint8_t*>(context.pixelsBuffer.buffer),
             byteCount, dstInfo_.width() * dstInfo_.height());
-        return res;
     }
     return SUCCESS;
 }
@@ -981,8 +977,10 @@ bool ExtDecoder::CheckCodec()
         IMAGE_LOGE("create codec: input stream size is zero.");
         return false;
     }
+    uint32_t src_offset = stream_->Tell();
     codec_ = SkCodec::MakeFromStream(make_unique<ExtStream>(stream_));
     if (codec_ == nullptr) {
+        stream_->Seek(src_offset);
         IMAGE_LOGE("create codec from stream failed");
         return false;
     }
@@ -1414,19 +1412,17 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
 
 bool ExtDecoder::IsSupportHardwareDecode() {
     if (info_.isEmpty() && !DecodeHeader()) {
-        InfoHardDecode(info_.width(), info_.height(), false);
         return false;
     }
     if (!(ImageSystemProperties::GetHardWareDecodeEnabled()
         && codec_->getEncodedFormat() == SkEncodedImageFormat::kJPEG)) {
-        InfoHardDecode(info_.width(), info_.height(), false);
         return false;
     }
     int width = info_.width();
     int height = info_.height();
-    bool res = (width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
-        && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM);
-    InfoHardDecode(info_.width(), info_.height(), res);
+    return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
+        && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
+}
 
 bool ExtDecoder::IsYuv420Format(PlPixelFormat format)
 {
