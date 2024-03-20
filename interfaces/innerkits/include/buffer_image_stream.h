@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "image_stream.h"
-#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
@@ -47,12 +46,12 @@ public:
     /* *
      * @brief Constructs a new BufferImageStream object.
      */
-    NATIVEEXPORT BufferImageStream();
+    BufferImageStream();
 
     /* *
      * @brief Destructs the BufferImageStream object.
      */
-    NATIVEEXPORT virtual ~BufferImageStream();
+    virtual ~BufferImageStream();
 
     /* *
      * @brief Writes data to the BufferImageStream.
@@ -62,7 +61,7 @@ public:
      * @return The number of bytes written. Returns -1 if an error occurred
      * during writing.
      */
-    NATIVEEXPORT virtual ssize_t Write(uint8_t *data, ssize_t size) override;
+    virtual ssize_t Write(uint8_t *data, ssize_t size) override;
 
     /* *
      * @brief Reads data from the BufferImageStream.
@@ -70,13 +69,13 @@ public:
      * @param size The size of the data.
      * @return The number of bytes read. Returns -1 if the buffer pointer is null.
      */
-    NATIVEEXPORT virtual ssize_t Read(uint8_t *buf, ssize_t size) override;
+    virtual ssize_t Read(uint8_t *buf, ssize_t size) override;
 
     /* *
      * @brief Reads a byte from the BufferImageStream.
      * @return The byte read.
      */
-    NATIVEEXPORT virtual int ReadByte() override;
+    virtual int ReadByte() override;
 
     /* *
      * @brief Seeks to a specific position in the image stream.
@@ -84,25 +83,25 @@ public:
      * @param pos The position to seek from. This can be the beginning, current position, or end of the stream.
      * @return The new position in the stream. Returns -1 if an invalid seek position is provided.
      */
-    NATIVEEXPORT virtual long Seek(long offset, SeekPos pos) override;
+    virtual long Seek(long offset, SeekPos pos) override;
 
     /* *
      * @brief Gets the current position in the BufferImageStream.
      * @return The current position.
      */
-    NATIVEEXPORT virtual long Tell() override;
+    virtual long Tell() override;
 
     /* *
      * @brief Checks if the end of the BufferImageStream has been reached.
      * @return true if the end has been reached, false otherwise.
      */
-    NATIVEEXPORT virtual bool IsEof() override;
+    virtual bool IsEof() override;
 
     /* *
      * @brief Checks if the BufferImageStream is open.
      * @return true if it is open, false otherwise.
      */
-    NATIVEEXPORT virtual bool IsOpen() override;
+    virtual bool IsOpen() override;
 
     /* *
      * For BufferImageStream, the Open function with a mode is not applicable,
@@ -114,7 +113,7 @@ public:
      * @return Returns false, as this function is not applicable for
      * BufferImageStream.
      */
-    NATIVEEXPORT virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
+    virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
 
     /* *
      * For BufferImageStream, the Flush function is not applicable,
@@ -125,7 +124,7 @@ public:
      * BufferImageStream, but it is assumed that the data is always "flushed" in
      * memory.
      */
-    NATIVEEXPORT virtual bool Flush() override;
+    virtual bool Flush() override;
 
     /* *
      * Get the memory address of the BufferImageStream.
@@ -139,7 +138,7 @@ public:
      * BufferImageStream is always writable.
      * @return Returns a pointer to the data of BufferImageStream.
      */
-    NATIVEEXPORT virtual byte *GetAddr(bool isWriteable = false) override;
+    virtual byte *GetAddr(bool isWriteable = false) override;
 
     /* *
      * Transfer the content of the source ImageStream to the current
@@ -152,14 +151,14 @@ public:
      * @param src The source ImageStream, this function will read data from this
      * ImageStream.
      */
-    NATIVEEXPORT virtual bool CopyFrom(ImageStream &src) override;
+    virtual bool CopyFrom(ImageStream &src) override;
 
     /* *
      * Get the size sof the BufferImageStream.
      *
      * @return Returns the size of the BufferImageStream.
      */
-    NATIVEEXPORT virtual ssize_t GetSize() override;
+    virtual ssize_t GetSize() override;
 
 INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
     /* *

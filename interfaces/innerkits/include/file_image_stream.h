@@ -24,7 +24,6 @@
 #include <vector>
 
 #include "image_stream.h"
-#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
@@ -74,18 +73,18 @@ public:
      * @brief Constructs a new FileImageStream object from a file descriptor.
      * @param fileDescriptor The file descriptor.
      */
-    NATIVEEXPORT FileImageStream(int fileDescriptor);
+    FileImageStream(int fileDescriptor);
 
     /* *
      * @brief Constructs a new FileImageStream object from a file path.
      * @param filePath The file path.
      */
-    NATIVEEXPORT FileImageStream(const std::string &filePath);
+    FileImageStream(const std::string &filePath);
 
     /* *
      * @brief Destructs the FileImageStream object.
      */
-    NATIVEEXPORT virtual ~FileImageStream();
+    virtual ~FileImageStream();
 
     /* *
      * @brief Writes data to the FileImageStream.
@@ -97,7 +96,7 @@ public:
      * @return The number of bytes written. Returns -1 if an error occurred
      * during writing.
      */
-    NATIVEEXPORT virtual ssize_t Write(byte *data, ssize_t size) override;
+    virtual ssize_t Write(byte *data, ssize_t size) override;
 
     /* *
      * @brief Reads data from the FileImageStream.
@@ -106,13 +105,13 @@ public:
      * @return The number of bytes read. Returns -1 if a read error occurred
      * or the pointer was not initialized.
      */
-    NATIVEEXPORT virtual ssize_t Read(byte *buf, ssize_t size) override;
+    virtual ssize_t Read(byte *buf, ssize_t size) override;
 
     /* *
      * @brief Reads a byte from the FileImageStream.
      * @return The byte read.
      */
-    NATIVEEXPORT virtual int ReadByte() override;
+    virtual int ReadByte() override;
 
     /* *
      * @brief Seeks to a specific position in the FileImageStream.
@@ -120,25 +119,25 @@ public:
      * @param pos The starting position of the offset.
      * @return The new position in the stream. Returns -1 if an error occurred during seeking.
      */
-    NATIVEEXPORT virtual long Seek(long offset, SeekPos pos) override;
+    virtual long Seek(long offset, SeekPos pos) override;
 
     /* *
      * @brief Gets the current position in the FileImageStream.
      * @return The current position.
      */
-    NATIVEEXPORT virtual long Tell() override;
+    virtual long Tell() override;
 
     /* *
      * @brief Checks if the end of the FileImageStream has been reached.
      * @return true if the end has been reached, false otherwise.
      */
-    NATIVEEXPORT virtual bool IsEof() override;
+    virtual bool IsEof() override;
 
     /* *
      * @brief Checks if the FileImageStream is open.
      * @return true if it is open, false otherwise.
      */
-    NATIVEEXPORT virtual bool IsOpen() override;
+    virtual bool IsOpen() override;
 
     /* *
      * @brief Opens the FileImageStream with a specific mode.
@@ -151,14 +150,14 @@ public:
      * or OpenMode::ReadWrite.
      * @return true if it opens successfully, false otherwise.
      */
-    NATIVEEXPORT virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
+    virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
 
     /* *
      * @brief Flushes the FileImageStream.
      * The scenarios for using Flush are described in ImageStream::Flush.
      * @return true if it flushes successfully, false otherwise.
      */
-    NATIVEEXPORT virtual bool Flush() override;
+    virtual bool Flush() override;
 
     /* *
      * @brief Creates a memory map of the file.
@@ -168,7 +167,7 @@ public:
      * @return A pointer to the memory map if it is created successfully,
      * nullptr otherwise.
      */
-    NATIVEEXPORT virtual byte *GetAddr(bool isWriteable = false) override;
+    virtual byte *GetAddr(bool isWriteable = false) override;
 
     /* *
      * @brief Should call Open first. Transfers the content of the source
@@ -179,14 +178,14 @@ public:
      * to a multiple of 4K.
      * @param src The source ImageStream.
      */
-    NATIVEEXPORT bool CopyFrom(ImageStream &src) override;
+    bool CopyFrom(ImageStream &src) override;
 
     /* *
      * @brief Gets the size of the FileImageStream.
      * @return The size of the FileImageStream.
      * @note If this function is called frequently, it is recommended to cache the size to improve performance.
      */
-    NATIVEEXPORT ssize_t GetSize() override;
+    ssize_t GetSize() override;
 
 INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
     /* *
