@@ -33,15 +33,6 @@
     *BasicTransformer*;
     *IncrementalSourceStream*CreateSourceStream*;
     *NativeImage*;
-    *FileWrapper*;
-    *FileImageStream*;
-    *BufferImageStream*;
-    *JpegImageAccessor*;
-    *ExifMetadata*;
-    *DataBuf*;
-    *TiffParser*;
-    *ImageAccessorFactory*;
-    *PngImageAccessor*;
   local:
     *;
 };
