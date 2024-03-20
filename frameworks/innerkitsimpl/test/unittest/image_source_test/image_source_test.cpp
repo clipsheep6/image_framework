@@ -2125,8 +2125,8 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty007, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
-    auto inSize = std::filesystem::file_size(IMAGE_INPUT_JPEG_PATH);
-    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    std::unique_ptr<ImageSource> imageSource =
+        ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     std::string valueGetIn;
     uint32_t index = 0;
     std::string key = "GPSLongitudeRef";
@@ -2134,14 +2134,18 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty007, TestSize.Level3)
     ASSERT_EQ(retGetIn, OHOS::Media::SUCCESS);
     ASSERT_EQ(valueGetIn, "E");
     std::string valueModify = "W";
-    const int fd = open(IMAGE_OUTPUT_JPEG_PATH.c_str(), O_RDWR | S_IRUSR | S_IWUSR);
+    const int fd = open(IMAGE_INPUT_JPEG_PATH.c_str(), O_RDWR | S_IRUSR | S_IWUSR);
     ASSERT_NE(fd, -1);
     int32_t retModify = imageSource->ModifyImageProperty(index, key, valueModify, fd);
     ASSERT_EQ(retModify, OHOS::Media::SUCCESS);
-    auto outSize = std::filesystem::file_size(IMAGE_OUTPUT_JPEG_PATH);
-    ASSERT_EQ(outSize, inSize);
+
+    std::string checkStr;
+    imageSource->GetImagePropertyString(index, key, checkStr);
+    ASSERT_EQ(checkStr, "W");
+
     std::string value;
-    std::unique_ptr<ImageSource> imageSourceOut = ImageSource::CreateImageSource(IMAGE_OUTPUT_JPEG_PATH, opts, errorCode);
+    std::unique_ptr<ImageSource> imageSourceOut =
+        ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_NE(imageSourceOut, nullptr);
     uint32_t retGet = imageSourceOut->GetImagePropertyString(index, key, value);
     ASSERT_EQ(retGet, OHOS::Media::SUCCESS);
@@ -2160,8 +2164,8 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty008, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
-    auto inSize = std::filesystem::file_size(IMAGE_INPUT_JPEG_PATH);
-    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    std::unique_ptr<ImageSource> imageSource =
+        ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     std::string valueGetIn;
     uint32_t index = 0;
     std::string key = "GPSLongitudeRef";
@@ -2169,13 +2173,16 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty008, TestSize.Level3)
     ASSERT_EQ(retGetIn, OHOS::Media::SUCCESS);
     ASSERT_EQ(valueGetIn, "E");
     std::string valueModify = "W";
-    uint32_t retModify = imageSource->ModifyImageProperty(index, key, valueModify, IMAGE_OUTPUT_JPEG_PATH);
+    uint32_t retModify = imageSource->ModifyImageProperty(index, key, valueModify, IMAGE_INPUT_JPEG_PATH);
     ASSERT_EQ(retModify, OHOS::Media::SUCCESS);
-    auto outSize = std::filesystem::file_size(IMAGE_OUTPUT_JPEG_PATH);
-    ASSERT_EQ(outSize, inSize);
+
+    std::string checkStr;
+    imageSource->GetImagePropertyString(index, key, checkStr);
+    ASSERT_EQ(checkStr, "W");
+
     std::string value;
     std::unique_ptr<ImageSource> imageSourceOut =
-        ImageSource::CreateImageSource(IMAGE_OUTPUT_JPEG_PATH, opts, errorCode);
+        ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_NE(imageSourceOut, nullptr);
     uint32_t retGet = imageSourceOut->GetImagePropertyString(index, key, value);
     ASSERT_EQ(retGet, OHOS::Media::SUCCESS);

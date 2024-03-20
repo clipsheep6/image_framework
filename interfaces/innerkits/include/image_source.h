@@ -138,7 +138,7 @@ struct ASTCInfo {
 
 class SourceStream;
 class ImageAccessorInterface;
-struct DataBuf;
+class ExifMetadata;
 
 class ImageSource {
 public:
@@ -207,7 +207,6 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
-    NATIVEEXPORT std::shared_ptr<DataBuf> GetExifBlob();
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -270,6 +269,8 @@ private:
     static uint64_t GetNowTimeMicroSeconds();
     uint32_t ModifyImageProperty(std::shared_ptr<ImageAccessorInterface> imageAccessor,
                                  const std::string &key, const std::string &value);
+    uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
+    uint32_t CreatExifMetadataByImageSource();
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
@@ -297,7 +298,7 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
-    std::shared_ptr<DataBuf> exifBlob_ = nullptr;
+    std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
 };
 } // namespace Media
 } // namespace OHOS

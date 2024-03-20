@@ -55,7 +55,6 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
-#include "tiff_parser.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -599,6 +598,10 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         "imageSize: (%{public}d, %{public}d), cost %{public}lu us", static_cast<unsigned long>(imageId_),
         opts.desiredSize.width, opts.desiredSize.height, info.size.width, info.size.height,
         static_cast<unsigned long>(GetNowTimeMicroSeconds() - decodeStartTime));
+
+    if (CreatExifMetadataByImageSource() == SUCCESS) {
+        pixelMap->SetExifMetadata(exifMetadata_);
+    }
     return pixelMap;
 }
 
@@ -822,6 +825,10 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         }
     }
 
+    if (CreatExifMetadataByImageSource() == SUCCESS) {
+        pixelMap->SetExifMetadata(exifMetadata_);
+    }
+
     // not ext decode, dump pixelMap while decoding svg here
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
     return pixelMap;
@@ -982,6 +989,21 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
     return SUCCESS;
 }
 
+uint32_t ImageSource::ModifyImageProperty(const std::string &key, const std::string &value)
+{
+    uint32_t ret = CreatExifMetadataByImageSource();
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]Create Exif metadata failed when modifying property.");
+        return ret;
+    }
+
+    if (!exifMetadata_->SetValue(key, value)) {
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+
+    return SUCCESS;
+}
+
 uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessorInterface> imageAccessor,
     const std::string &key, const std::string &value)
 {
@@ -996,17 +1018,23 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessorInterface
         return ret;
     }
 
-    auto exifDataPtr = imageAccessor->GetExifMetadata();
-    if (exifDataPtr == nullptr) {
+    if (imageAccessor->GetExifMetadata() == nullptr) {
         if (!imageAccessor->CreateExifMetadata()) {
             IMAGE_LOGE("[ImageSource]Create ExifMetadata failed.");
             return ERR_IMAGE_SOURCE_DATA;
         }
-        exifDataPtr = imageAccessor->GetExifMetadata();
     }
 
-    exifDataPtr->SetValue(key, value);
-    return imageAccessor->WriteMetadata();
+    auto exifDataPtr = imageAccessor->GetExifMetadata();
+    if (!exifDataPtr->SetValue(key, value)) {
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+    ret = imageAccessor->WriteMetadata();
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
+    return ModifyImageProperty(key, value);
 }
 
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key,
@@ -1032,27 +1060,15 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
 
-    auto imageAccessor = ImageAccessorFactory::Create(data, size);
-    uint32_t ret = ModifyImageProperty(imageAccessor, key, value);
-    if (ret != SUCCESS) {
-        return ret;
-    }
-
-    unsigned char *dataPtr;
-    uint32_t datSize = 0;
-    ExifData *exifData = imageAccessor->GetExifMetadata()->GetExifData();
-    if (exifData == nullptr) {
-        IMAGE_LOGE("[ImageSource]get valid exifmetadata on modify image property.");
-        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
-    }
-    TiffParser::Encode(&dataPtr, datSize, exifData);
-    exifBlob_ = std::make_shared<DataBuf>(dataPtr, datSize);
-
-    return SUCCESS;
+    return ModifyImageProperty(key, value);
 }
 
-uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &key, std::string &value)
+uint32_t ImageSource::CreatExifMetadataByImageSource()
 {
+    if (exifMetadata_ != nullptr) {
+        return SUCCESS;
+    }
+
     uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
     uint32_t size = sourceStreamPtr_->GetStreamSize();
     auto imageAccessor = ImageAccessorFactory::Create(ptr, size);
@@ -1061,12 +1077,25 @@ uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &
     }
 
     imageAccessor->ReadMetadata();
-    auto exifMetadata = imageAccessor->GetExifMetadata();
-    if (exifMetadata != nullptr) {
-        exifMetadata->GetValue(key, value);
+    if (imageAccessor->GetExifMetadata() == nullptr) {
+        if (!imageAccessor->CreateExifMetadata()) {
+            return ERR_IMAGE_SOURCE_DATA;
+        }
     }
 
+    exifMetadata_ = imageAccessor->GetExifMetadata();
     return SUCCESS;
+}
+
+uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &key, std::string &value)
+{
+    uint32_t ret = CreatExifMetadataByImageSource();
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]creat exifmetadata failed when getting property.");
+        return ret;
+    }
+
+    return exifMetadata_->GetValue(key, value);
 }
 
 uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
@@ -2075,6 +2104,11 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t &errorCode)
     }
 
     IMAGE_LOGD("[ImageSource]CreatePixelMapForYUV OUT");
+
+    if (CreatExifMetadataByImageSource() == SUCCESS) {
+        pixelMap->SetExifMetadata(exifMetadata_);
+    }
+
     return pixelMap;
 }
 
@@ -2265,6 +2299,11 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
         return nullptr;
     }
     pixelAstc->SetAstc(true);
+
+    if (CreatExifMetadataByImageSource() == SUCCESS) {
+        pixelAstc->SetExifMetadata(exifMetadata_);
+    }
+
     return pixelAstc;
 }
 #endif
@@ -2394,26 +2433,6 @@ size_t ImageSource::GetSourceSize() const
 bool ImageSource::IsSupportGenAstc()
 {
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
-}
-
-std::shared_ptr<DataBuf> ImageSource::GetExifBlob()
-{
-    if (exifBlob_ != nullptr) {
-        return exifBlob_;
-    }
-
-    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
-    uint32_t size = sourceStreamPtr_->GetStreamSize();
-    auto imageAccessor = ImageAccessorFactory::Create(ptr, size);
-    if (imageAccessor != nullptr) {
-        DataBuf dataBlob;
-        imageAccessor->ReadExifBlob(dataBlob);
-        if (!dataBlob.Empty()) {
-            return std::make_shared<DataBuf>(dataBlob.Data(), dataBlob.Size());
-        }
-    }
-
-    return nullptr;
 }
 
 } // namespace Media

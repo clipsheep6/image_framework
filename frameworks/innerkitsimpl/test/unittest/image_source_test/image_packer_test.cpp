@@ -373,7 +373,6 @@ HWTEST_F(ImagePackerTest, StartPacking013, TestSize.Level3)
     ASSERT_NE(imageSource.get(), nullptr);
 
     ImagePacker pack;
-    // uint8_t *outputData = static_cast<uint8_t *>(malloc(bufferSize));
     uint8_t outputData[MAX_IMAGE_SIZE] = {0};
     PackOption option;
     option.format = "image/jpeg";

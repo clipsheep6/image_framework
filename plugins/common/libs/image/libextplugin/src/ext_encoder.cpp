@@ -25,9 +25,12 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "astc_codec.h"
 #endif
+
+#include "data_buf.h"
 #include "ext_pixel_convert.h"
 #include "ext_wstream.h"
 #include "image_accessor_factory.h"
+#include "image_accessor_interface.h"
 #include "image_log.h"
 #include "image_type_converter.h"
 #include "image_utils.h"
@@ -36,6 +39,7 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
+#include "tiff_parser.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -173,16 +177,21 @@ uint32_t ExtEncoder::DoFinalizeEncode()
         return errorCode;
     }
 
-    auto exifBlob = pixelmap_->GetExifBlob();
-    if (exifBlob != nullptr) {
+    if (pixelmap_->GetExifMetadata() != nullptr) {
         TempStream wStream;
         if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
             IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
             return ERR_IMAGE_ENCODE_FAILED;
         }
 
+        unsigned char *dataPtr;
+        uint32_t datSize = 0;
+        ExifData *exifData = pixelmap_->GetExifMetadata()->GetExifData();
+        TiffParser::Encode(&dataPtr, datSize, exifData);
+        DataBuf exifBlob(dataPtr, datSize);
+
         auto destImageAccessor = ImageAccessorFactory::Create(wStream.GetAddr(), wStream.bytesWritten());
-        uint32_t ret = destImageAccessor->WriteExifBlob(*exifBlob);
+        uint32_t ret = destImageAccessor->WriteExifBlob(exifBlob);
         if (ret != SUCCESS) {
             IMAGE_LOGE("ExtEncoder::encode exifblob failed");
             return ret;
