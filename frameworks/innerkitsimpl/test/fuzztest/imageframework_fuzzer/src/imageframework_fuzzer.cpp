@@ -24,7 +24,7 @@ void BatchInsertFuzzer(const uint8_t* data, size_t size)
 {
 uint32_t errCode = 0;
 Media::SourceOptions opts;
-std::unique_ptr<Media::ImageSource> imageSource = 
+std::unique_ptr<Media::ImageSource> imageSource =
     Media::ImageSource::CreateImageSource(data, size, opts, errCode);
 const int32_t offset = 0;
 Media::InitializationOptions iopts;
