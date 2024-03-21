@@ -3753,5 +3753,51 @@ HWTEST_F(ImageSourceJpegTest, GetEncodedFormat003, TestSize.Level3)
     ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
     GTEST_LOG_(INFO) << "ImageSourceTest: GetEncodedFormat003 pixelMapFormat: " << pixelMapFormat;
 }
+
+/**
+ * @tc.name: GetEncodedFormat004
+ * @tc.desc: The GetEncodedFormat004
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceJpegTest, GetEncodedFormat004, TestSize.Level3)
+{
+    /**
+     * @tc.steps: step1. create image source by correct jpeg file path and jpeg format hit.
+     * @tc.expected: step1. create image source success.
+     */
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::string IMAGE_ENCODEDFORMAT = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_EXIF_JPEG_PATH,
+        opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+    /**
+     * @tc.steps: step2. get imageInfo encodedformat from imageSource.
+     * @tc.expected: step2. imageInfo encodedformat is the same as image.
+     */
+    ImageInfo imageinfo1;
+    uint32_t ret1 = imageSource->GetImageInfo(imageinfo1);
+    ASSERT_EQ(ret1, SUCCESS);
+    ASSERT_EQ(imageinfo1.encodedFormat, IMAGE_ENCODEDFORMAT);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat004 imageinfo1: " << imageinfo1.encodedFormat;
+    /**
+     * @tc.steps: step3. decode image source to pixel map by default decode options.
+     * @tc.expected: step3. decode image source to pixel map success.
+     */
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    /**
+     * @tc.steps: step4. get imageInfo encodedformat from pixelMap.
+     * @tc.expected: step4. imageInfo encodedformat is the same as image.
+     */
+    ImageInfo imageinfo2;
+    pixelMap->GetImageInfo(imageinfo2);
+    EXPECT_EQ(imageinfo2.encodedFormat.empty(), false);
+    ASSERT_EQ(imageinfo2.encodedFormat, IMAGE_ENCODEDFORMAT);
+    GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetEncodedFormat004 imageinfo2: " << imageinfo2.encodedFormat;
+}
 } // namespace Multimedia
 } // namespace OHOS
