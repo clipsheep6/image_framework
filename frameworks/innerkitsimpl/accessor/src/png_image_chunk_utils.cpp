@@ -15,6 +15,7 @@
 
 #include <zlib.h>
 #include <libexif/exif-data.h>
+
 #include "data_buf.h"
 #include "exif_metadata.h"
 #include "image_stream.h"
