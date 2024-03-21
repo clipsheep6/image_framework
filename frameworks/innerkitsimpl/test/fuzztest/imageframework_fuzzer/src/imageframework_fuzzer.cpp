@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,29 +13,31 @@
  * limitations under the License.
  */
 
- #include"imageframework_fuzzer.h"
- #include"image_source.h"
- #include"pixel_map.h"
- #include<cstdint>
- #include<string>
- namespace OHOS{
-    void BatchInsertFuzzer(const uint8_t* data, size_t size)
-    {
-        uint32_t errCode = 0;
-        Media::SourceOptions opts;
-        std::unique_ptr<Media::ImageSource> imageSource = Media::ImageSource::CreateImageSource(data, size, opts, errCode);
-        const int32_t offset = 0;
-        Media::InitializationOptions iopts;
-        Media::PixelMap::Create((uint32_t*)data, size, iopts);
-        Media::PixelMap::Create((uint32_t*)data, size, offset, 0, iopts);
-        Media::PixelMap::Create((uint32_t*)data, size, offset, 0, iopts, true);
-        Media::BUILD_PARAM bp;
-        bp.offset_ = 0;
-        bp.stride_ = 0;
-        bp.flag_ = true;
-        int err = 0;
-        Media::PixelMap::Create((uint32_t*)data, size, bp, iopts, err);
-    }
+#include <cstdint>
+#include <string>
+#include "imageframework_fuzzer.h"
+#include "image_source.h"
+#include "pixel_map.h"
+
+namespace OHOS {
+void BatchInsertFuzzer(const uint8_t* data, size_t size)
+{
+uint32_t errCode = 0;
+Media::SourceOptions opts;
+std::unique_ptr<Media::ImageSource> imageSource = 
+    Media::ImageSource::CreateImageSource(data, size, opts, errCode);
+const int32_t offset = 0;
+Media::InitializationOptions iopts;
+Media::PixelMap::Create((uint32_t*)data, size, iopts);
+Media::PixelMap::Create((uint32_t*)data, size, offset, 0, iopts);
+Media::PixelMap::Create((uint32_t*)data, size, offset, 0, iopts, true);
+Media::BUILD_PARAM bp;
+bp.offset_ = 0;
+bp.stride_ = 0;
+bp.flag_ = true;
+int err = 0;
+Media::PixelMap::Create((uint32_t*)data, size, bp, iopts, err);
+}
 } // namespace OHOS
 
 /* Fuzzer entry point */
