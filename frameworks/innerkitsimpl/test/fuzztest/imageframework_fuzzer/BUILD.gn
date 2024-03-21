@@ -16,16 +16,19 @@
  ohos_fuzztest("ImageFrameworkFuzzTest")
  {
     module_out_path = "multimedia_image/image_framework"
-    fuzz_config_file = "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/test/fuzztest/imageframework_fuzzer"
+    fuzz_config_file = "$image_subsystem/frameworks/innerkitsimpl/test/fuzztest/imageframework_fuzzer"
 
     include_dirs = [
         "./include",
-        "//foundation/multimedia/image_framework/interfaces/innerkits/include",
+        "$image_subsystem/interfaces/innerkits/include",
     ]
 
     sources = ["src/imageframework_fuzzer.cpp"]
 
-    deps = ["//foundation/multimedia/image_framework/interfaces/innerkits:image_native"]
+    deps = ["$image_subsystem/interfaces/innerkits:image_native"]
 
-    external_deps = ["graphic_2d:color_manager","c_utils:utils",]
+    external_deps = [
+        "graphic_2d:color_manager",
+        "c_utils:utils",
+        ]
  }
