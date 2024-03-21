@@ -13,7 +13,5 @@
 
 group("fuzztest"){
     testonly = true
-    deps = [
-        "imageframework_fuzzer:ImageFrameworkFuzzTest",
-    ]
+    deps = [ "imageframework_fuzzer:ImageFrameworkFuzzTest" ]
 }
