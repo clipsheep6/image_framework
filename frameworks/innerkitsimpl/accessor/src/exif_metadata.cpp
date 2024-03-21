@@ -154,7 +154,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     IMAGE_LOGD("GetValue key is [%{public}s]", key.c_str());
     char tagValueChar[1024];
     if (exifData_ == nullptr) {
-        IMAGE_LOGD("GetValue exifData_ is nullptr");
+        IMAGE_LOGE("GetValue exifData_ is nullptr");
         value = "";
         return ERR_MEDIA_NO_EXIF_DATA;
     }
@@ -182,7 +182,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
         auto tag = exif_tag_from_name(key.c_str());
         auto entry = exif_data_get_entry(exifData_, tag);
         if (entry == nullptr) {
-            IMAGE_LOGD("GetValue exif_data_get_entry leave");
+            IMAGE_LOGE("GetValue exif_data_get_entry leave");
             value = "";
             return  ERR_MEDIA_NO_EXIF_DATA;
         }
