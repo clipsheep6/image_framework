@@ -120,7 +120,7 @@ HWTEST_F(ExifMetadataTest, GetValue005, TestSize.Level3)
     ExifMetadata metadata(exifData);
     ASSERT_EQ(metadata.SetValue("GPSLatitude", "39,54,20"), true);
     metadata.GetValue("GPSLatitude", value);
-    ASSERT_EQ(value, "39, 54, 20.000000");
+    ASSERT_EQ(value, "39, 54, 20");
 }
 
 HWTEST_F(ExifMetadataTest, GetValue006, TestSize.Level3)
@@ -130,7 +130,7 @@ HWTEST_F(ExifMetadataTest, GetValue006, TestSize.Level3)
     ExifMetadata metadata(exifData);
     ASSERT_EQ(metadata.SetValue("GPSLongitude", "120,52,26"), true);
     metadata.GetValue("GPSLongitude", value);
-    ASSERT_EQ(value, "120, 52, 26.000000");
+    ASSERT_EQ(value, "120, 52, 26");
 }
 
 HWTEST_F(ExifMetadataTest, GetValue007, TestSize.Level3)
