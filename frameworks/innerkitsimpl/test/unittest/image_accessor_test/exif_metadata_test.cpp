@@ -581,17 +581,17 @@ std::string MODIFYDATA[][3] = {
     {"PixelXDimension", "1000", "1000"},
     {"PixelYDimension", "2000", "2000"},
     {"RecommendedExposureIndex", "241", "241"},
-    {"SceneType", "1", "Internal error (unknown value 49)"},
+    {"SceneType", "1", "Internal error (unknown value 49)"}, // need to set byte 0x01
     {"SensitivityType", "5", "Standard output sensitivity (SOS) and ISO speed"},
     {"StandardOutputSensitivity", "5", "5"},
     {"UserComment", "comm", "comm"},
-    {"JPEGProc", "252", "3 bytes undefined data"},
+    {"JPEGProc", "252", "3 bytes undefined data"}, // to test
     {"Compression", "6", "JPEG compression"},
     {"PhotometricInterpretation", "0", "Reversed mono"},
-    {"StripOffsets", "11", "2 bytes undefined data"},
+    {"StripOffsets", "11", "2 bytes undefined data"}, // offset
     {"SamplesPerPixel", "23", "23"},
-    {"RowsPerStrip", "252", "3 bytes undefined data"},
-    {"StripByteCounts", "252", "3 bytes undefined data"},
+    {"RowsPerStrip", "252", "252"},
+    {"StripByteCounts", "252", "252"},
     {"XResolution", "72/1", "72"},
     {"YResolution", "252/1", "252"},
     {"PlanarConfiguration", "1", "Planar format"},
@@ -601,7 +601,7 @@ std::string MODIFYDATA[][3] = {
     {"Artist", "Joseph.Xu", "Joseph.Xu"},
     {"WhitePoint", "252/1", "252, 0/0"},
     {"PrimaryChromaticities", "124/1", "124"},
-    {"YCbCrCoefficients", "299/1000 587/1000 114/1000", "26 bytes undefined data"},
+    {"YCbCrCoefficients", "299/1000 587/1000 114/1000", "0.299, 0.587, 0.114"},
     {"YCbCrSubSampling", "3 2", "3, 2"},
     {"YCbCrPositioning", "1", "Centered"},
     {"ReferenceBlackWhite", "221/1", "221, 255,  0, 255,  0, 255"},
@@ -632,7 +632,7 @@ std::string MODIFYDATA[][3] = {
     {"Sharpness", "0", "Normal"},
     {"DeviceSettingDescription", "2", "2"},
     {"SubjectDistanceRange", "0", "Unknown"},
-    {"ImageUniqueID", "FXIC012", "7 bytes undefined data"},
+    {"ImageUniqueID", "FXIC012", "FXIC012"},
     {"GPSVersionID", "2 2 0 0", "2 2 0 0"}, //TODO fix
     {"GPSAltitudeRef", "1", "1"}, //TODO fix
     {"GPSAltitude", "0/100", "0.00"},
