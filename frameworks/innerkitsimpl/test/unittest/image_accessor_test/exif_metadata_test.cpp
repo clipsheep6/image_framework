@@ -27,7 +27,7 @@ namespace Multimedia {
 
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test_metadata.jpg";
 static const std::string IMAGE_INPUT_JPEG_BLANKEXIF_PATH = "/data/local/tmp/image/test_exif_blank.jpg";
-static const std::string IMAGE_INPUT_JPEG_HW_PATH = "/data/local/tmp/image/test_huawei.jpg";
+static const std::string IMAGE_INPUT_JPEG_HW_PATH = "/data/local/tmp/image/test_hwkey.jpg";
 
 class ExifMetadataTest : public testing::Test {
 public:
