@@ -177,36 +177,37 @@ uint32_t ExtEncoder::DoFinalizeEncode()
         return errorCode;
     }
 
-    if (pixelmap_->GetExifMetadata() != nullptr) {
-        TempStream wStream;
-        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
-            IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
-            return ERR_IMAGE_ENCODE_FAILED;
-        }
-
-        unsigned char *dataPtr;
-        uint32_t datSize = 0;
-        ExifData *exifData = pixelmap_->GetExifMetadata()->GetExifData();
-        TiffParser::Encode(&dataPtr, datSize, exifData);
-        DataBuf exifBlob(dataPtr, datSize);
-
-        auto destImageAccessor = ImageAccessorFactory::Create(wStream.GetAddr(), wStream.bytesWritten());
-        uint32_t ret = destImageAccessor->WriteExifBlob(exifBlob);
-        if (ret != SUCCESS) {
-            IMAGE_LOGE("ExtEncoder::encode exifblob failed");
-            return ret;
-        }
-
-        if (!(destImageAccessor->WriteToOutput(*output_))) {
-            IMAGE_LOGE("ExtEncoder::FinalizeEncode write failed");
-            return ERR_IMAGE_ENCODE_FAILED;
-        }
-    } else {
+    if (pixelmap_->GetExifMetadata() == nullptr ||
+        pixelmap_->GetExifMetadata()->GetExifData() == null) {
         ExtWStream wStream(output_);
         if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
             IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
             return ERR_IMAGE_ENCODE_FAILED;
         }
+        return SUCCESS;
+    }
+
+    unsigned char *dataPtr;
+    uint32_t datSize = 0;
+    auto exifData = pixelmap_->GetExifMetadata()->GetExifData();
+    TiffParser::Encode(&dataPtr, datSize, exifData);
+    DataBuf exifBlob(dataPtr, datSize);
+    TempStream tStream;
+    if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality)) {
+        IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+
+    auto destImageAccessor = ImageAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
+    if (destImageAccessor != nullptr) {
+        if (destImageAccessor->WriteExifBlob(exifBlob) == SUCCESS) {
+            if (destImageAccessor->WriteToOutput(*output_)){
+                return SUCCESS;
+            }
+        }
+    }
+    if (!output_.Write(tStream.GetAddr(), tStream.bytesWritten())) {
+        return ERR_IMAGE_ENCODE_FAILED;
     }
 
     return SUCCESS;
