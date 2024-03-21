@@ -35,7 +35,7 @@ public:
     bool CreateExifdata();
 
 private:
-    ExifEntry* CreateEntry(const ExifTag &tag ,const size_t len);
+    ExifEntry* CreateEntry(const ExifTag &tag, const size_t len);
     ExifEntry* GetEntry(const std::string &key, const size_t len);
     void ReallocEntry(ExifEntry *ptrEntry, const size_t len);
     bool SetShort(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);

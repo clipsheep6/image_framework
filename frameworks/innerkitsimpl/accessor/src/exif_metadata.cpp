@@ -42,6 +42,8 @@
 namespace OHOS {
 namespace Media {
 
+const auto KEY_SIZE = 2;
+
 template <typename T>
 std::istream &OutputRational(std::istream &is, T &r)
 {
@@ -158,9 +160,8 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
         value = "";
         return ERR_MEDIA_NO_EXIF_DATA;
     }
-    if (key.size() > 2 && key.substr(0, 2) == "Hw") {
-        ExifMnoteData *md;
-        md = exif_data_get_mnote_data(exifData_);
+    if (key.size() > KEY_SIZE && key.substr(0, KEY_SIZE) == "Hw") {
+        ExifMnoteData *md = exif_data_get_mnote_data(exifData_);
         if (!md) {
             exif_data_unref(exifData_);
             value = "";
@@ -177,8 +178,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
             }
         }
         mnote_huawei_free_entry_count(ec);
-    }
-    else {
+    } else {
         auto tag = exif_tag_from_name(key.c_str());
         auto entry = exif_data_get_entry(exifData_, tag);
         if (entry == nullptr) {
@@ -317,7 +317,7 @@ ExifEntry* ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
         return nullptr;
     }
     
-    // TODO new function handle to check size 
+    // TODO new function handle to check size
     if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII) && (entry->size != static_cast<unsigned int>(valueLen))) {
         ReallocEntry(entry, valueLen);
     }
@@ -326,7 +326,7 @@ ExifEntry* ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
 
 bool ExifMetadata::SetShort(ExifEntry *ptrEntry, const ExifByteOrder &order, const std::string &value)
 {
-    //TODO: new function for each case
+    // TODO: new function for each case
     std::istringstream is(value);
     unsigned long icount = 0;
     ExifShort tmp;
