@@ -13,48 +13,48 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_H
-#define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_H
 
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <vector>
 
-#include "image_stream.h"
+#include "metadata_stream.h"
 
 namespace OHOS {
 namespace Media {
-#if defined(INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_TESTS_PRIVATE)
-    #define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_PRIVATE_UNLESS_TESTED public
+#if defined(FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_TESTS_PRIVATE)
+    #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_PRIVATE_UNLESS_TESTED public
 #else
-    #define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_PRIVATE_UNLESS_TESTED private
+    #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_PRIVATE_UNLESS_TESTED private
 #endif
 
 /**
- * @class BufferImageStream
+ * @class BufferMetadataStream
  * @brief A class for handling image streams in memory.
  *
  * This class provides methods for reading from and seeking within an image
  * stream in memory. The maximum size of the stream is limited by
- * std::vector<uint8_t>::size_type, which is 4GB. Although ImageStream can
+ * std::vector<uint8_t>::size_type, which is 4GB. Although MetadataStream can
  * address a maximum space of 'long', in memory mode, the maximum space is
  * limited by std::vector<uint8_t>::size_type.
  */
-class BufferImageStream : public ImageStream {
+class BufferMetadataStream : public MetadataStream {
 public:
     /* *
-     * @brief Constructs a new BufferImageStream object.
+     * @brief Constructs a new BufferMetadataStream object.
      */
-    BufferImageStream();
+    BufferMetadataStream();
 
     /* *
-     * @brief Destructs the BufferImageStream object.
+     * @brief Destructs the BufferMetadataStream object.
      */
-    virtual ~BufferImageStream();
+    virtual ~BufferMetadataStream();
 
     /* *
-     * @brief Writes data to the BufferImageStream.
+     * @brief Writes data to the BufferMetadataStream.
      * @param data The data to be written.
      * @param size The size of the data. On a 32-bit system, the maximum size
      * that can be written at once is 2GB or 4GB.
@@ -64,7 +64,7 @@ public:
     virtual ssize_t Write(uint8_t *data, ssize_t size) override;
 
     /* *
-     * @brief Reads data from the BufferImageStream.
+     * @brief Reads data from the BufferMetadataStream.
      * @param buf The buffer to store the data.
      * @param size The size of the data.
      * @return The number of bytes read. Returns -1 if the buffer pointer is null.
@@ -72,7 +72,7 @@ public:
     virtual ssize_t Read(uint8_t *buf, ssize_t size) override;
 
     /* *
-     * @brief Reads a byte from the BufferImageStream.
+     * @brief Reads a byte from the BufferMetadataStream.
      * @return The byte read.
      */
     virtual int ReadByte() override;
@@ -86,96 +86,96 @@ public:
     virtual long Seek(long offset, SeekPos pos) override;
 
     /* *
-     * @brief Gets the current position in the BufferImageStream.
+     * @brief Gets the current position in the BufferMetadataStream.
      * @return The current position.
      */
     virtual long Tell() override;
 
     /* *
-     * @brief Checks if the end of the BufferImageStream has been reached.
+     * @brief Checks if the end of the BufferMetadataStream has been reached.
      * @return true if the end has been reached, false otherwise.
      */
     virtual bool IsEof() override;
 
     /* *
-     * @brief Checks if the BufferImageStream is open.
+     * @brief Checks if the BufferMetadataStream is open.
      * @return true if it is open, false otherwise.
      */
     virtual bool IsOpen() override;
 
     /* *
-     * For BufferImageStream, the Open function with a mode is not applicable,
-     * as the data for BufferImageStream is already in memory and there are no
+     * For BufferMetadataStream, the Open function with a mode is not applicable,
+     * as the data for BufferMetadataStream is already in memory and there are no
      * read-only scenarios.
      *
      * @param mode This parameter is ignored, as there are no read-only
-     * scenarios for BufferImageStream.
+     * scenarios for BufferMetadataStream.
      * @return Returns false, as this function is not applicable for
-     * BufferImageStream.
+     * BufferMetadataStream.
      */
     virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
 
     /* *
-     * For BufferImageStream, the Flush function is not applicable,
-     * as the data for BufferImageStream is already in memory and there are no
+     * For BufferMetadataStream, the Flush function is not applicable,
+     * as the data for BufferMetadataStream is already in memory and there are no
      * write operations that need to be flushed.
      *
      * @return Returns true, as this function is not applicable for
-     * BufferImageStream, but it is assumed that the data is always "flushed" in
+     * BufferMetadataStream, but it is assumed that the data is always "flushed" in
      * memory.
      */
     virtual bool Flush() override;
 
     /* *
-     * Get the memory address of the BufferImageStream.
-     * Since the data of BufferImageStream is stored in a std::vector<uint8_t>,
+     * Get the memory address of the BufferMetadataStream.
+     * Since the data of BufferMetadataStream is stored in a std::vector<uint8_t>,
      * this function directly returns the pointer to the data using the
      * std::vector::data() function. Note that this function ignores the
-     * isWriteable parameter, because the data of BufferImageStream is always
+     * isWriteable parameter, because the data of BufferMetadataStream is always
      * writable.
      *
      * @param isWriteable This parameter is ignored, the data of
-     * BufferImageStream is always writable.
-     * @return Returns a pointer to the data of BufferImageStream.
+     * BufferMetadataStream is always writable.
+     * @return Returns a pointer to the data of BufferMetadataStream.
      */
     virtual byte *GetAddr(bool isWriteable = false) override;
 
     /* *
-     * Transfer the content of the source ImageStream to the current
-     * BufferImageStream. This function first clears the current buffer and sets
+     * Transfer the content of the source MetadataStream to the current
+     * BufferMetadataStream. This function first clears the current buffer and sets
      * the current offset to 0. Then, this function reads data from the source
-     * ImageStream and appends the read data to the current buffer. If an error
+     * MetadataStream and appends the read data to the current buffer. If an error
      * occurs during the reading process, this function will return immediately
      * and log the error information.
      *
-     * @param src The source ImageStream, this function will read data from this
-     * ImageStream.
+     * @param src The source MetadataStream, this function will read data from this
+     * MetadataStream.
      */
-    virtual bool CopyFrom(ImageStream &src) override;
+    virtual bool CopyFrom(MetadataStream &src) override;
 
     /* *
-     * Get the size sof the BufferImageStream.
+     * Get the size sof the BufferMetadataStream.
      *
-     * @return Returns the size of the BufferImageStream.
+     * @return Returns the size of the BufferMetadataStream.
      */
     virtual ssize_t GetSize() override;
 
-INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
+FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_PRIVATE_UNLESS_TESTED:
     /* *
-     * @brief Closes the BufferImageStream.
+     * @brief Closes the BufferMetadataStream.
      */
     virtual void Close() override;
 
     /* *
-     * @brief The memory buffer of the BufferImageStream.
+     * @brief The memory buffer of the BufferMetadataStream.
      */
     std::vector<uint8_t> buffer_;
 
     /* *
-     * @brief The current offset in the BufferImageStream.
+     * @brief The current offset in the BufferMetadataStream.
      */
     long currentOffset_;
 };
 } // namespace Media
 } // namespace OHOS
-#endif // INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_H
+#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_IMAGE_STREAM_H

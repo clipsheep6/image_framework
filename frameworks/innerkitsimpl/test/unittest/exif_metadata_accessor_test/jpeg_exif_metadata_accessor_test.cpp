@@ -16,8 +16,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "file_image_stream.h"
-#include "jpeg_image_accessor.h"
+#include "file_metadata_stream.h"
+#include "jpeg_exif_metadata_accessor.h"
 #include "log_tags.h"
 #include "media_errors.h"
 
@@ -58,26 +58,26 @@ namespace {
     constexpr auto EXIF_ID_SIZE = 6;
 }
 
-class JpegImageAccessorTest : public testing::Test {
+class JpegExifMetadataAccssorTest : public testing::Test {
 public:
-    JpegImageAccessorTest() {}
-    ~JpegImageAccessorTest() {}
+    JpegExifMetadataAccssorTest() {}
+    ~JpegExifMetadataAccssorTest() {}
     std::string GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop);
 };
 
 /**
- * @tc.name: ReadMetadata001
+ * @tc.name: Read001
  * @tc.desc: test the jpegDecoded Exif properties
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadMetadata001, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Read001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    JpegExifMetadataAccssor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, 0);
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "9, 7, 8");
     ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Top-right");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "1000");
@@ -115,18 +115,18 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata001, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata002
+ * @tc.name: Read002
  * @tc.desc: test the jpegDecoded Exif Image properties
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadMetadata002, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Read002, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    JpegExifMetadataAccssor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, 0);
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "0.08 EV (f/1.0)");
     ASSERT_EQ(GetProperty(exifMetadata, "Artist"), "Joseph.Xu");
     ASSERT_EQ(GetProperty(exifMetadata, "NewSubfileType"), "1");
@@ -160,18 +160,18 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata002, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata003
+ * @tc.name: Read003
  * @tc.desc: test the jpegDecoded Exif GPSInfo properties
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadMetadata003, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Read003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    JpegExifMetadataAccssor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, 0);
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "GPSAltitude"), "0.00");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSAltitudeRef"), "Sea level reference");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "20 bytes undefined data");
@@ -214,18 +214,18 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata003, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata004
+ * @tc.name: Read004
  * @tc.desc: test the jpegDecoded Exif photo properties
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadMetadata004, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Read004, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    JpegExifMetadataAccssor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, 0);
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "SceneCaptureType"), "Standard");
     ASSERT_EQ(GetProperty(exifMetadata, "SensingMethod"), "Two-chip color area sensor");
     ASSERT_EQ(GetProperty(exifMetadata, "Sharpness"), "Normal");
@@ -268,18 +268,18 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata004, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata005
+ * @tc.name: Read005
  * @tc.desc: test the jpegDecoded Exif properties
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadMetadata005, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Read005, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT2_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT2_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    JpegExifMetadataAccssor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, 0);
-    std::shared_ptr<ExifMetadata> exifMetadata = imageAccessor.GetExifMetadata();
+    std::shared_ptr<ExifMetadata> exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "8, 8, 8");
     ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Unknown value 0");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "4000");
@@ -317,79 +317,79 @@ HWTEST_F(JpegImageAccessorTest, ReadMetadata005, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadExifBlob001
- * @tc.desc: test ReadExifBlob from image file not open, return false
+ * @tc.name: ReadBlob001
+ * @tc.desc: test ReadBlob from image file not open, return false
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadExifBlob001, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
+    JpegExifMetadataAccssor imageAccessor(stream);
     DataBuf exifBuf;
-    bool result = imageAccessor.ReadExifBlob(exifBuf);
+    bool result = imageAccessor.ReadBlob(exifBuf);
     ASSERT_EQ(result, false);
 }
 
 /**
- * @tc.name: ReadExifBlob002
- * @tc.desc: test ReadExifBlob from error jpeg image1 which does not have 0xff, return false
+ * @tc.name: ReadBlob002
+ * @tc.desc: test ReadBlob from error jpeg image1 which does not have 0xff, return false
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadExifBlob002, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob002, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_ERROR1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_ERROR1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
+    JpegExifMetadataAccssor imageAccessor(stream);
     DataBuf exifBuf;
-    bool result = imageAccessor.ReadExifBlob(exifBuf);
+    bool result = imageAccessor.ReadBlob(exifBuf);
     ASSERT_EQ(result, false);
 }
 
 /**
- * @tc.name: ReadExifBlob003
- * @tc.desc: test ReadExifBlob from error jpeg image2 which does not have APP1, return false
+ * @tc.name: ReadBlob003
+ * @tc.desc: test ReadBlob from error jpeg image2 which does not have APP1, return false
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadExifBlob003, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_ERROR2_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_ERROR2_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
+    JpegExifMetadataAccssor imageAccessor(stream);
     DataBuf exifBuf;
-    bool result = imageAccessor.ReadExifBlob(exifBuf);
+    bool result = imageAccessor.ReadBlob(exifBuf);
     ASSERT_EQ(result, false);
 }
 
 /**
- * @tc.name: ReadExifBlob004
- * @tc.desc: test ReadExifBlob from right jpeg image, return true and the length of exifBlob
+ * @tc.name: ReadBlob004
+ * @tc.desc: test ReadBlob from right jpeg image, return true and the length of exifBlob
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, ReadExifBlob004, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob004, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
+    JpegExifMetadataAccssor imageAccessor(stream);
     DataBuf exifBuf;
-    bool result = imageAccessor.ReadExifBlob(exifBuf);
+    bool result = imageAccessor.ReadBlob(exifBuf);
     ASSERT_TRUE(result);
     ASSERT_EQ(exifBuf.Size(), 0x0932);
 }
 
 /**
- * @tc.name: WriteMetadata001
- * @tc.desc: test WriteMetadata from right jpeg image, modify "BitsPerSample" propert
+ * @tc.name: Write001
+ * @tc.desc: test Write from right jpeg image, modify "BitsPerSample" propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(stream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(stream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_TRUE(exifMetadata->SetValue("BitsPerSample", "8, 8, 8"));
     ASSERT_TRUE(exifMetadata->SetValue("Orientation", "Unknown value 0"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageLength", "4000"));
@@ -406,9 +406,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("WhiteBalance", "Auto white balance"));
     ASSERT_TRUE(exifMetadata->SetValue("FocalLengthIn35mmFilm", "27"));
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "8, 8, 8");
     ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Unknown value 0");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "4000");
@@ -427,76 +427,76 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata001, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata002
- * @tc.desc: test WriteMetadata from nonexisting image file, return error number
+ * @tc.name: Write002
+ * @tc.desc: test Write from nonexisting image file, return error number
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata002, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write002, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE3_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE3_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "9, 7, 8");
 
-    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE1_JPEG_PATH);
+    std::shared_ptr<MetadataStream> writeStream = std::make_shared<FileMetadataStream>(IMAGE_OUTPUT_WRITE1_JPEG_PATH);
     ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageWriteAccessor(writeStream);
-    ASSERT_EQ(imageWriteAccessor.WriteMetadata(), ERR_MEDIA_VALUE_INVALID);
+    JpegExifMetadataAccssor imageWriteAccessor(writeStream);
+    ASSERT_EQ(imageWriteAccessor.Write(), ERR_MEDIA_VALUE_INVALID);
 }
 
 /**
- * @tc.name: WriteMetadata003
- * @tc.desc: test WriteMetadata from right jpeg image, modify "GPSLongitudeRef" propert set value "W"
+ * @tc.name: Write003
+ * @tc.desc: test Write from right jpeg image, modify "GPSLongitudeRef" propert set value "W"
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata003, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE5_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE5_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_TRUE(exifMetadata->SetValue("GPSLongitudeRef", "W"));
     ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "W");
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "W");
 }
 
 /**
- * @tc.name: WriteMetadata004
- * @tc.desc: test WriteMetadata from right jpeg image,read and write
+ * @tc.name: Write004
+ * @tc.desc: test Write from right jpeg image,read and write
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata004, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write004, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE7_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE7_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    auto exifMetadata = imageAccessor.Get();
+    ASSERT_EQ(imageAccessor.Write(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 }
 
 /**
- * @tc.name: WriteMetadata005
- * @tc.desc: test WriteMetadata from right jpeg image, modify Image propert
+ * @tc.name: Write005
+ * @tc.desc: test Write from right jpeg image, modify Image propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata005, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write005, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE9_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE9_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "NewSubfileType"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "500");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "1000");
@@ -511,9 +511,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata005, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "PlanarConfiguration "), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "ResolutionUnit"), "Inch");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "NewSubfileType"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "500");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "1000");
@@ -530,18 +530,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata005, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata006
- * @tc.desc: test WriteMetadata from right jpeg image, modify Image propert
+ * @tc.name: Write006
+ * @tc.desc: test Write from right jpeg image, modify Image propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata006, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write006, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE11_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE11_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "TransferFunction"), "2");
     ASSERT_EQ(GetProperty(exifMetadata, "Software"), "MNA-AL00 4.0.0.120(C00E116R3P7)");
     ASSERT_EQ(GetProperty(exifMetadata, "Artist"), "Joseph.Xu");
@@ -555,9 +555,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata006, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "ExifTag"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "SpectralSensitivity"), "sensitivity");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "TransferFunction"), "2");
     ASSERT_EQ(GetProperty(exifMetadata, "Software"), "MNA-AL00 4.0.0.120(C00E116R3P7)");
     ASSERT_EQ(GetProperty(exifMetadata, "Artist"), "Joseph.Xu");
@@ -573,18 +573,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata006, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata007
- * @tc.desc: test WriteMetadata from right jpeg image, modify Image propert
+ * @tc.name: Write007
+ * @tc.desc: test Write from right jpeg image, modify Image propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata007, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write007, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE13_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE13_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTag"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "OECF"), "1 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "0.08 EV (f/1.0)");
@@ -594,9 +594,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata007, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "2.2.0.0");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTag"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "OECF"), "1 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "0.08 EV (f/1.0)");
@@ -608,18 +608,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata007, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata008
- * @tc.desc: test WriteMetadata from right jpeg image, modify GPSInfo propert
+ * @tc.name: Write008
+ * @tc.desc: test Write from right jpeg image, modify GPSInfo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata008, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write008, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE15_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE15_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "GPSVersionID"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitudeRef"), "N");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitude"), "39, 54, 20");
@@ -634,9 +634,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata008, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDOP"), "182");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSSpeedRef"), "K");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSVersionID"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitudeRef"), "N");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitude"), "39, 54, 20");
@@ -653,18 +653,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata008, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata009
- * @tc.desc: test WriteMetadata from right jpeg image, modify GPSInfo propert
+ * @tc.name: Write009
+ * @tc.desc: test Write from right jpeg image, modify GPSInfo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata009, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write009, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE17_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE17_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "GPSSpeed"), "150");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTrackRef"), "T");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTrack"), "56");
@@ -679,9 +679,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata009, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestBearing"), "2.6");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestDistanceRef"), "N");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSSpeed"), "150");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTrackRef"), "T");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSTrack"), "56");
@@ -698,18 +698,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata009, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata010
- * @tc.desc: test WriteMetadata from right jpeg image, modify GPSInfo propert
+ * @tc.name: Write010
+ * @tc.desc: test Write from right jpeg image, modify GPSInfo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata010, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write010, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE19_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE19_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestDistance"), "10");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "14 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "20 bytes undefined data");
@@ -717,9 +717,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata010, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDifferential"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSHPositioningError"), " 3");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestDistance"), "10");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "14 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "20 bytes undefined data");
@@ -729,18 +729,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata010, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata011
- * @tc.desc: test WriteMetadata from right jpeg image, modify Photo propert
+ * @tc.name: Write011
+ * @tc.desc: test Write from right jpeg image, modify Photo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata011, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write011, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE21_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE21_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "ExposureTime"), "1/34 sec.");
     ASSERT_EQ(GetProperty(exifMetadata, "FNumber"), "f/3.0");
     ASSERT_EQ(GetProperty(exifMetadata, "ExposureProgram"), "Normal program");
@@ -755,9 +755,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata011, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2024:01:25 05:51:34");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeDigitized"), "2023:01:19 10:39:58");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "ExposureTime"), "1/34 sec.");
     ASSERT_EQ(GetProperty(exifMetadata, "FNumber"), "f/3.0");
     ASSERT_EQ(GetProperty(exifMetadata, "ExposureProgram"), "Normal program");
@@ -774,18 +774,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata011, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata012
- * @tc.desc: test WriteMetadata from right jpeg image, modify Photo propert
+ * @tc.name: Write012
+ * @tc.desc: test Write from right jpeg image, modify Photo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata012, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write012, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE23_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE23_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "OffsetTime"), "xx");
     ASSERT_EQ(GetProperty(exifMetadata, "OffsetTimeOriginal"), "xx");
     ASSERT_EQ(GetProperty(exifMetadata, "OffsetTimeDigitized"), "xx");
@@ -800,9 +800,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata012, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "Flash"), "Strobe return light not detected");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalLength"), "31.0 mm");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "OffsetTime"), "xx");
     ASSERT_EQ(GetProperty(exifMetadata, "OffsetTimeOriginal"), "xx");
     ASSERT_EQ(GetProperty(exifMetadata, "OffsetTimeDigitized"), "xx");
@@ -819,18 +819,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata012, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata013
- * @tc.desc: test WriteMetadata from right jpeg image, modify Photo propert
+ * @tc.name: Write013
+ * @tc.desc: test Write from right jpeg image, modify Photo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata013, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write013, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE25_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE25_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "34 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "UserComment"), "comm");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTime"), "2.2.0.0");
@@ -845,9 +845,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata013, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), "1 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalPlaneXResolution"), "1080");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "34 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "UserComment"), "comm");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTime"), "2.2.0.0");
@@ -864,18 +864,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata013, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata014
- * @tc.desc: test WriteMetadata from right jpeg image, modify Photo propert
+ * @tc.name: Write014
+ * @tc.desc: test Write from right jpeg image, modify Photo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata014, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write014, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE27_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE27_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "FocalPlaneYResolution"), "880");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalPlaneResolutionUnit"), "Centimeter");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "3");
@@ -890,9 +890,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata014, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "DigitalZoomRatio"), "321");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalLengthIn35mmFilm"), "26");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "FocalPlaneYResolution"), "880");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalPlaneResolutionUnit"), "Centimeter");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "3");
@@ -909,18 +909,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata014, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata015
- * @tc.desc: test WriteMetadata from right jpeg image, modify Photo propert
+ * @tc.name: Write015
+ * @tc.desc: test Write from right jpeg image, modify Photo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata015, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write015, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE29_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE29_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "SceneCaptureType"), "Standard");
     ASSERT_EQ(GetProperty(exifMetadata, "GainControl"), "Normal");
     ASSERT_EQ(GetProperty(exifMetadata, "Contrast"), "Normal");
@@ -935,9 +935,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata015, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "LensMake"), "xxx");
     ASSERT_EQ(GetProperty(exifMetadata, "LensModel"), "xxx");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "SceneCaptureType"), "Standard");
     ASSERT_EQ(GetProperty(exifMetadata, "GainControl"), "Normal");
     ASSERT_EQ(GetProperty(exifMetadata, "Contrast"), "Normal");
@@ -954,18 +954,18 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata015, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteMetadata016
- * @tc.desc: test WriteMetadata from right jpeg image, modify Photo propert
+ * @tc.name: Write016
+ * @tc.desc: test Write from right jpeg image, modify Photo propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteMetadata016, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, Write016, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE31_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE31_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageAccessor(readStream);
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    JpegExifMetadataAccssor imageAccessor(readStream);
+    ASSERT_EQ(imageAccessor.Read(), 0);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "LensSerialNumber"), "xxx");
     ASSERT_EQ(GetProperty(exifMetadata, "CompositeImage"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "SourceImageNumberOfCompositeImage"), "1234");
@@ -979,9 +979,9 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata016, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "StripOffsets"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"), "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
 
-    ASSERT_EQ(imageAccessor.WriteMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Write(), 0);
 
-    ASSERT_EQ(imageAccessor.ReadMetadata(), 0);
+    ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "LensSerialNumber"), "xxx");
     ASSERT_EQ(GetProperty(exifMetadata, "CompositeImage"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "SourceImageNumberOfCompositeImage"), "1234");
@@ -997,72 +997,72 @@ HWTEST_F(JpegImageAccessorTest, WriteMetadata016, TestSize.Level3)
 }
 
 /**
- * @tc.name: WriteExifBlob001
- * @tc.desc: test WriteExifBlob from right jpeg image, modify propert
+ * @tc.name: WriteBlob001
+ * @tc.desc: test WriteBlob from right jpeg image, modify propert
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteExifBlob001, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, WriteBlob001, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE2_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE2_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageReadAccessor(readStream);
+    JpegExifMetadataAccssor imageReadAccessor(readStream);
     DataBuf inputBuf;
-    ASSERT_TRUE(imageReadAccessor.ReadExifBlob(inputBuf));
+    ASSERT_TRUE(imageReadAccessor.ReadBlob(inputBuf));
 
-    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE2_JPEG_PATH);
+    std::shared_ptr<MetadataStream> writeStream = std::make_shared<FileMetadataStream>(IMAGE_OUTPUT_WRITE2_JPEG_PATH);
     ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageWriteAccessor(writeStream);
-    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(inputBuf), 0);
+    JpegExifMetadataAccssor imageWriteAccessor(writeStream);
+    ASSERT_EQ(imageWriteAccessor.WriteBlob(inputBuf), 0);
 
     DataBuf outputBuf;
-    ASSERT_TRUE(imageWriteAccessor.ReadExifBlob(outputBuf));
+    ASSERT_TRUE(imageWriteAccessor.ReadBlob(outputBuf));
     ASSERT_EQ(outputBuf.Size(), inputBuf.Size());
 }
 
 /**
- * @tc.name: WriteExifBlob002
- * @tc.desc: test WriteExifBlob from empty data buffer, return error number
+ * @tc.name: WriteBlob002
+ * @tc.desc: test WriteBlob from empty data buffer, return error number
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteExifBlob002, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, WriteBlob002, TestSize.Level3)
 {
     DataBuf inputBuf;
-    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE4_JPEG_PATH);
+    std::shared_ptr<MetadataStream> writeStream = std::make_shared<FileMetadataStream>(IMAGE_OUTPUT_WRITE4_JPEG_PATH);
     ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageWriteAccessor(writeStream);
-    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(inputBuf), ERR_MEDIA_VALUE_INVALID);
+    JpegExifMetadataAccssor imageWriteAccessor(writeStream);
+    ASSERT_EQ(imageWriteAccessor.WriteBlob(inputBuf), ERR_MEDIA_VALUE_INVALID);
 }
 
 /**
- * @tc.name: WriteExifBlob003
- * @tc.desc: test WriteExifBlob from right jpeg image, Data buffer not container "EXIF\0\0"
+ * @tc.name: WriteBlob003
+ * @tc.desc: test WriteBlob from right jpeg image, Data buffer not container "EXIF\0\0"
  * @tc.type: FUNC
  */
-HWTEST_F(JpegImageAccessorTest, WriteExifBlob003, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, WriteBlob003, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> readStream = std::make_shared<FileImageStream>(IMAGE_INPUT_WRITE2_JPEG_PATH);
+    std::shared_ptr<MetadataStream> readStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_WRITE2_JPEG_PATH);
     ASSERT_TRUE(readStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageReadAccessor(readStream);
+    JpegExifMetadataAccssor imageReadAccessor(readStream);
     DataBuf inputBuf;
-    ASSERT_TRUE(imageReadAccessor.ReadExifBlob(inputBuf));
+    ASSERT_TRUE(imageReadAccessor.ReadBlob(inputBuf));
 
     auto length = 0;
     if (inputBuf.CmpBytes(0, EXIF_ID, EXIF_ID_SIZE) == 0) {
         length = EXIF_ID_SIZE;
     }
 
-    std::shared_ptr<ImageStream> writeStream = std::make_shared<FileImageStream>(IMAGE_OUTPUT_WRITE6_JPEG_PATH);
+    std::shared_ptr<MetadataStream> writeStream = std::make_shared<FileMetadataStream>(IMAGE_OUTPUT_WRITE6_JPEG_PATH);
     ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
-    JpegImageAccessor imageWriteAccessor(writeStream);
+    JpegExifMetadataAccssor imageWriteAccessor(writeStream);
     DataBuf dataBlob(inputBuf.CData(length), (inputBuf.Size() - length));
-    ASSERT_EQ(imageWriteAccessor.WriteExifBlob(dataBlob), 0);
+    ASSERT_EQ(imageWriteAccessor.WriteBlob(dataBlob), 0);
 
     DataBuf outputBuf;
-    ASSERT_TRUE(imageWriteAccessor.ReadExifBlob(outputBuf));
+    ASSERT_TRUE(imageWriteAccessor.ReadBlob(outputBuf));
     ASSERT_EQ(outputBuf.Size(), inputBuf.Size());
 }
 
-std::string JpegImageAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop)
+std::string JpegExifMetadataAccssorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop)
 {
     std::string value;
     metadata->GetValue(prop, value);

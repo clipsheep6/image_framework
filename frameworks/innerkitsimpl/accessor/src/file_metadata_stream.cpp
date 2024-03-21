@@ -23,14 +23,14 @@
 #include <unistd.h>
 
 #include "image_log.h"
-#include "image_stream.h"
-#include "file_image_stream.h"
+#include "metadata_stream.h"
+#include "file_metadata_stream.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "FileImageStream"
+#define LOG_TAG "FileMetadataStream"
 
 namespace OHOS {
 namespace Media {
@@ -44,31 +44,31 @@ ssize_t FileWrapper::FRead(void *destv, size_t size, ssize_t nmemb, FILE *file)
     return ::fread(destv, size, nmemb, file);
 }
 
-FileImageStream::FileImageStream(const std::string &filePath)
+FileMetadataStream::FileMetadataStream(const std::string &filePath)
 {
     initPath_ = INIT_FROM_PATH;
     Initialize(filePath);
 }
 
-FileImageStream::FileImageStream(int fileDescriptor)
+FileMetadataStream::FileMetadataStream(int fileDescriptor)
 {
     initPath_ = INIT_FROM_FD;
     Initialize("", fileDescriptor);
 }
 
-FileImageStream::FileImageStream(const std::string &filePath, std::unique_ptr<FileWrapper> fileWrapper)
+FileMetadataStream::FileMetadataStream(const std::string &filePath, std::unique_ptr<FileWrapper> fileWrapper)
     : fileWrapper_(std::move(fileWrapper))
 {
     initPath_ = INIT_FROM_PATH;
     Initialize(filePath);
 }
 
-FileImageStream::~FileImageStream()
+FileMetadataStream::~FileMetadataStream()
 {
     Close();
 }
 
-void FileImageStream::Initialize(const std::string &filePath, int fileDescriptor)
+void FileMetadataStream::Initialize(const std::string &filePath, int fileDescriptor)
 {
     // Implement the repeated initialization logic
     this->filePath_ = filePath;
@@ -97,7 +97,7 @@ void HandleFileError(const std::string &operation, const std::string &filePath, 
     }
 }
 
-ssize_t FileImageStream::Write(byte *data, ssize_t size)
+ssize_t FileMetadataStream::Write(byte *data, ssize_t size)
 {
     if (fp_ == nullptr) {
         HandleFileError("Write", filePath_, -1, -1, size);
@@ -113,7 +113,7 @@ ssize_t FileImageStream::Write(byte *data, ssize_t size)
     return result;
 }
 
-ssize_t FileImageStream::Read(byte *buf, ssize_t size)
+ssize_t FileMetadataStream::Read(byte *buf, ssize_t size)
 {
     if (fp_ == nullptr) {
         HandleFileError("Read", filePath_, -1, -1, size);
@@ -132,7 +132,7 @@ ssize_t FileImageStream::Read(byte *buf, ssize_t size)
     return result;
 }
 
-int FileImageStream::ReadByte()
+int FileMetadataStream::ReadByte()
 {
     if (fp_ == nullptr) {
         HandleFileError("ReadByte", filePath_, -1, -1, 1);
@@ -148,7 +148,7 @@ int FileImageStream::ReadByte()
     return byte;
 }
 
-long FileImageStream::Seek(long offset, SeekPos pos)
+long FileMetadataStream::Seek(long offset, SeekPos pos)
 {
     if (fp_ == nullptr) {
         HandleFileError("Seek", filePath_, -1, -1, offset);
@@ -179,7 +179,7 @@ long FileImageStream::Seek(long offset, SeekPos pos)
     return ftell(fp_);
 }
 
-long FileImageStream::Tell()
+long FileMetadataStream::Tell()
 {
     if (fp_ == nullptr) {
         if (initPath_ == INIT_FROM_FD) {
@@ -197,7 +197,7 @@ long FileImageStream::Tell()
     return ftell(fp_);
 }
 
-bool FileImageStream::IsEof()
+bool FileMetadataStream::IsEof()
 {
     if (fp_ == nullptr) {
         // File is not open
@@ -227,12 +227,12 @@ bool FileImageStream::IsEof()
     return isEof;
 }
 
-bool FileImageStream::IsOpen()
+bool FileMetadataStream::IsOpen()
 {
     return fp_ != nullptr;
 }
 
-void FileImageStream::Close()
+void FileMetadataStream::Close()
 {
     // If there is a memory map, delete it
     ReleaseAddr();
@@ -258,7 +258,7 @@ void FileImageStream::Close()
     initPath_ = INIT_FROM_UNKNOWN;
 }
 
-bool FileImageStream::OpenFromFD(const char *modeStr)
+bool FileMetadataStream::OpenFromFD(const char *modeStr)
 {
     if (dupFD_ == -1) {
         HandleFileError("Open file", filePath_, -1, -1, -1);
@@ -276,7 +276,7 @@ bool FileImageStream::OpenFromFD(const char *modeStr)
     return true;
 }
 
-bool FileImageStream::OpenFromPath(const char *modeStr)
+bool FileMetadataStream::OpenFromPath(const char *modeStr)
 {
     IMAGE_LOGD("Open file: %{public}s, modeStr: %{public}s", filePath_.c_str(), modeStr);
     fp_ = fopen(filePath_.c_str(), modeStr);
@@ -289,7 +289,7 @@ bool FileImageStream::OpenFromPath(const char *modeStr)
     return true;
 }
 
-bool FileImageStream::Open(OpenMode mode)
+bool FileMetadataStream::Open(OpenMode mode)
 {
     if (initPath_ == INIT_FROM_UNKNOWN) {
         IMAGE_LOGE("initPath is INIT_FROM_UNKNOWN. It seems that the file has "
@@ -326,7 +326,7 @@ bool FileImageStream::Open(OpenMode mode)
     return true;
 }
 
-byte *FileImageStream::GetAddr(bool isWriteable)
+byte *FileMetadataStream::GetAddr(bool isWriteable)
 {
     // If there is already a memory map, return it directly
     if (mappedMemory_ != nullptr) {
@@ -355,7 +355,7 @@ byte *FileImageStream::GetAddr(bool isWriteable)
     return (byte *)mappedMemory_;
 }
 
-bool FileImageStream::ReleaseAddr()
+bool FileMetadataStream::ReleaseAddr()
 {
     if (mappedMemory_ == nullptr) {
         // The memory map is nullptr
@@ -374,7 +374,7 @@ bool FileImageStream::ReleaseAddr()
     return true;
 }
 
-bool FileImageStream::Flush()
+bool FileMetadataStream::Flush()
 {
     if (fp_ == nullptr) {
         HandleFileError("Flush file", filePath_, -1, -1, -1);
@@ -389,7 +389,7 @@ bool FileImageStream::Flush()
     return true;
 }
 
-bool FileImageStream::TruncateFile(size_t totalBytesWritten, ImageStream &src, ssize_t src_cur)
+bool FileMetadataStream::TruncateFile(size_t totalBytesWritten, MetadataStream &src, ssize_t src_cur)
 {
     int fileDescriptor = fileno(fp_);
     if (ftruncate(fileDescriptor, totalBytesWritten) == -1) {
@@ -401,9 +401,9 @@ bool FileImageStream::TruncateFile(size_t totalBytesWritten, ImageStream &src, s
     return true;
 }
 
-bool FileImageStream::CopyDataFromSource(ImageStream &src, ssize_t &totalBytesWritten)
+bool FileMetadataStream::CopyDataFromSource(MetadataStream &src, ssize_t &totalBytesWritten)
 {
-    // Read data from the source ImageStream and write it to the current file
+    // Read data from the source MetadataStream and write it to the current file
     ssize_t buffer_size = std::min((ssize_t)IMAGE_STREAM_PAGE_SIZE, src.GetSize());
     byte tempBuffer[buffer_size];
 
@@ -429,7 +429,7 @@ bool FileImageStream::CopyDataFromSource(ImageStream &src, ssize_t &totalBytesWr
     return true;
 }
 
-bool FileImageStream::CopyFrom(ImageStream &src)
+bool FileMetadataStream::CopyFrom(MetadataStream &src)
 {
     ssize_t oldSize = GetSize();
     if (!src.IsOpen()) {
@@ -466,7 +466,7 @@ bool FileImageStream::CopyFrom(ImageStream &src)
     return true;
 }
 
-ssize_t FileImageStream::GetSize()
+ssize_t FileMetadataStream::GetSize()
 {
     if (fp_ == nullptr) {
         HandleFileError("GetSize", filePath_, -1, -1, -1);

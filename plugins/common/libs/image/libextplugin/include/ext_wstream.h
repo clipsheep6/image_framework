@@ -21,7 +21,7 @@
 #include "SkStream.h"
 #include "output_data_stream.h"
 #include "nocopyable.h"
-#include "buffer_image_stream.h"
+#include "buffer_metadata_stream.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -42,7 +42,7 @@ private:
 
 class TempStream : public SkWStream, NoCopyable {
 public:
-    TempStream() {stream_ = new Media::BufferImageStream();};
+    TempStream() {stream_ = new Media::BufferMetadataStream();};
     virtual ~TempStream() override
     {
         delete stream_;
@@ -53,7 +53,7 @@ public:
     size_t bytesWritten() const override;
     uint8_t* GetAddr();
 private:
-    Media::BufferImageStream *stream_;
+    Media::BufferMetadataStream *stream_;
 };
 
 } // namespace ImagePlugin

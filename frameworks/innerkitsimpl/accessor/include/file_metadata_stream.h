@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_H
-#define INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_H
 
 #include <cstddef>
 #include <cstdint>
@@ -23,18 +23,18 @@
 #include <sys/stat.h>
 #include <vector>
 
-#include "image_stream.h"
+#include "metadata_stream.h"
 
 namespace OHOS {
 namespace Media {
-#if defined(INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_TESTS_PRIVATE)
-#define INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED public
+#if defined(FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_TESTS_PRIVATE)
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TESTED public
 #else
-#define INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED private
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TESTED private
 #endif
 
 /**
- * This is a helper class for FileImageStream. It is used for testing whether exceptions are
+ * This is a helper class for FileMetadataStream. It is used for testing whether exceptions are
  * properly handled during file read/write errors.
  */
 class FileWrapper {
@@ -62,32 +62,32 @@ public:
 };
 
 /**
- * @class FileImageStream
+ * @class FileMetadataStream
  * @brief A class that represents a file-based image stream.
- * @note This class is not thread-safe. If you need to use the same FileImageStream instance from multiple threads,
+ * @note This class is not thread-safe. If you need to use the same FileMetadataStream instance from multiple threads,
  * you must ensure that all access to the instance is properly synchronized.
  */
-class FileImageStream : public ImageStream {
+class FileMetadataStream : public MetadataStream {
 public:
     /* *
-     * @brief Constructs a new FileImageStream object from a file descriptor.
+     * @brief Constructs a new FileMetadataStream object from a file descriptor.
      * @param fileDescriptor The file descriptor.
      */
-    FileImageStream(int fileDescriptor);
+    FileMetadataStream(int fileDescriptor);
 
     /* *
-     * @brief Constructs a new FileImageStream object from a file path.
+     * @brief Constructs a new FileMetadataStream object from a file path.
      * @param filePath The file path.
      */
-    FileImageStream(const std::string &filePath);
+    FileMetadataStream(const std::string &filePath);
 
     /* *
-     * @brief Destructs the FileImageStream object.
+     * @brief Destructs the FileMetadataStream object.
      */
-    virtual ~FileImageStream();
+    virtual ~FileMetadataStream();
 
     /* *
-     * @brief Writes data to the FileImageStream.
+     * @brief Writes data to the FileMetadataStream.
      * @param data The data to be written.
      * @param size The size of the data. On a 32-bit system, the maximum size
      * that can be written at once is 2GB. On a 64-bit system, the maximum size
@@ -99,7 +99,7 @@ public:
     virtual ssize_t Write(byte *data, ssize_t size) override;
 
     /* *
-     * @brief Reads data from the FileImageStream.
+     * @brief Reads data from the FileMetadataStream.
      * @param buf The buffer to store the data.
      * @param size The size of the data.
      * @return The number of bytes read. Returns -1 if a read error occurred
@@ -108,13 +108,13 @@ public:
     virtual ssize_t Read(byte *buf, ssize_t size) override;
 
     /* *
-     * @brief Reads a byte from the FileImageStream.
+     * @brief Reads a byte from the FileMetadataStream.
      * @return The byte read.
      */
     virtual int ReadByte() override;
 
     /* *
-     * @brief Seeks to a specific position in the FileImageStream.
+     * @brief Seeks to a specific position in the FileMetadataStream.
      * @param offset The offset.
      * @param pos The starting position of the offset.
      * @return The new position in the stream. Returns -1 if an error occurred during seeking.
@@ -122,39 +122,39 @@ public:
     virtual long Seek(long offset, SeekPos pos) override;
 
     /* *
-     * @brief Gets the current position in the FileImageStream.
+     * @brief Gets the current position in the FileMetadataStream.
      * @return The current position.
      */
     virtual long Tell() override;
 
     /* *
-     * @brief Checks if the end of the FileImageStream has been reached.
+     * @brief Checks if the end of the FileMetadataStream has been reached.
      * @return true if the end has been reached, false otherwise.
      */
     virtual bool IsEof() override;
 
     /* *
-     * @brief Checks if the FileImageStream is open.
+     * @brief Checks if the FileMetadataStream is open.
      * @return true if it is open, false otherwise.
      */
     virtual bool IsOpen() override;
 
     /* *
-     * @brief Opens the FileImageStream with a specific mode.
+     * @brief Opens the FileMetadataStream with a specific mode.
      * The Open operation will reset the read and write position of the file.
      * A file object can only be opened and closed once.
      * If the file fails to open from the file descriptor or path, it will
      * return false. If it fails to seek to the end of the file or restore
      * the file position, it will return false.
-     * @param mode The mode to open the FileImageStream. It can be OpenMode::Read
+     * @param mode The mode to open the FileMetadataStream. It can be OpenMode::Read
      * or OpenMode::ReadWrite.
      * @return true if it opens successfully, false otherwise.
      */
     virtual bool Open(OpenMode mode = OpenMode::ReadWrite) override;
 
     /* *
-     * @brief Flushes the FileImageStream.
-     * The scenarios for using Flush are described in ImageStream::Flush.
+     * @brief Flushes the FileMetadataStream.
+     * The scenarios for using Flush are described in MetadataStream::Flush.
      * @return true if it flushes successfully, false otherwise.
      */
     virtual bool Flush() override;
@@ -171,25 +171,25 @@ public:
 
     /* *
      * @brief Should call Open first. Transfers the content of the source
-     * ImageStream to the current FileImageStream.
+     * MetadataStream to the current FileMetadataStream.
      * Note the buffer size in CopyFrom is currently 4K. When reading from SSDs,
      * reading only 4K at a time may not fully utilize the IO transfer capabilities.
      * If performance issues are identified in later testing, this can be adjusted
      * to a multiple of 4K.
-     * @param src The source ImageStream.
+     * @param src The source MetadataStream.
      */
-    bool CopyFrom(ImageStream &src) override;
+    bool CopyFrom(MetadataStream &src) override;
 
     /* *
-     * @brief Gets the size of the FileImageStream.
-     * @return The size of the FileImageStream.
+     * @brief Gets the size of the FileMetadataStream.
+     * @return The size of the FileMetadataStream.
      * @note If this function is called frequently, it is recommended to cache the size to improve performance.
      */
     ssize_t GetSize() override;
 
-INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
+FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TESTED:
     /* *
-     * @brief Closes the FileImageStream.
+     * @brief Closes the FileMetadataStream.
      */
     virtual void Close() override;
 
@@ -201,58 +201,58 @@ INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
     bool ReleaseAddr();
 
     /* *
-     * @brief Constructs a new FileImageStream object from a file path and a
+     * @brief Constructs a new FileMetadataStream object from a file path and a
      * file wrapper.
      * @param filePath The file path.
      * @param fileWrapper The file wrapper.
      */
-    FileImageStream(const std::string &filePath, std::unique_ptr<FileWrapper> fileWrapper);
+    FileMetadataStream(const std::string &filePath, std::unique_ptr<FileWrapper> fileWrapper);
 
     /* *
-     * @brief Opens the FileImageStream from a file descriptor.
+     * @brief Opens the FileMetadataStream from a file descriptor.
      * @param modeStr The mode string.
      * @return true if it opens successfully, false otherwise.
      */
     bool OpenFromFD(const char *modeStr);
 
     /* *
-     * @brief Opens the FileImageStream from a file path.
+     * @brief Opens the FileMetadataStream from a file path.
      * @param modeStr The mode string.
      * @return true if it opens successfully, false otherwise.
      */
     bool OpenFromPath(const char *modeStr);
 
     /* *
-     * @brief Copies data from the source ImageStream to the current file.
-     * @param src The source ImageStream.
+     * @brief Copies data from the source MetadataStream to the current file.
+     * @param src The source MetadataStream.
      * @param totalBytesWritten The total number of bytes written to the current file.
-     * This function reads data from the source ImageStream and writes it to the current file.
+     * This function reads data from the source MetadataStream and writes it to the current file.
      * It uses a temporary buffer of size min(IMAGE_STREAM_PAGE_SIZE, src.GetSize()).
-     * The function continues to read and write data until it reaches the end of the source ImageStream.
+     * The function continues to read and write data until it reaches the end of the source MetadataStream.
      * If a write operation fails, it handles the error and returns false.
-     * If a read operation fails and it's not because of reaching the end of the source ImageStream, it returns false.
+     * If a read operation fails and it's not because of reaching the end of the source MetadataStream, it returns false.
      * @return true if the data is copied successfully, false otherwise.
      */
-    bool CopyDataFromSource(ImageStream &src, ssize_t &totalBytesWritten);
+    bool CopyDataFromSource(MetadataStream &src, ssize_t &totalBytesWritten);
 
     /* *
      * @brief Handles the error when writing data to the current file fails.
-     * @param src The source ImageStream.
-     * @param src_cur The current position of the source ImageStream.
+     * @param src The source MetadataStream.
+     * @param src_cur The current position of the source MetadataStream.
      */
-    void HandleWriteError(ImageStream &src, ssize_t src_cur);
+    void HandleWriteError(MetadataStream &src, ssize_t src_cur);
 
     /* *
      * @brief Truncates the current file to the specified size.
      * @param totalBytesWritten The new size of the file.
-     * @param src The source ImageStream.
-     * @param src_cur The current position of the source ImageStream.
+     * @param src The source MetadataStream.
+     * @param src_cur The current position of the source MetadataStream.
      * @return true if the file is truncated successfully, false otherwise.
      */
-    bool TruncateFile(size_t totalBytesWritten, ImageStream &src, ssize_t src_cur);
+    bool TruncateFile(size_t totalBytesWritten, MetadataStream &src, ssize_t src_cur);
 
     /* *
-     * @brief Initializes the FileImageStream with a file path and a file descriptor.
+     * @brief Initializes the FileMetadataStream with a file path and a file descriptor.
      * @param filePath The path of the file to be opened. Default is an empty string.
      * @param fileDescriptor The file descriptor of the file to be opened. Default is -1.
      */
@@ -272,4 +272,4 @@ INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_PRIVATE_UNLESS_TESTED:
 };
 } // namespace Media
 } // namespace OHOS
-#endif // INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_H
+#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_H

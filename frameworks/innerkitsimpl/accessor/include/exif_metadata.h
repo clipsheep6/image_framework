@@ -16,21 +16,20 @@
 #ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_METADATA_H
 #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_METADATA_H
 
-#include <string>
-
-#include <libexif/exif-data.h>
 #include <libexif/exif-entry.h>
 #include <libexif/exif-tag.h>
 
+#include "metadata.h"
+
 namespace OHOS {
 namespace Media {
-class ExifMetadata {
+class ExifMetadata : public Metadata {
 public:
     ExifMetadata();
     ExifMetadata(ExifData *exifData);
-    ~ExifMetadata();
-    int GetValue(const std::string &key, std::string &value) const;
-    bool SetValue(const std::string &key, const std::string &value);
+    virtual ~ExifMetadata();
+    virtual int GetValue(const std::string &key, std::string &value) const override;
+    virtual bool SetValue(const std::string &key, const std::string &value) override;
     ExifData* GetExifData();
     bool CreateExifdata();
 

@@ -13,27 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_FACTORY_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_FACTORY_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_ACCESSOR_FACTORY_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_ACCESSOR_FACTORY_H
 
 #include <memory>
 #include <string>
 
-#include "image_accessor_interface.h"
+#include "metadata_accessor.h"
 #include "image_type.h"
-#include "image_stream.h"
+#include "metadata_stream.h"
 
 namespace OHOS {
 namespace Media {
-class ImageAccessorFactory {
+class MetadataAccessorFactory {
 public:
-    static std::shared_ptr<ImageAccessorInterface> Create(uint8_t *buffer, const uint32_t size);
-    static std::shared_ptr<ImageAccessorInterface> Create(const int fd);
-    static std::shared_ptr<ImageAccessorInterface> Create(const std::string &path);
+    static std::shared_ptr<MetadataAccessor> Create(uint8_t *buffer, const uint32_t size);
+    static std::shared_ptr<MetadataAccessor> Create(const int fd);
+    static std::shared_ptr<MetadataAccessor> Create(const std::string &path);
 
 private:
-    static std::shared_ptr<ImageAccessorInterface> Create(std::shared_ptr<ImageStream> &stream);
-    static EncodedFormat GetImageType(std::shared_ptr<ImageStream> &stream);
+    static std::shared_ptr<MetadataAccessor> Create(std::shared_ptr<MetadataStream> &stream);
+    static EncodedFormat GetImageType(std::shared_ptr<MetadataStream> &stream);
 };
 } // namespace Media
 } // namespace OHOS

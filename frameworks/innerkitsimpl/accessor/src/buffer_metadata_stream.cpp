@@ -20,25 +20,25 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "buffer_image_stream.h"
+#include "buffer_metadata_stream.h"
 #include "image_log.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "BufferImageStream"
+#define LOG_TAG "BufferMetadataStream"
 
 namespace OHOS {
 namespace Media {
-BufferImageStream::BufferImageStream() : currentOffset_(0) {}
+BufferMetadataStream::BufferMetadataStream() : currentOffset_(0) {}
 
-BufferImageStream::~BufferImageStream()
+BufferMetadataStream::~BufferMetadataStream()
 {
     Close();
 }
 
-ssize_t BufferImageStream::Write(uint8_t *data, ssize_t size)
+ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
 {
     if (buffer_.capacity() < static_cast<unsigned int>(currentOffset_ + size)) {
         // Calculate the required memory size, ensuring it is a multiple of 4k
@@ -52,10 +52,10 @@ ssize_t BufferImageStream::Write(uint8_t *data, ssize_t size)
     return size;
 }
 
-ssize_t BufferImageStream::Read(uint8_t *buf, ssize_t size)
+ssize_t BufferMetadataStream::Read(uint8_t *buf, ssize_t size)
 {
     if (buf == nullptr) {
-        IMAGE_LOGE("BufferImageStream::Read buf is nullptr");
+        IMAGE_LOGE("BufferMetadataStream::Read buf is nullptr");
         return -1;
     }
     ssize_t bytesToRead = std::min(size, static_cast<ssize_t>(buffer_.size() - static_cast<size_t>(currentOffset_)));
@@ -64,7 +64,7 @@ ssize_t BufferImageStream::Read(uint8_t *buf, ssize_t size)
     return bytesToRead;
 }
 
-int BufferImageStream::ReadByte()
+int BufferMetadataStream::ReadByte()
 {
     if (static_cast<size_t>(currentOffset_) >= buffer_.size()) {
         return -1;
@@ -73,7 +73,7 @@ int BufferImageStream::ReadByte()
     return buffer_[currentOffset_++];
 }
 
-long BufferImageStream::Seek(long offset, SeekPos pos)
+long BufferMetadataStream::Seek(long offset, SeekPos pos)
 {
     switch (pos) {
         case SeekPos::BEGIN:
@@ -98,43 +98,43 @@ long BufferImageStream::Seek(long offset, SeekPos pos)
     return currentOffset_;
 }
 
-long BufferImageStream::Tell()
+long BufferMetadataStream::Tell()
 {
     return currentOffset_;
 }
 
-bool BufferImageStream::IsEof()
+bool BufferMetadataStream::IsEof()
 {
     return static_cast<size_t>(currentOffset_) >= buffer_.size();
 }
 
-bool BufferImageStream::IsOpen()
+bool BufferMetadataStream::IsOpen()
 {
     return true;
 }
 
-void BufferImageStream::Close()
+void BufferMetadataStream::Close()
 {
     buffer_.clear();
     currentOffset_ = 0;
 }
 
-bool BufferImageStream::Open(OpenMode mode)
+bool BufferMetadataStream::Open(OpenMode mode)
 {
     return true;
 }
 
-bool BufferImageStream::Flush()
+bool BufferMetadataStream::Flush()
 {
     return true;
 }
 
-byte *BufferImageStream::GetAddr(bool isWriteable)
+byte *BufferMetadataStream::GetAddr(bool isWriteable)
 {
     return buffer_.data();
 }
 
-bool BufferImageStream::CopyFrom(ImageStream &src)
+bool BufferMetadataStream::CopyFrom(MetadataStream &src)
 {
     // Clear the current buffer
     buffer_.clear();
@@ -150,7 +150,7 @@ bool BufferImageStream::CopyFrom(ImageStream &src)
     size_t tempBufferSize = std::min<size_t>(estimatedSize, IMAGE_STREAM_PAGE_SIZE);
     std::vector<uint8_t> tempBuffer(tempBufferSize);
 
-    // Read data from the source ImageStream and write it to the current buffer
+    // Read data from the source MetadataStream and write it to the current buffer
     src.Seek(0, SeekPos::BEGIN);
     Seek(0, SeekPos::BEGIN);
     while (!src.IsEof()) {
@@ -163,7 +163,7 @@ bool BufferImageStream::CopyFrom(ImageStream &src)
     return true;
 }
 
-ssize_t BufferImageStream::GetSize()
+ssize_t BufferMetadataStream::GetSize()
 {
     return buffer_.size();
 }

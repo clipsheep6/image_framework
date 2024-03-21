@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_PNG_IMAGE_ACCESSOR_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_PNG_IMAGE_ACCESSOR_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_PNG_EXIF_METADATA_ACCESSOR_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_PNG_EXIF_METADATA_ACCESSOR_H
 
-#include "abstract_image_accessor.h"
+#include "abstract_exif_metadata_accessor.h"
 
 namespace OHOS {
 namespace Media {
@@ -24,15 +24,15 @@ static unsigned char pngSignature[] = {
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 };
 
-class PngImageAccessor : public AbstractImageAccessor {
+class PngExifMetadataAccessor : public AbstractExifMetadataAccessor {
 public:
-    PngImageAccessor(std::shared_ptr<ImageStream> &stream);
-    ~PngImageAccessor();
+    PngExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream);
+    ~PngExifMetadataAccessor();
 
-    virtual uint32_t ReadMetadata() override;
-    virtual uint32_t WriteMetadata() override;
-    virtual bool ReadExifBlob(DataBuf &blob) const override;
-    virtual uint32_t WriteExifBlob(DataBuf &blob) override;
+    virtual uint32_t Read() override;
+    virtual uint32_t Write() override;
+    bool ReadBlob(DataBuf &blob) const;
+    uint32_t WriteBlob(DataBuf &blob) override;
 
 private:
     bool IsPngType() const;

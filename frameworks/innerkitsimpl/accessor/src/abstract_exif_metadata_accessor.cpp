@@ -13,22 +13,22 @@
  * limitations under the License.
  */
 
-#include "abstract_image_accessor.h"
+#include "abstract_exif_metadata_accessor.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "AbstractImageAccessor"
+#define LOG_TAG "AbstractExifMetadataAccessor"
 
 namespace OHOS {
 namespace Media {
 
-AbstractImageAccessor::AbstractImageAccessor(std::shared_ptr<ImageStream> &stream) : imageStream_(stream) {}
+AbstractExifMetadataAccessor::AbstractExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream) : imageStream_(stream) {}
 
-AbstractImageAccessor::~AbstractImageAccessor() {}
+AbstractExifMetadataAccessor::~AbstractExifMetadataAccessor() {}
 
-bool AbstractImageAccessor::CreateExifMetadata()
+bool AbstractExifMetadataAccessor::Create()
 {
     if (exifMetadata_ == nullptr) {
         exifMetadata_ = std::make_shared<ExifMetadata>();
@@ -37,7 +37,7 @@ bool AbstractImageAccessor::CreateExifMetadata()
     return exifMetadata_->CreateExifdata();
 }
 
-bool AbstractImageAccessor::WriteToOutput(ImagePlugin::OutputDataStream &output)
+bool AbstractExifMetadataAccessor::WriteToOutput(ImagePlugin::OutputDataStream &output)
 {
     if (imageStream_ == nullptr) {
         return false;
@@ -46,7 +46,7 @@ bool AbstractImageAccessor::WriteToOutput(ImagePlugin::OutputDataStream &output)
     return output.Write(imageStream_->GetAddr(), imageStream_->GetSize());
 }
 
-std::shared_ptr<ExifMetadata> AbstractImageAccessor::GetExifMetadata()
+std::shared_ptr<ExifMetadata> AbstractExifMetadataAccessor::Get()
 {
     return exifMetadata_;
 }

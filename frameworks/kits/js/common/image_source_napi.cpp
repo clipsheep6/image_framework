@@ -21,7 +21,7 @@
 #include "string_ex.h"
 #include "image_trace.h"
 #include "hitrace_meter.h"
-#include "exif_metadata_converter.h"
+#include "exif_metadata_formatter.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "color_space_object_convertor.h"
 #endif
@@ -1488,7 +1488,7 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContext(napi_env env, napi
 
 static bool CheckExifDataValue(const std::string &key, const std::string &value, std::string &errorInfo)
 {
-    bool isError = ExifMetadataConverter::Validate(key, value);
+    bool isError = ExifMetadatFormatter::Validate(key, value);
     if (isError) {
         errorInfo = key + "has invalid exif value: ";
         errorInfo.append(value);

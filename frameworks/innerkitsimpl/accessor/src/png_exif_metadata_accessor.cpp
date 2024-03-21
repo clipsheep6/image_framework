@@ -16,9 +16,9 @@
 #include "data_buf.h"
 #include "exif_metadata.h"
 #include "image_log.h"
-#include "image_stream.h"
+#include "metadata_stream.h"
 #include "media_errors.h"
-#include "png_image_accessor.h"
+#include "png_exif_metadata_accessor.h"
 #include "png_image_chunk_utils.h"
 #include "tiff_parser.h"
 
@@ -26,7 +26,7 @@
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "PngImageAccessor"
+#define LOG_TAG "PngExifMetadataAccessor"
 
 namespace OHOS {
 namespace Media {
@@ -43,16 +43,16 @@ namespace {
     constexpr auto PNG_SIGN_SIZE = 8;
 }
 
-PngImageAccessor::PngImageAccessor(std::shared_ptr<ImageStream> &stream)
-    : AbstractImageAccessor(stream)
+PngExifMetadataAccessor::PngExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
+    : AbstractExifMetadataAccessor(stream)
 {
 }
 
-PngImageAccessor::~PngImageAccessor()
+PngExifMetadataAccessor::~PngExifMetadataAccessor()
 {
 }
 
-bool PngImageAccessor::IsPngType() const
+bool PngExifMetadataAccessor::IsPngType() const
 {
     if (imageStream_->IsEof()) {
         return false;
@@ -67,12 +67,12 @@ bool PngImageAccessor::IsPngType() const
     return !memcmp(buf, pngSignature, PNG_SIGN_SIZE);
 }
 
-size_t PngImageAccessor::ReadChunk(DataBuf &buffer) const
+size_t PngExifMetadataAccessor::ReadChunk(DataBuf &buffer) const
 {
     return imageStream_->Read(buffer.Data(), buffer.Size());
 }
 
-bool PngImageAccessor::FindTiffFromText(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
+bool PngExifMetadataAccessor::FindTiffFromText(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
 {
     PngImageChunkUtils::TextChunkType txtType;
     if (chunkType == PNG_CHUNK_TEXT) {
@@ -90,12 +90,12 @@ bool PngImageAccessor::FindTiffFromText(const DataBuf &data, const std::string c
     return true;
 }
 
-bool PngImageAccessor::ProcessExifData(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const
+bool PngExifMetadataAccessor::ProcessExifData(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const
 {
     DataBuf chunkData(chunkLength);
     if (chunkLength > 0) {
         if (ReadChunk(chunkData) != chunkData.Size()) {
-            IMAGE_LOGE("ReadMetadata: Read chunk data error.");
+            IMAGE_LOGE("Read: Read chunk data error.");
             return false;
         }
     }
@@ -106,7 +106,7 @@ bool PngImageAccessor::ProcessExifData(DataBuf &blob, std::string chunkType, uin
     return true;
 }
 
-bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
+bool PngExifMetadataAccessor::ReadBlob(DataBuf &blob) const
 {
     if (!imageStream_->IsOpen()) {
         IMAGE_LOGE("Output image stream is not open.");
@@ -153,11 +153,11 @@ bool PngImageAccessor::ReadExifBlob(DataBuf &blob) const
     return true;
 }
 
-uint32_t PngImageAccessor::ReadMetadata()
+uint32_t PngExifMetadataAccessor::Read()
 {
     DataBuf tiffBuf;
-    if (!ReadExifBlob(tiffBuf)) {
-        IMAGE_LOGE("ReadExifBlob error.");
+    if (!ReadBlob(tiffBuf)) {
+        IMAGE_LOGE("ReadBlob error.");
         return ERR_IMAGE_SOURCE_DATA;
     }
     ExifData *exifData;
@@ -176,12 +176,12 @@ uint32_t PngImageAccessor::ReadMetadata()
     return SUCCESS;
 }
 
-uint32_t PngImageAccessor::WriteMetadata()
+uint32_t PngExifMetadataAccessor::Write()
 {
     return ERR_IMAGE_DATA_UNSUPPORT;
 }
 
-uint32_t PngImageAccessor::WriteExifBlob(DataBuf &blob)
+uint32_t PngExifMetadataAccessor::WriteBlob(DataBuf &blob)
 {
     return ERR_IMAGE_DATA_UNSUPPORT;
 }

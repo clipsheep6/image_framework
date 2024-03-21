@@ -29,8 +29,8 @@
 #include "data_buf.h"
 #include "ext_pixel_convert.h"
 #include "ext_wstream.h"
-#include "image_accessor_factory.h"
-#include "image_accessor_interface.h"
+#include "metadata_accessor_factory.h"
+#include "metadata_accessor.h"
 #include "image_log.h"
 #include "image_type_converter.h"
 #include "image_utils.h"
@@ -177,8 +177,8 @@ uint32_t ExtEncoder::DoFinalizeEncode()
         return errorCode;
     }
 
-    if (pixelmap_->GetExifMetadata() == nullptr ||
-        pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
+    if (pixelmap_->Get() == nullptr ||
+        pixelmap_->Get()->GetExifData() == nullptr) {
         ExtWStream wStream(output_);
         if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
             IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
@@ -189,7 +189,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
 
     unsigned char *dataPtr;
     uint32_t datSize = 0;
-    auto exifData = pixelmap_->GetExifMetadata()->GetExifData();
+    auto exifData = pixelmap_->Get()->GetExifData();
     TiffParser::Encode(&dataPtr, datSize, exifData);
     DataBuf exifBlob(dataPtr, datSize);
     TempStream tStream;
@@ -198,9 +198,9 @@ uint32_t ExtEncoder::DoFinalizeEncode()
         return ERR_IMAGE_ENCODE_FAILED;
     }
 
-    auto destImageAccessor = ImageAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
+    auto destImageAccessor = MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
     if (destImageAccessor != nullptr) {
-        if (destImageAccessor->WriteExifBlob(exifBlob) == SUCCESS) {
+        if (destImageAccessor->WriteBlob(exifBlob) == SUCCESS) {
             if (destImageAccessor->WriteToOutput(*output_)){
                 return SUCCESS;
             }

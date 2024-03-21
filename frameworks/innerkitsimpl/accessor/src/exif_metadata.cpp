@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "exif_metadata.h"
-#include "exif_metadata_converter.h"
+#include "exif_metadata_formatter.h"
 #include "image_log.h"
 #include "libexif/exif-format.h"
 #include "libexif/exif-tag.h"
@@ -444,7 +444,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         return false;
     }
     
-    auto result = ExifMetadataConverter::Convert(key, value);
+    auto result = ExifMetadatFormatter::Format(key, value);
     if (result.first) {
         IMAGE_LOGE("SetValue ValidateAndConvert fail.");
         return false;

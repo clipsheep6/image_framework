@@ -13,27 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_INTERFACE_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_IMAGE_ACCESSOR_INTERFACE_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_ACCESSOR_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_ACCESSOR_H
 
 #include <memory>
 
 #include "data_buf.h"
 #include "exif_metadata.h"
-#include "image_stream.h"
+#include "metadata_stream.h"
 #include "output_data_stream.h"
 
 namespace OHOS {
 namespace Media {
-class ImageAccessorInterface {
+class MetadataAccessor {
 public:
-    virtual uint32_t ReadMetadata() = 0;
-    virtual uint32_t WriteMetadata() = 0;
-    virtual bool CreateExifMetadata() = 0;
+    virtual uint32_t Read() = 0;
+    virtual uint32_t Write() = 0;
+    virtual bool Create() = 0;
+    virtual uint32_t WriteBlob(DataBuf &blob) = 0;
     virtual bool WriteToOutput(ImagePlugin::OutputDataStream &output) = 0;
-    virtual bool ReadExifBlob(DataBuf &blob) const = 0;
-    virtual uint32_t WriteExifBlob(DataBuf &blob) = 0;
-    virtual std::shared_ptr<ExifMetadata> GetExifMetadata() = 0;
+    virtual std::shared_ptr<ExifMetadata> Get() = 0;
 };
 } // namespace Media
 } // namespace OHOS

@@ -13,25 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_ABSTRACT_IMAGE_ACCESSOR_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_ABSTRACT_IMAGE_ACCESSOR_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_ABSTRACT_EXIF_METADATA_ACCESSOR_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_ABSTRACT_EXIF_METADATA_ACCESSOR_H
 
-#include "image_accessor_interface.h"
+#include "exif_metadata.h"
+#include "metadata_accessor.h"
 
 namespace OHOS {
 namespace Media {
-class AbstractImageAccessor : public ImageAccessorInterface {
+class AbstractExifMetadataAccessor : public MetadataAccessor {
 public:
-    AbstractImageAccessor(std::shared_ptr<ImageStream> &stream);
-    virtual ~AbstractImageAccessor();
+    AbstractExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream);
+    virtual ~AbstractExifMetadataAccessor();
 
-    virtual bool CreateExifMetadata() override;
-    virtual std::shared_ptr<ExifMetadata> GetExifMetadata() override;
+    virtual bool Create() override;
+    virtual std::shared_ptr<ExifMetadata> Get() override;
     virtual bool WriteToOutput(ImagePlugin::OutputDataStream &output) override;
 
 protected:
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
-    std::shared_ptr<ImageStream> imageStream_ = nullptr;
+    std::shared_ptr<MetadataStream> imageStream_ = nullptr;
 };
 } // namespace Media
 } // namespace OHOS

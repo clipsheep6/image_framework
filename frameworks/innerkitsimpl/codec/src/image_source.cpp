@@ -43,8 +43,8 @@
 #include "post_proc.h"
 #include "securec.h"
 #include "source_stream.h"
-#include "image_accessor_factory.h"
-#include "image_accessor_interface.h"
+#include "metadata_accessor_factory.h"
+#include "metadata_accessor.h"
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -1004,7 +1004,7 @@ uint32_t ImageSource::ModifyImageProperty(const std::string &key, const std::str
     return SUCCESS;
 }
 
-uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessorInterface> imageAccessor,
+uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<MetadataAccessor> imageAccessor,
     const std::string &key, const std::string &value)
 {
     if (imageAccessor == nullptr) {
@@ -1012,24 +1012,24 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<ImageAccessorInterface
         return ERR_IMAGE_SOURCE_DATA;
     }
 
-    uint32_t ret = imageAccessor->ReadMetadata();
+    uint32_t ret = imageAccessor->Read();
     if (ret == ERR_IMAGE_DECODE_FAILED) {
         IMAGE_LOGE("[ImageSource]Decode image exif failed.");
         return ret;
     }
 
-    if (imageAccessor->GetExifMetadata() == nullptr) {
-        if (!imageAccessor->CreateExifMetadata()) {
+    if (imageAccessor->Get() == nullptr) {
+        if (!imageAccessor->Create()) {
             IMAGE_LOGE("[ImageSource]Create ExifMetadata failed.");
             return ERR_IMAGE_SOURCE_DATA;
         }
     }
 
-    auto exifDataPtr = imageAccessor->GetExifMetadata();
+    auto exifDataPtr = imageAccessor->Get();
     if (!exifDataPtr->SetValue(key, value)) {
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
-    ret = imageAccessor->WriteMetadata();
+    ret = imageAccessor->Write();
     if (ret != SUCCESS) {
         return ret;
     }
@@ -1042,7 +1042,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
 
-    auto imageAccessor = ImageAccessorFactory::Create(path);
+    auto imageAccessor = MetadataAccessorFactory::Create(path);
     return ModifyImageProperty(imageAccessor, key, value);
 }
 
@@ -1051,7 +1051,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
 
-    auto imageAccessor = ImageAccessorFactory::Create(fd);
+    auto imageAccessor = MetadataAccessorFactory::Create(fd);
     return ModifyImageProperty(imageAccessor, key, value);
 }
 
@@ -1071,19 +1071,19 @@ uint32_t ImageSource::CreatExifMetadataByImageSource()
 
     uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
     uint32_t size = sourceStreamPtr_->GetStreamSize();
-    auto imageAccessor = ImageAccessorFactory::Create(ptr, size);
+    auto imageAccessor = MetadataAccessorFactory::Create(ptr, size);
     if (imageAccessor == nullptr) {
         return ERR_IMAGE_SOURCE_DATA;
     }
 
-    imageAccessor->ReadMetadata();
-    if (imageAccessor->GetExifMetadata() == nullptr) {
-        if (!imageAccessor->CreateExifMetadata()) {
+    imageAccessor->Read();
+    if (imageAccessor->Get() == nullptr) {
+        if (!imageAccessor->Create()) {
             return ERR_IMAGE_SOURCE_DATA;
         }
     }
 
-    exifMetadata_ = imageAccessor->GetExifMetadata();
+    exifMetadata_ = imageAccessor->Get();
     return SUCCESS;
 }
 

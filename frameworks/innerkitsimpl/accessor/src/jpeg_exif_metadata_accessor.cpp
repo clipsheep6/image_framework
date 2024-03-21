@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#include "jpeg_image_accessor.h"
+#include "jpeg_exif_metadata_accessor.h"
 
 #include <libexif/exif-data.h>
 
-#include "file_image_stream.h"
+#include "file_metadata_stream.h"
 #include "image_log.h"
 #include "media_errors.h"
 #include "tiff_parser.h"
@@ -26,7 +26,7 @@
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "JpegImageAccessor"
+#define LOG_TAG "JpegExifMetadataAccssor"
 
 namespace OHOS {
 namespace Media {
@@ -52,15 +52,15 @@ namespace {
     constexpr auto JPEG_DATA_MAX_SIZE = 0xffff;
 }
 
-JpegImageAccessor::JpegImageAccessor(std::shared_ptr<ImageStream> &stream)
-    : AbstractImageAccessor(stream) {}
+JpegExifMetadataAccssor::JpegExifMetadataAccssor(std::shared_ptr<MetadataStream> &stream)
+    : AbstractExifMetadataAccessor(stream) {}
 
-JpegImageAccessor::~JpegImageAccessor() {}
+JpegExifMetadataAccssor::~JpegExifMetadataAccssor() {}
 
-uint32_t JpegImageAccessor::ReadMetadata()
+uint32_t JpegExifMetadataAccssor::Read()
 {
     DataBuf dataBuf;
-    if (!ReadExifBlob(dataBuf)) {
+    if (!ReadBlob(dataBuf)) {
         IMAGE_LOGE("Image stream doesnot have dataBuf");
         return ERR_IMAGE_SOURCE_DATA;
     }
@@ -77,7 +77,7 @@ uint32_t JpegImageAccessor::ReadMetadata()
     return SUCCESS;
 }
 
-bool JpegImageAccessor::ReadExifBlob(DataBuf &blob) const
+bool JpegExifMetadataAccssor::ReadBlob(DataBuf &blob) const
 {
     if (!imageStream_->IsOpen()) {
         IMAGE_LOGE("Output image stream not open");
@@ -112,7 +112,7 @@ bool JpegImageAccessor::ReadExifBlob(DataBuf &blob) const
     return false;
 }
 
-uint32_t JpegImageAccessor::WriteMetadata()
+uint32_t JpegExifMetadataAccssor::Write()
 {
     uint8_t *dataBlob = nullptr;
     uint32_t size = 0;
@@ -131,7 +131,7 @@ uint32_t JpegImageAccessor::WriteMetadata()
     return result;
 }
 
-uint32_t JpegImageAccessor::WriteExifBlob(DataBuf &blob)
+uint32_t JpegExifMetadataAccssor::WriteBlob(DataBuf &blob)
 {
     byte *dataBlob = nullptr;
     uint32_t size = 0;
@@ -143,7 +143,7 @@ uint32_t JpegImageAccessor::WriteExifBlob(DataBuf &blob)
     return UpdateData(dataBlob, size);
 }
 
-int JpegImageAccessor::FindNextMarker() const
+int JpegExifMetadataAccssor::FindNextMarker() const
 {
     int marker = -1;
     do {
@@ -171,7 +171,7 @@ bool HasLength(byte marker)
     return true;
 }
 
-std::pair<std::array<byte, 2>, uint16_t> JpegImageAccessor::ReadSegmentLength(uint8_t marker) const
+std::pair<std::array<byte, 2>, uint16_t> JpegExifMetadataAccssor::ReadSegmentLength(uint8_t marker) const
 {
     std::array<byte, READ_BYTES> buf{0, 0};
     uint16_t size{0};
@@ -185,7 +185,7 @@ std::pair<std::array<byte, 2>, uint16_t> JpegImageAccessor::ReadSegmentLength(ui
     return {buf, size};
 }
 
-DataBuf JpegImageAccessor::ReadNextSegment(byte marker)
+DataBuf JpegExifMetadataAccssor::ReadNextSegment(byte marker)
 {
     const auto [sizebuf, size] = ReadSegmentLength(marker);
     DataBuf buf(size);
@@ -197,14 +197,14 @@ DataBuf JpegImageAccessor::ReadNextSegment(byte marker)
     return buf;
 }
 
-bool JpegImageAccessor::GetExifEncodeBlob(uint8_t **dataBlob, uint32_t &size)
+bool JpegExifMetadataAccssor::GetExifEncodeBlob(uint8_t **dataBlob, uint32_t &size)
 {
-    if (this->GetExifMetadata() == nullptr) {
+    if (this->Get() == nullptr) {
         IMAGE_LOGE("Exif metadata empty");
         return false;
     }
 
-    ExifData *exifData = this->GetExifMetadata()->GetExifData();
+    ExifData *exifData = this->Get()->GetExifData();
     TiffParser::EncodeJpegExif(dataBlob, size, exifData);
 
     if (dataBlob == nullptr || *dataBlob == nullptr) {
@@ -215,7 +215,7 @@ bool JpegImageAccessor::GetExifEncodeBlob(uint8_t **dataBlob, uint32_t &size)
     return (size > 0);
 }
 
-bool JpegImageAccessor::GetExifBlob(const DataBuf &blob, uint8_t **dataBlob, uint32_t &size)
+bool JpegExifMetadataAccssor::GetExifBlob(const DataBuf &blob, uint8_t **dataBlob, uint32_t &size)
 {
     if (blob.Empty()) {
         IMAGE_LOGE("Image exif blob data empty");
@@ -228,7 +228,7 @@ bool JpegImageAccessor::GetExifBlob(const DataBuf &blob, uint8_t **dataBlob, uin
     return true;
 }
 
-bool JpegImageAccessor::WriteHeader(BufferImageStream &bufStream)
+bool JpegExifMetadataAccssor::WriteHeader(BufferMetadataStream &bufStream)
 {
     byte tmpBuf[EXIF_ID_LENGTH];
     tmpBuf[0] = JPEG_MARKER_HEADER;
@@ -240,7 +240,7 @@ bool JpegImageAccessor::WriteHeader(BufferImageStream &bufStream)
     return true;
 }
 
-std::tuple<size_t, size_t> JpegImageAccessor::GetInsertPosAndMarkerAPP1()
+std::tuple<size_t, size_t> JpegExifMetadataAccssor::GetInsertPosAndMarkerAPP1()
 {
     size_t markerCount = 0;
     size_t skipExifSeqNum = -1;
@@ -265,7 +265,7 @@ std::tuple<size_t, size_t> JpegImageAccessor::GetInsertPosAndMarkerAPP1()
     return std::make_tuple(insertPos, skipExifSeqNum);
 }
 
-bool JpegImageAccessor::WriteData(BufferImageStream &bufStream, uint8_t *dataBlob, uint32_t size)
+bool JpegExifMetadataAccssor::WriteData(BufferMetadataStream &bufStream, uint8_t *dataBlob, uint32_t size)
 {
     std::array<byte, APP1_HEADER_LENGTH> tmpBuf;
     tmpBuf[0] = JPEG_MARKER_HEADER;
@@ -299,7 +299,7 @@ bool JpegImageAccessor::WriteData(BufferImageStream &bufStream, uint8_t *dataBlo
     return true;
 }
 
-bool JpegImageAccessor::WriteSegment(BufferImageStream &bufStream, uint8_t marker, const DataBuf &buf)
+bool JpegExifMetadataAccssor::WriteSegment(BufferMetadataStream &bufStream, uint8_t marker, const DataBuf &buf)
 {
     std::array<byte, SEGMENT_LENGTH_SIZE> tmpBuf;
     tmpBuf[0] = JPEG_MARKER_HEADER;
@@ -316,7 +316,7 @@ bool JpegImageAccessor::WriteSegment(BufferImageStream &bufStream, uint8_t marke
     return true;
 }
 
-bool JpegImageAccessor::WriteTail(BufferImageStream &bufStream)
+bool JpegExifMetadataAccssor::WriteTail(BufferMetadataStream &bufStream)
 {
     std::array<byte, SEGMENT_LENGTH_SIZE> tmpBuf;
     tmpBuf[0] = JPEG_MARKER_HEADER;
@@ -329,7 +329,7 @@ bool JpegImageAccessor::WriteTail(BufferImageStream &bufStream)
     return true;
 }
 
-bool JpegImageAccessor::CopyRestData(BufferImageStream &bufStream)
+bool JpegExifMetadataAccssor::CopyRestData(BufferMetadataStream &bufStream)
 {
     DataBuf buf(READ_WRITE_BLOCK);
     size_t readSize = imageStream_->Read(buf.Data(), buf.Size());
@@ -344,7 +344,7 @@ bool JpegImageAccessor::CopyRestData(BufferImageStream &bufStream)
     return true;
 }
 
-bool JpegImageAccessor::UpdateExifMetadata(BufferImageStream &bufStream, uint8_t *dataBlob, uint32_t size)
+bool JpegExifMetadataAccssor::UpdateExifMetadata(BufferMetadataStream &bufStream, uint8_t *dataBlob, uint32_t size)
 {
     size_t markerCount = 0;
     auto [insertPos, skipExifSeqNum] = GetInsertPosAndMarkerAPP1();
@@ -382,9 +382,9 @@ bool JpegImageAccessor::UpdateExifMetadata(BufferImageStream &bufStream, uint8_t
     return CopyRestData(bufStream);
 }
 
-uint32_t JpegImageAccessor::UpdateData(uint8_t *dataBlob, uint32_t size)
+uint32_t JpegExifMetadataAccssor::UpdateData(uint8_t *dataBlob, uint32_t size)
 {
-    BufferImageStream tmpBufStream;
+    BufferMetadataStream tmpBufStream;
     if (!tmpBufStream.Open(OpenMode::ReadWrite)) {
         IMAGE_LOGE("Image temp stream open failed");
         return ERR_IMAGE_SOURCE_DATA;

@@ -273,7 +273,7 @@ public:
         isAstc_ = isAstc;
     }
 
-    NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata()
+    NATIVEEXPORT std::shared_ptr<ExifMetadata> Get()
     {
         return exifMetadata_;
     }

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_IMAGE_STREAM_H
-#define INTERFACES_INNERKITS_INCLUDE_IMAGE_STREAM_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_STREAM_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_STREAM_H
 
 #include <cstddef>
 #include <cstdint>
@@ -40,7 +40,7 @@ enum class OpenMode {
 #define IMAGE_STREAM_ERROR_BUFFER_SIZE 255
 
 /**
- * @class ImageStream
+ * @class MetadataStream
  * @brief A class for handling image streams.
  *
  * This class provides methods for reading from and seeking within an image stream.
@@ -50,14 +50,14 @@ enum class OpenMode {
  * If 'long' is 32-bit, the maximum file size is 2GB.
  * If 'long' is 64-bit, the maximum file size is 8ZB (Zettabytes).
  */
-class ImageStream {
+class MetadataStream {
 public:
-    virtual ~ImageStream() {}
+    virtual ~MetadataStream() {}
 
     /* *
      * Open the image stream with a specific mode.
-     * For FileImageStream, OpenMode::ReadWrite and OpenMode::Read have distinct behaviors.
-     * For BufferImageStream, only OpenMode::ReadWrite is applicable. If OpenMode::Read is
+     * For FileMetadataStream, OpenMode::ReadWrite and OpenMode::Read have distinct behaviors.
+     * For BufferMetadataStream, only OpenMode::ReadWrite is applicable. If OpenMode::Read is
      * passed, it will be ignored as there is no specific read-only mode implemented.
      * @param mode The mode to open the image stream.
      * @return true if it opens successfully, false otherwise.
@@ -66,17 +66,17 @@ public:
 
     /* *
      * Check if the image stream is open.
-     * For FileImageStream, this function is meaningful and checks if the file is open.
-     * For BufferImageStream, this function always returns true.
+     * For FileMetadataStream, this function is meaningful and checks if the file is open.
+     * For BufferMetadataStream, this function always returns true.
      * @return true if it is open, false otherwise.
      */
     virtual bool IsOpen() = 0;
 
     /* *
-     * Flush the image stream. For FileImageStream, this function is used to clear the buffer and
+     * Flush the image stream. For FileMetadataStream, this function is used to clear the buffer and
      * write the buffered data into the file. This operation ensures that all modifications are
-     * written to the file, so other FileImageStream objects opening the same file can see these
-     * modifications. For BufferImageStream, this function may not have a specific use as it might
+     * written to the file, so other FileMetadataStream objects opening the same file can see these
+     * modifications. For BufferMetadataStream, this function may not have a specific use as it might
      * only operate data in memory and does not involve any file operations. However, it could still
      * be used to trigger certain behaviors, such as notifying other objects that data has been
      * modified, or releasing resources that are no longer needed.
@@ -140,18 +140,18 @@ public:
     virtual byte *GetAddr(bool isWriteable = false) = 0;
 
     /* *
-     * Copy the entire content from the source ImageStream to the current
-     * ImageStream. After the copy operation, the current position of both the source
-     * ImageStream and the current ImageStream will be at their respective ends.
-     * @param src The source ImageStream, this function will read data from this
-     * ImageStream.
+     * Copy the entire content from the source MetadataStream to the current
+     * MetadataStream. After the copy operation, the current position of both the source
+     * MetadataStream and the current MetadataStream will be at their respective ends.
+     * @param src The source MetadataStream, this function will read data from this
+     * MetadataStream.
      * @return true if the copy is successful, false otherwise.
      */
-    virtual bool CopyFrom(ImageStream &src) = 0;
+    virtual bool CopyFrom(MetadataStream &src) = 0;
 
     /* *
-     * Get the size of the ImageStream
-     * @return The size of the ImageStream
+     * Get the size of the MetadataStream
+     * @return The size of the MetadataStream
      */
     virtual ssize_t GetSize() = 0;
 

@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include "exif_metadata_converter.h"
+#include "exif_metadata_formatter.h"
 #include "image_log.h"
 
 using namespace OHOS::Media;
@@ -25,10 +25,10 @@ namespace OHOS {
 namespace Multimedia {
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test_exif.jpg";
 
-class MetadataConverterTest : public testing::Test {
+class ExifMetadataFormatterTest : public testing::Test {
 public:
-    MetadataConverterTest() {}
-    ~MetadataConverterTest() {}
+    ExifMetadataFormatterTest() {}
+    ~ExifMetadataFormatterTest() {}
 };
 
 std::string MODIFYDATA[][3] = {
@@ -69,30 +69,30 @@ std::string MODIFYDATA[][3] = {
     {"UserComment", "comm", "comm"},
 };
 
-HWTEST_F(MetadataConverterTest, Validate001, TestSize.Level3)
+HWTEST_F(ExifMetadataFormatterTest, Validate001, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 start";
-    ASSERT_EQ(ExifMetadataConverter::Validate("BitsPerSample", "9,9,8"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("Orientation", "1"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("ImageLength", "100"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("ImageWidth", "100"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitude", "39,54"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitude", "39,54,20"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitude", "39,54"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitude", "39,54,20"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLatitudeRef", "N"), 0);
-    ASSERT_EQ(ExifMetadataConverter::Validate("GPSLongitudeRef", "E"), 0);
-    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate001 end";
+    GTEST_LOG_(INFO) << "ExifMetadataFormatterTest: Validate001 start";
+    ASSERT_EQ(ExifMetadatFormatter::Validate("BitsPerSample", "9,9,8"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("Orientation", "1"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("ImageLength", "100"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("ImageWidth", "100"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("GPSLatitude", "39,54"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("GPSLatitude", "39,54,20"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("GPSLongitude", "39,54"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("GPSLongitude", "39,54,20"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("GPSLatitudeRef", "N"), 0);
+    ASSERT_EQ(ExifMetadatFormatter::Validate("GPSLongitudeRef", "E"), 0);
+    GTEST_LOG_(INFO) << "ExifMetadataFormatterTest: Validate001 end";
 }
 
-HWTEST_F(MetadataConverterTest, Validate002, TestSize.Level3)
+HWTEST_F(ExifMetadataFormatterTest, Validate002, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate002 start";
-    ASSERT_NE(ExifMetadataConverter::Validate("BitsPerSample", "xx"), 0);
-    ASSERT_NE(ExifMetadataConverter::Validate("ImageLength", "XXX"), 0);
-    ASSERT_NE(ExifMetadataConverter::Validate("GPSLatitudeRef", "C"), 0);
-    ASSERT_NE(ExifMetadataConverter::Validate("GPSLongitudeRef", "C"), 0);
-    GTEST_LOG_(INFO) << "MetadataConverterTest: Validate002 end";
+    GTEST_LOG_(INFO) << "ExifMetadataFormatterTest: Validate002 start";
+    ASSERT_NE(ExifMetadatFormatter::Validate("BitsPerSample", "xx"), 0);
+    ASSERT_NE(ExifMetadatFormatter::Validate("ImageLength", "XXX"), 0);
+    ASSERT_NE(ExifMetadatFormatter::Validate("GPSLatitudeRef", "C"), 0);
+    ASSERT_NE(ExifMetadatFormatter::Validate("GPSLongitudeRef", "C"), 0);
+    GTEST_LOG_(INFO) << "ExifMetadataFormatterTest: Validate002 end";
 }
 } // namespace Multimedia
 } // namespace OHOS

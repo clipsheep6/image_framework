@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_DATA_BUF
-#define INTERFACES_INNERKITS_INCLUDE_DATA_BUF
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF
 
 // standard includes
 #include <algorithm>
@@ -234,4 +234,4 @@ void US2Data(byte *buf, uint16_t value, ByteOrder byteOrder);
 } // namespace Media
 } // namespace OHOS
 
-#endif // #ifndef INTERFACES_INNERKITS_INCLUDE_DATA_BUF
+#endif // #ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF

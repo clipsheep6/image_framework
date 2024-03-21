@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_EXIF_METADATA_CONVERTER_H
-#define INTERFACES_INNERKITS_INCLUDE_EXIF_METADATA_CONVERTER_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_METADATA_FORMATTER_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_METADATA_FORMATTER_H
 
 #include <map>
 #include <string>
@@ -29,9 +29,9 @@ struct TagDetails {
 
 using ValueFormatDelegate = std::pair<std::function<int32_t (std::string&, const std::string&)>, std::string>;
 
-class ExifMetadataConverter {
+class ExifMetadatFormatter {
 public:
-    static std::pair<int32_t, std::string> Convert(const std::string &keyName, const std::string &value);
+    static std::pair<int32_t, std::string> Format(const std::string &keyName, const std::string &value);
     static int32_t Validate(const std::string &keyName, const std::string &value);
 
 private:
@@ -91,4 +91,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif // INTERFACES_INNERKITS_INCLUDE_EXIF_META_DATA_VALIDATE_H
+#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_META_DATA_VALIDATE_H

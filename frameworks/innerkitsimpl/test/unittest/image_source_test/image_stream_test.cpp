@@ -39,11 +39,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#define INTERFACES_INNERKITS_INCLUDE_FILE_IMAGE_STREAM_TESTS_PRIVATE
-#define INTERFACES_INNERKITS_INCLUDE_BUFFER_IMAGE_STREAM_TESTS_PRIVATE
-#include "image_stream.h"
-#include "buffer_image_stream.h"
-#include "file_image_stream.h"
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_TESTS_PRIVATE
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_TESTS_PRIVATE
+#include "metadata_stream.h"
+#include "buffer_metadata_stream.h"
+#include "file_metadata_stream.h"
 #include "data_buf.h"
 
 using namespace testing::ext;
@@ -181,10 +181,10 @@ std::string CreateIfNotExit(const std::string &filePath)
     return filePath;
 }
 
-class ImageStreamTest : public testing::Test {
+class MetadataStreamTest : public testing::Test {
 public:
-    ImageStreamTest() {}
-    ~ImageStreamTest() override {}
+    MetadataStreamTest() {}
+    ~MetadataStreamTest() override {}
     std::string filePath = "/data/local/tmp/image/testfile.txt";
     std::string filePathSource = "/data/local/tmp/image/test_exif_test.jpg";
     std::string filePathDest = "/data/local/tmp/image/testfile_dest.png";
@@ -253,8 +253,8 @@ public:
     }
 };
 
-bool ImageStreamTest::alreadyExist = false;
-const std::string ImageStreamTest::tmpDirectory = "/data/local/tmp/image";
+bool MetadataStreamTest::alreadyExist = false;
+const std::string MetadataStreamTest::tmpDirectory = "/data/local/tmp/image";
 
 class MockFileWrapper : public FileWrapper {
 public:
@@ -288,15 +288,15 @@ public:
 };
 
 /**
- * @tc.name: FileImageStream_Write001
- * @tc.desc: Test the Write function of FileImageStream, whether it can write
+ * @tc.name: FileMetadataStream_Write001
+ * @tc.desc: Test the Write function of FileMetadataStream, whether it can write
  * normally and verify the written data
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write001, TestSize.Level3)
 {
-    // Create a FileImageStream object
-    FileImageStream stream(CreateIfNotExit(filePath));
+    // Create a FileMetadataStream object
+    FileMetadataStream stream(CreateIfNotExit(filePath));
 
     // Open the file
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
@@ -334,34 +334,34 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Write002
- * @tc.desc: Test the Write function of FileImageStream when the file is not
+ * @tc.name: FileMetadataStream_Write002
+ * @tc.desc: Test the Write function of FileMetadataStream when the file is not
  * open
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Write002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write002, TestSize.Level3)
 {
-    FileImageStream stream(filePath);
+    FileMetadataStream stream(filePath);
     byte data[SIZE_10] = {0};
     ASSERT_EQ(stream.Write(data, sizeof(data)), -1);
 }
 
 /**
- * @tc.name: FileImageStream_Write003
- * @tc.desc: Test the Write function of FileImageStream when the amount of data
+ * @tc.name: FileMetadataStream_Write003
+ * @tc.desc: Test the Write function of FileMetadataStream when the amount of data
  * written exceeds the remaining space in the file system
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write003, TestSize.Level3)
 {
-    // This test case requires an ImageStream object that can simulate a read
+    // This test case requires an MetadataStream object that can simulate a read
     // failure, so mock technology may be needed in actual testing
     auto mockFileWrapper = std::make_unique<MockFileWrapper>();
     // Set the behavior of the write function to always return -1, simulating a
     // write failure
     EXPECT_CALL(*mockFileWrapper.get(), FWrite(_, _, _, _)).WillOnce(Return(-1));
 
-    FileImageStream stream(CreateIfNotExit(filePath), std::move(mockFileWrapper));
+    FileMetadataStream stream(CreateIfNotExit(filePath), std::move(mockFileWrapper));
 
     // Test the Write function
     byte buffer[SIZE_1024];
@@ -370,15 +370,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write003, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Write004
- * @tc.desc: Test the Write function of FileImageStream when all data from the
+ * @tc.name: FileMetadataStream_Write004
+ * @tc.desc: Test the Write function of FileMetadataStream when all data from the
  * source image stream has been read
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write004, TestSize.Level3)
 {
-    FileImageStream stream1(filePathSource);
-    FileImageStream stream2(CreateIfNotExit(filePathDest));
+    FileMetadataStream stream1(filePathSource);
+    FileMetadataStream stream2(CreateIfNotExit(filePathDest));
     ASSERT_TRUE(stream1.Open(OpenMode::ReadWrite));
     ASSERT_TRUE(stream2.Open(OpenMode::ReadWrite));
     // Read all data from stream1
@@ -396,14 +396,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write004, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Write005
- * @tc.desc: Test the Write function of FileImageStream when reading data from
+ * @tc.name: FileMetadataStream_Write005
+ * @tc.desc: Test the Write function of FileMetadataStream when reading data from
  * the source image stream fails
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write005, TestSize.Level3)
 {
-    // This test case requires an ImageStream object that can simulate a read
+    // This test case requires an MetadataStream object that can simulate a read
     // failure, so mock technology may be needed in actual testing
     auto mockSourceFileWrapper = std::make_unique<MockFileWrapper>();
     auto mockDestFileWrapper = std::make_unique<MockFileWrapper>();
@@ -413,8 +413,8 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
     EXPECT_CALL(*mockDestFileWrapper.get(), FWrite(_, _, _, _)).Times(Exactly(0));
     EXPECT_CALL(*mockSourceFileWrapper.get(), FRead(_, _, _, _)).WillOnce(Return(-1));
 
-    FileImageStream sourceStream(filePathSource, std::move(mockSourceFileWrapper));
-    FileImageStream destStream(filePath, std::move(mockDestFileWrapper));
+    FileMetadataStream sourceStream(filePathSource, std::move(mockSourceFileWrapper));
+    FileMetadataStream destStream(filePath, std::move(mockDestFileWrapper));
 
     // Test the Write function
     sourceStream.Open();
@@ -425,29 +425,29 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write005, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Write006
- * @tc.desc: Test the Write function of FileImageStream when the amount of data
+ * @tc.name: FileMetadataStream_Write006
+ * @tc.desc: Test the Write function of FileMetadataStream when the amount of data
  * written exceeds the remaining space in the file system
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Write006, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write006, TestSize.Level3)
 {
     // This test case requires a nearly full file system, so it may be difficult
     // to implement in actual testing
     auto mockFileWrapper = std::make_unique<MockFileWrapper>();
-    FileImageStream stream(filePath, std::move(mockFileWrapper));
+    FileMetadataStream stream(filePath, std::move(mockFileWrapper));
 }
 
 /**
- * @tc.name: FileImageStream_Write001
- * @tc.desc: Test the Write function of FileImageStream, whether it can write
+ * @tc.name: FileMetadataStream_Write001
+ * @tc.desc: Test the Write function of FileMetadataStream, whether it can write
  * normally and verify the written data
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write007, TestSize.Level3)
 {
-    // Create a FileImageStream object
-    FileImageStream stream(CreateIfNotExit(filePath));
+    // Create a FileMetadataStream object
+    FileMetadataStream stream(CreateIfNotExit(filePath));
 
     // Open the file
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
@@ -478,11 +478,11 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write007, TestSize.Level3)
     close(fileDescriptor);
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_Write008, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Write008, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
         RemoveFile(filePath);
-        FileImageStream stream(CreateIfNotExit(filePath));
+        FileMetadataStream stream(CreateIfNotExit(filePath));
         ASSERT_TRUE(stream.Open());
         byte *buf = new byte[size](); // Dynamically allocate the buffer with the current test size
         ASSERT_EQ(stream.Write(buf, size), size);
@@ -505,17 +505,17 @@ HWTEST_F(ImageStreamTest, FileImageStream_Write008, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Open001
- * @tc.desc: Test the Open function of FileImageStream when the file path does
+ * @tc.name: FileMetadataStream_Open001
+ * @tc.desc: Test the Open function of FileMetadataStream when the file path does
  * not exist
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Open001, TestSize.Level3)
 {
     // Test the case where the file path does not exist
     std::string nonExistFilePath = "/data/local/tmp/image/non_exist_file.txt";
     RemoveFile(nonExistFilePath.c_str());
-    FileImageStream stream1(CreateIfNotExit(nonExistFilePath));
+    FileMetadataStream stream1(CreateIfNotExit(nonExistFilePath));
     ASSERT_TRUE(stream1.Open());
     std::string sourceData = "Hello, world!";
     stream1.Write((byte *)sourceData.c_str(), sourceData.size());
@@ -532,12 +532,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Open002
- * @tc.desc: Test the Open function of FileImageStream when the file path exists
+ * @tc.name: FileMetadataStream_Open002
+ * @tc.desc: Test the Open function of FileMetadataStream when the file path exists
  * but is not writable
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Open002, TestSize.Level3)
 {
     // Get the username of the current user
     uid_t uid = getuid();
@@ -551,7 +551,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
     // Test the case where the file path exists but is not writable
     std::string nonWritableFilePath = "/data/local/tmp/image/non_writable_file.txt";
     close(open(nonWritableFilePath.c_str(), O_CREAT, S_IRUSR));
-    FileImageStream stream2(nonWritableFilePath);
+    FileMetadataStream stream2(nonWritableFilePath);
     if (username == "root") {
         // If the current user is root, then it can be opened successfully
         ASSERT_TRUE(stream2.Open());
@@ -563,54 +563,54 @@ HWTEST_F(ImageStreamTest, FileImageStream_Open002, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Open003
- * @tc.desc: Test the Open function of FileImageStream when the file is already
+ * @tc.name: FileMetadataStream_Open003
+ * @tc.desc: Test the Open function of FileMetadataStream when the file is already
  * open
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Open003, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Open003, TestSize.Level3)
 {
     // Test the case where the file is already open
-    FileImageStream stream3(CreateIfNotExit(filePath));
+    FileMetadataStream stream3(CreateIfNotExit(filePath));
     ASSERT_TRUE(stream3.Open());
     ASSERT_TRUE(stream3.Open());
     ASSERT_TRUE(stream3.Flush());
 }
 
 /**
- * @tc.name: FileImageStream_Open004
- * @tc.desc: Test the Open function of FileImageStream when the file does not
+ * @tc.name: FileMetadataStream_Open004
+ * @tc.desc: Test the Open function of FileMetadataStream when the file does not
  * exist
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Open004, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Open004, TestSize.Level3)
 {
     // Test the case where the file does not exist
     const char *nonExistentFilePath = "/path/to/nonexistent/file";
-    FileImageStream stream(nonExistentFilePath);
+    FileMetadataStream stream(nonExistentFilePath);
     ASSERT_FALSE(stream.Open(OpenMode::Read));
 }
 
 /**
- * @tc.name: FileImageStream_Open005
+ * @tc.name: FileMetadataStream_Open005
  * @tc.desc: Test the Open twice
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Open005, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Open005, TestSize.Level3)
 {
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     ASSERT_TRUE(stream.Open(OpenMode::Read));
     ASSERT_TRUE(stream.Open(OpenMode::Read));
 }
 
 /**
- * @tc.name: FileImageStream_Read001
- * @tc.desc: Test the Read function of FileImageStream, reading 512 bytes
+ * @tc.name: FileMetadataStream_Read001
+ * @tc.desc: Test the Read function of FileMetadataStream, reading 512 bytes
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Read001, TestSize.Level3)
 {
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     byte buffer[SIZE_1024];
     stream.Open(OpenMode::ReadWrite);
     // Simulate reading 512 bytes
@@ -619,14 +619,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_Read001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Read002
- * @tc.desc: Test the Read function of FileImageStream, trying to read from a
+ * @tc.name: FileMetadataStream_Read002
+ * @tc.desc: Test the Read function of FileMetadataStream, trying to read from a
  * file that has not been opened
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Read002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Read002, TestSize.Level3)
 {
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     byte buffer[SIZE_1024];
     // Flush the stream to simulate an unopened file
     ASSERT_FALSE(stream.Flush());
@@ -644,19 +644,19 @@ static void HandleSigsegv(int sig)
 }
 
 /**
- * @tc.name: FileImageStream_MMap001
- * @tc.desc: Test the MMap function of FileImageStream, trying to write to a
+ * @tc.name: FileMetadataStream_MMap001
+ * @tc.desc: Test the MMap function of FileMetadataStream, trying to write to a
  * memory-mapped file that is not writable
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_MMap001, TestSize.Level3)
 {
     memoryCheck.check = false; // This test is expected to crash, so memory leak
                                // check is not needed
     // Assume there is an appropriate way to create or obtain the resources
     // needed for the test YourResource test_resource; Test the behavior of the
     // MMap function when isWriteable is false
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     byte *result = stream.GetAddr(false);
     // Assume that checking whether result is not nullptr, or there is another
     // appropriate verification method
@@ -677,15 +677,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_MMap002
- * @tc.desc: Test the MMap function of FileImageStream, trying to write to a
+ * @tc.name: FileMetadataStream_MMap002
+ * @tc.desc: Test the MMap function of FileMetadataStream, trying to write to a
  * memory-mapped file that is writable
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_MMap002, TestSize.Level3)
 {
     // Test the behavior of the MMap function when isWriteable is true
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     byte *result = stream.GetAddr(true);
     ASSERT_NE(result, nullptr);
@@ -697,15 +697,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap002, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_MMap003
- * @tc.desc: Test whether the MMap function of FileImageStream can actually
+ * @tc.name: FileMetadataStream_MMap003
+ * @tc.desc: Test whether the MMap function of FileMetadataStream can actually
  * modify the content of the file
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_MMap003, TestSize.Level3)
 {
     // Test whether MMap can actually modify the content of the file
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     byte *result = stream.GetAddr(true);
     ASSERT_NE(result, nullptr);
@@ -720,7 +720,7 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3)
 
     // Flush stream
     ASSERT_TRUE(stream.Flush());
-    FileImageStream checkStream(filePathSource);
+    FileMetadataStream checkStream(filePathSource);
     checkStream.Open(OpenMode::ReadWrite);
     byte checkBuffer[1];
     ASSERT_EQ(checkStream.Read(checkBuffer, 1), 1);
@@ -730,15 +730,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_MMap003, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_CopyFrom001
- * @tc.desc: Test the CopyFrom function of FileImageStream, copying data from
+ * @tc.name: FileMetadataStream_CopyFrom001
+ * @tc.desc: Test the CopyFrom function of FileMetadataStream, copying data from
  * one stream to another
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom001, TestSize.Level3)
 {
-    FileImageStream src(filePathSource);
-    FileImageStream dest(CreateIfNotExit(filePathDest));
+    FileMetadataStream src(filePathSource);
+    FileMetadataStream dest(CreateIfNotExit(filePathDest));
 
     src.Open();
     // Write some known data to src
@@ -761,10 +761,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom001, TestSize.Level3)
     ASSERT_EQ(dest.GetSize(), src.GetSize());
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom002, TestSize.Level3)
 {
-    BufferImageStream src;
-    FileImageStream dest(CreateIfNotExit(filePathDest));
+    BufferMetadataStream src;
+    FileMetadataStream dest(CreateIfNotExit(filePathDest));
     ASSERT_TRUE(src.Open());
     ASSERT_EQ(dest.Open(), true);
     src.Write((byte *)"Hello, world!", 13);
@@ -776,10 +776,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom002, TestSize.Level3)
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), 13), 0);
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom003, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom003, TestSize.Level3)
 {
-    BufferImageStream src;
-    FileImageStream dest(CreateIfNotExit(filePathDest));
+    BufferMetadataStream src;
+    FileMetadataStream dest(CreateIfNotExit(filePathDest));
     src.Open();
     dest.Open();
     char buff[IMAGE_STREAM_PAGE_SIZE + 1] = {0};
@@ -789,10 +789,10 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom003, TestSize.Level3)
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), 4097), 0);
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom004, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom004, TestSize.Level3)
 {
-    BufferImageStream src;
-    FileImageStream dest(CreateIfNotExit(filePathDest));
+    BufferMetadataStream src;
+    FileMetadataStream dest(CreateIfNotExit(filePathDest));
     src.Open();
     dest.Open();
     char buff[IMAGE_STREAM_PAGE_SIZE - 1] = {0};
@@ -802,11 +802,11 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom004, TestSize.Level3)
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom005, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom005, TestSize.Level3)
 {
     RemoveFile(filePath.c_str());
-    FileImageStream src(CreateIfNotExit(filePathDest));
-    BufferImageStream dest;
+    FileMetadataStream src(CreateIfNotExit(filePathDest));
+    BufferMetadataStream dest;
     src.Open();
     dest.Open();
     char buff[IMAGE_STREAM_PAGE_SIZE - 1] = {0};
@@ -819,12 +819,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom005, TestSize.Level3)
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom006, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom006, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
         RemoveFile(filePathDest.c_str());
-        FileImageStream src(CreateIfNotExit(filePathDest));
-        BufferImageStream dest;
+        FileMetadataStream src(CreateIfNotExit(filePathDest));
+        BufferMetadataStream dest;
         src.Open();
         dest.Open();
         byte *buf = new byte[size]();
@@ -839,12 +839,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom006, TestSize.Level3)
     }
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom007, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom007, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
         RemoveFile(filePath.c_str());
-        FileImageStream dest(CreateIfNotExit(filePathDest));
-        BufferImageStream src;
+        FileMetadataStream dest(CreateIfNotExit(filePathDest));
+        BufferMetadataStream src;
         src.Open();
         dest.Open();
         byte *buf = new byte[size]();
@@ -859,13 +859,13 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom007, TestSize.Level3)
     }
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom008, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom008, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
         RemoveFile(filePathDest.c_str());
         RemoveFile(filePathSource.c_str());
-        FileImageStream src(CreateIfNotExit(filePathSource));
-        FileImageStream dest(CreateIfNotExit(filePathDest));
+        FileMetadataStream src(CreateIfNotExit(filePathSource));
+        FileMetadataStream dest(CreateIfNotExit(filePathDest));
         src.Open();
         dest.Open();
         byte *buf = new byte[size]();
@@ -880,12 +880,12 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom008, TestSize.Level3)
     }
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom009, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom009, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
         RemoveFile(filePath.c_str());
-        BufferImageStream src;
-        BufferImageStream dest;
+        BufferMetadataStream src;
+        BufferMetadataStream dest;
         src.Open();
         dest.Open();
         byte *buf = new byte[size]();
@@ -900,13 +900,13 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom009, TestSize.Level3)
     }
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom010, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom010, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
         RemoveFile(filePathDest.c_str());
         std::filesystem::copy(backupFilePathSource, filePathSource, std::filesystem::copy_options::overwrite_existing);
-        FileImageStream src(CreateIfNotExit(filePathDest));
-        FileImageStream dest(CreateIfNotExit(filePathSource));
+        FileMetadataStream src(CreateIfNotExit(filePathDest));
+        FileMetadataStream dest(CreateIfNotExit(filePathSource));
         src.Open();
         dest.Open();
         byte *buf = new byte[size]();
@@ -921,9 +921,9 @@ HWTEST_F(ImageStreamTest, FileImageStream_CopyFrom010, TestSize.Level3)
     }
 }
 
-HWTEST_F(ImageStreamTest, FileImageStream_IsEof001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_IsEof001, TestSize.Level3)
 {
-    FileImageStream src(filePathSource);
+    FileMetadataStream src(filePathSource);
     src.Open();
     byte buffer[1];
     ASSERT_EQ(src.Seek(0, SeekPos::BEGIN), 0);
@@ -935,14 +935,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_IsEof001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_ReadByte001
- * @tc.desc: Test the ReadByte function of FileImageStream, comparing its output
+ * @tc.name: FileMetadataStream_ReadByte001
+ * @tc.desc: Test the ReadByte function of FileMetadataStream, comparing its output
  * with the Read function
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_ReadByte001, TestSize.Level3)
 {
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     stream.Open(OpenMode::ReadWrite);
 
     // Read 10 bytes using Read function
@@ -965,14 +965,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_ReadByte002
- * @tc.desc: Test the ReadByte function of FileImageStream, trying to read
+ * @tc.name: FileMetadataStream_ReadByte002
+ * @tc.desc: Test the ReadByte function of FileMetadataStream, trying to read
  * beyond the end of the file
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_ReadByte002, TestSize.Level3)
 {
-    FileImageStream stream(filePathSource);
+    FileMetadataStream stream(filePathSource);
     stream.Open(OpenMode::ReadWrite);
 
     // Set the file offset to the end of the file
@@ -986,20 +986,20 @@ HWTEST_F(ImageStreamTest, FileImageStream_ReadByte002, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_CONSTRUCTOR001
- * @tc.desc: Test the constructor of FileImageStream, checking if it can
+ * @tc.name: FileMetadataStream_CONSTRUCTOR001
+ * @tc.desc: Test the constructor of FileMetadataStream, checking if it can
  * correctly initialize a stream from an existing file pointer
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CONSTRUCTOR001, TestSize.Level3)
 {
-    FileImageStream stream(CreateIfNotExit(filePath));
+    FileMetadataStream stream(CreateIfNotExit(filePath));
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     std::string sourceData = "Hello, world!";
     ASSERT_EQ(stream.Seek(5, SeekPos::BEGIN), 5);
     ASSERT_EQ(stream.Write((byte *)sourceData.c_str(), sourceData.size()), sourceData.size());
 
-    FileImageStream cloneStream(fileno(stream.fp_));
+    FileMetadataStream cloneStream(fileno(stream.fp_));
     ASSERT_TRUE(stream.Flush());
     ASSERT_TRUE(cloneStream.Open(OpenMode::ReadWrite));
     // Read the data from cloneStream
@@ -1026,23 +1026,23 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_CONSTRUCTOR002
- * @tc.desc: Test the constructor of FileImageStream, checking if it can
+ * @tc.name: FileMetadataStream_CONSTRUCTOR002
+ * @tc.desc: Test the constructor of FileMetadataStream, checking if it can
  * correctly initialize a stream from an existing file descriptor
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CONSTRUCTOR002, TestSize.Level3)
 {
     // Create and open a temporary file
     std::string tempFile = "/tmp/testfile";
     int fileDescription = open(tempFile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     ASSERT_NE(fileDescription, -1);
 
-    // Use the file descriptor to create a new FileImageStream object
-    FileImageStream stream(fileDescription);
+    // Use the file descriptor to create a new FileMetadataStream object
+    FileMetadataStream stream(fileDescription);
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     ASSERT_NE(stream.dupFD_, -1);
-    // Check the state of the FileImageStream object
+    // Check the state of the FileMetadataStream object
     ASSERT_TRUE(stream.fp_ != nullptr);
     ASSERT_EQ(stream.mappedMemory_, nullptr);
     ASSERT_EQ(stream.Tell(), 0);
@@ -1071,13 +1071,13 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR002, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_CONSTRUCTOR003
- * @tc.desc: Test the constructor of FileImageStream, checking if it can
+ * @tc.name: FileMetadataStream_CONSTRUCTOR003
+ * @tc.desc: Test the constructor of FileMetadataStream, checking if it can
  * correctly initialize a stream from an existing file descriptor and handle
  * file operations
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CONSTRUCTOR003, TestSize.Level3)
 {
     int fdCount = CountOpenFileDescriptors();
     int fileDescriptor = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
@@ -1116,16 +1116,16 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR003, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_CONSTRUCTOR004
- * @tc.desc: Test the constructor of FileImageStream, checking if it can
+ * @tc.name: FileMetadataStream_CONSTRUCTOR004
+ * @tc.desc: Test the constructor of FileMetadataStream, checking if it can
  * correctly initialize a stream from an existing file descriptor and handle
  * file operations using the stream's file pointer
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_CONSTRUCTOR004, TestSize.Level3)
 {
     int fileDescriptor = open("/tmp/testfile", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-    FileImageStream stream(fileDescriptor);
+    FileMetadataStream stream(fileDescriptor);
     int dupFD = stream.dupFD_;
     ASSERT_NE(fileDescriptor, -1);
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
@@ -1154,14 +1154,14 @@ HWTEST_F(ImageStreamTest, FileImageStream_CONSTRUCTOR004, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_DESTRUCTOR001
- * @tc.desc: Test the destructor of FileImageStream, checking if it can
+ * @tc.name: FileMetadataStream_DESTRUCTOR001
+ * @tc.desc: Test the destructor of FileMetadataStream, checking if it can
  * correctly handle the deletion of a non-existing file
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_DESTRUCTOR001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_DESTRUCTOR001, TestSize.Level3)
 {
-    FileImageStream *stream = new FileImageStream("/data/fileNotExist");
+    FileMetadataStream *stream = new FileMetadataStream("/data/fileNotExist");
     ASSERT_FALSE(stream->Open());
     ASSERT_EQ(stream->Write((byte *)"Hello, the world", 16), -1);
     stream->GetAddr();
@@ -1170,15 +1170,15 @@ HWTEST_F(ImageStreamTest, FileImageStream_DESTRUCTOR001, TestSize.Level3)
 }
 
 /**
- * @tc.name: FileImageStream_Seek001
- * @tc.desc: Test the Seek function of FileImageStream, checking if it can
+ * @tc.name: FileMetadataStream_Seek001
+ * @tc.desc: Test the Seek function of FileMetadataStream, checking if it can
  * correctly change the position of the file pointer
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, FileMetadataStream_Seek001, TestSize.Level3)
 {
     RemoveFile(filePath.c_str());
-    FileImageStream stream(CreateIfNotExit(filePath));
+    FileMetadataStream stream(CreateIfNotExit(filePath));
     stream.Open(OpenMode::ReadWrite);
     std::string sourceData = "Hello, world!";
     ASSERT_EQ(stream.Tell(), 0);
@@ -1201,26 +1201,26 @@ HWTEST_F(ImageStreamTest, FileImageStream_Seek001, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Open001
- * @tc.desc: Test the Open function of BufferImageStream, checking if it can
+ * @tc.name: BufferMetadataStream_Open001
+ * @tc.desc: Test the Open function of BufferMetadataStream, checking if it can
  * correctly open a stream
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Open001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Open001, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
 }
 
 /**
- * @tc.name: BufferImageStream_Read001
- * @tc.desc: Test the Read function of BufferImageStream, checking if it can
+ * @tc.name: BufferMetadataStream_Read001
+ * @tc.desc: Test the Read function of BufferMetadataStream, checking if it can
  * correctly read data from the stream
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Read001, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
 
     // Write a string
@@ -1239,14 +1239,14 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Read001, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Write001
- * @tc.desc: Test the Write function of BufferImageStream, checking if it can
+ * @tc.name: BufferMetadataStream_Write001
+ * @tc.desc: Test the Write function of BufferMetadataStream, checking if it can
  * correctly write data to the stream
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write001, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     byte data[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     stream.Open(OpenMode::ReadWrite);
     size_t size = sizeof(data) / sizeof(data[0]);
@@ -1269,14 +1269,14 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write001, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Write002
- * @tc.desc: Test the Write function of BufferImageStream, checking if it can
+ * @tc.name: BufferMetadataStream_Write002
+ * @tc.desc: Test the Write function of BufferMetadataStream, checking if it can
  * correctly write a string to the stream
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write002, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     stream.Open(OpenMode::ReadWrite);
     stream.Write((byte *)"Hello, world!", 13);
     ASSERT_EQ(stream.buffer_.capacity(), 4096);
@@ -1284,14 +1284,14 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write002, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Write003
- * @tc.desc: Test the Write function of BufferImageStream, checking if it can
+ * @tc.name: BufferMetadataStream_Write003
+ * @tc.desc: Test the Write function of BufferMetadataStream, checking if it can
  * correctly handle large data
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write003, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     stream.Open(OpenMode::ReadWrite);
     byte data[IMAGE_STREAM_PAGE_SIZE + 1] = {0};  // Create a 4097-byte data
     stream.Write(data, IMAGE_STREAM_PAGE_SIZE + 1); // Write 4097 bytes of data
@@ -1301,14 +1301,14 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write003, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Write004
- * @tc.desc: Test the Write function of BufferImageStream, checking if it can
+ * @tc.name: BufferMetadataStream_Write004
+ * @tc.desc: Test the Write function of BufferMetadataStream, checking if it can
  * correctly handle data of the exact buffer capacity
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write004, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     stream.Open(OpenMode::ReadWrite);
 
     byte data[IMAGE_STREAM_PAGE_SIZE] = {0};  // Create a 4096-byte data
@@ -1320,24 +1320,24 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write004, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Write005
- * @tc.desc: Test the Write function of BufferImageStream, checking if it can
+ * @tc.name: BufferMetadataStream_Write005
+ * @tc.desc: Test the Write function of BufferMetadataStream, checking if it can
  * correctly handle fixed buffer size
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Write005, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write005, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     ASSERT_TRUE(stream.Open(OpenMode::ReadWrite));
     ASSERT_EQ(stream.Write((byte *)"Hi", 2), 2);
     ASSERT_EQ(stream.Tell(), 2);
     ASSERT_EQ(stream.Write((byte *)"this is a very long text", 24), 24);
 }
 
-HWTEST_F(ImageStreamTest, BufferImageStream_Write006, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write006, TestSize.Level3)
 {
     for (ssize_t size : testSize) {
-        BufferImageStream stream;
+        BufferMetadataStream stream;
         ASSERT_TRUE(stream.Open());
         byte *buf = new byte[size](); // Dynamically allocate the buffer with the current test size
         ASSERT_EQ(stream.Write(buf, size), size);
@@ -1348,44 +1348,44 @@ HWTEST_F(ImageStreamTest, BufferImageStream_Write006, TestSize.Level3)
 }
 
 /**
- * @tc.name: BufferImageStream_Close001
- * @tc.desc: Test the Close function of BufferImageStream with an empty stream
+ * @tc.name: BufferMetadataStream_Close001
+ * @tc.desc: Test the Close function of BufferMetadataStream with an empty stream
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Close001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Close001, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
 }
 
 /**
- * @tc.name: BufferImageStream_Close002
- * @tc.desc: Test the Close function of BufferImageStream after writing to the
+ * @tc.name: BufferMetadataStream_Close002
+ * @tc.desc: Test the Close function of BufferMetadataStream after writing to the
  * stream
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Close002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Close002, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     stream.Write((byte *)"Hello, world!", 13);
 }
 
 /**
- * @tc.name: BufferImageStream_Close004
- * @tc.desc: Test the Close function of BufferImageStream after closing the
+ * @tc.name: BufferMetadataStream_Close004
+ * @tc.desc: Test the Close function of BufferMetadataStream after closing the
  * stream
  * @tc.type: FUNC
  */
-HWTEST_F(ImageStreamTest, BufferImageStream_Close004, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Close004, TestSize.Level3)
 {
-    BufferImageStream stream;
+    BufferMetadataStream stream;
     stream.Write((byte *)"Hello, world!", 13);
     stream.Close();
 }
 
-HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom001, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_CopyFrom001, TestSize.Level3)
 {
-    FileImageStream src(filePathSource);
-    BufferImageStream dest;
+    FileMetadataStream src(filePathSource);
+    BufferMetadataStream dest;
     src.Open();
     dest.Open();
     ASSERT_TRUE(dest.CopyFrom(src));
@@ -1393,10 +1393,10 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom001, TestSize.Level3)
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
-HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom002, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_CopyFrom002, TestSize.Level3)
 {
-    BufferImageStream src;
-    BufferImageStream dest;
+    BufferMetadataStream src;
+    BufferMetadataStream dest;
     src.Open();
     dest.Open();
     src.Write((byte *)"Hello, world!", 13);
@@ -1405,10 +1405,10 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom002, TestSize.Level3)
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
-HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom003, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_CopyFrom003, TestSize.Level3)
 {
-    BufferImageStream src;
-    BufferImageStream dest;
+    BufferMetadataStream src;
+    BufferMetadataStream dest;
     src.Open();
     dest.Open();
     char buff[IMAGE_STREAM_PAGE_SIZE + 1] = {0};
@@ -1418,10 +1418,10 @@ HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom003, TestSize.Level3)
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
 }
 
-HWTEST_F(ImageStreamTest, BufferImageStream_CopyFrom004, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_CopyFrom004, TestSize.Level3)
 {
-    BufferImageStream src;
-    BufferImageStream dest;
+    BufferMetadataStream src;
+    BufferMetadataStream dest;
     src.Open();
     dest.Open();
     char buff[IMAGE_STREAM_PAGE_SIZE - 1] = {0};

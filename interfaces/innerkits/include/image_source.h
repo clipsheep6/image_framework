@@ -137,7 +137,7 @@ struct ASTCInfo {
 };
 
 class SourceStream;
-class ImageAccessorInterface;
+class MetadataAccessor;
 class ExifMetadata;
 
 class ImageSource {
@@ -267,7 +267,7 @@ private:
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
-    uint32_t ModifyImageProperty(std::shared_ptr<ImageAccessorInterface> imageAccessor,
+    uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> imageAccessor,
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
     uint32_t CreatExifMetadataByImageSource();

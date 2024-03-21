@@ -18,7 +18,7 @@
 
 #include "data_buf.h"
 #include "exif_metadata.h"
-#include "image_stream.h"
+#include "metadata_stream.h"
 #include "image_log.h"
 #include "media_errors.h"
 #include "png_image_chunk_utils.h"
