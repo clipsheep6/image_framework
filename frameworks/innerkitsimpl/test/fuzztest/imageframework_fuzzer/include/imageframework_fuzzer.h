@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NOTIFYCHANGE_FUZZER_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_TEST_FUZZTEST_IMAGEFRAMEWORK_FUZZER_IMAGEFRAMEWORK_FUZZER_H_
 
-#define NOTIFYCHANGE_FUZZER_H
+#define FRAMEWORKS_INNERKITSIMPL_TEST_FUZZTEST_IMAGEFRAMEWORK_FUZZER_IMAGEFRAMEWORK_FUZZER_H_
 
 #define FUZZ_PROJECT_NAME "image_framework_fuzzer"
 #endif
