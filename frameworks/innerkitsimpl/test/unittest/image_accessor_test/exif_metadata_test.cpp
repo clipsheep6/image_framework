@@ -218,7 +218,7 @@ HWTEST_F(ExifMetadataTest, GetValue015, TestSize.Level3)
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
     std::string value;
     ExifMetadata metadata(exifData);
-    ASSERT_EQ(metadata.SetValue("GPSTimeStamp", "11:37:56.00"), true);
+    ASSERT_EQ(metadata.SetValue("GPSTimeStamp", "11:37:56"), true);
     metadata.GetValue("GPSTimeStamp", value);
     ASSERT_EQ(value, "11:37:56.00");
 }
