@@ -178,7 +178,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     }
 
     if (pixelmap_->GetExifMetadata() == nullptr ||
-        pixelmap_->GetExifMetadata()->GetExifData() == null) {
+        pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
         ExtWStream wStream(output_);
         if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
             IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
@@ -206,7 +206,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
             }
         }
     }
-    if (!output_.Write(tStream.GetAddr(), tStream.bytesWritten())) {
+    if (!output_->Write(tStream.GetAddr(), tStream.bytesWritten())) {
         return ERR_IMAGE_ENCODE_FAILED;
     }
 
