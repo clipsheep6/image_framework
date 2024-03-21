@@ -1311,6 +1311,7 @@ ohos_unittest("imageaccessortest") {
   sources = [
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_converter.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",

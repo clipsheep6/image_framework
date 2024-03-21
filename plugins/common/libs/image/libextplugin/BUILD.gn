@@ -139,17 +139,17 @@ ohos_shared_library("extplugin") {
     }
   }
   sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/exif_metadata_converter.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/abstract_image_accessor.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
-    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/exif_metadata_converter.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/image_accessor_factory.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/jpeg_image_accessor.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_image_accessor.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/codec/src/buffer_image_stream.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/codec/src/data_buf.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/codec/src/file_image_stream.cpp",
-    "$image_subsystem/frameworks/innerkitsimpl/codec/src/tiff_parser.cpp",
     "src/ext_decoder.cpp",
     "src/ext_encoder.cpp",
     "src/ext_pixel_convert.cpp",
