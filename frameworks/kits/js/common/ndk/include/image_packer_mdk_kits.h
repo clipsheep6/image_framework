@@ -35,12 +35,16 @@ struct ImagePackerArgs {
     uint8_t* outData;
     size_t* dataSize;
     napi_value* outVal;
+    uint16_t loop;
+    std::vector<uint16_t> delayTimes;
 };
 
 enum {
     ENV_FUNC_IMAGEPACKER_CREATE,
     CTX_FUNC_IMAGEPACKER_PACKTODATA,
+    CTX_FUNC_IMAGEPACKER_PACKTODATAMULTIFRAMES,
     CTX_FUNC_IMAGEPACKER_PACKTOFILE,
+    CTX_FUNC_IMAGEPACKER_PACKTOFILEMULTIFRAMES,
 };
 ImagePackerNapi* ImagePackerNapi_Unwrap(napi_env env, napi_value value);
 int32_t ImagePackerNativeCall(int32_t mode, struct ImagePackerArgs* args);

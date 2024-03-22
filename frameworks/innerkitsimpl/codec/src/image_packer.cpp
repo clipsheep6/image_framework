@@ -278,6 +278,8 @@ bool ImagePacker::GetEncoderPlugin(const PackOption &option)
 
 void ImagePacker::CopyOptionsToPlugin(const PackOption &opts, PlEncodeOptions &plOpts)
 {
+    plOpts.delayTimes = opts.delayTimes;
+    plOpts.loop = opts.loop;
     plOpts.numberHint = opts.numberHint;
     plOpts.quality = opts.quality;
     plOpts.format = opts.format;

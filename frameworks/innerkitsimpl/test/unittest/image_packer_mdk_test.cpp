@@ -96,6 +96,43 @@ HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToFile, TestSize.Level3)
 }
 
 /**
+ * @tc.name: OH_ImagePacker_PackToFileMultiFrames
+ * @tc.desc: test OH_ImagePacker_PackToFileMultiFrames
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToFileMultiFrames, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToFileMultiFrames start";
+    ImagePacker_Native* native = nullptr;
+    napi_value source = nullptr;
+    ImagePacker_Opts opts;
+    int fd = TEST_FD;
+    uint16_t* delayTimes = nullptr;
+    int32_t ret = OH_ImagePacker_PackToFileMultiFrames(native, source, &opts, fd, 0, delayTimes, 0);
+    ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToFileMultiFrames end";
+}
+
+/**
+ * @tc.name: OH_ImagePacker_PackToDataMultiFrames
+ * @tc.desc: test OH_ImagePacker_PackToDataMultiFrames
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerMdkTest, OH_ImagePacker_PackToDataMultiFrames, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToDataMultiFrames start";
+    ImagePacker_Native* native = nullptr;
+    napi_value source = nullptr;
+    ImagePacker_Opts opts;
+    uint8_t* outData = nullptr;
+    size_t size = TEST_SIZE;
+    uint16_t* delayTimes = nullptr;
+    int32_t ret = OH_ImagePacker_PackToDataMultiFrames(native, source, &opts, outData, &size, 0, delayTimes, 0);
+    ASSERT_NE(ret, IMAGE_RESULT_SUCCESS);
+    GTEST_LOG_(INFO) << "ImagePackerMdkTest: OH_ImagePacker_PackToDataMultiFrames end";
+}
+
+/**
  * @tc.name: OH_ImagePacker_Release
  * @tc.desc: test OH_ImagePacker_Release
  * @tc.type: FUNC

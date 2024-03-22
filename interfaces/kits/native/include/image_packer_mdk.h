@@ -137,6 +137,31 @@ int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
     ImagePacker_Opts* opts, uint8_t* outData, size_t* size);
 
 /**
+ * @brief Encoding a <b>PixelMap</b> list into the a file with fd with required format
+ *
+ * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
+ * @param source Indicates an encoding source, a JS pixel map object.
+ * @param opts Indicates the encoding {@link ImagePacker_Opts} .
+ * @param outData Indicates the pointer to the encoded data.
+ * @param size Indicates the pointer to the {@link OhosImageComponent} object obtained.
+ * @param loop Indicates the number of times the loop should.
+ * @param delayTimes Indicates the delay time for each frame of the dynamic image.
+ * @param delayTimesSize Indicates the pointer to the {@link delayTimes} object obtained.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
+ * @see {@link OH_ImagePacker_PackToFileMultiFrames}
+ * @since 12
+ * @version 5.0
+ */
+int32_t OH_ImagePacker_PackToDataMultiFrames(ImagePacker_Native* native, napi_value source,
+    ImagePacker_Opts* opts, uint8_t* outData, size_t* size, uint16_t loop, uint16_t* delayTimes, int delayTimesSize);
+
+/**
  * @brief Encoding an <b>ImageSource</b> or a <b>PixelMap</b> into the a file with fd with required format
  *
  * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
@@ -157,6 +182,29 @@ int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
 int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
     ImagePacker_Opts* opts, int fd);
 
+/**
+ * @brief Encoding a <b>PixelMap</b> list into the a file with fd with required format
+ *
+ * @param native Indicates the pointer to an {@link ImagePacker} object at the native layer.
+ * @param source Indicates an encoding source, a JS pixel map object.
+ * @param opts Indicates the encoding {@link ImagePacker_Opts} .
+ * @param fd Indicates the a writable file descriptor.
+ * @param loop Indicates the number of times the loop should.
+ * @param delayTimes Indicates the delay time for each frame of the dynamic image.
+ * @param size Indicates the pointer to the {@link delayTimes} object obtained.
+ * @return Returns {@link IRNdkErrCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+  * returns {@link IRNdkErrCode} IMAGE_RESULT_INVALID_PARAMETER - if invalid parameter.
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DATA_ABNORMAL - if output target abnormal
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MISMATCHED_FORMAT - if format mismatched
+  * returns {@link IRNdkErrCode} ERR_IMAGE_MALLOC_ABNORMAL - if malloc internal buffer error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_DECODE_ABNORMAL - if init codec internal error
+  * returns {@link IRNdkErrCode} ERR_IMAGE_ENCODE_FAILED - if encoder occur error during encoding
+ * @see {@link OH_ImagePacker_PackToFileMultiFrames}
+ * @since 12
+ * @version 5.0
+ */
+int32_t OH_ImagePacker_PackToFileMultiFrames(ImagePacker_Native* native, napi_value source,
+    ImagePacker_Opts* opts, int fd, uint16_t loop, uint16_t* delayTimes, int size);
 
 /**
  * @brief Releases an {@link ImagePacker_Native} object at the native layer.

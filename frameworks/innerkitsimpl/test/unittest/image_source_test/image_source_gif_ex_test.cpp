@@ -40,6 +40,7 @@ static const std::string TEST_FILE_MULTI_FRAME_GIF = "moving_test.gif";
 static const size_t TEST_FILE_MULTI_FRAME_GIF_FRAME_COUNT = 3;
 static const std::string TEST_FILE_JPG = "test.jpg";
 static const size_t TEST_FILE_JPG_FRAME_COUNT = 1;
+static const std::string OUTPUT_PATH_REPACK = "/data/local/tmp/image/output_repack.gif";
 }
 
 class ImageSourceGifExTest : public testing::Test {
@@ -148,6 +149,35 @@ HWTEST_F(ImageSourceGifExTest, CreatePixelMapList003, TestSize.Level3)
     }
 
     GTEST_LOG_(INFO) << "ImageSourceGifExTest: CreatePixelMapList003 end";
+}
+
+/**
+ * @tc.name: CreatePixelMapList004
+ * @tc.desc: test CreatePixelMapList
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceGifExTest, CreatePixelMapList004, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceGifExTest: CreatePixelMapList004 start";
+
+    const std::string testName = TEST_FILE_MULTI_FRAME_GIF;
+
+    uint32_t errorCode = 0;
+    const SourceOptions opts;
+    const std::string inputName = INPUT_PATH + testName;
+    auto imageSource = ImageSource::CreateImageSource(inputName, opts, errorCode);
+
+    const DecodeOptions decodeOpts;
+    auto pixelMaps = imageSource->CreatePixelMapList(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMaps, nullptr);
+    ASSERT_EQ(pixelMaps->size(), TEST_FILE_MULTI_FRAME_GIF_FRAME_COUNT);
+
+    const std::string outputName = OUTPUT_PATH_REPACK;
+    int64_t packSize = PackImage(outputName, std::move(pixelMaps));
+    ASSERT_NE(packSize, 0);
+
+    GTEST_LOG_(INFO) << "ImageSourceGifExTest: CreatePixelMapList004 end";
 }
 
 /**

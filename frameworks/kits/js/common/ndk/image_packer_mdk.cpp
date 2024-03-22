@@ -66,6 +66,27 @@ int32_t OH_ImagePacker_PackToData(ImagePacker_Native* native, napi_value source,
 }
 
 MIDK_EXPORT
+int32_t OH_ImagePacker_PackToDataMultiFrames(ImagePacker_Native* native, napi_value source,
+    ImagePacker_Opts* opts, uint8_t* outData, size_t* size, uint16_t loop, uint16_t* delayTimes, int delayTimesSize)
+{
+    if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImagePackerArgs args;
+    args.inEnv = native->env;
+    args.inNapi = native->napi;
+    args.inVal = source;
+    args.inOpts = opts;
+    args.outData = outData;
+    args.dataSize = size;
+    args.loop = loop;
+    for (int i = 0; i < delayTimesSize; i++) {
+        args.delayTimes.push_back(delayTimes[i]);
+    }
+    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKTODATAMULTIFRAMES, &args);
+}
+
+MIDK_EXPORT
 int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
     ImagePacker_Opts* opts, int fd)
 {
@@ -79,6 +100,26 @@ int32_t OH_ImagePacker_PackToFile(ImagePacker_Native* native, napi_value source,
     args.inOpts = opts;
     args.inNum0 = fd;
     return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKTOFILE, &args);
+}
+
+MIDK_EXPORT
+int32_t OH_ImagePacker_PackToFileMultiFrames(ImagePacker_Native* native, napi_value source,
+    ImagePacker_Opts* opts, int fd, uint16_t loop, uint16_t* delayTimes, int size)
+{
+    if (native == nullptr || native->napi == nullptr || native->env == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    ImagePackerArgs args;
+    args.inEnv = native->env;
+    args.inNapi = native->napi;
+    args.inVal = source;
+    args.inOpts = opts;
+    args.inNum0 = fd;
+    args.loop = loop;
+    for (int i = 0; i < size; i++) {
+        args.delayTimes.push_back(delayTimes[i]);
+    }
+    return ImagePackerNativeCall(CTX_FUNC_IMAGEPACKER_PACKTOFILEMULTIFRAMES, &args);
 }
 
 MIDK_EXPORT
