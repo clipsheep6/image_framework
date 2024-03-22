@@ -209,12 +209,13 @@ bool ExifMetadata::CreateExifdata()
             IMAGE_LOGE("Create exif data failed.");
             return false;
         }
-        /* Set the image options */
+        
+        // Set the image options
         exif_data_set_option(exifData_, EXIF_DATA_OPTION_FOLLOW_SPECIFICATION);
         exif_data_set_data_type(exifData_, EXIF_DATA_TYPE_COMPRESSED);
         exif_data_set_byte_order(exifData_, EXIF_BYTE_ORDER_INTEL);
 
-        /* Create the mandatory EXIF fields with default data */
+        // Create the mandatory EXIF fields with default data
         exif_data_fix(exifData_);
         return true;
     }
@@ -223,12 +224,13 @@ bool ExifMetadata::CreateExifdata()
         IMAGE_LOGE("Create exif data failed.");
         return false;
     }
-    /* Set the image options */
+
+    // Set the image options
     exif_data_set_option(exifData_, EXIF_DATA_OPTION_FOLLOW_SPECIFICATION);
     exif_data_set_data_type(exifData_, EXIF_DATA_TYPE_COMPRESSED);
     exif_data_set_byte_order(exifData_, EXIF_BYTE_ORDER_INTEL);
 
-    /* Create the mandatory EXIF fields with default data */
+    // Create the mandatory EXIF fields with default data
     exif_data_fix(exifData_);
     IMAGE_LOGD("Create new exif data.");
     return true;
@@ -237,33 +239,38 @@ bool ExifMetadata::CreateExifdata()
 ExifEntry* ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
 {
     if (UndefinedFormat.find(tag) != UndefinedFormat.end()) {
-        /* Create a memory allocator to manage this ExifEntry */
+        // Create a memory allocator to manage this ExifEntry
         ExifMem* exifMem = exif_mem_new_default();
         if (exifMem == nullptr) {
             IMAGE_LOGE("SetValue exif_mem_new_default fail.");
             return nullptr;
         }
-        /* Create a new ExifEntry using our allocator */
+
+        // Create a new ExifEntry using our allocator
         ExifEntry *entry = exif_entry_new_mem(exifMem);
         if (entry == nullptr) {
             IMAGE_LOGE("SetValue exif_entry_new_mem fail.");
             return nullptr;
         }
-        /* Allocate memory to use for holding the tag data */
+
+        // Allocate memory to use for holding the tag data
         void* buffer = exif_mem_alloc(exifMem, valueLen);
         if (buffer == nullptr) {
             IMAGE_LOGE("SetValue allocate memory exif_mem_alloc fail.");
             return nullptr;
         }
-        /* Fill in the entry */
+
+        // Fill in the entry
         entry->data = static_cast<unsigned char*>(buffer);
         entry->size = valueLen;
         entry->tag = tag;
         entry->components = valueLen;
         entry->format = EXIF_FORMAT_UNDEFINED;
-        /* Attach the ExifEntry to an IFD */
+
+        // Attach the ExifEntry to an IFD
         exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
-        /* The ExifMem and ExifEntry are now owned elsewhere */
+
+        // The ExifMem and ExifEntry are now owned elsewhere
         exif_mem_unref(exifMem);
         exif_entry_unref(entry);
         return entry;
@@ -283,7 +290,7 @@ ExifEntry* ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
 
 void ExifMetadata::ReallocEntry(ExifEntry *ptrEntry, const size_t valueLen)
 {
-    /* Create a memory allocator to manage this ExifEntry */
+    // Create a memory allocator to manage this ExifEntry
     ExifMem* exifMem = exif_mem_new_default();
     if (exifMem == nullptr) {
         IMAGE_LOGE("SetValue undeinfed or ascii exif_mem_new_default fail.");
@@ -456,27 +463,27 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         return false;
     }
     
-    ExifByteOrder o = exif_data_get_byte_order(ptrEntry->parent->parent);
+    ExifByteOrder order = exif_data_get_byte_order(ptrEntry->parent->parent);
 
     bool isSetSuccess = false;
     switch (ptrEntry->format) {
         case EXIF_FORMAT_SHORT:
-            isSetSuccess = SetShort(ptrEntry, o, result.second);
+            isSetSuccess = SetShort(ptrEntry, order, result.second);
             break;
         case EXIF_FORMAT_LONG:
-            isSetSuccess = SetLong(ptrEntry, o, result.second);
+            isSetSuccess = SetLong(ptrEntry, order, result.second);
             break;
         case EXIF_FORMAT_SSHORT:
-            isSetSuccess = SetSShort(ptrEntry, o, result.second);
+            isSetSuccess = SetSShort(ptrEntry, order, result.second);
             break;
         case EXIF_FORMAT_SLONG:
-            isSetSuccess = SetSLong(ptrEntry, o, result.second);
+            isSetSuccess = SetSLong(ptrEntry, order, result.second);
             break;
         case EXIF_FORMAT_RATIONAL:
-            isSetSuccess = SetRational(ptrEntry, o, result.second);
+            isSetSuccess = SetRational(ptrEntry, order, result.second);
             break;
         case EXIF_FORMAT_SRATIONAL:
-            isSetSuccess = SetSRational(ptrEntry, o, result.second);
+            isSetSuccess = SetSRational(ptrEntry, order, result.second);
             break;
         case EXIF_FORMAT_UNDEFINED:
         case EXIF_FORMAT_ASCII:
