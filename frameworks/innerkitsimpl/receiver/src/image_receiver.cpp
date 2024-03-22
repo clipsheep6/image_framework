@@ -186,7 +186,6 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
                                                                   int32_t format,
                                                                   int32_t capicity)
 {
-    isAccessTypeRequested_ = false;
     std::shared_ptr<ImageReceiver> iva = std::make_shared<ImageReceiver>();
     iva->iraContext_ = ImageReceiverContext::CreateImageReceiverContext();
     iva->receiverConsumerSurface_ = IConsumerSurface::Create();
