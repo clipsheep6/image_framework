@@ -94,7 +94,7 @@ bool JpegExifMetadataAccssor::ReadBlob(DataBuf &blob) const
     }
 
     while ((marker != JPEG_MARKER_SOS) && (marker != JPEG_MARKER_EOI)) {
-        const auto [sizebuf, size] = ReadSegmentLength(marker);
+        const auto [sizeBuf, size] = ReadSegmentLength(marker);
 
         if ((marker == JPEG_MARKER_APP1) && (size >= APP1_EXIF_LENGTH)) {
             blob.Resize(size - SEGMENT_LENGTH_SIZE);
@@ -189,11 +189,11 @@ std::pair<std::array<byte, 2>, uint16_t> JpegExifMetadataAccssor::ReadSegmentLen
 
 DataBuf JpegExifMetadataAccssor::ReadNextSegment(byte marker)
 {
-    const auto [sizebuf, size] = ReadSegmentLength(marker);
+    const auto [sizeBuf, size] = ReadSegmentLength(marker);
     DataBuf buf(size);
     if (size > SEGMENT_LENGTH_SIZE) {
         imageStream_->Read(buf.Data(SEGMENT_LENGTH_SIZE), (size - SEGMENT_LENGTH_SIZE));
-        std::copy(sizebuf.begin(), sizebuf.end(), buf.Begin());
+        std::copy(sizeBuf.begin(), sizeBuf.end(), buf.Begin());
     }
 
     return buf;
