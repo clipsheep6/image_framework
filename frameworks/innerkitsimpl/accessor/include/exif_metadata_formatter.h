@@ -79,11 +79,12 @@ private:
     static ValueFormatDelegate fourIntToRationalWithBlank;
     static ValueFormatDelegate fourIntToRationalWithComma;
     static ValueFormatDelegate decimal4Ratiional4;
-    static ValueFormatDelegate decimal4Ratiional4Comma;
+    static ValueFormatDelegate fourDecimalToRationalWithComma;
     static ValueFormatDelegate dateTimeValidation;
     static ValueFormatDelegate dateValidation;
     static ValueFormatDelegate tribleIntToRationalWithColon;
-    static ValueFormatDelegate fourIntToRationalWithDot;
+    static ValueFormatDelegate fourIntWithDot;
+    static ValueFormatDelegate fourDecimalToRationalWithBlank;
     static std::multimap<std::string, ValueFormatDelegate> valueFormatConvertConfig;
     static std::multimap<std::string, std::string> valueFormatValidateConfig;
     static std::map<std::string, std::tuple<const TagDetails*, const size_t>> valueRangeValidateConfig;

@@ -324,7 +324,7 @@ ExifEntry* ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
         return nullptr;
     }
     
-    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII)
+    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII || entry->format == EXIF_FORMAT_BYTE)
         && (entry->size != static_cast<unsigned int>(valueLen))) {
         ReallocEntry(entry, valueLen);
     }
@@ -435,8 +435,26 @@ bool ExifMetadata::SetSRational(ExifEntry *ptrEntry, const ExifByteOrder &order,
     return true;
 }
 
+bool ExifMetadata::SetByte(ExifEntry *ptrEntry, const std::string &value)
+{
+    std::string result;
+    for (char c : value) {
+        if (c != ' ') {
+            result += c;
+        }
+    }
+    const char* p = result.c_str();
+    int valueLen = result.length();
+    for (int i = 0; i < valueLen && i < static_cast<int>(ptrEntry->size); i++) {
+        *(ptrEntry->data + i) = p[i] - '0';
+    }
+    return true;
+}
 bool ExifMetadata::SetMem(ExifEntry *ptrEntry, const std::string &value, const size_t valueLen)
 {
+    if(ptrEntry->tag == EXIF_TAG_SCENE_TYPE) {
+        return SetByte(ptrEntry, value);
+    }
     if (memcpy_s((ptrEntry)->data, valueLen, value.c_str(), valueLen) != 0) {
         IMAGE_LOGE("SetValue memcpy_s error tag.");
         return false;

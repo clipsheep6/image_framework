@@ -43,6 +43,7 @@ private:
     bool SetSLong(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
     bool SetRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
     bool SetSRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
+    bool SetByte(ExifEntry *ptrEntry, const std::string &value);
     bool SetMem(ExifEntry *ptrEntry, const std::string &value, const size_t len);
     ExifData *exifData_;
 };

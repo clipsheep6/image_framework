@@ -581,11 +581,11 @@ std::string MODIFYDATA[][3] = {
     {"PixelXDimension", "1000", "1000"},
     {"PixelYDimension", "2000", "2000"},
     {"RecommendedExposureIndex", "241", "241"},
-    {"SceneType", "1", "Internal error (unknown value 49)"}, // need to set byte 0x01
+    {"SceneType", "1", "Directly photographed)"},
     {"SensitivityType", "5", "Standard output sensitivity (SOS) and ISO speed"},
     {"StandardOutputSensitivity", "5", "5"},
     {"UserComment", "comm", "comm"},
-    {"JPEGProc", "252", "3 bytes undefined data"}, // to test
+    {"JPEGProc", "252", "252"},
     {"Compression", "6", "JPEG compression"},
     {"PhotometricInterpretation", "0", "Reversed mono"},
     {"StripOffsets", "11", "2 bytes undefined data"}, // offset
@@ -634,7 +634,7 @@ std::string MODIFYDATA[][3] = {
     {"SubjectDistanceRange", "0", "Unknown"},
     {"ImageUniqueID", "FXIC012", "FXIC012"},
     {"GPSVersionID", "2 2 0 0", "2 2 0 0"},
-    {"GPSAltitudeRef", "1", "1"},
+    {"GPSAltitudeRef", "1", "Sea level reference"},
     {"GPSAltitude", "0/100", "0.00"},
     {"GPSSatellites", "xxx", "xxx"},
     {"GPSStatus", "A", "A"},

@@ -1577,7 +1577,7 @@ napi_value ImageSourceNapi::ModifyImageProperty(napi_env env, napi_callback_info
                 context->status = ERR_MEDIA_VALUE_INVALID;
                 return;
             }
-                        if (!IsSameTextStr(context->pathName, "")) {
+            if (!IsSameTextStr(context->pathName, "")) {
                 context->status = context->rImageSource->ModifyImageProperty(context->index,
                     context->keyStr, context->valueStr, context->pathName);
             } else if (context->fdIndex != -1) {
