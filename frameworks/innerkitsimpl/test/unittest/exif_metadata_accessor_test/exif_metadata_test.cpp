@@ -527,7 +527,7 @@ HWTEST_F(ExifMetadataTest, SetValueBatch002, TestSize.Level3)
     ASSERT_EQ(metadata.SetValue("YCbCrSubSampling", "3 2"), true);
     ASSERT_EQ(metadata.SetValue("YCbCrPositioning", "1"), true);
     ASSERT_EQ(metadata.SetValue("ReferenceBlackWhite", "221/1"), true);
-    ASSERT_EQ(metadata.SetValue("Copyright", "Huawei"), true);
+    ASSERT_EQ(metadata.SetValue("Copyright", "Hw"), true);
     ASSERT_EQ(metadata.SetValue("JPEGInterchangeFormat", "1"), true);
     ASSERT_EQ(metadata.SetValue("JPEGInterchangeFormatLength", "111"), true);
     ASSERT_EQ(metadata.SetValue("ExposureProgram", "2"), true);
@@ -605,7 +605,7 @@ std::string MODIFYDATA[][3] = {
     {"YCbCrSubSampling", "3 2", "3, 2"},
     {"YCbCrPositioning", "1", "Centered"},
     {"ReferenceBlackWhite", "221/1", "221, 255,  0, 255,  0, 255"},
-    {"Copyright", "Huawei", "Huawei (Photographer) - [None] (Editor)"},
+    {"Copyright", "Hw", "Hw (Photographer) - [None] (Editor)"},
     {"SubsecTime", "427000", "427000"},
     {"SubSecTimeOriginal", "427000", "427000"},
     {"SubSecTimeDigitized", "427000", "427000"},

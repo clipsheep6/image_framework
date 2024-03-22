@@ -428,7 +428,7 @@ bool ExifMetadata::SetSRational(ExifEntry *ptrEntry, const ExifByteOrder &order,
     return true;
 }
 
-bool ExifMetadata::SetMemcpy(ExifEntry *ptrEntry, const std::string &value, const size_t valueLen)
+bool ExifMetadata::SetMem(ExifEntry *ptrEntry, const std::string &value, const size_t valueLen)
 {
     if (memcpy_s((ptrEntry)->data, valueLen, value.c_str(), valueLen) != 0) {
         IMAGE_LOGE("SetValue memcpy_s error tag.");
@@ -480,7 +480,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
             break;
         case EXIF_FORMAT_UNDEFINED:
         case EXIF_FORMAT_ASCII:
-            isSetSuccess = SetMemcpy(ptrEntry, result.second, valueLen);
+            isSetSuccess = SetMem(ptrEntry, result.second, valueLen);
             break;
         default:
             break;

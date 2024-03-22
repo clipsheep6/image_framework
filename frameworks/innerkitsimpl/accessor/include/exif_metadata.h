@@ -43,7 +43,7 @@ private:
     bool SetSLong(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
     bool SetRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
     bool SetSRational(ExifEntry *ptrEntry, const ExifByteOrder &o, const std::string &value);
-    bool SetMemcpy(ExifEntry *ptrEntry, const std::string &value, const size_t len);
+    bool SetMem(ExifEntry *ptrEntry, const std::string &value, const size_t len);
     ExifData *exifData_;
 };
 } // namespace Media
