@@ -17,10 +17,10 @@
 #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_TIFF_PARSER_H
 
 #include <algorithm>
-#include <map>
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <map>
 #include <stdint.h>
 #include <vector>
 
