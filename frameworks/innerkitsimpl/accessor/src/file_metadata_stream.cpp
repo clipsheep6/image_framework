@@ -71,7 +71,7 @@ FileMetadataStream::~FileMetadataStream()
 void FileMetadataStream::Initialize(const std::string &filePath, int fileDescriptor)
 {
     this->filePath_ = filePath;
-    this->dupFD_ = fileDescriptor;
+    this->dupFD_ = dup(fileDescriptor);
     if (!fileWrapper_) {
         this->fileWrapper_ = std::make_unique<FileWrapper>();
     }
