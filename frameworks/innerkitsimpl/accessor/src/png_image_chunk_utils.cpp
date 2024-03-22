@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include <zlib.h>
 #include <libexif/exif-data.h>
+#include <zlib.h>
 
 #include "data_buf.h"
 #include "exif_metadata.h"
-#include "metadata_stream.h"
 #include "image_log.h"
 #include "media_errors.h"
+#include "metadata_stream.h"
 #include "png_image_chunk_utils.h"
 #include "tiff_parser.h"
 
@@ -116,13 +116,13 @@ DataBuf PngImageChunkUtils::GetRawTextFromTextChunk(const DataBuf &chunkData, si
     return rawText;
 }
 
-std::string FetchString(const char *chunkData, size_t data_length)
+std::string FetchString(const char *chunkData, size_t dataLength)
 {
-    if (data_length == 0) {
-        IMAGE_LOGE("Data_length is 0.");
+    if (dataLength == 0) {
+        IMAGE_LOGE("dataLength is 0.");
         return {};
     }
-    const size_t stringLength = strnlen(chunkData, data_length);
+    const size_t stringLength = strnlen(chunkData, dataLength);
     return {chunkData, stringLength};
 }
 

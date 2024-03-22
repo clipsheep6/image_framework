@@ -98,7 +98,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read002, TestSize.Level3)
  */
 HWTEST_F(PngExifMetadataAccessorTest, Read003, TestSize.Level3)
 {
-    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_CHUNK_TEXT_PNG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_CHUNK_ZTXT_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngExifMetadataAccessor imageAccessor(stream);
     int result = imageAccessor.Read();
