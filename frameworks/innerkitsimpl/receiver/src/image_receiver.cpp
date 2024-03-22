@@ -21,6 +21,9 @@
 #include "image_utils.h"
 #include "image_receiver_buffer_processor.h"
 #include "image_receiver_manager.h"
+#include "v1_1/buffer_handle_meta_key_type.h"
+
+using namespace OHOS::HDI::Display::Graphic::Common::V1_1;
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
