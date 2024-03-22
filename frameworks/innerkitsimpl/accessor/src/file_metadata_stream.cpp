@@ -22,9 +22,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "file_metadata_stream.h"
 #include "image_log.h"
 #include "metadata_stream.h"
-#include "file_metadata_stream.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -260,7 +260,7 @@ bool FileMetadataStream::OpenFromFD(const char *modeStr)
         HandleFileError("Open file", filePath_, -1, -1, -1);
         return false;
     }
-    
+
     // Decide how to create FILE* fp based on the mode parameter
     fp_ = fdopen(dupFD_, modeStr);
     if (fp_ == NULL || ferror(fp_) != 0) {

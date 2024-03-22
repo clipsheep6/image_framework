@@ -19,8 +19,8 @@
 #include <memory>
 #include <string>
 
-#include "metadata_accessor.h"
 #include "image_type.h"
+#include "metadata_accessor.h"
 #include "metadata_stream.h"
 
 namespace OHOS {

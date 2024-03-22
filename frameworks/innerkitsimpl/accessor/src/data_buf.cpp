@@ -31,8 +31,6 @@
 #undef LOG_TAG
 #define LOG_TAG "DataBuffer"
 
-// *****************************************************************************
-// class member definitions
 namespace OHOS {
 namespace Media {
 const uint32_t BYTE_1_MASK = 0x000000ffU;
