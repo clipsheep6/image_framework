@@ -51,5 +51,11 @@ std::shared_ptr<ExifMetadata> AbstractExifMetadataAccessor::Get()
 {
     return exifMetadata_;
 }
+
+void AbstractExifMetadataAccessor::Set(std::shared_ptr<ExifMetadata> &ptr)
+{
+    exifMetadata_ = ptr;
+}
+
 } // namespace Media
 } // namespace OHOS

@@ -61,7 +61,7 @@ size_t ExtWStream::bytesWritten() const
     return written;
 }
 
-bool TempStream::write(const void *buffer, size_t size)
+bool MetadataWStream::write(const void *buffer, size_t size)
 {
     OHOS::Media::byte* bytePtr = reinterpret_cast<OHOS::Media::byte*>(const_cast<void*>(buffer));
     if (stream_->Write(bytePtr, size) !=0) {
@@ -70,12 +70,12 @@ bool TempStream::write(const void *buffer, size_t size)
     return false;
 }
 
-size_t TempStream::bytesWritten() const
+size_t MetadataWStream::bytesWritten() const
 {
     return stream_->GetSize();
 }
 
-uint8_t* TempStream::GetAddr()
+uint8_t* MetadataWStream::GetAddr()
 {
     return stream_->GetAddr();
 }

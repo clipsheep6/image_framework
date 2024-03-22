@@ -192,16 +192,16 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     auto exifData = pixelmap_->Get()->GetExifData();
     TiffParser::Encode(&dataPtr, datSize, exifData);
     DataBuf exifBlob(dataPtr, datSize);
-    TempStream tStream;
+    MetadataWStream tStream;
     if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality)) {
         IMAGE_LOGE("Failed to encode image");
         return ERR_IMAGE_ENCODE_FAILED;
     }
 
-    auto destImageAccessor = MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
-    if (destImageAccessor != nullptr) {
-        if (destImageAccessor->WriteBlob(exifBlob) == SUCCESS) {
-            if (destImageAccessor->WriteToOutput(*output_)) {
+    auto metadataAccessor = MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
+    if (metadataAccessor != nullptr) {
+        if (metadataAccessor->WriteBlob(exifBlob) == SUCCESS) {
+            if (metadataAccessor->WriteToOutput(*output_)) {
                 return SUCCESS;
             }
         }

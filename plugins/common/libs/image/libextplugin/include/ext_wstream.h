@@ -40,10 +40,10 @@ private:
     ImagePlugin::OutputDataStream *stream_;
 };
 
-class TempStream : public SkWStream, NoCopyable {
+class MetadataWStream : public SkWStream, NoCopyable {
 public:
-    TempStream() {stream_ = new Media::BufferMetadataStream();};
-    virtual ~TempStream() override
+    MetadataWStream() {stream_ = new Media::BufferMetadataStream();};
+    virtual ~MetadataWStream() override
     {
         delete stream_;
         stream_ = nullptr;
