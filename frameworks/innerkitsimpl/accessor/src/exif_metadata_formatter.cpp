@@ -40,6 +40,8 @@ enum PropertyPermision {
     READ_WRITE,
 };
 
+const auto GPS_DEGREE_SIZE = 2;
+
 const std::map<std::string, PropertyPermision> SUPPORTKEYS = {
     { "BitsPerSample", READ_WRITE },
     { "Orientation", READ_WRITE },
@@ -593,7 +595,8 @@ const auto FOUR_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9]
                                                                +/[1-9][0-9]*$)";
 const auto FOUR_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 const auto FOUR_DECIMAL_WITH_COMMA_REGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
-const auto SIX_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
+const auto SIX_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)
+                                                               (\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 const auto DATETIME_REGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$)";
 const auto DATE_REGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}$)";
 
@@ -819,7 +822,7 @@ bool ExifMetadatFormatter::ValidRegexWithGpsOneRationalFormat(std::string &value
     }
     std::vector<std::string> vec;
     SplitStr(value, ",", vec);
-    if (vec.size() != 2) {
+    if (vec.size() != GPS_DEGREE_SIZE) {
         IMAGE_LOGD("Gps degree data size is invalid.");
         return false;
     }

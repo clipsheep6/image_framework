@@ -78,23 +78,25 @@ static const map<PixelFormat, PlPixelFormat> PIXEL_FORMAT_MAP = {
     { PixelFormat::ASTC_6x6, PlPixelFormat::ASTC_6X6 },   { PixelFormat::ASTC_8x8, PlPixelFormat::ASTC_8X8 }
 };
 
-static const map<ColorSpace, PlColorSpace> COLOR_SPACE_MAP = { { ColorSpace::UNKNOWN, PlColorSpace::UNKNOWN },
-                                                               { ColorSpace::DISPLAY_P3, PlColorSpace::DISPLAY_P3 },
-                                                               { ColorSpace::SRGB, PlColorSpace::SRGB },
-                                                               { ColorSpace::LINEAR_SRGB, PlColorSpace::LINEAR_SRGB },
-                                                               { ColorSpace::EXTENDED_SRGB, PlColorSpace::EXTENDED_SRGB },
-                                                               { ColorSpace::LINEAR_EXTENDED_SRGB, PlColorSpace::LINEAR_EXTENDED_SRGB },
-                                                               { ColorSpace::GENERIC_XYZ, PlColorSpace::GENERIC_XYZ },
-                                                               { ColorSpace::GENERIC_LAB, PlColorSpace::GENERIC_LAB },
-                                                               { ColorSpace::ACES, PlColorSpace::ACES },
-                                                               { ColorSpace::ACES_CG, PlColorSpace::ACES_CG },
-                                                               { ColorSpace::ADOBE_RGB_1998, PlColorSpace::ADOBE_RGB_1998 },
-                                                               { ColorSpace::DCI_P3, PlColorSpace::DCI_P3 },
-                                                               { ColorSpace::ITU_709, PlColorSpace::ITU_709 },
-                                                               { ColorSpace::ITU_2020, PlColorSpace::ITU_2020 },
-                                                               { ColorSpace::ROMM_RGB, PlColorSpace::ROMM_RGB },
-                                                               { ColorSpace::NTSC_1953, PlColorSpace::NTSC_1953 },
-                                                               { ColorSpace::SMPTE_C, PlColorSpace::SMPTE_C } };
+static const map<ColorSpace, PlColorSpace> COLOR_SPACE_MAP = {
+    { ColorSpace::UNKNOWN, PlColorSpace::UNKNOWN },
+    { ColorSpace::DISPLAY_P3, PlColorSpace::DISPLAY_P3 },
+    { ColorSpace::SRGB, PlColorSpace::SRGB },
+    { ColorSpace::LINEAR_SRGB, PlColorSpace::LINEAR_SRGB },
+    { ColorSpace::EXTENDED_SRGB, PlColorSpace::EXTENDED_SRGB },
+    { ColorSpace::LINEAR_EXTENDED_SRGB, PlColorSpace::LINEAR_EXTENDED_SRGB },
+    { ColorSpace::GENERIC_XYZ, PlColorSpace::GENERIC_XYZ },
+    { ColorSpace::GENERIC_LAB, PlColorSpace::GENERIC_LAB },
+    { ColorSpace::ACES, PlColorSpace::ACES },
+    { ColorSpace::ACES_CG, PlColorSpace::ACES_CG },
+    { ColorSpace::ADOBE_RGB_1998, PlColorSpace::ADOBE_RGB_1998 },
+    { ColorSpace::DCI_P3, PlColorSpace::DCI_P3 },
+    { ColorSpace::ITU_709, PlColorSpace::ITU_709 },
+    { ColorSpace::ITU_2020, PlColorSpace::ITU_2020 },
+    { ColorSpace::ROMM_RGB, PlColorSpace::ROMM_RGB },
+    { ColorSpace::NTSC_1953, PlColorSpace::NTSC_1953 },
+    { ColorSpace::SMPTE_C, PlColorSpace::SMPTE_C }
+};
 
 namespace InnerFormat {
 const string RAW_FORMAT = "image/x-raw";
@@ -1016,7 +1018,7 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<MetadataAccessor> meta
     }
 
     if (metadataAccessor == nullptr) {
-        IMAGE_LOGE("Failed to create image accessor when attempting to modify image property.");        
+        IMAGE_LOGE("Failed to create image accessor when attempting to modify image property.");
         return ERR_IMAGE_SOURCE_DATA;
     }
 

@@ -961,7 +961,8 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write016, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "RowsPerStrip"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "StripByteCounts"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "StripOffsets"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"), "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"),
+              "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
 
     ASSERT_EQ(imageAccessor.Write(), 0);
 

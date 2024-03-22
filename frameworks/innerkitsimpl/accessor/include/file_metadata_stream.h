@@ -230,7 +230,7 @@ FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TE
      * It uses a temporary buffer of size min(IMAGE_STREAM_PAGE_SIZE, src.GetSize()).
      * The function continues to read and write data until it reaches the end of the source MetadataStream.
      * If a write operation fails, it handles the error and returns false.
-     * If a read operation fails and it's not because of reaching the end of the source MetadataStream, 
+     * If a read operation fails and it's not because of reaching the end of the source MetadataStream,
      * it returns false.
      * @return true if the data is copied successfully, false otherwise.
      */
