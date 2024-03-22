@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF
+#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF_H
+#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF_H
 
 // standard includes
 #include <algorithm>
@@ -28,7 +28,7 @@ namespace Media {
 using byte = uint8_t;
 using URational = std::pair<uint32_t, uint32_t>;
 using Rational = std::pair<int32_t, int32_t>;
-#define DATA_BUF_BYTE_SIZE 8
+constexpr int DATA_BUF_BYTE_SIZE = 8;
 
 // Type to express the byte order (little or big endian)
 enum ByteOrder {
@@ -234,4 +234,4 @@ void US2Data(byte *buf, uint16_t value, ByteOrder byteOrder);
 } // namespace Media
 } // namespace OHOS
 
-#endif // #ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF
+#endif // #ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF_H
