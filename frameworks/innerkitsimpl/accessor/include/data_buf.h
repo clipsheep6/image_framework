@@ -16,7 +16,6 @@
 #ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF_H
 #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF_H
 
-// standard includes
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -234,4 +233,4 @@ void US2Data(byte *buf, uint16_t value, ByteOrder byteOrder);
 } // namespace Media
 } // namespace OHOS
 
-#endif // #ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF_H
+#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_DATA_BUF_H

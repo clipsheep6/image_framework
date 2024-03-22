@@ -41,6 +41,7 @@ BufferMetadataStream::~BufferMetadataStream()
 ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
 {
     if (buffer_.capacity() < static_cast<unsigned int>(currentOffset_ + size)) {
+        
         // Calculate the required memory size, ensuring it is a multiple of 4k
         size_t newCapacity =
             ((currentOffset_ + size + IMAGE_STREAM_PAGE_SIZE - 1) / IMAGE_STREAM_PAGE_SIZE) * IMAGE_STREAM_PAGE_SIZE;
@@ -142,6 +143,7 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
 
     // Pre-allocate memory based on the estimated size
     size_t estimatedSize = src.GetSize();
+    
     // Adjust estimatedSize to be a multiple of 4096
     estimatedSize = ((estimatedSize + IMAGE_STREAM_PAGE_SIZE - 1) / IMAGE_STREAM_PAGE_SIZE) * IMAGE_STREAM_PAGE_SIZE;
     buffer_.reserve(estimatedSize);

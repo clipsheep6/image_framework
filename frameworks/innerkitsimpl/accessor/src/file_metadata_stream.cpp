@@ -70,7 +70,6 @@ FileMetadataStream::~FileMetadataStream()
 
 void FileMetadataStream::Initialize(const std::string &filePath, int fileDescriptor)
 {
-    // Implement the repeated initialization logic
     this->filePath_ = filePath;
     this->dupFD_ = fileDescriptor;
     if (!fileWrapper_) {
@@ -200,7 +199,6 @@ long FileMetadataStream::Tell()
 bool FileMetadataStream::IsEof()
 {
     if (fp_ == nullptr) {
-        // File is not open
         HandleFileError("Check EOF", "", -1, -1, -1);
         return true;
     }
@@ -220,7 +218,6 @@ bool FileMetadataStream::IsEof()
     bool isEof = currentPos == fileSize;
 
     if (Seek(currentPos, SeekPos::BEGIN) == -1) {
-        // Restore the file pointer to its original position after comparison
         return true;
     }
 
@@ -234,7 +231,6 @@ bool FileMetadataStream::IsOpen()
 
 void FileMetadataStream::Close()
 {
-    // If there is a memory map, delete it
     ReleaseAddr();
 
     // If the file is not open, return directly
@@ -264,10 +260,10 @@ bool FileMetadataStream::OpenFromFD(const char *modeStr)
         HandleFileError("Open file", filePath_, -1, -1, -1);
         return false;
     }
+    
     // Decide how to create FILE* fp based on the mode parameter
     fp_ = fdopen(dupFD_, modeStr);
     if (fp_ == NULL || ferror(fp_) != 0) {
-        // Handle errors, such as throwing exceptions or returning error codes
         HandleFileError("Open file", filePath_, dupFD_, -1, -1);
         return false;
     }
@@ -281,7 +277,6 @@ bool FileMetadataStream::OpenFromPath(const char *modeStr)
     IMAGE_LOGD("Open file: %{public}s, modeStr: %{public}s", filePath_.c_str(), modeStr);
     fp_ = fopen(filePath_.c_str(), modeStr);
     if (fp_ == nullptr) {
-        // Open failed
         HandleFileError("Open file", filePath_, -1, -1, -1);
         return false;
     }
@@ -347,7 +342,6 @@ byte *FileMetadataStream::GetAddr(bool isWriteable)
     mappedMemory_ =
         ::mmap(nullptr, GetSize(), isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fileDescriptor, 0);
     if (mappedMemory_ == (void *)MAP_FAILED) {
-        // Memory mapping failed
         HandleFileError("Create memory mapping", filePath_, fileDescriptor, -1, -1);
         mappedMemory_ = nullptr;
     }
@@ -358,7 +352,6 @@ byte *FileMetadataStream::GetAddr(bool isWriteable)
 bool FileMetadataStream::ReleaseAddr()
 {
     if (mappedMemory_ == nullptr) {
-        // The memory map is nullptr
         return true;
     }
 
@@ -393,7 +386,6 @@ bool FileMetadataStream::TruncateFile(size_t totalBytesWritten, MetadataStream &
 {
     int fileDescriptor = fileno(fp_);
     if (ftruncate(fileDescriptor, totalBytesWritten) == -1) {
-        // Failed to truncate the file
         HandleFileError("Truncate file", filePath_, fileDescriptor, -1, totalBytesWritten);
         src.Seek(src_cur, SeekPos::BEGIN); // Restore the position of src
         return false;
@@ -403,7 +395,6 @@ bool FileMetadataStream::TruncateFile(size_t totalBytesWritten, MetadataStream &
 
 bool FileMetadataStream::CopyDataFromSource(MetadataStream &src, ssize_t &totalBytesWritten)
 {
-    // Read data from the source MetadataStream and write it to the current file
     ssize_t buffer_size = std::min((ssize_t)IMAGE_STREAM_PAGE_SIZE, src.GetSize());
     byte tempBuffer[buffer_size];
 
