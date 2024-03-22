@@ -24,7 +24,8 @@
 namespace OHOS {
 namespace Media {
 
-AbstractExifMetadataAccessor::AbstractExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream) : imageStream_(stream) {}
+AbstractExifMetadataAccessor::AbstractExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
+    : imageStream_(stream) {}
 
 AbstractExifMetadataAccessor::~AbstractExifMetadataAccessor() {}
 

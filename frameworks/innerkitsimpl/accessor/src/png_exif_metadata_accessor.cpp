@@ -72,7 +72,8 @@ size_t PngExifMetadataAccessor::ReadChunk(DataBuf &buffer) const
     return imageStream_->Read(buffer.Data(), buffer.Size());
 }
 
-bool PngExifMetadataAccessor::FindTiffFromText(const DataBuf &data, const std::string chunkType, DataBuf &tiffData) const
+bool PngExifMetadataAccessor::FindTiffFromText(const DataBuf &data, const std::string chunkType,
+    DataBuf &tiffData) const
 {
     PngImageChunkUtils::TextChunkType txtType;
     if (chunkType == PNG_CHUNK_TEXT) {

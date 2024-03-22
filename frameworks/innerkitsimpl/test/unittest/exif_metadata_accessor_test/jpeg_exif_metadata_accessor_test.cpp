@@ -993,7 +993,8 @@ HWTEST_F(JpegExifMetadataAccssorTest, Write016, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "RowsPerStrip"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "StripByteCounts"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "StripOffsets"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"), "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"),
+              "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
 }
 
 /**
@@ -1062,7 +1063,8 @@ HWTEST_F(JpegExifMetadataAccssorTest, WriteBlob003, TestSize.Level3)
     ASSERT_EQ(outputBuf.Size(), inputBuf.Size());
 }
 
-std::string JpegExifMetadataAccssorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop)
+std::string JpegExifMetadataAccssorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata,
+    const std::string& prop)
 {
     std::string value;
     metadata->GetValue(prop, value);

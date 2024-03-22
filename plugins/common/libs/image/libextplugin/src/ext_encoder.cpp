@@ -201,7 +201,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     auto destImageAccessor = MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
     if (destImageAccessor != nullptr) {
         if (destImageAccessor->WriteBlob(exifBlob) == SUCCESS) {
-            if (destImageAccessor->WriteToOutput(*output_)){
+            if (destImageAccessor->WriteToOutput(*output_)) {
                 return SUCCESS;
             }
         }
