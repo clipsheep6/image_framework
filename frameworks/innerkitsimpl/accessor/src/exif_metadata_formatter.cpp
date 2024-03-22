@@ -1107,16 +1107,16 @@ int32_t ExifMetadatFormatter::ConvertValueFormat(const std::string &keyName, std
     IMAGE_LOGD("Validating value format. Key: %{public}s, Value: %{public}s", keyName.c_str(), value.c_str());
 
     // get first iterator according to keyName
-    for (auto iterator = ExifMetadatFormatter::valueFormatConvertConfig.find(keyName);
-        iterator != ExifMetadatFormatter::valueFormatConvertConfig.end() &&
-        iterator != ExifMetadatFormatter::valueFormatConvertConfig.upper_bound(keyName);
-        iterator++) {
-        IMAGE_LOGD("Validating value format in loop. Key: %{public}s, Regex: %{public}s", (iterator->first).c_str(),
-            (iterator->second).second.c_str());
-        auto func = (iterator->second).first;
+    for (it = ExifMetadatFormatter::valueFormatConvertConfig.find(keyName);
+        it != ExifMetadatFormatter::valueFormatConvertConfig.end() &&
+        it != ExifMetadatFormatter::valueFormatConvertConfig.upper_bound(keyName);
+        it++) {
+        IMAGE_LOGD("Validating value format in loop. Key: %{public}s, Regex: %{public}s", (it->first).c_str(),
+            (it->second).second.c_str());
+        auto func = (it->second).first;
 
         // call each value format function with value and regex
-        int32_t isValid = func(value, (iterator->second).second);
+        int32_t isValid = func(value, (it->second).second);
         IMAGE_LOGD("Validation result: %{public}d", isValid);
         if (isValid) {
             IMAGE_LOGD("Validation successful.");
