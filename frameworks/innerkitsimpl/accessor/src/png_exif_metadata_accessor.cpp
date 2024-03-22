@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,8 @@
 #include "data_buf.h"
 #include "exif_metadata.h"
 #include "image_log.h"
-#include "metadata_stream.h"
 #include "media_errors.h"
+#include "metadata_stream.h"
 #include "png_exif_metadata_accessor.h"
 #include "png_image_chunk_utils.h"
 #include "tiff_parser.h"
@@ -31,26 +31,23 @@
 namespace OHOS {
 namespace Media {
 namespace {
-    constexpr auto PNG_CHUNK_IEND = "IEND";
-    constexpr auto PNG_CHUNK_TEXT = "tEXt";
-    constexpr auto PNG_CHUNK_ZTXT = "zTXt";
-    constexpr auto PNG_CHUNK_ITXT = "iTXt";
-    constexpr auto PNG_CHUNK_EXIF = "eXIf";
-    constexpr auto PNG_CHUNK_HEAD_SIZE = 8;
-    constexpr auto PNG_CHUNK_LENGTH_SIZE = 4;
-    constexpr auto PNG_CHUNK_TYPE_SIZE = 4;
-    constexpr auto PNG_CHUNK_CRC_SIZE = 4;
-    constexpr auto PNG_SIGN_SIZE = 8;
+constexpr auto PNG_CHUNK_IEND = "IEND";
+constexpr auto PNG_CHUNK_TEXT = "tEXt";
+constexpr auto PNG_CHUNK_ZTXT = "zTXt";
+constexpr auto PNG_CHUNK_ITXT = "iTXt";
+constexpr auto PNG_CHUNK_EXIF = "eXIf";
+constexpr auto PNG_CHUNK_HEAD_SIZE = 8;
+constexpr auto PNG_CHUNK_LENGTH_SIZE = 4;
+constexpr auto PNG_CHUNK_TYPE_SIZE = 4;
+constexpr auto PNG_CHUNK_CRC_SIZE = 4;
+constexpr auto PNG_SIGN_SIZE = 8;
 }
 
 PngExifMetadataAccessor::PngExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
     : AbstractExifMetadataAccessor(stream)
-{
-}
+{}
 
-PngExifMetadataAccessor::~PngExifMetadataAccessor()
-{
-}
+PngExifMetadataAccessor::~PngExifMetadataAccessor() {}
 
 bool PngExifMetadataAccessor::IsPngType() const
 {
@@ -96,7 +93,7 @@ bool PngExifMetadataAccessor::ProcessExifData(DataBuf &blob, std::string chunkTy
     DataBuf chunkData(chunkLength);
     if (chunkLength > 0) {
         if (ReadChunk(chunkData) != chunkData.Size()) {
-            IMAGE_LOGE("Read: Read chunk data error.");
+            IMAGE_LOGE("Failed to read chunk data. Expected size: %{public}zu", chunkData.Size());
             return false;
         }
     }
@@ -110,13 +107,13 @@ bool PngExifMetadataAccessor::ProcessExifData(DataBuf &blob, std::string chunkTy
 bool PngExifMetadataAccessor::ReadBlob(DataBuf &blob) const
 {
     if (!imageStream_->IsOpen()) {
-        IMAGE_LOGE("Output image stream is not open.");
+        IMAGE_LOGE("The output image stream is not open");
         return false;
     }
     imageStream_->Seek(0, SeekPos::BEGIN);
 
     if (!IsPngType()) {
-        IMAGE_LOGE("Is not a PNG file.");
+        IMAGE_LOGE("The file is not a PNG file");
         return false;
     }
 
@@ -125,21 +122,21 @@ bool PngExifMetadataAccessor::ReadBlob(DataBuf &blob) const
 
     while (!imageStream_->IsEof()) {
         if (ReadChunk(chunkHead) != chunkHead.Size()) {
-            IMAGE_LOGE("Read chunk head error.");
+            IMAGE_LOGE("Failed to read chunk head. Expected size: %{public}zu", chunkHead.Size());
             return false;
         }
         uint32_t chunkLength = chunkHead.ReadUInt32(0, bigEndian);
         if (chunkLength > imgSize - imageStream_->Tell()) {
-            IMAGE_LOGE("Read chunk length error.");
+            IMAGE_LOGE("Chunk length is larger than the remaining image size");
             return false;
         }
-        std::string chunkType(reinterpret_cast<const char*>(chunkHead.CData(PNG_CHUNK_LENGTH_SIZE)),
-                              PNG_CHUNK_TYPE_SIZE);
+        std::string chunkType(reinterpret_cast<const char *>(chunkHead.CData(PNG_CHUNK_LENGTH_SIZE)),
+            PNG_CHUNK_TYPE_SIZE);
         if (chunkType == PNG_CHUNK_IEND) {
             return false;
         }
-        if (chunkType == PNG_CHUNK_TEXT || chunkType == PNG_CHUNK_ZTXT ||
-            chunkType == PNG_CHUNK_EXIF || chunkType == PNG_CHUNK_ITXT) {
+        if (chunkType == PNG_CHUNK_TEXT || chunkType == PNG_CHUNK_ZTXT || chunkType == PNG_CHUNK_EXIF ||
+            chunkType == PNG_CHUNK_ITXT) {
             if (ProcessExifData(blob, chunkType, chunkLength)) {
                 break;
             }
@@ -147,7 +144,7 @@ bool PngExifMetadataAccessor::ReadBlob(DataBuf &blob) const
         }
         imageStream_->Seek(chunkLength + PNG_CHUNK_CRC_SIZE, CURRENT);
         if (imageStream_->IsEof()) {
-            IMAGE_LOGE("Read file error.");
+            IMAGE_LOGE("Failed to read the file");
             return false;
         }
     }
@@ -158,25 +155,24 @@ uint32_t PngExifMetadataAccessor::Read()
 {
     DataBuf tiffBuf;
     if (!ReadBlob(tiffBuf)) {
-        IMAGE_LOGE("ReadBlob error.");
+        IMAGE_LOGE("Failed to read the blob.");
         return ERR_IMAGE_SOURCE_DATA;
     }
     ExifData *exifData;
     size_t byteOrderPos = PngImageChunkUtils::FindTiffPos(tiffBuf, tiffBuf.Size());
     if (byteOrderPos == std::numeric_limits<size_t>::max()) {
-        IMAGE_LOGE("Failed to parse Exif metadata: cannot find tiff byte order");
+        IMAGE_LOGE("Cannot find TIFF byte order in Exif metadata.");
         return ERR_IMAGE_SOURCE_DATA;
     }
     TiffParser::Decode(tiffBuf.CData(), tiffBuf.Size(), &exifData);
     if (exifData == nullptr) {
-        IMAGE_LOGE("Decode tiffBuf error.");
+        IMAGE_LOGE("Failed to decode TIFF buffer.");
         return ERR_EXIF_DECODE_FAILED;
     }
 
     exifMetadata_ = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
     return SUCCESS;
 }
-
 uint32_t PngExifMetadataAccessor::Write()
 {
     return ERR_IMAGE_DATA_UNSUPPORT;

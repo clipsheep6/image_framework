@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
-#include "tiff_parser.h"
-#include "image_log.h"
-
 #include <cstring>
+#include <fcntl.h>
+#include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <string>
+#include "image_log.h"
+#include "tiff_parser.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -47,12 +46,12 @@ void TiffParser::Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifD
         return;
     }
     exif_data_save_data_general(exifData, dataPtr, &size);
-    IMAGE_LOGE("[Encode] Encode dataPtr size is [%{public}u].", size);
+    IMAGE_LOGE("Encode dataPtr size is: %{public}u", size);
 }
 
 void TiffParser::DecodeJpegExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData)
 {
-    IMAGE_LOGE("[DecodeJpegExif].");
+    IMAGE_LOGE("Decoding Jpeg Exif data.");
     if (dataPtr == nullptr) {
         return;
     }
@@ -63,7 +62,7 @@ void TiffParser::DecodeJpegExif(const unsigned char *dataPtr, const uint32_t &si
 
 void TiffParser::EncodeJpegExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData)
 {
-    IMAGE_LOGE("[EncodeJpegExif].");
+    IMAGE_LOGE("Encoding Jpeg Exif data.");
     if (exifData == nullptr) {
         return;
     }

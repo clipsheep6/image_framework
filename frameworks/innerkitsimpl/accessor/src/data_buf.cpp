@@ -80,7 +80,9 @@ void DataBuf::Reset()
 uint8_t DataBuf::ReadUInt8(size_t offset) const
 {
     if (offset >= pData_.size()) {
-        IMAGE_LOGE("Overflow in DataBuf::read_uint8");
+        IMAGE_LOGE("Attempted to read beyond the buffer size while reading an 8-bit unsigned integer. "
+            "Offset: %{public}zu, Buffer size: %{public}zu",
+            offset, pData_.size());
         return 0;
     }
     return pData_[offset];
@@ -89,7 +91,9 @@ uint8_t DataBuf::ReadUInt8(size_t offset) const
 void DataBuf::WriteUInt8(size_t offset, uint8_t value)
 {
     if (offset >= pData_.size()) {
-        IMAGE_LOGE("Overflow in DataBuf::write_uint8");
+        IMAGE_LOGE("Attempted to write beyond the buffer size while writing an 8-bit unsigned integer. "
+            "Offset: %{public}zu, Buffer size: %{public}zu",
+            offset, pData_.size());
         return;
     }
     pData_[offset] = value;
@@ -98,7 +102,9 @@ void DataBuf::WriteUInt8(size_t offset, uint8_t value)
 void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder)
 {
     if (pData_.size() < UINT32_SIZE || offset > (pData_.size() - UINT32_SIZE)) {
-        IMAGE_LOGE("Overflow in DataBuf::write_uint32");
+        IMAGE_LOGE("Attempted to write beyond the buffer size while writing a 32-bit unsigned integer. "
+            "Offset: %{public}zu, Buffer size: %{public}zu",
+            offset, pData_.size());
         return;
     }
     UL2Data(&pData_[offset], x, byteOrder);
@@ -107,7 +113,9 @@ void DataBuf::WriteUInt32(size_t offset, uint32_t x, ByteOrder byteOrder)
 uint32_t DataBuf::ReadUInt32(size_t offset, ByteOrder byteOrder)
 {
     if (pData_.size() < UINT32_SIZE || offset > (pData_.size() - UINT32_SIZE)) {
-        IMAGE_LOGE("Overflow in DataBuf::read_uint32");
+        IMAGE_LOGE("Attempted to read beyond the buffer size while reading a 32-bit unsigned integer. "
+            "Offset: %{public}zu, Buffer size: %{public}zu",
+            offset, pData_.size());
         return 0;
     }
     return GetULong(&pData_[offset], byteOrder);
@@ -116,7 +124,9 @@ uint32_t DataBuf::ReadUInt32(size_t offset, ByteOrder byteOrder)
 int DataBuf::CmpBytes(size_t offset, const void *buf, size_t bufsize) const
 {
     if (pData_.size() < bufsize || offset > pData_.size() - bufsize) {
-        IMAGE_LOGE("Overflow in DataBuf::cmpBytes");
+        IMAGE_LOGE("Attempted to compare bytes beyond the buffer size. "
+            "Offset: %{public}zu, Buffer size: %{public}zu, Compare size: %{public}zu",
+            offset, pData_.size(), bufsize);
         return -1;
     }
     return memcmp(&pData_[offset], buf, bufsize);
@@ -133,7 +143,9 @@ const byte *DataBuf::CData(size_t offset) const
         return nullptr;
     }
     if (offset > pData_.size()) {
-        IMAGE_LOGE("Overflow in DataBuf::CData");
+        IMAGE_LOGE("Attempted to access beyond the buffer size. "
+            "Offset: %{public}zu, Buffer size: %{public}zu",
+            offset, pData_.size());
         return nullptr;
     }
     return &pData_[offset];

@@ -993,7 +993,8 @@ uint32_t ImageSource::ModifyImageProperty(const std::string &key, const std::str
 {
     uint32_t ret = CreatExifMetadataByImageSource();
     if (ret != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]Create Exif metadata failed when modifying property.");
+        IMAGE_LOGE("Failed to create Exif metadata "
+                   "when attempting to modify property.");
         return ret;
     }
 
@@ -1008,19 +1009,20 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<MetadataAccessor> imag
     const std::string &key, const std::string &value)
 {
     if (imageAccessor == nullptr) {
-        IMAGE_LOGE("[ImageSource]Create image accessor fail on modify image property.");
+        IMAGE_LOGE("Failed to create image accessor "
+                   "when attempting to modify image property.");
         return ERR_IMAGE_SOURCE_DATA;
     }
 
     uint32_t ret = imageAccessor->Read();
     if (ret == ERR_IMAGE_DECODE_FAILED) {
-        IMAGE_LOGE("[ImageSource]Decode image exif failed.");
+        IMAGE_LOGE("Decoding image exif failed.");
         return ret;
     }
 
     if (imageAccessor->Get() == nullptr) {
         if (!imageAccessor->Create()) {
-            IMAGE_LOGE("[ImageSource]Create ExifMetadata failed.");
+            IMAGE_LOGE("Failed to create ExifMetadata.");
             return ERR_IMAGE_SOURCE_DATA;
         }
     }
@@ -1091,7 +1093,8 @@ uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &
 {
     uint32_t ret = CreatExifMetadataByImageSource();
     if (ret != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]creat exifmetadata failed when getting property.");
+        IMAGE_LOGE("Failed to create Exif metadata "
+                   "when attempting to get property.");
         return ret;
     }
 
@@ -1162,7 +1165,8 @@ void ImageSource::AddDecodeListener(DecodeListener *listener)
 void ImageSource::RemoveDecodeListener(DecodeListener *listener)
 {
     if (listener == nullptr) {
-        IMAGE_LOGE("RemoveDecodeListener listener null");
+        IMAGE_LOGE("Attempted to remove a null listener "
+                   "from decode listeners.");
         return;
     }
     std::lock_guard<std::mutex> guard(listenerMutex_);
@@ -1320,7 +1324,7 @@ uint32_t ImageSource::GetFormatExtended(string &format)
     }
 
     if (sourceStreamPtr_ == nullptr) {
-        IMAGE_LOGE("[ImageSource]sourceStreamPtr_ is null");
+        IMAGE_LOGE("Source stream pointer is null.");
         return ERR_MEDIA_NULL_POINTER;
     }
 
@@ -1329,13 +1333,13 @@ uint32_t ImageSource::GetFormatExtended(string &format)
     auto codec = DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *sourceStreamPtr_,
         errorCode);
     if (errorCode != SUCCESS || codec == nullptr) {
-        IMAGE_LOGE("[ImageSource]No extended decoder.");
+        IMAGE_LOGE("No extended decoder available.");
         return errorCode;
     }
     const static string EXT_ENCODED_FORMAT_KEY = "EncodedFormat";
     auto decoderPtr = unique_ptr<AbsImageDecoder>(codec);
     if (decoderPtr == nullptr) {
-        IMAGE_LOGE("[ImageSource]decoderPtr null");
+        IMAGE_LOGE("Decoder pointer is null.");
         return ERR_MEDIA_NULL_POINTER;
     }
     ProgDecodeContext context;
@@ -1345,12 +1349,12 @@ uint32_t ImageSource::GetFormatExtended(string &format)
     }
     errorCode = decoderPtr->GetImagePropertyString(FIRST_FRAME, EXT_ENCODED_FORMAT_KEY, format);
     if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]Extended get format failed %{public}d.", errorCode);
+        IMAGE_LOGE("Failed to get extended format. Error code: %{public}d.", errorCode);
         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
     }
 
     if (!ImageSystemProperties::GetSkiaEnabled()) {
-        IMAGE_LOGD("[ImageSource]Extended close SK decode");
+        IMAGE_LOGD("Extended SK decode is closed.");
         if (format != "image/gif") {
             sourceStreamPtr_->Seek(imageType);
             return ERR_MEDIA_DATA_UNSUPPORT;
@@ -2063,13 +2067,14 @@ bool ImageSource::ConvertYUV420ToRGBA(uint8_t *data, uint32_t size,
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t &errorCode)
 {
-    IMAGE_LOGD("[ImageSource]CreatePixelMapForYUV IN srcPixelFormat:%{public}d, srcSize:(%{public}d,"
-        "%{public}d)", sourceOptions_.pixelFormat, sourceOptions_.size.width, sourceOptions_.size.height);
+    IMAGE_LOGD("Starting the creation of PixelMap for YUV. Source pixel format: %{public}d, "
+               "Source size: (%{public}d, %{public}d)", 
+               sourceOptions_.pixelFormat, sourceOptions_.size.width, sourceOptions_.size.height);
     DumpInputData("yuv");
 
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
     if (pixelMap == nullptr) {
-        IMAGE_LOGE("[ImageSource]create the pixel map unique_ptr fail.");
+        IMAGE_LOGE("Failed to create the pixel map unique_ptr.");
         errorCode = ERR_IMAGE_MALLOC_ABNORMAL;
         return nullptr;
     }
@@ -2082,14 +2087,14 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t &errorCode)
     info.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
     errorCode = pixelMap->SetImageInfo(info);
     if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
+        IMAGE_LOGE("Error updating pixelmap info. Return code: %{public}u.", errorCode);
         return nullptr;
     }
 
     size_t bufferSize = static_cast<size_t>(pixelMap->GetWidth() * pixelMap->GetHeight() * pixelMap->GetPixelBytes());
     auto buffer = malloc(bufferSize);
     if (buffer == nullptr) {
-        IMAGE_LOGE("allocate memory size %{public}zu fail", bufferSize);
+        IMAGE_LOGE("Failed to allocate memory of size %{public}zu", bufferSize);
         errorCode = ERR_IMAGE_MALLOC_ABNORMAL;
         return nullptr;
     }
@@ -2098,12 +2103,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t &errorCode)
     pixelMap->SetPixelsAddr(buffer, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
 
     if (!ConvertYUV420ToRGBA(static_cast<uint8_t *>(buffer), bufferSize, false, false, errorCode)) {
-        IMAGE_LOGE("convert yuv420 to rgba issue, errorCode=%{public}u", errorCode);
+        IMAGE_LOGE("Issue converting yuv420 to rgba, errorCode=%{public}u", errorCode);
         errorCode = ERROR;
         return nullptr;
     }
 
-    IMAGE_LOGD("[ImageSource]CreatePixelMapForYUV OUT");
+    IMAGE_LOGD("CreatePixelMapForYUV operation completed.");
 
     if (CreatExifMetadataByImageSource() == SUCCESS) {
         pixelMap->SetExifMetadata(exifMetadata_);
@@ -2354,7 +2359,7 @@ unique_ptr<vector<int32_t>> ImageSource::GetDelayTime(uint32_t &errorCode)
 {
     auto frameCount = GetFrameCount(errorCode);
     if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]GetDelayTime get frame sum error.");
+        IMAGE_LOGE("Failed to get frame count in GetDelayTime.");
         return nullptr;
     }
 
@@ -2368,17 +2373,19 @@ unique_ptr<vector<int32_t>> ImageSource::GetDelayTime(uint32_t &errorCode)
         string delayTimeStr;
         errorCode = mainDecoder_->GetImagePropertyString(index, IMAGE_DELAY_TIME, delayTimeStr);
         if (errorCode != SUCCESS) {
-            IMAGE_LOGE("[ImageSource]GetDelayTime get delay time issue. index=%{public}u", index);
+            IMAGE_LOGE("Issue getting delay time in GetDelayTime. "
+                       "Index: %{public}u", index);
             return nullptr;
         }
         if (!IsNumericStr(delayTimeStr)) {
-            IMAGE_LOGE("[ImageSource]GetDelayTime not a numeric string. delayTimeStr=%{public}s",
-                delayTimeStr.c_str());
+            IMAGE_LOGE("Delay time string is not numeric in GetDelayTime. "
+                       "Delay time string: %{public}s", delayTimeStr.c_str());
             return nullptr;
         }
         int delayTime = 0;
         if (!StrToInt(delayTimeStr, delayTime)) {
-            IMAGE_LOGE("[ImageSource]GetDelayTime to int fail. delayTimeStr=%{public}s", delayTimeStr.c_str());
+            IMAGE_LOGE("Failed to convert delay time string to int in GetDelayTime. "
+                       "Delay time string: %{public}s", delayTimeStr.c_str());
             return nullptr;
         }
         delayTimes->push_back(delayTime);

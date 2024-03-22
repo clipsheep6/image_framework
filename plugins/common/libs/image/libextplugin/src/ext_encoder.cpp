@@ -165,7 +165,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
             return IsSameTextStr(item.second, opts_.format);
     });
     if (iter == FORMAT_NAME.end()) {
-        IMAGE_LOGE("ExtEncoder::FinalizeEncode unsupported format %{public}s", opts_.format.c_str());
+        IMAGE_LOGE("Unsupported format: %{public}s", opts_.format.c_str());
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
@@ -173,7 +173,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     TmpBufferHolder holder;
     auto errorCode = BuildSkBitmap(pixelmap_, bitmap, iter->first, holder);
     if (errorCode != SUCCESS) {
-        IMAGE_LOGE("ExtEncoder::FinalizeEncode BuildSkBitmap failed");
+        IMAGE_LOGE("Failed to build SkBitmap");
         return errorCode;
     }
 
@@ -181,7 +181,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
         pixelmap_->Get()->GetExifData() == nullptr) {
         ExtWStream wStream(output_);
         if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
-            IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
+            IMAGE_LOGE("Failed to encode image");
             return ERR_IMAGE_ENCODE_FAILED;
         }
         return SUCCESS;
@@ -194,7 +194,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     DataBuf exifBlob(dataPtr, datSize);
     TempStream tStream;
     if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality)) {
-        IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
+        IMAGE_LOGE("Failed to encode image");
         return ERR_IMAGE_ENCODE_FAILED;
     }
 
