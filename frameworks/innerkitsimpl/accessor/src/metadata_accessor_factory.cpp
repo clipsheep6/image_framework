@@ -69,7 +69,7 @@ std::shared_ptr<MetadataAccessor> MetadataAccessorFactory::Create(std::shared_pt
 
     switch (type) {
         case EncodedFormat::JPEG:
-            return std::make_shared<JpegExifMetadataAccssor>(stream);
+            return std::make_shared<JpegExifMetadataAccessor>(stream);
         case EncodedFormat::PNG:
             return std::make_shared<PngExifMetadataAccessor>(stream);
         default:

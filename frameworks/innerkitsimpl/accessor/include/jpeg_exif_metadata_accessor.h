@@ -25,10 +25,10 @@
 
 namespace OHOS {
 namespace Media {
-class JpegExifMetadataAccssor : public AbstractExifMetadataAccessor {
+class JpegExifMetadataAccessor : public AbstractExifMetadataAccessor {
 public:
-    JpegExifMetadataAccssor(std::shared_ptr<MetadataStream> &stream);
-    ~JpegExifMetadataAccssor();
+    JpegExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream);
+    ~JpegExifMetadataAccessor();
 
     virtual uint32_t Read() override;
     bool ReadBlob(DataBuf &blob) const;

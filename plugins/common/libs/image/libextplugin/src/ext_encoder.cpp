@@ -177,8 +177,8 @@ uint32_t ExtEncoder::DoFinalizeEncode()
         return errorCode;
     }
 
-    if (pixelmap_->Get() == nullptr ||
-        pixelmap_->Get()->GetExifData() == nullptr) {
+    if (pixelmap_->GetExifMetadata() == nullptr ||
+        pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
         ExtWStream wStream(output_);
         if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
             IMAGE_LOGE("Failed to encode image");
@@ -189,7 +189,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
 
     unsigned char *dataPtr;
     uint32_t datSize = 0;
-    auto exifData = pixelmap_->Get()->GetExifData();
+    auto exifData = pixelmap_->GetExifMetadata()->GetExifData();
     TiffParser::Encode(&dataPtr, datSize, exifData);
     DataBuf exifBlob(dataPtr, datSize);
     MetadataWStream tStream;
