@@ -1177,7 +1177,7 @@ bool ExifMetadatFormatter::IsModifyAllowed(const std::string &keyName)
 std::pair<int32_t, std::string> ExifMetadatFormatter::Format(const std::string &keyName, const std::string &value)
 {
     IMAGE_LOGD("Processing. Key: %{public}s, Value: %{public}s.", keyName.c_str(), value.c_str());
-    std::string valuetmp = value;
+    std::string tmpValue = value;
 
     if (!ExifMetadatFormatter::IsKeySupported(keyName)) {
         IMAGE_LOGD("Key is not supported.");
@@ -1190,7 +1190,7 @@ std::pair<int32_t, std::string> ExifMetadatFormatter::Format(const std::string &
     }
 
     // 1.validate value format
-    if (ExifMetadatFormatter::ConvertValueFormat(keyName, valuetmp)) {
+    if (ExifMetadatFormatter::ConvertValueFormat(keyName, tmpValue)) {
         IMAGE_LOGD("Invalid value format. Key: %{public}s, Value: %{public}s.", keyName.c_str(), value.c_str());
         // value format validate does not pass
         return std::make_pair(Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT, "");
@@ -1203,7 +1203,7 @@ std::pair<int32_t, std::string> ExifMetadatFormatter::Format(const std::string &
         // value range validate does not pass
         return std::make_pair(Media::ERR_MEDIA_OUT_OF_RANGE, "");
     }
-    return std::make_pair(Media::SUCCESS, valuetmp);
+    return std::make_pair(Media::SUCCESS, tmpValue);
 }
 
 // exif validation portal
