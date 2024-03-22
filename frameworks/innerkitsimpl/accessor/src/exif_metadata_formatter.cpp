@@ -1083,7 +1083,7 @@ int32_t ExifMetadatFormatter::ValidateValueRange(const std::string &keyName, con
         IMAGE_LOGD("Valid value: %{public}s", value.c_str());
         return Media::SUCCESS;
     }
-    return Media::SUCCESS; // SUCCESS
+    return Media::SUCCESS;
 }
 
 // check if has any value format configuration
@@ -1120,12 +1120,12 @@ int32_t ExifMetadatFormatter::ConvertValueFormat(const std::string &keyName, std
         IMAGE_LOGD("Validation result: %{public}d", isValid);
         if (isValid) {
             IMAGE_LOGD("Validation successful.");
-            return Media::SUCCESS; // SUCCESS
+            return Media::SUCCESS;
         }
     }
 
     IMAGE_LOGD("Validation failed. Unsupported EXIF format.");
-    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; // FAILED
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
 }
 
 int32_t ExifMetadatFormatter::ValidateValueFormat(const std::string &keyName, const std::string &value)
@@ -1151,12 +1151,12 @@ int32_t ExifMetadatFormatter::ValidateValueFormat(const std::string &keyName, co
         IMAGE_LOGD("Validation result: %{public}d", isValidated);
         if (isValidated) {
             IMAGE_LOGD("Validation successful.");
-            return Media::SUCCESS; // SUCCESS
+            return Media::SUCCESS;
         }
     }
 
     IMAGE_LOGD("Validation failed. Unsupported EXIF format.");
-    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT; // FAILED
+    return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
 }
 
 bool ExifMetadatFormatter::IsKeySupported(const std::string &keyName)
