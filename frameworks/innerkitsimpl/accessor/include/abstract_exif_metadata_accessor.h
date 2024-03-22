@@ -37,4 +37,4 @@ protected:
 } // namespace Media
 } // namespace OHOS
 
-#endif
+#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_ABSTRACT_EXIF_METADATA_ACCESSOR_H

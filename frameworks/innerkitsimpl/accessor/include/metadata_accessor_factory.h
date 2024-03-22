@@ -38,4 +38,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif
+#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_ACCESSOR_FACTORY_H

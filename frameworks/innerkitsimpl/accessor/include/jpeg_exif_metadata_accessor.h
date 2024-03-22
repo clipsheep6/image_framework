@@ -53,4 +53,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif
+#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_JPEG_EXIF_METADATA_ACCESSOR_H
