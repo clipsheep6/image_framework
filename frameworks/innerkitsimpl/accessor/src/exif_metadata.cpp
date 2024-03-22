@@ -469,7 +469,6 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         IMAGE_LOGE("Exif data is null. Cannot set value for key: %{public}s", key.c_str());
         return false;
     }
-
     auto result = ExifMetadatFormatter::Format(key, value);
     if (result.first) {
         IMAGE_LOGE("Failed to validate and convert value for key: %{public}s", key.c_str());
@@ -477,15 +476,12 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
     }
     IMAGE_LOGD("Formatted value for key %{public}s is: %{public}s", key.c_str(), result.second.c_str());
     size_t valueLen = result.second.length();
-
     ExifEntry *ptrEntry = GetEntry(key, valueLen);
     if (ptrEntry == nullptr) {
         IMAGE_LOGE("Failed to get ExifEntry for key: %{public}s", key.c_str());
         return false;
     }
-
     ExifByteOrder order = exif_data_get_byte_order(ptrEntry->parent->parent);
-
     bool isSetSuccess = false;
     switch (ptrEntry->format) {
         case EXIF_FORMAT_SHORT:
@@ -519,7 +515,6 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
             IMAGE_LOGE("Unsupported Exif format for key: %{public}s", key.c_str());
             break;
     }
-
     return isSetSuccess;
 }
 } // namespace Media
