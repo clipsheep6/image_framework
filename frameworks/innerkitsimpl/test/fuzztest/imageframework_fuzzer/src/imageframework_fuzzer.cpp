@@ -12,12 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "imageframework_fuzzer.h"
 
 #include <cstdint>
 #include <string>
-#include "imageframework_fuzzer.h"
+
 #include "image_source.h"
 #include "pixel_map.h"
+
 namespace OHOS {
 void BatchInsertFuzzer(const uint8_t* data, size_t size)
 {
