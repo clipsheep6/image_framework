@@ -57,10 +57,13 @@ private:
     static bool ValidRegexWithDot(std::string &value, const std::string &regex);
     static bool ValidRegxWithCommaDecimalRationalFormat(std::string &value, const std::string &regex);
     static bool ValidRegexWithDecimalRationalFormat(std::string &value, const std::string &regex);
+    static bool ValidRegexWithGpsOneRationalFormat(std::string &value, const std::string &regex);
     static void ReplaceAsSpace(std::string &value, const std::string &regex);
+    static void ReplaceAsContent(std::string &value, const std::string &regex, const std::string &content);
     static void RationalFormat(std::string &value);
     static std::string GetFractionFromStr(const std::string &decimal);
     static void DecimalRationalFormat(std::string &value);
+    static ValueFormatDelegate doubleIntToOneRationalWithComma;
     static ValueFormatDelegate doubleIntWithBlank;
     static ValueFormatDelegate doubleIntWithComma;
     static ValueFormatDelegate tribleIntWithBlank;
@@ -85,6 +88,7 @@ private:
     static ValueFormatDelegate tribleIntToRationalWithColon;
     static ValueFormatDelegate fourIntWithDot;
     static ValueFormatDelegate fourDecimalToRationalWithBlank;
+    static ValueFormatDelegate sixDecimalToRationalWithBlank;
     static std::multimap<std::string, ValueFormatDelegate> valueFormatConvertConfig;
     static std::multimap<std::string, std::string> valueFormatValidateConfig;
     static std::map<std::string, std::tuple<const TagDetails*, const size_t>> valueRangeValidateConfig;

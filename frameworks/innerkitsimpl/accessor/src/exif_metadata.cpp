@@ -304,6 +304,7 @@ void ExifMetadata::ReallocEntry(ExifEntry *ptrEntry, const size_t valueLen)
 
 ExifEntry *ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
 {
+    IMAGE_LOGD("GetEntry key is %{public}s.", key.c_str());
     ExifTag tag = exif_tag_from_name(key.c_str());
     ExifEntry *entry;
     if (tag == 0x0001 || tag == 0x0002) {
@@ -314,16 +315,17 @@ ExifEntry *ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
     }
 
     if (entry == nullptr) {
+        IMAGE_LOGD("GetEntry entry is nullptr and try to create entry.");
         entry = CreateEntry(tag, valueLen);
     }
 
     if (entry == nullptr) {
+        IMAGE_LOGE("GetEntry entry is nullptr fail.");
         return nullptr;
     }
 
-    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII ||
-        entry->format == EXIF_FORMAT_BYTE) &&
-        (entry->size != static_cast<unsigned int>(valueLen))) {
+    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII)
+        && (entry->size != static_cast<unsigned int>(valueLen))) {
         ReallocEntry(entry, valueLen);
     }
     return entry;
@@ -503,6 +505,16 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         case EXIF_FORMAT_SRATIONAL:
             isSetSuccess = SetSRational(ptrEntry, order, result.second);
             break;
+        case EXIF_FORMAT_BYTE: {
+            IMAGE_LOGD("handle EXIF_FORMAT_BYTE type.");
+            const char* p = result.second.c_str();
+            for (int i = 0; i < valueLen && i < (ptrEntry)->size; i++) {
+                IMAGE_LOGD("set char value.");
+                *((ptrEntry)->data + i) = p[i] - '0';
+            }
+            isSetSuccess = true;
+            break;
+        }
         case EXIF_FORMAT_UNDEFINED:
         case EXIF_FORMAT_ASCII:
             isSetSuccess = SetMem(ptrEntry, result.second, valueLen);
