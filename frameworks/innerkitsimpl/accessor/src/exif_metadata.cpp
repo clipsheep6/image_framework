@@ -128,7 +128,7 @@ std::map<ExifTag, ExifIfd> TagIfdTable = { { EXIF_TAG_ORIENTATION, EXIF_IFD_0 },
                                            { EXIF_TAG_GPS_DATE_STAMP, EXIF_IFD_GPS },
                                            { EXIF_TAG_GPS_DIFFERENTIAL, EXIF_IFD_GPS } };
 
-std::set<ExifTag> UndefinedFormat = { EXIF_TAG_USER_COMMENT, EXIF_TAG_SCENE_TYPE };
+std::set<ExifTag> UndefinedByte = { EXIF_TAG_SCENE_TYPE, EXIF_TAG_COMPONENTS_CONFIGURATION, EXIF_TAG_FILE_SOURCE };
 
 ExifMetadata::ExifMetadata() : exifData_(nullptr) {}
 
@@ -230,7 +230,18 @@ bool ExifMetadata::CreateExifdata()
 
 ExifEntry *ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
 {
-    if (UndefinedFormat.find(tag) != UndefinedFormat.end()) {
+    ExifEntry *entry = exif_entry_new();
+    if (entry == nullptr) {
+        IMAGE_LOGE("Failed to create new ExifEntry.");
+        return nullptr;
+    }
+    entry->tag = tag; // tag must be set before calling exif_content_add_entry
+    exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
+    exif_entry_initialize(entry, tag);
+
+    if (entry->format == EXIF_FORMAT_UNDEFINED && entry->size != valueLen) {
+        exif_content_remove_entry(exifData_->ifd[TagIfdTable[tag]], entry);
+
         // Create a memory allocator to manage this ExifEntry
         ExifMem *exifMem = exif_mem_new_default();
         if (exifMem == nullptr) {
@@ -239,7 +250,7 @@ ExifEntry *ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
         }
 
         // Create a new ExifEntry using our allocator
-        ExifEntry *entry = exif_entry_new_mem(exifMem);
+        entry = exif_entry_new_mem(exifMem);
         if (entry == nullptr) {
             IMAGE_LOGE("Failed to create new ExifEntry using memory allocator.");
             exif_mem_unref(exifMem);
@@ -268,19 +279,8 @@ ExifEntry *ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
         // The ExifMem and ExifEntry are now owned elsewhere
         exif_mem_unref(exifMem);
         exif_entry_unref(entry);
-        return entry;
-    } else {
-        ExifEntry *entry = exif_entry_new();
-        if (entry == nullptr) {
-            IMAGE_LOGE("Failed to create new ExifEntry.");
-            return nullptr;
-        }
-        entry->tag = tag; // tag must be set before calling exif_content_add_entry
-        exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
-        exif_entry_initialize(entry, tag);
-        exif_entry_unref(entry);
-        return entry;
     }
+    return entry;
 }
 
 void ExifMetadata::ReallocEntry(ExifEntry *ptrEntry, const size_t valueLen)
@@ -450,9 +450,10 @@ bool ExifMetadata::SetByte(ExifEntry *ptrEntry, const std::string &value)
     }
     return true;
 }
+
 bool ExifMetadata::SetMem(ExifEntry *ptrEntry, const std::string &value, const size_t valueLen)
 {
-    if (ptrEntry->tag == EXIF_TAG_SCENE_TYPE) {
+    if (UndefinedByte.find(ptrEntry->tag) != UndefinedByte.end()) {
         return SetByte(ptrEntry, value);
     }
     if (memcpy_s((ptrEntry)->data, valueLen, value.c_str(), valueLen) != 0) {
@@ -507,12 +508,7 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
             break;
         case EXIF_FORMAT_BYTE: {
             IMAGE_LOGD("handle EXIF_FORMAT_BYTE type.");
-            const char* p = result.second.c_str();
-            for (int i = 0; i < valueLen && i < (ptrEntry)->size; i++) {
-                IMAGE_LOGD("set char value.");
-                *((ptrEntry)->data + i) = p[i] - '0';
-            }
-            isSetSuccess = true;
+            isSetSuccess = SetByte(ptrEntry, result.second);
             break;
         }
         case EXIF_FORMAT_UNDEFINED:
