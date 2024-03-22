@@ -81,6 +81,7 @@ public:
     std::shared_ptr<NativeImage> LastNativeImage();
 private:
     std::shared_ptr<IBufferProcessor> bufferProcessor_;
+    bool isAccessTypeRequested_;
 };
 class ImageReceiverSurfaceListener : public IBufferConsumerListener {
 public:

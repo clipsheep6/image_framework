@@ -41,6 +41,7 @@ ImageReceiver::~ImageReceiver()
     iraContext_ = nullptr;
     surfaceBufferAvaliableListener_ = nullptr;
     bufferProcessor_ = nullptr;
+    isAccessTypeRequested_ = false;
 }
 
 enum class Mode {
@@ -185,6 +186,7 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
                                                                   int32_t format,
                                                                   int32_t capicity)
 {
+    isAccessTypeRequested_ = false;
     std::shared_ptr<ImageReceiver> iva = std::make_shared<ImageReceiver>();
     iva->iraContext_ = ImageReceiverContext::CreateImageReceiverContext();
     iva->receiverConsumerSurface_ = IConsumerSurface::Create();
@@ -319,6 +321,14 @@ std::shared_ptr<NativeImage> ImageReceiver::NextNativeImage()
     if (surfaceBuffer == nullptr) {
         return nullptr;
     }
+    if (isAccessTypeRequested_) {
+        isAccessTypeRequested_ = true;
+        std::vector<uint8_t> values;
+        surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+        if (values.size() == 1) {
+            IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE %{public}d", values[0]);
+        }
+    }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }
 
@@ -331,6 +341,14 @@ std::shared_ptr<NativeImage> ImageReceiver::LastNativeImage()
     auto surfaceBuffer = ReadLastImage(timestamp);
     if (surfaceBuffer == nullptr) {
         return nullptr;
+    }
+    if (isAccessTypeRequested_) {
+        isAccessTypeRequested_ = true;
+        std::vector<uint8_t> values;
+        surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+        if (values.size() == 1) {
+            IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE %{public}d", values[0]);
+        }
     }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }
