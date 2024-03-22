@@ -633,8 +633,8 @@ std::string MODIFYDATA[][3] = {
     {"DeviceSettingDescription", "2", "2"},
     {"SubjectDistanceRange", "0", "Unknown"},
     {"ImageUniqueID", "FXIC012", "FXIC012"},
-    {"GPSVersionID", "2 2 0 0", "2 2 0 0"}, //TODO fix
-    {"GPSAltitudeRef", "1", "1"}, //TODO fix
+    {"GPSVersionID", "2 2 0 0", "2 2 0 0"},
+    {"GPSAltitudeRef", "1", "1"},
     {"GPSAltitude", "0/100", "0.00"},
     {"GPSSatellites", "xxx", "xxx"},
     {"GPSStatus", "A", "A"},
@@ -681,9 +681,8 @@ HWTEST_F(ExifMetadataTest, SetValueBatch003, TestSize.Level3)
 
         std::string retvalue;
         metadata.GetValue(key, retvalue);
-        GTEST_LOG_(INFO) << "[key]: " << key << " [modifyvalue]: " << modifyvalue 
+        GTEST_LOG_(INFO) << "[key]: " << key << " [modifyvalue]: " << modifyvalue
             << " [retvalue]: " << retvalue;
-        // ASSERT_EQ(retvalue, MODIFYDATA[i][2]);
     }
     GTEST_LOG_(INFO) << "ExifMetadataTest: SetValueBatch003 end";
 }

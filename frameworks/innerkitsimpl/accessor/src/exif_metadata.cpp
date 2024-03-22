@@ -293,7 +293,7 @@ void ExifMetadata::ReallocEntry(ExifEntry *ptrEntry, const size_t valueLen)
     if (buf != nullptr) {
         ptrEntry->data = static_cast<unsigned char*>(buf);
         ptrEntry->size = exif_format_get_size(ptrEntry->format) * valueLen;
-        ptrEntry->components = exif_format_get_size(ptrEntry->format) * valueLen; 
+        ptrEntry->components = exif_format_get_size(ptrEntry->format) * valueLen;
     }
     exif_mem_unref(exifMem);
 }
@@ -317,8 +317,8 @@ ExifEntry* ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
         return nullptr;
     }
     
-    // TODO new function handle to check size
-    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII) && (entry->size != static_cast<unsigned int>(valueLen))) {
+    if ((entry->format == EXIF_FORMAT_UNDEFINED || entry->format == EXIF_FORMAT_ASCII)
+        && (entry->size != static_cast<unsigned int>(valueLen))) {
         ReallocEntry(entry, valueLen);
     }
     return entry;
@@ -326,7 +326,6 @@ ExifEntry* ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
 
 bool ExifMetadata::SetShort(ExifEntry *ptrEntry, const ExifByteOrder &order, const std::string &value)
 {
-    // TODO: new function for each case
     std::istringstream is(value);
     unsigned long icount = 0;
     ExifShort tmp;
