@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@
 #include "file_metadata_stream.h"
 #include "image_log.h"
 #include "media_errors.h"
+#include "metadata.h"
 #include "png_exif_metadata_accessor.h"
 
 using namespace OHOS::Media;
@@ -27,21 +28,23 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Multimedia {
 namespace {
-    static const std::string IMAGE_INPUT_NOEXIF_PNG_PATH = "/data/local/tmp/image/test_noexif.png";
-    static const std::string IMAGE_INPUT_EXIF_PNG_PATH = "/data/local/tmp/image/test_exif.png";
-    static const std::string IMAGE_INPUT_CHUNK_ZTXT_PNG_PATH = "/data/local/tmp/image/test_chunk_ztxt.png";
-    static const std::string IMAGE_INPUT_CHUNK_TEXT_PNG_PATH = "/data/local/tmp/image/test_chunk_text.png";
-    static const std::string IMAGE_INPUT_ITXT_NOCOMPRESS_PNG_PATH = "/data/local/tmp/image/test_chunk_itxt_nocompress.png";
-    static const std::string IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH = "/data/local/tmp/image/test_chunk_itxt_withcompress.png";
+static const std::string IMAGE_INPUT_NOEXIF_PNG_PATH = "/data/local/tmp/image/test_noexif.png";
+static const std::string IMAGE_INPUT_EXIF_PNG_PATH = "/data/local/tmp/image/test_exif.png";
+static const std::string IMAGE_INPUT_CHUNK_ZTXT_PNG_PATH = "/data/local/tmp/image/test_chunk_ztxt.png";
+static const std::string IMAGE_INPUT_CHUNK_TEXT_PNG_PATH = "/data/local/tmp/image/test_chunk_text.png";
+static const std::string IMAGE_INPUT_ITXT_NOCOMPRESS_PNG_PATH = "/data/local/tmp/image/test_chunk_itxt_nocompress.png";
+static const std::string IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH =
+    "/data/local/tmp/image/test_chunk_itxt_withcompress.png";
 }
 class PngExifMetadataAccessorTest : public testing::Test {
 public:
     PngExifMetadataAccessorTest() {}
     ~PngExifMetadataAccessorTest() {}
-    std::string GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop);
+    std::string GetProperty(const std::shared_ptr<ExifMetadata> &metadata, const std::string &prop);
 };
 
-std::string PngExifMetadataAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata>& metadata, const std::string& prop)
+std::string PngExifMetadataAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata> &metadata,
+    const std::string &prop)
 {
     std::string value;
     metadata->GetValue(prop, value);
@@ -95,7 +98,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read002, TestSize.Level3)
  */
 HWTEST_F(PngExifMetadataAccessorTest, Read003, TestSize.Level3)
 {
-    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_TEXTCHUNK_PNG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_CHUNK_TEXT_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngExifMetadataAccessor imageAccessor(stream);
     int result = imageAccessor.Read();
@@ -139,7 +142,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read003, TestSize.Level3)
  */
 HWTEST_F(PngExifMetadataAccessorTest, Read004, TestSize.Level3)
 {
-    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_TEXTCHUNK_PNG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_CHUNK_ZTXT_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngExifMetadataAccessor imageAccessor(stream);
     int result = imageAccessor.Read();
@@ -179,7 +182,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read004, TestSize.Level3)
  */
 HWTEST_F(PngExifMetadataAccessorTest, Read005, TestSize.Level3)
 {
-    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_CHUNKTYPETEXT_PNG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_CHUNK_TEXT_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     PngExifMetadataAccessor imageAccessor(stream);
     int result = imageAccessor.Read();
@@ -229,15 +232,15 @@ HWTEST_F(PngExifMetadataAccessorTest, Read005, TestSize.Level3)
  * @tc.desc: test ReadMetadata
  * @tc.type: FUNC
  */
-HWTEST_F(PngImageAccessorTest, ReadMetadata006, TestSize.Level3)
+HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata006, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_ITXT_NOCOMPRESS_PNG_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_ITXT_NOCOMPRESS_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    PngImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    PngExifMetadataAccessor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, SUCCESS);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "320");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "211");
     ASSERT_EQ(GetProperty(exifMetadata, "Make"), "NIKON CORPORATION");
@@ -281,15 +284,16 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata006, TestSize.Level3)
  * @tc.desc: test ReadMetadata
  * @tc.type: FUNC
  */
-HWTEST_F(PngImageAccessorTest, ReadMetadata007, TestSize.Level3)
+HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata007, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH);
+    std::shared_ptr<MetadataStream> stream =
+        std::make_shared<FileMetadataStream>(IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    PngImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    PngExifMetadataAccessor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, SUCCESS);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "200");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "130");
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "8, 8, 8");
@@ -325,15 +329,16 @@ HWTEST_F(PngImageAccessorTest, ReadMetadata007, TestSize.Level3)
  * @tc.desc: test ReadMetadata
  * @tc.type: FUNC
  */
-HWTEST_F(PngImageAccessorTest, ReadMetadata008, TestSize.Level3)
+HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata008, TestSize.Level3)
 {
-    std::shared_ptr<ImageStream> stream = std::make_shared<FileImageStream>(IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH);
+    std::shared_ptr<MetadataStream> stream =
+        std::make_shared<FileMetadataStream>(IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    PngImageAccessor imageAccessor(stream);
-    int result = imageAccessor.ReadMetadata();
+    PngExifMetadataAccessor imageAccessor(stream);
+    int result = imageAccessor.Read();
     ASSERT_EQ(result, SUCCESS);
 
-    auto exifMetadata = imageAccessor.GetExifMetadata();
+    auto exifMetadata = imageAccessor.Get();
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTime"), "2.2.0.0");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "06");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "06");
