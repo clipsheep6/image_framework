@@ -42,6 +42,7 @@
 namespace OHOS {
 namespace Media {
 const auto KEY_SIZE = 2;
+const auto TAG_VALUE_SIZE = 1024;
 
 template <typename T> std::istream &OutputRational(std::istream &is, T &r)
 {
@@ -144,7 +145,7 @@ ExifMetadata::~ExifMetadata()
 int ExifMetadata::GetValue(const std::string &key, std::string &value) const
 {
     IMAGE_LOGD("Retrieving value for key: %{public}s", key.c_str());
-    char tagValueChar[1024];
+    char tagValueChar[TAG_VALUE_SIZE];
     if (exifData_ == nullptr) {
         IMAGE_LOGE("Exif data is null for key: %{public}s", key.c_str());
         value = "";
