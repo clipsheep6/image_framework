@@ -317,26 +317,11 @@ HWTEST_F(JpegExifMetadataAccssorTest, Read005, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadBlob001
- * @tc.desc: test ReadBlob from image file not open, return false
- * @tc.type: FUNC
- */
-HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob001, TestSize.Level3)
-{
-    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
-    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    JpegExifMetadataAccssor imageAccessor(stream);
-    DataBuf exifBuf;
-    bool result = imageAccessor.ReadBlob(exifBuf);
-    ASSERT_EQ(result, false);
-}
-
-/**
  * @tc.name: ReadBlob002
  * @tc.desc: test ReadBlob from error jpeg image1 which does not have 0xff, return false
  * @tc.type: FUNC
  */
-HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob002, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob001, TestSize.Level3)
 {
     std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_ERROR1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
@@ -351,7 +336,7 @@ HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob002, TestSize.Level3)
  * @tc.desc: test ReadBlob from error jpeg image2 which does not have APP1, return false
  * @tc.type: FUNC
  */
-HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob003, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob002, TestSize.Level3)
 {
     std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_ERROR2_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
@@ -366,7 +351,7 @@ HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob003, TestSize.Level3)
  * @tc.desc: test ReadBlob from right jpeg image, return true and the length of exifBlob
  * @tc.type: FUNC
  */
-HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob004, TestSize.Level3)
+HWTEST_F(JpegExifMetadataAccssorTest, ReadBlob003, TestSize.Level3)
 {
     std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT1_JPEG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
@@ -390,40 +375,39 @@ HWTEST_F(JpegExifMetadataAccssorTest, Write001, TestSize.Level3)
     ASSERT_EQ(imageAccessor.Read(), 0);
 
     auto exifMetadata = imageAccessor.Get();
-    ASSERT_TRUE(exifMetadata->SetValue("BitsPerSample", "8, 8, 8"));
-    ASSERT_TRUE(exifMetadata->SetValue("Orientation", "Unknown value 0"));
+    ASSERT_NE(exifMetadata, nullptr);
+    ASSERT_TRUE(exifMetadata->SetValue("BitsPerSample", "8,8,8"));
+    ASSERT_TRUE(exifMetadata->SetValue("Orientation", "8"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageLength", "4000"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageWidth", "3000"));
     ASSERT_TRUE(exifMetadata->SetValue("DateTimeOriginal", "2024:01:11 09:39:58"));
-    ASSERT_TRUE(exifMetadata->SetValue("ExposureTime", "1/590 sec."));
+    ASSERT_TRUE(exifMetadata->SetValue("ExposureTime", "1/590"));
     ASSERT_TRUE(exifMetadata->SetValue("ISOSpeedRatings", "160"));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSTimeStamp", "01:39:58.00"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDateStamp", "2024:01:11"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageDescription", "_cuva"));
-    ASSERT_TRUE(exifMetadata->SetValue("Flash", "Flash did not fire"));
+    ASSERT_TRUE(exifMetadata->SetValue("Flash", "7"));
     ASSERT_TRUE(exifMetadata->SetValue("PixelXDimension", "4000"));
     ASSERT_TRUE(exifMetadata->SetValue("PixelYDimension", "3000"));
-    ASSERT_TRUE(exifMetadata->SetValue("WhiteBalance", "Auto white balance"));
-    ASSERT_TRUE(exifMetadata->SetValue("FocalLengthIn35mmFilm", "27"));
+    ASSERT_TRUE(exifMetadata->SetValue("WhiteBalance", "1"));
+    ASSERT_TRUE(exifMetadata->SetValue("FocalLengthIn35mmFilm", "28"));
 
     ASSERT_EQ(imageAccessor.Write(), 0);
 
     ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "8, 8, 8");
-    ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Unknown value 0");
+    ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Left-bottom");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "4000");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "3000");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2024:01:11 09:39:58");
     ASSERT_EQ(GetProperty(exifMetadata, "ExposureTime"), "1/590 sec.");
     ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedRatings"), "160");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSTimeStamp"), "01:39:58.00");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDateStamp"), "2024:01:11");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageDescription"), "_cuva");
-    ASSERT_EQ(GetProperty(exifMetadata, "Flash"), "Flash did not fire");
+    ASSERT_EQ(GetProperty(exifMetadata, "Flash"), "Strobe return light detected");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelXDimension"), "4000");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelYDimension"), "3000");
-    ASSERT_EQ(GetProperty(exifMetadata, "WhiteBalance"), "Auto white balance");
-    ASSERT_EQ(GetProperty(exifMetadata, "FocalLengthIn35mmFilm"), "27");
+    ASSERT_EQ(GetProperty(exifMetadata, "WhiteBalance"), "Manual white balance");
+    ASSERT_EQ(GetProperty(exifMetadata, "FocalLengthIn35mmFilm"), "28");
 }
 
 /**

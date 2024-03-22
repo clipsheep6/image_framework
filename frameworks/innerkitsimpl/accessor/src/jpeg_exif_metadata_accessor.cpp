@@ -43,11 +43,12 @@ constexpr auto EXIF_BLOB_OFFSET = 2;
 constexpr auto EXIF_ID_LENGTH = 2;
 constexpr auto SEGMENT_LENGTH_SIZE = 2;
 constexpr auto READ_BYTES = 2;
+constexpr auto JPEG_HEADER_LENGTH = 2;
 constexpr auto EXIF_ID_SIZE = 6;
 constexpr auto APP1_EXIF_LENGTH = 8;
 constexpr auto APP1_HEADER_LENGTH = 10;
 constexpr auto MARKER_LENGTH_SIZE = 4;
-constexpr auto READ_WRITE_BLOCK = 4096;
+constexpr auto READ_WRITE_BLOCK_SIZE = 4096;
 constexpr auto JPEG_MARKER_HEADER = 0xff;
 constexpr auto JPEG_DATA_MAX_SIZE = 0xffff;
 }
@@ -190,8 +191,8 @@ DataBuf JpegExifMetadataAccssor::ReadNextSegment(byte marker)
 {
     const auto [sizebuf, size] = ReadSegmentLength(marker);
     DataBuf buf(size);
-    if (size > EXIF_ID_LENGTH) {
-        imageStream_->Read(buf.Data(EXIF_ID_LENGTH), (size - EXIF_ID_LENGTH));
+    if (size > SEGMENT_LENGTH_SIZE) {
+        imageStream_->Read(buf.Data(SEGMENT_LENGTH_SIZE), (size - SEGMENT_LENGTH_SIZE));
         std::copy(sizebuf.begin(), sizebuf.end(), buf.Begin());
     }
 
@@ -231,10 +232,10 @@ bool JpegExifMetadataAccssor::GetExifBlob(const DataBuf &blob, uint8_t **dataBlo
 
 bool JpegExifMetadataAccssor::WriteHeader(BufferMetadataStream &bufStream)
 {
-    byte tmpBuf[EXIF_ID_LENGTH];
+    byte tmpBuf[JPEG_HEADER_LENGTH];
     tmpBuf[0] = JPEG_MARKER_HEADER;
     tmpBuf[1] = JPEG_MARKER_SOI;
-    if (bufStream.Write(tmpBuf, EXIF_ID_LENGTH) != EXIF_ID_LENGTH) {
+    if (bufStream.Write(tmpBuf, JPEG_HEADER_LENGTH) != JPEG_HEADER_LENGTH) {
         return false;
     }
 
@@ -332,7 +333,7 @@ bool JpegExifMetadataAccssor::WriteTail(BufferMetadataStream &bufStream)
 
 bool JpegExifMetadataAccssor::CopyRestData(BufferMetadataStream &bufStream)
 {
-    DataBuf buf(READ_WRITE_BLOCK);
+    DataBuf buf(READ_WRITE_BLOCK_SIZE);
     ssize_t readSize = imageStream_->Read(buf.Data(), buf.Size());
     while (readSize != 0) {
         if (bufStream.Write((byte *)buf.CData(), readSize) != readSize) {
