@@ -1048,6 +1048,12 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     uint8_t *data, uint32_t size)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
+
+    uint32_t ret = CreatExifMetadataByImageSource();
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("Failed to create ExifMetadata.");
+        return ret;
+    }
     return ModifyImageProperty(key, value);
 }
 
