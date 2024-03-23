@@ -1047,14 +1047,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
     uint8_t *data, uint32_t size)
 {
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-
-    uint32_t ret = CreatExifMetadataByImageSource();
-    if (ret != SUCCESS) {
-        IMAGE_LOGE("Failed to create ExifMetadata.");
-        return ret;
-    }
-    return ModifyImageProperty(key, value);
+    return ERR_MEDIA_WRITE_PARCEL_FAIL;
 }
 
 uint32_t ImageSource::CreatExifMetadataByImageSource()
