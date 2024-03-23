@@ -582,15 +582,12 @@ const auto DOUBLE_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+$)";
 const auto TRIBLE_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+$)";
 const auto TRIBLE_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+,[0-9]+$)";
 const auto TRIBLE_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
-const auto TRIBLE_INT_NZ_WITH_BLANK_REGEX = R"(^[1-9][0-9]*\s[1-9][0-9]*\s[1-9][0-9]*$)";
-const auto TRIBLE_INT_NZ_WITH_COMMA_REGEX = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
 const auto TRIBLE_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 const auto TRIBLE_DECIMAL_WITH_COMMA_REGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
 const auto TRIBLE_INT_WITH_COLON_REGEX = R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*$)";
 const auto TRIBLE_INT_WITH_DOT_REGEX = R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)";
 const auto FOUR_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)";
 const auto FOUR_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)";
-const auto FOUR_INT_NZ_WITH_COMMA_REGEX = R"(^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$)";
 const auto FOUR_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]
                                                                +/[1-9][0-9]*$)";
 const auto FOUR_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
@@ -874,11 +871,11 @@ ValueFormatDelegate ExifMetadatFormatter::tribleRationalWithBlank =
 
 // regex validation for three integer and convert to three rational like GPSLatitude 39 54 20 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadatFormatter::tribleIntToRationalWithBlank =
-    std::make_pair(ExifMetadatFormatter::ValidRegexWithRationalFormat, TRIBLE_INT_NZ_WITH_BLANK_REGEX);
+    std::make_pair(ExifMetadatFormatter::ValidRegexWithRationalFormat, TRIBLE_INT_WITH_BLANK_REGEX);
 
 // regex validation for three integer with comma like GPSLatitude 39,54,20 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadatFormatter::tribleIntToRationalWithComma =
-    std::make_pair(ExifMetadatFormatter::ValidRegexWithCommaRationalFormat, TRIBLE_INT_NZ_WITH_COMMA_REGEX);
+    std::make_pair(ExifMetadatFormatter::ValidRegexWithCommaRationalFormat, TRIBLE_INT_WITH_COMMA_REGEX);
 
 // regex validation for three decimal like YCbCrCoefficients 39.0 54 20.0 --> 39/1 54/1 20/1
 ValueFormatDelegate ExifMetadatFormatter::tribleDecimalToRationalWithBlank =
@@ -898,7 +895,7 @@ ValueFormatDelegate ExifMetadatFormatter::fourIntToRationalWithBlank =
 
 // regex validation for four integer like LensSpecification 1,3,1,2 --> 1/1 3/2 1/1 2/1
 ValueFormatDelegate ExifMetadatFormatter::fourIntToRationalWithComma =
-    std::make_pair(ExifMetadatFormatter::ValidRegexWithCommaRationalFormat, FOUR_INT_NZ_WITH_COMMA_REGEX);
+    std::make_pair(ExifMetadatFormatter::ValidRegexWithCommaRationalFormat, FOUR_INT_WITH_COMMA_REGEX);
 
 // regex validation for four decimal like LensSpecification 1.0 3.0 1.0 2.0 --> 1/1 3/1 2/1
 ValueFormatDelegate ExifMetadatFormatter::fourDecimalToRationalWithBlank =
