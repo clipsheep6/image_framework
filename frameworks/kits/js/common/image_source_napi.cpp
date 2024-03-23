@@ -1492,6 +1492,7 @@ static bool CheckExifDataValue(const std::string &key, const std::string &value,
     if (isError) {
         errorInfo = key + "has invalid exif value: ";
         errorInfo.append(value);
+        return false;
     }
     return true;
 }
