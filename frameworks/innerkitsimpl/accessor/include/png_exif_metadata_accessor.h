@@ -31,7 +31,7 @@ public:
 
     virtual uint32_t Read() override;
     virtual uint32_t Write() override;
-    bool ReadBlob(DataBuf &blob) const;
+    bool ReadBlob(DataBuf &blob) const override;
     uint32_t WriteBlob(DataBuf &blob) override;
 
 private:
