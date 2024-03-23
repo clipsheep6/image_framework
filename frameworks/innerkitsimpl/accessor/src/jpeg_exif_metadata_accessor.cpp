@@ -333,7 +333,7 @@ bool JpegExifMetadataAccessor::WriteTail(BufferMetadataStream &bufStream)
 
 bool JpegExifMetadataAccessor::CopyRestData(BufferMetadataStream &bufStream)
 {
-    DataBuf buf(READ_WRITE_BLOCK_SIZE);
+    DataBuf buf(READ_WRITE_BLOCK_SIZE*32);
     ssize_t readSize = imageStream_->Read(buf.Data(), buf.Size());
     while (readSize != 0) {
         if (bufStream.Write((byte *)buf.CData(), readSize) != readSize) {
