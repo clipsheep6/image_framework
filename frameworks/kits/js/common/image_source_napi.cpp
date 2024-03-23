@@ -1372,6 +1372,9 @@ static void ModifyImagePropertyComplete(napi_env env, napi_status status, ImageS
             "The exif data format is not standard, so modify it failed!");
     } else if (context->status == ERR_MEDIA_VALUE_INVALID) {
         ImageNapiUtils::CreateErrorObj(env, result[0], context->status, context->errMsg);
+    } else if (context->status == ERR_MEDIA_WRITE_PARCEL_FAIL) {
+        ImageNapiUtils::CreateErrorObj(env, result[0], context->status,
+            "The EXIF data failed to be written to the file.");
     }
 
     if (context->deferred) {
