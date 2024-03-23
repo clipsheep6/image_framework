@@ -474,11 +474,9 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         IMAGE_LOGE("Failed to validate and convert value for key: %{public}s", key.c_str());
         return false;
     }
-    IMAGE_LOGD("Formatted value for key %{public}s is: %{public}s", key.c_str(), result.second.c_str());
     size_t valueLen = result.second.length();
     ExifEntry *ptrEntry = GetEntry(key, valueLen);
     if (ptrEntry == nullptr) {
-        IMAGE_LOGE("Failed to get ExifEntry for key: %{public}s", key.c_str());
         return false;
     }
     ExifByteOrder order = exif_data_get_byte_order(ptrEntry->parent->parent);
@@ -502,11 +500,9 @@ bool ExifMetadata::SetValue(const std::string &key, const std::string &value)
         case EXIF_FORMAT_SRATIONAL:
             isSetSuccess = SetSRational(ptrEntry, order, result.second);
             break;
-        case EXIF_FORMAT_BYTE: {
-            IMAGE_LOGD("handle EXIF_FORMAT_BYTE type.");
+        case EXIF_FORMAT_BYTE:
             isSetSuccess = SetByte(ptrEntry, result.second);
             break;
-        }
         case EXIF_FORMAT_UNDEFINED:
         case EXIF_FORMAT_ASCII:
             isSetSuccess = SetMem(ptrEntry, result.second, valueLen);
