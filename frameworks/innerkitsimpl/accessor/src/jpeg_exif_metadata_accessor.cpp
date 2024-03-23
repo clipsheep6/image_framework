@@ -49,6 +49,7 @@ constexpr auto APP1_EXIF_LENGTH = 8;
 constexpr auto APP1_HEADER_LENGTH = 10;
 constexpr auto MARKER_LENGTH_SIZE = 4;
 constexpr auto READ_WRITE_BLOCK_SIZE = 4096;
+constexpr auto READ_WRITE_BLOCK_SIZE_NUM = 32;
 constexpr auto JPEG_MARKER_HEADER = 0xff;
 constexpr auto JPEG_DATA_MAX_SIZE = 0xffff;
 }
@@ -333,7 +334,7 @@ bool JpegExifMetadataAccessor::WriteTail(BufferMetadataStream &bufStream)
 
 bool JpegExifMetadataAccessor::CopyRestData(BufferMetadataStream &bufStream)
 {
-    DataBuf buf(READ_WRITE_BLOCK_SIZE*32);
+    DataBuf buf(READ_WRITE_BLOCK_SIZE * READ_WRITE_BLOCK_SIZE_NUM);
     ssize_t readSize = imageStream_->Read(buf.Data(), buf.Size());
     while (readSize != 0) {
         if (bufStream.Write((byte *)buf.CData(), readSize) != readSize) {
