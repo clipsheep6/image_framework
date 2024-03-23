@@ -571,7 +571,7 @@ std::map<std::string, std::tuple<const TagDetails *, const size_t>> ExifMetadatF
     { "CompositeImage", std::make_tuple(exifCompositeImage, std::size(exifCompositeImage)) },
 };
 
-const size_t DESIZE = 10;
+const size_t DECIMAL_BASE = 10;
 const std::string COMMA_REGEX("\\,"), COLON_REGEX("\\:"), DOT_REGEX("\\.");
 
 const auto ONE_RATIONAL_REGEX = R"(^[0-9]+/[1-9][0-9]*$)";
@@ -680,8 +680,8 @@ std::string ExifMetadatFormatter::GetFractionFromStr(const std::string &decimal)
     int intPart = stoi(decimal.substr(0, decimal.find(".")));
     double decPart = stod(decimal.substr(decimal.find(".")));
 
-    int numerator = decPart * pow(DESIZE, decimal.length() - decimal.find(".") - 1);
-    int denominator = pow(DESIZE, decimal.length() - decimal.find(".") - 1);
+    int numerator = decPart * pow(DECIMAL_BASE, decimal.length() - decimal.find(".") - 1);
+    int denominator = pow(DECIMAL_BASE, decimal.length() - decimal.find(".") - 1);
 
     int gcdVal = ExifMetadatFormatter::Gcd(numerator, denominator);
     if (gcdVal == 0) {
@@ -1140,8 +1140,7 @@ int32_t ExifMetadatFormatter::ConvertValueFormat(const std::string &keyName, std
     IMAGE_LOGD("Validating value format. Key: %{public}s, Value: %{public}s", keyName.c_str(), value.c_str());
 
     // get first iterator according to keyName
-    for (it = ExifMetadatFormatter::valueFormatConvertConfig.find(keyName);
-        it != ExifMetadatFormatter::valueFormatConvertConfig.end() &&
+    for (; it != ExifMetadatFormatter::valueFormatConvertConfig.end() &&
         it != ExifMetadatFormatter::valueFormatConvertConfig.upper_bound(keyName);
         it++) {
         IMAGE_LOGD("Validating value format in loop. Key: %{public}s, Regex: %{public}s", (it->first).c_str(),
