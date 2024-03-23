@@ -238,9 +238,11 @@ if (use_clang_android) {
         "hilog:libhilog",
         "hitrace:hitrace_meter",
         "ipc:ipc_core",
-        "libexif:libexif",
         "napi:ace_napi",
       ]
+      if (enable_libexif) {
+        external_deps += [ "libexif:libexif" ]
+      }
     }
 
     if (purgeable_ashmem_enable && defined(global_parts_info) &&

@@ -100,6 +100,7 @@ if (use_clang_android) {
 # hw_decoder
 declare_args() {
   enable_jpeg_hw_decode = true
+  enable_libexif = true
 
   if (defined(global_parts_info) &&
       !defined(global_parts_info.hdf_drivers_interface_display)) {
