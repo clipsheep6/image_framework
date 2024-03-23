@@ -82,7 +82,7 @@ void FileMetadataStream::Initialize(const std::string &filePath, int fileDescrip
 void HandleFileError(const std::string &operation, const std::string &filePath, int fileDescriptor, ssize_t result,
     ssize_t expectedSize)
 {
-    char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+    char buf[METADATA_STREAM_ERROR_BUFFER_SIZE];
     strerror_r(errno, buf, sizeof(buf));
 
     if (fileDescriptor != -1) { // If the operation is through a file descriptor
@@ -395,7 +395,7 @@ bool FileMetadataStream::TruncateFile(size_t totalBytesWritten, MetadataStream &
 
 bool FileMetadataStream::CopyDataFromSource(MetadataStream &src, ssize_t &totalBytesWritten)
 {
-    ssize_t buffer_size = std::min((ssize_t)IMAGE_STREAM_PAGE_SIZE, src.GetSize());
+    ssize_t buffer_size = std::min((ssize_t)METADATA_STREAM_COPY_FROM_BUFFER_SIZE, src.GetSize());
     byte tempBuffer[buffer_size];
 
     Seek(0, SeekPos::BEGIN);
@@ -465,7 +465,7 @@ ssize_t FileMetadataStream::GetSize()
     }
     ssize_t oldPos = Tell();
     if (fseek(fp_, 0, SEEK_END) != 0) {
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        char errstr[METADATA_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, errstr, sizeof(errstr));
         IMAGE_LOGE("Failed to seek to the end of the file: %{public}s", errstr);
         return -1;
@@ -474,7 +474,7 @@ ssize_t FileMetadataStream::GetSize()
     ssize_t fileSize = ftell(fp_);
 
     if (fseek(fp_, oldPos, SEEK_SET) != 0) { // Restore the file pointer to its original position
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        char errstr[METADATA_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, errstr, sizeof(errstr));
         IMAGE_LOGE("Failed to restore the file position: %{public}s", errstr);
         return -1;

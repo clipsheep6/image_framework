@@ -36,8 +36,9 @@ enum class OpenMode {
     ReadWrite // Read-write mode
 };
 
-constexpr int IMAGE_STREAM_PAGE_SIZE = 4096;
-constexpr int IMAGE_STREAM_ERROR_BUFFER_SIZE = 255;
+constexpr int METADATA_STREAM_PAGE_SIZE = 4096;
+constexpr int METADATA_STREAM_ERROR_BUFFER_SIZE = 255;
+constexpr int METADATA_STREAM_COPY_FROM_BUFFER_SIZE = 4096*32;
 
 /**
  * @class MetadataStream

@@ -162,7 +162,7 @@ void RemoveFile(const std::string &filePath)
 {
     int result = remove(filePath.c_str());
     if (result != 0) {
-        char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+        char errstr[METADATA_STREAM_ERROR_BUFFER_SIZE];
         strerror_r(errno, errstr, sizeof(errstr));
     }
 }
@@ -191,9 +191,9 @@ public:
     std::string backupFilePathSource = "/data/local/tmp/image/test_exif.jpg";
     const ssize_t testSize[4] = {
         1,
-        IMAGE_STREAM_PAGE_SIZE + 1,
-        IMAGE_STREAM_PAGE_SIZE,
-        IMAGE_STREAM_PAGE_SIZE - 1
+        METADATA_STREAM_PAGE_SIZE + 1,
+        METADATA_STREAM_PAGE_SIZE,
+        METADATA_STREAM_PAGE_SIZE - 1
     };
     MemoryCheck memoryCheck;
 
@@ -204,7 +204,7 @@ public:
         if (access(dirPath.c_str(), F_OK) != 0) {
             int ret = mkdir(dirPath.c_str(), TEST_DIR_PERMISSIONS);
             if (ret != 0) {
-                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+                char buf[METADATA_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, buf, sizeof(buf));
                 GTEST_LOG_(ERROR) << "Failed to create directory: " << dirPath << ", error: " << buf;
             }
@@ -236,7 +236,7 @@ public:
         if (access(tmpDirectory.c_str(), F_OK) != 0) {
             int ret = mkdir(tmpDirectory.c_str(), TEST_DIR_PERMISSIONS);
             if (ret != 0) {
-                char buf[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+                char buf[METADATA_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, buf, sizeof(buf));
                 GTEST_LOG_(ERROR) << "Failed to create directory: " << tmpDirectory << ", error: " << buf;
             }
@@ -268,7 +268,7 @@ public:
             .WillByDefault(Invoke([](const void *src, size_t size, ssize_t nmemb, FILE *file) {
                 size_t result = ::fwrite(src, size, nmemb, file);
                 if (result != static_cast<size_t>(nmemb)) {
-                    char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+                    char errstr[METADATA_STREAM_ERROR_BUFFER_SIZE];
                     strerror_r(errno, errstr, sizeof(errstr));
                     std::cerr << "Failed to write to the file: " << errstr << std::endl;
                 }
@@ -278,7 +278,7 @@ public:
         ON_CALL(*this, FRead(_, _, _, _)).WillByDefault(Invoke([](void *destv, size_t size, ssize_t nmemb, FILE *file) {
             size_t result = ::fread(destv, size, nmemb, file);
             if (result != static_cast<size_t>(nmemb)) {
-                char errstr[IMAGE_STREAM_ERROR_BUFFER_SIZE];
+                char errstr[METADATA_STREAM_ERROR_BUFFER_SIZE];
                 strerror_r(errno, errstr, sizeof(errstr));
                 std::cerr << "Failed to read from the file: " << errstr << std::endl;
             }
@@ -382,7 +382,7 @@ HWTEST_F(MetadataStreamTest, FileMetadataStream_Write004, TestSize.Level3)
     ASSERT_TRUE(stream1.Open(OpenMode::ReadWrite));
     ASSERT_TRUE(stream2.Open(OpenMode::ReadWrite));
     // Read all data from stream1
-    byte buffer[IMAGE_STREAM_PAGE_SIZE];
+    byte buffer[METADATA_STREAM_PAGE_SIZE];
     while (stream1.Read(buffer, sizeof(buffer)) > 0) {
     }
     // At this point, all data from stream1 has been read, so the write should
@@ -782,7 +782,7 @@ HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom003, TestSize.Level3)
     FileMetadataStream dest(CreateIfNotExit(filePathDest));
     src.Open();
     dest.Open();
-    char buff[IMAGE_STREAM_PAGE_SIZE + 1] = {0};
+    char buff[METADATA_STREAM_PAGE_SIZE + 1] = {0};
     src.Write((byte *)buff, sizeof(buff));
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
@@ -795,7 +795,7 @@ HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom004, TestSize.Level3)
     FileMetadataStream dest(CreateIfNotExit(filePathDest));
     src.Open();
     dest.Open();
-    char buff[IMAGE_STREAM_PAGE_SIZE - 1] = {0};
+    char buff[METADATA_STREAM_PAGE_SIZE - 1] = {0};
     src.Write((byte *)buff, sizeof(buff));
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
@@ -809,7 +809,7 @@ HWTEST_F(MetadataStreamTest, FileMetadataStream_CopyFrom005, TestSize.Level3)
     BufferMetadataStream dest;
     src.Open();
     dest.Open();
-    char buff[IMAGE_STREAM_PAGE_SIZE - 1] = {0};
+    char buff[METADATA_STREAM_PAGE_SIZE - 1] = {0};
     ASSERT_EQ(src.Write((byte *)buff, sizeof(buff)), sizeof(buff));
     ASSERT_TRUE(src.Flush());
     ASSERT_EQ(src.Tell(), sizeof(buff));
@@ -1304,11 +1304,11 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write003, TestSize.Level3)
 {
     BufferMetadataStream stream;
     stream.Open(OpenMode::ReadWrite);
-    byte data[IMAGE_STREAM_PAGE_SIZE + 1] = {0};  // Create a 4097-byte data
-    stream.Write(data, IMAGE_STREAM_PAGE_SIZE + 1); // Write 4097 bytes of data
+    byte data[METADATA_STREAM_PAGE_SIZE + 1] = {0};  // Create a 4097-byte data
+    stream.Write(data, METADATA_STREAM_PAGE_SIZE + 1); // Write 4097 bytes of data
     ASSERT_GE(stream.buffer_.capacity(),
-        IMAGE_STREAM_PAGE_SIZE * 2);                      // Check if the buffer capacity is at least 4097
-    ASSERT_EQ(stream.Tell(), IMAGE_STREAM_PAGE_SIZE + 1); // Check if the write position is correct
+        METADATA_STREAM_PAGE_SIZE * 2);                      // Check if the buffer capacity is at least 4097
+    ASSERT_EQ(stream.Tell(), METADATA_STREAM_PAGE_SIZE + 1); // Check if the write position is correct
 }
 
 /**
@@ -1322,12 +1322,12 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write004, TestSize.Level3)
     BufferMetadataStream stream;
     stream.Open(OpenMode::ReadWrite);
 
-    byte data[IMAGE_STREAM_PAGE_SIZE] = {0};  // Create a 4096-byte data
-    stream.Write(data, IMAGE_STREAM_PAGE_SIZE); // Write 4096 bytes of data
+    byte data[METADATA_STREAM_PAGE_SIZE] = {0};  // Create a 4096-byte data
+    stream.Write(data, METADATA_STREAM_PAGE_SIZE); // Write 4096 bytes of data
     ASSERT_EQ(stream.buffer_.capacity(),
-        IMAGE_STREAM_PAGE_SIZE); // Check if the buffer capacity is 4096
+        METADATA_STREAM_PAGE_SIZE); // Check if the buffer capacity is 4096
     ASSERT_EQ(stream.Tell(),
-        IMAGE_STREAM_PAGE_SIZE); // Check if the write position is correct
+        METADATA_STREAM_PAGE_SIZE); // Check if the write position is correct
 }
 
 /**
@@ -1422,8 +1422,8 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_CopyFrom003, TestSize.Level3)
     BufferMetadataStream dest;
     src.Open();
     dest.Open();
-    char buff[IMAGE_STREAM_PAGE_SIZE + 1] = {0};
-    src.Write((byte *)buff, IMAGE_STREAM_PAGE_SIZE + 1);
+    char buff[METADATA_STREAM_PAGE_SIZE + 1] = {0};
+    src.Write((byte *)buff, METADATA_STREAM_PAGE_SIZE + 1);
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
@@ -1435,8 +1435,8 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_CopyFrom004, TestSize.Level3)
     BufferMetadataStream dest;
     src.Open();
     dest.Open();
-    char buff[IMAGE_STREAM_PAGE_SIZE - 1] = {0};
-    src.Write((byte *)buff, IMAGE_STREAM_PAGE_SIZE - 1);
+    char buff[METADATA_STREAM_PAGE_SIZE - 1] = {0};
+    src.Write((byte *)buff, METADATA_STREAM_PAGE_SIZE - 1);
     ASSERT_TRUE(dest.CopyFrom(src));
     ASSERT_EQ(src.GetSize(), dest.GetSize());
     ASSERT_EQ(memcmp(src.GetAddr(), dest.GetAddr(), src.GetSize()), 0);
