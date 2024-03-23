@@ -1047,7 +1047,8 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
     uint8_t *data, uint32_t size)
 {
-    return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    return ModifyImageProperty(key, value);
 }
 
 uint32_t ImageSource::CreatExifMetadataByImageSource()
