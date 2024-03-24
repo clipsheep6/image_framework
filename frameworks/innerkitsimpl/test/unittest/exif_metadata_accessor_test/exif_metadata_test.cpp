@@ -15,9 +15,11 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include "libexif/exif-tag.h"
 #include "tiff_parser.h"
 #include "exif_metadata.h"
 #include "image_log.h"
+
 
 using namespace OHOS::Media;
 using namespace testing::ext;
@@ -551,45 +553,52 @@ HWTEST_F(ExifMetadataTest, SetValueBatch002, TestSize.Level3)
 
 std::string MODIFYDATA[][3] = {
     {"BitsPerSample", "9 9 8", "9, 9, 8"},
+    {"BitsPerSample", "9, 9, 8", "9, 9, 8"},
     {"BitsPerSample", "9,9,8", "9, 9, 8"},
     {"Orientation", "1", "Top-left"},
+    {"Orientation", "4", "Bottom-left"},
     {"ImageLength", "1000", "1000"},
     {"ImageWidth", "1001", "1001"},
-    {"CompressedBitsPerPixel", "24/1", "24"},
     {"GPSLatitude", "114,3", "38.0,  0,  0"},
     {"GPSLatitude", "39,54,20", "39, 54, 20"},
     {"GPSLatitude", "39/1 54/1 20/1", "39, 54, 20"},
     {"GPSLongitude", "120,52,26", "120, 52, 26"},
     {"GPSLatitudeRef", "N", "N"},
     {"GPSLongitudeRef", "E", "E"},
-    {"WhiteBalance", "1", "Manual white balance"},
-    {"FocalLengthIn35mmFilm", "2", "2"},
-    {"Flash", "5", "Strobe return light not detected"},
-    {"ApertureValue", "4/1", "4.00 EV (f/4.0)"},
     {"DateTimeOriginal", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
+    {"ExposureTime", "1/34", "1/34 sec."},
+    {"ExposureTime", "1/3", "1/3 sec."},
+    {"SceneType", "1", "Directly photographed"},
+    {"ISOSpeedRatings", "160", "160"},
+    {"FNumber", "3/1", "f/3.0"},
     {"DateTime", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
     {"DateTime", "2024:01:25", "2024:01:25"},
-    {"ExposureBiasValue", "23/1", "23.00 EV"},
-    {"ExposureTime", "1/34", "1/34 sec."},
-    {"FNumber", "3/1", "f/3.0"},
-    {"FocalLength", "31/1", "31.0 mm"},
     {"GPSTimeStamp", "11/1 37/1 56/1", "11:37:56.00"},
+    {"GPSDateStamp", "2023:10:19", "2023:10:19"},
     {"ImageDescription", "_cuva", "_cuva"},
-    {"ISOSpeedRatings", "160", "160"},
-    {"LightSource", "2", "Fluorescent"},
-    {"MeteringMode", "5", "Pattern"},
+    {"Make", "XiaoMI", "XiaoMI"},
     {"Model", "TNY-AL00", "TNY-AL00"},
-    {"PixelXDimension", "1000", "1000"},
-    {"PixelYDimension", "2000", "2000"},
-    {"RecommendedExposureIndex", "241", "241"},
-    {"SceneType", "1", "Directly photographed"},
+    {"PhotoMode", "252", "252"},
     {"SensitivityType", "5", "Standard output sensitivity (SOS) and ISO speed"},
     {"StandardOutputSensitivity", "5", "5"},
+    {"RecommendedExposureIndex", "241", "241"},
+    {"ISOSpeed", "1456", "1456"},
+    {"ApertureValue", "4/1", "4.00 EV (f/4.0)"},
+    {"ExposureBiasValue", "23/1", "23.00 EV"},
+    {"MeteringMode", "5", "Pattern"},
+    {"LightSource", "2", "Fluorescent"},
+    {"Flash", "5", "Strobe return light not detected"},
+    {"FocalLength", "31/1", "31.0 mm"},
     {"UserComment", "comm", "comm"},
+    {"PixelXDimension", "1000", "1000"},
+    {"PixelYDimension", "2000", "2000"},
+    {"WhiteBalance", "1", "Manual white balance"},
+    {"FocalLengthIn35mmFilm", "2", "2"},
+    {"CompressedBitsPerPixel", "24/1", "24"},
     {"JPEGProc", "252", "252"},
     {"Compression", "6", "JPEG compression"},
     {"PhotometricInterpretation", "0", "Reversed mono"},
-    {"StripOffsets", "11", "2 bytes undefined data"}, // offset
+    {"StripOffsets", "11", "11"},
     {"SamplesPerPixel", "23", "23"},
     {"RowsPerStrip", "252", "252"},
     {"StripByteCounts", "252", "252"},
@@ -660,12 +669,11 @@ std::string MODIFYDATA[][3] = {
     {"GPSAreaInformation", "arexxx", "arexxx"},
     {"GPSDifferential", "0", "0"},
     {"ComponentsConfiguration", "1456", "Y R G B"},
-    {"ISOSpeed", "1456", "1456"},
     {"ISOSpeedLatitudeyyy", "1456", "1456"},
     {"ISOSpeedLatitudezzz", "1456", "1456"},
     {"SubjectDistance", "5/2", "2.5 m"},
     {"DefaultCropSize", "153 841", "153, 841"},
-    {"LensSpecification", "3/4 5/2 3/2 1/2", "3/4 5/2 3/2 1/2"},
+    {"LensSpecification", "3/4 5/2 3/2 1/2", "0.8, 2.5, 1.5, 0.5"},
     {"JPEGInterchangeFormat", "1456", "1456"},
     {"JPEGInterchangeFormatLength", "1456", "1456"},
     {"SubjectArea", "12", ""},
@@ -679,9 +687,22 @@ std::string MODIFYDATA[][3] = {
     {"OffsetTimeOriginal", "chex", "chex"},
     {"SourceExposureTimesOfCompositeImage", "xxxw", "xxxw"},
     {"SourceImageNumberOfCompositeImage", "23 34", "23, 34"},
-    {"GPSHPositioningError", "5/2", "3 bytes undefined data"},
+    {"GPSHPositioningError", "5/2", "2.5"},
     {"Orientation", "4", "Bottom-left"},
-    {"GPSLongitudeRef", "W", "W"}
+    {"GPSLongitudeRef", "W", "W"},
+    {"ExposureProgram", "7", "Portrait mode (for closeup photos with the background out of focus)"},
+    {"SpectralSensitivity", "xxd", "xxd"},
+    {"OECF", "excc", "4 bytes undefined data"},
+    {"ExifVersion", "0110", "Exif Version 1.1"},
+    {"DateTimeDigitized", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
+    {"ShutterSpeedValue", "5/2", "2.50 EV (1/6 sec.)"},
+    {"BrightnessValue", "5/2", "2.50 EV (19.38 cd/m^2)"},
+    {"MaxApertureValue", "5/2", "2.50 EV (f/2.4)"},
+    {"BodySerialNumber", "exoch", "exoch"},
+    {"CameraOwnerName", "c.uec", "c.uec"},
+    {"CompositeImage", "2" , "2"},
+    {"Gamma", "5/2", "2.5"},
+    {"OffsetTime", "2024:01:25", "2024:01:25"},
 };
 
 HWTEST_F(ExifMetadataTest, SetValueBatch003, TestSize.Level3)
@@ -700,15 +721,197 @@ HWTEST_F(ExifMetadataTest, SetValueBatch003, TestSize.Level3)
     for (int i = 0; i < rows; ++i) {
         std::string key = MODIFYDATA[i][0];
         std::string modifyvalue = MODIFYDATA[i][1];
-        GTEST_LOG_(INFO) << "ExifMetadataTest: modifyvalue: "<< modifyvalue;
+        GTEST_LOG_(INFO) << "SetValueBatch003 SetValue [key]:" << key <<  " [modifyvalue]: " << modifyvalue;
         ASSERT_EQ(metadata.SetValue(key, modifyvalue), true);
 
         std::string retvalue;
         metadata.GetValue(key, retvalue);
-        GTEST_LOG_(INFO) << "[key]: " << key << " [modifyvalue]: " << modifyvalue
+        GTEST_LOG_(INFO) << "SetValueBatch003 GetValue [key]: " << key << " [modifyvalue]: " << modifyvalue
             << " [retvalue]: " << retvalue;
+        ASSERT_EQ(retvalue, MODIFYDATA[i][2]);
     }
     GTEST_LOG_(INFO) << "ExifMetadataTest: SetValueBatch003 end";
+}
+
+std::string DIRTDATA[][2] = {
+    {"BitsPerSample", "abc,4"},
+    {"DateTimeOriginal", "202:01:25 05:51:34"},
+};
+
+HWTEST_F(ExifMetadataTest, SetValueBatch004, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValueBatch004 start";
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_BLANKEXIF_PATH.c_str());
+    if (exifData == nullptr)
+    {
+        GTEST_LOG_(INFO) << "ExifMetadataTest SetValueBatch004 exifData is nullptr ";
+    }
+    std::string value;
+    ExifMetadata metadata(exifData);
+
+    int rows = sizeof(DIRTDATA) / sizeof(DIRTDATA[0]);
+    for (int i = 0; i < rows; ++i) {
+        std::string key = DIRTDATA[i][0];
+        std::string modifyvalue = DIRTDATA[i][1];
+        GTEST_LOG_(INFO) << "SetValueBatch004 SetValue [key]:" << key <<  " [modifyvalue]: " << modifyvalue;
+        ASSERT_NE(metadata.SetValue(key, modifyvalue), true);
+    }
+    GTEST_LOG_(INFO) << "ExifMetadataTest: SetValueBatch004 end";
+}
+
+std::map<std::string, ExifIfd> IFDTable = {
+    { "BitsPerSample", EXIF_IFD_0 },
+    { "Orientation", EXIF_IFD_0 },
+    { "ImageLength", EXIF_IFD_0 },
+    { "ImageWidth", EXIF_IFD_0 },
+    { "Compression", EXIF_IFD_0 },
+    { "StripOffsets", EXIF_IFD_0 },
+    { "PhotoMode", EXIF_IFD_0},
+    { "JPEGProc", EXIF_IFD_0},
+    { "PhotometricInterpretation", EXIF_IFD_0},
+    { "SamplesPerPixel", EXIF_IFD_0},
+    { "RowsPerStrip", EXIF_IFD_0},
+    { "StripByteCounts", EXIF_IFD_0},
+    { "XResolution", EXIF_IFD_0},
+    { "YResolution", EXIF_IFD_0},
+    { "PlanarConfiguration", EXIF_IFD_0},
+    { "ResolutionUnit", EXIF_IFD_0},
+    { "TransferFunction", EXIF_IFD_0},
+    { "Software", EXIF_IFD_0},
+    { "Artist", EXIF_IFD_0},
+    { "WhitePoint", EXIF_IFD_0},
+    { "PrimaryChromaticities", EXIF_IFD_0},
+    { "YCbCrCoefficients", EXIF_IFD_0},
+    { "YCbCrSubSampling", EXIF_IFD_0},
+    { "YCbCrPositioning", EXIF_IFD_0},
+    { "ReferenceBlackWhite", EXIF_IFD_0},
+    { "Copyright", EXIF_IFD_0},
+    { "JPEGInterchangeFormat", EXIF_IFD_1},
+    { "JPEGInterchangeFormatLength", EXIF_IFD_1},
+    { "NewSubfileType", EXIF_IFD_0},
+    { "DateTime", EXIF_IFD_0 },
+    { "ImageDescription", EXIF_IFD_0 },
+    { "Make", EXIF_IFD_0 },
+    { "Model", EXIF_IFD_0 },
+    { "DefaultCropSize", EXIF_IFD_0 },
+    { "DNGVersion", EXIF_IFD_0 },
+    { "SubfileType", EXIF_IFD_0 },
+    { "DateTimeOriginal", EXIF_IFD_EXIF },
+    { "ExposureTime", EXIF_IFD_EXIF },
+    { "FNumber", EXIF_IFD_EXIF },
+    { "ISOSpeedRatings", EXIF_IFD_EXIF },
+    { "ISOSpeed", EXIF_IFD_EXIF},
+    { "DeviceSettingDescription", EXIF_IFD_EXIF},
+    { "SceneType", EXIF_IFD_EXIF },
+    { "CompressedBitsPerPixel", EXIF_IFD_EXIF },
+    { "SensitivityType", EXIF_IFD_EXIF },
+    { "StandardOutputSensitivity", EXIF_IFD_EXIF },
+    { "RecommendedExposureIndex", EXIF_IFD_EXIF },
+    { "ApertureValue", EXIF_IFD_EXIF },
+    { "ExposureBiasValue", EXIF_IFD_EXIF },
+    { "MeteringMode", EXIF_IFD_EXIF },
+    { "FocalLength", EXIF_IFD_EXIF },
+    { "ExposureProgram", EXIF_IFD_EXIF },
+    { "SpectralSensitivity", EXIF_IFD_EXIF },
+    { "OECF", EXIF_IFD_EXIF },
+    { "ExifVersion", EXIF_IFD_EXIF },
+    { "DateTimeDigitized", EXIF_IFD_EXIF },
+    { "ComponentsConfiguration", EXIF_IFD_EXIF },
+    { "ShutterSpeedValue", EXIF_IFD_EXIF },
+    { "BrightnessValue", EXIF_IFD_EXIF },
+    { "MaxApertureValue", EXIF_IFD_EXIF },
+    { "SubjectDistance", EXIF_IFD_EXIF },
+    { "SubjectArea", EXIF_IFD_EXIF },
+    { "MakerNote", EXIF_IFD_EXIF },
+    { "SubsecTime", EXIF_IFD_EXIF },
+    { "SubsecTimeOriginal", EXIF_IFD_EXIF },
+    { "SubsecTimeDigitized", EXIF_IFD_EXIF },
+    { "FlashpixVersion", EXIF_IFD_EXIF },
+    { "ColorSpace", EXIF_IFD_EXIF },
+    { "RelatedSoundFile", EXIF_IFD_EXIF },
+    { "FlashEnergy", EXIF_IFD_EXIF },
+    { "FocalPlaneXResolution", EXIF_IFD_EXIF },
+    { "FocalPlaneYResolution", EXIF_IFD_EXIF },
+    { "FocalPlaneResolutionUnit", EXIF_IFD_EXIF },
+    { "SubjectLocation", EXIF_IFD_EXIF },
+    { "ExposureIndex", EXIF_IFD_EXIF },
+    { "SensingMethod", EXIF_IFD_EXIF },
+    { "FileSource", EXIF_IFD_EXIF },
+    { "CFAPattern", EXIF_IFD_EXIF },
+    { "CustomRendered", EXIF_IFD_EXIF },
+    { "ExposureMode", EXIF_IFD_EXIF },
+    { "DigitalZoomRatio", EXIF_IFD_EXIF },
+    { "SceneCaptureType", EXIF_IFD_EXIF },
+    { "GainControl", EXIF_IFD_EXIF },
+    { "Contrast", EXIF_IFD_EXIF },
+    { "Saturation", EXIF_IFD_EXIF },
+    { "Sharpness", EXIF_IFD_EXIF },
+    { "SubjectDistanceRange", EXIF_IFD_EXIF },
+    { "ImageUniqueID", EXIF_IFD_EXIF },
+    { "BodySerialNumber", EXIF_IFD_EXIF },
+    { "CameraOwnerName", EXIF_IFD_EXIF },
+    { "CompositeImage", EXIF_IFD_EXIF },
+    { "Gamma", EXIF_IFD_EXIF },
+    { "ISOSpeedLatitudeyyy", EXIF_IFD_EXIF },
+    { "ISOSpeedLatitudezzz", EXIF_IFD_EXIF },
+    { "SpatialFrequencyResponse", EXIF_IFD_EXIF},
+    { "LensMake", EXIF_IFD_EXIF },
+    { "LensModel", EXIF_IFD_EXIF },
+    { "LensSerialNumber", EXIF_IFD_EXIF },
+    { "LensSpecification", EXIF_IFD_EXIF },
+    { "OffsetTime", EXIF_IFD_EXIF },
+    { "OffsetTimeDigitized", EXIF_IFD_EXIF },
+    { "OffsetTimeOriginal", EXIF_IFD_EXIF },
+    { "SourceExposureTimesOfCompositeImage", EXIF_IFD_EXIF },
+    { "SourceImageNumberOfCompositeImage", EXIF_IFD_EXIF },
+    { "LightSource", EXIF_IFD_EXIF },
+    { "Flash", EXIF_IFD_EXIF },
+    { "FocalLengthIn35mmFilm", EXIF_IFD_EXIF },
+    { "UserComment", EXIF_IFD_EXIF },
+    { "PixelXDimension", EXIF_IFD_EXIF },
+    { "PixelYDimension", EXIF_IFD_EXIF },
+    { "WhiteBalance", EXIF_IFD_EXIF },
+    { "GPSVersionID", EXIF_IFD_GPS },
+    { "GPSLatitudeRef", EXIF_IFD_GPS },
+    { "GPSLatitude", EXIF_IFD_GPS },
+    { "GPSLongitudeRef", EXIF_IFD_GPS },
+    { "GPSLongitude", EXIF_IFD_GPS },
+    { "GPSAltitudeRef", EXIF_IFD_GPS },
+    { "GPSAltitude", EXIF_IFD_GPS },
+    { "GPSTimeStamp", EXIF_IFD_GPS },
+    { "GPSSatellites", EXIF_IFD_GPS },
+    { "GPSStatus", EXIF_IFD_GPS },
+    { "GPSMeasureMode", EXIF_IFD_GPS },
+    { "GPSDOP", EXIF_IFD_GPS },
+    { "GPSSpeedRef", EXIF_IFD_GPS },
+    { "GPSSpeed", EXIF_IFD_GPS },
+    { "GPSTrackRef", EXIF_IFD_GPS },
+    { "GPSTrack", EXIF_IFD_GPS },
+    { "GPSImgDirectionRef", EXIF_IFD_GPS },
+    { "GPSImgDirection", EXIF_IFD_GPS },
+    { "GPSMapDatum", EXIF_IFD_GPS },
+    { "GPSDestLatitudeRef", EXIF_IFD_GPS },
+    { "GPSDestLatitude", EXIF_IFD_GPS },
+    { "GPSDestLongitudeRef", EXIF_IFD_GPS },
+    { "GPSDestLongitude", EXIF_IFD_GPS },
+    { "GPSDestBearingRef", EXIF_IFD_GPS },
+    { "GPSDestBearing", EXIF_IFD_GPS },
+    { "GPSDestDistanceRef", EXIF_IFD_GPS },
+    { "GPSDestDistance", EXIF_IFD_GPS },
+    { "GPSProcessingMethod", EXIF_IFD_GPS },
+    { "GPSAreaInformation", EXIF_IFD_GPS },
+    { "GPSDateStamp", EXIF_IFD_GPS },
+    { "GPSDifferential", EXIF_IFD_GPS },
+    { "GPSHPositioningError", EXIF_IFD_GPS }
+};
+HWTEST_F(ExifMetadataTest, GetIFD001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ExifMetadataTest: GetIFD001 start";
+    for (const auto &it : IFDTable) {
+        auto ifd = exif_ifd_from_name(it.first.c_str());
+        ASSERT_EQ(ifd, it.second);
+    }
+    GTEST_LOG_(INFO) << "ExifMetadataTest: GetIFD001 end";
 }
 
 } // namespace Multimedia

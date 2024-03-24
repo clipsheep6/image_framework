@@ -67,67 +67,6 @@ std::istream &operator >> (std::istream &is, ExifSRational &r)
     return OutputRational(is, r);
 }
 
-std::map<ExifTag, ExifIfd> TagIfdTable = { { EXIF_TAG_ORIENTATION, EXIF_IFD_0 },
-                                           { EXIF_TAG_BITS_PER_SAMPLE, EXIF_IFD_0 },
-                                           { EXIF_TAG_IMAGE_LENGTH, EXIF_IFD_0 },
-                                           { EXIF_TAG_IMAGE_WIDTH, EXIF_IFD_0 },
-                                           { EXIF_TAG_DATE_TIME, EXIF_IFD_0 },
-                                           { EXIF_TAG_IMAGE_DESCRIPTION, EXIF_IFD_0 },
-                                           { EXIF_TAG_MAKE, EXIF_IFD_0 },
-                                           { EXIF_TAG_MODEL, EXIF_IFD_0 },
-                                           { EXIF_TAG_DATE_TIME_ORIGINAL, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_EXPOSURE_TIME, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_FNUMBER, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_ISO_SPEED_RATINGS, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_SCENE_TYPE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_COMPRESSED_BITS_PER_PIXEL, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_SENSITIVITY_TYPE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_STANDARD_OUTPUT_SENSITIVITY, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_RECOMMENDED_EXPOSURE_INDEX, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_APERTURE_VALUE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_EXPOSURE_BIAS_VALUE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_METERING_MODE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_LIGHT_SOURCE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_METERING_MODE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_FLASH, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_FOCAL_LENGTH, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_USER_COMMENT, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_PIXEL_X_DIMENSION, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_PIXEL_Y_DIMENSION, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_WHITE_BALANCE, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_FOCAL_LENGTH_IN_35MM_FILM, EXIF_IFD_EXIF },
-                                           { EXIF_TAG_GPS_VERSION_ID, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_LATITUDE_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_LATITUDE, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_LONGITUDE_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_LONGITUDE, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_ALTITUDE, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_TIME_STAMP, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_SATELLITES, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_STATUS, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_MEASURE_MODE, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DOP, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_SPEED_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_SPEED, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_TRACK_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_TRACK, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_IMG_DIRECTION_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_IMG_DIRECTION, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_MAP_DATUM, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_LATITUDE_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_LATITUDE, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_LONGITUDE_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_LONGITUDE, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_BEARING_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_BEARING, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_DISTANCE_REF, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DEST_DISTANCE, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_PROCESSING_METHOD, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_AREA_INFORMATION, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DATE_STAMP, EXIF_IFD_GPS },
-                                           { EXIF_TAG_GPS_DIFFERENTIAL, EXIF_IFD_GPS } };
-
 std::set<ExifTag> UndefinedByte = { EXIF_TAG_SCENE_TYPE, EXIF_TAG_COMPONENTS_CONFIGURATION, EXIF_TAG_FILE_SOURCE };
 
 ExifMetadata::ExifMetadata() : exifData_(nullptr) {}
@@ -231,7 +170,7 @@ bool ExifMetadata::CreateExifdata()
     return true;
 }
 
-ExifEntry *ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
+ExifEntry *ExifMetadata::CreateEntry(const std::string &key, const ExifTag &tag, const size_t valueLen)
 {
     ExifEntry *entry = exif_entry_new();
     if (entry == nullptr) {
@@ -239,11 +178,12 @@ ExifEntry *ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
         return nullptr;
     }
     entry->tag = tag; // tag must be set before calling exif_content_add_entry
-    exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
+    auto ifdindex = exif_ifd_from_name(key.c_str());
+    exif_content_add_entry(exifData_->ifd[ifdindex], entry);
     exif_entry_initialize(entry, tag);
 
     if (entry->format == EXIF_FORMAT_UNDEFINED && entry->size != valueLen) {
-        exif_content_remove_entry(exifData_->ifd[TagIfdTable[tag]], entry);
+        exif_content_remove_entry(exifData_->ifd[ifdindex], entry);
 
         // Create a memory allocator to manage this ExifEntry
         ExifMem *exifMem = exif_mem_new_default();
@@ -277,7 +217,7 @@ ExifEntry *ExifMetadata::CreateEntry(const ExifTag &tag, const size_t valueLen)
         entry->format = EXIF_FORMAT_UNDEFINED;
 
         // Attach the ExifEntry to an IFD
-        exif_content_add_entry(exifData_->ifd[TagIfdTable[tag]], entry);
+        exif_content_add_entry(exifData_->ifd[ifdindex], entry);
 
         // The ExifMem and ExifEntry are now owned elsewhere
         exif_mem_unref(exifMem);
@@ -319,7 +259,7 @@ ExifEntry *ExifMetadata::GetEntry(const std::string &key, const size_t valueLen)
 
     if (entry == nullptr) {
         IMAGE_LOGD("GetEntry entry is nullptr and try to create entry.");
-        entry = CreateEntry(tag, valueLen);
+        entry = CreateEntry(key, tag, valueLen);
     }
 
     if (entry == nullptr) {

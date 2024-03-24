@@ -35,185 +35,37 @@
 
 namespace OHOS {
 namespace Media {
-enum PropertyPermision {
-    READ_ONLY = 1,
-    READ_WRITE,
-};
 
 const auto GPS_DEGREE_SIZE = 2;
 
-const std::map<std::string, PropertyPermision> SUPPORTKEYS = {
-    { "BitsPerSample", READ_WRITE },
-    { "Orientation", READ_WRITE },
-    { "ImageLength", READ_WRITE },
-    { "ImageWidth", READ_WRITE },
-    { "GPSLatitude", READ_WRITE },
-    { "GPSLongitude", READ_WRITE },
-    { "GPSLatitudeRef", READ_WRITE },
-    { "GPSLongitudeRef", READ_WRITE },
-    { "DateTimeOriginal", READ_WRITE },
-    { "ExposureTime", READ_WRITE },
-    { "FNumber", READ_WRITE },
-    { "ISOSpeed", READ_WRITE },
-    { "ISOSpeedRatings", READ_WRITE },
-    { "SceneType", READ_WRITE },
-    { "DateTime", READ_WRITE },
-    { "GPSTimeStamp", READ_WRITE },
-    { "GPSDateStamp", READ_WRITE },
-    { "ImageDescription", READ_WRITE },
-    { "Make", READ_WRITE },
-    { "Model", READ_WRITE },
-    { "SensitivityType", READ_WRITE },
-    { "StandardOutputSensitivity", READ_WRITE },
-    { "RecommendedExposureIndex", READ_WRITE },
-    { "ApertureValue", READ_WRITE },
-    { "ExposureBiasValue", READ_WRITE },
-    { "MeteringMode", READ_WRITE },
-    { "LightSource", READ_WRITE },
-    { "Flash", READ_WRITE },
-    { "FocalLength", READ_WRITE },
-    { "UserComment", READ_WRITE },
-    { "PixelXDimension", READ_WRITE },
-    { "PixelYDimension", READ_WRITE },
-    { "WhiteBalance", READ_WRITE },
-    { "FocalLengthIn35mmFilm", READ_WRITE },
-    { "Compression", READ_WRITE },
-    { "PhotometricInterpretation", READ_WRITE },
-    { "StripOffsets", READ_WRITE },
-    { "SamplesPerPixel", READ_WRITE },
-    { "RowsPerStrip", READ_WRITE },
-    { "StripByteCounts", READ_WRITE },
-    { "XResolution", READ_WRITE },
-    { "YResolution", READ_WRITE },
-    { "PlanarConfiguration", READ_WRITE },
-    { "ResolutionUnit", READ_WRITE },
-    { "TransferFunction", READ_WRITE },
-    { "Software", READ_WRITE },
-    { "Artist", READ_WRITE },
-    { "WhitePoint", READ_WRITE },
-    { "PrimaryChromaticities", READ_WRITE },
-    { "ReferenceBlackWhite", READ_WRITE },
-    { "Copyright", READ_WRITE },
-    { "JPEGInterchangeFormat", READ_WRITE },
-    { "JPEGInterchangeFormatLength", READ_WRITE },
-    { "ExposureProgram", READ_WRITE },
-    { "SpectralSensitivity", READ_WRITE },
-    { "OECF", READ_WRITE },
-    { "ExifVersion", READ_WRITE },
-    { "DateTimeDigitized", READ_WRITE },
-    { "ComponentsConfiguration", READ_WRITE },
-    { "ShutterSpeedValue", READ_WRITE },
-    { "BrightnessValue", READ_WRITE },
-    { "MaxApertureValue", READ_WRITE },
-    { "SubjectDistance", READ_WRITE },
-    { "SubjectArea", READ_WRITE },
-    { "MakerNote", READ_WRITE },
-    { "SubsecTime", READ_WRITE },
-    { "SubSecTimeOriginal", READ_WRITE },
-    { "SubSecTimeDigitized", READ_WRITE },
-    { "FlashpixVersion", READ_WRITE },
-    { "ColorSpace", READ_WRITE },
-    { "RelatedSoundFile", READ_WRITE },
-    { "FlashEnergy", READ_WRITE },
-    { "SpatialFrequencyResponse", READ_WRITE },
-    { "FocalPlaneXResolution", READ_WRITE },
-    { "FocalPlaneYResolution", READ_WRITE },
-    { "FocalPlaneResolutionUnit", READ_WRITE },
-    { "SubjectLocation", READ_WRITE },
-    { "ExposureIndex", READ_WRITE },
-    { "SensingMethod", READ_WRITE },
-    { "FileSource", READ_WRITE },
-    { "CFAPattern", READ_WRITE },
-    { "CustomRendered", READ_WRITE },
-    { "ExposureMode", READ_WRITE },
-    { "DigitalZoomRatio", READ_WRITE },
-    { "SceneCaptureType", READ_WRITE },
-    { "GainControl", READ_WRITE },
-    { "Contrast", READ_WRITE },
-    { "Saturation", READ_WRITE },
-    { "Sharpness", READ_WRITE },
-    { "DeviceSettingDescription", READ_WRITE },
-    { "SubjectDistanceRange", READ_WRITE },
-    { "ImageUniqueID", READ_WRITE },
-    { "GPSVersionID", READ_WRITE },
-    { "GPSAltitudeRef", READ_WRITE },
-    { "GPSAltitude", READ_WRITE },
-    { "GPSSatellites", READ_WRITE },
-    { "GPSStatus", READ_WRITE },
-    { "GPSMeasureMode", READ_WRITE },
-    { "GPSDOP", READ_WRITE },
-    { "GPSSpeedRef", READ_WRITE },
-    { "GPSSpeed", READ_WRITE },
-    { "GPSTrackRef", READ_WRITE },
-    { "GPSTrack", READ_WRITE },
-    { "GPSImgDirectionRef", READ_WRITE },
-    { "GPSImgDirection", READ_WRITE },
-    { "GPSMapDatum", READ_WRITE },
-    { "GPSDestLatitudeRef", READ_WRITE },
-    { "GPSDestLatitude", READ_WRITE },
-    { "GPSDestLongitudeRef", READ_WRITE },
-    { "GPSDestLongitude", READ_WRITE },
-    { "GPSDestBearingRef", READ_WRITE },
-    { "GPSDestBearing", READ_WRITE },
-    { "GPSDestDistanceRef", READ_WRITE },
-    { "GPSDestDistance", READ_WRITE },
-    { "GPSProcessingMethod", READ_WRITE },
-    { "GPSAreaInformation", READ_WRITE },
-    { "GPSDifferential", READ_WRITE },
-    { "YCbCrCoefficients", READ_WRITE },
-    { "YCbCrSubSampling", READ_WRITE },
-    { "YCbCrPositioning", READ_WRITE },
-    { "CompressedBitsPerPixel", READ_WRITE },
-    { "JPEGProc", READ_WRITE },
-    { "BodySerialNumber", READ_WRITE },
-    { "CameraOwnerName", READ_WRITE },
-    { "CompositeImage", READ_WRITE },
-    { "CompressedBitsPerPixel", READ_WRITE },
-    { "DNGVersion", READ_WRITE },
-    { "DefaultCropSize", READ_WRITE },
-    { "Gamma", READ_WRITE },
-    { "ISOSpeedLatitudeyyy", READ_WRITE },
-    { "ISOSpeedLatitudezzz", READ_WRITE },
-    { "LensMake", READ_WRITE },
-    { "LensModel", READ_WRITE },
-    { "LensSerialNumber", READ_WRITE },
-    { "LensSpecification", READ_WRITE },
-    { "NewSubfileType", READ_WRITE },
-    { "OffsetTime", READ_WRITE },
-    { "OffsetTimeDigitized", READ_WRITE },
-    { "OffsetTimeOriginal", READ_WRITE },
-    { "SourceExposureTimesOfCompositeImage", READ_WRITE },
-    { "SourceImageNumberOfCompositeImage", READ_WRITE },
-    { "SubfileType", READ_WRITE },
-    { "GPSHPositioningError", READ_WRITE },
-    { "HwMnoteCaptureMode", READ_WRITE },
-    { "HwMnotePhysicalAperture", READ_ONLY },
-    { "HwMnoteRollAngle", READ_ONLY },
-    { "HwMnotePitchAngle", READ_ONLY },
-    { "HwMnoteSceneFoodConf", READ_ONLY },
-    { "HwMnoteSceneStageConf", READ_ONLY },
-    { "HwMnoteSceneBlueSkyConf", READ_ONLY },
-    { "HwMnoteSceneGreenPlantConf", READ_ONLY },
-    { "HwMnoteSceneBeachConf", READ_ONLY },
-    { "HwMnoteSceneSnowConf", READ_ONLY },
-    { "HwMnoteSceneSunsetConf", READ_ONLY },
-    { "HwMnoteSceneFlowersConf", READ_ONLY },
-    { "HwMnoteSceneNightConf", READ_ONLY },
-    { "HwMnoteSceneTextConf", READ_ONLY },
-    { "HwMnoteFaceCount", READ_ONLY },
-    { "HwMnoteFocusMode", READ_ONLY },
-    { "HwMnoteFrontCamera", READ_ONLY },
-    { "HwMnoteSceneVersion", READ_ONLY },
-    { "HwMnoteScenePointer", READ_ONLY },
-    { "HwMnoteFacePointer", READ_ONLY },
-    { "HwMnoteBurstNumber", READ_ONLY },
-    { "HwMnoteFaceVersion", READ_ONLY },
-    { "HwMnoteFaceConf", READ_ONLY },
-    { "HwMnoteFaceSmileScore", READ_ONLY },
-    { "HwMnoteFaceRect", READ_ONLY },
-    { "HwMnoteFaceLeyeCenter", READ_ONLY },
-    { "HwMnoteFaceReyeCenter", READ_ONLY },
-    { "HwMnoteFaceMouthCenter", READ_ONLY },
+const std::set<std::string> READ_WRITE_KEYS = {
+    "BitsPerSample","Orientation","ImageLength","ImageWidth","GPSLatitude","GPSLongitude","GPSLatitudeRef",
+    "GPSLongitudeRef",    "DateTimeOriginal","ExposureTime","SceneType","ISOSpeedRatings","FNumber","DateTime",
+    "GPSTimeStamp","GPSDateStamp","ImageDescription","Make","Model",    "PhotoMode","SensitivityType",
+    "StandardOutputSensitivity","RecommendedExposureIndex","ISOSpeed","ApertureValue","ExposureBiasValue",
+    "MeteringMode","LightSource",    "Flash","FocalLength","UserComment","PixelXDimension","PixelYDimension",
+    "WhiteBalance","FocalLengthIn35mmFilm",    "CompressedBitsPerPixel","JPEGProc","Compression","PhotometricInterpretation","StripOffsets","SamplesPerPixel","RowsPerStrip","StripByteCounts",
+    "XResolution","YResolution","PlanarConfiguration","ResolutionUnit","TransferFunction","Software",
+    "Artist","WhitePoint","PrimaryChromaticities","YCbCrCoefficients","YCbCrSubSampling","YCbCrPositioning","ReferenceBlackWhite",
+    "Copyright","SubsecTime","SubSecTimeOriginal","SubSecTimeDigitized","FlashpixVersion","ColorSpace","RelatedSoundFile","FlashEnergy",
+    "SpatialFrequencyResponse","FocalPlaneXResolution","FocalPlaneYResolution","FocalPlaneResolutionUnit","SubjectLocation","ExposureIndex",
+    "SensingMethod","FileSource","CFAPattern","CustomRendered","ExposureMode","DigitalZoomRatio","SceneCaptureType","GainControl","Contrast","Saturation","Sharpness",
+    "DeviceSettingDescription","SubjectDistanceRange","ImageUniqueID","GPSVersionID","GPSAltitudeRef","GPSAltitude","GPSSatellites","GPSStatus","GPSMeasureMode","GPSDOP",
+    "GPSSpeedRef","GPSSpeed","GPSTrackRef","GPSTrack","GPSImgDirectionRef","GPSImgDirection","GPSMapDatum","GPSDestLatitudeRef","GPSDestLatitude","GPSDestLongitudeRef",
+    "GPSDestLongitude","GPSDestBearingRef","GPSDestBearing","GPSDestDistanceRef","GPSDestDistance","GPSProcessingMethod","GPSAreaInformation",
+    "GPSDifferential","ComponentsConfiguration","ISOSpeedLatitudeyyy","ISOSpeedLatitudezzz","SubjectDistance","DefaultCropSize","LensSpecification",
+    "JPEGInterchangeFormat","JPEGInterchangeFormatLength","SubjectArea","DNGVersion","SubfileType","NewSubfileType","LensMake","LensModel",
+    "LensSerialNumber","OffsetTimeDigitized","OffsetTimeOriginal","SourceExposureTimesOfCompositeImage","SourceImageNumberOfCompositeImage",
+    "GPSHPositioningError","Orientation","GPSLongitudeRef","ExposureProgram","SpectralSensitivity","OECF","ExifVersion","DateTimeDigitized",
+    "ShutterSpeedValue","BrightnessValue","MaxApertureValue","BodySerialNumber","CameraOwnerName","CompositeImage","Gamma","OffsetTime"
+};
+
+const std::set<std::string> READ_ONLY_KEYS = {
+    "HwMnoteCaptureMode","HwMnotePhysicalAperture","HwMnoteRollAngle","HwMnotePitchAngle","HwMnoteSceneFoodConf","HwMnoteSceneStageConf","HwMnoteSceneBlueSkyConf",
+    "HwMnoteSceneGreenPlantConf","HwMnoteSceneBeachConf","HwMnoteSceneSnowConf","HwMnoteSceneSunsetConf","HwMnoteSceneFlowersConf","HwMnoteSceneNightConf",
+    "HwMnoteSceneTextConf","HwMnoteFaceCount","HwMnoteFocusMode","HwMnoteFrontCamera","HwMnoteSceneVersion","HwMnoteScenePointer","HwMnoteFacePointer",
+    "HwMnoteBurstNumber","HwMnoteFaceVersion","HwMnoteFaceConf","HwMnoteFaceSmileScore","HwMnoteFaceRect","HwMnoteFaceLeyeCenter","HwMnoteFaceReyeCenter",
+    "HwMnoteFaceMouthCenter"
 };
 
 // Orientation, tag 0x0112
@@ -580,7 +432,7 @@ const auto ONE_DECIMAL_REGEX = "(\\d+)(\\.\\d+)?";
 const auto DOUBLE_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+$)";
 const auto DOUBLE_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+$)";
 const auto TRIBLE_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+$)";
-const auto TRIBLE_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+,[0-9]+$)";
+const auto TRIBLE_INT_WITH_COMMA_REGEX = R"(^[0-9]+,(\s)?[0-9]+,(\s)?[0-9]+$)";
 const auto TRIBLE_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
 const auto TRIBLE_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 const auto TRIBLE_DECIMAL_WITH_COMMA_REGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
@@ -588,8 +440,7 @@ const auto TRIBLE_INT_WITH_COLON_REGEX = R"(^[1-9][0-9]*:[1-9][0-9]*:[1-9][0-9]*
 const auto TRIBLE_INT_WITH_DOT_REGEX = R"(^[0-9]+.[0-9]+.[0-9]+.[0-9]+$)";
 const auto FOUR_INT_WITH_BLANK_REGEX = R"(^[0-9]+\s[0-9]+\s[0-9]+\s[0-9]+$)";
 const auto FOUR_INT_WITH_COMMA_REGEX = R"(^[0-9]+,[0-9]+,[0-9]+,[0-9]+$)";
-const auto FOUR_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]"
-                                                               "+/[1-9][0-9]*$)";
+const auto FOUR_RATIONAL_WITH_BLANK_REGEX = R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
 const auto FOUR_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 const auto FOUR_DECIMAL_WITH_COMMA_REGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
 const auto SIX_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)"
@@ -1193,17 +1044,15 @@ int32_t ExifMetadatFormatter::ValidateValueFormat(const std::string &keyName, co
 
 bool ExifMetadatFormatter::IsKeySupported(const std::string &keyName)
 {
-    auto it = SUPPORTKEYS.find(keyName);
-    return !(it == SUPPORTKEYS.end());
+    auto wit = READ_WRITE_KEYS.find(keyName);
+    auto rit = READ_ONLY_KEYS.find(keyName);
+    return (wit != READ_WRITE_KEYS.end() || rit != READ_ONLY_KEYS.end());
 }
 
 bool ExifMetadatFormatter::IsModifyAllowed(const std::string &keyName)
 {
-    auto it = SUPPORTKEYS.find(keyName);
-    if (it != SUPPORTKEYS.end() && it->second == READ_WRITE) {
-        return true;
-    }
-    return false;
+    auto it = READ_WRITE_KEYS.find(keyName);
+    return (it != READ_WRITE_KEYS.end());
 }
 
 std::pair<int32_t, std::string> ExifMetadatFormatter::Format(const std::string &keyName, const std::string &value)
