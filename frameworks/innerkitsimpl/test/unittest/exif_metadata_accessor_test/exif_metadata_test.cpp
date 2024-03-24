@@ -180,7 +180,7 @@ HWTEST_F(ExifMetadataTest, GetValue011, TestSize.Level3)
     ExifMetadata metadata(exifData);
     ASSERT_EQ(metadata.SetValue("SceneType", "1"), true);
     metadata.GetValue("SceneType", value);
-    ASSERT_EQ(value, "Internal error (unknown value 49)");
+    ASSERT_EQ(value, "Directly photographed");
 }
 
 HWTEST_F(ExifMetadataTest, GetValue012, TestSize.Level3)
