@@ -707,7 +707,6 @@ HWTEST_F(ExifMetadataTest, SetValueBatch003, TestSize.Level3)
         metadata.GetValue(key, retvalue);
         GTEST_LOG_(INFO) << "[key]: " << key << " [modifyvalue]: " << modifyvalue
             << " [retvalue]: " << retvalue;
-        // ASSERT_EQ(retvalue, MODIFYDATA[i][2]);
     }
     GTEST_LOG_(INFO) << "ExifMetadataTest: SetValueBatch003 end";
 }

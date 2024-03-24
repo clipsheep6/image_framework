@@ -162,7 +162,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
 
         MnoteHuaweiEntryCount *ec = nullptr;
         mnote_huawei_get_entry_count((ExifMnoteDataHuawei *)md, &ec);
-        if(ec == nullptr) {
+        if (ec == nullptr) {
             return ERR_MEDIA_NO_EXIF_DATA;
         }
         for (unsigned int i = 0; i < ec->size; i++) {
