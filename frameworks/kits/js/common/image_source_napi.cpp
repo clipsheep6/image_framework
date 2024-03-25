@@ -411,10 +411,13 @@ std::vector<std::pair<std::string, std::string>> GetRecordArgument(napi_env env,
 napi_status SetValueString(napi_env env, std::string keyStr, std::string valueStr, napi_value &object)
 {
     napi_value value = nullptr;
-    napi_status status = napi_create_string_utf8(env, valueStr.c_str(), valueStr.length(), &value);
-    if (status != napi_ok) {
-        IMAGE_LOGE("Set Value failed %{public}d", status);
-        return napi_invalid_arg;
+    napi_status status;
+    if (valueStr != "") {
+        status = napi_create_string_utf8(env, valueStr.c_str(), valueStr.length(), &value);
+        if (status != napi_ok) {
+            IMAGE_LOGE("Set Value failed %{public}d", status);
+            return napi_invalid_arg;
+        }
     }
     status = napi_set_named_property(env, object, keyStr.c_str(), value);
     if (status != napi_ok) {
@@ -458,7 +461,7 @@ napi_value SetRecordParametersInfo(napi_env env, std::vector<std::pair<std::stri
     return result;
 }
 
-napi_value CreateErrorArray(napi_env env, std::multimap<std::int32_t, std::string> errMsgArray)
+napi_value CreateModifyErrorArray(napi_env env, std::multimap<std::int32_t, std::string> errMsgArray)
 {
     napi_value result = nullptr;
     napi_status status = napi_create_array_with_length(env, errMsgArray.size(), &result);
@@ -479,12 +482,12 @@ napi_value CreateErrorArray(napi_env env, std::multimap<std::int32_t, std::strin
                 "The given buffer size is too small to add new exif data! exif key: " + it->second);
         } else if (it->first == ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
             ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
-                "The exif data format is not standard, so modify it failed! exif key: " + it->second);
+                "The exif data format is not standard! exif key: " + it->second);
         } else if (it->first == ERR_MEDIA_VALUE_INVALID) {
             ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
-                "Unsupport EXIF info key! exif key: " + it->second);
+                "The exif value is invalid! exif key: " + it->second);
         } else {
-            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, ERROR,
                 "There is generic napi failure! exif key: " + it->second);
         }
         status = napi_set_element(env, result, index, errMsgVal);
@@ -495,7 +498,45 @@ napi_value CreateErrorArray(napi_env env, std::multimap<std::int32_t, std::strin
         ++index;
     }
 
-    IMAGE_LOGD("Create error array success.");
+    IMAGE_LOGD("Create modify error array success.");
+    return result;
+}
+
+napi_value CreateObtainErrorArray(napi_env env, std::multimap<std::int32_t, std::string> errMsgArray)
+{
+    napi_value result = nullptr;
+    napi_status status = napi_create_array_with_length(env, errMsgArray.size(), &result);
+    if (status != napi_ok) {
+        IMAGE_LOGE("Malloc array buffer failed %{public}d", status);
+        return result;
+    }
+
+    uint32_t index = 0;
+    for (auto it = errMsgArray.begin(); it != errMsgArray.end(); ++it) {
+        napi_value errMsgVal;
+        napi_get_undefined(env, &errMsgVal);
+        if (it->first == ERR_IMAGE_DECODE_ABNORMAL) {
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
+                "The image source data is incorrect! exif key: " + it->second);
+        } else if (it->first == ERR_IMAGE_UNKNOWN_FORMAT) {
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
+                "Unknown image format! exif key: " + it->second);
+        } else if (it->first == ERR_IMAGE_DECODE_FAILED) {
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
+                "Failed to decode the image! exif key: " + it->second);
+        } else {
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, ERROR,
+                "There is generic napi failure! exif key: " + it->second);
+        }
+        status = napi_set_element(env, result, index, errMsgVal);
+        if (status != napi_ok) {
+            IMAGE_LOGE("Add error message to array failed %{public}d", status);
+            continue;
+        }
+        ++index;
+    }
+
+    IMAGE_LOGD("Create obtain error array success.");
     return result;
 }
 
@@ -1365,7 +1406,7 @@ static void ModifyImagePropertyComplete(napi_env env, napi_status status, ImageS
     napi_value retVal;
     napi_value callback = nullptr;
     if (context->isBatch) {
-        result[NUM_0] = CreateErrorArray(env, context->errMsgArray);
+        result[NUM_0] = CreateModifyErrorArray(env, context->errMsgArray);
     } else {
         if (context->status == ERR_MEDIA_WRITE_PARCEL_FAIL) {
             if (context->fdIndex != -1) {
@@ -1424,13 +1465,11 @@ static void GetImagePropertyComplete(napi_env env, napi_status status, ImageSour
         }
     } else {
         if (context->isBatch) {
-            result[NUM_0] = CreateErrorArray(env, context->errMsgArray);
+            result[NUM_0] = CreateObtainErrorArray(env, context->errMsgArray);
         } else {
-            if (context->status == ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
-                ImageNapiUtils::CreateErrorObj(env, result[NUM_0], context->status, "Unsupport EXIF info key!");
-            } else {
-                ImageNapiUtils::CreateErrorObj(env, result[NUM_0], context->status, "There is generic napi failure!");
-            }
+            std::string errMsg = context->status == ERR_IMAGE_DECODE_EXIF_UNSUPPORT ? "Unsupport EXIF info key!" :
+                "There is generic napi failure!";
+            ImageNapiUtils::CreateErrorObj(env, result[NUM_0], context->status, errMsg);
 
             if (!context->defaultValueStr.empty()) {
                 napi_create_string_utf8(env, context->defaultValueStr.c_str(),
@@ -1662,10 +1701,12 @@ static void GetImagePropertiesExecute(napi_env env, void *data)
         if (status == SUCCESS) {
             context->kVStrArray.emplace_back(std::make_pair(*keyStrIt, valueStr));
         } else {
+            context->kVStrArray.emplace_back(std::make_pair(*keyStrIt, ""));
             context->errMsgArray.insert(std::make_pair(status, *keyStrIt));
+            IMAGE_LOGE("errCode: %{public}u , exif key: %{public}s", status, keyStrIt->c_str());
         }
     }
-    context->status = context->kVStrArray.size() > 0 ? SUCCESS : ERROR;
+     context->status = context->kVStrArray.size() == context->errMsgArray.size() ? ERROR : SUCCESS;
 }
 
 static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env env,
