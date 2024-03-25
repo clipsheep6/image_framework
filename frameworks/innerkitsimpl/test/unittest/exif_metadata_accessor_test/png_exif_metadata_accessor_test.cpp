@@ -79,6 +79,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read002, TestSize.Level3)
     ASSERT_EQ(result, SUCCESS);
 
     auto exifMetadata = imageAccessor.Get();
+    ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "XResolution"), "72");
     ASSERT_EQ(GetProperty(exifMetadata, "ResolutionUnit"), "Inch");
     ASSERT_EQ(GetProperty(exifMetadata, "Software"), "Adobe Photoshop CS Windows");
@@ -89,6 +90,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read002, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "PixelYDimension"), "1920");
     ASSERT_EQ(GetProperty(exifMetadata, "Orientation"), "Unknown value 0");
     ASSERT_EQ(GetProperty(exifMetadata, "YResolution"), "72");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTime"), "140");
 }
 
 /**
@@ -105,6 +107,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read003, TestSize.Level3)
     ASSERT_EQ(result, SUCCESS);
 
     auto exifMetadata = imageAccessor.Get();
+    ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "200");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "130");
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "8, 8, 8");
@@ -149,9 +152,10 @@ HWTEST_F(PngExifMetadataAccessorTest, Read004, TestSize.Level3)
     ASSERT_EQ(result, SUCCESS);
 
     auto exifMetadata = imageAccessor.Get();
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTime"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "06");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "06");
+    ASSERT_NE(exifMetadata, nullptr);
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTime"), "06");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeOriginal"), "06");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeDigitized"), "06");
     ASSERT_EQ(GetProperty(exifMetadata, "FlashpixVersion"), "FlashPix Version 1.0");
     ASSERT_EQ(GetProperty(exifMetadata, "ColorSpace"), "sRGB");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelXDimension"), "200");
@@ -189,6 +193,7 @@ HWTEST_F(PngExifMetadataAccessorTest, Read005, TestSize.Level3)
     ASSERT_EQ(result, SUCCESS);
 
     auto exifMetadata = imageAccessor.Get();
+    ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "320");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "211");
     ASSERT_EQ(GetProperty(exifMetadata, "Make"), "NIKON CORPORATION");
@@ -241,6 +246,7 @@ HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata006, TestSize.Level3)
     ASSERT_EQ(result, SUCCESS);
 
     auto exifMetadata = imageAccessor.Get();
+    ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "320");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "211");
     ASSERT_EQ(GetProperty(exifMetadata, "Make"), "NIKON CORPORATION");
@@ -294,6 +300,7 @@ HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata007, TestSize.Level3)
     ASSERT_EQ(result, SUCCESS);
 
     auto exifMetadata = imageAccessor.Get();
+    ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "ImageWidth"), "200");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageLength"), "130");
     ASSERT_EQ(GetProperty(exifMetadata, "BitsPerSample"), "8, 8, 8");
@@ -339,9 +346,10 @@ HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata008, TestSize.Level3)
     ASSERT_EQ(result, SUCCESS);
 
     auto exifMetadata = imageAccessor.Get();
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTime"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "06");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "06");
+    ASSERT_NE(exifMetadata, nullptr);
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTime"), "06");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeOriginal"), "06");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeDigitized"), "06");
     ASSERT_EQ(GetProperty(exifMetadata, "FlashpixVersion"), "FlashPix Version 1.0");
     ASSERT_EQ(GetProperty(exifMetadata, "ColorSpace"), "sRGB");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelXDimension"), "200");
