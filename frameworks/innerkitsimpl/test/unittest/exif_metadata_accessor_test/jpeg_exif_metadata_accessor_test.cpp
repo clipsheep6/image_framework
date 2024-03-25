@@ -142,9 +142,9 @@ HWTEST_F(JpegExifMetadataAccessorTest, Read002, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "Software"), "MNA-AL00 4.0.0.120(C00E116R3P7)");
     ASSERT_EQ(GetProperty(exifMetadata, "Copyright"), "xxxxxx (Photographer) - [None] (Editor)");
     ASSERT_EQ(GetProperty(exifMetadata, "SpectralSensitivity"), "sensitivity");
-    ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "0x01, 0x01, 0x02, 0x03");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistance"), "");
-    ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "12, 1");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "3");
     ASSERT_EQ(GetProperty(exifMetadata, "TransferFunction"), "2");
     ASSERT_EQ(GetProperty(exifMetadata, "WhitePoint"), "124.2");
@@ -154,9 +154,9 @@ HWTEST_F(JpegExifMetadataAccessorTest, Read002, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrSubSampling"), "3, 2");
     ASSERT_EQ(GetProperty(exifMetadata, "YResolution"), "72");
     ASSERT_EQ(GetProperty(exifMetadata, "Gamma"), "1.5");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "200");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "3");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageUniqueID"), "FXIC012");
     ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormat"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormatLength"), "");
@@ -178,7 +178,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Read003, TestSize.Level3)
     ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSAltitude"), "0.00");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSAltitudeRef"), "Sea level reference");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "20 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "23...15...57");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDOP"), "182");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestBearing"), "2.6");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestBearingRef"), "T");
@@ -193,7 +193,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Read003, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSImgDirectionRef"), "M");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSMapDatum"), "xxxx");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSMeasureMode"), "2");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "14 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "CELLID");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSSatellites"), "xxx");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSSpeed"), "150");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSSpeedRef"), "K");
@@ -235,15 +235,15 @@ HWTEST_F(JpegExifMetadataAccessorTest, Read004, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "SensingMethod"), "Two-chip color area sensor");
     ASSERT_EQ(GetProperty(exifMetadata, "Sharpness"), "Normal");
     ASSERT_EQ(GetProperty(exifMetadata, "ShutterSpeedValue"), "13.00 EV (1/8192 sec.)");
-    ASSERT_EQ(GetProperty(exifMetadata, "SourceExposureTimesOfCompositeImage"), "1 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "SourceExposureTimesOfCompositeImage"), ".");
     ASSERT_EQ(GetProperty(exifMetadata, "SourceImageNumberOfCompositeImage"), "1234");
-    ASSERT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), "1 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), ".");
     ASSERT_EQ(GetProperty(exifMetadata, "StripByteCounts"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "StripOffsets"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "SubsecTime"), "427000");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "427000");
     ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "427000");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"),
               "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistanceRange"), "Unknown");
@@ -258,7 +258,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Read004, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "Contrast"), "Normal");
     ASSERT_EQ(GetProperty(exifMetadata, "CustomRendered"), "Custom process");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeDigitized"), "2023:01:19 10:39:58");
-    ASSERT_EQ(GetProperty(exifMetadata, "DeviceSettingDescription"), "1 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "DeviceSettingDescription"), ".");
     ASSERT_EQ(GetProperty(exifMetadata, "DigitalZoomRatio"), "321");
     ASSERT_EQ(GetProperty(exifMetadata, "ExifVersion"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "ExposureIndex"), "1.5");
@@ -609,9 +609,9 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write007, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "0.08 EV (f/1.0)");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistance"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "3");
-    ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "0x01, 0x01, 0x02, 0x03");
+    ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "12, 1");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "");
 
     ASSERT_TRUE(exifMetadata->SetValue("OECF", "1 bytes"));
     ASSERT_TRUE(exifMetadata->SetValue("MaxApertureValue", "9/100"));
@@ -627,9 +627,9 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write007, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "0.09 EV (f/1.0)");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistance"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "5");
-    ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "1.1.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "1.1.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "1.1.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "0x01, 0x01, 0x00, 0x00");
+    ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "1, 1");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "1");
 }
 
 /**
@@ -762,8 +762,8 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write010, TestSize.Level3)
     auto exifMetadata = imageAccessor.Get();
     ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestDistance"), "10");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "14 bytes undefined data");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "20 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "CELLID");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "23...15...57");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDateStamp"), "2025:01:11");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDifferential"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSHPositioningError"), " 3");
@@ -778,8 +778,8 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write010, TestSize.Level3)
 
     ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestDistance"), "11");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "8 bytes undefined data");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "8 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSProcessingMethod"), "14 bytes");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSAreaInformation"), "20 bytes");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDateStamp"), "2025:01:12");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDifferential"), "0");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSHPositioningError"), " 5");
@@ -806,9 +806,9 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write011, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "SensitivityType"), "Standard output sensitivity (SOS) and ISO speed");
     ASSERT_EQ(GetProperty(exifMetadata, "StandardOutputSensitivity"), "5");
     ASSERT_EQ(GetProperty(exifMetadata, "RecommendedExposureIndex"), "241");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "2.2.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "2.2.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "200");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "3");
     ASSERT_EQ(GetProperty(exifMetadata, "ExifVersion"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2024:01:25 05:51:34");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeDigitized"), "2023:01:19 10:39:58");
@@ -836,9 +836,9 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write011, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "SensitivityType"), "Recommended exposure index (REI)");
     ASSERT_EQ(GetProperty(exifMetadata, "StandardOutputSensitivity"), "8");
     ASSERT_EQ(GetProperty(exifMetadata, "RecommendedExposureIndex"), "261");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "1.0.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "1.0.0.0");
-    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "1.0.0.0");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeed"), "100");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "100");
+    ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "100");
     ASSERT_EQ(GetProperty(exifMetadata, "ExifVersion"), "Exif Version 2.1");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2024:01:25 05:51:35");
     ASSERT_EQ(GetProperty(exifMetadata, "DateTimeDigitized"), "2023:01:19 10:39:59");
@@ -928,7 +928,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write013, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "PixelYDimension"), "2000");
     ASSERT_EQ(GetProperty(exifMetadata, "RelatedSoundFile"), "/usr/home/sound/sea.wav");
     ASSERT_EQ(GetProperty(exifMetadata, "FlashEnergy"), "832");
-    ASSERT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), "1 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), ".");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalPlaneXResolution"), "1080");
 
     ASSERT_TRUE(exifMetadata->SetValue("MakerNote", "XXXXXX"));
@@ -942,7 +942,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write013, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("PixelYDimension", "2002"));
     ASSERT_TRUE(exifMetadata->SetValue("RelatedSoundFile", "/usr/home/sound/sea1.wav"));
     ASSERT_TRUE(exifMetadata->SetValue("FlashEnergy", "800/1"));
-    ASSERT_TRUE(exifMetadata->SetValue("SpatialFrequencyResponse", "1 bytes"));
+    ASSERT_TRUE(exifMetadata->SetValue("SpatialFrequencyResponse", "2"));
     ASSERT_TRUE(exifMetadata->SetValue("FocalPlaneXResolution", "1081/1"));
     ASSERT_EQ(imageAccessor.Write(), 0);
 
@@ -958,7 +958,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write013, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "PixelYDimension"), "2002");
     ASSERT_EQ(GetProperty(exifMetadata, "RelatedSoundFile"), "/usr/home/sound/sea1.wav");
     ASSERT_EQ(GetProperty(exifMetadata, "FlashEnergy"), "800");
-    ASSERT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), "7 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), "2");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalPlaneXResolution"), "1081");
 }
 
@@ -1040,7 +1040,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write015, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "Contrast"), "Normal");
     ASSERT_EQ(GetProperty(exifMetadata, "Saturation"), "Normal");
     ASSERT_EQ(GetProperty(exifMetadata, "Sharpness"), "Normal");
-    ASSERT_EQ(GetProperty(exifMetadata, "DeviceSettingDescription"), "1 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "DeviceSettingDescription"), ".");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistanceRange"), "Unknown");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageUniqueID"), "FXIC012");
     ASSERT_EQ(GetProperty(exifMetadata, "CameraOwnerName"), "xx");
@@ -1070,7 +1070,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write015, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "Contrast"), "Hard");
     ASSERT_EQ(GetProperty(exifMetadata, "Saturation"), "Low saturation");
     ASSERT_EQ(GetProperty(exifMetadata, "Sharpness"), "Soft");
-    ASSERT_EQ(GetProperty(exifMetadata, "DeviceSettingDescription"), "7 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "DeviceSettingDescription"), "1 bytes");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectDistanceRange"), "Distant view");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageUniqueID"), "fxic012");
     ASSERT_EQ(GetProperty(exifMetadata, "CameraOwnerName"), "XX");
@@ -1097,7 +1097,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write016, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "LensSerialNumber"), "xxx");
     ASSERT_EQ(GetProperty(exifMetadata, "CompositeImage"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "SourceImageNumberOfCompositeImage"), "1234");
-    ASSERT_EQ(GetProperty(exifMetadata, "SourceExposureTimesOfCompositeImage"), "1 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "SourceExposureTimesOfCompositeImage"), ".");
     ASSERT_EQ(GetProperty(exifMetadata, "Gamma"), "1.5");
     ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormat"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormatLength"), "");
@@ -1126,14 +1126,14 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write016, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "LensSerialNumber"), "XXX");
     ASSERT_EQ(GetProperty(exifMetadata, "CompositeImage"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "SourceImageNumberOfCompositeImage"), "3456");
-    ASSERT_EQ(GetProperty(exifMetadata, "SourceExposureTimesOfCompositeImage"), "7 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "SourceExposureTimesOfCompositeImage"), "1 bytes");
     ASSERT_EQ(GetProperty(exifMetadata, "Gamma"), "2.5");
     ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormat"), "0");
     ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormatLength"), "0");
     ASSERT_EQ(GetProperty(exifMetadata, "PhotometricInterpretation"), "Reversed mono");
-    ASSERT_EQ(GetProperty(exifMetadata, "RowsPerStrip"), "1 bytes undefined data");
-    ASSERT_EQ(GetProperty(exifMetadata, "StripByteCounts"), "1 bytes undefined data");
-    ASSERT_EQ(GetProperty(exifMetadata, "StripOffsets"), "1 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "RowsPerStrip"), "0");
+    ASSERT_EQ(GetProperty(exifMetadata, "StripByteCounts"), "0");
+    ASSERT_EQ(GetProperty(exifMetadata, "StripOffsets"), "0");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"),
             "Within rectangle (width 183, height 259) around (x,y) = (11,21)");
 }

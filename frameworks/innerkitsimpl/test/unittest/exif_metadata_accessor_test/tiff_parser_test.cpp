@@ -33,11 +33,11 @@ public:
 
 HWTEST_F(TiffParserTest, DecodeJpegExif001, TestSize.Level3)
 {
-    IMAGE_LOGD("DecodeJpegExif001");
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+
     unsigned char* buf = nullptr;
     unsigned int len = 0;
-    // 从文件中获取exif buffer（包括了jpeg exif header 头信息45 78 69 66 00 00）
     exif_data_save_data(exifData, &buf, &len);
     GTEST_LOG_(INFO) << "TiffParserTest: DecodeJpegExif001" << " buffer length: " << len;
     ASSERT_NE(len, 0);
@@ -51,11 +51,11 @@ HWTEST_F(TiffParserTest, EncodeJpegExif001, TestSize.Level3)
 {
     TiffParser parser;
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+
     unsigned char* buf = nullptr;
     unsigned int len = 0;
-    // 从文件中获取exif buffer（包括了jpeg exif header 头信息45 78 69 66 00 00）
     exif_data_save_data(exifData, &buf, &len);
-    GTEST_LOG_(INFO) << "TiffParserTest: EncodeJpegExif001" << " buffer length: " << len;
     ASSERT_NE(len, 0);
 
     ExifData *exifData_ = nullptr;
@@ -72,11 +72,11 @@ HWTEST_F(TiffParserTest, Decode001, TestSize.Level3)
 {
     TiffParser parser;
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+
     unsigned char* buf = nullptr;
     unsigned int len = 0;
-    // 从文件中获取exif buffer（包括了jpeg exif header 头信息45 78 69 66 00 00）
     exif_data_save_data(exifData, &buf, &len);
-    GTEST_LOG_(INFO) << "TiffParserTest: Decode001" << " buffer length: " << len;
     ASSERT_NE(len, 0);
 
     ExifData *exifData_ = nullptr;
@@ -88,11 +88,11 @@ HWTEST_F(TiffParserTest, Encode001, TestSize.Level3)
 {
     TiffParser parser;
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+
     unsigned char* buf = nullptr;
     unsigned int len = 0;
-    // 从文件中获取exif buffer（包括了jpeg exif header 头信息45 78 69 66 00 00）
     exif_data_save_data(exifData, &buf, &len);
-    GTEST_LOG_(INFO) << "TiffParserTest: Encode001" << " buffer length: " << len;
     ASSERT_NE(len, 0);
 
     ExifData *exifData_ = nullptr;
