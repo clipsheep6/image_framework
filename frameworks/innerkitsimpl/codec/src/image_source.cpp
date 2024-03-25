@@ -387,14 +387,27 @@ static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, in
     return prop;
 }
 
-static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
-    int32_t wantDensity, Size &dstSize, uint32_t resolutionQuality)
+static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const DecodeOptions &opts)
 {
-    if (IsSizeVailed(wantSize) && (resolutionQuality == HIGH || resolutionQuality == SUPER)) {
+    const Size wantSize = opts.desiredSize;
+    int32_t wantDensity = opts.fitDensity;
+    Size dstSize = opts.desiredSize;
+    bool AiProcessCheck = true;
+
+
+#ifdef AI_ENABLE
+     if ((resolutionQuality == HIGH) || (resolutionQuality == SUPER)) {
+         AiProcessCheck = true;
+     } else {
+         AiProcessCheck = false;
+     }
+#endif
+    if (IsSizeVailed(wantSize) && (AiProcessCheck == true)) {
         CopySize(wantSize, dstSize);
     } else {
         CopySize(srcSize, dstSize);
     }
+
     if (IsDensityChange(srcDensity, wantDensity)) {
         dstSize.width = GetScalePropByDensity(dstSize.width, srcDensity, wantDensity);
         dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
@@ -522,9 +535,45 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
+static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint64_t count, DecodeContext &context, Size &sizeInfo)
+{
+#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+    IMAGE_LOGE("Unsupport dma mem alloc");
+    return {};
+#else
+    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
+    BufferRequestConfig requestConfig = {
+        .width = sizeInfo.width(),
+        .height = sizeInfo.height(),
+        .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
+        .timeout = 0,
+        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
+        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
+    };
+    GSError ret = sb->Alloc(requestConfig);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
+        return {};
+    }
+    void* nativeBuffer = sb.GetRefPtr();
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("NativeBufferReference failed");
+        return {};
+    }
+    context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
+    context.pixelsBuffer.bufferSize = count;
+    context.pixelsBuffer.context = nativeBuffer;
+    context.allocatorType = AllocatorType::DMA_ALLOC;
+    context.freeFunc = nullptr;
+    return sb;
+#endif
+}
+
 uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, ImagePlugin::PlImageInfo &plInfo)
 {
-    PixelMapAddrInfos addrInfos;
     #ifdef AI_ENABLE
     bool isAisr = false;
     bool isHdr = false;
@@ -534,15 +583,22 @@ uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, ImagePlu
     if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR) {
        isHdr = true;
     }
-    if (isAisr) {
+    if (isAisr || isHdr) {
         sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
+        //sptr<SurfaceBuffer> output = mainDecoder_->CreateSurfaceBufferByContext(context, context.pixelsBuffer.bufferSize, dstInfo);
 
-        sptr<SurfaceBuffer> output = mainDecoder_->DmaMemAlloc(context, context.pixelsBuffer.bufferSize, dstInfo);
-    }
-    if (isHdr) {
+        uint64_t byteCount = context.pixelsBuffer.bufferSize;
+        Size dstInfo;
+        dstInfo.width = context.outInfo.size.width;
+        dstInfo.height = context.outInfo.size.height;
+        sptr<SurfaceBuffer> output = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
 
+        process(input, output);
     }
+
+    return 0;
     #endif
+#if 0
     ContextToAddrInfos(context, addrInfos);
     if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
         // hardware decode success, update plInfo.size
@@ -556,11 +612,12 @@ uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, ImagePlu
         plInfo.yuvDataInfo = context.yuvInfo;
         plInfo.size = context.yuvInfo.imageSize;
     }
-   
+
     auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, errorCode);
     if (pixelMap == nullptr) {
         return nullptr;
     }
+#endif
 }
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
@@ -579,12 +636,15 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     }
     std::unique_lock<std::mutex> guard(decodingMutex_);
     hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
+    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts);
+#if 0
 #ifdef AI_ENABLE
     TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
         opts_.desiredSize, opts_.resolutionQuality);
 #else
     TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
         opts_.desiredSize);
+#endif
 #endif
     ImagePlugin::PlImageInfo plInfo;
     errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
@@ -605,6 +665,26 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
+        return nullptr;
+    }
+
+    AIProcess(context.outInfo.size, context, 0);
+    if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
+        // hardware decode success, update plInfo.size
+        IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
+            "(%{public}u, %{public}u)", plInfo.size.width, plInfo.size.height, context.outInfo.size.width,
+            context.outInfo.size.height);
+        plInfo.size = context.outInfo.size;
+    }
+    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
+        context.yuvInfo.imageSize.width != 0) {
+        plInfo.yuvDataInfo = context.yuvInfo;
+        plInfo.size = context.yuvInfo.imageSize;
+    }
+    PixelMapAddrInfos addrInfos;
+    ContextToAddrInfos(context, addrInfos);
+    auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, errorCode);
+    if (pixelMap == nullptr) {
         return nullptr;
     }
     if (!context.ifPartialOutput) {

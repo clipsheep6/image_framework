@@ -665,7 +665,7 @@ HWTEST_F(ImageSourceTest, GetImagePropertyInt002, TestSize.Level3)
 HWTEST_F(ImageSourceTest, GetImagePropertyString001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImagePropertyString001 start";
-    
+
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
@@ -729,7 +729,7 @@ HWTEST_F(ImageSourceTest, ModifyImageProperty002, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceTest: ModifyImageProperty002 start";
 
-    
+
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
@@ -2021,6 +2021,48 @@ HWTEST_F(ImageSourceTest, End2EndTest008, TestSize.Level3)
     ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
 
     GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest008 end";
+}
+
+/**
+ * @tc.name: End2EndTest009
+ * @tc.desc: test CreateImageSource and CreatePixelMap of jpg resource and process image quality
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, End2EndTest009, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest009 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t jpegWidth = 472;
+    int32_t jpegHeight = 226;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
+    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = 400;
+    int32_t desiredHeight = 200;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    decodeOpts.decodingDynamicRange = IMAGE_DYNAMIC_RANGE_HDR;
+    decodeOpts.resolutionQuality = SUPER;
+
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest009 end";
 }
 
 /**
