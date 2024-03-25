@@ -387,22 +387,24 @@ static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, in
     return prop;
 }
 
-static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const DecodeOptions &opts)
+void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
+    int32_t wantDensity, Size &dstSize)
 {
-    const Size wantSize = opts.desiredSize;
-    int32_t wantDensity = opts.fitDensity;
-    Size dstSize = opts.desiredSize;
-    bool AiProcessCheck = true;
+    if (IsSizeVailed(wantSize)) {
+        CopySize(wantSize, dstSize);
+    } else {
+        CopySize(srcSize, dstSize);
+    }
+    if (IsDensityChange(srcDensity, wantDensity)) {
+        dstSize.width = GetScalePropByDensity(dstSize.width, srcDensity, wantDensity);
+        dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
+    }
+}
 
-
-#ifdef AI_ENABLE
-     if ((resolutionQuality == HIGH) || (resolutionQuality == SUPER)) {
-         AiProcessCheck = true;
-     } else {
-         AiProcessCheck = false;
-     }
-#endif
-    if (IsSizeVailed(wantSize) && (AiProcessCheck == true)) {
+void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
+    int32_t wantDensity, Size &dstSize, int32_t resolutionQuality)
+{
+    if (IsSizeVailed(wantSize) && ((resolutionQuality == HIGH) || (resolutionQuality == SUPER))) {
         CopySize(wantSize, dstSize);
     } else {
         CopySize(srcSize, dstSize);
@@ -572,7 +574,7 @@ static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint64_t count, DecodeCo
 #endif
 }
 
-uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, ImagePlugin::PlImageInfo &plInfo)
+uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 {
     #ifdef AI_ENABLE
     bool isAisr = false;
@@ -592,14 +594,34 @@ uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, ImagePlu
         dstInfo.width = context.outInfo.size.width;
         dstInfo.height = context.outInfo.size.height;
         sptr<SurfaceBuffer> output = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
-
         process(input, output);
     }
 
     return 0;
     #endif
-#if 0
-    ContextToAddrInfos(context, addrInfos);
+}
+
+
+uint64_t ImageSource::DecodeImageToPixelData(ImageInfo &info, ImagePlugin::PlImageInfo &plInfo, DecodeContext &context)
+{
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
+    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
+    context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
+
+    context.info.pixelFormat = plInfo.pixelFormat;
+    errorCode = mainDecoder_->Decode(index, context);
+    if (context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
+    }
+    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
+    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
+    guard.unlock();
+    return 0;
+}
+
+void UpdateImageInfo(ImagePlugin::PlImageInfo &plInfo, DecodeContext &context)
+{
     if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
         // hardware decode success, update plInfo.size
         IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
@@ -612,12 +634,20 @@ uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, ImagePlu
         plInfo.yuvDataInfo = context.yuvInfo;
         plInfo.size = context.yuvInfo.imageSize;
     }
+}
 
+unique_ptr<PixelMap> ImageSource::CreateFinalPixelData(ImagePlugin::PlImageInfo & plInfo, DecodeContext &context)
+{
+    PixelMapAddrInfos addrInfos;
+    ContextToAddrInfos(context, addrInfos);
     auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, errorCode);
     if (pixelMap == nullptr) {
         return nullptr;
     }
-#endif
+    if (!context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
+    }
+    return pixelMap;
 }
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
@@ -634,10 +664,6 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
         return nullptr;
     }
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts);
-#if 0
 #ifdef AI_ENABLE
     TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
         opts_.desiredSize, opts_.resolutionQuality);
@@ -645,51 +671,23 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
         opts_.desiredSize);
 #endif
-#endif
     ImagePlugin::PlImageInfo plInfo;
     errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
         return nullptr;
     }
-    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    DecodeContext context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
-    context.info.pixelFormat = plInfo.pixelFormat;
-    errorCode = mainDecoder_->Decode(index, context);
-    if (context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
-    }
-    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
-    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
-    guard.unlock();
+
+    DecodeContext context;
+    DecodeImageToPixelData(info, plInfo, context);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         return nullptr;
     }
-
-    AIProcess(context.outInfo.size, context, 0);
-    if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
-        // hardware decode success, update plInfo.size
-        IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
-            "(%{public}u, %{public}u)", plInfo.size.width, plInfo.size.height, context.outInfo.size.width,
-            context.outInfo.size.height);
-        plInfo.size = context.outInfo.size;
-    }
-    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
-        context.yuvInfo.imageSize.width != 0) {
-        plInfo.yuvDataInfo = context.yuvInfo;
-        plInfo.size = context.yuvInfo.imageSize;
-    }
-    PixelMapAddrInfos addrInfos;
-    ContextToAddrInfos(context, addrInfos);
-    auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, errorCode);
-    if (pixelMap == nullptr) {
-        return nullptr;
-    }
-    if (!context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
-    }
+    AIProcess(context.outInfo.size, context);
+    UpdateImageInfo(plInfo, context);
+    auto pixelMap = CreateFinalPixelData(plInfo, context);
     IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
         "imageSize: (%{public}d, %{public}d), cost %{public}lu us", static_cast<unsigned long>(imageId_),
         opts.desiredSize.width, opts.desiredSize.height, info.size.width, info.size.height,
