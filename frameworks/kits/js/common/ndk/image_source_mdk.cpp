@@ -201,21 +201,6 @@ int32_t OH_ImageSource_GetDelayTime(const ImageSourceNative* native,
 }
 
 MIDK_EXPORT
-int32_t OH_ImageSource_GetDisposalTypeList(const ImageSourceNative* native,
-    size_t* size, int32_t* list)
-{
-    if (native == nullptr || native->napi == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
-    }
-    ImageSourceArgs args;
-    args.napi = native->napi;
-    args.outSize = size;
-    args.outList = list;
-    auto ret = ImageSourceNativeCall(CTX_FUNC_IMAGE_SOURCE_GET_DISPOSAL_TYPE, &args);
-    return ret;
-}
-
-MIDK_EXPORT
 int32_t OH_ImageSource_GetFrameCount(const ImageSourceNative* native, uint32_t *res)
 {
     if (native == nullptr || native->napi == nullptr) {

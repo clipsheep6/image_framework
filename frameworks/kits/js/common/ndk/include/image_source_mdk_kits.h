@@ -52,8 +52,6 @@ struct ImageSourceArgs {
     int32_t inInt32;
     napi_value *outVal;
     uint32_t* outUint32;
-    size_t* outSize;
-    int32_t* outList;
 };
 
 enum {
@@ -68,7 +66,6 @@ enum {
     CTX_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP,
     CTX_FUNC_IMAGE_SOURCE_CREATE_PIXELMAP_LIST,
     CTX_FUNC_IMAGE_SOURCE_GET_DELAY_TIME,
-    CTX_FUNC_IMAGE_SOURCE_GET_DISPOSAL_TYPE,
     CTX_FUNC_IMAGE_SOURCE_GET_FRAME_COUNT,
     CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_INFO,
     CTX_FUNC_IMAGE_SOURCE_GET_IMAGE_PROPERTY,
