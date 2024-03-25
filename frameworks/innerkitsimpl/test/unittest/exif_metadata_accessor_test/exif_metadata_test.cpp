@@ -700,7 +700,7 @@ std::string MODIFYDATA[][3] = {
     {"MaxApertureValue", "5/2", "2.50 EV (f/2.4)"},
     {"BodySerialNumber", "exoch", "exoch"},
     {"CameraOwnerName", "c.uec", "c.uec"},
-    {"CompositeImage", "2" , "2"},
+    {"CompositeImage", "2", "2"},
     {"Gamma", "5/2", "2.5"},
     {"OffsetTime", "2024:01:25", "2024:01:25"},
 };
