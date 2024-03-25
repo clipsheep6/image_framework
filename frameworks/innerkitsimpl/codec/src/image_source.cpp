@@ -2328,21 +2328,10 @@ unique_ptr<vector<int32_t>> ImageSource::GetDisposalType(uint32_t &errorCode)
     auto disposalTypes = std::make_unique<vector<int32_t>>();
     const string IMAGE_DISPOSAL_TYPE = "DisposalType";
     for (uint32_t index = 0; index < frameCount; index++) {
-        string disposalTypeStr;
-        errorCode = mainDecoder_->GetImagePropertyString(index, IMAGE_DISPOSAL_TYPE, disposalTypeStr);
+        int disposalType = 0;
+        errorCode = mainDecoder_->GetImagePropertyInt(index, IMAGE_DISPOSAL_TYPE, disposalType);
         if (errorCode != SUCCESS) {
             IMAGE_LOGE("[ImageSource]GetDisposalType get delay time issue. index=%{public}u", index);
-            return nullptr;
-        }
-        if (!IsNumericStr(disposalTypeStr)) {
-            IMAGE_LOGE("[ImageSource]GetDisposalType not a numeric string. disposalTypeStr=%{public}s",
-                disposalTypeStr.c_str());
-            return nullptr;
-        }
-        int disposalType = 0;
-        if (!StrToInt(disposalTypeStr, disposalType)) {
-            IMAGE_LOGE("[ImageSource]GetDisposalType to int fail. disposalTypeStr=%{public}s",
-                disposalTypeStr.c_str());
             return nullptr;
         }
         disposalTypes->push_back(disposalType);
