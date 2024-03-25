@@ -182,7 +182,8 @@ const std::set<std::string> READ_WRITE_KEYS = {
     "CameraOwnerName",
     "CompositeImage",
     "Gamma",
-    "OffsetTime"};
+    "OffsetTime"
+};
 
 const std::set<std::string> READ_ONLY_KEYS = {
     "HwMnoteCaptureMode",      "HwMnotePhysicalAperture",
@@ -198,7 +199,8 @@ const std::set<std::string> READ_ONLY_KEYS = {
     "HwMnoteBurstNumber",      "HwMnoteFaceVersion",
     "HwMnoteFaceConf",         "HwMnoteFaceSmileScore",
     "HwMnoteFaceRect",         "HwMnoteFaceLeyeCenter",
-    "HwMnoteFaceReyeCenter",   "HwMnoteFaceMouthCenter"};
+    "HwMnoteFaceReyeCenter",   "HwMnoteFaceMouthCenter"
+};
 
 // Orientation, tag 0x0112
 constexpr TagDetails exifOrientation[] = {
