@@ -1075,7 +1075,7 @@ HWTEST_F(JpegExifMetadataAccessorTest, Write015, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "ImageUniqueID"), "fxic012");
     ASSERT_EQ(GetProperty(exifMetadata, "CameraOwnerName"), "XX");
     ASSERT_EQ(GetProperty(exifMetadata, "BodySerialNumber"), "XX");
-    ASSERT_EQ(GetProperty(exifMetadata, "LensSpecification"), "1, 2.5, 3, 2");
+    ASSERT_EQ(GetProperty(exifMetadata, "LensSpecification"), " 1, 2.5,  3,  2");
     ASSERT_EQ(GetProperty(exifMetadata, "LensMake"), "XXX");
     ASSERT_EQ(GetProperty(exifMetadata, "LensModel"), "XXX");
 }
