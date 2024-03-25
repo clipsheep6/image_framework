@@ -182,7 +182,8 @@ const std::set<std::string> READ_WRITE_KEYS = {
     "CameraOwnerName",
     "CompositeImage",
     "Gamma",
-    "OffsetTime"
+    "OffsetTime",
+    "MakerNote"
 };
 
 const std::set<std::string> READ_ONLY_KEYS = {
@@ -578,8 +579,8 @@ const auto FOUR_RATIONAL_WITH_BLANK_REGEX =
     R"(^[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*\s[0-9]+/[1-9][0-9]*$)";
 const auto FOUR_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 const auto FOUR_DECIMAL_WITH_COMMA_REGEX = "(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?,(\\d+)(\\.\\d+)?";
-const auto SIX_DECIMAL_WITH_BLANK_REGEX = "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)"
-                                                             "(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
+const auto SIX_DECIMAL_WITH_BLANK_REGEX = 
+    "(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?\\s(\\d+)(\\.\\d+)?";
 const auto DATETIME_REGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$)";
 const auto DATE_REGEX = R"(^[0-9]{4}:[0-9]{2}:[0-9]{2}$)";
 

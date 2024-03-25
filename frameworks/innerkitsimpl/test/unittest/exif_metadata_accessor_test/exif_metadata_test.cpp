@@ -676,7 +676,7 @@ std::string MODIFYDATA[][3] = {
     {"LensSpecification", "3/4 5/2 3/2 1/2", "0.8, 2.5, 1.5, 0.5"},
     {"JPEGInterchangeFormat", "1456", "1456"},
     {"JPEGInterchangeFormatLength", "1456", "1456"},
-    {"SubjectArea", "12", "12"},
+    {"SubjectArea", "12", "(x,y) = (12,0)"},
     {"DNGVersion", "2 2 3 1", "2, 2, 3, 1"},
     {"SubfileType", "2", "2"},
     {"NewSubfileType", "3", "3"},
@@ -703,6 +703,7 @@ std::string MODIFYDATA[][3] = {
     {"CompositeImage", "2", "2"},
     {"Gamma", "5/2", "2.5"},
     {"OffsetTime", "2024:01:25", "2024:01:25"},
+    {"MakerNote", "xxxxx", "5 bytes undefined data"},
 };
 
 HWTEST_F(ExifMetadataTest, SetValueBatch003, TestSize.Level3)
