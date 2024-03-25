@@ -47,7 +47,7 @@ public:
     sptr<Surface> receiverProducerSurface_ = nullptr;
     std::mutex imageReceiverMutex_;
     std::shared_ptr<SurfaceBufferAvaliableListener> surfaceBufferAvaliableListener_ = nullptr;
-    ImageReceiver() {}
+    ImageReceiver() {isAccessTypeRequested_ = false;}
     ~ImageReceiver();
     static inline int32_t pipeFd[2] = {};
     static inline std::string OPTION_FORMAT = "image/jpeg";
@@ -81,6 +81,7 @@ public:
     std::shared_ptr<NativeImage> LastNativeImage();
 private:
     std::shared_ptr<IBufferProcessor> bufferProcessor_;
+    bool isAccessTypeRequested_;
 };
 class ImageReceiverSurfaceListener : public IBufferConsumerListener {
 public:

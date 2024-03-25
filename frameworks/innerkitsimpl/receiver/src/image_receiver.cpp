@@ -21,6 +21,9 @@
 #include "image_utils.h"
 #include "image_receiver_buffer_processor.h"
 #include "image_receiver_manager.h"
+#include "v1_1/buffer_handle_meta_key_type.h"
+
+using namespace OHOS::HDI::Display::Graphic::Common::V1_1;
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -41,6 +44,7 @@ ImageReceiver::~ImageReceiver()
     iraContext_ = nullptr;
     surfaceBufferAvaliableListener_ = nullptr;
     bufferProcessor_ = nullptr;
+    isAccessTypeRequested_ = false;
 }
 
 enum class Mode {
@@ -322,6 +326,14 @@ std::shared_ptr<NativeImage> ImageReceiver::NextNativeImage()
     if (surfaceBuffer == nullptr) {
         return nullptr;
     }
+    if (isAccessTypeRequested_) {
+        isAccessTypeRequested_ = true;
+        std::vector<uint8_t> values;
+        surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+        if (values.size() == 1) {
+            IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE %{public}d", values[0]);
+        }
+    }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }
 
@@ -334,6 +346,14 @@ std::shared_ptr<NativeImage> ImageReceiver::LastNativeImage()
     auto surfaceBuffer = ReadLastImage(timestamp);
     if (surfaceBuffer == nullptr) {
         return nullptr;
+    }
+    if (isAccessTypeRequested_) {
+        isAccessTypeRequested_ = true;
+        std::vector<uint8_t> values;
+        surfaceBuffer->GetMetadata(ATTRKEY_REQUEST_ACCESS_TYPE, values);
+        if (values.size() == 1) {
+            IMAGE_LOGD("ImageReceiver::NextNativeImage Get ATTRKEY_REQUEST_ACCESS_TYPE %{public}d", values[0]);
+        }
     }
     return std::make_shared<NativeImage>(surfaceBuffer, GetBufferProcessor(), timestamp);
 }
