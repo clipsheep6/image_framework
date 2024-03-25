@@ -201,6 +201,7 @@
         <preparer>
             <option name="push" value="images/exif/test_jpeg_readmetadata001.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/exif/test_jpeg_readmetadata003.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/exif/test_jpeg_readmetadata004.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/exif/test_jpeg_readexifblob002.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/exif/test_jpeg_readexifblob003.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/exif/test_jpeg_writemetadata001.jpg -> /data/local/tmp/image" src="res"/>

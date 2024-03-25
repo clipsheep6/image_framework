@@ -20,7 +20,6 @@
 #include "exif_metadata.h"
 #include "image_log.h"
 
-
 using namespace OHOS::Media;
 using namespace testing::ext;
 

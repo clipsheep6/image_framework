@@ -30,6 +30,7 @@ namespace Multimedia {
 namespace {
     static const std::string IMAGE_INPUT1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata001.jpg";
     static const std::string IMAGE_INPUT2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata003.jpg";
+    static const std::string IMAGE_INPUT3_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readmetadata004.jpg";
     static const std::string IMAGE_ERROR1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob002.jpg";
     static const std::string IMAGE_ERROR2_JPEG_PATH = "/data/local/tmp/image/test_jpeg_readexifblob003.jpg";
     static const std::string IMAGE_INPUT_WRITE1_JPEG_PATH = "/data/local/tmp/image/test_jpeg_writemetadata001.jpg";
@@ -320,6 +321,51 @@ HWTEST_F(JpegExifMetadataAccessorTest, Read005, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "WhiteBalance"), "Auto white balance");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalLengthIn35mmFilm"), "27");
     ASSERT_EQ(GetProperty(exifMetadata, "JPEGProc"), "");
+}
+
+/**
+ * @tc.name: Read006
+ * @tc.desc: test Read
+ * @tc.type: FUNC
+ */
+HWTEST_F(JpegExifMetadataAccessorTest, Read006, TestSize.Level3)
+{
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT3_JPEG_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
+    JpegExifMetadataAccessor imageAccessor(stream);
+    uint32_t result = imageAccessor.Read();
+    ASSERT_EQ(result, 0);
+    std::shared_ptr<ExifMetadata> exifMetadata = imageAccessor.Get();
+    ASSERT_NE(exifMetadata, nullptr);
+
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteBurstNumber"), "2");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteCaptureMode"), "1");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceConf"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceCount"), "2");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceLeyeCenter"), "1 2 3 4");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceMouthCenter"), "1 2 3 4 5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFacePointer"), "122");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceRect"), "1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceReyeCenter"), "5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceSmileScore"), "1 2 3 4 5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceVersion"), "1");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFocusMode"), "7");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFrontCamera"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePhysicalAperture"), "6");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePitchAngle"), "5");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteRollAngle"), "4");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBeachConf"), "6");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBlueSkyConf"), "4");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFlowersConf"), "9");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFoodConf"), "2");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneGreenPlantConf"), "5");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneNightConf"), "10");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteScenePointer"), "256");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSnowConf"), "7");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneStageConf"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSunsetConf"), "8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneTextConf"), "11");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneVersion"), "1");
 }
 
 /**
