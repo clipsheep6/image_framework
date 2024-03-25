@@ -233,11 +233,11 @@ HWTEST_F(PngExifMetadataAccessorTest, Read005, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata006
- * @tc.desc: test ReadMetadata
+ * @tc.name: Read006
+ * @tc.desc: test Read
  * @tc.type: FUNC
  */
-HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata006, TestSize.Level3)
+HWTEST_F(PngExifMetadataAccessorTest, Read006, TestSize.Level3)
 {
     std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_ITXT_NOCOMPRESS_PNG_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
@@ -286,11 +286,11 @@ HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata006, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata007
- * @tc.desc: test ReadMetadata
+ * @tc.name: Read007
+ * @tc.desc: test Read
  * @tc.type: FUNC
  */
-HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata007, TestSize.Level3)
+HWTEST_F(PngExifMetadataAccessorTest, Read007, TestSize.Level3)
 {
     std::shared_ptr<MetadataStream> stream =
         std::make_shared<FileMetadataStream>(IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH);
@@ -332,11 +332,11 @@ HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata007, TestSize.Level3)
 }
 
 /**
- * @tc.name: ReadMetadata008
- * @tc.desc: test ReadMetadata
+ * @tc.name: Read008
+ * @tc.desc: test Read
  * @tc.type: FUNC
  */
-HWTEST_F(PngExifMetadataAccessorTest, ReadMetadata008, TestSize.Level3)
+HWTEST_F(PngExifMetadataAccessorTest, Read008, TestSize.Level3)
 {
     std::shared_ptr<MetadataStream> stream =
         std::make_shared<FileMetadataStream>(IMAGE_INPUT_ITXT_WITHCOMPRESS_PNG_PATH);
