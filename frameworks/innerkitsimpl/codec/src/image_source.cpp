@@ -19,6 +19,7 @@
 #include <charconv>
 #include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <vector>
 #include <dlfcn.h>
 #include "buffer_source_stream.h"
@@ -1029,6 +1030,10 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<MetadataAccessor> meta
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
     const std::string &path)
 {
+    if (!std::filesystem::exists(path)) {
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+
     std::unique_lock<std::mutex> guard(decodingMutex_);
 
     auto metadataAccessor = MetadataAccessorFactory::Create(path);
@@ -1038,6 +1043,10 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
     const int fd)
 {
+    if (fd <= STDERR_FILENO) {
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+
     std::unique_lock<std::mutex> guard(decodingMutex_);
 
     auto metadataAccessor = MetadataAccessorFactory::Create(fd);
