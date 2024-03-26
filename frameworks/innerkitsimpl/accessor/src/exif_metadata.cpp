@@ -88,7 +88,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     if (exifData_ == nullptr) {
         IMAGE_LOGE("Exif data is null for key: %{public}s", key.c_str());
         value = "";
-        return ERR_MEDIA_NO_EXIF_DATA;
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     if (key.size() > KEY_SIZE && key.substr(0, KEY_SIZE) == "Hw") {
         ExifMnoteData *md = exif_data_get_mnote_data(exifData_);
@@ -96,13 +96,13 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
             IMAGE_LOGE("Exif data returned null for key: %{public}s", key.c_str());
             exif_data_unref(exifData_);
             value = "";
-            return ERR_MEDIA_NO_EXIF_DATA;
+            return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
 
         MnoteHuaweiEntryCount *ec = nullptr;
         mnote_huawei_get_entry_count((ExifMnoteDataHuawei *)md, &ec);
         if (ec == nullptr) {
-            return ERR_MEDIA_NO_EXIF_DATA;
+            return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
         for (unsigned int i = 0; i < ec->size; i++) {
             MnoteHuaweiEntry *entry = ec->entries[i];
@@ -118,7 +118,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
         if (entry == nullptr) {
             IMAGE_LOGE("Exif data entry returned null for key: %{public}s, tag: %{public}d", key.c_str(), tag);
             value = "";
-            return ERR_MEDIA_NO_EXIF_DATA;
+            return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
         IMAGE_LOGD("Using exif_entry_get_value for key: %{public}s, tag: %{public}d", key.c_str(), entry->tag);
         exif_entry_get_value(entry, tagValueChar, sizeof(tagValueChar));
