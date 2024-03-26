@@ -1076,7 +1076,11 @@ uint32_t ImageSource::CreatExifMetadataByImageSource()
         return ERR_IMAGE_SOURCE_DATA;
     }
 
-    metadataAccessor->Read();
+    uint32_t ret = metadataAccessor->Read();
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
     if (metadataAccessor->Get() == nullptr) {
         if (!metadataAccessor->Create()) {
             return ERR_IMAGE_SOURCE_DATA;
