@@ -91,6 +91,8 @@ private:
     static napi_value GetImageInfoSync(napi_env env, napi_callback_info info);
     static napi_value GetBytesNumberPerRow(napi_env env, napi_callback_info info);
     static napi_value GetPixelBytesNumber(napi_env env, napi_callback_info info);
+    static napi_value GetAllocRowBytes(napi_env env, napi_callback_info info);
+    static napi_value GetAllocByteCount(napi_env env, napi_callback_info info);
     static napi_value getPixelBytesCount(napi_env env, napi_callback_info info);
     static napi_value IsSupportAlpha(napi_env env, napi_callback_info info);
     static napi_value SetAlphaAble(napi_env env, napi_callback_info info);

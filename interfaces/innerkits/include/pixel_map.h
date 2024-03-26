@@ -119,6 +119,8 @@ public:
     NATIVEEXPORT virtual bool GetARGB32Color(int32_t x, int32_t y, uint32_t &color);
     NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
                                     CustomFreePixelMap func);
+    NATIVEEXPORT virtual int32_t GetAllocRowStride();
+    NATIVEEXPORT virtual int32_t GetPixelAllocByteCount();
     NATIVEEXPORT virtual int32_t GetPixelBytes();
     NATIVEEXPORT virtual int32_t GetRowBytes();
     NATIVEEXPORT virtual int32_t GetByteCount();
