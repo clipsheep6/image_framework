@@ -540,12 +540,8 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
-static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint64_t count, DecodeContext &context, Size &sizeInfo)
+static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
-    IMAGE_LOGE("Unsupport dma mem alloc");
-    return {};
-#else
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
     BufferRequestConfig requestConfig = {
         .width = sizeInfo.width,
@@ -574,7 +570,6 @@ static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint64_t count, DecodeCo
     context.allocatorType = AllocatorType::DMA_ALLOC;
     context.freeFunc = nullptr;
     return sb;
-#endif
 }
 
 #ifdef AI_ENABLE
@@ -609,7 +604,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
        isHdr = true;
     }
     sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-    uint64_t byteCount = context.pixelsBuffer.bufferSize;
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
     Size dstInfo;
     dstInfo.width = context.outInfo.size.width;
     dstInfo.height = context.outInfo.size.height;
@@ -621,16 +616,16 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         }
         sptr<SurfaceBuffer> output2 = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
         return AiHdrProcess(output, output2);
-    } else if (isHdr) {     
+    } else if (isHdr) {
        return AiHdrProcess(input, output);
     } else if (isAisr){
-       return AiSrProcess(input, output2);
+       return AiSrProcess(input, output);
     }
     return SUCCESS;
 }
 #endif
 
-uint64_t DecodeImageToPixelData(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+uint32_t DecodeImageDataToPixelMap(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         DecodeContext &context, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
@@ -665,7 +660,7 @@ void UpdateImageInfo(ImagePlugin::PlImageInfo &plInfo, DecodeContext &context)
     }
 }
 
-unique_ptr<PixelMap> ImageSource::CreateFinalPixelData(ImagePlugin::PlImageInfo & plInfo, DecodeContext &context,
+unique_ptr<PixelMap> ImageSource::CreateFinalPixelMap(ImagePlugin::PlImageInfo &plInfo, DecodeContext &context,
         uint32_t &errorCode)
 {
     PixelMapAddrInfos addrInfos;
@@ -709,7 +704,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     }
 
     DecodeContext context;
-    DecodeImageToPixelData(index, info, plInfo, context);
+    DecodeImageDataToPixelMap(index, info, plInfo, context);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
@@ -722,7 +717,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     }
 #endif
     UpdateImageInfo(plInfo, context);
-    auto pixelMap = CreateFinalPixelData(plInfo, context);
+    auto pixelMap = CreateFinalPixelMap(plInfo, context);
     IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
         "imageSize: (%{public}d, %{public}d), cost %{public}lu us", static_cast<unsigned long>(imageId_),
         opts.desiredSize.width, opts.desiredSize.height, info.size.width, info.size.height,

@@ -269,8 +269,9 @@ private:
         int32_t wantDensity, Size &dstSize);
     void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
         int32_t wantDensity, Size &dstSize, int32_t resolutionQuality);
-    uint64_t AIProcess(Size imageSize, ImagePlugin::DecodeContext &context);
-
+#ifdef AI_ENABLE
+    uint32_t AIProcess(Size imageSize, ImagePlugin::DecodeContext &context);
+#endif
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
