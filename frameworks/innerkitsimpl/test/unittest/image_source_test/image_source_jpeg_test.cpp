@@ -1160,7 +1160,7 @@ HWTEST_F(ImageSourceJpegTest, GetImagePropertyStringTest001, TestSize.Level3)
     std::string value = "";
     std::string key = "Aaaab";
     uint32_t res = imageSource->GetImagePropertyString(index, key, value);
-    ASSERT_EQ(res, ERR_MEDIA_NO_EXIF_DATA);
+    ASSERT_EQ(res, ERR_IMAGE_DECODE_EXIF_UNSUPPORT);
     GTEST_LOG_(INFO) << "ImageSourceJpegTest: GetImagePropertyStringTest001 end";
 }
 
