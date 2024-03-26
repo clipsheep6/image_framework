@@ -134,6 +134,14 @@ enum class FinalOutputStep : int32_t {
     DENSITY_CHANGE = 4
 };
 
+enum class resolutionQuality : int32_t {
+    NONE = 0,
+    LOW = 1,
+    MEDIUM = 2,
+    HIGH = 3,
+    SUPER = 4,
+};
+
 struct Position {
     int32_t x = 0;
     int32_t y = 0;
@@ -210,7 +218,7 @@ struct DecodeOptions {
     bool preferDma = false;
 
     uint32_t decodingDynamicRange = 0;
-    uint32_t resolutionQuality = resolutionQuality::LOW;
+    resolutionQuality resolutionQuality = resolutionQuality::LOW;
 };
 
 enum class ScaleMode : int32_t {
@@ -233,15 +241,6 @@ enum class AntiAliasingOption : int32_t {
     LANCZOS = 8, // SWS_LANCZOS
     SPLINE = 9, // SWS_SPLINE
 };
-
-enum class resolutionQuality : int32_t {
-    NONE = 0,
-    LOW = 1,
-    MEDIUM = 2,
-    HIGH = 3,
-    SUPER = 4,
-};
-
 
 } // namespace Media
 } // namespace OHOS

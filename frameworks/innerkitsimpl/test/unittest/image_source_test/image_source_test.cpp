@@ -2024,48 +2024,6 @@ HWTEST_F(ImageSourceTest, End2EndTest008, TestSize.Level3)
 }
 
 /**
- * @tc.name: End2EndTest009
- * @tc.desc: test CreateImageSource and CreatePixelMap of jpg resource and process image quality
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceTest, End2EndTest009, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest009 start";
-    uint32_t errorCode = 0;
-    SourceOptions opts;
-    std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(imageSource.get(), nullptr);
-
-    int32_t jpegWidth = 472;
-    int32_t jpegHeight = 226;
-
-    DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
-    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
-
-    int32_t desiredWidth = 400;
-    int32_t desiredHeight = 200;
-
-    decodeOpts.desiredSize.width = desiredWidth;
-    decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.decodingDynamicRange = IMAGE_DYNAMIC_RANGE_HDR;
-    decodeOpts.resolutionQuality = SUPER;
-
-    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
-    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
-
-    GTEST_LOG_(INFO) << "ImageSourceTest: End2EndTest009 end";
-}
-
-/**
  * @tc.name: UpdateData002
  * @tc.desc: test UpdateData
  * @tc.type: FUNC
@@ -2192,5 +2150,204 @@ HWTEST_F(ImageSourceTest, GetImagePropertyString003, TestSize.Level3)
     ASSERT_NE(ret, SUCCESS);
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImagePropertyString003 end";
 }
+
+/**
+ * @tc.name: ImageQualityTest001
+ * @tc.desc: test decode jpg image to pixel map data ,and change image quality by AISR.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, ImageQualityTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest001 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t jpegWidth = 472;
+    int32_t jpegHeight = 226;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
+    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = jpegWidth + 400; // enable AISR by desired size
+    int32_t desiredHeight = jpegHeight + 400;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest001 end";
+}
+
+/**
+ * @tc.name: ImageQualityTest002
+ * @tc.desc: test decode jpg image to pixel map data ,and change image quality by AIHDR.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, ImageQualityTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest002 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t jpegWidth = 472;
+    int32_t jpegHeight = 226;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
+    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
+
+    decodeOpts.desiredSize.width = jpegWidth;
+    decodeOpts.desiredSize.height = jpegHeight;
+    decodeOpts.decodingDynamicRange = IMAGE_DYNAMIC_RANGE_HDR; // enable AISR by decodingDynamicRange
+
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest002 end";
+}
+
+
+/**
+ * @tc.name: ImageQualityTest003
+ * @tc.desc: test decode jpg image to pixel map data ,and change image quality by AISR/AIHDR both.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, ImageQualityTest003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest003 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t jpegWidth = 472;
+    int32_t jpegHeight = 226;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
+    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
+
+    int32_t desiredWidth = jpegWidth + 400;
+    int32_t desiredHeight = jpegHeight + 200;
+
+    decodeOpts.desiredSize.width = desiredWidth; // enable AISR by desired size
+    decodeOpts.desiredSize.height = desiredHeight;
+    decodeOpts.decodingDynamicRange = IMAGE_DYNAMIC_RANGE_HDR; // enable AISR by decodingDynamicRange
+
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest003 end";
+}
+
+/**
+ * @tc.name: ImageQualityTest004
+ * @tc.desc: test decode jpg image to pixel map data ,and set resolutionQuality to SUPER.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, ImageQualityTest004, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest004 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t jpegWidth = 472;
+    int32_t jpegHeight = 226;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
+    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
+
+    decodeOpts.desiredSize.width = jpegWidth;
+    decodeOpts.desiredSize.height = jpegHeight;
+    decodeOpts.decodingDynamicRange = IMAGE_DYNAMIC_RANGE_HDR;
+    decodeOpts.resolutionQuality = SUPER;
+
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest004 end";
+}
+
+/**
+ * @tc.name: ImageQualityTest005
+ * @tc.desc: test decode jpg image to pixel map data ,and set resolutionQuality to HIGH.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, ImageQualityTest005, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest005 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource("/data/local/tmp/image/test.jpg", opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    int32_t jpegWidth = 472;
+    int32_t jpegHeight = 226;
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(jpegWidth, pixelMap->GetWidth());
+    ASSERT_EQ(jpegHeight, pixelMap->GetHeight());
+
+    decodeOpts.desiredSize.width = jpegWidth;
+    decodeOpts.desiredSize.height = jpegHeight;
+    decodeOpts.decodingDynamicRange = IMAGE_DYNAMIC_RANGE_HDR;
+    decodeOpts.resolutionQuality = HIGH;
+
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
+    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: ImageQualityTest005 end";
+}
+
 } // namespace Multimedia
 } // namespace OHOS

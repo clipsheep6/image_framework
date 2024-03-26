@@ -24,6 +24,7 @@
 #include <optional>
 #include <set>
 
+#include "image/abs_image_decoder.h"
 #include "decode_listener.h"
 #include "image_type.h"
 #include "incremental_pixel_map.h"
@@ -268,6 +269,7 @@ private:
         int32_t wantDensity, Size &dstSize);
     void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
         int32_t wantDensity, Size &dstSize, int32_t resolutionQuality);
+    uint64_t AIProcess(Size imageSize, ImagePlugin::DecodeContext &context);
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";

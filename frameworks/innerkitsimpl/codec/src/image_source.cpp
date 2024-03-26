@@ -404,7 +404,8 @@ void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Siz
 void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
     int32_t wantDensity, Size &dstSize, int32_t resolutionQuality)
 {
-    if (IsSizeVailed(wantSize) && ((resolutionQuality == HIGH) || (resolutionQuality == SUPER))) {
+    if (IsSizeVailed(wantSize) && ((resolutionQuality == resolutionQuality::HIGH) ||
+                                    (resolutionQuality == resolutionQuality::SUPER))) {
         CopySize(wantSize, dstSize);
     } else {
         CopySize(srcSize, dstSize);
@@ -545,8 +546,8 @@ static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint64_t count, DecodeCo
 #else
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
     BufferRequestConfig requestConfig = {
-        .width = sizeInfo.width(),
-        .height = sizeInfo.height(),
+        .width = sizeInfo.width,
+        .height = sizeInfo.height,
         .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
         .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
@@ -585,16 +586,33 @@ uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
     if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR) {
        isHdr = true;
     }
-    if (isAisr || isHdr) {
+    if (isAisr && isHdr) {
         sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-        //sptr<SurfaceBuffer> output = mainDecoder_->CreateSurfaceBufferByContext(context, context.pixelsBuffer.bufferSize, dstInfo);
 
         uint64_t byteCount = context.pixelsBuffer.bufferSize;
         Size dstInfo;
         dstInfo.width = context.outInfo.size.width;
         dstInfo.height = context.outInfo.size.height;
         sptr<SurfaceBuffer> output = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
-        process(input, output);
+        AiSrProcess(input, output);
+
+        output->SetMetadata(key,value);
+        sptr<SurfaceBuffer> output2 = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
+        HdrProcess(output, output2);
+    } else if (isHdr) {
+        sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
+        input->SetMetadata(key,value);
+        input->SetMetadata(key,value);
+        HdrProcess(input, output);
+    } else if (isAisr){
+        sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
+
+        uint64_t byteCount = context.pixelsBuffer.bufferSize;
+        Size dstInfo;
+        dstInfo.width = context.outInfo.size.width;
+        dstInfo.height = context.outInfo.size.height;
+        sptr<SurfaceBuffer> output = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
+        AiSrProcess(input, output);
     }
 
     return 0;
@@ -602,7 +620,8 @@ uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 }
 
 
-uint64_t ImageSource::DecodeImageToPixelData(ImageInfo &info, ImagePlugin::PlImageInfo &plInfo, DecodeContext &context)
+uint64_t DecodeImageToPixelData(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+        DecodeContext &context, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
     NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
@@ -636,7 +655,8 @@ void UpdateImageInfo(ImagePlugin::PlImageInfo &plInfo, DecodeContext &context)
     }
 }
 
-unique_ptr<PixelMap> ImageSource::CreateFinalPixelData(ImagePlugin::PlImageInfo & plInfo, DecodeContext &context)
+unique_ptr<PixelMap> ImageSource::CreateFinalPixelData(ImagePlugin::PlImageInfo & plInfo, DecodeContext &context,
+        uint32_t &errorCode)
 {
     PixelMapAddrInfos addrInfos;
     ContextToAddrInfos(context, addrInfos);
@@ -679,13 +699,13 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     }
 
     DecodeContext context;
-    DecodeImageToPixelData(info, plInfo, context);
+    DecodeImageToPixelData(index, info, plInfo, context);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         return nullptr;
     }
-    AIProcess(context.outInfo.size, context);
+    AIProcess(<Size>(context.outInfo.size), context);
     UpdateImageInfo(plInfo, context);
     auto pixelMap = CreateFinalPixelData(plInfo, context);
     IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
