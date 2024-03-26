@@ -58,6 +58,8 @@
 #undef LOG_TAG
 #define LOG_TAG "ImageSource"
 
+#define AI_ENABLE
+
 namespace OHOS {
 namespace Media {
 using namespace std;
@@ -575,9 +577,19 @@ static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint64_t count, DecodeCo
 #endif
 }
 
-uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
+#ifdef AI_ENABLE
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output) {
+    input->SetMetadata(key,value);
+    return Hdr::Process(input, output);
+}
+
+uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output) {
+    Sr::SetParam();
+    return Sr::Process(input, output);
+}
+
+uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 {
-    #ifdef AI_ENABLE
     bool isAisr = false;
     bool isHdr = false;
     if (imageSize != opts_.desiredSize) {
@@ -586,39 +598,27 @@ uint64_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
     if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR) {
        isHdr = true;
     }
+    sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
+    uint64_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+    sptr<SurfaceBuffer> output = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
     if (isAisr && isHdr) {
-        sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-
-        uint64_t byteCount = context.pixelsBuffer.bufferSize;
-        Size dstInfo;
-        dstInfo.width = context.outInfo.size.width;
-        dstInfo.height = context.outInfo.size.height;
-        sptr<SurfaceBuffer> output = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
-        AiSrProcess(input, output);
-
-        output->SetMetadata(key,value);
+        auto res = AiSrProcess(input, output);
+        if (res != SUCCESS) {
+            return res;
+        }
         sptr<SurfaceBuffer> output2 = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
-        HdrProcess(output, output2);
-    } else if (isHdr) {
-        sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-        input->SetMetadata(key,value);
-        input->SetMetadata(key,value);
-        HdrProcess(input, output);
+        return AiHdrProcess(output, output2);
+    } else if (isHdr) {     
+       return AiHdrProcess(input, output);
     } else if (isAisr){
-        sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-
-        uint64_t byteCount = context.pixelsBuffer.bufferSize;
-        Size dstInfo;
-        dstInfo.width = context.outInfo.size.width;
-        dstInfo.height = context.outInfo.size.height;
-        sptr<SurfaceBuffer> output = CreateSurfaceBufferByContext(byteCount, context, dstInfo);
-        AiSrProcess(input, output);
+       return AiSrProcess(input, output2);
     }
-
-    return 0;
-    #endif
+    return SUCCESS;
 }
-
+#endif
 
 uint64_t DecodeImageToPixelData(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         DecodeContext &context, uint32_t &errorCode)
@@ -705,7 +705,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         return nullptr;
     }
-    AIProcess(<Size>(context.outInfo.size), context);
+#ifdef AI_ENABLE
+    auto res = AIProcess(<Size>(context.outInfo.size), context);
+    if (res != SUCCESS) {
+        IMAGE_LOGE("[ImageSource] AIProcess fail, ret:%{public}u.", res);
+    }
+#endif
     UpdateImageInfo(plInfo, context);
     auto pixelMap = CreateFinalPixelData(plInfo, context);
     IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
