@@ -43,6 +43,6 @@ public:
 };
 
 
-} // namespace MultimediaPlugin
+} // namespace Media
 } // namespace OHOS
 #endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_TIFF_PARSER_H
