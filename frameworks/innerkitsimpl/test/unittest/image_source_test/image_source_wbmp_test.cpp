@@ -376,14 +376,14 @@ HWTEST_F(ImageSourceWbmpTest, WbmpGetEncodedFormat001, TestSize.Level3)
     ASSERT_EQ(pixelMap.get(), nullptr);
 
     /**
-     * @tc.steps: step3. get imagesource encodedformat.
-     * @tc.expected: step3. get imagesource encodedformat success.
+     * @tc.steps: step3. get imageinfo encodedformat from imagesource.
+     * @tc.expected: step3. get imageinfo encodedformat success.
      */
-    std::string imageSourceFormat;
-    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
-    ASSERT_EQ(errorCode, SUCCESS);
-    EXPECT_EQ(imageSourceFormat.empty(), false);
-    GTEST_LOG_(INFO) << "ImageSourceWbmpTest: WbmpGetEncodedFormat001 imageSourceFormat " << imageSourceFormat;
+    ImageInfo imageinfo1;
+    uint32_t ret1 = imageSource->GetImageInfo(imageinfo1);
+    ASSERT_EQ(ret1, SUCCESS);
+    EXPECT_EQ(imageinfo1.encodedFormat.empty(), false);
+    GTEST_LOG_(INFO) << "ImageSourceWbmpTest: WbmpGetEncodedFormat001 imageinfo1: " << imageinfo1.encodedFormat;
 }
 
 /**
@@ -399,8 +399,8 @@ HWTEST_F(ImageSourceWbmpTest, WbmpGetEncodedFormat002, TestSize.Level3)
      */
     uint32_t errorCode = 0;
     SourceOptions opts;
-    std::string IMAGE_ENCODEDFORMAR = "image/vnd.wap.wbmp";
-    opts.formatHint = IMAGE_ENCODEDFORMAR;
+    std::string IMAGE_ENCODEDFORMAT = "image/vnd.wap.wbmp";
+    opts.formatHint = IMAGE_ENCODEDFORMAT;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_WBMP_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
@@ -414,22 +414,22 @@ HWTEST_F(ImageSourceWbmpTest, WbmpGetEncodedFormat002, TestSize.Level3)
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
     /**
-     * @tc.steps: step3. get imagesource encodedformat.
-     * @tc.expected: step3. get imagesource encodedformat success.
+     * @tc.steps: step3. get imageinfo encodedformat from imagesource.
+     * @tc.expected: step3. get imageinfo encodedformat success.
      */
-    std::string imageSourceFormat;
-    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
-    ASSERT_EQ(errorCode, SUCCESS);
-    EXPECT_EQ(imageSourceFormat.empty(), false);
-    GTEST_LOG_(INFO) << "ImageSourceWbmpTest: WbmpGetEncodedFormat002 imageSourceFormat" << imageSourceFormat;
+    ImageInfo imageinfo1;
+    uint32_t ret1 = imageSource->GetImageInfo(imageinfo1);
+    ASSERT_EQ(ret1, SUCCESS);
+    EXPECT_EQ(imageinfo1.encodedFormat.empty(), false);
+    GTEST_LOG_(INFO) << "ImageSourceWbmpTest: WbmpGetEncodedFormat002 imageinfo1: " << imageinfo1.encodedFormat;
     /**
-     * @tc.steps: step3. get pixelmap encodedformat.
-     * @tc.expected: step3. get pixelmap encodedformat success.
+     * @tc.steps: step4. get imageinfo encodedformat pixelmap.
+     * @tc.expected: step4. get imageinfo encodedformat success.
      */
-    std::string pixelMapFormat;
-    pixelMap->GetEncodedFormat(pixelMapFormat);
-    EXPECT_EQ(pixelMapFormat.empty(), false);
-    GTEST_LOG_(INFO) << "ImageSourceWbmpTest: WbmpGetEncodedFormat002 pixelMapFormat: " << pixelMapFormat;
+    ImageInfo imageinfo2;
+    pixelMap->GetImageInfo(imageinfo2);
+    EXPECT_EQ(imageinfo2.encodedFormat.empty(), false);
+    GTEST_LOG_(INFO) << "ImageSourceWbmpTest: WbmpGetEncodedFormat002 imageinfo2: " << imageinfo2.encodedFormat;
 }
 } // namespace Multimedia
 } // namespace OHOS

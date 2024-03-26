@@ -1388,9 +1388,9 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap044, TestSize.Level3)
     info.pixelFormat = PixelFormat::ALPHA_8;
     info.colorSpace = ColorSpace::SRGB;
     pixelMap.SetImageInfo(info);
-    std::string format;
-    pixelMap.GetEncodedFormat(format);
-    EXPECT_EQ(format.empty(), true);
+    ImageInfo info1;
+    pixelMap.GetImageInfo(info1);
+    EXPECT_EQ(info1.encodedFormat.empty(), true);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap044 getEncodedFormat end";
 }
 

@@ -1025,11 +1025,6 @@ void PixelMap::SetTransformData(TransformData transformData)
     transformData_ = transformData;
 }
 
-void PixelMap::GetEncodedFormat(std::string &format)
-{
-    format = imageInfo_.encodedFormat;
-}
-
 int32_t PixelMap::GetBaseDensity()
 {
     return imageInfo_.baseDensity;

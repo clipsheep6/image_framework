@@ -2346,18 +2346,6 @@ uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
     return frameCount;
 }
 
-uint32_t ImageSource::GetEncodedFormat(string &format)
-{
-    uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
-    string encodedFormat = GetSourceInfo(errorCode).encodedFormat;
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]GetEncodedFormat get source info error.");
-        return errorCode;
-    }
-    format = encodedFormat;
-    return SUCCESS;
-}
-
 void ImageSource::DumpInputData(const std::string& fileSuffix)
 {
     if (!ImageSystemProperties::GetDumpImageEnabled()) {

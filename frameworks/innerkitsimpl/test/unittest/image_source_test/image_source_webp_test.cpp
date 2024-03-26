@@ -672,22 +672,22 @@ HWTEST_F(ImageSourceWebpTest, WebpGetEncodedFormat001, TestSize.Level3)
     ASSERT_NE(pixelMap.get(), nullptr);
 
     /**
-     * @tc.steps: step3. get imagesource encodedformat.
-     * @tc.expected: step3. get imagesource encodedformat success.
+     * @tc.steps: step3. get imageinfo encodedformat from imagesource.
+     * @tc.expected: step3. get imageinfo encodedformat success.
      */
-    std::string imageSourceFormat;
-    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAT);
-    GTEST_LOG_(INFO) << "ImageSourceWebpTest: WebpGetEncodedFormat001 imageSourceFormat" << imageSourceFormat;
+    ImageInfo imageinfo1;
+    uint32_t ret1 = imageSource->GetImageInfo(imageinfo1);
+    ASSERT_EQ(ret1, SUCCESS);
+    EXPECT_EQ(imageinfo1.encodedFormat.empty(), false);
+    GTEST_LOG_(INFO) << "ImageSourceWebpTest: WebpGetEncodedFormat001 imageinfo1: " << imageinfo1.encodedFormat;
     /**
-     * @tc.steps: step3. get pixelmap encodedformat.
-     * @tc.expected: step3. get pixelmap encodedformat success.
+     * @tc.steps: step4. get imageinfo encodedformat pixelmap.
+     * @tc.expected: step4. get imageinfo encodedformat success.
      */
-    std::string pixelMapFormat;
-    pixelMap->GetEncodedFormat(pixelMapFormat);
-    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAT);
-    GTEST_LOG_(INFO) << "ImageSourceWebpTest: WebpGetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;
+    ImageInfo imageinfo2;
+    pixelMap->GetImageInfo(imageinfo2);
+    EXPECT_EQ(imageinfo2.encodedFormat.empty(), false);
+    GTEST_LOG_(INFO) << "ImageSourceWebpTest: WebpGetEncodedFormat001 imageinfo2: " << imageinfo2.encodedFormat;
 }
 } // namespace Multimedia
 } // namespace OHOS

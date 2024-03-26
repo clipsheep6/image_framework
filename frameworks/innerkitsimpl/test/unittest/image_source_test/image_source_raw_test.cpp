@@ -521,55 +521,8 @@ HWTEST_F(ImageSourceRawTest, RawGetEncodedFormat001, TestSize.Level3)
      */
     uint32_t errorCode = 0;
     SourceOptions opts;
-    std::string IMAGE_ENCODEDFORMAR = "image/x-raw";
-    opts.formatHint = IMAGE_ENCODEDFORMAR;
-    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(imageSource.get(), nullptr);
-    /**
-     * @tc.steps: step2. decode image source to pixel map by default decode options(RGBA_8888).
-     * @tc.expected: step2. decode image source to pixel map success.
-     */
-    DecodeOptions decodeOpts;
-    decodeOpts.desiredPixelFormat = PixelFormat::RGBA_8888;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap, nullptr);
-    ASSERT_NE(pixelMap.get(), nullptr);
-    /**
-     * @tc.steps: step3. get imagesource encodedformat.
-     * @tc.expected: step3. get imagesource encodedformat success.
-     */
-    std::string imageSourceFormat;
-    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
-    ASSERT_EQ(errorCode, SUCCESS);
-    EXPECT_EQ(imageSourceFormat.empty(), false);
-    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat001 imageSourceFormat" << imageSourceFormat;
-    /**
-     * @tc.steps: step3. get pixelmap encodedformat.
-     * @tc.expected: step3. get pixelmap encodedformat success.
-     */
-    std::string pixelMapFormat;
-    pixelMap->GetEncodedFormat(pixelMapFormat);
-    EXPECT_EQ(pixelMapFormat.empty(), false);
-    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;
-}
-
-/**
- * @tc.name: RawGetEncodedFormat002
- * @tc.desc: Decode raw image from file source stream(default:RGBA_8888)
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceRawTest, RawGetEncodedFormat002, TestSize.Level3)
-{
-   /**
-     * @tc.steps: step1. create image source by correct raw file path and format hit.
-     * @tc.expected: step1. create image source success.
-     */
-    uint32_t errorCode = 0;
-    SourceOptions opts;
-    std::string IMAGE_ENCODEDFORMAR = "image/x-raw";
-    opts.formatHint = IMAGE_ENCODEDFORMAR;
+    std::string IMAGE_ENCODEDFORMAT = "image/x-raw";
+    opts.formatHint = IMAGE_ENCODEDFORMAT;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
@@ -591,7 +544,7 @@ HWTEST_F(ImageSourceRawTest, RawGetEncodedFormat002, TestSize.Level3)
     uint32_t ret1 = imageSource->GetImageInfo(imageinfo1);
     ASSERT_EQ(ret1, SUCCESS);
     EXPECT_EQ(imageinfo1.encodedFormat.empty(), false);
-    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat002 imageinfo1: " << imageinfo1.encodedFormat;
+    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat001 imageinfo1: " << imageinfo1.encodedFormat;
     /**
      * @tc.steps: step4. get imageInfo encodedformat from pixelmap.
      * @tc.expected: step4. get imageInfo encodedformat success.
@@ -599,7 +552,7 @@ HWTEST_F(ImageSourceRawTest, RawGetEncodedFormat002, TestSize.Level3)
     ImageInfo imageinfo2;
     pixelMap->GetImageInfo(imageinfo2);
     EXPECT_EQ(imageinfo2.encodedFormat.empty(), false);
-    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat002 imageinfo2: " << imageinfo2.encodedFormat;
+    GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat001 imageinfo2: " << imageinfo2.encodedFormat;
 }
 } // namespace Multimedia
 } // namespace OHOS

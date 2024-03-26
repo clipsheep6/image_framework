@@ -298,49 +298,12 @@ HWTEST_F(ImageSourceGifExTest, GetFrameCount003, TestSize.Level3)
 
 /**
  * @tc.name: GetEncodedFormat001
- * @tc.desc: test GetEncodedFormat
+ * @tc.desc: test GetImageInfo encodedFormat
  * @tc.type: FUNC
  */
 HWTEST_F(ImageSourceGifExTest, GetEncodedFormat001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetEncodedFormat001 start";
-    const std::string testName = TEST_FILE_SINGLE_FRAME_GIF;
-
-    uint32_t errorCode = 0;
-    const SourceOptions opts;
-    const std::string inputName = INPUT_PATH + testName;
-    std::string IMAGE_ENCODEDFORMAR = "image/gif";
-
-    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(inputName, opts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(imageSource.get(), nullptr);
-
-    DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-
-    std::string imageSourceFormat;
-    errorCode = imageSource->GetEncodedFormat(imageSourceFormat);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_EQ(imageSourceFormat, IMAGE_ENCODEDFORMAR);
-    GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetEncodedFormat001 imageSourceFormat " << imageSourceFormat;
-
-    std::string pixelMapFormat;
-    pixelMap->GetEncodedFormat(pixelMapFormat);
-    ASSERT_EQ(pixelMapFormat, IMAGE_ENCODEDFORMAR);
-    GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetEncodedFormat001 pixelMapFormat: " << pixelMapFormat;
-    GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetEncodedFormat001 end";
-}
-
-/**
- * @tc.name: GetEncodedFormat002
- * @tc.desc: test GetImageInfo.encodedFormat
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceGifExTest, GetEncodedFormat002, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetEncodedFormat002 start";
     const std::string testName = TEST_FILE_SINGLE_FRAME_GIF;
 
     uint32_t errorCode = 0;
@@ -367,7 +330,7 @@ HWTEST_F(ImageSourceGifExTest, GetEncodedFormat002, TestSize.Level3)
     pixelMap->GetImageInfo(imageInfo2);
     ASSERT_EQ(imageInfo2.encodedFormat, IMAGE_ENCODEDFORMAT);
     GTEST_LOG_(INFO) << "ImageSourceGifExTest: imageInfo2 encodedFormat " << imageInfo2.encodedFormat;
-    GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetEncodedFormat002 end";
+    GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetEncodedFormat001 end";
 }
 } // namespace Multimedia
 } // namespace OHOS
