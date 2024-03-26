@@ -294,7 +294,7 @@ int PngImageChunkUtils::DecompressText(const byte *sourceData, unsigned int sour
     }
     uLongf destDataLen = IMAGE_SEG_MAX_SIZE;
 
-    textOut.Alloc(destDataLen);
+    textOut.Resize(destDataLen);
     int result = uncompress(textOut.Data(), &destDataLen, sourceData, sourceDataLen);
     if (result != Z_OK) {
         IMAGE_LOGE("Decompression failed: job aborted");
@@ -412,7 +412,7 @@ DataBuf PngImageChunkUtils::ConvertRawTextToExifInfo(const DataBuf &rawText)
     }
 
     DataBuf exifInfo;
-    exifInfo.Alloc(exifInfoLength);
+    exifInfo.Resize(exifInfoLength);
     if (exifInfo.Size() != exifInfoLength) {
         IMAGE_LOGE("Unable to allocate memory for Exif information.");
         return {};

@@ -69,12 +69,6 @@ struct DataBuf {
     DataBuf(const byte *pData, size_t size);
 
     /* *
-     * Allocate memory for the buffer
-     * @param size The size of the memory to allocate
-     */
-    void Alloc(size_t size);
-
-    /* *
      * Resize the buffer
      * @param size The new size of the buffer
      */

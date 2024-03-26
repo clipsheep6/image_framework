@@ -60,11 +60,6 @@ DataBuf::DataBuf(const byte *pData, size_t size) : pData_(size)
     std::copy_n(pData, size, pData_.begin());
 }
 
-void DataBuf::Alloc(size_t size)
-{
-    pData_.resize(size);
-}
-
 void DataBuf::Resize(size_t size)
 {
     pData_.resize(size);
