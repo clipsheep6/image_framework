@@ -484,8 +484,7 @@ napi_value CreateModifyErrorArray(napi_env env, std::multimap<std::int32_t, std:
             ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
                 "The exif data format is not standard! exif key: " + it->second);
         } else if (it->first == ERR_MEDIA_VALUE_INVALID) {
-            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
-                "The exif value is invalid! exif key: " + it->second);
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first, it->second);
         } else {
             ImageNapiUtils::CreateErrorObj(env, errMsgVal, ERROR,
                 "There is generic napi failure! exif key: " + it->second);
@@ -1632,9 +1631,7 @@ static void ModifyImagePropertiesExecute(napi_env env, void *data)
         if (!CheckExifDataValue(recordIterator->first, recordIterator->second, context->errMsg)) {
             IMAGE_LOGE("There is invalid exif data parameter");
             status = ERR_MEDIA_VALUE_INVALID;
-            if (context->fdIndex != -1) {
-                context->errMsgArray.insert(std::make_pair(status, recordIterator->first));
-            }
+            context->errMsgArray.insert(std::make_pair(status, context->errMsg));
             continue;
         }
         if (!IsSameTextStr(context->pathName, "")) {
