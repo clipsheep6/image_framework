@@ -43,6 +43,7 @@ namespace OHOS {
 namespace Media {
 const auto KEY_SIZE = 2;
 const auto TAG_VALUE_SIZE = 1024;
+const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
 
 template <typename T> std::istream &OutputRational(std::istream &is, T &r)
 {
@@ -91,6 +92,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     if (key.size() > KEY_SIZE && key.substr(0, KEY_SIZE) == "Hw") {
+        value = DEFAULT_EXIF_VALUE;
         ExifMnoteData *md = exif_data_get_mnote_data(exifData_);
         if (!md) {
             IMAGE_LOGE("Exif data returned null for key: %{public}s", key.c_str());
