@@ -579,13 +579,23 @@ static sptr<SurfaceBuffer> CreateSurfaceBufferByContext(uint64_t count, DecodeCo
 
 #ifdef AI_ENABLE
 uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output) {
-    input->SetMetadata(key,value);
-    return Hdr::Process(input, output);
+    std::vector<uint8_t> values;
+    input->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
+    input->SetMetadata(ATTRKEY_COLORSPACE_INFO, values);
+    Parameter param;
+    param.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
+    auto csc = ColorSpaceConverter::Create();
+    csc->SetParameter(param);
+    return  csc->Process(input, output);
 }
 
 uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output) {
-    Sr::SetParam();
-    return Sr::Process(input, output);
+    QualityEnhancerParameter param;
+    param.features.QENH_FEATURE_AISR = 1;
+
+    QualityEnhancerImage *qei = nullptr;
+    qei->SetParameter(param);
+    return qei->Process(input, output);
 }
 
 uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
