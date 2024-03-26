@@ -66,6 +66,8 @@
             <option name="push" value="images/test.svg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_large.svg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test.ico -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/raw1.dng -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_raw_file.jpg -> /data/test" src="res"/>
         </preparer>
     </target>
     <target name="imagecolorspacetest">
