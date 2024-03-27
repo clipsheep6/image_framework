@@ -1527,6 +1527,7 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContext(napi_env env, napi
         context->keyStr = GetStringArgument(env, argValue[NUM_0]);
     } else if (ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_object) {
         context->keyStrArray = GetStringArrayArgument(env, argValue[NUM_0]);
+        if (context->keyStrArray.size() == 0) return nullptr;
         context->isBatch = true;
     } else {
         IMAGE_LOGE("arg 0 type mismatch");
@@ -1731,12 +1732,13 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env 
         context->keyStr = GetStringArgument(env, argValue[NUM_0]);
     } else if (ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_object) {
         context->kVStrArray = GetRecordArgument(env, argValue[NUM_0]);
+        if (context->kVStrArray.size() == 0) return nullptr;
         context->isBatch = true;
     } else {
         IMAGE_LOGE("arg 0 type mismatch");
         return nullptr;
     }
-    if (argCount == NUM_2) {
+    if (argCount == NUM_2 || argCount == NUM_3 || argCount == NUM_4) {
         if (ImageNapiUtils::getType(env, argValue[NUM_1]) == napi_string) {
             context->valueStr = GetStringArgument(env, argValue[NUM_1]);
         } else {
