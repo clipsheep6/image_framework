@@ -1707,8 +1707,7 @@ static void GetImagePropertiesExecute(napi_env env, void *data)
      context->status = context->kVStrArray.size() == context->errMsgArray.size() ? ERROR : SUCCESS;
 }
 
-static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env env,
-    napi_callback_info info)
+static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env env, napi_callback_info info)
 {
     int32_t refCount = 1;
     napi_status status;
@@ -1716,7 +1715,6 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env 
     napi_value argValue[NUM_4] = {0};
     size_t argCount = NUM_4;
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
-    IMAGE_LOGD("UnwrapContextForModify argCount is [%{public}zu]", argCount);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
     std::unique_ptr<ImageSourceAsyncContext> context = std::make_unique<ImageSourceAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&context->constructor_));
