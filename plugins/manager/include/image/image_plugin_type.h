@@ -97,6 +97,8 @@ enum class PlPixelFormat {
     ASTC_6X6 = 12,
     ASTC_8X8 = 13,
     RGBA_1010102 = 14,
+    YU12 = 15,
+    YV12 = 16,
 };
 
 enum class PlDynamicRange : int32_t {

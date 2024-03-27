@@ -36,6 +36,7 @@
 #include "pubdef.h"
 #include "exif_metadata.h"
 #include "image_mdk_common.h"
+#include "pixel_yuv.h"
 
 #ifndef _WIN32
 #include "securec.h"
@@ -2196,21 +2197,30 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 
 PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
 {
-    PixelMap *pixelMap = new PixelMap();
-    if (pixelMap == nullptr) {
+    PixelMap *pixelMap = nullptr;
+    PixelMap *tmpPixelMap = new PixelMap();
+    if (tmpPixelMap == nullptr) {
         PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "pixelmap create failed");
         return nullptr;
     }
 
     ImageInfo imgInfo;
     PixelMemInfo pixelMemInfo;
-    if (!pixelMap->ReadPropertiesFromParcel(parcel, imgInfo, pixelMemInfo.allocatorType,
+    if (!tmpPixelMap->ReadPropertiesFromParcel(parcel, imgInfo, pixelMemInfo.allocatorType,
         pixelMemInfo.bufferSize, error)) {
         IMAGE_LOGE("read properties fail");
-        delete pixelMap;
+        delete tmpPixelMap;
         return nullptr;
     }
     pixelMemInfo.isAstc = pixelMap->IsAstc();
+    delete tmpPixelMap;
+    if (imgInfo.pixelFormat == PixelFormat::NV21 || imgInfo.pixelFormat == PixelFormat::NV12 ||
+        imgInfo.pixelFormat == PixelFormat::YU12 || imgInfo.pixelFormat == PixelFormat::YV12) {
+        pixelMap = new PixelYuv();
+    } else {
+        pixelMap = new PixelMap();
+    }
+
     if (!ReadMemInfoFromParcel(parcel, pixelMemInfo, error)) {
         IMAGE_LOGE("read memInfo fail");
         delete pixelMap;

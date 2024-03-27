@@ -29,6 +29,8 @@ public:
                                   const ImageInfo &srcInfo, void *dstPixels, uint32_t dstRowBytes,
                                   const ImageInfo &dstInfo);
     static bool EraseBitmap(const void *srcPixels, uint32_t srcRowBytes, const ImageInfo &srcInfo, uint32_t color);
+    static bool YUV420ToRGB888(const uint8_t *in, uint8_t *out, int32_t width, int32_t height,
+        PixelFormat pixelFormat);
 };
 } // namespace Media
 } // namespace OHOS

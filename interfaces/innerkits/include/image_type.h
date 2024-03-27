@@ -116,6 +116,8 @@ enum class PixelFormat : int32_t {
     ASTC_6x6 = 12,
     ASTC_8x8 = 13,
     RGBA_1010102 = 14,
+    YU12 = 15,  // Each pixel is sorted on 3/2 bytes.
+    YV12 = 16,
 };
 
 enum class DecodeDynamicRange : int32_t {
@@ -155,6 +157,12 @@ enum class ResolutionQuality : int32_t {
     LOW = 1,
     MEDIUM,
     HIGH
+};
+
+struct ColorYuv420 {
+    uint8_t colorY = 0;
+    uint8_t colorU = 0;
+    uint8_t colorV = 0;
 };
 
 struct Position {

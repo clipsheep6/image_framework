@@ -36,6 +36,7 @@
 #include "string_ex.h"
 #include "image_data_statistics.h"
 #include "image_dfx.h"
+#include "pixel_convert_adapter.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #include "v1_0/buffer_handle_meta_key_type.h"
@@ -77,6 +78,9 @@ static const std::map<SkEncodedImageFormat, std::string> FORMAT_NAME = {
     {SkEncodedImageFormat::kHEIF, IMAGE_HEIF_FORMAT},
 };
 
+static const uint8_t NUM_3 = 3;
+static const uint8_t NUM_4 = 4;
+
 ExtEncoder::ExtEncoder()
 {
 }
@@ -102,7 +106,13 @@ struct TmpBufferHolder {
     std::unique_ptr<uint8_t[]> buf = nullptr;
 };
 
-static SkImageInfo ToSkInfo(PixelMap *pixelMap)
+struct ImageData {
+    uint8_t *dst;
+    uint8_t *pixels;
+    ImageInfo info;
+};
+
+static SkImageInfo ToSkInfo(Media::PixelMap *pixelMap)
 {
     ImageInfo info;
     pixelMap->GetImageInfo(info);
@@ -128,6 +138,89 @@ static uint32_t RGBToRGBx(PixelMap *pixelMap, SkImageInfo &skInfo, TmpBufferHold
         holder.buf.get(), skInfo.computeMinByteSize(), skInfo.width()*skInfo.height(),
     };
     return ExtPixelConvert::RGBToRGBx(src, dst);
+}
+
+static bool IsYuvImage(PixelFormat format)
+{
+    if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
+        return true;
+    }
+    return false;
+}
+
+static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::PixelMap *pixelMap,
+    TmpBufferHolder &holder, SkEncodedImageFormat format)
+{
+    uint32_t res = SUCCESS;
+    uint32_t width  = image.info.size.width;
+    uint32_t height = image.info.size.height;
+    uint8_t *srcData = static_cast<uint8_t*>(pixelMap->GetWritablePixels());
+    if (IsYuvImage(image.info.pixelFormat)) {
+        if (!PixelConvertAdapter::YUV420ToRGB888(srcData, image.dst, width, height, image.info.pixelFormat)) {
+            IMAGE_LOGE("ExtEncoder::BuildSkBitmap Support YUV format RGB convert failed ");
+            return ERR_IMAGE_ENCODE_FAILED;
+        }
+        holder.buf = std::make_unique<uint8_t[]>(width * height * NUM_4);
+        SkAlphaType alphaType = ImageTypeConverter::ToSkAlphaType(AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN);
+        skInfo = SkImageInfo::Make(width, height, SkColorType::kRGBA_8888_SkColorType, alphaType, nullptr);
+        ExtPixels src = {
+            image.dst, width * height * NUM_3, width * height * NUM_3,
+        };
+        ExtPixels dst = {
+            holder.buf.get(), width * height * NUM_4, width * height * NUM_4,
+        };
+        res = ExtPixelConvert::RGBToRGBx(src, dst);
+        if (res != SUCCESS) {
+            IMAGE_LOGE("ExtEncoder::BuildSkBitmap Support YUV format RGB convert failed %{public}d", res);
+            return res;
+        }
+        image.pixels = holder.buf.get();
+    } else {
+        skInfo = ToSkInfo(pixelMap);
+        image.pixels = static_cast<uint8_t*>(pixelMap->GetWritablePixels());
+        if (format == SkEncodedImageFormat::kJPEG &&
+            skInfo.colorType() == SkColorType::kRGB_888x_SkColorType &&
+            pixelMap->GetCapacity() < skInfo.computeMinByteSize()) {
+            res = RGBToRGBx(pixelMap, skInfo, holder);
+            if (res != SUCCESS) {
+                IMAGE_LOGE("ExtEncoder::BuildSkBitmap RGB convert failed %{public}d", res);
+                return res;
+            }
+            image.pixels = holder.buf.get();
+            skInfo = skInfo.makeColorType(SkColorType::kRGBA_8888_SkColorType);
+        }
+    }
+    return SUCCESS;
+}
+
+static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
+    SkEncodedImageFormat format, TmpBufferHolder &holder)
+{
+    uint32_t res = SUCCESS;
+    SkImageInfo skInfo;
+    ImageData imageData;
+    pixelMap->GetImageInfo(imageData.info);
+    uint32_t width  = imageData.info.size.width;
+    uint32_t height = imageData.info.size.height;
+    std::unique_ptr<uint8_t[]> dstData = std::make_unique<uint8_t[]>(width * height * NUM_3);
+    imageData.dst = dstData.get();
+    if (pixelToSkInfo(imageData, skInfo, pixelMap, holder, format) != SUCCESS) {
+        IMAGE_LOGE("ExtEncoder::BuildSkBitmap pixel convert failed");
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+    uint64_t rowStride = skInfo.minRowBytes64();
+
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    if (pixelMap->GetAllocatorType() == Media::AllocatorType::DMA_ALLOC) {
+        SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
+        rowStride = sbBuffer->GetStride();
+    }
+#endif
+    if (!bitmap.installPixels(skInfo, imageData.pixels, rowStride)) {
+        IMAGE_LOGE("ExtEncoder::BuildSkBitmap to skbitmap failed");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    return res;
 }
 
 bool IsAstc(const std::string &format)

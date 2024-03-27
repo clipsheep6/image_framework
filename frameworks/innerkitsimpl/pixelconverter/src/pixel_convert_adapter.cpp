@@ -25,6 +25,7 @@
 #include "include/core/SkImageInfo.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkPixmap.h"
+#include "media_errors.h"
 #ifdef _WIN32
 #include <iomanip>
 #endif
@@ -44,6 +45,13 @@ static const uint8_t NUM_1 = 1;
 static const uint8_t NUM_2 = 2;
 static const uint8_t NUM_3 = 3;
 static const uint8_t NUM_4 = 4;
+
+constexpr int32_t INT_128 = 128;
+constexpr int32_t INT_255 = 255;
+const float YUV_TO_RGB888_PARAM_1 = 1.402;
+const float YUV_TO_RGB888_PARAM_2 = 0.344136;
+const float YUV_TO_RGB888_PARAM_3 = 0.714136;
+const float YUV_TO_RGB888_PARAM_4 = 1.772;
 
 static const map<PixelFormat, SkColorType> PIXEL_FORMAT_MAP = {
     { PixelFormat::UNKNOWN, SkColorType::kUnknown_SkColorType},
@@ -254,5 +262,109 @@ bool PixelConvertAdapter::EraseBitmap(const void *srcPixels, uint32_t srcRowByte
     canvas.drawPaint(paint);
     return true;
 }
+
+static uint8_t GetYuv420Y(uint32_t x, uint32_t y, int32_t width, const uint8_t *in)
+{
+    return *(in + y * width + x);
+}
+
+static uint8_t GetYuv420U(uint32_t x, uint32_t y, Size &size, PixelFormat format,
+    const uint8_t *in)
+{
+    int32_t width = size.width;
+    int32_t height = size.height;
+    switch (format) {
+        case PixelFormat::NV21:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1) + 1);
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1) + 1);
+        case PixelFormat::NV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1));
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1));
+        case PixelFormat::YU12:
+            if (width & 1) {
+                return *(in + y / NUM_2 + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        case PixelFormat::YV12:
+            if (width & 1) {
+                return *(in + height / NUM_2 + y / NUM_2 + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                            (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        default:
+            break;
+    }
+    return SUCCESS;
+}
+
+static uint8_t GetYuv420V(uint32_t x, uint32_t y, Size &size, PixelFormat format,
+    const uint8_t *in)
+{
+    int32_t width = size.width;
+    int32_t height = size.height;
+    switch (format) {
+        case PixelFormat::NV21:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1));
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1));
+        case PixelFormat::NV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1) + 1);
+            }
+            return *(in + width * height + (y / NUM_2) * width + (x & ~1) + 1);
+        case PixelFormat::YU12:
+            if (width & 1) {
+                return *(in + height / NUM_2 + y / NUM_2 + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                            (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (width / NUM_2) * (height / NUM_2) +
+                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            break;
+        case PixelFormat::YV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        default:
+            break;
+    }
+    return SUCCESS;
+}
+
+bool PixelConvertAdapter::YUV420ToRGB888(const uint8_t *in, uint8_t *out, int32_t width, int32_t height,
+    PixelFormat pixelFormat)
+{
+    if (!in || !out || width <= 0 || height == 0) {
+        return false;
+    }
+    Size size = {width, height};
+    for (int32_t i = 0; i < height; i++) {
+        for (int32_t j = 0; j < width; j++) {
+            uint8_t Y = GetYuv420Y(j, i, width, in);
+            uint8_t U = GetYuv420U(j, i, size, pixelFormat, in);
+            uint8_t V = GetYuv420V(j, i, size, pixelFormat, in);
+
+            int32_t colorR = Y + YUV_TO_RGB888_PARAM_1 * (V - INT_128);
+            int32_t colorG = Y - YUV_TO_RGB888_PARAM_2 * (U - INT_128) - YUV_TO_RGB888_PARAM_3 * (V - INT_128);
+            int32_t colorB = Y + YUV_TO_RGB888_PARAM_4 * (U - INT_128);
+
+            colorR = colorR > INT_255 ? INT_255 : (colorR < 0 ? 0 : colorR);
+            colorG = colorG > INT_255 ? INT_255 : (colorG < 0 ? 0 : colorG);
+            colorB = colorB > INT_255 ? INT_255 : (colorB < 0 ? 0 : colorB);
+
+            *out++ = colorB;
+            *out++ = colorG;
+            *out++ = colorR;
+        }
+    }
+    return true;
+}
+
 } // namespace Media
 } // namespace OHOS
