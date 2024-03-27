@@ -271,6 +271,12 @@ public:
         isAstc_ = isAstc;
     }
 
+    static int32_t GetRGBxPixelBytes(const PixelFormat format);
+    static int32_t GetRGBxRowDataSize(const ImageInfo& info);
+    static int32_t GetRGBxByteCount(const ImageInfo& info);
+    static int32_t GetYUVByteCount(const ImageInfo& info);
+    static int32_t GetAllByteCount(const ImageInfo& info);
+
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
     static constexpr uint8_t TLV_VARINT_MASK = 0x7F;
