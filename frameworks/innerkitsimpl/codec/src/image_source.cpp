@@ -754,7 +754,7 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
     }
 }
 
-unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo & plInfo,
+unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
     PixelMapAddrInfos &addrInfos, uint32_t &errorCode)
 {
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
@@ -1674,7 +1674,7 @@ uint32_t ImageSource::InitMainDecoder()
     return result;
 }
 
-AbsImageDecoder * ImageSource::CreateDecoder(uint32_t &errorCode)
+AbsImageDecoder *ImageSource::CreateDecoder(uint32_t &errorCode)
 {
     // in normal mode, we can get actual encoded format to the user
     // but we need transfer to skia codec for adaption, "image/x-skia"
@@ -2414,7 +2414,7 @@ unique_ptr<vector<unique_ptr<PixelMap>>> ImageSource::CreatePixelMapList(const D
     return pixelMaps;
 }
 
-unique_ptr<vector<int32_t >> ImageSource::GetDelayTime(uint32_t &errorCode)
+unique_ptr<vector<int32_t>> ImageSource::GetDelayTime(uint32_t &errorCode)
 {
     auto frameCount = GetFrameCount(errorCode);
     if (errorCode != SUCCESS) {
