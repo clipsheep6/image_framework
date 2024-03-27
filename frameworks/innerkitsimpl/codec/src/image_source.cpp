@@ -14,6 +14,9 @@
  */
 
 #include "image_source.h"
+#ifdef EXT_PIXEL
+#include "pixel_yuv_ext.h"
+#endif
 
 #include <algorithm>
 #include <charconv>
@@ -45,6 +48,7 @@
 #include "metadata_accessor_factory.h"
 #include "pixel_astc.h"
 #include "pixel_map.h"
+#include "pixel_yuv.h"
 #include "plugin_server.h"
 #include "post_proc.h"
 #include "securec.h"
@@ -802,6 +806,43 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
     }
 }
 
+static bool IsYuvFormat(PlPixelFormat format)
+{
+    return format == PlPixelFormat::NV21 || format == PlPixelFormat::NV12;
+}
+
+static void CopyYuvInfo(YUVDataInfo &yuvInfo, ImagePlugin::PlImageInfo &plInfo)
+{
+    yuvInfo.yWidth = plInfo.yuvDataInfo.yWidth;
+    yuvInfo.yHeight = plInfo.yuvDataInfo.yHeight;
+    yuvInfo.uvWidth = plInfo.yuvDataInfo.uvWidth;
+    yuvInfo.uvHeight = plInfo.yuvDataInfo.uvHeight;
+    yuvInfo.yStride = plInfo.yuvDataInfo.yStride;
+    yuvInfo.uStride = plInfo.yuvDataInfo.uStride;
+    yuvInfo.vStride = plInfo.yuvDataInfo.vStride;
+    yuvInfo.uvStride = plInfo.yuvDataInfo.uvStride;
+    yuvInfo.yOffset = plInfo.yuvDataInfo.yOffset;
+    yuvInfo.uOffset = plInfo.yuvDataInfo.uOffset;
+    yuvInfo.vOffset = plInfo.yuvDataInfo.vOffset;
+    yuvInfo.uvOffset = plInfo.yuvDataInfo.uvOffset;
+}
+
+static bool ResizePixelmap(std::unique_ptr<PixelMap>& pixelMap, uint64_t imageId, DecodeOptions &opts)
+{
+    ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId);
+    if (opts.desiredSize.height != pixelMap->GetHeight() ||
+        opts.desiredSize.width != pixelMap->GetWidth()) {
+        float xScale = static_cast<float>(opts.desiredSize.width) / pixelMap->GetWidth();
+        float yScale = static_cast<float>(opts.desiredSize.height) / pixelMap->GetHeight();
+        if (!pixelMap->resize(xScale, yScale)) {
+            return false;
+        }
+        // dump pixelMap after resize
+        ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId);
+    }
+    return true;
+}
+
 // add graphic colorspace object to pixelMap.
 static void SetPixelMapColorSpace(ImagePlugin::DecodeContext context, unique_ptr<PixelMap>& pixelMap,
     std::unique_ptr<ImagePlugin::AbsImageDecoder>& decoder)
@@ -824,7 +865,16 @@ static void SetPixelMapColorSpace(ImagePlugin::DecodeContext context, unique_ptr
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
     ImagePlugin::DecodeContext& context, uint32_t &errorCode)
 {
-    unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
+    unique_ptr<PixelMap> pixelMap;
+    if (IsYuvFormat(plInfo.pixelFormat)) {
+#ifdef EXT_PIXEL
+        pixelMap = make_unique<LibYuvPixelMap>();
+#else
+        pixelMap = make_unique<PixelYuv>();
+#endif
+    } else {
+        pixelMap = make_unique<PixelMap>();
+    }
     PixelMapAddrInfos addrInfos;
     ContextToAddrInfos(context, addrInfos);
     // add graphic colorspace object to pixelMap.
@@ -863,16 +913,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     } else if (opts_.rotateNewDegrees != INT_ZERO) {
         pixelMap->rotate(opts_.rotateNewDegrees);
     }
-    ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
-    if ((opts_.desiredSize.height != pixelMap->GetHeight() || opts_.desiredSize.width != pixelMap->GetWidth()) &&
-        (context.hdrType < ImageHdrType::HDR_ISO_DUAL) && !context.isAisr) {
-        float xScale = static_cast<float>(opts_.desiredSize.width) / pixelMap->GetWidth();
-        float yScale = static_cast<float>(opts_.desiredSize.height) / pixelMap->GetHeight();
-        if (!pixelMap->resize(xScale, yScale)) {
-            return nullptr;
-        }
-        // dump pixelMap after resize
-        ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
+    if (!(ResizePixelmap(pixelMap, imageId_, opts_))) {
+        IMAGE_LOGE("[ImageSource]Resize pixelmap fail.");
+        return nullptr;
     }
     pixelMap->SetEditable(saveEditable);
     return pixelMap;
@@ -2120,14 +2163,7 @@ uint32_t ImageSource::UpdatePixelMapInfo(const DecodeOptions &opts, ImagePlugin:
 
     if (info.pixelFormat == PixelFormat::NV12 || info.pixelFormat == PixelFormat::NV21) {
         YUVDataInfo yuvInfo;
-        yuvInfo.y_width = plInfo.yuvDataInfo.y_width;
-        yuvInfo.y_height = plInfo.yuvDataInfo.y_height;
-        yuvInfo.uv_width = plInfo.yuvDataInfo.uv_width;
-        yuvInfo.uv_height = plInfo.yuvDataInfo.uv_height;
-        yuvInfo.y_stride = plInfo.yuvDataInfo.y_stride;
-        yuvInfo.u_stride = plInfo.yuvDataInfo.u_stride;
-        yuvInfo.v_stride = plInfo.yuvDataInfo.v_stride;
-        yuvInfo.uv_stride = plInfo.yuvDataInfo.uv_stride;
+        CopyYuvInfo(yuvInfo, plInfo);
         pixelMap.SetImageYUVInfo(yuvInfo);
     }
 
