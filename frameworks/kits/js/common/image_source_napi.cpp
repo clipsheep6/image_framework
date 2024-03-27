@@ -1718,7 +1718,6 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env 
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
     IMAGE_LOGD("UnwrapContextForModify argCount is [%{public}zu]", argCount);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
-
     std::unique_ptr<ImageSourceAsyncContext> context = std::make_unique<ImageSourceAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&context->constructor_));
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, context->constructor_), nullptr, IMAGE_LOGE("fail to unwrap context"));
