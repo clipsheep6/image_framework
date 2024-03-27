@@ -158,6 +158,12 @@ const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
 
+static sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo);
+static uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output);
+static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output);
+static DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+        DecodeContext &context, uint32_t &errorCode);
+
 uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
 {
     IMAGE_LOGD("[ImageSource]get supported image type.");
@@ -540,125 +546,6 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
-static sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
-{
-    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
-    BufferRequestConfig requestConfig = {
-        .width = sizeInfo.width,
-        .height = sizeInfo.height,
-        .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
-        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
-        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
-        .timeout = 0,
-        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
-        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
-    };
-    GSError ret = sb->Alloc(requestConfig);
-    if (ret != GSERROR_OK) {
-        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
-        return {};
-    }
-    void* nativeBuffer = sb.GetRefPtr();
-    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
-    if (err != OHOS::GSERROR_OK) {
-        IMAGE_LOGE("NativeBufferReference failed");
-        return {};
-    }
-    context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
-    context.pixelsBuffer.bufferSize = count;
-    context.pixelsBuffer.context = nativeBuffer;
-    context.allocatorType = AllocatorType::DMA_ALLOC;
-    context.freeFunc = nullptr;
-    return sb;
-}
-
-#ifdef AI_ENABLE
-uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output) {
-    std::vector<uint8_t> values;
-    input->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
-    input->SetMetadata(ATTRKEY_COLORSPACE_INFO, values);
-    Parameter param;
-    param.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
-    auto csc = ColorSpaceConverter::Create();
-    csc->SetParameter(param);
-    return  csc->Process(input, output);
-}
-
-uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output) {
-    QualityEnhancerParameter param;
-    param.features.QENH_FEATURE_AISR = 1;
-
-    QualityEnhancerImage *qei = nullptr;
-    qei->SetParameter(param);
-    return qei->Process(input, output);
-}
-
-uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
-{
-    bool isAisr = false;
-    bool isHdr = false;
-    if (imageSize != opts_.desiredSize) {
-        isAisr = true;
-    }
-    if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR) {
-       isHdr = true;
-    }
-    sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-    uint32_t byteCount = context.pixelsBuffer.bufferSize;
-    Size dstInfo;
-    dstInfo.width = context.outInfo.size.width;
-    dstInfo.height = context.outInfo.size.height;
-    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
-    if (isAisr && isHdr) {
-        auto res = AiSrProcess(input, output);
-        if (res != SUCCESS) {
-            return res;
-        }
-        sptr<SurfaceBuffer> output2 = AllocBufferForContext(byteCount, context, dstInfo);
-        return AiHdrProcess(output, output2);
-    } else if (isHdr) {
-       return AiHdrProcess(input, output);
-    } else if (isAisr){
-       return AiSrProcess(input, output);
-    }
-    return SUCCESS;
-}
-#endif
-
-DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
-        DecodeContext &context, uint32_t &errorCode)
-{
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
-#ifdef AI_ENABLE
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize, opts_.resolutionQuality);
-#else
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize);
-#endif
-    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
-        return nullptr;
-    }
-    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    DecodeContext context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
-    context.info.pixelFormat = plInfo.pixelFormat;
-    errorCode = mainDecoder_->Decode(index, context);
-    if (context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
-    }
-    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
-    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
-    guard.unlock();
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        return nullptr;
-    }
-}
-
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     const DecodeOptions &opts, uint32_t &errorCode)
 {
@@ -674,7 +561,10 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     }
     ImagePlugin::PlImageInfo plInfo;
     DecodeContext context;
-    context = DecodeImageDataToContext(index, info, plInfo, context, ErrCode);
+    context = DecodeImageDataToContext(index, info, plInfo, context, errorCode);
+    if (context == NULL) {
+        return nullptr;
+    }
 #ifdef AI_ENABLE
     auto res = AIProcess(<Size>(context.outInfo.size), context);
     if (res != SUCCESS) {
@@ -688,6 +578,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
             context.outInfo.size.height);
         plInfo.size = context.outInfo.size;
     }
+
     if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
         context.yuvInfo.imageSize.width != 0) {
         plInfo.yuvDataInfo = context.yuvInfo;
@@ -2477,6 +2368,128 @@ size_t ImageSource::GetSourceSize() const
 bool ImageSource::IsSupportGenAstc()
 {
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
+}
+
+static sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
+{
+    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
+    BufferRequestConfig requestConfig = {
+        .width = sizeInfo.width,
+        .height = sizeInfo.height,
+        .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
+        .timeout = 0,
+        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
+        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
+    };
+    GSError ret = sb->Alloc(requestConfig);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
+        return {};
+    }
+    void* nativeBuffer = sb.GetRefPtr();
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("NativeBufferReference failed");
+        return {};
+    }
+    context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
+    context.pixelsBuffer.bufferSize = count;
+    context.pixelsBuffer.context = nativeBuffer;
+    context.allocatorType = AllocatorType::DMA_ALLOC;
+    context.freeFunc = nullptr;
+    return sb;
+}
+
+#ifdef AI_ENABLE
+static uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+{
+    QualityEnhancerParameter param;
+    param.features.QENH_FEATURE_AISR = 1;
+
+    QualityEnhancerImage *qei = nullptr;
+    qei->SetParameter(param);
+    return qei->Process(input, output);
+}
+
+static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+{
+    std::vector<uint8_t> values;
+    input->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
+    input->SetMetadata(ATTRKEY_COLORSPACE_INFO, values);
+    Parameter param;
+    param.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
+    auto csc = ColorSpaceConverter::Create();
+    csc->SetParameter(param);
+    return  csc->Process(input, output);
+}
+
+uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
+{
+    bool isAisr = false;
+    bool isHdr = false;
+    if (imageSize != opts_.desiredSize) {
+        isAisr = true;
+    }
+    if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR) {
+       isHdr = true;
+    }
+    sptr<SurfaceBuffer> input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
+    if (isAisr && isHdr) {
+        auto res = AiSrProcess(input, output);
+        if (res != SUCCESS) {
+            return res;
+        }
+        sptr<SurfaceBuffer> output2 = AllocBufferForContext(byteCount, context, dstInfo);
+        return AiHdrProcess(output, output2);
+    } else if (isHdr) {
+       return AiHdrProcess(input, output);
+    } else if (isAisr){
+       return AiSrProcess(input, output);
+    }
+    return SUCCESS;
+}
+#endif
+
+static DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+        DecodeContext &context, uint32_t &errorCode)
+{
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
+#ifdef AI_ENABLE
+    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
+        opts_.desiredSize, opts_.resolutionQuality);
+#else
+    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
+        opts_.desiredSize);
+#endif
+    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
+        return {};
+    }
+    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
+    DecodeContext context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
+    context.info.pixelFormat = plInfo.pixelFormat;
+    errorCode = mainDecoder_->Decode(index, context);
+    if (context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
+    }
+    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
+    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
+    guard.unlock();
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
+        return {};
+    }
+    return context;
 }
 } // namespace Media
 } // namespace OHOS
