@@ -24,6 +24,7 @@ if (use_clang_ios) {
       "//commonlibrary/c_utils/base/include",
       "//foundation/multimedia/media_utils_lite/interfaces/kits",
       "//foundation/communication/ipc/utils/include",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/include",
     ]
 
     sources = [
@@ -31,6 +32,7 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
+      "src/pixel_yuv_utils.cpp",
     ]
 
     defines = image_decode_ios_defines
@@ -55,6 +57,7 @@ if (use_clang_ios) {
       }
     }
     include_dirs = [
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/include",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
       "//foundation/multimedia/utils/include",
       "//foundation/multimedia/image_framework/plugins/manager/include",
@@ -71,6 +74,7 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
+      "src/pixel_yuv_utils.cpp",
     ]
 
     if (use_mingw_win) {
@@ -134,6 +138,7 @@ if (use_clang_ios) {
 
 ohos_static_library("image_utils_static") {
   include_dirs = [
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/plugins/manager/include",
@@ -146,6 +151,7 @@ ohos_static_library("image_utils_static") {
     "src/image_system_properties.cpp",
     "src/image_type_converter.cpp",
     "src/image_utils.cpp",
+    "src/pixel_yuv_utils.cpp",
   ]
 
   if (use_mingw_win) {

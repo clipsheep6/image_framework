@@ -162,6 +162,8 @@ ohos_shared_library("extplugin") {
     "include/jpeg_yuv_decoder",
     "${image_subsystem}/interfaces/innerkits/include",
     "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
+    "${image_subsystem}/frameworks/innerkitsimpl/pixelconverter/include",
+    "${graphic_subsystem}/interfaces/inner_api/surface",
     "${image_subsystem}/../../../drivers/peripheral/base/",
     "${image_subsystem}/../../../drivers/peripheral/display/interfaces/include/",
     "${image_subsystem}/../../../third_party/skia/",
@@ -198,6 +200,7 @@ ohos_shared_library("extplugin") {
     include_dirs += [ "${commonlibrary_subsystem}/base/include" ]
     deps = [
       ":exifhelper",
+      "${image_subsystem}//frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
