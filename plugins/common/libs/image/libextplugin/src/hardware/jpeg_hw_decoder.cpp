@@ -22,6 +22,7 @@
 
 #include "hardware/jpeg_marker_define.h"
 #include "hdf_base.h"
+#include "iservmgr_hdi.h"
 #include "media_errors.h"
 #include "src/codec/SkJpegUtility.h"
 #include "src/codec/SkJpegDecoderMgr.h"
@@ -30,6 +31,58 @@
 namespace OHOS::ImagePlugin {
 using namespace OHOS::HDI::Codec::Image::V1_0;
 using namespace OHOS::HDI::Display::Buffer::V1_0;
+using namespace OHOS::HDI::ServiceManager::V1_0;
+
+static std::mutex g_codecMtx;
+static sptr<ICodecImage> g_codecMgr;
+
+static std::mutex g_bufferMtx;
+static IDisplayBuffer* g_bufferMgr;
+
+class Listener : public ServStatListenerStub {
+public:
+    void OnReceive(const ServiceStatus &status) override
+    {
+        if (status.status != SERVIE_STATUS_STOP) {
+            return;
+        }
+        if (status.serviceName == "codec_image_service") {
+            JPEG_HW_LOGW("codec_image_service died");
+            std::lock_guard<std::mutex> lk(g_codecMtx);
+            g_codecMgr = nullptr;
+        } else if (status.serviceName == "allocator_service") {
+            JPEG_HW_LOGW("allocator_service died");
+            std::lock_guard<std::mutex> lk(g_bufferMtx);
+            g_bufferMgr = nullptr;
+        }
+    }
+};
+
+static sptr<ICodecImage> GetCodecManager()
+{
+    std::lock_guard<std::mutex> lk(g_codecMtx);
+    if (g_codecMgr) {
+        return g_codecMgr;
+    }
+    JPEG_HW_LOGI("need to get ICodecImage");
+    sptr<IServiceManager> serviceMng = IServiceManager::Get();
+    if (serviceMng) {
+        serviceMng->RegisterServiceStatusListener(new Listener(), DEVICE_CLASS_DEFAULT);
+    }
+    g_codecMgr = ICodecImage::Get();
+    return g_codecMgr;
+}
+
+static IDisplayBuffer* GetBufferMgr()
+{
+    std::lock_guard<std::mutex> lk(g_bufferMtx);
+    if (g_bufferMgr) {
+        return g_bufferMgr;
+    }
+    JPEG_HW_LOGI("need to get IDisplayBuffer");
+    g_bufferMgr = IDisplayBuffer::Get();
+    return g_bufferMgr;
+}
 
 JpegHardwareDecoder::LifeSpanTimer::LifeSpanTimer(std::string desc) : desc_(desc)
 {
@@ -53,7 +106,7 @@ int64_t JpegHardwareDecoder::LifeSpanTimer::GetCurrentTimeInUs()
 JpegHardwareDecoder::JpegHardwareDecoder()
 {
     inputBuffer_.fenceFd = -1;
-    hwDecoder_ = ICodecImage::Get();
+    hwDecoder_ = GetCodecManager();
     bufferMgr_ = GetBufferMgr();
 }
 
@@ -384,11 +437,5 @@ void JpegHardwareDecoder::RecycleAllocatedResource()
     if (ret != HDF_SUCCESS) {
         JPEG_HW_LOGE("failed to deinit decoder, err=%{public}d", ret);
     }
-}
-
-OHOS::HDI::Display::Buffer::V1_0::IDisplayBuffer* JpegHardwareDecoder::GetBufferMgr()
-{
-    static OHOS::HDI::Display::Buffer::V1_0::IDisplayBuffer* staticBufferMgr = IDisplayBuffer::Get();
-    return staticBufferMgr;
 }
 } // namespace OHOS::ImagePlugin
