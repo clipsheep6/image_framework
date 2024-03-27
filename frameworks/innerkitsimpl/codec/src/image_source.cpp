@@ -476,10 +476,10 @@ static void FreeContextBuffer(const Media::CustomFreePixelMap &func,
 static void ContextToAddrInfos(DecodeContext &context, PixelMapAddrInfos &addrInfos)
 {
     addrInfos.addr = static_cast<uint8_t*>(context.pixelsBuffer.buffer);
-    addrInfos.context = static_cast<uint8_t*>(context.pixelsBuffer.context);
-    addrInfos.size = context.pixelsBuffer.bufferSize;
-    addrInfos.type = context.allocatorType;
-    addrInfos.func = context.freeFunc;
+    addrInfos.context =static_cast<uint8_t*>(context.pixelsBuffer.context);
+    addrInfos.size =context.pixelsBuffer.bufferSize;
+    addrInfos.type =context.allocatorType;
+    addrInfos.func =context.freeFunc;
 }
 
 bool IsSupportFormat(const PixelFormat &format)
@@ -755,7 +755,7 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
 }
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo & plInfo,
-    PixelMapAddrInfos & addrInfos, uint32_t & errorCode)
+    PixelMapAddrInfos &addrInfos, uint32_t &errorCode)
 {
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
 #ifdef IMAGE_COLORSPACE_FLAG
@@ -803,8 +803,8 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
     if (opts_.desiredSize.height != pixelMap->GetHeight() ||
         opts_.desiredSize.width != pixelMap->GetWidth()) {
-        float xScale = static_cast<float>(opts_.desiredSize.width) / pixelMap->GetWidth();
-        float yScale = static_cast<float>(opts_.desiredSize.height) / pixelMap->GetHeight();
+        float xScale = static_cast<float>(opts_.desiredSize.width)/pixelMap->GetWidth();
+        float yScale = static_cast<float>(opts_.desiredSize.height)/pixelMap->GetHeight();
         if (!pixelMap->resize(xScale, yScale)) {
             return nullptr;
         }
@@ -1314,7 +1314,7 @@ ImageSource::FormatAgentMap ImageSource::InitClass()
     return tempAgentMap;
 }
 
-uint32_t ImageSource::CheckEncodedFormat(AbsImageFormatAgent & agent)
+uint32_t ImageSource::CheckEncodedFormat(AbsImageFormatAgent &agent)
 {
     uint32_t size = agent.GetHeaderSize();
     ImagePlugin::DataStreamBuffer outData;
@@ -1386,7 +1386,7 @@ AbsImageDecoder *DoCreateDecoder(std::string codecFormat,
     return decoder;
 }
 
-uint32_t ImageSource::GetFormatExtended(string & format)
+uint32_t ImageSource::GetFormatExtended(string &format)
 {
     if (mainDecoder_ != nullptr) {
         format = sourceInfo_.encodedFormat;
@@ -1674,7 +1674,7 @@ uint32_t ImageSource::InitMainDecoder()
     return result;
 }
 
-AbsImageDecoder * ImageSource::CreateDecoder(uint32_t & errorCode)
+AbsImageDecoder * ImageSource::CreateDecoder(uint32_t &errorCode)
 {
     // in normal mode, we can get actual encoded format to the user
     // but we need transfer to skia codec for adaption, "image/x-skia"
@@ -1695,7 +1695,7 @@ static void GetDefaultPixelFormat(const PixelFormat desired, PlPixelFormat& out,
             return;
         }
     }
-    out = (preference == MemoryUsagePreference::LOW_RAM) ? PlPixelFormat::RGB_565 : PlPixelFormat::RGBA_8888;
+    out = (preference == MemoryUsagePreference::LOW_RAM)?PlPixelFormat::RGB_565:PlPixelFormat::RGBA_8888;
 }
 
 uint32_t ImageSource::SetDecodeOptions(std::unique_ptr<AbsImageDecoder> &decoder,
@@ -1840,7 +1840,7 @@ ImageSource::ImageStatusMap::iterator ImageSource::GetValidImageStatus(uint32_t 
     return iter;
 }
 
-uint32_t ImageSource::AddIncrementalContext(PixelMap & pixelMap, IncrementalRecordMap::iterator & iterator)
+uint32_t ImageSource::AddIncrementalContext(PixelMap &pixelMap, IncrementalRecordMap::iterator &iterator)
 {
     uint32_t ret = SUCCESS;
     IncrementalDecodingContext context;
@@ -2135,7 +2135,7 @@ bool ImageSource::ConvertYUV420ToRGBA(uint8_t *data, uint32_t size,
     return true;
 }
 
-unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t & errorCode)
+unique_ptr<PixelMap> ImageSource::CreatePixelMapForYUV(uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]CreatePixelMapForYUV IN srcPixelFormat:%{public}d, srcSize:(%{public}d,"
         "%{public}d)", sourceOptions_.pixelFormat, sourceOptions_.size.width, sourceOptions_.size.height);
@@ -2335,7 +2335,7 @@ static bool ReadFileAndResoveAstc(size_t fileSize, size_t astcSize,
     return true;
 }
 
-unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t & errorCode)
+unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode)
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 {
     errorCode = ERROR;
@@ -2414,7 +2414,7 @@ unique_ptr<vector<unique_ptr<PixelMap>>> ImageSource::CreatePixelMapList(const D
     return pixelMaps;
 }
 
-unique_ptr<vector<int32_t >> ImageSource::GetDelayTime(uint32_t & errorCode)
+unique_ptr<vector<int32_t >> ImageSource::GetDelayTime(uint32_t &errorCode)
 {
     auto frameCount = GetFrameCount(errorCode);
     if (errorCode != SUCCESS) {
@@ -2449,7 +2449,7 @@ unique_ptr<vector<int32_t >> ImageSource::GetDelayTime(uint32_t & errorCode)
     return delayTimes;
 }
 
-uint32_t ImageSource::GetFrameCount(uint32_t & errorCode)
+uint32_t ImageSource::GetFrameCount(uint32_t &errorCode)
 {
     uint32_t frameCount = GetSourceInfo(errorCode).topLevelImageNum;
     if (errorCode != SUCCESS) {
