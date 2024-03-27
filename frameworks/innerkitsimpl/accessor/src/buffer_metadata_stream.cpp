@@ -150,7 +150,7 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
 
     // Determine the size of the tempBuffer
     size_t tempBufferSize = std::min<size_t>(estimatedSize, METADATA_STREAM_COPY_FROM_BUFFER_SIZE);
-    std::vector<uint8_t> tempBuffer(tempBufferSize);
+    std::vector<uint8_t> tempBuffer(tempBufferSize, 0);
 
     // Read data from the source MetadataStream and write it to the current buffer
     src.Seek(0, SeekPos::BEGIN);

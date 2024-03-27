@@ -82,17 +82,17 @@ void FileMetadataStream::Initialize(const std::string &filePath, int fileDescrip
 void HandleFileError(const std::string &operation, const std::string &filePath, int fileDescriptor, ssize_t result,
     ssize_t expectedSize)
 {
-    char buf[METADATA_STREAM_ERROR_BUFFER_SIZE];
-    strerror_r(errno, buf, sizeof(buf));
+    std::string buf(METADATA_STREAM_ERROR_BUFFER_SIZE, '\0');
+    strerror_r(errno, &buf[0], buf.size());
 
     if (fileDescriptor != -1) { // If the operation is through a file descriptor
         IMAGE_LOGE("%{public}s file failed: %{public}d, reason: "
             "%{public}s. result is %{public}zd, expected size is %{public}zd",
-            operation.c_str(), fileDescriptor, buf, result, expectedSize);
+            operation.c_str(), fileDescriptor, buf.c_str(), result, expectedSize);
     } else { // If the operation is through a file path
         IMAGE_LOGE("%{public}s file failed: %{public}s, reason: "
             "%{public}s. result is %{public}zd, expected size is %{public}zd",
-            operation.c_str(), filePath.c_str(), buf, result, expectedSize);
+            operation.c_str(), filePath.c_str(), buf.c_str(), result, expectedSize);
     }
 }
 
@@ -396,7 +396,7 @@ bool FileMetadataStream::TruncateFile(size_t totalBytesWritten, MetadataStream &
 bool FileMetadataStream::CopyDataFromSource(MetadataStream &src, ssize_t &totalBytesWritten)
 {
     ssize_t buffer_size = std::min((ssize_t)METADATA_STREAM_COPY_FROM_BUFFER_SIZE, src.GetSize());
-    std::vector<byte> tempBuffer(buffer_size);
+    std::vector<byte> tempBuffer(buffer_size, 0); // Initialize all elements to 0
 
     Seek(0, SeekPos::BEGIN);
     src.Seek(0, SeekPos::BEGIN); // Set the position of src to 0
@@ -465,18 +465,18 @@ ssize_t FileMetadataStream::GetSize()
     }
     ssize_t oldPos = Tell();
     if (fseek(fp_, 0, SEEK_END) != 0) {
-        char errstr[METADATA_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, errstr, sizeof(errstr));
-        IMAGE_LOGE("Failed to seek to the end of the file: %{public}s", errstr);
+        std::string errstr(METADATA_STREAM_ERROR_BUFFER_SIZE, '\0');
+        strerror_r(errno, &errstr[0], METADATA_STREAM_ERROR_BUFFER_SIZE);
+        IMAGE_LOGE("Failed to seek to the end of the file: %{public}s", errstr.c_str());
         return -1;
     }
 
     ssize_t fileSize = ftell(fp_);
 
     if (fseek(fp_, oldPos, SEEK_SET) != 0) { // Restore the file pointer to its original position
-        char errstr[METADATA_STREAM_ERROR_BUFFER_SIZE];
-        strerror_r(errno, errstr, sizeof(errstr));
-        IMAGE_LOGE("Failed to restore the file position: %{public}s", errstr);
+        std::string errstr(METADATA_STREAM_ERROR_BUFFER_SIZE, '\0');
+        strerror_r(errno, &errstr[0], METADATA_STREAM_ERROR_BUFFER_SIZE);
+        IMAGE_LOGE("Failed to restore the file position: %{public}s", errstr.c_str());
         return -1;
     }
 
