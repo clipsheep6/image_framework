@@ -97,7 +97,6 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
         if (!is_huawei_md(md)) {
             IMAGE_LOGE("Exif data returned null for key: %{public}s", key.c_str());
             exif_data_unref(exifData_);
-            value = "";
             return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
 
