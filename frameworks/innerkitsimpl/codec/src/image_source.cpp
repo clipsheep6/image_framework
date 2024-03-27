@@ -158,10 +158,10 @@ const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
 
-static sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo);
-static uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output);
-static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output);
-static DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo);
+uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output);
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output);
+uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         DecodeContext &context, uint32_t &errorCode);
 
 uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
@@ -561,10 +561,11 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     }
     ImagePlugin::PlImageInfo plInfo;
     DecodeContext context;
-    context = DecodeImageDataToContext(index, info, plInfo, context, errorCode);
-    if (context == NULL) {
-        return nullptr;
+    auto ret = DecodeImageDataToContext(index, info, plInfo, context, errorCode);
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("[ImageSource] Decode data fail, ret:%{public}u.", ret);
     }
+
 #ifdef AI_ENABLE
     auto res = AIProcess(<Size>(context.outInfo.size), context);
     if (res != SUCCESS) {
@@ -2370,7 +2371,7 @@ bool ImageSource::IsSupportGenAstc()
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
 
-static sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
+sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
 {
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
     BufferRequestConfig requestConfig = {
@@ -2403,7 +2404,7 @@ static sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &
 }
 
 #ifdef AI_ENABLE
-static uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
 {
     QualityEnhancerParameter param;
     param.features.QENH_FEATURE_AISR = 1;
@@ -2413,7 +2414,7 @@ static uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
     return qei->Process(input, output);
 }
 
-static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
 {
     std::vector<uint8_t> values;
     input->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
@@ -2457,7 +2458,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 }
 #endif
 
-static DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         DecodeContext &context, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
@@ -2472,10 +2473,10 @@ static DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo &info, I
     errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
-        return {};
+        return ERR_IMAGE_DATA_UNSUPPORT;
     }
     NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    DecodeContext context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
+    context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
     context.info.pixelFormat = plInfo.pixelFormat;
     errorCode = mainDecoder_->Decode(index, context);
     if (context.ifPartialOutput) {
@@ -2487,9 +2488,9 @@ static DecodeContext DecodeImageDataToContext(uint32_t index, ImageInfo &info, I
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        return {};
+        return ERR_IMAGE_DATA_UNSUPPORT;
     }
-    return context;
+    return SUCCESS;
 }
 } // namespace Media
 } // namespace OHOS
