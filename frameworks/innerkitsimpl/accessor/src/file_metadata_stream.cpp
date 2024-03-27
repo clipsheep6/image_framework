@@ -396,15 +396,15 @@ bool FileMetadataStream::TruncateFile(size_t totalBytesWritten, MetadataStream &
 bool FileMetadataStream::CopyDataFromSource(MetadataStream &src, ssize_t &totalBytesWritten)
 {
     ssize_t buffer_size = std::min((ssize_t)METADATA_STREAM_COPY_FROM_BUFFER_SIZE, src.GetSize());
-    byte tempBuffer[buffer_size];
+    std::vector<byte> tempBuffer(buffer_size);
 
     Seek(0, SeekPos::BEGIN);
     src.Seek(0, SeekPos::BEGIN); // Set the position of src to 0
 
     while (!src.IsEof()) {
-        ssize_t bytesRead = src.Read(tempBuffer, buffer_size);
+        ssize_t bytesRead = src.Read(tempBuffer.data(), buffer_size);
         if (bytesRead > 0) {
-            size_t bytesWritten = Write(tempBuffer, bytesRead);
+            size_t bytesWritten = Write(tempBuffer.data(), bytesRead);
             if (bytesWritten == static_cast<size_t>(-1)) {
                 // Write failed
                 HandleFileError("Write file", filePath_, fileno(fp_), bytesWritten, bytesRead);
