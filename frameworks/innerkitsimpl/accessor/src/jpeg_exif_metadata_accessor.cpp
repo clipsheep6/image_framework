@@ -325,7 +325,8 @@ bool JpegExifMetadataAccessor::WriteTail(BufferMetadataStream &bufStream)
     tmpBuf[0] = JPEG_MARKER_HEADER;
     tmpBuf[1] = JPEG_MARKER_SOS;
     if (bufStream.Write(tmpBuf.data(), SEGMENT_LENGTH_SIZE) != SEGMENT_LENGTH_SIZE) {
-        IMAGE_LOGE("Failed to write the final marker. Expected length: %{public}zu", SEGMENT_LENGTH_SIZE);
+        IMAGE_LOGE("Failed to write the final marker. Expected length: %{public}d", 
+                static_cast<int>(SEGMENT_LENGTH_SIZE));
         return false;
     }
 
@@ -338,7 +339,7 @@ bool JpegExifMetadataAccessor::CopyRestData(BufferMetadataStream &bufStream)
     ssize_t readSize = imageStream_->Read(buf.Data(), buf.Size());
     while (readSize != 0) {
         if (bufStream.Write((byte *)buf.CData(), readSize) != readSize) {
-            IMAGE_LOGE("Failed to write block data to temporary stream. Expected size: %{public}zu", readSize);
+            IMAGE_LOGE("Failed to write block data to temporary stream. Expected size: %{public}zd", readSize);
             return false;
         }
         readSize = imageStream_->Read(buf.Data(), buf.Size());

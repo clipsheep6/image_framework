@@ -87,11 +87,11 @@ void HandleFileError(const std::string &operation, const std::string &filePath, 
 
     if (fileDescriptor != -1) { // If the operation is through a file descriptor
         IMAGE_LOGE("%{public}s file failed: %{public}d, reason: "
-            "%{public}s. result is %{public}d, expected size is %{public}d",
+            "%{public}s. result is %{public}zd, expected size is %{public}zd",
             operation.c_str(), fileDescriptor, buf, result, expectedSize);
     } else { // If the operation is through a file path
         IMAGE_LOGE("%{public}s file failed: %{public}s, reason: "
-            "%{public}s. result is %{public}d, expected size is %{public}d",
+            "%{public}s. result is %{public}zd, expected size is %{public}zd",
             operation.c_str(), filePath.c_str(), buf, result, expectedSize);
     }
 }
