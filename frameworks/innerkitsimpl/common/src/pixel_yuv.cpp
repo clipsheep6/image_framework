@@ -1,0 +1,2470 @@
+/*
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "pixel_yuv.h"
+
+#include "image_utils.h"
+#include "image_trace.h"
+#include "image_type_converter.h"
+#include "memory_manager.h"
+#include "hilog/log.h"
+#include "hitrace_meter.h"
+#include "log_tags.h"
+#include "media_errors.h"
+#include "pubdef.h"
+#include "securec.h"
+#include "image_log.h"
+#include "image_mdk_common.h"
+#include "image_system_properties.h"
+#include "surface_buffer.h"
+
+#undef LOG_DOMAIN
+#define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
+
+#undef LOG_TAG
+#define LOG_TAG "PixelYuv"
+
+namespace OHOS {
+namespace Media {
+using namespace std;
+
+static const uint8_t NUM_2 = 2;
+static const uint8_t NUM_3 = 3;
+static const uint8_t NUM_4 = 4;
+#ifndef LIBYUV_ENABLE
+static const uint8_t NUM_5 = 5;
+static const uint8_t NUM_6 = 6;
+static const uint8_t NUM_7 = 7;
+static const uint8_t NUM_8 = 8;
+static const int32_t degrees360 = 360; // 360度角
+constexpr int32_t INT_16 = 16;
+constexpr int32_t INT_128 = 128;
+constexpr int32_t INT_219 = 219;
+constexpr int32_t INT_224 = 224;
+constexpr int32_t INT_255 = 255;
+const float YUV_TO_RGB_PARAM_1 = 1.402;
+const float YUV_TO_RGB_PARAM_2 = 0.344136;
+const float YUV_TO_RGB_PARAM_3 = 0.714136;
+const float YUV_TO_RGB_PARAM_4 = 1.772;
+const float RGB_TO_YUV_PARAM_1 = 0.2627;
+const float RGB_TO_YUV_PARAM_2 = 0.678;
+const float RGB_TO_YUV_PARAM_3 = 0.0593;
+const float RGB_TO_YUV_PARAM_4 = 0.5;
+const float RGB_TO_YUV_PARAM_5 = 0.9407;
+const float RGB_TO_YUV_PARAM_6 = 0.7373;
+// Define pixel yuv malloc max size 600MB
+constexpr int32_t PIXEL_YUV_MAX_RAM_SIZE = 600 * 1024 * 1024;
+#endif
+static const int32_t degrees90 = 90; // 90度角
+static const int32_t degrees180 = 180; // 180度角
+static const int32_t degrees270 = 270; // 270度角
+constexpr int32_t MAX_DIMENSION = INT32_MAX >> NUM_2;
+constexpr uint8_t Y_SHIFT = 16;
+constexpr uint8_t U_SHIFT = 8;
+constexpr uint8_t V_SHIFT = 0;
+constexpr uint8_t YUV_MASK = 0xFF;
+constexpr uint8_t Y_DEFAULT = 0x10;
+constexpr uint8_t UV_DEFAULT = 0x80;
+
+struct TransInfos {
+    SkMatrix matrix;
+};
+
+struct TransMemoryInfo {
+    AllocatorType allocType;
+    std::unique_ptr<AbsMemory> memory = nullptr;
+};
+
+static SkImageInfo ToSkImageInfo(ImageInfo &info, sk_sp<SkColorSpace> colorSpace)
+{
+    SkColorType colorType = ImageTypeConverter::ToSkColorType(info.pixelFormat);
+    SkAlphaType alphaType = ImageTypeConverter::ToSkAlphaType(info.alphaType);
+    IMAGE_LOGD("ToSkImageInfo w %{public}d, h %{public}d", info.size.width, info.size.height);
+    IMAGE_LOGD(
+        "ToSkImageInfo pf %{public}s, at %{public}s, skpf %{public}s, skat %{public}s",
+        ImageTypeConverter::ToName(info.pixelFormat).c_str(),
+        ImageTypeConverter::ToName(info.alphaType).c_str(),
+        ImageTypeConverter::ToName(colorType).c_str(),
+        ImageTypeConverter::ToName(alphaType).c_str()
+    );
+    return SkImageInfo::Make(info.size.width, info.size.height, colorType, alphaType, colorSpace);
+}
+
+static sk_sp<SkColorSpace> ToSkColorSpace(PixelMap *pixelmap)
+{
+#ifdef IMAGE_COLORSPACE_FLAG
+    if (pixelmap->InnerGetGrColorSpacePtr() == nullptr) {
+        return nullptr;
+    }
+    return pixelmap->InnerGetGrColorSpacePtr()->ToSkColorSpace();
+#else
+    return nullptr;
+#endif
+}
+
+static bool isSameColorSpace(const OHOS::ColorManager::ColorSpace &src,
+    const OHOS::ColorManager::ColorSpace &dst)
+{
+    auto skSrc = src.ToSkColorSpace();
+    auto skDst = dst.ToSkColorSpace();
+    return SkColorSpace::Equals(skSrc.get(), skDst.get());
+}
+
+PixelYuv::~PixelYuv()
+{
+    FreePixelMap();
+}
+
+const uint8_t *PixelYuv::GetPixel8(int32_t x, int32_t y)
+{
+    IMAGE_LOGE("GetPixel8 is not support on PixelYuv");
+    return nullptr;
+}
+
+const uint16_t *PixelYuv::GetPixel16(int32_t x, int32_t y)
+{
+    IMAGE_LOGE("GetPixel16 is not support on PixelYuv");
+    return nullptr;
+}
+
+const uint32_t *PixelYuv::GetPixel32(int32_t x, int32_t y)
+{
+    IMAGE_LOGE("GetPixel32 is not support on PixelYuv");
+    return nullptr;
+}
+
+bool PixelYuv::GetARGB32Color(int32_t x, int32_t y, uint32_t &color)
+{
+    IMAGE_LOGE("GetARGB32Color is not support on PixelYuv");
+    return false;
+}
+
+uint8_t PixelYuv::GetARGB32ColorA(uint32_t color)
+{
+    IMAGE_LOGE("GetARGB32ColorA is not support on PixelYuv");
+    return 0;
+}
+
+uint8_t PixelYuv::GetARGB32ColorR(uint32_t color)
+{
+    IMAGE_LOGE("GetARGB32ColorR is not support on PixelYuv");
+    return 0;
+}
+
+uint8_t PixelYuv::GetARGB32ColorG(uint32_t color)
+{
+    IMAGE_LOGE("GetARGB32ColorG is not support on PixelYuv");
+    return 0;
+}
+
+uint8_t PixelYuv::GetARGB32ColorB(uint32_t color)
+{
+    IMAGE_LOGE("GetARGB32ColorB is not support on PixelYuv");
+    return 0;
+}
+
+uint32_t PixelYuv::SetAlpha(const float percent)
+{
+    IMAGE_LOGE("SetAlpha is not support on PixelYuv");
+    return ERR_IMAGE_DATA_UNSUPPORT;
+}
+
+uint32_t PixelYuv::getPixelBytesNumber()
+{
+    IMAGE_LOGE("getPixelBytesNumber is not support on PixelYuv");
+    return ERR_IMAGE_DATA_UNSUPPORT;
+}
+
+int32_t PixelYuv::GetByteCount()
+{
+    IMAGE_LOGE("GetByteCount is not support on PixelYuv");
+    return ERR_IMAGE_DATA_UNSUPPORT;
+}
+
+static int32_t GetYSize(int32_t width, int32_t height)
+{
+    return width * height;
+}
+
+static int32_t GetVOffset(int32_t width, int32_t height)
+{
+    return width * height + ((width + 1) / NUM_2) * ((height + 1) / NUM_2);
+}
+
+//The stride of u and v are the same,YUV420P u, v single planer
+static int32_t GetUStride(int32_t width)
+{
+    return (width + 1) / NUM_2;
+}
+
+static int32_t GetUVHeight(int32_t height)
+{
+    return (height + 1) / NUM_2;
+}
+
+//YUV420SP,u、v blend planer
+static int32_t GetUVStride(int32_t width)
+{
+    return (width + 1) / NUM_2 * NUM_2;
+}
+
+void PixelYuv::rotate(float degrees)
+{
+    uint32_t count = GetImageSize(imageInfo_.size.width, imageInfo_.size.height);
+    Size desiredSize = {imageInfo_.size.width, imageInfo_.size.height};
+    MemoryData memoryData = {nullptr, count, "Rotate ImageData", desiredSize};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("rotate CreateMemory failed");
+        return;
+    }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        if (m->extend.data == nullptr) {
+            IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+        }
+    }
+#endif
+    uint8_t *dst = reinterpret_cast<uint8_t *>(m->data.data);
+    if (!YUVRotate(data_, imageInfo_.size, dst, degrees, imageInfo_.pixelFormat)) {
+        m->Release();
+        return;
+    }
+    if (memcpy_s(data_, count, dst, count) != 0) {
+        IMAGE_LOGE("rotate memcpy failed");
+        return;
+    }
+    AssignYUVDataOnType(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
+    return;
+}
+
+uint32_t PixelYuv::crop(const Rect &rect)
+{
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+    int32_t rectSize = GetYSize(rect.width, rect.height);
+    int32_t pixelSize = GetYSize(imageInfo.size.width, imageInfo.size.height);
+    if (rect.top < 0 || rect.left < 0 || rectSize > pixelSize) {
+        IMAGE_LOGE("crop invalid param");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    Size desiredSize = {rect.width, rect.height};
+    MemoryData memoryData = {nullptr, GetImageSize(rect.width, rect.height), "Trans ImageData", desiredSize};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("crop CreateMemory failed");
+        return ERR_IMAGE_CROP;
+    }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        if (m->extend.data == nullptr) {
+            IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+        }
+    }
+#endif
+    if (!YUVCrop(data_, imageInfo_.size, (uint8_t *)m->data.data, rect, imageInfo.pixelFormat)) {
+        m->Release();
+        return ERR_IMAGE_CROP;
+    }
+    imageInfo.size.height = rect.height;
+    imageInfo.size.width = rect.width;
+
+    SetPixelsAddr(m->data.data, m->extend.data, m->data.size, m->GetType(), nullptr);
+    SetImageInfo(imageInfo, true);
+    AssignYUVDataOnType(imageInfo.pixelFormat, imageInfo.size.width, imageInfo.size.height);
+    return SUCCESS;
+}
+
+#ifndef LIBYUV_ENABLE
+void PixelYuv::scale(float xAxis, float yAxis)
+{
+    ImageTrace imageTrace("PixelMap scale");
+    return scale(xAxis, yAxis, AntiAliasingOption::NONE);
+}
+
+int32_t PixelYuv::ScaleYuvToBGRA(ImageInfo &imageInfo, PixelFormat &format)
+{
+    if (IsYuvFormat(imageInfo.pixelFormat)) {
+        uint32_t pictureSize = imageInfo.size.width * imageInfo.size.height * NUM_4;
+        Size desiredSize = {imageInfo.size.width, imageInfo.size.height};
+        MemoryData memoryData = {nullptr, pictureSize, "Trans ImageData", desiredSize};
+        auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+        if (m == nullptr) {
+            IMAGE_LOGE("ScaleYuvToBGRA CreateMemory failed");
+            return ERR_IMAGE_CROP;
+        }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+        if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+            if (m->extend.data == nullptr) {
+                IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+            }
+        }
+#endif
+        uint8_t *argbData = reinterpret_cast<uint8_t *>(m->data.data);
+        if (!YUV420ToBGRA(data_, argbData, imageInfo.size.width, imageInfo.size.height, imageInfo.pixelFormat)) {
+            m->Release();
+            return ERR_IMAGE_CROP;
+        }
+        format = imageInfo.pixelFormat;
+        imageInfo.pixelFormat = PixelFormat::BGRA_8888;
+        SetPixelsAddr(argbData, nullptr, pictureSize, m->GetType(), nullptr);
+    }
+    return SUCCESS;
+}
+
+int32_t PixelYuv::ScaleBGRAToYuv(ImageInfo &imageInfo, PixelFormat &format)
+{
+    if (format != PixelFormat::UNKNOWN) {
+        int width = imageInfo.size.width;
+        int height = imageInfo.size.height;
+        uint32_t pictureSize = GetImageSize(width, height);
+        Size desiredSize = {width, height};
+        MemoryData memoryData = {nullptr, pictureSize, "Trans ImageData", desiredSize};
+        auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+        if (m == nullptr) {
+            IMAGE_LOGE("ScaleBGRAToYuv CreateMemory failed");
+            return ERR_IMAGE_CROP;
+        }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+        if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+            if (m->extend.data == nullptr) {
+                IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+            }
+        }
+#endif
+        uint8_t *YUVData = reinterpret_cast<uint8_t *>(m->data.data);
+        if (!BGRAToYUV420(data_, YUVData, imageInfo.size.width, imageInfo.size.height, format)) {
+            m->Release();
+            return false;
+        }
+        SetPixelsAddr(YUVData, nullptr, pictureSize, m->GetType(), nullptr);
+        imageInfo.pixelFormat = format;
+    }
+    return SUCCESS;
+}
+
+void PixelYuv::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
+{
+    ImageTrace imageTrace("PixelMap scale");
+    TransInfos infos;
+    infos.matrix.setScale(xAxis, yAxis);
+    PixelFormat format = PixelFormat::UNKNOWN;
+
+    if (ScaleYuvToBGRA(imageInfo_, format) != SUCCESS) {
+        IMAGE_LOGE("ScaleYuvToBGRA failed");
+        return;
+    }
+
+    if (!DoTranslation(infos, option)) {
+        IMAGE_LOGE("scale falied");
+    }
+    if (ScaleBGRAToYuv(imageInfo_, format) != SUCCESS) {
+        IMAGE_LOGE("ScaleBGRAToYuv failed");
+        return;
+    }
+    AssignYUVDataOnType(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
+}
+
+bool PixelYuv::resize(float xAxis, float yAxis)
+{
+    ImageTrace imageTrace("PixelMap resize");
+    TransInfos infos;
+    infos.matrix.setScale(xAxis, yAxis);
+    PixelFormat format = PixelFormat::UNKNOWN;
+
+    if (ScaleYuvToBGRA(imageInfo_, format) != SUCCESS) {
+        IMAGE_LOGE("ScaleYuvToBGRA failed");
+        return false;
+    }
+
+    if (!DoTranslation(infos)) {
+        IMAGE_LOGE("resize falied");
+        return false;
+    }
+    if (ScaleBGRAToYuv(imageInfo_, format) != SUCCESS) {
+        IMAGE_LOGE("ScaleBGRAToYuv failed");
+        return false;
+    }
+    AssignYUVDataOnType(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
+    return true;
+}
+
+bool PixelYuv::FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t srcW, int32_t srcH, PixelFormat format)
+{
+    uint32_t dstSize = GetImageSize(srcW, srcH);
+    switch (format) {
+        case PixelFormat::YU12:
+        case PixelFormat::YV12:
+            I420Copy(src, srcW, src + GetYSize(srcW, srcH), GetYSize(srcW, srcH),
+                src + GetVOffset(srcW, srcH), GetUStride(srcW), dst, srcW, dst + GetYSize(srcW, srcH),
+                GetUStride(srcW), dst + GetVOffset(srcW, srcH),
+                GetUStride(srcW), srcW, -srcH);
+            break;
+        case PixelFormat::NV12:
+        case PixelFormat::NV21:
+            NV12Copy(src, srcW, src + GetYSize(srcW, srcH), GetUVStride(srcW),
+                dst, srcW, dst + GetYSize(srcW, srcH), GetUVStride(srcW), srcW, -srcH);
+            break;
+        default:
+            break;
+    }
+    if (memcpy_s(data_, dstSize, dst, dstSize) != 0) {
+        IMAGE_LOGE("FlipXaxis memcpy failed");
+        return false;
+    }
+    return true;
+}
+
+bool PixelYuv::FlipYaxis(const uint8_t *src, uint8_t *dst, int32_t srcW, int32_t srcH, PixelFormat format)
+{
+    uint32_t dstSize = GetImageSize(srcW, srcH);
+    switch (format) {
+        case PixelFormat::YU12:
+        case PixelFormat::YV12:
+            I420Mirror(src, srcW, src + GetYSize(srcW, srcH), GetUStride(srcW),
+                src + GetVOffset(srcW, srcH), GetUStride(srcW),
+                dst, srcW, dst + GetYSize(srcW, srcH), GetUStride(srcW),
+                dst + GetVOffset(srcW, srcH), GetUStride(srcW),
+                srcW, srcH);
+            break;
+        case PixelFormat::NV12:
+        case PixelFormat::NV21:
+            NV12Mirror(src, srcW, src + GetYSize(srcW, srcH), GetUVStride(srcW),
+            dst, srcW, dst + GetYSize(srcW, srcH), GetUVStride(srcW), srcW, srcH);
+            break;
+        default:
+            break;
+    }
+    if (memcpy_s(data_, dstSize, dst, dstSize) != 0) {
+        IMAGE_LOGE("FlipYaxis memcpy failed");
+        return false;
+    }
+    return true;
+}
+
+void PixelYuv::flip(bool xAxis, bool yAxis)
+{
+    if (xAxis == false && yAxis == false) {
+        return;
+    }
+    int32_t srcW = imageInfo_.size.width;
+    int32_t srcH = imageInfo_.size.height;
+    PixelFormat format = imageInfo_.pixelFormat;
+    const uint8_t *src = data_;
+    Size desiredSize = {srcW, srcH};
+    uint32_t pictureSize = GetImageSize(srcW, srcH);
+    MemoryData memoryData = {nullptr, pictureSize, "flip ImageData", desiredSize};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("flip CreateMemory failed");
+        return;
+    }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        if (m->extend.data == nullptr) {
+            IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+        }
+    }
+#endif
+    uint8_t *dst = reinterpret_cast<uint8_t *>(m->data.data);
+    if (xAxis) {
+        if (!FlipXaxis(src, dst, srcW, srcH, format)) {
+            IMAGE_LOGE("flip xAxis failed");
+            return;
+        }
+    }
+    if (yAxis) {
+        if (!FlipYaxis(src, dst, srcW, srcH, format)) {
+            IMAGE_LOGE("flip yAxis failed");
+            return;
+        }
+    }
+    SetPixelsAddr(dst, m->extend.data, m->data.size, m->GetType(), nullptr);
+    AssignYUVDataOnType(format, srcW, srcH);
+}
+
+#else
+void PixelYuv::scale(float xAxis, float yAxis)
+{
+    ScaleYUV420(xAxis, yAxis);
+}
+
+constexpr int32_t ANTIALIASING_SIZE = 350;
+
+static bool IsSupportAntiAliasing(const ImageInfo& imageInfo, const AntiAliasingOption &option)
+{
+    return option != AntiAliasingOption::NONE && imageInfo.size.width <= ANTIALIASING_SIZE &&
+            imageInfo.size.height <= ANTIALIASING_SIZE;
+}
+
+void PixelYuv::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
+{
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+    AntiAliasingOption operation = AntiAliasingOption::NONE;
+    if (ImageSystemProperties::GetAntiAliasingEnabled() && IsSupportAntiAliasing(imageInfo, option)) {
+        operation = AntiAliasingOption::MEDIUM;
+    } else {
+        operation = option;
+    }
+    ScaleYUV420(xAxis, yAxis, operation);
+}
+
+bool PixelYuv::resize(float xAxis, float yAxis)
+{
+    ScaleYUV420(xAxis, yAxis);
+    return true;
+}
+
+void PixelYuv::ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option)
+{
+    switch (option) {
+        case AntiAliasingOption::NONE:
+            filterMode = libyuv::FilterMode::kFilterNone;
+            break;
+        case AntiAliasingOption::LOW:
+            filterMode = libyuv::FilterMode::kFilterLinear;
+            break;
+        case AntiAliasingOption::MEDIUM:
+            filterMode = libyuv::FilterMode::kFilterBilinear;
+            break;
+        case AntiAliasingOption::HIGH:
+            filterMode = libyuv::FilterMode::kFilterBox;
+            break;
+        default:
+            break;
+    }
+}
+
+void PixelYuv::ScaleYUV420(float xAxis, float yAxis, const AntiAliasingOption &option)
+{
+    libyuv::FilterMode filterMode = libyuv::FilterMode::kFilterNone;
+    ConvertYuvMode(filterMode, option);
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+    int32_t srcW = imageInfo.size.width;
+    int32_t srcH = imageInfo.size.height;
+    int32_t dstW = srcW * xAxis;
+    int32_t dstH = srcH * yAxis;
+    const uint8_t *src = data_;
+    uint32_t pictureSize = GetImageSize(dstW, dstH);
+    Size desiredSize = {dstW, dstH};
+    MemoryData memoryData = {nullptr, pictureSize, "ScaleYUV420 ImageData", desiredSize};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("ScaleYUV420 CreateMemory failed");
+        return;
+    }
+    uint8_t *dst = reinterpret_cast<uint8_t *>(m->data.data);
+    if (imageInfo.pixelFormat == PixelFormat::YU12 || imageInfo.pixelFormat == PixelFormat::YV12) {
+        if (SUCCESS != libyuv::I420Scale(src, srcW, src + GetYSize(srcW, srcH), GetUStride(srcW),
+            src + GetVOffset(srcW, srcH), GetUStride(srcW), srcW, srcH, dst, dstW,
+            dst + GetYSize(dstW, dstH), GetUStride(dstW), dst + GetVOffset(dstW, dstH),
+            GetUStride(dstW), dstW, dstH, filterMode)) {
+            m->Release();
+            IMAGE_LOGE("Scale YUV420P failed");
+            return;
+        }
+    }
+    if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21) {
+        uint32_t srcHalfW = GetUStride(srcW);
+        uint32_t srcHalfH = GetUVHeight(srcH);
+        uint32_t dstHalfW = GetUStride(dstW);
+        uint32_t dstHalfH = GetUVHeight(dstH);
+
+        // resize y_plane
+        libyuv::ScalePlane(src, srcW, srcW, srcH, dst, dstW, dstW, dstH, filterMode);
+        //Whether the row width is odd or even, U and Z are equal in size
+        uint32_t srcUSize = GetUStride(srcW) * GetUVHeight(srcH);
+        uint32_t dstUSize = GetUStride(dstW) * GetUVHeight(dstH);
+        // Split VUplane
+        std::unique_ptr<uint8_t[]> uvData = std::make_unique<uint8_t[]>(NUM_2 * srcUSize);
+
+        // NV21
+        uint8_t *vData = uvData.get();
+        uint8_t *uData = uvData.get() + srcUSize;
+        // If it's in NV12 format，swap u and v
+        if (imageInfo.pixelFormat == PixelFormat::NV12) {
+            uint8_t *tempSwap = vData;
+            vData = uData;
+            uData = tempSwap;
+        }
+
+        const uint8_t *src_uv = src + GetYSize(srcW, srcH);
+        libyuv::SplitUVPlane(src_uv, NUM_2 * srcHalfW, vData, srcHalfW, uData, srcHalfW, srcHalfW, srcHalfH);
+
+        // malloc memory to store temp u v
+        std::unique_ptr<uint8_t[]> tempUVData = std::make_unique<uint8_t[]>(NUM_2 * srcUSize);
+        uint8_t *tempVData = tempUVData.get();
+        uint8_t *tempUData = tempUVData.get() + dstUSize;
+        if (imageInfo.pixelFormat == PixelFormat::NV12) {
+            uint8_t *tempSwap = tempVData;
+            tempVData = tempUData;
+            tempUData = tempSwap;
+        }
+
+        // resize u and v
+        libyuv::ScalePlane(uData, srcHalfW, srcHalfW, srcHalfH, tempUData, dstHalfW, dstHalfW, dstHalfH, filterMode);
+        libyuv::ScalePlane(vData, srcHalfW, srcHalfW, srcHalfH, tempVData, dstHalfW, dstHalfW, dstHalfH, filterMode);
+
+        uint8_t *dst_uv = dst + GetYSize(dstW, dstH);
+        libyuv::MergeUVPlane(tempVData, dstHalfW, tempUData, dstHalfW, dst_uv, NUM_2 * dstHalfW, dstHalfW, dstHalfH);
+
+        uData = vData = nullptr;
+        tempUData = tempVData = nullptr;
+
+        SetPixelsAddr(reinterpret_cast<void *>(dst), m->extend.data, m->data.size, m->GetType(), nullptr);
+        imageInfo.size.width = dstW;
+        imageInfo.size.height = dstH;
+        SetImageInfo(imageInfo, true);
+    }
+}
+
+bool PixelYuv::FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format)
+{
+    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
+        if (SUCCESS != libyuv::I420Copy(src, width, src + GetYSize(width, height), GetUStride(width),
+            src + GetVOffset(width, height), GetUStride(width), dst, width,
+            dst + GetYSize(width, height), GetUStride(width),
+            dst + GetVOffset(width, height), GetUStride(width), width, -height)) {
+            IMAGE_LOGE("Flip YUV420P, YUV420P Copy failed");
+            return false;
+        }
+    }
+    if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
+        libyuv::NV12ToI420(src, width, src + GetYSize(width, height), GetUVStride(width),
+            dst, width, dst + GetYSize(width, height), GetUStride(width),
+            dst + GetVOffset(width, height), GetUStride(width), width, height);
+        if (SUCCESS != libyuv::I420Copy(dst, width, dst + GetYSize(width, height), GetUStride(width),
+            dst + GetVOffset(width, height), GetUStride(width), const_cast<uint8_t *>(src), width,
+            const_cast<uint8_t *>(src) + GetYSize(width, height), GetUStride(width),
+            const_cast<uint8_t *>(src) + GetVOffset(width, height), GetUStride(width), width, -height)) {
+            IMAGE_LOGE("Flip YUV420SP, YUV420SP Copy failed");
+            return false;
+        }
+        libyuv::I420ToNV12(src, width, src + GetYSize(width, height), GetUStride(width),
+            src + GetVOffset(width, height), GetUStride(width), dst, width,
+            dst + GetYSize(width, height), GetUVStride(width), width, height);
+    }
+    return true;
+}
+
+void PixelYuv::FlipYaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format)
+{
+    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
+        libyuv::I420Mirror(src, width, src + GetYSize(width, height), GetUStride(width),
+            src + GetVOffset(width, height), GetUStride(width), dst, width,
+            dst + GetYSize(width, height), GetUStride(width),
+            dst + GetVOffset(width, height), GetUStride(width), width, height);
+        }
+    if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
+        libyuv::NV12ToI420(src, width, src + GetYSize(width, height), GetUVStride(width), dst, width,
+            dst + GetYSize(width, height), GetUStride(width), dst + GetVOffset(width, height), GetUStride(width),
+            width, height);
+        libyuv::I420Mirror(dst, width, dst + GetYSize(width, height), GetUStride(width),
+            dst + GetVOffset(width, height), GetUStride(width), const_cast<uint8_t *>(src),
+            width, const_cast<uint8_t *>(src) + GetYSize(width, height), GetUStride(width),
+            const_cast<uint8_t *>(src) + GetVOffset(width, height), GetUStride(width), width, height);
+        libyuv::I420ToNV12(src, width, src + GetYSize(width, height), GetUStride(width),
+            src + GetVOffset(width, height), GetUStride(width), dst, width,
+            dst + GetYSize(width, height), GetUVStride(width), width, height);
+    }
+}
+
+void PixelYuv::flip(bool xAxis, bool yAxis)
+{
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+    uint8_t *dst = nullptr;
+    const uint8_t *src = data_;
+    int32_t width = imageInfo.size.width;
+    int32_t height = imageInfo.size.height;
+    uint32_t pictureSize = GetImageSize(width, height);
+    MemoryData memoryData = {nullptr, pictureSize, "flip ImageData", {width, height}};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("flip CreateMemory failed");
+        return;
+    }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        if (m->extend.data == nullptr) {
+            IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+        }
+    }
+#endif
+    dst = reinterpret_cast<uint8_t *>(m->data.data);
+    if (xAxis) {
+        if (!FlipXaxis(src, dst, width, height, imageInfo.pixelFormat)) {
+            IMAGE_LOGE("FlipXaxis failed");
+            m->Release();
+            return;
+        }
+    }
+    if (yAxis) {
+        FlipYaxis(src, dst, width, height, imageInfo.pixelFormat);
+    }
+    SetPixelsAddr(dst, m->extend.data, m->data.size, m->GetType(), nullptr);
+    AssignYUVDataOnType(imageInfo.pixelFormat, width, height);
+}
+#endif
+
+uint32_t PixelYuv::WritePixels(const uint8_t *source, const uint64_t &bufferSize, const uint32_t &offset,
+    const uint32_t &stride, const Rect &region)
+{
+    if (!CheckPixelsInput(source, bufferSize, offset, region)) {
+        IMAGE_LOGE("write pixel by rect input parameter fail.");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (!IsEditable()) {
+        IMAGE_LOGE("write pixel by rect PixelYuv data is not editable.");
+        return ERR_IMAGE_PIXELMAP_NOT_ALLOW_MODIFY;
+    }
+    if (!ImageUtils::IsValidImageInfo(imageInfo_)) {
+        IMAGE_LOGE("write pixel by rect current PixelYuv image info is invalid.");
+        return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
+    }
+    if (data_ == nullptr) {
+        IMAGE_LOGE("write pixel by rect current pixel map data is null.");
+        return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
+    }
+    uint32_t bytesPerPixel = ImageUtils::GetPixelBytes(imageInfo_.pixelFormat);
+    if (bytesPerPixel == 0) {
+        IMAGE_LOGE("write pixel by rect get bytes by per pixel fail.");
+        return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
+    }
+    Position dstPosition{region.left, region.top};
+    ImageInfo srcInfo;
+    srcInfo.size.height = region.height;
+    srcInfo.size.width = region.width;
+    srcInfo.pixelFormat = imageInfo_.pixelFormat;
+    if (!WritePixelsConvert(source + offset, srcInfo, data_, dstPosition, imageInfo_)) {
+        IMAGE_LOGE("write pixel by rect call WritePixelsConvert fail.");
+        return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
+    }
+    return SUCCESS;
+}
+
+uint32_t PixelYuv::ReadPixels(const uint64_t &bufferSize, const uint32_t &offset, const uint32_t &stride,
+    const Rect &region, uint8_t *dst)
+{
+    if (!CheckPixelsInput(dst, bufferSize, offset, region)) {
+        IMAGE_LOGE("read pixels by rect input parameter fail.");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    if (data_ == nullptr) {
+        IMAGE_LOGE("read pixels by rect this pixel data is null.");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
+    ImageInfo dstImageInfo;
+    dstImageInfo.size.width = region.width;
+    dstImageInfo.size.height = region.height;
+    dstImageInfo.pixelFormat = imageInfo_.pixelFormat;
+
+    Position srcPosition{region.left, region.top};
+    if (!ReadPixelsConvert((void *)data_, srcPosition, imageInfo_, dst + offset, dstImageInfo)) {
+        IMAGE_LOGE("read pixels by rect call ReadPixelsConvert fail.");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
+    return SUCCESS;
+}
+
+void PixelYuv::SetTranslateDataDefault(uint8_t *srcPixels, int32_t width, int32_t height)
+{
+    int32_t ySize = GetYSize(width, height);
+    int32_t uvSize = GetUStride(width) * GetUVHeight(height) * NUM_2;
+    if (memset_s(srcPixels, ySize, Y_DEFAULT, ySize) != EOK ||
+        memset_s(srcPixels + ySize, uvSize, UV_DEFAULT, uvSize) != EOK) {
+        IMAGE_LOGW("set translate default color failed");
+    }
+}
+
+void PixelYuv::translate(float xAxis, float yAxis)
+{
+    if (xAxis == 0 && yAxis == 0) {
+        return;
+    }
+    int32_t width = imageInfo_.size.width;
+    int32_t height = imageInfo_.size.height;
+
+    int32_t dstSize = GetImageSize(width, height);
+    MemoryData memoryData = {nullptr, dstSize, "translate ImageData", {width, height}};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("translate CreateMemory failed");
+        return;
+    }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        if (m->extend.data == nullptr) {
+            IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+        }
+    }
+#endif
+    uint8_t *dst = reinterpret_cast<uint8_t *>(m->data.data);
+    SetTranslateDataDefault(dst, width, height);
+    if (!YUVTransLate(data_, imageInfo_.size, dst, imageInfo_.pixelFormat, xAxis, yAxis)) {
+        m->Release();
+        return;
+    }
+    imageInfo_.size.width = width;
+    imageInfo_.size.height = height;
+    if (memcpy_s(data_, dstSize, dst, dstSize) != 0) {
+        IMAGE_LOGE("translate memcpy failed");
+        return;
+    }
+}
+
+uint32_t PixelYuv::ReadPixel(const Position &pos, uint32_t &dst)
+{
+    if (pos.x < 0 || pos.y < 0) {
+        IMAGE_LOGE("read pixel by pos input invalid exception. [x(%{public}d), y(%{public}d)]", pos.x, pos.y);
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (data_ == nullptr) {
+        IMAGE_LOGE("read pixel by pos source data is null.");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
+    YUVReadPixel(data_, imageInfo_.size, imageInfo_.pixelFormat, pos, dst);
+    return SUCCESS;
+}
+
+bool PixelYuv::WritePixels(const uint32_t &color)
+{
+    if (data_ == nullptr) {
+        IMAGE_LOGE("erase pixels by color current pixel map data is null.");
+        return false;
+    }
+    YUV420WritePixels(imageInfo_.size, data_, imageInfo_.pixelFormat, color);
+    return true;
+}
+
+uint32_t PixelYuv::WritePixel(const Position &pos, const uint32_t &color)
+{
+    if (pos.x < 0 || pos.y < 0) {
+        IMAGE_LOGE("write pixel by pos but input position is invalid. [x(%{public}d), y(%{public}d)]", pos.x, pos.y);
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (data_ == nullptr) {
+        IMAGE_LOGE("write pixel by pos but current pixelmap data is nullptr.");
+        return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
+    }
+    YUVWritePixel(data_, imageInfo_.size, imageInfo_.pixelFormat, pos, color);
+    return SUCCESS;
+}
+
+ColorYUV420 PixelYuv::GetYUV420Color(uint32_t x, uint32_t y)
+{
+    ColorYUV420 colorYUV;
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+    int width = imageInfo.size.width;
+    int height = imageInfo.size.height;
+    PixelFormat format = imageInfo.pixelFormat;
+    colorYUV.colorY = GetYUV420Y(x, y, width, data_);
+    colorYUV.colorU = GetYUV420U(x, y, width, height, format, data_);
+    colorYUV.colorV = GetYUV420V(x, y, width, height, format, data_);
+    return colorYUV;
+}
+
+void PixelYuv::SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type, CustomFreePixelMap func)
+{
+    if (data_ != nullptr) {
+        IMAGE_LOGE("SetPixelsAddr release the existed data first");
+        FreePixelMap();
+    }
+    if (type == AllocatorType::SHARE_MEM_ALLOC && context == nullptr) {
+        IMAGE_LOGE("SetPixelsAddr error type %{public}d ", type);
+    }
+    data_ = static_cast<uint8_t *>(addr);
+    context_ = context;
+    pixelsSize_ = size;
+    allocatorType_ = type;
+    custFreePixelMap_ = func;
+    if (type == AllocatorType::DMA_ALLOC && rowDataSize_ != 0) {
+        SetImageInfo(imageInfo_, true);
+    }
+}
+
+bool PixelYuv::YUV420WritePixels(Size &size, uint8_t *srcPixels, const PixelFormat &format, const uint32_t &color)
+{
+    switch (format) {
+        case PixelFormat::YU12:
+        case PixelFormat::YV12: {
+            bool isI420 = (format == PixelFormat::YU12 ? true : false);
+            YUV420PWritePixels(size, srcPixels, color, isI420);
+            return true;
+        }
+        case PixelFormat::NV21:
+        case PixelFormat::NV12: {
+            bool isNV12 = (format == PixelFormat::NV12 ? true : false);
+            YUV420SPWritePixels(size, srcPixels, color, isNV12);
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+bool PixelYuv::YUVReadPixel(const uint8_t *srcPixels, Size &size, const PixelFormat &format, const Position &pos,
+    uint32_t &dst)
+{
+    switch (format) {
+        case PixelFormat::YU12:
+        case PixelFormat::YV12: {
+            bool isI420 = (format == PixelFormat::YU12) ? true : false;
+            YUV420PReadPixel(srcPixels, size, pos, dst, isI420);
+            return true;
+        }
+        case PixelFormat::NV21:
+        case PixelFormat::NV12: {
+            bool isNV12 = (format == PixelFormat::NV12) ? true : false;
+            YUV420SPReadPixel(srcPixels, size, pos, dst, isNV12);
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+bool PixelYuv::YUVWritePixel(uint8_t *srcPixels, Size &size, const PixelFormat &format, const Position &pos,
+    const uint32_t &color)
+{
+    switch (format) {
+        case PixelFormat::YU12:
+        case PixelFormat::YV12: {
+            bool isI420 = (format == PixelFormat::YU12) ? true : false;
+            YUV420PWritePixel(srcPixels, size, pos, color, isI420);
+            return true;
+        }
+        case PixelFormat::NV21:
+        case PixelFormat::NV12: {
+            bool isNV12 = (format == PixelFormat::NV12) ? true : false;
+            YUV420SPWritePixel(srcPixels, size, pos, color, isNV12);
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+bool PixelYuv::YUVTransLate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, const PixelFormat &format,
+    float xAxis, float yAxis)
+{
+    switch (format) {
+        case PixelFormat::YU12:
+        case PixelFormat::YV12: {
+            bool isI420 = (format == PixelFormat::YU12) ? true : false;
+            YUV420PTranslate(srcPixels, size, dstPixels, xAxis, yAxis, isI420);
+            return true;
+        }
+        case PixelFormat::NV21:
+        case PixelFormat::NV12: {
+            YUV420SPTranslate(srcPixels, size, dstPixels, xAxis, yAxis);
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+bool PixelYuv::WritePixelsConvert(const void *srcPixels, const ImageInfo &srcInfo, void *dstPixels,
+    const Position &dstPos, const ImageInfo &dstInfo)
+{
+    if (srcPixels == nullptr || dstPixels == nullptr) {
+        IMAGE_LOGE("src or dst pixels invalid.");
+        return false;
+    }
+    switch (dstInfo.pixelFormat) {
+        case PixelFormat::YU12:
+            WriteDataI420Convert((uint8_t *)srcPixels, srcInfo.size, static_cast<uint8_t *>(dstPixels), dstPos,
+                dstInfo.size);
+            return true;
+        case PixelFormat::YV12:
+            WriteDataI420Convert((uint8_t *)srcPixels, srcInfo.size, static_cast<uint8_t *>(dstPixels), dstPos,
+                dstInfo.size);
+            return true;
+        case PixelFormat::NV21:
+            WriteDataNV12Convert((uint8_t *)srcPixels, srcInfo.size, static_cast<uint8_t *>(dstPixels), dstPos,
+                dstInfo.size);
+            return true;
+        case PixelFormat::NV12:
+            WriteDataNV12Convert((uint8_t *)srcPixels, srcInfo.size, static_cast<uint8_t *>(dstPixels), dstPos,
+                dstInfo.size);
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool PixelYuv::ReadPixelsConvert(const void *srcPixels, const Position &srcPos, const ImageInfo &srcInfo,
+    void *dstPixels, const ImageInfo &dstInfo)
+{
+    if (srcPixels == nullptr || dstPixels == nullptr) {
+        IMAGE_LOGE("src or dst pixels invalid.");
+        return false;
+    }
+    Rect rect;
+    rect.left = srcPos.x;
+    rect.top = srcPos.y;
+    rect.width = dstInfo.size.width;
+    rect.height = dstInfo.size.height;
+    if (!YUVCrop((uint8_t *)srcPixels, srcInfo.size, static_cast<uint8_t *>(dstPixels), rect, srcInfo.pixelFormat)) {
+        return false;
+    }
+    return true;
+}
+
+bool PixelYuv::CheckPixelsInput(const uint8_t *dst, const uint64_t &bufferSize, const uint32_t &offset,
+    const Rect &region)
+{
+    if (dst == nullptr) {
+        IMAGE_LOGE("CheckPixelsInput input dst address is null.");
+        return false;
+    }
+
+    if (bufferSize == 0) {
+        IMAGE_LOGE("CheckPixelsInput input buffer size is 0.");
+        return false;
+    }
+
+    if (region.left < 0 || region.top < 0 || static_cast<uint64_t>(offset) > bufferSize) {
+        IMAGE_LOGE("CheckPixelsInput left(%{public}d) or top(%{public}d) or offset(%{public}u) < 0.",
+            region.left, region.top, offset);
+        return false;
+    }
+    if (region.width <= 0 || region.height <= 0 || region.width > MAX_DIMENSION || region.height > MAX_DIMENSION) {
+        IMAGE_LOGE("CheckPixelsInput width(%{public}d) or height(%{public}d) is < 0.", region.width,
+            region.height);
+        return false;
+    }
+    if (region.left > GetWidth() - region.width) {
+        IMAGE_LOGE("CheckPixelsInput left(%{public}d) + width(%{public}d) is > PixelYuv width(%{public}d).",
+            region.left, region.width, GetWidth());
+        return false;
+    }
+    if (region.top > GetHeight() - region.height) {
+        IMAGE_LOGE("CheckPixelsInput top(%{public}d) + height(%{public}d) is > PixelYuv height(%{public}d).",
+            region.top, region.height, GetHeight());
+        return false;
+    }
+
+    if (static_cast<uint64_t>(offset) > (bufferSize - NUM_3)) {
+        IMAGE_LOGE(
+            "CheckPixelsInput fail, height(%{public}d), width(%{public}d) "
+            "offset(%{public}u), bufferSize:%{public}llu.",
+            region.height, region.width, offset,
+            static_cast<unsigned long long>(bufferSize));
+        return false;
+    }
+    return true;
+}
+
+bool PixelYuv::YUVCrop(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels, const Rect &rect,
+    const PixelFormat &srcFormat)
+{
+    switch (srcFormat) {
+        case PixelFormat::YV12:
+            CropYU12(srcPixels, size, dstPixels, rect);
+            break;
+        case PixelFormat::YU12:
+            CropYU12(srcPixels, size, dstPixels, rect);
+            break;
+        case PixelFormat::NV21:
+            CropNV21(srcPixels, size, dstPixels, rect);
+            break;
+        case PixelFormat::NV12:
+            CropNV21(srcPixels, size, dstPixels, rect);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+bool PixelYuv::CropYU12(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels, Rect rect)
+{
+    rect.top = GetUVStride(rect.top);
+    for (int i = 0; i < size.height; i++) {
+        if (memcpy_s(dstPixels + i * rect.width, rect.width,
+            srcPixels + (rect.top + i) * size.width + rect.left, rect.width) != 0) {
+            IMAGE_LOGE("CropYU12 memcpy yplane failed");
+            return false;
+        }
+    }
+    for (int i = 0; i < GetUVHeight(rect.height); i++) {
+        if (memcpy_s(dstPixels + GetYSize(rect.width, rect.height) + i * GetUStride(rect.width),
+            GetUStride(rect.width), srcPixels + GetYSize(size.width, size.height) + (rect.top / NUM_2 + i) *
+            GetUStride(size.width) + rect.left / NUM_2, GetUStride(rect.width)) != 0 ||
+            memcpy_s(dstPixels + GetVOffset(rect.width, rect.height) +
+            i * GetUStride(rect.width), GetUStride(rect.width), srcPixels + GetVOffset(size.width, size.height) +
+            ((rect.top / NUM_2) + i) * GetUStride(size.width) + rect.left / NUM_2, GetUStride(rect.width)) != 0) {
+            IMAGE_LOGE("CropYU12 memcpy uplane or vplane failed");
+            return false;
+            }
+    }
+    return true;
+}
+
+void PixelYuv::SwapUV(uint8_t *dstPixels, int32_t width, int32_t heigth)
+{
+    uint8_t *uvData = dstPixels + GetYSize(width, heigth);
+    for (int32_t i = 0; i < GetUVStride(width) * GetUVHeight(heigth); i += NUM_2) {
+        std::swap(uvData[i], uvData[i + 1]);
+    }
+}
+
+bool PixelYuv::CropNV21(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels, Rect rect)
+{
+    rect.top = GetUVStride(rect.top);
+    for (int32_t i = 0; i < rect.height; i++) {
+        if (memcpy_s(dstPixels + i * rect.width, rect.width,
+            srcPixels + (rect.top + i) * size.width + rect.left, rect.width) != 0) {
+            IMAGE_LOGE("CropNV21 memcpy yplane failed");
+            return false;
+        }
+    }
+    const uint8_t *line = srcPixels + GetYSize(size.width, size.height) + rect.left;
+    for (int32_t i = 0; i < GetUVHeight(rect.height); ++i) {
+        if (memcpy_s(dstPixels + GetYSize(rect.width, rect.height) + i * GetUVStride(rect.width),
+            GetUVStride(rect.width),
+            line + ((rect.top / NUM_2) + i) * GetUVStride(size.width),
+            GetUVStride(rect.width)) != 0) {
+            IMAGE_LOGE("CropNV21 memcpy uvplane failed");
+            return false;
+        }
+    }
+    if (rect.width == rect.height) {
+        SwapUV(dstPixels, rect.width, rect.height);
+    }
+    return true;
+}
+
+#ifdef LIBYUV_ENABLE
+static bool YUVRotateConvert(Size &size, int32_t degrees, int32_t &dstWidth, int32_t &dstHeight,
+    libyuv::RotationMode &rotateNum)
+{
+    switch (degrees) {
+        case 0:
+            return true;
+        case degrees90:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            rotateNum = libyuv::RotationMode::kRotate90;
+            break;
+        case degrees180:
+            rotateNum = libyuv::RotationMode::kRotate180;
+            break;
+        case degrees270:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            rotateNum = libyuv::RotationMode::kRotate270;
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+bool PixelYuv::NV21Rotate(const uint8_t *src, uint8_t *dstData, PixelSize &size,
+    uint8_t *dstPixels, libyuv::RotationMode &rotateNum)
+{
+    if (libyuv::NV12ToI420Rotate(src, size.srcW, src + GetYSize(size.srcW, size.srcH),
+            GetUVStride(size.srcW), dstData, size.dstW,
+            dstData + GetVOffset(size.dstW, size.dstH),
+            GetUStride(size.dstW), dstData + GetYSize(size.dstW, size.dstH),
+            GetUStride(size.dstW), size.srcW, size.srcH, rotateNum) == -1) {
+        IMAGE_LOGE("NV21 to I420 rotate failed");
+        return false;
+    }
+    if (libyuv::I420ToNV21(dstData, size.dstW, dstData + GetYSize(size.dstW, size.dstH), GetUStride(size.dstW),
+            dstData + GetVOffset(size.dstW, size.dstH), GetUStride(size.dstW),
+            dstPixels, size.dstW, dstPixels + GetYSize(size.dstW, size.dstH),
+            GetUVStride(size.dstW), size.dstW, size.dstH) == -1) {
+        IMAGE_LOGE("I420 to NV21 failed");
+        return false;
+    }
+    return true;
+}
+
+bool PixelYuv::NV12Rotate(const uint8_t *src, uint8_t *dstData, PixelSize &size,
+    uint8_t *dstPixels, libyuv::RotationMode &rotateNum)
+{
+    if (libyuv::NV12ToI420Rotate(src, size.srcW, src + GetYSize(size.srcW, size.srcH),
+            GetUVStride(size.srcW), dstData, size.dstW,
+            dstData + GetYSize(size.dstW, size.dstH), GetUStride(size.dstW),
+            dstData + GetVOffset(size.dstW, size.dstH), GetUStride(size.dstW),
+            size.srcW, size.srcH, rotateNum) == -1) {
+        IMAGE_LOGE("NV12 to I420 rotate failed");
+        return false;
+    }
+    if (libyuv::I420ToNV12(dstData, size.dstW, dstData + GetYSize(size.dstW, size.dstH),
+            GetUStride(size.dstW), dstData + GetVOffset(size.dstW, size.dstH),
+            GetUStride(size.dstW), dstPixels, size.dstW, dstPixels + GetYSize(size.dstW, size.dstH),
+            GetUVStride(size.dstW), size.dstW, size.dstH) == -1) {
+        IMAGE_LOGE("I420 to NV21 failed");
+        return false;
+    }
+    return true;
+}
+
+bool PixelYuv::I420Rotate(const uint8_t *src, PixelSize &size, uint8_t *dstPixels, libyuv::RotationMode &rotateNum)
+{
+    if (libyuv::I420Rotate(src, size.srcW, src + GetYSize(size.srcW, size.srcH),
+            GetUStride(size.srcW), src + GetVOffset(size.srcW, size.srcH),
+            GetUStride(size.srcW), dstPixels, size.dstW, dstPixels + GetYSize(size.dstW, size.dstH),
+            GetUStride(size.dstW), dstPixels + GetVOffset(size.dstW, size.dstH),
+            GetUStride(size.dstW), size.srcW, size.srcH, rotateNum) == -1) {
+            IMAGE_LOGE("I420 rotate failed");
+        return false;
+    }
+    return true;
+}
+
+bool PixelYuv::YUVRotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int32_t degrees,
+    const PixelFormat &format)
+{
+    libyuv::RotationMode rotateNum = libyuv::RotationMode::kRotate0;
+    int32_t dstWidth = size.width;
+    int32_t dstHeight = size.height;
+    if (YUVRotateConvert(size, degrees, dstWidth, dstHeight, rotateNum)) {
+        IMAGE_LOGI("Rotate degress is 0, don't need rotate");
+        return true;
+    }
+    MemoryData memoryData = {nullptr, GetImageSize(dstWidth, dstHeight), "YUVRotate ImageData", {dstWidth, dstHeight}};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("translate CreateMemory failed");
+        return false;
+    }
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (allocatorType_ == AllocatorType::DMA_ALLOC) {
+        if (m->extend.data == nullptr) {
+            IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
+        }
+    }
+#endif
+    uint8_t *dstData = reinterpret_cast<uint8_t *>(m->data.data);
+    PixelSize pixelSize = {size.width, size.height, dstWidth, dstHeight};
+    switch (format) {
+        case PixelFormat::NV21:
+            if (!NV21Rotate(srcPixels, dstData, pixelSize, dstPixels, rotateNum)) {
+                m->Release();
+                return false;
+            }
+        case PixelFormat::NV12:
+            if (!NV12Rotate(srcPixels, dstData, pixelSize, dstPixels, rotateNum)) {
+                m->Release();
+                return false;
+            }
+        case PixelFormat::YV12:
+        case PixelFormat::YU12:
+            if (!I420Rotate(srcPixels, pixelSize, dstPixels, rotateNum)) {
+                m->Release();
+                return false;
+            }
+        default:
+            return false;
+    }
+    size.width = dstWidth;
+    size.height = dstHeight;
+    return true;
+}
+#else
+
+bool PixelYuv::YUVRotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int32_t degrees,
+    const PixelFormat &format)
+{
+    if (degrees < 0) {
+        degrees = degrees360 + degrees;
+    }
+    switch (format) {
+        case PixelFormat::YU12:
+        case PixelFormat::YV12:
+            if (!YV12Rotate(srcPixels, size, dstPixels, degrees)) {
+                return false;
+            }
+            return true;
+        case PixelFormat::NV21:
+            NV21ToI420(srcPixels, size, dstPixels);
+            break;
+        case PixelFormat::NV12:
+            NV12ToI420(srcPixels, size, dstPixels);
+            break;
+        default:
+            return false;
+    }
+    size_t count = GetImageSize(size.width, size.height);
+    if (count == 0 || count > PIXEL_YUV_MAX_RAM_SIZE) {
+        IMAGE_LOGE("YUVRotate parameter count:[%{public}zu] error.", count);
+        return false;
+    }
+    std::unique_ptr<uint8_t[]> src = std::make_unique<uint8_t[]>(count);
+    if (!YV12Rotate(dstPixels, size, src.get(), degrees)) {
+        return false;
+    }
+    switch (format) {
+        case PixelFormat::NV21:
+            I420ToNV21(src.get(), dstPixels, size.width, size.height);
+            return true;
+        case PixelFormat::NV12:
+            I420ToNV12(src.get(), dstPixels, size.width, size.height);
+            return true;
+        case PixelFormat::YV12:
+        case PixelFormat::YU12:
+            return true;
+        default:
+            return false;
+    }
+}
+#endif
+
+bool PixelYuv::I420AndYV12Transfers(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height)
+{
+    uint32_t ySize = GetYSize(width, height);
+    uint32_t uvDataSize = GetUStride(width) * GetUVHeight(height);
+    if (memcpy_s(dst, ySize, src, ySize) != EOK ||
+        memcpy_s(dst + ySize, uvDataSize, src + ySize + uvDataSize, uvDataSize) != EOK ||
+        memcpy_s(dst + ySize + uvDataSize, uvDataSize, src + ySize, uvDataSize) != EOK) {
+        IMAGE_LOGE("I420AndYV12Transfers memcpy failed");
+        return false;
+    }
+    return true;
+}
+
+uint8_t PixelYuv::GetYUV420Y(uint32_t x, uint32_t y, int32_t width, const uint8_t *in)
+{
+    return *(in + y * width + x);
+}
+
+uint8_t PixelYuv::GetYUV420U(uint32_t x, uint32_t y, int32_t width, int32_t height, PixelFormat format,
+                             const uint8_t *in)
+{
+    switch (format) {
+        case PixelFormat::NV21:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + GetYSize(width, height) + (y / NUM_2) * (width - 1) + (x & ~1) + 1);
+            }
+            return *(in + GetYSize(width, height) + (y / NUM_2) * width + (x & ~1) + 1);
+        case PixelFormat::NV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + GetYSize(width, height) + (y / NUM_2) * (width - 1) + (x & ~1));
+            }
+            return *(in + GetYSize(width, height) + (y / NUM_2) * width + (x & ~1));
+        case PixelFormat::YU12:
+            if (width & 1) {
+                return *(in + y / NUM_2 + GetYSize(width, height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + GetYSize(width, height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        case PixelFormat::YV12:
+            if (width & 1) {
+                return *(in + height / NUM_2 + y / NUM_2 + GetYSize(width, height) +
+                            (width / NUM_2) * (height / NUM_2) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + GetYSize(width, height) + (width / NUM_2) * (height / NUM_2) +
+                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        default:
+            break;
+    }
+    return SUCCESS;
+}
+
+uint8_t PixelYuv::GetYUV420V(uint32_t x, uint32_t y, int32_t width, int32_t height, PixelFormat format,
+    const uint8_t *in)
+{
+    switch (format) {
+        case PixelFormat::NV21:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + GetYSize(width, height) + (y / NUM_2) * (width - 1) + (x & ~1));
+            }
+            return *(in + GetYSize(width, height) + (y / NUM_2) * width + (x & ~1));
+        case PixelFormat::NV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 * NUM_2 + GetYSize(width, height) + (y / NUM_2) * (width - 1) + (x & ~1) + 1);
+            }
+            return *(in + GetYSize(width, height) + (y / NUM_2) * width + (x & ~1) + 1);
+        case PixelFormat::YU12:
+            if (width & 1) {
+                return *(in + height / NUM_2 + y / NUM_2 + GetYSize(width, height) +
+                            (width / NUM_2) * (height / NUM_2) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + GetYSize(width, height) + (width / NUM_2) * (height / NUM_2) +
+                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            break;
+        case PixelFormat::YV12:
+            if (width & 1) {
+                return *(in + y / NUM_2 + GetYSize(width, height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+            }
+            return *(in + GetYSize(width, height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
+        default:
+            break;
+    }
+    return SUCCESS;
+}
+
+void PixelYuv::SetRowDataSizeForImageInfo(ImageInfo info)
+{
+    rowDataSize_ = info.size.width * NUM_3 / NUM_2;
+    return;
+}
+
+void PixelYuv::YUV420PTranslate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, float xAxis, float yAxis,
+    bool isI420)
+{
+    int32_t dstWidth = size.width;
+    int32_t dstHeight = size.height;
+    const uint8_t *srcU;
+    const uint8_t *srcV;
+    uint8_t *dstU;
+    uint8_t *dstV;
+    if (isI420) {
+        srcU = srcPixels + GetYSize(size.width, size.height);
+        srcV = srcPixels + GetVOffset(size.width, size.height);
+        dstU = dstPixels + GetYSize(dstWidth, dstHeight);
+        dstV = dstPixels + GetVOffset(dstWidth, dstHeight);
+    } else {
+        srcV = srcPixels + GetYSize(size.width, size.height);
+        srcU = srcPixels + GetVOffset(size.width, size.height);
+        dstV = dstPixels + GetYSize(dstWidth, dstHeight);
+        dstU = dstPixels + GetVOffset(dstWidth, dstHeight);
+    }
+
+    for (int32_t y = 0; y < size.height; y++) {
+        for (int32_t x = 0; x < size.width; x++) {
+            int32_t newX = x + xAxis;
+            int32_t newY = y + yAxis;
+            if (newX >= 0 && newY >= 0 && newX < size.width && newY < size.height) {
+                *(dstPixels + newY * dstWidth + newX) = *(srcPixels + y * size.width + x);
+            }
+        }
+    }
+
+    for (int32_t y = 0; y < GetUVHeight(size.height); y++) {
+        for (int32_t x = 0; x < GetUStride(size.width); x++) {
+            int32_t newX = x + xAxis / NUM_2;
+            int32_t newY = y + yAxis / NUM_2;
+            if (newX >= 0 && newY >= 0 && newX < size.width / NUM_2 && newY < size.height / NUM_2) {
+                *(dstU + newY * GetUStride(dstWidth) + newX) = *(srcU + y * GetUStride(size.width) + x);
+                *(dstV + newY * GetUStride(dstWidth) + newX) = *(srcV + y * GetUStride(size.width) + x);
+            }
+        }
+    }
+}
+
+void PixelYuv::YUV420SPTranslate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, float xAxis, float yAxis)
+{
+    int32_t dstWidth = size.width;
+    int32_t dstHeight = size.height;
+
+    const uint8_t *srcUV = srcPixels + GetYSize(size.width, size.height);
+    uint8_t *dstUV = dstPixels + GetYSize(dstWidth, dstHeight);
+
+    for (int32_t y = 0; y < size.height; y++) {
+        for (int32_t x = 0; x < size.width; x++) {
+            int32_t newX = x + xAxis;
+            int32_t newY = y + yAxis;
+            if (newX >= 0 && newY >= 0 && newX < size.width && newY < size.height) {
+                *(dstPixels + newY * dstWidth + newX) = *(srcPixels + y * size.width + x);
+            }
+        }
+    }
+
+    for (int32_t y = 0; y < GetUVHeight(size.height); y++) {
+        for (int32_t x = 0; x < GetUStride(size.width); x++) {
+            int32_t newX = x + xAxis / NUM_2;
+            int32_t newY = y + yAxis / NUM_2;
+            if (newX >= 0 && newX < size.width / NUM_2 && newY >= 0 && newY < size.height / NUM_2) {
+                *(dstUV + (newY * dstWidth + newX * NUM_2)) = *(srcUV + (y * size.width + x * NUM_2));
+                *(dstUV + (newY * dstWidth + newX * NUM_2) + 1) = *(srcUV + (y * size.width + x * NUM_2) + 1);
+            }
+        }
+    }
+}
+
+void PixelYuv::YUV420PReadPixel(const uint8_t *srcPixels, Size &size, const Position &pos, uint32_t &dst, bool isI420)
+{
+    const uint8_t *srcU;
+    const uint8_t *srcV;
+
+    if (isI420) {
+        srcU = srcPixels + GetYSize(size.width, size.height);
+        srcV = srcPixels + GetVOffset(size.width, size.height);
+    } else {
+        srcV = srcPixels + GetYSize(size.width, size.height);
+        srcU = srcPixels + GetVOffset(size.width, size.height);
+    }
+
+    uint8_t colorY = *(srcPixels + (pos.y * size.width + pos.x));
+    uint8_t colorU = *(srcU + ((pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2));
+    uint8_t colorV = *(srcV + ((pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2));
+
+    uint32_t YUVcolor = (colorY << Y_SHIFT) | (colorU << U_SHIFT) | (colorV << V_SHIFT);
+    dst = YUVcolor;
+}
+
+void PixelYuv::YUV420SPReadPixel(const uint8_t *srcPixels, Size &size, const Position &pos, uint32_t &dst, bool isNV12)
+{
+    const uint8_t *srcUV = srcPixels + GetYSize(size.width, size.height);
+    uint8_t colorY = *(srcPixels + (pos.y * size.width + pos.x));
+    uint8_t colorU = 0;
+    uint8_t colorV = 0;
+
+    if (isNV12) {
+        colorU = *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2);
+        colorV = *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2 + 1);
+    } else {
+        colorV = *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2);
+        colorU = *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2 + 1);
+    }
+
+    uint32_t YUVcolor = (colorY << Y_SHIFT) | (colorU << U_SHIFT) | (colorV << V_SHIFT);
+    dst = YUVcolor;
+}
+
+void PixelYuv::YUV420PWritePixel(uint8_t *srcPixels, Size &size, const Position &pos,
+                                 const uint32_t &color, bool isI420)
+{
+    uint8_t *srcU;
+    uint8_t *srcV;
+
+    uint8_t colorY = (color >> Y_SHIFT) & YUV_MASK;
+    uint8_t colorU = (color >> U_SHIFT) & YUV_MASK;
+    uint8_t colorV = (color >> V_SHIFT) & YUV_MASK;
+
+    if (isI420) {
+        srcU = srcPixels + GetYSize(size.width, size.height);
+        srcV = srcPixels + GetVOffset(size.width, size.height);
+    } else {
+        srcV = srcPixels + GetYSize(size.width, size.height);
+        srcU = srcPixels + GetVOffset(size.width, size.height);
+    }
+
+    *(srcPixels + (pos.y * size.width + pos.x)) = colorY;
+    *(srcU + ((pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2)) = colorU;
+    *(srcV + ((pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2)) = colorV;
+}
+
+void PixelYuv::YUV420SPWritePixel(uint8_t *srcPixels, Size &size, const Position &pos,
+                                  const uint32_t &color, bool isNV12)
+{
+    uint8_t *srcUV = srcPixels + GetYSize(size.width, size.height);
+    uint8_t colorY = (color >> Y_SHIFT) & YUV_MASK;
+    uint8_t colorU = (color >> U_SHIFT) & YUV_MASK;
+    uint8_t colorV = (color >> V_SHIFT) & YUV_MASK;
+
+    *(srcPixels + (pos.y * size.width + pos.x)) = colorY;
+
+    if (isNV12) {
+        *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2) = colorU;
+        *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2 + 1) = colorV;
+    } else {
+        *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2) = colorV;
+        *(srcUV + (pos.y / NUM_2) * GetUStride(size.width) + pos.x / NUM_2 + 1) = colorU;
+    }
+}
+
+void PixelYuv::YUV420PWritePixels(Size &size, uint8_t *srcPixels, const uint32_t &color, bool isI420)
+{
+    uint8_t colorY = (color >> Y_SHIFT) & YUV_MASK;
+    uint8_t colorU = (color >> U_SHIFT) & YUV_MASK;
+    uint8_t colorV = (color >> V_SHIFT) & YUV_MASK;
+
+    uint8_t *srcU;
+    uint8_t *srcV;
+    if (isI420) {
+        srcU = srcPixels + GetYSize(size.width, size.height);
+        srcV = srcPixels + GetVOffset(size.width, size.height);
+    } else {
+        srcV = srcPixels + GetYSize(size.width, size.height);
+        srcU = srcPixels + GetVOffset(size.width, size.height);
+    }
+
+    for (int32_t i = 0; i < size.height; i++) {
+        for (int32_t j = 0; j < size.width; j++) {
+            *(srcPixels + i * size.width + j) = colorY;
+        }
+    }
+    for (int32_t i = 0; i < GetUVHeight(size.height); i++) {
+        for (int32_t j = 0; j < GetUStride(size.width); j++) {
+            *(srcU + i * GetUStride(size.width) + j) = colorU;
+            *(srcV + i * GetUStride(size.width) + j) = colorV;
+        }
+    }
+}
+
+void PixelYuv::YUV420SPWritePixels(Size &size, uint8_t *srcPixels, const uint32_t &color, bool isNV12)
+{
+    uint8_t colorY = (color >> Y_SHIFT) & YUV_MASK;
+    uint8_t colorU = (color >> U_SHIFT) & YUV_MASK;
+    uint8_t colorV = (color >> V_SHIFT) & YUV_MASK;
+
+    uint8_t *srcUV = srcPixels + GetYSize(size.width, size.height);
+
+    for (int32_t y = 0; y < size.height; y++) {
+        for (int32_t x = 0; x < size.width; x++) {
+            *(srcPixels + y * size.width + x) = colorY;
+        }
+    }
+
+    for (int32_t y = 0; y < size.height / NUM_2; y++) {
+        for (int32_t x = 0; x < size.width; x++) {
+            if (isNV12) {
+                *(srcUV + (y * size.width + x)) = colorU;
+                *(srcUV + (y * size.width + x) + 1) = colorV;
+            } else {
+                *(srcUV + (y * size.width + x)) = colorV;
+                *(srcUV + (y * size.width + x) + 1) = colorU;
+            }
+        }
+    }
+}
+
+void PixelYuv::WriteDataI420Convert(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels,
+                                    Position dstPos, const Size &dstSize)
+{
+    dstPos.y = GetUVStride(dstPos.y);
+    const uint8_t *srcU = srcPixels + GetYSize(size.width, size.height);
+    const uint8_t *srcV = srcPixels + GetVOffset(size.width, size.height);
+    uint8_t *dstU = dstPixels + GetYSize(dstSize.width, dstSize.height);
+    uint8_t *dstV = dstPixels + GetVOffset(dstSize.width, dstSize.height);
+    for (int32_t i = 0; i < size.height; i++) {
+        if (memcpy_s(dstPixels + (dstPos.y + i) * dstSize.width + dstPos.x, size.width,
+            srcPixels + i * size.width, size.width) != EOK) {
+            IMAGE_LOGE("WriteDataI420Convert memcpy yplane failed");
+            return;
+        }
+    }
+    for (int32_t i = 0; i < GetUVHeight(size.height); i++) {
+        if (memcpy_s(dstU + (dstPos.y / NUM_2 + i) * GetUStride(dstSize.width) + dstPos.x / NUM_2,
+            GetUStride(size.width), srcU + i * GetUStride(size.width), GetUStride(size.width)) != 0 ||
+            memcpy_s(dstV + (dstPos.y / NUM_2 + i) * GetUStride(dstSize.width) + dstPos.x / NUM_2,
+            GetUStride(size.width), srcV + i * GetUStride(size.width), GetUStride(size.width)) != 0) {
+            IMAGE_LOGE("WriteDataI420Convert memcpy uplane or vplane failed");
+            return;
+        }
+    }
+}
+
+void PixelYuv::WriteDataNV12Convert(uint8_t *srcPixels, const Size &size, uint8_t *dstPixels,
+                                    Position dstPos, const Size &dstSize)
+{
+    if (size.width == size.height) {
+        SwapUV(srcPixels, size.width, size.height);
+    }
+    dstPos.y = GetUVStride(dstPos.y);
+    for (int i = 0; i < size.height; i++) {
+        if (memcpy_s(dstPixels + (dstPos.y + i) * dstSize.width + dstPos.x, size.width,
+            srcPixels + i * size.width, size.width) != 0) {
+            IMAGE_LOGE("WriteDataNV12Convert memcpy yplane failed");
+            return;
+        }
+    }
+    for (int i = 0; i < GetUVHeight(size.height); ++i) {
+        if (memcpy_s(dstPixels + ((dstPos.y) / NUM_2 + i) * GetUVStride(dstSize.width) + dstPos.x +
+            GetYSize(dstSize.width, dstSize.height), GetUVStride(size.width),
+            srcPixels + GetYSize(size.width, size.height) + i * GetUVStride(size.width),
+            GetUVStride(size.width)) != 0) {
+            IMAGE_LOGE("WriteDataNV12Convert memcpy uplane or vplane failed");
+            return;
+        }
+    }
+}
+
+uint32_t PixelYuv::GetImageSize(int32_t width, int32_t height)
+{
+    return width * height + ((width + 1) / NUM_2) * ((height + 1) / NUM_2) * NUM_2;
+}
+
+void PixelYuv::AssignYUVDataOnType(PixelFormat format, int32_t width, int32_t height)
+{
+    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
+        yuvDataInfo_.y_width = width;
+        yuvDataInfo_.y_height = height;
+        yuvDataInfo_.y_stride = width;
+        yuvDataInfo_.u_stride = GetUStride(width);
+        yuvDataInfo_.v_stride = GetUStride(width);
+    }
+    if (format == PixelFormat::NV12 || format == PixelFormat::NV21) {
+        yuvDataInfo_.y_width = width;
+        yuvDataInfo_.y_height = height;
+        yuvDataInfo_.y_stride = width;
+        yuvDataInfo_.uv_width = GetUVStride(width);
+        yuvDataInfo_.uv_height = GetUVHeight(height);
+        yuvDataInfo_.uv_stride = GetUVStride(width);
+    }
+}
+
+bool PixelYuv::IsYuvFormat(PixelFormat format)
+{
+    return format == PixelFormat::NV21 || format == PixelFormat::NV12 ||
+        format == PixelFormat::YU12 || format == PixelFormat::YV12;
+}
+
+#ifdef IMAGE_COLORSPACE_FLAG
+static void ToImageInfo(ImageInfo &info, SkImageInfo &skInfo, bool sizeOnly = true)
+{
+    info.size.width = skInfo.width();
+    info.size.height = skInfo.height();
+    if (!sizeOnly) {
+        info.alphaType = ImageTypeConverter::ToAlphaType(skInfo.alphaType());
+        info.pixelFormat = ImageTypeConverter::ToPixelFormat(skInfo.colorType());
+    }
+}
+
+bool PixelYuv::CheckColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
+{
+    auto grName = grColorSpace.GetColorSpaceName();
+    if (grColorSpace_ != nullptr && isSameColorSpace(*grColorSpace_, grColorSpace)) {
+        if (grColorSpace_->GetColorSpaceName() != grName) {
+            InnerSetColorSpace(grColorSpace);
+            IMAGE_LOGI("applyColorSpace inner set");
+        }
+        return true;
+    }
+    return false;
+}
+
+int32_t PixelYuv::ColorSpaceBGRAToYuv(uint8_t *bgraData, SkTransYuvInfo &dst, ImageInfo &imageInfo,
+    PixelFormat &format, const OHOS::ColorManager::ColorSpace &grColorSpace)
+{
+    int32_t dstWidth = dst.info.width();
+    int32_t dstHeight = dst.info.height();
+    uint32_t pictureSize = GetImageSize(dstWidth, dstHeight);
+    MemoryData memoryYUVData = {nullptr, pictureSize, "Trans ImageData", {dstWidth, dstHeight}};
+    auto YUVMemory = MemoryManager::CreateMemory(allocatorType_, memoryYUVData);
+    if (YUVMemory == nullptr) {
+        YUVMemory->Release();
+        IMAGE_LOGE("applyColorSpace CreateYUVMemory failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+    if (!BGRAToYUV420(bgraData, reinterpret_cast<uint8_t *>(YUVMemory->data.data),
+        dstWidth, dstHeight, format)) {
+            return ERR_IMAGE_COLOR_CONVERT;
+        }
+    imageInfo.pixelFormat = format;
+    dst.info = ToSkImageInfo(imageInfo, grColorSpace.ToSkColorSpace());
+    ToImageInfo(imageInfo, dst.info);
+    auto grName = grColorSpace.GetColorSpaceName();
+    grColorSpace_ = std::make_shared<OHOS::ColorManager::ColorSpace>(dst.info.refColorSpace(), grName);
+    SetPixelsAddr(reinterpret_cast<void *>(YUVMemory->data.data), nullptr, pictureSize, YUVMemory->GetType(), nullptr);
+    return SUCCESS;
+}
+
+uint32_t PixelYuv::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
+{
+    if (CheckColorSpace(grColorSpace)) {
+        return SUCCESS;
+    }
+    PixelFormat format = imageInfo_.pixelFormat;
+    imageInfo_.pixelFormat = PixelFormat::BGRA_8888;
+    SkTransYuvInfo src;
+    src.info = ToSkImageInfo(imageInfo_, ToSkColorSpace(this));
+    uint64_t rowStride = src.info.minRowBytes();
+    uint8_t *srcData = data_;
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (GetAllocatorType() == AllocatorType::DMA_ALLOC && GetFd() != nullptr) {
+        SurfaceBuffer *sbBuffer = reinterpret_cast<SurfaceBuffer *>(GetFd());
+        rowStride = sbBuffer->GetStride();
+    }
+    srcData = static_cast<uint8_t *>(GetWritablePixels());
+#endif
+
+    int32_t width = imageInfo_.size.width;
+    int32_t height = imageInfo_.size.height;
+    std::unique_ptr<uint8_t[]> RGBAdata = std::make_unique<uint8_t[]>(width * height * NUM_4);
+    YUV420ToBGRA(srcData, RGBAdata.get(), width, height, format);
+    src.bitmap.installPixels(src.info, RGBAdata.get(), rowStride);
+    // Build sk target infomation
+    SkTransYuvInfo dst;
+    dst.info = ToSkImageInfo(imageInfo_, grColorSpace.ToSkColorSpace());
+    MemoryData memoryData = {nullptr, width * height * NUM_4, "ApplyColorSpace ImageData",
+        {dst.info.width(), dst.info.height()}};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("applyColorSpace CreateMemory failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+    // Transfor pixels by readPixels
+    if (!src.bitmap.readPixels(dst.info, m->data.data, rowStride, 0, 0)) {
+        m->Release();
+        IMAGE_LOGE("ReadPixels failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+
+    uint8_t *bgraData = reinterpret_cast<uint8_t *>(m->data.data);
+    if (ColorSpaceBGRAToYuv(bgraData, dst, imageInfo_, format, grColorSpace) != SUCCESS) {
+        m->Release();
+        IMAGE_LOGE("ColorSpaceBGRAToYuv failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+    SetImageInfo(imageInfo_, true);
+    return SUCCESS;
+}
+#endif
+
+#ifdef LIBYUV_ENABLE
+bool PixelYuv::BGRAToYUV420(const uint8_t *src, uint8_t *dst, int srcW, int srcH, PixelFormat pixelFormat)
+{
+    uint32_t pictureSize = GetImageSize(srcW, srcH);
+    std::unique_ptr<uint8_t[]> temp = std::make_unique<uint8_t[]>(pictureSize);
+    libyuv::ARGBToI420(src, srcW * NUM_4, temp.get(), srcW, temp.get() + GetYSize(srcW, srcH), GetUStride(srcW),
+                      temp.get() + GetVOffset(srcW, srcH), GetUStride(srcW), srcW, srcH);
+    int32_t r = 0;
+    switch (pixelFormat) {
+        case PixelFormat::NV12:
+            r = libyuv::I420ToNV12(temp.get(), srcW, temp.get() + GetYSize(srcW, srcH), GetUStride(srcW),
+                    temp.get() + GetVOffset(srcW, srcH), GetUStride(srcW), dst, srcW,
+                    dst + GetYSize(srcW, srcH), GetUVStride(srcW), srcW, srcH);
+            break;
+        case PixelFormat::NV21:
+            r = libyuv::I420ToNV21(temp.get(), srcW, temp.get() + GetYSize(srcW, srcH), GetUStride(srcW),
+                    temp.get() + GetVOffset(srcW, srcH), GetUStride(srcW), dst, srcW,
+                    dst + GetYSize(srcW, srcH), GetUVStride(srcW), srcW, srcH);
+            break;
+        default:
+            break;
+    }
+    return r == 0;
+}
+
+bool PixelYuv::YUV420ToBGRA(const uint8_t *sample, uint8_t *dst_argb, int width, int height, PixelFormat pixelFormat)
+{
+    int alignedSrcW = (width + 1) & ~1;
+    const uint8_t *src = nullptr;
+    const uint8_t *src_uv = nullptr;
+    const uint32_t dstStrideARGB = width * NUM_4;
+    switch (pixelFormat) {
+        case PixelFormat::NV12:
+            src = sample;
+            src_uv = sample + alignedSrcW * height;
+            return 0 == libyuv::NV12ToARGB(src, width, src_uv, alignedSrcW, dst_argb, dstStrideARGB, width, height);
+        case PixelFormat::NV21:
+            src = sample;
+            src_uv = sample + alignedSrcW * height;
+            return 0 == libyuv::NV21ToARGB(src, width, src_uv, alignedSrcW, dst_argb, dstStrideARGB, width, height);
+        default:
+            break;
+    }
+    return false;
+}
+
+bool PixelYuv::YUV420ToARGB(const uint8_t *sample, uint8_t *dst_argb, int width, int height, PixelFormat pixelFormat)
+{
+    std::unique_ptr<uint8_t[]> temp = std::make_unique<uint8_t[]>(width * height * NUM_4);
+    int32_t r = YUV420ToBGRA(sample, temp.get(), width, height, pixelFormat);
+    if (r != 0) {
+        return false;
+    }
+    return 0 == libyuv::ARGBToBGRA(temp.get(), width * NUM_4, dst_argb, width * NUM_4, width, height);
+}
+
+#else
+
+bool PixelYuv::NV12ToI420(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels)
+{
+    if (srcPixels == nullptr || dstPixels == nullptr || size.width <= 0 || size.height <= 0) {
+        IMAGE_LOGE("NV12ToI420 param error!");
+        return false;
+    }
+    const uint8_t *srcUV = srcPixels + GetYSize(size.width, size.height);
+    uint8_t *destU = dstPixels + GetYSize(size.width, size.height);
+    uint8_t *destV = dstPixels + GetVOffset(size.width, size.height);
+    if (memcpy_s(dstPixels, GetYSize(size.width, size.height), srcPixels, GetYSize(size.width, size.height)) != 0) {
+        IMAGE_LOGE("NV12ToI420 memcpy failed");
+        return false;
+    }
+    for (int32_t i = 0; i < GetUStride(size.width) * GetUVHeight(size.height); i++) {
+        destU[i] = srcUV[i * NUM_2];
+        destV[i] = srcUV[i * NUM_2 + 1];
+    }
+    return true;
+}
+
+bool PixelYuv::NV21ToI420(const uint8_t *srcPixels, const Size &size, uint8_t *dstPixels)
+{
+    if (srcPixels == nullptr || dstPixels == nullptr || size.width <= 0 || size.height <= 0) {
+        IMAGE_LOGE("NV12ToI420 param error!");
+        return false;
+    }
+    const uint8_t *srcUV = srcPixels + GetYSize(size.width, size.height);
+    uint8_t *destV = dstPixels + GetYSize(size.width, size.height);
+    uint8_t *destU = dstPixels + GetVOffset(size.width, size.height);
+    if (memcpy_s(dstPixels, GetYSize(size.width, size.height), srcPixels, GetYSize(size.width, size.height)) != 0) {
+        IMAGE_LOGE("NV21ToI420 memcpy failed");
+        return false;
+    }
+    for (int32_t i = 0; i < GetUStride(size.width) * GetUVHeight(size.height); i++) {
+        destU[i] = srcUV[i * NUM_2];
+        destV[i] = srcUV[i * NUM_2 + 1];
+    }
+    return true;
+}
+
+bool PixelYuv::I420ToNV12(const uint8_t *srcPixels, uint8_t *dstPixels, int32_t width, int32_t height)
+{
+    int32_t halfWidth = GetUStride(width);
+    int32_t halfHeight = GetUVHeight(height);
+    const uint8_t *srcV = srcPixels + GetVOffset(width, height);
+    const uint8_t *srcU = srcPixels + GetYSize(width, height);
+    uint8_t *dstUV = dstPixels + GetYSize(width, height);
+    int32_t dstStrideUV = GetUVStride(width);
+    // Negative height means invert the image.
+    if (memcpy_s(dstPixels, GetYSize(width, height), srcPixels, GetYSize(width, height)) != 0) {
+        IMAGE_LOGE("I420ToNV12 memcpy failed");
+        return false;
+    }
+    MergeUVPlane(srcU, halfWidth, srcV, halfWidth, dstUV, dstStrideUV, halfWidth, halfHeight);
+    return true;
+}
+
+bool PixelYuv::I420ToNV21(const uint8_t *srcPixels, uint8_t *dstPixels, int32_t width, int32_t height)
+{
+    int32_t halfWidth = GetUStride(width);
+    int32_t halfHeight = GetUVHeight(height);
+    const uint8_t *srcU = srcPixels + GetVOffset(width, height);
+    const uint8_t *srcV = srcPixels + GetYSize(width, height);
+    uint8_t *dstUV = dstPixels + GetYSize(width, height);
+    int32_t dstStrideUV = GetUVStride(width);
+    if (memcpy_s(dstPixels, GetYSize(width, height), srcPixels, GetYSize(width, height)) != 0) {
+        IMAGE_LOGE("I420ToNV21 memcpy failed");
+        return false;
+    }
+    MergeUVPlane(srcU, halfWidth, srcV, halfWidth, dstUV, dstStrideUV,
+        halfWidth, halfHeight);
+    return true;
+}
+
+static bool YUVRotateConvert(Size &size, int32_t degrees, int32_t &dstWidth, int32_t &dstHeight)
+{
+    switch (degrees) {
+        case 0:
+            return true;
+        case degrees90:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            break;
+        case degrees180:
+            break;
+        case degrees270:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            break;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool PixelYuv::YV12Rotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int32_t degrees)
+{
+    int32_t dstWidth = size.width;
+    int32_t dstHeight = size.height;
+    if (degrees < 0) {
+        degrees += degrees360;
+    }
+    if (YUVRotateConvert(size, degrees, dstWidth, dstHeight)) {
+        IMAGE_LOGI("Rotate degress is 0, don't need rotate");
+        return true;
+    }
+    const uint8_t *srcU = srcPixels + GetYSize(size.width, size.height);
+    const uint8_t *srcV = srcPixels + GetVOffset(size.width, size.height);
+    int32_t srcStrideU = GetUStride(size.width);
+    int32_t srcStrideV = GetUStride(size.width);
+    uint8_t *dstU = dstPixels + GetYSize(dstWidth, dstHeight);
+    uint8_t *dstV = dstPixels + GetVOffset(dstWidth, dstHeight);
+    int32_t dstStrideU = GetUStride(dstWidth);
+    int32_t dstStrideV = GetUStride(dstWidth);
+    Size halfSize = {GetUStride(size.width), GetUVHeight(size.height)};
+    switch (degrees) {
+        case 0:
+            return false;
+        case degrees90:
+            RotatePlane90(srcPixels, size.width, dstPixels, dstWidth, size);
+            RotatePlane90(srcU, srcStrideU, dstU, dstStrideU, halfSize);
+            RotatePlane90(srcV, srcStrideV, dstV, dstStrideV, halfSize);
+            break;
+        case degrees180:
+            RotatePlane180(srcPixels, size.width, dstPixels, dstWidth, size);
+            RotatePlane180(srcU, srcStrideU, dstU, dstStrideU, halfSize);
+            RotatePlane180(srcV, srcStrideV, dstV, dstStrideV, halfSize);
+            break;
+        case degrees270:
+            RotatePlane270(srcPixels, size.width, dstPixels, dstWidth, size);
+            RotatePlane270(srcU, srcStrideU, dstU, dstStrideU, halfSize);
+            RotatePlane270(srcV, srcStrideV, dstV, dstStrideV, halfSize);
+            break;
+        default:
+            return false;
+    }
+    size.height = dstHeight;
+    size.width = dstWidth;
+    return true;
+}
+
+void PixelYuv::MergeUVPlane(const uint8_t *srcU, int32_t srcStrideU, const uint8_t *srcV, int32_t srcStrideV,
+    uint8_t *dstUV, int32_t dstStrideUV, int32_t width, int32_t height)
+{
+    if (width <= 0 || height == 0) {
+        return;
+    }
+    // Coalesce rows.
+    if (srcStrideU == width && srcStrideV == width && dstStrideUV == width * NUM_2) {
+        width *= height;
+        height = 1;
+        srcStrideU = srcStrideV = dstStrideUV = 0;
+    }
+
+    for (int32_t y = 0; y < height; ++y) {
+        // Merge a row of U and V into a row of UV.
+        MergeUV(srcU, srcV, dstUV, width);
+        srcU += srcStrideU;
+        srcV += srcStrideV;
+        dstUV += dstStrideUV;
+    }
+}
+
+void PixelYuv::MergeUV(const uint8_t *srcU, const uint8_t *srcV, uint8_t *dstUV, int32_t width)
+{
+    for (int32_t x = 0; x < width - 1; x += NUM_2) {
+        dstUV[0] = srcU[x];
+        dstUV[1] = srcV[x];
+        dstUV[NUM_2] = srcU[x + 1];
+        dstUV[NUM_3] = srcV[x + 1];
+        dstUV += NUM_4;
+    }
+    if (width & 1) {
+        dstUV[0] = srcU[width - 1];
+        dstUV[1] = srcV[width - 1];
+    }
+}
+
+void PixelYuv::RotatePlane270(const uint8_t *src, int32_t srcStride, uint8_t *dst, int32_t dstStride,
+    const Size &half)
+{
+    dst += dstStride * (half.width - 1);
+    dstStride = -dstStride;
+    TransposePlane(src, srcStride, dst, dstStride, half);
+}
+
+void PixelYuv::RotatePlane180(const uint8_t *src, int32_t srcStride, uint8_t *dst, int32_t dstStride,
+    const Size &half)
+{
+    // Swap top and bottom row and mirror the content. Uses a temporary row.
+    std::unique_ptr<uint8_t[]> row = std::make_unique<uint8_t[]>(half.width);
+
+    const uint8_t *src_bot = src + srcStride * (half.height - 1);
+    uint8_t *dst_bot = dst + dstStride * (half.height - 1);
+    int32_t half_height = GetUVHeight(half.height);
+    for (int32_t y = 0; y < half_height; ++y) {
+        if (memcpy_s(row.get(), half.width, src, half.width) != 0) {
+            IMAGE_LOGE("RotatePlane180 memcpy failed.");
+            return;
+        }
+        MirrorRow(src_bot, dst, half.width);
+        MirrorRow(row.get(), dst_bot, half.width);
+        src += srcStride;
+        dst += dstStride;
+        src_bot -= srcStride;
+        dst_bot -= dstStride;
+    }
+}
+
+void PixelYuv::RotatePlane90(const uint8_t *src, int32_t srcStride, uint8_t *dst, int32_t dstStride, const Size &half)
+{
+    src += srcStride * (half.height - 1);
+    srcStride = -srcStride;
+    TransposePlane(src, srcStride, dst, dstStride, half);
+}
+
+void PixelYuv::TransposePlane(const uint8_t *src, int32_t srcStride, uint8_t *dst, int32_t dstStride,
+    const Size &half)
+{
+    int32_t i = half.height;
+    while (i >= NUM_8) {
+        TransposeW8(src, srcStride, dst, dstStride, half.width);
+        src += NUM_8 * srcStride; // Go down 8 rows.
+        dst += NUM_8;             // Move over 8 columns.
+        i -= NUM_8;
+    }
+
+    if (i > 0) {
+        for (int32_t k = 0; k < half.width; ++k) {
+            for (int32_t j = 0; j < i; ++j) {
+                dst[k * dstStride + j] = src[j * srcStride + k];
+            }
+        }
+    }
+}
+
+void PixelYuv::TransposeW8(const uint8_t *src, int32_t srcStride, uint8_t *dst, int32_t dstStride, int32_t width)
+{
+    for (int32_t i = 0; i < width; ++i) {
+        dst[0] = src[0 * srcStride];
+        dst[1] = src[1 * srcStride];
+        dst[NUM_2] = src[NUM_2 * srcStride];
+        dst[NUM_3] = src[NUM_3 * srcStride];
+        dst[NUM_4] = src[NUM_4 * srcStride];
+        dst[NUM_5] = src[NUM_5 * srcStride];
+        dst[NUM_6] = src[NUM_6 * srcStride];
+        dst[NUM_7] = src[NUM_7 * srcStride];
+        ++src;
+        dst += dstStride;
+    }
+}
+
+void PixelYuv::MirrorRow(const uint8_t *src, uint8_t *dst, int32_t width)
+{
+    src += width - 1;
+    for (int x = 0; x < width - 1; x += NUM_2) {
+        dst[x] = src[0];
+        dst[x + 1] = src[-1];
+        src -= NUM_2;
+    }
+    if (width & 1) {
+        dst[width - 1] = src[0];
+    }
+}
+
+bool PixelYuv::BGRAToYUV420(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat pixelFormat)
+{
+    uint32_t pictureSize = GetImageSize(width, height);
+    if (pictureSize == 0 || pictureSize > PIXEL_YUV_MAX_RAM_SIZE) {
+        IMAGE_LOGE("BGRAToYUV420 parameter pictureSize:[%{public}u] error.", pictureSize);
+        return false;
+    }
+    std::unique_ptr<uint8_t[]> temp = std::make_unique<uint8_t[]>(pictureSize);
+    bool result = BGRAToI420(src, temp.get(), width, height);
+    if (!result) {
+        return false;
+    }
+    switch (pixelFormat) {
+        case PixelFormat::NV12:
+            I420ToNV12(temp.get(), dst, width, height);
+            break;
+        case PixelFormat::NV21:
+            I420ToNV21(temp.get(), dst, width, height);
+            break;
+        case PixelFormat::YU12:
+            if (memcpy_s(dst, pictureSize, temp.get(), pictureSize) != 0) {
+                IMAGE_LOGE("BGRAToYUV420 to YU12 memcpy failed.");
+                return false;
+            }
+            return true;
+        case PixelFormat::YV12:
+            I420AndYV12Transfers(temp.get(), dst, width, height);
+            break;
+        default:
+            break;
+    }
+    return true;
+}
+
+bool PixelYuv::YUV420ToBGRA(const uint8_t *in, uint8_t *out, int32_t width, int32_t height, PixelFormat pixelFormat)
+{
+    if (!in || !out || width <= 0 || height == 0) {
+        return false;
+    }
+    for (int32_t i = 0; i < height; i++) {
+        for (int32_t j = 0; j < width; j++) {
+            uint8_t Y = GetYUV420Y(j, i, width, in);
+            uint8_t U = GetYUV420U(j, i, width, height, pixelFormat, in);
+            uint8_t V = GetYUV420V(j, i, width, height, pixelFormat, in);
+
+            int32_t colorR = Y + YUV_TO_RGB_PARAM_1 * (V - INT_128);
+            int32_t colorG = Y - YUV_TO_RGB_PARAM_2 * (U - INT_128) - YUV_TO_RGB_PARAM_3 * (V - INT_128);
+            int32_t colorB = Y + YUV_TO_RGB_PARAM_4 * (U - INT_128);
+
+            colorR = colorR > INT_255 ? INT_255 : (colorR < 0 ? 0 : colorR);
+            colorG = colorG > INT_255 ? INT_255 : (colorG < 0 ? 0 : colorG);
+            colorB = colorB > INT_255 ? INT_255 : (colorB < 0 ? 0 : colorB);
+
+            *out++ = colorB;
+            *out++ = colorG;
+            *out++ = colorR;
+            *out++ = 0xFF;
+        }
+    }
+    return true;
+}
+
+bool PixelYuv::YUV420ToARGB(const uint8_t *in, uint8_t *out, int32_t width, int32_t height, PixelFormat pixelFormat)
+{
+    if (!in || !out || width <= 0 || height == 0) {
+        return false;
+    }
+    for (int32_t i = 0; i < height; i++) {
+        for (int32_t j = 0; j < width; j++) {
+            uint8_t Y = GetYUV420Y(j, i, width, in);
+            uint8_t U = GetYUV420U(j, i, width, height, pixelFormat, in);
+            uint8_t V = GetYUV420V(j, i, width, height, pixelFormat, in);
+
+            int32_t colorR = Y + YUV_TO_RGB_PARAM_1 * (V - INT_128);
+            int32_t colorG = Y - YUV_TO_RGB_PARAM_2 * (U - INT_128) - YUV_TO_RGB_PARAM_3 * (V - INT_128);
+            int32_t colorB = Y + YUV_TO_RGB_PARAM_4 * (U - INT_128);
+
+            colorR = colorR > INT_255 ? INT_255 : (colorR < 0 ? 0 : colorR);
+            colorG = colorG > INT_255 ? INT_255 : (colorG < 0 ? 0 : colorG);
+            colorB = colorB > INT_255 ? INT_255 : (colorB < 0 ? 0 : colorB);
+
+            *out++ = 0xFF;
+            *out++ = colorR;
+            *out++ = colorG;
+            *out++ = colorB;
+        }
+    }
+    return true;
+}
+
+int32_t PixelYuv::I420Copy(const uint8_t *srcY, int32_t srcStrideY, const uint8_t *srcU, int32_t srcStrideU,
+    const uint8_t *srcV, int32_t srcStrideV, uint8_t *dstY, int32_t dstStrideY, uint8_t *dstU,
+    int32_t dstStrideU, uint8_t *dstV, int32_t dstStrideV, int32_t width, int32_t height)
+{
+    int32_t halfwidth = GetUStride(width);
+    int32_t halfheight = GetUVHeight(height);
+    if ((!srcY && dstY) || !srcU || !srcV || !dstU || !dstV || width <= 0 || height == 0) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    // Negative height means invert the image.
+    if (height < 0) {
+        height = -height;
+        halfheight = GetUVHeight(height);
+        srcY = srcY + (height - 1) * srcStrideY;
+        srcU = srcU + (halfheight - 1) * srcStrideU;
+        srcV = srcV + (halfheight - 1) * srcStrideV;
+        srcStrideY = -srcStrideY;
+        srcStrideU = -srcStrideU;
+        srcStrideV = -srcStrideV;
+    }
+
+    if (dstY) {
+        CopyPlane(srcY, srcStrideY, dstY, dstStrideY, width, height);
+    }
+    // Copy UV planes.
+    CopyPlane(srcU, srcStrideU, dstU, dstStrideU, halfwidth, halfheight);
+    CopyPlane(srcV, srcStrideV, dstV, dstStrideV, halfwidth, halfheight);
+    return SUCCESS;
+}
+
+void PixelYuv::TranslateRGBToYUV(const uint8_t *src, uint8_t *dst, Size &size,  size_t &i, UVPos &uvPos)
+{
+    for (int x = 0; x < size.width; x += NUM_2) {
+        uint8_t b = src[NUM_4 * i];
+        uint8_t g = src[NUM_4 * i + 1];
+        uint8_t r = src[NUM_4 * i + NUM_2];
+
+        uint8_t y = dst[i++] = INT_16 + INT_219 * (RGB_TO_YUV_PARAM_1 * r + RGB_TO_YUV_PARAM_2 * g +
+            RGB_TO_YUV_PARAM_3 * b) / INT_255;
+
+        dst[uvPos.upos++] = INT_128 + INT_224 * (RGB_TO_YUV_PARAM_4 * (b - y) / RGB_TO_YUV_PARAM_5) / INT_255;
+        dst[uvPos.vpos++] = INT_128 + INT_224 * (RGB_TO_YUV_PARAM_4 * (r - y) / RGB_TO_YUV_PARAM_6) / INT_255;
+
+        if ((size.width & 1) && x == size.width - 1) {
+            // nothing to do
+        } else {
+            dst[i++] = INT_16 + INT_219 * (RGB_TO_YUV_PARAM_1 * r + RGB_TO_YUV_PARAM_2 * g +
+                RGB_TO_YUV_PARAM_3 * b) / INT_255;
+        }
+    }
+}
+
+bool PixelYuv::BGRAToI420(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height)
+{
+    if (!src || !dst || width <= 0 || height == 0) {
+        return false;
+    }
+
+    size_t i = 0;
+    Size size = {width, height};
+    UVPos uvPos;
+    uvPos.upos = GetYSize(size.width, size.height);
+    uvPos.vpos = GetVOffset(size.width, size.height);
+
+    for (int32_t line = 0; line < height; ++line) {
+        if (!(line % NUM_2)) {
+            TranslateRGBToYUV(src, dst, size, i, uvPos);
+        } else {
+            for (int32_t x = 0; x < width; x += 1) {
+                uint8_t b = src[NUM_4 * i];
+                uint8_t g = src[NUM_4 * i + 1];
+                uint8_t r = src[NUM_4 * i + NUM_2];
+
+                dst[i++] = INT_16 + INT_219 * (RGB_TO_YUV_PARAM_1 * r + RGB_TO_YUV_PARAM_2 * g +
+                    RGB_TO_YUV_PARAM_3 * b) / INT_255;
+            }
+        }
+    }
+    return true;
+}
+
+void PixelYuv::MirrorPlane(const uint8_t *srcY, int32_t srcStrideY, uint8_t *dstY, int32_t dstStrideY,
+    int32_t width, int32_t height)
+{
+    // Negative height means invert the image.
+    if (height < 0) {
+        height = -height;
+        srcY = srcY + (height - 1) * srcStrideY;
+        srcStrideY = -srcStrideY;
+    }
+
+    // Mirror plane
+    for (int32_t y = 0; y < height; ++y) {
+        MirrorRow(srcY, dstY, width);
+        srcY += srcStrideY;
+        dstY += dstStrideY;
+    }
+}
+
+void PixelYuv::MirrorUVRow(const uint8_t *srcUV, uint8_t *dstUV, int32_t width)
+{
+    srcUV += (width - 1) << 1;
+    for (int32_t x = 0; x < width; ++x) {
+        dstUV[0] = srcUV[0];
+        dstUV[1] = srcUV[1];
+        srcUV -= NUM_2;
+        dstUV += NUM_2;
+    }
+}
+
+void PixelYuv::MirrorUVPlane(const uint8_t *srcUV, int32_t srcStrideUV, uint8_t *dstUV, int32_t dstStrideUV,
+                             int32_t width, int32_t height)
+{
+    // Negative height means invert the image.
+    if (height < 0) {
+        height = -height;
+        srcUV = srcUV + (height - 1) * srcStrideUV;
+        srcStrideUV = -srcStrideUV;
+    }
+    // MirrorUV plane
+    for (int32_t y = 0; y < height; ++y) {
+        MirrorUVRow(srcUV, dstUV, width);
+        srcUV += srcStrideUV;
+        dstUV += dstStrideUV;
+    }
+}
+
+int32_t PixelYuv::I420Mirror(const uint8_t *srcY, int32_t srcStrideY, const uint8_t *srcU, int32_t srcStrideU,
+                             const uint8_t *srcV, int32_t srcStrideV, uint8_t *dstY, int32_t dstStrideY,
+                             uint8_t *dstU, int32_t dstStrideU, uint8_t *dstV, int32_t dstStrideV,
+                             int32_t width, int32_t height)
+{
+    int32_t halfwidth = GetUStride(width);
+    int32_t halfheight = GetUVHeight(height);
+
+    if (!srcY || !srcU || !srcV || !dstU || !dstV || width <= 0 || height == 0) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    // Negative height means invert the image.
+    if (height < 0) {
+        height = -height;
+        halfheight = GetUVHeight(height);
+        srcY = srcY + (height - 1) * srcStrideY;
+        srcU = srcU + (halfheight - 1) * srcStrideU;
+        srcV = srcV + (halfheight - 1) * srcStrideV;
+        srcStrideY = -srcStrideY;
+        srcStrideU = -srcStrideU;
+        srcStrideV = -srcStrideV;
+    }
+
+    if (dstY) {
+        MirrorPlane(srcY, srcStrideY, dstY, dstStrideY, width, height);
+    }
+    MirrorPlane(srcU, srcStrideU, dstU, dstStrideU, halfwidth, halfheight);
+    MirrorPlane(srcV, srcStrideV, dstV, dstStrideV, halfwidth, halfheight);
+    return SUCCESS;
+}
+
+int32_t PixelYuv::NV12Mirror(const uint8_t *srcY, int32_t srcStrideY, const uint8_t *srcUV, int32_t srcStrideUV,
+    uint8_t *dstY, int32_t dstStrideY, uint8_t *dstUV, int32_t dstStrideUV, int32_t width, int32_t height)
+{
+    int32_t halfwidth = GetUStride(width);
+    int32_t halfheight = GetUVHeight(height);
+
+    if (!srcY || !srcUV || !dstUV || width <= 0 || height == 0) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    // Negative height means invert the image.
+    if (height < 0) {
+        height = -height;
+        halfheight = GetUVHeight(height);
+        srcY = srcY + (height - 1) * srcStrideY;
+        srcUV = srcUV + (halfheight - 1) * srcStrideUV;
+        srcStrideY = -srcStrideY;
+        srcStrideUV = -srcStrideUV;
+    }
+
+    if (dstY) {
+        MirrorPlane(srcY, srcStrideY, dstY, dstStrideY, width, height);
+    }
+    MirrorUVPlane(srcUV, srcStrideUV, dstUV, dstStrideUV, halfwidth, halfheight);
+    return SUCCESS;
+}
+
+int32_t PixelYuv::NV12Copy(const uint8_t *srcY, int32_t srcStrideY, const uint8_t *srcUV, int32_t srcStrideUV,
+    uint8_t *dstY, int32_t dstStrideY, uint8_t *dstUV, int32_t dstStrideUV, int32_t width, int32_t height)
+{
+    int32_t halfwidth = GetUStride(width);
+    int32_t halfheight = GetUVHeight(height);
+
+    if (!srcY || !dstY || !srcUV || !dstUV || width <= 0 || height == 0) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    // Negative height means invert the image.
+    if (height < 0) {
+        height = -height;
+        halfheight = GetUVHeight(height);
+        srcY = srcY + (height - 1) * srcStrideY;
+        srcUV = srcUV + (halfheight - 1) * srcStrideUV;
+        srcStrideY = -srcStrideY;
+        srcStrideUV = -srcStrideUV;
+    }
+    CopyPlane(srcY, srcStrideY, dstY, dstStrideY, width, height);
+    CopyPlane(srcUV, srcStrideUV, dstUV, dstStrideUV, halfwidth * NUM_2, halfheight);
+    return SUCCESS;
+}
+
+void PixelYuv::CopyPlane(const uint8_t *srcY, int32_t srcStrideY, uint8_t *dstY, int32_t dstStrideY,
+    int32_t width, int32_t height)
+{
+    if (width <= 0 || height == 0) {
+        return;
+    }
+    // Coalesce rows.
+    if (srcStrideY == width && dstStrideY == width) {
+        width *= height;
+        height = 1;
+        srcStrideY = dstStrideY = 0;
+    }
+    // Nothing to do.
+    if (srcY == dstY && srcStrideY == dstStrideY) {
+        return;
+    }
+
+    // Copy plane
+    for (int32_t y = 0; y < height; ++y) {
+        if (memcpy_s(dstY, width, srcY, width) != 0) {
+            IMAGE_LOGE("CopyPlane memcpy failed.");
+        }
+        srcY += srcStrideY;
+        dstY += dstStrideY;
+    }
+}
+
+#endif
+} // namespace Media
+} // namespace OHOS

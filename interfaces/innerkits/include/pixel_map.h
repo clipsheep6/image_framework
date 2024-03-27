@@ -152,6 +152,8 @@ public:
     NATIVEEXPORT virtual uint8_t GetARGB32ColorR(uint32_t color);
     NATIVEEXPORT virtual uint8_t GetARGB32ColorG(uint32_t color);
     NATIVEEXPORT virtual uint8_t GetARGB32ColorB(uint32_t color);
+    NATIVEEXPORT virtual bool YUV420ToRGB888(const uint8_t *in, uint8_t *out, int32_t width, int32_t height,
+        PixelFormat pixelFormat);
     // Config the pixel map parameter
     NATIVEEXPORT virtual bool IsSameImage(const PixelMap &other);
     NATIVEEXPORT virtual uint32_t ReadPixels(const uint64_t &bufferSize, const uint32_t &offset, const uint32_t &stride,
@@ -240,7 +242,7 @@ public:
     {
         return grColorSpace_;
     }
-    NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
+    NATIVEEXPORT virtual uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----end-------
 #endif
 
@@ -293,6 +295,11 @@ private:
     static bool RGBA8888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
     static bool BGRA8888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
     static bool RGB888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
+    static uint8_t GetYUV420Y(uint32_t x, uint32_t y, int32_t width, const uint8_t *in);
+    static uint8_t GetYUV420U(uint32_t x, uint32_t y, int32_t width, int32_t height,
+                              PixelFormat format, const uint8_t *in);
+    static uint8_t GetYUV420V(uint32_t x, uint32_t y, int32_t width, int32_t height,
+                              PixelFormat format, const uint8_t *in);
     static bool CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t offset, int32_t stride,
         const InitializationOptions &opts);
     static void UpdatePixelsAlpha(const AlphaType &alphaType, const PixelFormat &pixelFormat, uint8_t *dstPixels,
@@ -323,10 +330,6 @@ private:
     bool WriteAstcRealSizeToParcel(Parcel &parcel) const;
     bool ReadAstcRealSize(Parcel &parcel, PixelMap *pixelMap);
     uint32_t SetRowDataSizeForImageInfo(ImageInfo info);
-    void SetEditable(bool editable)
-    {
-        editable_ = editable;
-    }
 
     void ResetPixelMap()
     {
@@ -363,22 +366,34 @@ private:
         const int32_t &height, const int32_t &rowDataSize, const int32_t &rowStride) const;
     static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor);
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
-    bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
 
+protected:
+    void SetEditable(bool editable)
+    {
+        editable_ = editable;
+    }
+    bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
     ImageInfo imageInfo_;
     int32_t rowDataSize_ = 0;
+    bool editable_ = false;
+    AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;
+    void *context_ = nullptr;
+    uint32_t pixelsSize_ = 0;
+    CustomFreePixelMap custFreePixelMap_ = nullptr;
+#ifdef IMAGE_COLORSPACE_FLAG
+    std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
+#else
+    std::shared_ptr<uint8_t> grColorSpace_ = nullptr;
+#endif
+
+private:
     int32_t rowStride_ = 0;
     int32_t pixelBytes_ = 0;
     TransColorProc colorProc_ = nullptr;
-    void *context_ = nullptr;
-    CustomFreePixelMap custFreePixelMap_ = nullptr;
     CustomFreePixelMap freePixelMapProc_ = nullptr;
-    AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;
-    uint32_t pixelsSize_ = 0;
-    bool editable_ = false;
     bool useSourceAsResponse_ = false;
     bool isTransformered_ = false;
     std::shared_ptr<std::mutex> transformMutex_ = std::make_shared<std::mutex>();
@@ -388,12 +403,6 @@ private:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
-
-#ifdef IMAGE_COLORSPACE_FLAG
-    std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
-#else
-    std::shared_ptr<uint8_t> grColorSpace_ = nullptr;
-#endif
 
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     std::shared_ptr<PurgeableMem::PurgeableMemBase> purgeableMemPtr_ = nullptr;
