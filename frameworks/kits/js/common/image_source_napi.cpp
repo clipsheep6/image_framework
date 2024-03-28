@@ -563,7 +563,6 @@ STATIC_COMPLETE_FUNC(GetImageInfo)
         napi_create_int32(env, static_cast<int32_t>(context->imageInfo.alphaType), &alphaTypeValue);
         napi_set_named_property(env, result, "alphaType", alphaTypeValue);
 
-        napi_value isHdr = nullptr;
         status = napi_get_boolean(env, context->imageInfo.isHdr, &result);
         if (!IMG_IS_OK(status)) {
             context->status = ERROR;
@@ -679,14 +678,16 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
     } else {
         IMAGE_LOGD("no SVGResize percentage");
     }
-
-    if (GET_UINT32_BY_NAME(root, "resolutionQuality", opts->resolutionQuality)) {
+    uint32_t resolutionQuality = 0;
+    if (GET_UINT32_BY_NAME(root, "resolutionQuality", resolutionQuality)) {
+        opts->resolutionQuality = static_cast<ResolutionQuality>(resolutionQuality);
         IMAGE_LOGD("resolutionQuality %{public}x", opts->resolutionQuality);
     } else {
         IMAGE_LOGD("no resolutionQuality");
     }
-
-    if (GET_UINT32_BY_NAME(root, "dynamicRange", opts->decodingDynamicRange)) {
+    uint32_t decodingDynamicRange = 0;
+    if (GET_UINT32_BY_NAME(root, "dynamicRange", decodingDynamicRange)) {
+        opts->decodingDynamicRange = static_cast<DynamicRange>(decodingDynamicRange);
         IMAGE_LOGD("dynamicRange %{public}x", opts->decodingDynamicRange);
     } else {
         IMAGE_LOGD("no dynamicRange");
