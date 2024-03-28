@@ -419,7 +419,7 @@ napi_value ImageSourceNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("updateData", UpdateData),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_GETTER("supportedFormats", GetSupportedFormats),
-        DECLARE_NAPI_GETTER("desiredDynamicRange", GetDesiredDynamicRange),
+        //DECLARE_NAPI_GETTER("desiredDynamicRange", GetDesiredDynamicRange),
     };
 
     napi_property_descriptor static_prop[] = {
