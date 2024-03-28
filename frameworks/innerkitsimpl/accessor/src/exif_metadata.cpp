@@ -96,7 +96,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
         ExifMnoteData *md = exif_data_get_mnote_data(exifData_);
         if (md == nullptr) {
             IMAGE_LOGD("Exif data mnote data md is nullptr");
-            return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            return SUCCESS;
         }
         if (!is_huawei_md(md)) {
             IMAGE_LOGE("Exif data returned null for key: %{public}s", key.c_str());
