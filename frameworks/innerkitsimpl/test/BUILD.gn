@@ -643,6 +643,7 @@ ohos_unittest("pngtest") {
 
   include_dirs = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/mock",
+    "$image_subsystem/plugins/manager/include/pluginbase",
     "//foundation/multimedia/utils/include",
     "//foundation/graphic/graphic_2d/utils/color_manager/export",
     "//third_party/googletest/googletest/include",
