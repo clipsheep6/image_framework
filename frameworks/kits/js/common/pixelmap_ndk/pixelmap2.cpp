@@ -38,6 +38,7 @@ struct OH_Pixelmap_ImageInfo {
     uint32_t rowStride;
     int32_t pixelFormat = PIXEL_FORMAT::UNKNOWN;
     PIXELMAP_ALPHA_TYPE alphaType = PIXELMAP_ALPHA_TYPE::PIXELMAP_ALPHA_TYPE_UNKNOWN;
+    bool isHdr = false;
 };
 
 static PIXEL_FORMAT ParsePixelForamt(int32_t val)
@@ -227,6 +228,16 @@ Image_ErrorCode OH_Pixelmap2_ImageInfoGetAlphaType(OH_Pixelmap_ImageInfo *infos,
 }
 
 MIDK_EXPORT
+Image_ErrorCode OH_Pixelmap2_ImageInfoGetDynamicRange(OH_Pixelmap_ImageInfo *infos, bool *isHdr)
+{
+    if ( infos == nullptr || isHdr == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    *isHdr = infos->isHdr;
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
 Image_ErrorCode OH_Pixelmap2_ReleaseImageInfo(OH_Pixelmap_ImageInfo *infos)
 {
     if ( infos == nullptr ) {
@@ -288,6 +299,7 @@ Image_ErrorCode OH_Pixelmap2_GetImageInfo(OH_Pixelmap *pixelmap, OH_Pixelmap_Ima
     imageInfo->height = srcInfo.size.height;
     imageInfo->rowStride = pixelmap->GetInnerPixelMap()->GetRowStride();
     imageInfo->pixelFormat = static_cast<int32_t>(srcInfo.pixelFormat);
+    imageInfo->isHdr = srcInfo.isHdr;
     return IMAGE_RESULT_SUCCESS;
 }
 

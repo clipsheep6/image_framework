@@ -300,6 +300,18 @@ Image_ErrorCode OH_Pixelmap2_ImageInfoGetPixelFormat(OH_Pixelmap_ImageInfo *info
 Image_ErrorCode OH_Pixelmap2_ImageInfoGetAlphaType(OH_Pixelmap_ImageInfo *infos, int32_t *alphaType);
 
 /**
+ * @brief Get Dynamic Range for imageinfo struct.
+ *
+ * @param infos The imageinfo pointer will be operated.
+ * @param isHdr The pointer of imageinfo isHdr.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_Pixelmap2_ImageInfoGetDynamicRange
+ * @since 12
+ * @version 1.0
+ */
+Image_ErrorCode OH_Pixelmap2_ImageInfoGetDynamicRange(OH_Pixelmap_ImageInfo *infos, bool *isHdr);
+
+/**
  * @brief Delete imageinfo struct point.
  *
  * @param info The imageinfo pointer will be operated.

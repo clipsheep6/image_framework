@@ -99,6 +99,18 @@ Image_ErrorCode OH_ImageSource2_ImageInfoGetWidth(OH_ImageSource_ImageInfo *info
 Image_ErrorCode OH_ImageSource2_ImageInfoGetHeight(OH_ImageSource_ImageInfo *info, uint32_t *height);
 
 /**
+ * @brief Get Dynamic Range for OH_ImageSource_ImageInfo struct.
+ *
+ * @param info The DecodingOptions pointer will be operated.
+ * @param isHdr the number of image height.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_ImageSource2_ImageInfoGetDynamicRange
+ * @since 12
+ * @version 1.0
+ */
+Image_ErrorCode OH_ImageSource2_ImageInfoGetDynamicRange(OH_ImageSource_ImageInfo *info, bool *isHdr);
+
+/**
  * @brief delete OH_ImageSource_ImageInfo pointer.
  *
  * @param info The OH_ImageSource_ImageInfo pointer will be operated.
@@ -255,6 +267,58 @@ Image_ErrorCode OH_ImageSource2_DecodingOptionsGetDesiredRegion(OH_ImageSource_D
  */
 Image_ErrorCode OH_ImageSource2_DecodingOptionsSetDesiredRegion(OH_ImageSource_DecodingOptions *opts,
     Image_Region *desiredRegion);
+
+/**
+ * @brief Get Resolution Quality for DecodingOptions struct.
+ *
+ * @param ops The DecodingOptions pointer will be operated.
+ * @param resolutionQuality the pointer of image resolution quality.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_ImageSource2_DecodingOptionsGetResolutionQuality
+ * @since 12
+ * @version 1.0
+ */
+Image_ErrorCode OH_ImageSource2_DecodingOptionsGetResolutionQuality(OH_ImageSource_DecodingOptions *opts,
+    Image_Resolution_Quality *resolutionQuality);
+
+/**
+ * @brief Set Resolution Quality for DecodingOptions struct.
+ *
+ * @param opts The DecodingOptions pointer will be operated.
+ * @param resolutionQuality the number of image resolutionQuality.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_ImageSource2_DecodingOptionsSetResolutionQuality
+ * @since 12
+ * @version 1.0
+ */
+Image_ErrorCode OH_ImageSource2_DecodingOptionsSetResolutionQuality(OH_ImageSource_DecodingOptions *opts,
+    Image_Resolution_Quality resolutionQuality);
+
+/**
+ * @brief Get Dynamic Range for DecodingOptions struct.
+ *
+ * @param ops The DecodingOptions pointer will be operated.
+ * @param dynamicRange the pointer of image dynamic range.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_ImageSource2_DecodingOptionsGetResolutionQuality
+ * @since 12
+ * @version 1.0
+ */
+Image_ErrorCode OH_ImageSource2_DecodingOptionsGetDesiredDynamicRange(OH_ImageSource_DecodingOptions *opts,
+    Image_Dynamic_Range *dynamicRange);
+
+/**
+ * @brief Set Dynamic Range for DecodingOptions struct.
+ *
+ * @param opts The DecodingOptions pointer will be operated.
+ * @param dynamicRange the number of image resolutionQuality.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_ImageSource2_DecodingOptionsSetResolutionQuality
+ * @since 12
+ * @version 1.0
+ */
+Image_ErrorCode OH_ImageSource2_DecodingOptionsSetDesiredDynamicRange(OH_ImageSource_DecodingOptions *opts,
+   Image_Dynamic_Range dynamicRange);
 
 /**
  * @brief delete DecodingOptions pointer.
