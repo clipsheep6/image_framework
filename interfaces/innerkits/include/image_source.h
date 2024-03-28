@@ -267,7 +267,7 @@ private:
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
     uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
-        DecodeContext &context, uint32_t &errorCode);
+        ImagePlugin::DecodeContext &context, uint32_t &errorCode);
 #ifdef AI_ENABLE
     uint32_t AIProcess(Size imageSize, ImagePlugin::DecodeContext &context);
 #endif
