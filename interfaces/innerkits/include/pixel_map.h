@@ -270,6 +270,8 @@ public:
     {
         isAstc_ = isAstc;
     }
+    bool IsHdr();
+    void SetIsHdr(bool isHdr);
 
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
@@ -365,8 +367,6 @@ private:
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
     bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
-    bool IsHdr();
-    void SetIsHdr(bool isHdr);
 
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
