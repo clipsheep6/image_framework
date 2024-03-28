@@ -563,9 +563,11 @@ STATIC_COMPLETE_FUNC(GetImageInfo)
         napi_create_int32(env, static_cast<int32_t>(context->imageInfo.alphaType), &alphaTypeValue);
         napi_set_named_property(env, result, "alphaType", alphaTypeValue);
 
+        napi_value isHdr = nullptr;
+        status = napi_get_boolean(env, context->imageInfo.isHdr, &result);
         if (!IMG_IS_OK(status)) {
             context->status = ERROR;
-            IMAGE_LOGE("napi_create_int32 failed!");
+            IMAGE_LOGE("napi_get_boolean failed!");
             napi_get_undefined(env, &result);
         } else {
             context->status = SUCCESS;
