@@ -58,8 +58,6 @@
 #undef LOG_TAG
 #define LOG_TAG "ImageSource"
 
-#define AI_ENABLE
-
 namespace OHOS {
 namespace Media {
 using namespace std;
@@ -409,6 +407,7 @@ static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, co
     }
 }
 
+#ifdef AI_ENABLE
 static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
     int32_t wantDensity, Size &dstSize, int32_t resolutionQuality)
 {
@@ -424,6 +423,7 @@ static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, co
         dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
     }
 }
+#endif
 
 static void NotifyDecodeEvent(set<DecodeListener *> &listeners, DecodeEvent event,
     std::unique_lock<std::mutex>* guard)
@@ -2458,7 +2458,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 }
 #endif
 
-uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         DecodeContext &context, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
