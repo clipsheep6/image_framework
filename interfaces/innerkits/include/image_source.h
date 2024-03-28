@@ -265,10 +265,6 @@ private:
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
-    void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
-        int32_t wantDensity, Size &dstSize);
-    void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
-        int32_t wantDensity, Size &dstSize, int32_t resolutionQuality);
 #ifdef AI_ENABLE
     uint32_t AIProcess(Size imageSize, ImagePlugin::DecodeContext &context);
 #endif
