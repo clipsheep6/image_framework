@@ -419,7 +419,6 @@ napi_value ImageSourceNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("updateData", UpdateData),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_GETTER("supportedFormats", GetSupportedFormats),
-        //DECLARE_NAPI_GETTER("desiredDynamicRange", GetDesiredDynamicRange),
     };
 
     napi_property_descriptor static_prop[] = {
@@ -678,6 +677,19 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
     } else {
         IMAGE_LOGD("no SVGResize percentage");
     }
+
+    if (GET_UINT32_BY_NAME(root, "resolutionQuality", opts->resolutionQuality)) {
+        IMAGE_LOGD("resolutionQuality %{public}x", opts->resolutionQuality);
+    } else {
+        IMAGE_LOGD("no resolutionQuality");
+    }
+
+    if (GET_UINT32_BY_NAME(root, "dynamicRange", opts->decodingDynamicRange)) {
+        IMAGE_LOGD("dynamicRange %{public}x", opts->decodingDynamicRange);
+    } else {
+        IMAGE_LOGD("no dynamicRange");
+    }
+
     napi_value nDesiredColorSpace = nullptr;
     if (napi_get_named_property(env, root, "desiredColorSpace", &nDesiredColorSpace) == napi_ok) {
         opts->desiredColorSpaceInfo = OHOS::ColorManager::GetColorSpaceByJSObject(env, nDesiredColorSpace);

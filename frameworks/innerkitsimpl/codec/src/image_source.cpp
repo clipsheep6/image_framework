@@ -559,6 +559,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
         return nullptr;
     }
+    bool isHdr = false;
     ImagePlugin::PlImageInfo plInfo;
     DecodeContext context;
     auto ret = DecodeImageDataToContext(index, info, plInfo, context, errorCode);
@@ -591,6 +592,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     if (pixelMap == nullptr) {
         return nullptr;
     }
+    pixelMap->SetIsHdr(isHdr);
     if (!context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
     }
