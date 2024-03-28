@@ -1015,6 +1015,35 @@ ohos_unittest("ndktest") {
   ]
 }
 
+ohos_unittest("ndktest2") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "$image_subsystem/frameworks/kits/js/common/ndk/include",
+    "/utils/include",
+    "/interfaces/innerkits/include",
+    "//third_party/googletest/googletest/include",
+    "../../../../../arkui/napi/interfaces/inner_api",
+    "../../../../../arkui/napi/interfaces/kits",
+    "//third_party/node/src",
+    "$resource_management_subsystem/interfaces/native/resource/include",
+  ]
+  sources = [
+    "unittest/image_source2_ndk_test.cpp",
+    "unittest/image_packer2_ndk_test.cpp",
+    "unittest/pixelmap2_ndk_test.cpp",
+  ]
+
+  deps = [
+    "$image_subsystem/frameworks/kits/js/common/ndk:image_ndk",
+    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap_ndk2",
+    "$image_subsystem/frameworks/kits/js/common/ndk:image_source_ndk2", 
+    "$image_subsystem/frameworks/kits/js/common/ndk:image_packer_ndk2",
+    "//third_party/googletest:gmock_main",
+    "//third_party/googletest:gtest_main",
+  ]
+}
+
 ohos_unittest("napitest") {
   module_out_path = module_output_path
 
@@ -1279,6 +1308,7 @@ group("unittest") {
     ":jpegdecoderextest",
     ":jpegutilstest",
     ":jpgyuvtest",
+    ":ndktest2",
     ":napitest",
     ":pixelastctest",
     ":pixelconvertadaptertest",
