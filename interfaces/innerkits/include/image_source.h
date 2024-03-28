@@ -46,6 +46,7 @@ class AbsImageDecoder;
 struct DataStreamBuffer;
 struct PixelDecodeOptions;
 struct PlImageInfo;
+struct DecodeContext;
 } // namespace ImagePlugin
 } // namespace OHOS
 
