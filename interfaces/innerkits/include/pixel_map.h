@@ -34,7 +34,7 @@ namespace OHOS {
 namespace Media {
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
-
+struct SkTransInfo;
 typedef struct {
     float scaleX;
     float scaleY;
@@ -323,6 +323,7 @@ private:
     bool WriteAstcRealSizeToParcel(Parcel &parcel) const;
     bool ReadAstcRealSize(Parcel &parcel, PixelMap *pixelMap);
     uint32_t SetRowDataSizeForImageInfo(ImageInfo info);
+    void TakeGenSrcTransInfo(SkTransInfo &srcInfo, ImageInfo &imageInfo);
     void SetEditable(bool editable)
     {
         editable_ = editable;
