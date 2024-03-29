@@ -36,7 +36,7 @@ const byte jpegHeader[] = { 0xff, 0xd8, 0xff };
 const byte pngHeader[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 const byte webpHeader[] = { 0x57, 0x45, 0x42, 0x50 };
 const byte riffHeader[] = { 0x52, 0x49, 0x46, 0x46 };
-const byte heifHeader[] = { 0x00, 0x00, 0x00, 0x18 };
+const byte heifHeader[] = { 0x66, 0x74, 0x79, 0x70 };
 
 std::shared_ptr<MetadataAccessor> MetadataAccessorFactory::Create(uint8_t *buffer, const uint32_t size,
     BufferMetadataStream::MemoryMode mode)
@@ -105,7 +105,7 @@ EncodedFormat MetadataAccessorFactory::GetImageType(std::shared_ptr<MetadataStre
         return EncodedFormat::WEBP;
     }
 
-    if (memcmp(buff, heifHeader, sizeof(heifHeader) * sizeof(byte)) == 0) {
+    if (memcmp(buff + 4, heifHeader, sizeof(heifHeader) * sizeof(byte)) == 0) {
         return EncodedFormat::HEIF;
     }
 
