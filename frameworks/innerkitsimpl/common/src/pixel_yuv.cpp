@@ -13,6 +13,185 @@
  * limitations under the License.
  */
 
+void PixelYuv::ConvertYuvMode(OpenSourceLibyuv::FilterMode &filterMode, const AntiAliasingOption &option)
+{
+    switch (option) {
+        case AntiAliasingOption::NONE:
+            filterMode = OpenSourceLibyuv::FilterMode::kFilterNone;
+            break;
+        case AntiAliasingOption::LOW:
+            filterMode = OpenSourceLibyuv::FilterMode::kFilterLinear;
+            break;
+        case AntiAliasingOption::MEDIUM:
+            filterMode = OpenSourceLibyuv::FilterMode::kFilterBilinear;
+            break;
+        case AntiAliasingOption::HIGH:
+            filterMode = OpenSourceLibyuv::FilterMode::kFilterBox;
+            break;
+        default:
+            break;
+    }
+}
+
+void PixelYuv::ScaleYUV420(float xAxis, float yAxis, const AntiAliasingOption &option)
+{
+    OpenSourceLibyuv::FilterMode filterMode = OpenSourceLibyuv::FilterMode::kFilterNone;
+    ConvertYuvMode(filterMode, option);
+    ImageInfo imageInfo;
+    GetImageInfo(imageInfo);
+    int32_t srcW = imageInfo.size.width;
+    int32_t srcH = imageInfo.size.height;
+    int32_t dstW = srcW * xAxis;
+    int32_t dstH = srcH * yAxis;
+    const uint8_t *src = data_;
+    uint32_t pictureSize = GetImageSize(dstW, dstH);
+    Size desiredSize = {dstW, dstH};
+    MemoryData memoryData = {nullptr, pictureSize, "ScaleYUV420 ImageData", desiredSize};
+    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (m == nullptr) {
+        IMAGE_LOGE("ScaleYUV420 CreateMemory failed");
+        return;
+    }
+    auto converter = ConverterHandle::GetInstance().GetHandle();
+    uint8_t *dst = reinterpret_cast<uint8_t *>(m->data.data);
+    if (imageInfo.pixelFormat == PixelFormat::YU12 || imageInfo.pixelFormat == PixelFormat::YV12) {
+        //CHECK_AND_RETURN_LOG(converter.I420Scale == nullptr, "converter is null.");
+        if (SUCCESS != converter.I420Scale(src, srcW, src + GetYSize(srcW, srcH), GetUStride(srcW),
+            src + GetVOffset(srcW, srcH), GetUStride(srcW), srcW, srcH, dst, dstW,
+            dst + GetYSize(dstW, dstH), GetUStride(dstW), dst + GetVOffset(dstW, dstH),
+            GetUStride(dstW), dstW, dstH, filterMode)) {
+            m->Release();
+            IMAGE_LOGE("Scale YUV420P failed");
+            return;
+        }
+    }
+    if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21) {
+        uint32_t srcHalfW = GetUStride(srcW);
+        uint32_t srcHalfH = GetUVHeight(srcH);
+        uint32_t dstHalfW = GetUStride(dstW);
+        uint32_t dstHalfH = GetUVHeight(dstH);
+        //CHECK_AND_RETURN_LOG(converter.ScalePlane == nullptr, "converter is null.");
+        // resize y_plane
+        converter.ScalePlane(src, srcW, srcW, srcH, dst, dstW, dstW, dstH, filterMode);
+        //Whether the row width is odd or even, U and Z are equal in size
+        uint32_t srcUSize = GetUStride(srcW) * GetUVHeight(srcH);
+        uint32_t dstUSize = GetUStride(dstW) * GetUVHeight(dstH);
+        NV12SizeInfo srcNV12SizeInfo = {srcUSize, srcW, srcH, srcHalfW, srcHalfH};
+        NV12SizeInfo dstNV12SizeInfo = {dstUSize, dstW, dstH, dstHalfW, dstHalfH};
+        ScaleYUV420(imageInfo, srcNV12SizeInfo, dstNV12SizeInfo,src, dst, filterMode);
+        SetPixelsAddr(reinterpret_cast<void *>(dst), m->extend.data, m->data.size, m->GetType(), nullptr);
+    }
+}
+
+void PixelYuv::ScaleYUV420(ImageInfo &imageInfo, NV12SizeInfo srcNV12SizeInfo, NV12SizeInfo dstNV12SizeInfo,
+        const uint8_t *src, uint8_t *dst, OpenSourceLibyuv::FilterMode filterMode)
+{
+    // Split VUplane
+    std::unique_ptr<uint8_t[]> uvData = std::make_unique<uint8_t[]>(NUM_2 * srcNV12SizeInfo.uSize);
+
+    // NV21
+    uint8_t *vData = uvData.get();
+    uint8_t *uData = uvData.get() + srcNV12SizeInfo.uSize;
+    // If it's in NV12 format，swap u and v
+    if (imageInfo.pixelFormat == PixelFormat::NV12) {
+        uint8_t *tempSwap = vData;
+        vData = uData;
+        uData = tempSwap;
+    }
+
+    const uint8_t *src_uv = src + GetYSize(srcNV12SizeInfo.width, srcNV12SizeInfo.height);
+    //CHECK_AND_RETURN_LOG(converter.SplitUVPlane == nullptr, "converter is null.");
+    auto converter = ConverterHandle::GetInstance().GetHandle();
+    converter.SplitUVPlane(src_uv, NUM_2 * srcNV12SizeInfo.halfWidth, vData, srcNV12SizeInfo.halfWidth, uData,
+    srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfHeight);
+
+    // malloc memory to store temp u v
+    std::unique_ptr<uint8_t[]> tempUVData = std::make_unique<uint8_t[]>(NUM_2 * srcNV12SizeInfo.uSize);
+    uint8_t *tempVData = tempUVData.get();
+    uint8_t *tempUData = tempUVData.get() + dstNV12SizeInfo.uSize;
+    if (imageInfo.pixelFormat == PixelFormat::NV12) {
+        uint8_t *tempSwap = tempVData;
+        tempVData = tempUData;
+        tempUData = tempSwap;
+    }
+
+    // resize u and v
+    //CHECK_AND_RETURN_LOG(converter.ScalePlane == nullptr, "converter is null.");
+    converter.ScalePlane(uData, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfHeight,
+     tempUData, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfHeight, filterMode);
+    converter.ScalePlane(vData, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfHeight,
+     tempVData, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfHeight, filterMode);
+
+    uint8_t *dst_uv = dst + GetYSize(dstNV12SizeInfo.width, dstNV12SizeInfo.height);
+    //CHECK_AND_RETURN_LOG(converter.MergeUVPlane == nullptr, "converter is null.");
+    converter.MergeUVPlane(tempVData, dstNV12SizeInfo.halfWidth, tempUData, dstNV12SizeInfo.halfWidth, dst_uv, NUM_2 * dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfHeight);
+
+    uData = vData = nullptr;
+    tempUData = tempVData = nullptr;
+    imageInfo.size.width = dstNV12SizeInfo.width;
+    imageInfo.size.height = dstNV12SizeInfo.height;
+    SetImageInfo(imageInfo, true);
+}
+
+static bool YUVRotateConvert(Size &size, int32_t degrees, int32_t &dstWidth, int32_t &dstHeight,
+    OpenSourceLibyuv::RotationMode &rotateNum)
+{
+    switch (degrees) {
+        case 0:
+            return true;
+        case degrees90:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            rotateNum = OpenSourceLibyuv::RotationMode::kRotate90;
+            return false;
+        case degrees180:
+            rotateNum = OpenSourceLibyuv::RotationMode::kRotate180;
+            return false;
+        case degrees270:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            rotateNum = OpenSourceLibyuv::RotationMode::kRotate270;
+            return false;
+        default:
+            return false;
+    }
+}
+
+static bool YUVRotateConvert(Size &size, int32_t degrees, int32_t &dstWidth, int32_t &dstHeight)
+{
+    switch (degrees) {
+        case 0:
+            return true;
+        case degrees90:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            return false;
+        case degrees180:
+            return false;
+        case degrees270:
+            dstWidth = size.height;
+            dstHeight = size.width;
+            return false;
+        default:
+            return false;
+    }
+}
+
+void PixelYuv::rotate(float degrees)
+{
+    if (degrees == 0) {
+        return;
+    }
+    if (degrees < 0) {
+        degrees = degrees360 + degrees;
+    }
+    std::string str = "rotate() degrees  238 is "  + std::to_string(__LINE__) +  std::to_string(degrees);
+    writeLogrotate(str);
+    IMAGE_LOGE(" PixelYuv::rotate(degrees)");
+
+#endif
+static const int32_t degrees360 = 360; // 360度角
+
 #include "pixel_yuv.h"
 
 #include "image_utils.h"
