@@ -31,12 +31,16 @@ ohos_shared_library("ohimage") {
 
   sources = [ "image.cpp" ]
   public_configs = [ ":native_public_config" ]
-  deps = [ 
+  deps = [
     "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
     "${image_subsystem}/interfaces/innerkits:image_native",
   ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
   part_name = "image_framework"
@@ -51,12 +55,16 @@ ohos_shared_library("image_receiver") {
 
   sources = [ "image_receiver.cpp" ]
   public_configs = [ ":native_public_config" ]
-  deps = [ 
+  deps = [
     "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
     "${image_subsystem}/interfaces/innerkits:image_native",
   ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
   part_name = "image_framework"

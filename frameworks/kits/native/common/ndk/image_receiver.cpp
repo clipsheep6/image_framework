@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include "common_utils.h"
+#include "image_log.h"
 #include "image/image_receiver.h"
 #include "image_kits.h"
 #include "receiver/include/image_receiver.h"
@@ -67,13 +68,16 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_CreateImageReceiverOptions(OH_ImageReceiverOptions** options)
 {
     if (nullptr == options) {
+        IMAGE_LOGE("Invalid parameter: options=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     auto rst = new OH_ImageReceiverOptions;
     if (nullptr == rst) {
+        IMAGE_LOGE("OH_ImageReceiverOptions create failed.");
         return IMAGE_ERRORCODE_MALLOC_ABNORMAL;
     }
     *options = rst;
+    IMAGE_LOGI("OH_ImageReceiverOptions 0x%{public}p has been created.", rst);
     return IMAGE_ERRORCODE_SUCCESS;
 }
 
@@ -81,6 +85,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ImageReceiverOptionsGetSize(OH_ImageReceiverOptions* options, Image_Size* size)
 {
     if (nullptr == options) {
+        IMAGE_LOGE("Invalid parameter: options=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     size->width = options->width;
@@ -92,6 +97,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ImageReceiverOptionsSetSize(OH_ImageReceiverOptions* options, Image_Size size)
 {
     if (nullptr == options) {
+        IMAGE_LOGE("Invalid parameter: options=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     options->width = size.width;
@@ -103,6 +109,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ImageReceiverOptionsGetFormat(OH_ImageReceiverOptions* options, int32_t* format)
 {
     if (nullptr == options) {
+        IMAGE_LOGE("Invalid parameter: options=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     *format = options->format;
@@ -113,6 +120,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ImageReceiverOptionsSetFormat(OH_ImageReceiverOptions* options, int32_t format)
 {
     if (nullptr == options) {
+        IMAGE_LOGE("Invalid parameter: options=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     options->format = format;
@@ -123,6 +131,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ImageReceiverOptionsGetCapacity(OH_ImageReceiverOptions* options, int32_t* capacity)
 {
     if (nullptr == options) {
+        IMAGE_LOGE("Invalid parameter: options=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     *capacity = options->capacity;
@@ -133,6 +142,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ImageReceiverOptionsSetCapacity(OH_ImageReceiverOptions* options, int32_t capacity)
 {
     if (nullptr == options) {
+        IMAGE_LOGE("Invalid parameter: options=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     options->capacity = capacity;
@@ -143,6 +153,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ReleaseImageReceiverOptions(OH_ImageReceiverOptions* options)
 {
     if (nullptr != options) {
+        IMAGE_LOGI("OH_ImageReceiverOptions 0x%{public}p has been deleted.", options);
         delete options;
     }
     return IMAGE_ERRORCODE_SUCCESS;
@@ -152,11 +163,13 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_Create(OH_ImageReceiverOptions* options, OH_ImageReceiver** receiver)
 {
     if (nullptr == options || nullptr == receiver) {
+        IMAGE_LOGE("Invalid parameter: options=0x%{public}p, receiver=0x%{public}p", options, receiver);
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
 
     auto rst = new OH_ImageReceiver;
     if (nullptr == rst) {
+        IMAGE_LOGE("OH_ImageReceiver create failed.");
         return IMAGE_ERRORCODE_MALLOC_ABNORMAL;
     }
 
@@ -164,10 +177,12 @@ Image_ErrorCode OH_ImageReceiver2_Create(OH_ImageReceiverOptions* options, OH_Im
         options->width, options->height, options->format, options->capacity);
     if (!(rst->ptrImgRcv)) {
         delete rst;
+        IMAGE_LOGE("OH_ImageReceiver data create failed.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     *receiver = rst;
+    IMAGE_LOGI("OH_ImageReceiver 0x%{public}p has been created.", rst);
     return IMAGE_ERRORCODE_SUCCESS;
 }
 
@@ -175,18 +190,25 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_GetReceivingSurfaceId(OH_ImageReceiver* receiver, uint64_t* surfaceId)
 {
     if (nullptr == receiver) {
+        IMAGE_LOGE("Invalid parameter: receiver=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv || nullptr == receiver->ptrImgRcv->iraContext_) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
     std::string strKey = receiver->ptrImgRcv->iraContext_->GetReceiverKey();
     if (strKey.empty() || nullptr == strKey.c_str()) {
+        IMAGE_LOGE("Bad data: key string empty.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     *surfaceId = std::stoul(strKey);
+    if (*surfaceId <= 0) {
+        IMAGE_LOGE("Bad data: key string empty.");
+        return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
+    }
     return IMAGE_ERRORCODE_SUCCESS;
 }
 
@@ -194,34 +216,41 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ReadLatestImage(OH_ImageReceiver* receiver, OH_Image** image)
 {
     if (nullptr == receiver) {
+        IMAGE_LOGE("Invalid parameter: receiver=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
     auto bufferProcessor = receiver->ptrImgRcv->GetBufferProcessor();
     if (nullptr == bufferProcessor) {
+        IMAGE_LOGE("Bad data: buffer processor empty.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     auto surfaceBuffer = receiver->ptrImgRcv->ReadLastImage();
     if (nullptr == surfaceBuffer) {
+        IMAGE_LOGE("Bad data: surface buffer empty.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     auto rst = new OH_Image;
     if (nullptr == rst) {
+        IMAGE_LOGE("OH_Image create failed.");
         return IMAGE_ERRORCODE_MALLOC_ABNORMAL;
     }
 
     rst->imgNative = new OHOS::Media::NativeImage(surfaceBuffer, bufferProcessor);
     if (!(rst->imgNative)) {
         delete rst;
+        IMAGE_LOGE("OH_Image data create failed.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     *image = rst;
+    IMAGE_LOGI("OH_Image 0x%{public}p has been created.", rst);
     return IMAGE_ERRORCODE_SUCCESS;
 }
 
@@ -229,34 +258,41 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_ReadNextImage(OH_ImageReceiver* receiver, OH_Image** image)
 {
     if (nullptr == receiver) {
+        IMAGE_LOGE("Invalid parameter: receiver=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
     auto bufferProcessor = receiver->ptrImgRcv->GetBufferProcessor();
     if (nullptr == bufferProcessor) {
+        IMAGE_LOGE("Bad data: buffer processor empty.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     auto surfaceBuffer = receiver->ptrImgRcv->ReadNextImage();
     if (nullptr == surfaceBuffer) {
+        IMAGE_LOGE("Bad data: surface buffer empty.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     auto rst = new OH_Image;
     if (nullptr == rst) {
+        IMAGE_LOGE("OH_Image create failed.");
         return IMAGE_ERRORCODE_MALLOC_ABNORMAL;
     }
 
     rst->imgNative = new OHOS::Media::NativeImage(surfaceBuffer, bufferProcessor);
     if (!(rst->imgNative)) {
         delete rst;
+        IMAGE_LOGE("OH_Image data create failed.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
     *image = rst;
+    IMAGE_LOGI("OH_Image 0x%{public}p has been created.", rst);
     return IMAGE_ERRORCODE_SUCCESS;
 }
 
@@ -264,9 +300,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_On(OH_ImageReceiver* receiver, OH_Image_Receiver_On_Callback callback)
 {
     if (nullptr == receiver || nullptr == callback) {
+        IMAGE_LOGE("Invalid parameter: receiver=0x%{public}p, callback=0x%{public}p", receiver, callback);
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
@@ -280,9 +318,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_Off(OH_ImageReceiver* receiver)
 {
     if (nullptr == receiver) {
+        IMAGE_LOGE("Invalid parameter: receiver=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
@@ -294,9 +334,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_GetSize(OH_ImageReceiver* receiver, Image_Size* size)
 {
     if (nullptr == receiver || nullptr == size) {
+        IMAGE_LOGE("Invalid parameter: receiver=0x%{public}p, size=0x%{public}p", receiver, size);
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv || nullptr == receiver->ptrImgRcv->iraContext_) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
@@ -309,9 +351,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_GetCapacity(OH_ImageReceiver* receiver, int32_t* capacity)
 {
     if (nullptr == receiver || nullptr == capacity) {
+        IMAGE_LOGE("Invalid parameter: receiver=0x%{public}p, capacity=0x%{public}p", receiver, capacity);
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv || nullptr == receiver->ptrImgRcv->iraContext_) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
@@ -323,9 +367,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_GetFormat(OH_ImageReceiver* receiver, int32_t* format)
 {
     if (nullptr == receiver || nullptr == format) {
+        IMAGE_LOGE("Invalid parameter: receiver=0x%{public}p, format=0x%{public}p", receiver, format);
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     if (nullptr == receiver->ptrImgRcv || nullptr == receiver->ptrImgRcv->iraContext_) {
+        IMAGE_LOGE("Bad parameter: receiver data empty.");
         return IMAGE_ERRORCODE_BAD_PARAMETER;
     }
 
@@ -337,9 +383,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageReceiver2_Release(OH_ImageReceiver* receiver)
 {
     if (nullptr == receiver) {
+        IMAGE_LOGE("Invalid parameter: receiver=null.");
         return IMAGE_ERRORCODE_INVALID_PARAMETER;
     }
     receiver->ptrImgRcv.reset();
+    IMAGE_LOGI("OH_ImageReceiver 0x%{public}p has been deleted.", receiver);
     delete receiver;
     return IMAGE_ERRORCODE_SUCCESS;
 }
