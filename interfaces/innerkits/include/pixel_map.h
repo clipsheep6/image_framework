@@ -274,6 +274,11 @@ public:
         isAstc_ = isAstc;
     }
 
+    static int32_t GetRGBxPixelBytes(const PixelFormat format);
+    static int32_t GetRGBxRowDataSize(const ImageInfo& info);
+    static int32_t GetRGBxByteCount(const ImageInfo& info);
+    static int32_t GetYUVByteCount(const ImageInfo& info);
+    static int32_t GetAllByteCount(const ImageInfo& info);
     NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata()
     {
         return exifMetadata_;
