@@ -13,6 +13,98 @@
  * limitations under the License.
  */
 
+ /*
+ * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "image_converter.h"
+
+#include "libyuv.h"
+
+namespace OHOS {
+namespace OpenSourceLibyuv {
+static int32_t I420Scale(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+    const uint8_t* src_v, int src_stride_v, int src_width, int src_height,
+    uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u,
+    uint8_t* dst_v, int dst_stride_v, int dst_width, int dst_height,
+    enum FilterMode filtering)
+{
+    return libyuv::I420Scale(src_y, src_stride_y, src_u, src_stride_u,
+                             src_v, src_stride_v, src_width, src_height,
+                             dst_y, dst_stride_y, dst_u, dst_stride_u,
+                             dst_v, dst_stride_v, dst_width, dst_height,
+                             static_cast<libyuv::FilterMode>(filtering));
+}
+
+static void ScalePlane(const uint8_t *src, int src_stride, int src_width, int src_height, uint8_t *dst,
+                        int dst_stride, int dst_width, int dst_height, enum FilterMode filtering)
+{
+    return libyuv::ScalePlane(src, src_stride, src_width, src_height, dst,
+                                dst_stride, dst_width, dst_height, static_cast<libyuv::FilterMode>(filtering));
+}
+
+
+ #include <stdio.h>
+    void writeLog() {
+   FILE *fp;
+   char content[] = "image_converter   NV12ToI420Rotate ";
+
+   fp = fopen("/tmp/mylog.log", "a");
+   fprintf(fp, "%s", content);
+   fclose(fp);
+
+   return;
+}
+
+static int32_t NV12ToI420Rotate(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv,
+                                int src_stride_uv, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u,
+                                uint8_t *dst_v, int dst_stride_v, int width, int height, enum RotationMode mode)
+{
+    writeLog();
+    return libyuv::NV12ToI420Rotate(src_y, src_stride_y, src_uv, src_stride_uv, dst_y, dst_stride_y,
+                                    dst_u, dst_stride_u, dst_v, dst_stride_v, width, height,
+                                    static_cast<libyuv::RotationMode>(mode));
+}
+
+struct ImageConverter GetImageConverter(void)
+{
+    struct ImageConverter converter = {0};
+    // converter.NV12ToI420 = libyuv::NV12ToI420;
+    // converter.I420Scale = I420Scale;
+    // converter.I420ToNV21 = libyuv::I420ToNV21;
+    converter.I420ToRGBA = libyuv::I420ToRGBA;
+    converter.ARGBToNV12 = libyuv::ARGBToNV12;
+//  024
+    converter.I420Scale = I420Scale;
+    converter.ScalePlane = ScalePlane;
+    converter.SplitUVPlane = libyuv::SplitUVPlane;
+    converter.MergeUVPlane = libyuv::MergeUVPlane;
+    converter.NV12ToI420 = libyuv::NV12ToI420;
+    converter.I420ToNV12 = libyuv::I420ToNV12;
+    converter.I420Mirror = libyuv::I420Mirror;
+    converter.NV12ToI420Rotate = NV12ToI420Rotate;
+    converter.I420ToNV21 = libyuv::I420ToNV21;
+    converter.ARGBToI420 = libyuv::ARGBToI420;
+    converter.NV12ToARGB = libyuv::NV12ToARGB;
+    converter.NV21ToARGB = libyuv::NV21ToARGB;
+    converter.ARGBToBGRA = libyuv::ARGBToBGRA;
+    converter.I420Copy = libyuv::I420Copy;
+    return converter;
+}
+} // namespace OpenSourceLibyuv
+} // namespace OHOS
+
 void PixelYuv::ConvertYuvMode(OpenSourceLibyuv::FilterMode &filterMode, const AntiAliasingOption &option)
 {
     switch (option) {
