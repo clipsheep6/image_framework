@@ -946,3 +946,228 @@ uint32_t PixelYuv::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
 #endif
 } // namespace Media
 } // namespace OHOS
+
+
+/*
+ * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "image_utils_tools.h"
+#include <chrono>
+#include <dlfcn.h>
+#include <string>
+#include "image_log.h"
+#include "log_tags.h"
+
+namespace OHOS {
+namespace Media {
+namespace {
+#if (defined(__aarch64__) || defined(__x86_64__))
+const std::string YUV_LIB_PATH = "/system/lib64/platformsdk/libyuv.z.so";
+#else
+const std::string YUV_LIB_PATH = "/system/lib/platformsdk/libyuv.z.so";
+#endif
+const std::string GET_IMAGE_CONVERTER_FUNC = "GetImageConverter";
+}
+
+#ifdef DCAMERA_MMAP_RESERVE
+using GetImageConverterFunc = OHOS::OpenSourceLibyuv::ImageConverter (*)();
+#endif
+
+#ifdef DCAMERA_MMAP_RESERVE
+IMPLEMENT_SINGLE_INSTANCE(ConverterHandle);
+void ConverterHandle::InitConverter()
+{
+    dlHandler_ = dlopen(YUV_LIB_PATH.c_str(), RTLD_LAZY | RTLD_NODELETE);
+    if (dlHandler_ == nullptr) {
+        IMAGE_LOGD("Dlopen failed.");
+        return;
+    }
+    GetImageConverterFunc getConverter = (GetImageConverterFunc)dlsym(dlHandler_, GET_IMAGE_CONVERTER_FUNC.c_str());
+    if (getConverter == nullptr) {
+        IMAGE_LOGD("Function of converter is null.");
+        dlclose(dlHandler_);
+        dlHandler_ = nullptr;
+        return;
+    }
+    converter_ = getConverter();
+    isInited_.store(true);
+    IMAGE_LOGD("Initialize image converter success.");
+}
+
+void ConverterHandle::DeInitConverter()
+{
+    if (dlHandler_) {
+        dlclose(dlHandler_);
+        dlHandler_ = nullptr;
+    }
+    isInited_.store(false);
+}
+
+const OHOS::OpenSourceLibyuv::ImageConverter &ConverterHandle::GetHandle()
+{
+    if (!isInited_.load()) {
+        InitConverter();
+    }
+    return converter_;
+}
+
+} // namespace Media
+} // namespace OHOS
+#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
+
+
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
+#define FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
+
+#include <atomic>
+#include "single_instance.h"
+
+#ifdef DCAMERA_MMAP_RESERVE
+#include "image_converter.h"
+#endif
+
+namespace OHOS {
+namespace Media {
+#ifdef DCAMERA_MMAP_RESERVE
+class ConverterHandle {
+    DECLARE_SINGLE_INSTANCE(ConverterHandle);
+
+public:
+    void InitConverter();
+    void DeInitConverter();
+    const OHOS::OpenSourceLibyuv::ImageConverter &GetHandle();
+
+    using DlHandle = void *;
+private:
+    std::atomic<bool> isInited_ = false;
+    DlHandle dlHandler_ = nullptr;
+    OHOS::OpenSourceLibyuv::ImageConverter converter_ = {0};
+};
+#endif
+} // namespace Media
+} // namespace OHOS
+#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
+
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
+#define OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
+
+#include <stdint.h>
+
+namespace OHOS {
+namespace OpenSourceLibyuv {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum FilterMode {
+    kFilterNone = 0,
+    kFilterLinear = 1,
+    kFilterBilinear = 2,
+    kFilterBox = 3
+} FilterModeEnum;
+
+typedef enum RotationMode {
+    kRotate0 = 0,
+    kRotate90 = 90,
+    kRotate180 = 180,
+    kRotate270 = 270,
+} RotationModeEnum;
+
+struct ImageConverter {
+    int32_t (*I420ToRGBA)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+        const uint8_t* src_v, int src_stride_v, uint8_t* dst_rgba, int dst_stride_rgba,
+        int width, int height);
+    int32_t (*ARGBToNV12)(const uint8_t* src_argb, int src_stride_argb, uint8_t* dst_y, int dst_stride_y,
+        uint8_t* dst_uv, int dst_stride_uv, int width, int height);
+    int32_t (*I420Scale)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+                        const uint8_t* src_v, int src_stride_v, int src_width, int src_height,
+                        uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u,
+                        uint8_t* dst_v, int dst_stride_v, int dst_width, int dst_height,
+                        enum FilterMode filtering);
+    int32_t (*NV12ToI420)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
+                            uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u,
+                            uint8_t *dst_v, int dst_stride_v, int width, int height);
+    int32_t (*I420ToNV21)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
+                            const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y,
+                            uint8_t *dst_vu, int dst_stride_vu, int width, int height);
+    void (*ScalePlane)(const uint8_t *src, int src_stride, int src_width, int src_height, uint8_t *dst,
+                        int dst_stride, int dst_width, int dst_height, enum FilterMode filtering);
+    void (*SplitUVPlane)(const uint8_t *src_uv, int src_stride_uv, uint8_t *dst_u, int dst_stride_u,
+                            uint8_t *dst_v, int dst_stride_v, int width, int height);
+    void (*MergeUVPlane)(const uint8_t *src_u, int src_stride_u, const uint8_t *src_v, int src_stride_v,
+                            uint8_t *dst_uv, int dst_stride_uv, int width, int height);
+    int32_t (*I420ToNV12)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
+                            const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_uv,
+                            int dst_stride_uv, int width, int height);
+    int32_t (*I420Mirror)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
+                            const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u,
+                            int dst_stride_u, uint8_t *dst_v, int dst_stride_v, int width, int height);
+    int32_t (*NV12ToI420Rotate)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
+                                uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u, uint8_t *dst_v,
+                                int dst_stride_v, int width, int height, enum RotationMode mode);
+    int32_t (*ARGBToI420)(const uint8_t *src_argb, int src_stride_argb, uint8_t *dst_y, int dst_stride_y,
+                            uint8_t *dst_u, int dst_stride_u, uint8_t *dst_v,
+                            int dst_stride_v, int width, int height);
+    int32_t (*NV12ToARGB)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
+                            uint8_t *dst_argb,
+                            int dst_stride_argb, int width, int height);
+    int32_t (*NV21ToARGB)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_vu, int src_stride_vu,
+                            uint8_t *dst_argb, int dst_stride_argb,
+                            int width, int height);
+    int32_t (*ARGBToBGRA)(const uint8_t *src_argb, int src_stride_argb, uint8_t *dst_bgra,
+                            int dst_stride_bgra, int width, int height);
+    int32_t (*I420Copy)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
+                        const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u,
+                        int dst_stride_u, uint8_t *dst_v, int dst_stride_v, int width, int height);
+};
+
+struct ImageConverter GetImageConverter(void);
+
+#ifdef __cplusplus
+}
+#endif
+} // namespace OpenSourceLibyuv
+} // namespace OHOS
+#endif // OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
