@@ -74,6 +74,38 @@ HWTEST_F(ImagSourceNdk2Test, OH_ImageSource2_ImageInfoGetHeight, TestSize.Level3
 }
 
 /**
+ * @tc.name: OH_ImageSource2_ImageInfoGetDynamicRangeTest
+ * @tc.desc: test OH_ImageSource2_ImageInfoGetDynamicRange
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSource2_ImageInfoGetDynamicRangeTest1, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_ImageInfoGetDynamicRangeTest start";
+    OH_ImageSource_ImageInfo *ops = nullptr;
+    bool isHdr = false;
+    Image_ErrorCode ret = OH_ImageSource2_ImageInfoGetDynamicRange(ops, &isHdr);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_ImageInfoGetDynamicRangeTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSource2_ImageInfoGetDynamicRangeTest
+ * @tc.desc: test OH_ImageSource2_ImageInfoGetDynamicRange
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSource2_ImageInfoGetDynamicRangeTest2, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_ImageInfoGetDynamicRangeTest start";
+    OH_ImageSource_ImageInfo ops;
+    ops.isHdr = true;
+    bool isHdr = false;
+    Image_ErrorCode ret = OH_ImageSource2_ImageInfoGetDynamicRange(ops, &isHdr);
+    ASSERT_EQ(ret, IMAGE_RESULT_BAD_PARAMETER);
+    ASSERT_EQ(isHdr, true);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_ImageInfoGetDynamicRangeTest end";
+}
+
+/**
  * @tc.name: OH_ImageSource2_ReleaseImageInfo
  * @tc.desc: test OH_ImageSource2_ReleaseImageInfo
  * @tc.type: FUNC
@@ -202,6 +234,90 @@ HWTEST_F(ImagSourceNdk2Test, OH_ImageSource_DecodingOptionsSetGetDesiredRegion, 
     ret = OH_ImageSource2_ReleaseDecodingOptions(ops);
     ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
     GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource_DecodingOptionsSetGetDesiredRegion end";
+}
+
+/**
+ * @tc.name: OH_ImageSource2_DecodingOptionsGetResolutionQualityTest
+ * @tc.desc: test OH_ImageSource2_DecodingOptionsGetResolutionQuality
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSource2_DecodingOptionsGetResolutionQualityTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsGetResolutionQualityTest start";
+    OH_ImageSource_DecodingOptions *ops = nullptr;
+    Image_ErrorCode ret = IMAGE_RESULT_MEDIA_UNKNOWN;
+    Image_Resolution_Quality resolutionQualityOut;
+    ret = OH_ImageSource2_CreateDecodingOptions(&ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    OH_ImageSource2_DecodingOptionsGetResolutionQuality(ops, &resolutionQualityOut);
+    ASSERT_EQ(resolutionQualityOut, Image_Resolution_Quality::LOW);
+    ret = OH_ImageSource2_ReleaseDecodingOptions(ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsGetResolutionQualityTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSource2_DecodingOptionsSetResolutionQualityTest
+ * @tc.desc: test OH_ImageSource2_DecodingOptionsSetResolutionQuality
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSource2_DecodingOptionsSetResolutionQualityTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsSetResolutionQualityTest start";
+    OH_ImageSource_DecodingOptions *ops = nullptr;
+    Image_ErrorCode ret = IMAGE_RESULT_MEDIA_UNKNOWN;
+    Image_Resolution_Quality resolutionQuality = Image_Resolution_Quality::MEDIUM;
+    Image_Resolution_Quality resolutionQualityOut;
+    ret = OH_ImageSource2_CreateDecodingOptions(&ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    OH_ImageSource2_DecodingOptionsSetResolutionQuality(ops, resolutionQuality);
+    OH_ImageSource2_DecodingOptionsGetResolutionQuality(ops, &resolutionQualityOut);
+    ASSERT_EQ(resolutionQualityOut, Image_Resolution_Quality::MEDIUM);
+    ret = OH_ImageSource2_ReleaseDecodingOptions(ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsSetResolutionQualityTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSource2_DecodingOptionsGetDesiredDynamicRangeTest
+ * @tc.desc: test OH_ImageSource2_DecodingOptionsGetDesiredDynamicRange
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSource2_DecodingOptionsGetDesiredDynamicRangeTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsGetDesiredDynamicRangeTest start";
+    OH_ImageSource_DecodingOptions *ops = nullptr;
+    Image_ErrorCode ret = IMAGE_RESULT_MEDIA_UNKNOWN;
+    Image_Dynamic_Range dynamicRangeOut;
+    ret = OH_ImageSource2_CreateDecodingOptions(&ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    OH_ImageSource2_DecodingOptionsGetDesiredDynamicRange(ops, &dynamicRangeOut);
+    ASSERT_EQ(dynamicRangeOut, Image_Dynamic_Range::IMAGE_DYNAMIC_RANGE_AUTO);
+    ret = OH_ImageSource2_ReleaseDecodingOptions(ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsGetDesiredDynamicRangeTest end";
+}
+
+/**
+ * @tc.name: OH_ImageSource2_DecodingOptionsSetDesiredDynamicRangeTest
+ * @tc.desc: test OH_ImageSource2_DecodingOptionsSetDesiredDynamicRange
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSource2_DecodingOptionsSetDesiredDynamicRangeTest, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsSetDesiredDynamicRangeTest start";
+    OH_ImageSource_DecodingOptions *ops = nullptr;
+    Image_ErrorCode ret = IMAGE_RESULT_MEDIA_UNKNOWN;
+    Image_Dynamic_Range dynamicRange = Image_Dynamic_Range::IMAGE_DYNAMIC_RANGE_SDR;
+    Image_Dynamic_Range dynamicRangeOut;
+    ret = OH_ImageSource2_CreateDecodingOptions(&ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    OH_ImageSource2_DecodingOptionsSetDesiredDynamicRange(ops, dynamicRange);
+    OH_ImageSource2_DecodingOptionsGetDesiredDynamicRange(ops, &dynamicRangeOut);
+    ASSERT_EQ(dynamicRangeOut, Image_Dynamic_Range::IMAGE_DYNAMIC_RANGE_SDR);
+    ret = OH_ImageSource2_ReleaseDecodingOptions(ops);
+    ASSERT_EQ(ret, IMAGE_RESULT_SUCCESS);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSource2_DecodingOptionsSetDesiredDynamicRangeTest end";
 }
 
 /**

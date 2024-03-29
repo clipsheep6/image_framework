@@ -210,6 +210,38 @@ HWTEST_F(PixelMapNdk2Test, OH_Pixelmap2_ImageInfoGetAlphaType, TestSize.Level3)
 }
 
 /**
+ * @tc.name: OH_Pixelmap2_ImageInfoGetDynamicRangeTest
+ * @tc.desc: OH_Pixelmap2_ImageInfoGetDynamicRange
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapNdk2Test, OH_Pixelmap2_ImageInfoGetDynamicRangeTest1, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_Pixelmap2_ImageInfoGetDynamicRangeTest start";
+    OH_Pixelmap_ImageInfo *ImageInfo = nullptr;
+    bool *isHdr = false;
+    Image_ErrorCode ret = OH_Pixelmap2_ImageInfoGetDynamicRange(ImageInfo, &isHdr);
+    ASSERT_EQ(ret , IMAGE_RESULT_BAD_PARAMETER);
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_Pixelmap2_ImageInfoGetDynamicRangeTest end";
+}
+
+/**
+ * @tc.name: OH_Pixelmap2_ImageInfoGetDynamicRangeTest
+ * @tc.desc: OH_Pixelmap2_ImageInfoGetDynamicRange
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapNdk2Test, OH_Pixelmap2_ImageInfoGetDynamicRangeTest2, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_Pixelmap2_ImageInfoGetDynamicRangeTest start";
+    OH_Pixelmap_ImageInfo ImageInfo;
+    ImageInfo.isHdr = true;
+    bool *isHdr = false;
+    Image_ErrorCode ret = OH_Pixelmap2_ImageInfoGetDynamicRange(ImageInfo, &isHdr);
+    ASSERT_EQ(ret , IMAGE_RESULT_SUCCESS);
+    ASSERT_EQ(isHdr, true);
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_Pixelmap2_ImageInfoGetDynamicRangeTest end";
+}
+
+/**
  * @tc.name: OH_Pixelmap2_ReleaseImageInfo
  * @tc.desc: OH_Pixelmap2_ReleaseImageInfo
  * @tc.type: FUNC

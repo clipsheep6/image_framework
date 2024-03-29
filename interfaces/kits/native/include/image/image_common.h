@@ -237,6 +237,31 @@ typedef enum {
 } Image_ErrorCode;
 
 /**
+ * @brief Enumerates the resolution quality that may be used by the interface.
+ *
+ * @since 12
+ * @version 2.0
+ */
+typedef enum {
+    SUPER = 0,
+    HIGH = 1,
+    MEDIUM = 2,
+    LOW = 3,
+ } Image_Resolution_Quality;
+
+ /**
+ * @brief Enumerates the return values that may be used by the interface.
+ *
+ * @since 12
+ * @version 2.0
+ */
+typedef enum {
+    IMAGE_DYNAMIC_RANGE_AUTO = 0,
+    IMAGE_DYNAMIC_RANGE_SDR = 1,
+    IMAGE_DYNAMIC_RANGE_HDR = 2,
+ } Image_Dynamic_Range;
+ 
+/**
  * @brief Defines the mbp mime type.
  *
  * @since 10
