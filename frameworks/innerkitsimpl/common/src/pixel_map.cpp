@@ -2473,6 +2473,77 @@ static int8_t GetAlphaIndex(const PixelFormat& pixelFormat)
     }
 }
 
+static void ConvertUintPixelAlpha(uint8_t *rpixel,
+    uint8_t pixelByte, int8_t alphaIndex, bool isPremul, uint8_t *wpixel)
+{
+    float alphaValue = static_cast<float>(rpixel[alphaIndex]) / UINT8_MAX;
+    for (int32_t pixelIndex = 0; pixelIndex < pixelByte; pixelIndex++) {
+        float pixelValue = static_cast<float>(rpixel[pixelIndex]);
+        if (pixelIndex != alphaIndex) {
+            float nPixel;
+            if (isPremul) {
+                nPixel = pixelValue * alphaValue;
+            } else {
+                nPixel = (alphaValue == 0) ? 0 : pixelValue / alphaValue;
+            }
+            wpixel[pixelIndex] = static_cast<uint8_t>(nPixel + HALF_ONE);
+        } else {
+            wpixel[pixelIndex] = rpixel[pixelIndex];
+        }
+    }
+}
+
+uint32_t PixelMap::ConvertAlphaFormat(ImageInfo &dstImageInfo, const uint32_t &dstPixelSize,
+    const int32_t &dstPixelBytes, void *dstData, const bool isPremul)
+{
+    if (dstData == nullptr) {
+        IMAGE_LOGE("read pixels by dstPixelMap data is null.");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
+    if (data_ == nullptr) {
+        IMAGE_LOGE("read pixels by srcPixelMap data is null.");
+        return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
+    if (dstPixelSize < pixelsSize_) {
+        IMAGE_LOGE("pixelsSize from dstPixelMap (%{public}u) < srcPixelMap size (%{public}u).",
+            dstPixelSize, pixelsSize_);
+        return COMMON_ERR_INVALID_PARAMETER;
+    }
+    if (imageInfo_.size.height != dstImageInfo.size.height || imageInfo_.size.width != dstImageInfo.size.width) {
+        IMAGE_LOGE("srcPixelMap size mismtach srcPixelMap");
+        return COMMON_ERR_INVALID_PARAMETER;
+    }
+
+    PixelFormat srcPixelFormat = GetPixelFormat();
+    PixelFormat dstPixelFormat = dstImageInfo.pixelFormat;
+    int8_t srcAlphaIndex = GetAlphaIndex(srcPixelFormat);
+    int8_t dstAlphaIndex = GetAlphaIndex(dstPixelFormat);
+    if (srcPixelFormat != dstPixelFormat || srcAlphaIndex == INVALID_ALPHA_INDEX ||
+        dstAlphaIndex == INVALID_ALPHA_INDEX || srcPixelFormat == PixelFormat::RGBA_F16 ||
+        dstPixelFormat == PixelFormat::RGBA_F16) {
+        IMAGE_LOGE("Could not perform premultiply or nonpremultiply from %{public}s to %{public}s",
+            GetNamedPixelFormat(srcPixelFormat).c_str(), GetNamedPixelFormat(dstPixelFormat).c_str());
+        return ERR_IMAGE_DATA_UNSUPPORT;
+    }
+
+    if ((srcPixelFormat == PixelFormat::ALPHA_8 && pixelBytes_ != ALPHA_BYTES) ||
+        (dstPixelFormat == PixelFormat::ALPHA_8 && dstPixelBytes != ALPHA_BYTES)) {
+        IMAGE_LOGE("Pixel format %{public}s and %{public}s mismatch pixelByte %{public}d and %{public}d",
+            GetNamedPixelFormat(srcPixelFormat).c_str(), GetNamedPixelFormat(dstPixelFormat).c_str(), pixelBytes_,
+            dstPixelBytes);
+        return COMMON_ERR_INVALID_PARAMETER;
+    }
+
+    for (uint32_t i = 0; i < pixelsSize_;) {
+        uint8_t* rpixel = data_ + i;
+        uint8_t* wpixel = static_cast<uint8_t*>(dstData) + i;
+        ConvertUintPixelAlpha(rpixel, pixelBytes_, srcAlphaIndex, isPremul, wpixel);
+        i += pixelBytes_;
+    }
+
+    return SUCCESS;
+}
+
 uint32_t PixelMap::SetAlpha(const float percent)
 {
     auto alphaType = GetAlphaType();
@@ -2488,7 +2559,7 @@ uint32_t PixelMap::SetAlpha(const float percent)
         IMAGE_LOGE(
             "Set alpha input should (0 < input <= 1). Current input %{public}f",
             percent);
-        return ERR_IMAGE_INVALID_PARAMETER;
+        return COMMON_ERR_INVALID_PARAMETER;
     }
 
     bool isPixelPremul = alphaType == AlphaType::IMAGE_ALPHA_TYPE_PREMUL;
@@ -2505,7 +2576,7 @@ uint32_t PixelMap::SetAlpha(const float percent)
         (pixelFormat == PixelFormat::RGBA_F16 && pixelBytes_ != RGBA_F16_BYTES)) {
         IMAGE_LOGE("Pixel format %{public}s mismatch pixelByte %{public}d",
             GetNamedPixelFormat(pixelFormat).c_str(), pixelBytes_);
-        return ERR_IMAGE_INVALID_PARAMETER;
+        return COMMON_ERR_INVALID_PARAMETER;
     }
     for (uint32_t i = 0; i < pixelsSize;) {
         uint8_t* pixel = data_ + i;

@@ -174,6 +174,8 @@ public:
     NATIVEEXPORT virtual void *GetFd() const;
     NATIVEEXPORT virtual void SetFreePixelMapProc(CustomFreePixelMap func);
     NATIVEEXPORT virtual void SetTransformered(bool isTransformered);
+    NATIVEEXPORT virtual uint32_t ConvertAlphaFormat(ImageInfo &dstImageInfo, const uint32_t &dstPixelSize,
+                                     const int32_t &dstPixelBytes, void *dstData, const bool isPremul);
     NATIVEEXPORT void SetPixelMapError(uint32_t code, std::string info)
     {
         errorCode = code;
@@ -389,6 +391,8 @@ private:
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> &metadataAccessor,
         const std::string &key, const std::string &value);
 
+    static int32_t ConvertPixelAlpha(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
+        void *dstPixels, const ImageInfo &dstInfo);
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
     ImageInfo imageInfo_;
