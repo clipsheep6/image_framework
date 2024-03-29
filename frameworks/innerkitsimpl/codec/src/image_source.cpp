@@ -549,6 +549,8 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index,
     const DecodeOptions &opts, uint32_t &errorCode)
 {
+    IMAGE_LOGI("[ImageSource]DecodeOptions, decodingDynamicRange:%{public}d resolutionQuality:%{public}d", 
+        DecodeOptions.decodingDynamicRange, DecodeOptions. resolutionQuality);
     uint64_t decodeStartTime = GetNowTimeMicroSeconds();
     opts_ = opts;
     ImageInfo info;
