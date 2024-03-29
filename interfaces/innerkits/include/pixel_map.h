@@ -88,6 +88,9 @@ struct PixelMemInfo {
     AllocatorType allocatorType = AllocatorType::SHARE_MEM_ALLOC;
 };
 
+class MetadataAccessor;
+class ExifMetadata;
+
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
 public:
     static std::atomic<uint32_t> currentId;
@@ -273,6 +276,23 @@ public:
         isAstc_ = isAstc;
     }
 
+    NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata()
+    {
+        return exifMetadata_;
+    }
+
+    NATIVEEXPORT void SetExifMetadata(std::shared_ptr<ExifMetadata> &ptr)
+    {
+        exifMetadata_ = ptr;
+    }
+
+    NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
+    NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
+        const std::string &path);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
+        const int fd);
+
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
     static constexpr uint8_t TLV_VARINT_MASK = 0x7F;
@@ -368,6 +388,9 @@ private:
     bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
     void SetNumsAPICalled(std::string funcName);
+    uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
+    uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> &metadataAccessor,
+        const std::string &key, const std::string &value);
 
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
@@ -385,6 +408,7 @@ private:
     bool useSourceAsResponse_ = false;
     bool isTransformered_ = false;
     std::shared_ptr<std::mutex> transformMutex_ = std::make_shared<std::mutex>();
+    std::shared_ptr<std::mutex> metadataMutex_ = std::make_shared<std::mutex>();
 
     // only used by rosen backend
     uint32_t uniqueId_ = 0;
@@ -406,6 +430,7 @@ private:
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
     YUVDataInfo yuvDataInfo_;
+    std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
 };
 } // namespace Media
 } // namespace OHOS

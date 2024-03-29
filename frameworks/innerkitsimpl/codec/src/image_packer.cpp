@@ -206,6 +206,7 @@ uint32_t ImagePacker::AddImage(ImageSource &source)
         IMAGE_LOGE("create the pixel map unique_ptr fail.");
         return ERR_IMAGE_MALLOC_ABNORMAL;
     }
+
     return AddImage(*pixelMap_.get());
 }
 
@@ -227,6 +228,7 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
         IMAGE_LOGE("create the pixel map unique_ptr fail.");
         return ERR_IMAGE_MALLOC_ABNORMAL;
     }
+
     return AddImage(*pixelMap_.get());
 }
 
