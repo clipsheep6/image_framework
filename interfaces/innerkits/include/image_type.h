@@ -137,6 +137,19 @@ enum class FinalOutputStep : int32_t {
     DENSITY_CHANGE = 4
 };
 
+enum class ResolutionQuality : int32_t {
+    SUPER,
+    HIGH,
+    MEDIUM,
+    LOW
+};
+
+enum class DynamicRange : int32_t {
+    IMAGE_DYNAMIC_RANGE_AUTO,
+    IMAGE_DYNAMIC_RANGE_SDR,
+    IMAGE_DYNAMIC_RANGE_HDR
+};
+
 struct Position {
     int32_t x = 0;
     int32_t y = 0;
@@ -160,6 +173,7 @@ struct ImageInfo {
     ColorSpace colorSpace = ColorSpace::SRGB;
     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     int32_t baseDensity = 0;
+    bool isHdr = false;
     std::string encodedFormat;
 };
 
@@ -212,6 +226,9 @@ struct DecodeOptions {
     SVGDecodeOptions SVGOpts;
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
+
+    DynamicRange decodingDynamicRange = DynamicRange::IMAGE_DYNAMIC_RANGE_AUTO;
+    ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
 };
 
 enum class ScaleMode : int32_t {
@@ -234,6 +251,7 @@ enum class AntiAliasingOption : int32_t {
     LANCZOS = 8, // SWS_LANCZOS
     SPLINE = 9, // SWS_SPLINE
 };
+
 } // namespace Media
 } // namespace OHOS
 

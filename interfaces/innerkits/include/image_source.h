@@ -24,6 +24,7 @@
 #include <optional>
 #include <set>
 
+#include "image/abs_image_decoder.h"
 #include "decode_listener.h"
 #include "image_type.h"
 #include "incremental_pixel_map.h"
