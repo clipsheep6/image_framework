@@ -25,6 +25,7 @@
 #include "media_errors.h"
 #include "pixel_convert.h"
 #include "src/images/SkImageEncoderFns.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -280,6 +281,7 @@ uint32_t JpegEncoder::Yuv420spEncoder(const uint8_t *data)
         IMAGE_LOGE("allocate vPlane memory failed.");
         return ERR_IMAGE_MALLOC_ABNORMAL;
     }
+    ReportIfMemoryOverflow("JpegEncoder Yuv420spEncoder", (width >> SHIFT_MASK) * UV_SAMPLE_ROW);
     while (encodeInfo_.next_scanline < height) {
         Deinterweave(uvPlane, uPlane.get(), vPlane.get(), encodeInfo_.next_scanline, width, height);
         for (uint32_t i = 0; i < Y_SAMPLE_ROW; i++) {
@@ -335,6 +337,7 @@ uint32_t JpegEncoder::RGBAF16Encoder(const uint8_t *data)
     uint32_t orgRowStride = encodeInfo_.image_width * PIXEL_SIZE_RGBA_F16;
     uint8_t *buffer = nullptr;
     auto rowBuffer = std::make_unique<uint8_t[]>(rowStride);
+    ReportIfMemoryOverflow("JpegEncoder RGBAF16Encoder", rowStride);
     while (encodeInfo_.next_scanline < encodeInfo_.image_height) {
         buffer = base + encodeInfo_.next_scanline * orgRowStride;
         for (uint32_t i = 0; i < rowStride;i++) {
@@ -365,7 +368,7 @@ uint32_t JpegEncoder::RGB565Encoder(const uint8_t *data)
 
     uint32_t outRowStride = encodeInfo_.image_width * encodeInfo_.input_components;
     auto outRowBuffer = std::make_unique<uint8_t[]>(outRowStride);
-
+    ReportIfMemoryOverflow("JpegEncoder RGB565Encoder", outRowStride);
     while (encodeInfo_.next_scanline < encodeInfo_.image_height) {
         orgRowBuffer = base + encodeInfo_.next_scanline * orgRowStride;
         skcms(reinterpret_cast<char*>(&outRowBuffer[0]),

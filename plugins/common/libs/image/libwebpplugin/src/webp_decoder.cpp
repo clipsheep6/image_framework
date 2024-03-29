@@ -21,6 +21,7 @@
 #include "media_errors.h"
 #include "multimedia_templates.h"
 #include "securec.h"
+#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -513,6 +514,7 @@ bool WebpDecoder::AllocOutputBuffer(DecodeContext &context, bool isIncremental)
     }
     if (context.pixelsBuffer.buffer == nullptr) {
         uint64_t byteCount = static_cast<uint64_t>(webpSize_.width * webpSize_.height * bytesPerPixel_);
+        ReportIfMemoryOverflow("WebpDecoder AllocOutputBuffer", byteCount);
         if (context.allocatorType == Media::AllocatorType::SHARE_MEM_ALLOC) {
             return SharedMemoryCreate(context, byteCount);
         } else if (context.allocatorType == Media::AllocatorType::HEAP_ALLOC) {

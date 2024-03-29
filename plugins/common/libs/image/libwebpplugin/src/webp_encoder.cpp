@@ -18,6 +18,7 @@
 #include "image_trace.h"
 #include "media_errors.h"
 #include "pixel_convert_adapter.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -293,7 +294,7 @@ uint32_t WebpEncoder::DoEncode(Media::PixelMap &pixelMap, WebPConfig &webpConfig
         IMAGE_LOGE("DoEncode, transform issue.");
         return ERROR;
     }
-
+    ReportIfMemoryOverflow("WebpEncoder DoEncode", rgbSize);
     auto importProc = WebPPictureImportRGB;
     if (componentsNum_ != COMPONENT_NUM_3) {
         importProc = (IsOpaque(pixelMap)) ? WebPPictureImportRGBX : WebPPictureImportRGBA;

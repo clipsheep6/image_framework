@@ -34,7 +34,7 @@ namespace OHOS {
 namespace Media {
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
-
+enum class InvocationMode : uint32_t;
 typedef struct {
     float scaleX;
     float scaleY;
@@ -93,10 +93,7 @@ class ExifMetadata;
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
 public:
     static std::atomic<uint32_t> currentId;
-    PixelMap()
-    {
-        uniqueId_ = currentId.fetch_add(1, std::memory_order_relaxed);
-    }
+    PixelMap();
     virtual ~PixelMap();
     NATIVEEXPORT static std::unique_ptr<PixelMap> Create(const uint32_t *colors, uint32_t colorLength,
                                                          const InitializationOptions &opts);
@@ -235,6 +232,7 @@ public:
     {
         yuvInfo = yuvDataInfo_;
     }
+    NATIVEEXPORT void SetAPICalledType(InvocationMode type);
 #ifdef IMAGE_COLORSPACE_FLAG
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----begin----
     NATIVEEXPORT void InnerSetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
@@ -388,6 +386,7 @@ private:
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> &metadataAccessor,
         const std::string &key, const std::string &value);
+    void SetNumsAPICalled(std::string funcName);
 
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
@@ -412,6 +411,8 @@ private:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
+    std::map<std::string, int32_t> numbersAPICalledMap_;
+    InvocationMode invocationMode_;
 
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;

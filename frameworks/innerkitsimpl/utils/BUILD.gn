@@ -110,11 +110,13 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
       ]
 
+      sources += [ "src/image_dfx.cpp" ]
       external_deps = [
         "c_utils:utils",
         "graphic_2d:color_manager",
         "graphic_surface:surface",
         "hilog:libhilog",
+        "hisysevent:libhisysevent",
         "hitrace:hitrace_meter",
       ]
 
@@ -181,6 +183,7 @@ ohos_static_library("image_utils_static") {
     ]
   } else {
     sources += [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
+    sources += [ "src/image_dfx.cpp" ]
     deps = [
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
@@ -188,6 +191,7 @@ ohos_static_library("image_utils_static") {
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
+      "hisysevent:libhisysevent",
       "hitrace:hitrace_meter",
     ]
 

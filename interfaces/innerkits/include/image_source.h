@@ -50,6 +50,9 @@ struct PlImageInfo;
 
 namespace OHOS {
 namespace Media {
+enum class InvocationMode : uint32_t;
+struct ReportImageoptions;
+
 struct SourceOptions {
     std::string formatHint;
     int32_t baseDensity = 0;
@@ -208,6 +211,7 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
+    NATIVEEXPORT void SetAPICalledType(InvocationMode type);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -267,11 +271,13 @@ private:
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
+    void SetReportDecodeInfoParam(const DecodeOptions &opts, ReportImageoptions& codecInfo);
     static uint64_t GetNowTimeMicroSeconds();
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
     uint32_t CreatExifMetadataByImageSource();
+    void SetNumsAPICalled(std::string funcName);
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
@@ -300,6 +306,8 @@ private:
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
+    std::map<std::string, int32_t> numbersAPICalledMap_;
+    InvocationMode invocationMode_;
 };
 } // namespace Media
 } // namespace OHOS

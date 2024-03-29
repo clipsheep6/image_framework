@@ -21,6 +21,7 @@
 #include "media_errors.h"
 #include "pngpriv.h"
 #include "pngstruct.h"
+#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -382,6 +383,7 @@ uint8_t *PngDecoder::AllocOutputBuffer(DecodeContext &context)
             return nullptr;
         }
 #endif
+        ReportIfMemoryOverflow("PngDecoder AllocOutputBuffer", byteCount);
     }
     return static_cast<uint8_t *>(context.pixelsBuffer.buffer);
 }
