@@ -598,6 +598,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     if (pixelMap == nullptr) {
         return nullptr;
     }
+    if (opts.decodingDynamicRange == DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
+        pixelMap.SetIsHdr(true);
+    }
     if (!context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
     }
