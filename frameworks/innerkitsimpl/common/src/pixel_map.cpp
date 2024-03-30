@@ -1491,12 +1491,18 @@ bool PixelMap::IsStrideAlignment()
 
 bool PixelMap::IsHdr()
 {
-    return isHdr_;
+    return imageInfo_.isHdr;
 }
 
-void PixelMap::SetIsHdr(bool isHdr)
+uint32_t PixelMap::SetIsHdr(bool isHdr)
 {
-    isHdr_ = isHdr;
+    ImageInfo dstInfo = imageInfo_;
+    dstInfo.isHdr = isHdr;
+    uint32_t ret = SetImageInfo(dstInfo, true);
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("SetAlphaType call SetImageInfo Failed. ret:%{public}u", ret);
+    }
+    return ret;
 }
 
 AllocatorType PixelMap::GetAllocatorType()

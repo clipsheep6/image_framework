@@ -774,7 +774,10 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
     napi_create_string_utf8(env, imageInfo->encodedFormat.c_str(), NAPI_AUTO_LENGTH,
         &encodedFormatValue);
     napi_set_named_property(env, result, "mimeType", encodedFormatValue);
-    napi_get_boolean(env, imageInfo->isHdr, &result);
+
+    napi_value isHdr = nullptr;
+    napi_create_int32(env, static_cast<int32_t>(imageInfo->isHdr), &isHdr);
+    napi_set_named_property(env, result, "isHdr", isHdr);
 
     return result;
 }

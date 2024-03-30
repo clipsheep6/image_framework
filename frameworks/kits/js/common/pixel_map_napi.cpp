@@ -393,7 +393,6 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_GETTER("isEditable", GetIsEditable),
         DECLARE_NAPI_GETTER("isStrideAlignment", GetIsStrideAlignment),
-        DECLARE_NAPI_GETTER("isHdr", GetIsHdr),
     };
 
     napi_property_descriptor static_prop[] = {
@@ -1211,35 +1210,6 @@ napi_value PixelMapNapi::GetIsStrideAlignment(napi_env env, napi_callback_info i
     return result;
 }
 
-napi_value PixelMapNapi::GetIsHdr(napi_env env, napi_callback_info info)
-{
-    napi_value result = nullptr;
-    napi_get_undefined(env, &result);
-
-    napi_status status;
-    napi_value thisVar = nullptr;
-    size_t argCount = 0;
-    IMAGE_LOGD("GetIsStrideAlignment IN");
-    
-    IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
-
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to napi_get_cb_info"));
-
-    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
-
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi),
-        result, IMAGE_LOGE("fail to unwrap context"));
-        
-    if (pixelMapNapi->nativePixelMap_ == nullptr) {
-        return result;
-    }
-    bool isHdr = pixelMapNapi->nativePixelMap_->IsHdr();
-    napi_get_boolean(env, isHdr, &result);
-    pixelMapNapi.release();
-    return result;
-}
-
 napi_value PixelMapNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info info)
 {
     ImageTrace imageTrace("PixelMapNapi::ReadPixelsToBuffer");
@@ -1685,6 +1655,11 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
     napi_create_string_utf8(env, imageInfo->encodedFormat.c_str(),
         imageInfo->encodedFormat.length(), &encodedFormatValue);
     napi_set_named_property(env, result, "mimeType", encodedFormatValue);
+
+    napi_value isHdr = nullptr;
+    napi_create_int32(env, static_cast<int32_t>(imageInfo->isHdr), &isHdr);
+    napi_set_named_property(env, result, "isHdr", isHdr);
+
     return result;
 }
 
