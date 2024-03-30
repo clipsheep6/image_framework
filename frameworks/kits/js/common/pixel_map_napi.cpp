@@ -393,6 +393,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_GETTER("isEditable", GetIsEditable),
         DECLARE_NAPI_GETTER("isStrideAlignment", GetIsStrideAlignment),
+        DECLARE_NAPI_GETTER("isHdr", GetIsHdr),
     };
 
     napi_property_descriptor static_prop[] = {
@@ -1206,6 +1207,35 @@ napi_value PixelMapNapi::GetIsStrideAlignment(napi_env env, napi_callback_info i
     }
     bool isDMA = pixelMapNapi->nativePixelMap_->IsStrideAlignment();
     napi_get_boolean(env, isDMA, &result);
+    pixelMapNapi.release();
+    return result;
+}
+
+napi_value PixelMapNapi::GetIsHdr(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = 0;
+    IMAGE_LOGD("GetIsStrideAlignment IN");
+    
+    IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to napi_get_cb_info"));
+
+    std::unique_ptr<PixelMapNapi> pixelMapNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pixelMapNapi));
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pixelMapNapi),
+        result, IMAGE_LOGE("fail to unwrap context"));
+        
+    if (pixelMapNapi->nativePixelMap_ == nullptr) {
+        return result;
+    }
+    bool isHdr = pixelMapNapi->nativePixelMap_->IsHdr();
+    napi_get_boolean(env, isHdr, &result);
     pixelMapNapi.release();
     return result;
 }

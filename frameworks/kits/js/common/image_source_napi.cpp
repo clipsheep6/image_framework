@@ -770,11 +770,12 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
     napi_value alphaTypeValue = nullptr;
     napi_create_int32(env, static_cast<int32_t>(imageInfo->alphaType), &alphaTypeValue);
     napi_set_named_property(env, result, "alphaType", alphaTypeValue);
-
     napi_value encodedFormatValue = nullptr;
     napi_create_string_utf8(env, imageInfo->encodedFormat.c_str(), NAPI_AUTO_LENGTH,
         &encodedFormatValue);
     napi_set_named_property(env, result, "mimeType", encodedFormatValue);
+    napi_get_boolean(env, context->imageInfo.isHdr, &result);
+
     return result;
 }
 
@@ -897,6 +898,20 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
         IMAGE_LOGD("SVGResize percentage %{public}x", opts->SVGOpts.SVGResize.resizePercentage);
     } else {
         IMAGE_LOGD("no SVGResize percentage");
+    }
+    uint32_t resolutionQuality = NUM_0;
+    if (GET_UINT32_BY_NAME(root, "resolutionQuality", resolutionQuality)) {
+        opts->resolutionQuality = static_cast<ResolutionQuality>(resolutionQuality);
+        IMAGE_LOGD("resolutionQuality %{public}x", opts->resolutionQuality);
+    } else {
+        IMAGE_LOGD("no resolutionQuality");
+    }
+    uint32_t decodingDynamicRange = NUM_0;
+    if (GET_UINT32_BY_NAME(root, "dynamicRange", decodingDynamicRange)) {
+        opts->decodingDynamicRange = static_cast<DynamicRange>(decodingDynamicRange);
+        IMAGE_LOGD("dynamicRange %{public}x", opts->decodingDynamicRange);
+    } else {
+        IMAGE_LOGD("no dynamicRange");
     }
     napi_value nDesiredColorSpace = nullptr;
     if (napi_get_named_property(env, root, "desiredColorSpace", &nDesiredColorSpace) == napi_ok) {

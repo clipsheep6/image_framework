@@ -1489,6 +1489,16 @@ bool PixelMap::IsStrideAlignment()
     return false;
 }
 
+bool PixelMap::IsHdr()
+{
+    return isHdr_;
+}
+
+void PixelMap::SetIsHdr(bool isHdr)
+{
+    isHdr_ = isHdr;
+}
+
 AllocatorType PixelMap::GetAllocatorType()
 {
     return allocatorType_;

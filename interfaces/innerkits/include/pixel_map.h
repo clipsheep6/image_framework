@@ -284,6 +284,9 @@ public:
         exifMetadata_ = ptr;
     }
 
+    bool IsHdr();
+    void SetIsHdr(bool isHdr);
+
     NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
     NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
     NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
@@ -426,6 +429,7 @@ private:
 #endif
     YUVDataInfo yuvDataInfo_;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
+    bool isHdr_ = false;
 };
 } // namespace Media
 } // namespace OHOS

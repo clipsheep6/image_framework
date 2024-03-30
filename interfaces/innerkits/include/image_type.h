@@ -136,6 +136,18 @@ enum class FinalOutputStep : int32_t {
     SIZE_CHANGE = 3,
     DENSITY_CHANGE = 4
 };
+enum class ResolutionQuality : int32_t {
+    SUPER,
+    HIGH,
+    MEDIUM,
+    LOW
+};
+
+enum class DynamicRange : int32_t {
+    IMAGE_DYNAMIC_RANGE_AUTO,
+    IMAGE_DYNAMIC_RANGE_SDR,
+    IMAGE_DYNAMIC_RANGE_HDR
+};
 
 struct Position {
     int32_t x = 0;
@@ -161,6 +173,7 @@ struct ImageInfo {
     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     int32_t baseDensity = 0;
     std::string encodedFormat;
+    bool isHdr = false;
 };
 
 struct YUVDataInfo {
@@ -213,6 +226,8 @@ struct DecodeOptions {
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
     bool fastAstc = false;
+    DynamicRange decodingDynamicRange = DynamicRange::IMAGE_DYNAMIC_RANGE_AUTO;
+    ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
 };
 
 enum class ScaleMode : int32_t {
