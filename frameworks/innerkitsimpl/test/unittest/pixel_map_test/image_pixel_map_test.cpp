@@ -1402,7 +1402,7 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap044, TestSize.Level3)
 */
 HWTEST_F(ImagePixelMapTest, ImagePixelMap045, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap045 getEncodedFormat start";
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap045 getIsHdr start";
     PixelMap pixelMap;
     ImageInfo info;
     info.size.width = PIXEL_MAP_TEST_WIDTH;
@@ -1414,7 +1414,7 @@ HWTEST_F(ImagePixelMapTest, ImagePixelMap045, TestSize.Level3)
     ImageInfo info1;
     pixelMap.GetImageInfo(info1);
     EXPECT_EQ(info1.isHdr, false);
-    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap045 getEncodedFormat end";
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ImagePixelMap045 getIsHdr end";
 }
 
 /**
