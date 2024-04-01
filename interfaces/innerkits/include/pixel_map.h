@@ -76,7 +76,7 @@ typedef struct PixelMapError {
 
 typedef struct BuildParam {
     int32_t offset_ = 0;
-    int32_t stride_ = 0;
+    int32_t width_ = 0;
     bool flag_ = true;
 } BUILD_PARAM;
 
