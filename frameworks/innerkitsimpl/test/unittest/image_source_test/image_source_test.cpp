@@ -356,6 +356,45 @@ HWTEST_F(ImageSourceTest, CreatePixelMap002, TestSize.Level3)
 }
 
 /**
+ * @tc.name: CreatePixelMap003
+ * @tc.desc: test CreatePixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreatePixelMap003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMap003 start";
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource =
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+
+    int32_t desiredWidth = 100;
+    int32_t desiredHeight = 100;
+
+    decodeOpts.desiredSize.width = desiredWidth;
+    decodeOpts.desiredSize.height = desiredHeight;
+    decodeOpts.decodingDynamicRange = DynamicRange::IMAGE_DYNAMIC_RANGE_HDR;
+
+    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+
+    ImageInfo imageInfo; 
+    pixelMap->GetImageInfo(imageInfo);
+
+    ASSERT_EQ(imageInfo.isHdr, true);
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMap003 end";
+}
+
+/**
  * @tc.name: CreateIncrementalPixelMap001
  * @tc.desc: test CreateIncrementalPixelMap
  * @tc.type: FUNC
