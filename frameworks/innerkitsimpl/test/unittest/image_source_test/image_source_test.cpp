@@ -411,6 +411,31 @@ HWTEST_F(ImageSourceTest, CreateIncrementalPixelMap002, TestSize.Level3)
 }
 
 /**
+ * @tc.name: CreateIncrementalPixelMap003
+ * @tc.desc: test CreatePixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreateIncrementalPixelMap003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreateIncrementalPixelMap003 start";
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+
+    uint32_t info = 100;
+    DecodeOptions op;
+    op.decodingDynamicRange = 2;
+    op.sampleSize = 1;
+    auto pixelmap = imageSource->CreatePixelMap(info, op, errorCode);
+    ASSERT_NE(pixelmap, nullptr);
+    ASSERT_EQ(pixelmap.isHdr, true);
+
+    GTEST_LOG_(INFO) << "ImageSourceTest: CreateIncrementalPixelMap003 end";
+}
+
+/**
  * @tc.name: UpdateData001
  * @tc.desc: test UpdateData
  * @tc.type: FUNC
