@@ -742,6 +742,7 @@ napi_value ImageSourceNapi::GetSupportedFormats(napi_env env, napi_callback_info
 
 STATIC_NAPI_VALUE_FUNC(GetImageInfo)
 {
+    IMAGE_LOGI("==========test==========imagesource GetImageInfo");
     napi_value result = nullptr;
     auto imageInfo = static_cast<ImageInfo*>(data);
     napi_create_object(env, &result);

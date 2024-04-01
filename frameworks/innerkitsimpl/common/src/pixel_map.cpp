@@ -1500,7 +1500,7 @@ uint32_t PixelMap::SetIsHdr(bool isHdr)
     dstInfo.isHdr = isHdr;
     uint32_t ret = SetImageInfo(dstInfo, true);
     if (ret != SUCCESS) {
-        IMAGE_LOGE("SetAlphaType call SetImageInfo Failed. ret:%{public}u", ret);
+        IMAGE_LOGE("SetIsHdr call SetImageInfo Failed. ret:%{public}u", ret);
     }
     return ret;
 }

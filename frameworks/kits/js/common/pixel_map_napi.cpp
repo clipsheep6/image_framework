@@ -1622,6 +1622,7 @@ napi_value PixelMapNapi::WriteBufferToPixelsSync(napi_env env, napi_callback_inf
 
 STATIC_NAPI_VALUE_FUNC(GetImageInfo)
 {
+    IMAGE_LOGI("==========test==========PixelMap GetImageInfo");
     IMAGE_LOGD("[PixelMap]GetImageInfoNapiValue IN");
     napi_value result = nullptr;
     napi_create_object(env, &result);

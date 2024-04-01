@@ -544,6 +544,7 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
 
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
+    IMAGE_LOGI("=======test============CreatePixelMapExtended start");
     uint64_t decodeStartTime = GetNowTimeMicroSeconds();
     opts_ = opts;
     ImageInfo info;
@@ -599,6 +600,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
         return nullptr;
     }
     if (opts.decodingDynamicRange == DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
+        IMAGE_LOGI("=======test============CreatePixelMapExtended: SetIsHdr true");
         pixelMap->SetIsHdr(true);
     }
     if (!context.ifPartialOutput) {
