@@ -29,6 +29,7 @@
 #include "image_creator_context.h"
 #include "image_receiver.h"
 #include "native_image.h"
+#include "image_dfx.h"
 
 namespace OHOS {
 namespace Media {
@@ -53,6 +54,7 @@ public:
         std::shared_ptr<SurfaceBufferAvaliableListener> surfaceBufferAvaliableListener)
     {
         surfaceBufferAvaliableListener_ = surfaceBufferAvaliableListener;
+        SetNumsAPICalled("RegisterBufferAvaliableListener");
     }
     static std::shared_ptr<ImageCreator> CreateImageCreator(int32_t width,
                                                             int32_t height,
@@ -82,8 +84,12 @@ public:
     std::shared_ptr<IBufferProcessor> GetBufferProcessor();
     std::shared_ptr<NativeImage> DequeueNativeImage();
     void QueueNativeImage(std::shared_ptr<NativeImage> image);
+    void SetAPICalledType(InvocationMode type);
 private:
+    void SetNumsAPICalled(std::string funcName);
     std::shared_ptr<IBufferProcessor> bufferProcessor_;
+    std::map<std::string, int32_t> numbersAPICalledMap_;
+    InvocationMode invocationMode_ = InvocationMode::INTERNAL_CALL;
 };
 class ImageCreatorSurfaceListener : public IBufferConsumerListener {
 public:

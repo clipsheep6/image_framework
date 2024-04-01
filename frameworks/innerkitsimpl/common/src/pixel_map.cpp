@@ -91,6 +91,10 @@ std::atomic<uint32_t> PixelMap::currentId = 0;
 PixelMap::~PixelMap()
 {
     IMAGE_LOGD("PixelMap::~PixelMap_id:%{public}d", GetUniqueId());
+    for (auto iter : numbersAPICalledMap_) {
+        CountImagePackerCalledNums(iter.first, iter.second, static_cast<uint32_t>(invocationMode_),
+            reinterpret_cast<uint64_t>(this));
+    }
     FreePixelMap();
 }
 
@@ -1182,6 +1186,7 @@ bool PixelMap::IsSameImage(const PixelMap &other)
 uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
 {
     ImageTrace imageTrace("ReadPixels by bufferSize");
+    SetNumsAPICalled("ReadPixelsbybuffersize");
     if (dst == nullptr) {
         IMAGE_LOGE("read pixels by buffer input dst address is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
@@ -1266,6 +1271,7 @@ bool PixelMap::CheckPixelsInput(const uint8_t *dst, const uint64_t &bufferSize, 
 uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, const uint32_t &offset, const uint32_t &stride,
                               const Rect &region, uint8_t *dst)
 {
+    SetNumsAPICalled("ReadPixelsbyrect");
     if (!CheckPixelsInput(dst, bufferSize, offset, stride, region)) {
         IMAGE_LOGE("read pixels by rect input parameter fail.");
         return ERR_IMAGE_INVALID_PARAMETER;
@@ -1287,7 +1293,9 @@ uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, const uint32_t &offset
 
 uint32_t PixelMap::ReadPixel(const Position &pos, uint32_t &dst)
 {
-    if (pos.x < 0 || pos.y < 0 || pos.x >= GetWidth() || pos.y >= GetHeight()) {
+    SetNumsAPICalled("ReadPixel");
+    if (pos.x < 0 || pos.y < 0 || pos.x >= GetWidth() || pos.y >= GetHeight())
+    {
         IMAGE_LOGE("read pixel by pos input invalid exception. [x(%{public}d), y(%{public}d)]", pos.x, pos.y);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
@@ -1358,6 +1366,7 @@ bool PixelMap::SetAlphaType(const AlphaType &alphaType)
 
 uint32_t PixelMap::WritePixel(const Position &pos, const uint32_t &color)
 {
+    SetNumsAPICalled("WritePixel");
     if (pos.x < 0 || pos.y < 0 || pos.x >= GetWidth() || pos.y >= GetHeight()) {
         IMAGE_LOGE(
             "write pixel by pos but input position is invalid. [x(%{public}d), y(%{public}d)]"\
@@ -2832,6 +2841,21 @@ uint32_t PixelMap::crop(const Rect &rect)
     SetPixelsAddr(m->data.data, m->extend.data, m->data.size, m->GetType(), nullptr);
     SetImageInfo(imageInfo, true);
     return SUCCESS;
+}
+
+void PixelMap::SetNumsAPICalled(std::string funcName)
+{
+    auto iter = numbersAPICalledMap_.find(funcName);
+    if (iter == numbersAPICalledMap_.end()) {
+        numbersAPICalledMap_.insert(std::pair<std::string, uint32_t>(funcName, 1));
+        return;
+    }
+    iter->second++;
+}
+
+void PixelMap::SetAPICalledType(InvocationMode type)
+{
+    invocationMode_ = type;
 }
 
 #ifdef IMAGE_COLORSPACE_FLAG

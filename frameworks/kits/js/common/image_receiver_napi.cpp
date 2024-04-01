@@ -21,6 +21,7 @@
 #include "image_napi.h"
 #include "image_receiver_context.h"
 #include "image_receiver_manager.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -232,6 +233,7 @@ napi_value ImageReceiverNapi::Constructor(napi_env env, napi_callback_info info)
         IMAGE_ERR("Create native image receiver failed");
         return undefineVar;
     }
+    reference->imageReceiver_->SetAPICalledType(InvocationMode::TS_CALL);
     napi_status status = napi_wrap(env, inputArgs.thisVar, reinterpret_cast<void *>(reference.get()),
         ImageReceiverNapi::Destructor, nullptr, nullptr);
     if (status == napi_ok) {

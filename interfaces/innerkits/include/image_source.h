@@ -29,6 +29,7 @@
 #include "incremental_pixel_map.h"
 #include "peer_listener.h"
 #include "pixel_map.h"
+#include "image_dfx.h"
 
 namespace OHOS {
 namespace MultimediaPlugin {
@@ -208,6 +209,7 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
+    NATIVEEXPORT void SetAPICalledType(InvocationMode type);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -267,7 +269,9 @@ private:
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
+    void SetReportDecodeInfoParam(const DecodeOptions &opts, ReportImageoptions& codecInfo);
     static uint64_t GetNowTimeMicroSeconds();
+    void SetNumsAPICalled(std::string funcName);
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
@@ -299,6 +303,8 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
+    std::map<std::string, int32_t> numbersAPICalledMap_;
+    InvocationMode invocationMode_ = InvocationMode::INTERNAL_CALL;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
 };
 } // namespace Media

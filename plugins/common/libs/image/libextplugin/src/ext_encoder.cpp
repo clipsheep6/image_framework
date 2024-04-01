@@ -36,6 +36,7 @@
 #include "image_utils.h"
 #include "media_errors.h"
 #include "string_ex.h"
+#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -109,6 +110,7 @@ static SkImageInfo ToSkInfo(Media::PixelMap *pixelMap)
 static uint32_t RGBToRGBx(Media::PixelMap *pixelMap, SkImageInfo &skInfo, TmpBufferHolder &holder)
 {
     holder.buf = std::make_unique<uint8_t[]>(skInfo.computeMinByteSize());
+    ReportIfMemoryOverflow("ExtEncoder RGBToRGBx", skInfo.computeMinByteSize());
     ExtPixels src = {
         static_cast<uint8_t*>(pixelMap->GetWritablePixels()),
         pixelMap->GetCapacity(), pixelMap->GetWidth()*pixelMap->GetHeight(),
@@ -158,6 +160,35 @@ bool IsAstc(const std::string &format)
     return format.find("image/astc") == 0;
 }
 
+void ExtEncoder::SetReportEecodeInfoParam(ReportImageoptions& codecInfo)
+{
+    ImageInfo imageInfo;
+    pixelmap_->GetImageInfo(imageInfo);
+    codecInfo.dstWidth = imageInfo.size.width;
+    codecInfo.dstHeight = imageInfo.size.height;
+    codecInfo.pixelFormat = static_cast<int32_t>(imageInfo.pixelFormat);
+    codecInfo.colorSpace = static_cast<int32_t>(imageInfo.colorSpace);
+    codecInfo.encodeFormat = opts_.format;
+    codecInfo.quality = opts_.quality;
+}
+
+uint32_t ExtEncoder::FinalizeEncode()
+{
+    if (pixelmap_ == nullptr || output_ == nullptr) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    ImageEvent imageEvent("ExtEncoder FinalizeEncode", "ENCODE_TIME_OVER_FLOW");
+    ReportImageoptions codecInfo;
+    SetReportEecodeInfoParam(codecInfo);
+    imageEvent.SetImageInfo(codecInfo);
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+    if (IsAstc(opts_.format)) {
+        AstcCodec astcEncoder;
+        astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);
+        return astcEncoder.ASTCEncode();
+    }
+#endif
 uint32_t ExtEncoder::DoFinalizeEncode()
 {
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),

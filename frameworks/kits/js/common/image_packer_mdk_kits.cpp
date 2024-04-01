@@ -164,6 +164,7 @@ static int32_t DoNativePacking(struct ImagePackerArgs* args)
         IMAGE_LOGE("DoNativePacking get native failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    nativeImagePacker->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     int32_t res = DoStartPacking(nativeImagePacker, args);
     if (res != IMAGE_RESULT_SUCCESS) {
         IMAGE_LOGE("DoNativePacking StartPacking failed");

@@ -25,6 +25,7 @@
 #endif
 #include "image_type.h"
 #include "parcel.h"
+#include "image_dfx.h"
 #ifdef IMAGE_PURGEABLE_PIXELMAP
 #include "purgeable_mem_base.h"
 #include "purgeable_mem_builder.h"
@@ -235,6 +236,7 @@ public:
     {
         yuvInfo = yuvDataInfo_;
     }
+    NATIVEEXPORT void SetAPICalledType(InvocationMode type);
 #ifdef IMAGE_COLORSPACE_FLAG
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----begin----
     NATIVEEXPORT void InnerSetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
@@ -385,6 +387,7 @@ private:
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
     bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
+    void SetNumsAPICalled(std::string funcName);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> &metadataAccessor,
         const std::string &key, const std::string &value);
@@ -411,6 +414,8 @@ private:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
+    std::map<std::string, int32_t> numbersAPICalledMap_;
+    InvocationMode invocationMode_ = InvocationMode::INTERNAL_CALL;
 
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;

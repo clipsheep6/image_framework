@@ -55,6 +55,7 @@ static std::shared_ptr<PixelMap> GetPixelMap(PixelMapNapi* napi, PixelMapNapiArg
         error = IMAGE_RESULT_DATA_ABNORMAL;
         return nullptr;
     }
+    napi->GetPixelNapiInner()->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     return napi->GetPixelNapiInner();
 }
 
@@ -134,7 +135,7 @@ static int32_t PixelMapNapiCreateAlpha(napi_env env, PixelMapNapiArgs* args)
     if (pixelmap == nullptr) {
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-
+    pixelmap->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     InitializationOptions opts;
     opts.pixelFormat = PixelFormat::ALPHA_8;
     Rect rect;
@@ -143,6 +144,7 @@ static int32_t PixelMapNapiCreateAlpha(napi_env env, PixelMapNapiArgs* args)
     if (alphaPixelMap == nullptr) {
         return error;
     }
+    alphaPixelMap->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
 
     *(args->outValue) = PixelMapNapi::CreatePixelMap(env, std::move(alphaPixelMap));
     return isUndefine(env, *(args->outValue))?IMAGE_RESULT_BAD_PARAMETER:IMAGE_RESULT_SUCCESS;

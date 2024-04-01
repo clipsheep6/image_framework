@@ -683,6 +683,7 @@ napi_value PixelMapNapi::Constructor(napi_env env, napi_callback_info info)
         pPixelMapNapi->nativePixelMap_ = PixelMapContainer::GetInstance()[pixelMapId];
         IMAGE_LOGD("Constructor in napi_id:%{public}d, id:%{public}d",
             pPixelMapNapi->GetUniqueId(), pPixelMapNapi->nativePixelMap_->GetUniqueId());
+        pPixelMapNapi->nativePixelMap_->SetAPICalledType(InvocationMode::TS_CALL);
     } else {
         IMAGE_LOGE("Constructor nativePixelMap is nullptr");
     }
