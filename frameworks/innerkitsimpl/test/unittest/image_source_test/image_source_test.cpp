@@ -509,6 +509,29 @@ HWTEST_F(ImageSourceTest, GetImageInfo003, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImageInfo003 end";
 }
 
+ /**
+  * @tc.name: GetImageInfo004
+  * @tc.desc: test GetImageInfo
+  * @tc.type: FUNC
+  */
+HWTEST_F(ImageSourceTest, GetImageInfo004, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetImageInfo004 start";
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    std::string IMAGE_ENCODEDFORMAT = "image/jpeg";
+    opts.formatHint = IMAGE_ENCODEDFORMAT;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+
+    ImageInfo imageInfo;
+    uint32_t index = 1;
+    imageSource->GetImageInfo(index, imageInfo);
+    ASSERT_NE(imageInfo.isHdr, true);
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetImageInfo004 isHdr " << imageInfo.isHdr;
+    GTEST_LOG_(INFO) << "ImageSourceTest: GetImageInfo004 end";
+}
+
 /**
  * @tc.name: GetSourceInfo001
  * @tc.desc: test GetSourceInfo
