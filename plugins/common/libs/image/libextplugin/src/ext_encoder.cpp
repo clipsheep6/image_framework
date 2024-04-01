@@ -25,8 +25,12 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "astc_codec.h"
 #endif
+
+#include "data_buf.h"
 #include "ext_pixel_convert.h"
 #include "ext_wstream.h"
+#include "metadata_accessor_factory.h"
+#include "metadata_accessor.h"
 #include "image_log.h"
 #include "image_type_converter.h"
 #include "image_utils.h"
@@ -36,6 +40,7 @@
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
+#include "tiff_parser.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -124,7 +129,7 @@ static uint32_t RGBToRGBx(Media::PixelMap *pixelMap, SkImageInfo &skInfo, TmpBuf
     return ExtPixelConvert::RGBToRGBx(src, dst);
 }
 
-static bool IsYUVImage(PixelFormat format)
+static bool IsYuvImage(PixelFormat format)
 {
     if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
         return true;
@@ -139,7 +144,7 @@ static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::Pixe
     uint32_t width  = image.info.size.width;
     uint32_t height = image.info.size.height;
     uint8_t *srcData = static_cast<uint8_t*>(pixelMap->GetWritablePixels());
-    if (IsYUVImage(image.info.pixelFormat)) {
+    if (IsYuvImage(image.info.pixelFormat)) {
         if (!PixelConvertAdapter::YUV420ToRGB888(srcData, image.dst, width, height, image.info.pixelFormat)) {
             IMAGE_LOGE("ExtEncoder::BuildSkBitmap Support YUV format RGB convert failed ");
             return ERR_IMAGE_ENCODE_FAILED;
@@ -212,6 +217,61 @@ bool IsAstc(const std::string &format)
     return format.find("image/astc") == 0;
 }
 
+uint32_t ExtEncoder::DoFinalizeEncode()
+{
+    auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
+        [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
+            return IsSameTextStr(item.second, opts_.format);
+    });
+    if (iter == FORMAT_NAME.end()) {
+        IMAGE_LOGE("Unsupported format: %{public}s", opts_.format.c_str());
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    SkBitmap bitmap;
+    TmpBufferHolder holder;
+    auto errorCode = BuildSkBitmap(pixelmap_, bitmap, iter->first, holder);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Failed to build SkBitmap");
+        return errorCode;
+    }
+
+    if (pixelmap_->GetExifMetadata() == nullptr ||
+        pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
+        ExtWStream wStream(output_);
+        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
+            IMAGE_LOGE("Failed to encode image");
+            return ERR_IMAGE_ENCODE_FAILED;
+        }
+        return SUCCESS;
+    }
+
+    unsigned char *dataPtr;
+    uint32_t datSize = 0;
+    auto exifData = pixelmap_->GetExifMetadata()->GetExifData();
+    TiffParser::Encode(&dataPtr, datSize, exifData);
+    DataBuf exifBlob(dataPtr, datSize);
+    MetadataWStream tStream;
+    if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality)) {
+        IMAGE_LOGE("Failed to encode image");
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+
+    auto metadataAccessor = MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
+    if (metadataAccessor != nullptr) {
+        if (metadataAccessor->WriteBlob(exifBlob) == SUCCESS) {
+            if (metadataAccessor->WriteToOutput(*output_)) {
+                return SUCCESS;
+            }
+        }
+    }
+    if (!output_->Write(tStream.GetAddr(), tStream.bytesWritten())) {
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+
+    return SUCCESS;
+}
+
 uint32_t ExtEncoder::FinalizeEncode()
 {
     if (pixelmap_ == nullptr || output_ == nullptr) {
@@ -224,28 +284,8 @@ uint32_t ExtEncoder::FinalizeEncode()
         return astcEncoder.ASTCEncode();
     }
 #endif
-    auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
-        [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
-            return IsSameTextStr(item.second, opts_.format);
-    });
-    if (iter == FORMAT_NAME.end()) {
-        IMAGE_LOGE("ExtEncoder::FinalizeEncode unsupported format %{public}s", opts_.format.c_str());
-        return ERR_IMAGE_INVALID_PARAMETER;
-    }
-    auto encodeFormat = iter->first;
-    SkBitmap bitmap;
-    TmpBufferHolder holder;
-    auto errorCode = BuildSkBitmap(pixelmap_, bitmap, encodeFormat, holder);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("ExtEncoder::FinalizeEncode BuildSkBitmap failed");
-        return errorCode;
-    }
-    ExtWStream wStream(output_);
-    if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
-        IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
-        return ERR_IMAGE_ENCODE_FAILED;
-    }
-    return SUCCESS;
+
+    return DoFinalizeEncode();
 }
 } // namespace ImagePlugin
 } // namespace OHOS

@@ -38,12 +38,10 @@ if (use_clang_ios) {
     defines = image_decode_ios_defines
     sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
     include_dirs += [ "$image_subsystem/mock/native/include/log" ]
-    include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
-    deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
 
     #relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
@@ -81,7 +79,6 @@ if (use_clang_ios) {
 
     if (use_mingw_win) {
       defines = image_decode_windows_defines
-      include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
       sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
       include_dirs +=
           [ "//foundation/multimedia/image_framework/mock/native/include" ]
@@ -89,10 +86,8 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
       ]
-      deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
     } else if (use_clang_mac) {
       defines = image_decode_mac_defines
-      include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
       sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
       include_dirs += [
         "//foundation/multimedia/image_framework/mock/native/include",
@@ -103,10 +98,9 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
         "//third_party/bounds_checking_function:libsec_static",
       ]
-      deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
     } else if (use_clang_android) {
       defines = image_decode_android_defines
-      include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
+
       sources -= [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
       include_dirs += [ "$image_subsystem/mock/native/include/log" ]
       deps = [
@@ -114,14 +108,12 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
       ]
-      deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
     } else {
       defines = [ "DUAL_ADAPTER" ]
-      include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
+
       deps = [
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
       ]
-      deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
 
       external_deps = [
         "c_utils:utils",
@@ -130,6 +122,8 @@ if (use_clang_ios) {
         "hilog:libhilog",
         "hitrace:hitrace_meter",
       ]
+
+      external_deps += [ "ffmpeg:libohosffmpeg" ]
 
       if (is_standard_system) {
         external_deps += [ "init:libbegetutil" ]
@@ -165,17 +159,16 @@ ohos_static_library("image_utils_static") {
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
-    include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
+
     include_dirs +=
         [ "//foundation/multimedia/image_framework/mock/native/include" ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
     ]
-    deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
   } else if (use_clang_mac) {
     defines = image_decode_mac_defines
-    include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
+
     include_dirs += [
       "//foundation/multimedia/image_framework/mock/native/include",
       "//third_party/bounds_checking_function/include",
@@ -185,35 +178,32 @@ ohos_static_library("image_utils_static") {
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
       "//third_party/bounds_checking_function:libsec_static",
     ]
-    deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
   } else if (use_clang_ios) {
     defines = image_decode_ios_defines
-    include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
     include_dirs += [ "$image_subsystem/mock/native/include/log" ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
     ]
   } else if (use_clang_android) {
     defines = image_decode_android_defines
-    include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
+
     include_dirs += [ "$image_subsystem/mock/native/include/log" ]
     deps = [
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
     ]
-    deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
   } else {
-    include_dirs += [ "${image_subsystem}/../../../third_party/ffmpeg" ]
     sources += [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
     deps = [
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
-    deps += [ "${image_subsystem}/../../../third_party/ffmpeg:libohosffmpeg" ]
 
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
     ]
+
+    external_deps += [ "ffmpeg:libohosffmpeg" ]
 
     if (is_standard_system) {
       external_deps += [ "init:libbegetutil" ]

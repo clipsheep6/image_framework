@@ -21,6 +21,9 @@
 #include <string>
 #include "image_type.h"
 #include "iosfwd"
+#ifdef LIBYUV_ENABLE
+#include "image_converter.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,12 +40,16 @@ extern "C" {
 }
 #endif
 
-#ifdef LIBYUV_ENABLE
-#include "libyuv.h"
-#endif
-
 namespace OHOS {
 namespace Media {
+
+struct NV12SizeInfo {
+    int32_t uSize = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t halfWidth = 0;
+    int32_t halfHeight = 0;
+};
 
 struct UVPos {
     size_t upos = 0;
@@ -88,7 +95,12 @@ public:
         int32_t width, int32_t height, PixelFormat pixelFormat);
     static bool YuvRotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int32_t degrees,
         const PixelFormat &format);
-    static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
+    static void ConvertYuvMode(OpenSourceLibyuv::FilterMode &filterMode, const AntiAliasingOption &option);
+    static void ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option);
+    static void ScaleYUV420(ImageInfo &imageInfo, NV12SizeInfo srcNV12SizeInfo, NV12SizeInfo dstNV12SizeInfo,
+        const uint8_t *src, uint8_t *dst, OpenSourceLibyuv::FilterMode filterMode);
+    static bool FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format);
+    static void FlipYaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format);
     #else
     static bool BGRAToYuv420(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height,
         PixelFormat pixelFormat);

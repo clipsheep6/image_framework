@@ -43,20 +43,22 @@
           "hdf_core",
           "memmgr_plugin",
           "libyuv",
-          "libjpeg-turbo"
+          "libjpeg-turbo",
+          "libexif",
+          "zlib",
+          "ffmpeg"
         ],
         "third_party": [
           "flutter",
           "libpng",
-          "libexif",
           "bounds_checking_function",
           "expat",
           "json",
           "skia",
-          "zlib",
           "astc-encoder",
           "opencl-headers",
-          "ffmpeg"
+          "ffmpeg",
+          "zlib"
         ]
       },
       "build": {

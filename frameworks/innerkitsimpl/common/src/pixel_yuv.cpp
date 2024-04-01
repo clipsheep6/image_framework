@@ -13,277 +13,6 @@
  * limitations under the License.
  */
 
- /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#include "image_converter.h"
-
-#include "libyuv.h"
-
-namespace OHOS {
-namespace OpenSourceLibyuv {
-static int32_t I420Scale(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
-    const uint8_t* src_v, int src_stride_v, int src_width, int src_height,
-    uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u,
-    uint8_t* dst_v, int dst_stride_v, int dst_width, int dst_height,
-    enum FilterMode filtering)
-{
-    return libyuv::I420Scale(src_y, src_stride_y, src_u, src_stride_u,
-                             src_v, src_stride_v, src_width, src_height,
-                             dst_y, dst_stride_y, dst_u, dst_stride_u,
-                             dst_v, dst_stride_v, dst_width, dst_height,
-                             static_cast<libyuv::FilterMode>(filtering));
-}
-
-static void ScalePlane(const uint8_t *src, int src_stride, int src_width, int src_height, uint8_t *dst,
-                        int dst_stride, int dst_width, int dst_height, enum FilterMode filtering)
-{
-    return libyuv::ScalePlane(src, src_stride, src_width, src_height, dst,
-                                dst_stride, dst_width, dst_height, static_cast<libyuv::FilterMode>(filtering));
-}
-
-
- #include <stdio.h>
-    void writeLog() {
-   FILE *fp;
-   char content[] = "image_converter   NV12ToI420Rotate ";
-
-   fp = fopen("/tmp/mylog.log", "a");
-   fprintf(fp, "%s", content);
-   fclose(fp);
-
-   return;
-}
-
-static int32_t NV12ToI420Rotate(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv,
-                                int src_stride_uv, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u,
-                                uint8_t *dst_v, int dst_stride_v, int width, int height, enum RotationMode mode)
-{
-    writeLog();
-    return libyuv::NV12ToI420Rotate(src_y, src_stride_y, src_uv, src_stride_uv, dst_y, dst_stride_y,
-                                    dst_u, dst_stride_u, dst_v, dst_stride_v, width, height,
-                                    static_cast<libyuv::RotationMode>(mode));
-}
-
-struct ImageConverter GetImageConverter(void)
-{
-    struct ImageConverter converter = {0};
-    // converter.NV12ToI420 = libyuv::NV12ToI420;
-    // converter.I420Scale = I420Scale;
-    // converter.I420ToNV21 = libyuv::I420ToNV21;
-    converter.I420ToRGBA = libyuv::I420ToRGBA;
-    converter.ARGBToNV12 = libyuv::ARGBToNV12;
-//  024
-    converter.I420Scale = I420Scale;
-    converter.ScalePlane = ScalePlane;
-    converter.SplitUVPlane = libyuv::SplitUVPlane;
-    converter.MergeUVPlane = libyuv::MergeUVPlane;
-    converter.NV12ToI420 = libyuv::NV12ToI420;
-    converter.I420ToNV12 = libyuv::I420ToNV12;
-    converter.I420Mirror = libyuv::I420Mirror;
-    converter.NV12ToI420Rotate = NV12ToI420Rotate;
-    converter.I420ToNV21 = libyuv::I420ToNV21;
-    converter.ARGBToI420 = libyuv::ARGBToI420;
-    converter.NV12ToARGB = libyuv::NV12ToARGB;
-    converter.NV21ToARGB = libyuv::NV21ToARGB;
-    converter.ARGBToBGRA = libyuv::ARGBToBGRA;
-    converter.I420Copy = libyuv::I420Copy;
-    return converter;
-}
-} // namespace OpenSourceLibyuv
-} // namespace OHOS
-
-void PixelYuv::ConvertYuvMode(OpenSourceLibyuv::FilterMode &filterMode, const AntiAliasingOption &option)
-{
-    switch (option) {
-        case AntiAliasingOption::NONE:
-            filterMode = OpenSourceLibyuv::FilterMode::kFilterNone;
-            break;
-        case AntiAliasingOption::LOW:
-            filterMode = OpenSourceLibyuv::FilterMode::kFilterLinear;
-            break;
-        case AntiAliasingOption::MEDIUM:
-            filterMode = OpenSourceLibyuv::FilterMode::kFilterBilinear;
-            break;
-        case AntiAliasingOption::HIGH:
-            filterMode = OpenSourceLibyuv::FilterMode::kFilterBox;
-            break;
-        default:
-            break;
-    }
-}
-
-void PixelYuv::ScaleYUV420(float xAxis, float yAxis, const AntiAliasingOption &option)
-{
-    OpenSourceLibyuv::FilterMode filterMode = OpenSourceLibyuv::FilterMode::kFilterNone;
-    ConvertYuvMode(filterMode, option);
-    ImageInfo imageInfo;
-    GetImageInfo(imageInfo);
-    int32_t srcW = imageInfo.size.width;
-    int32_t srcH = imageInfo.size.height;
-    int32_t dstW = srcW * xAxis;
-    int32_t dstH = srcH * yAxis;
-    const uint8_t *src = data_;
-    uint32_t pictureSize = GetImageSize(dstW, dstH);
-    Size desiredSize = {dstW, dstH};
-    MemoryData memoryData = {nullptr, pictureSize, "ScaleYUV420 ImageData", desiredSize};
-    auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
-    if (m == nullptr) {
-        IMAGE_LOGE("ScaleYUV420 CreateMemory failed");
-        return;
-    }
-    auto converter = ConverterHandle::GetInstance().GetHandle();
-    uint8_t *dst = reinterpret_cast<uint8_t *>(m->data.data);
-    if (imageInfo.pixelFormat == PixelFormat::YU12 || imageInfo.pixelFormat == PixelFormat::YV12) {
-        //CHECK_AND_RETURN_LOG(converter.I420Scale == nullptr, "converter is null.");
-        if (SUCCESS != converter.I420Scale(src, srcW, src + GetYSize(srcW, srcH), GetUStride(srcW),
-            src + GetVOffset(srcW, srcH), GetUStride(srcW), srcW, srcH, dst, dstW,
-            dst + GetYSize(dstW, dstH), GetUStride(dstW), dst + GetVOffset(dstW, dstH),
-            GetUStride(dstW), dstW, dstH, filterMode)) {
-            m->Release();
-            IMAGE_LOGE("Scale YUV420P failed");
-            return;
-        }
-    }
-    if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21) {
-        uint32_t srcHalfW = GetUStride(srcW);
-        uint32_t srcHalfH = GetUVHeight(srcH);
-        uint32_t dstHalfW = GetUStride(dstW);
-        uint32_t dstHalfH = GetUVHeight(dstH);
-        //CHECK_AND_RETURN_LOG(converter.ScalePlane == nullptr, "converter is null.");
-        // resize y_plane
-        converter.ScalePlane(src, srcW, srcW, srcH, dst, dstW, dstW, dstH, filterMode);
-        //Whether the row width is odd or even, U and Z are equal in size
-        uint32_t srcUSize = GetUStride(srcW) * GetUVHeight(srcH);
-        uint32_t dstUSize = GetUStride(dstW) * GetUVHeight(dstH);
-        NV12SizeInfo srcNV12SizeInfo = {srcUSize, srcW, srcH, srcHalfW, srcHalfH};
-        NV12SizeInfo dstNV12SizeInfo = {dstUSize, dstW, dstH, dstHalfW, dstHalfH};
-        ScaleYUV420(imageInfo, srcNV12SizeInfo, dstNV12SizeInfo,src, dst, filterMode);
-        SetPixelsAddr(reinterpret_cast<void *>(dst), m->extend.data, m->data.size, m->GetType(), nullptr);
-    }
-}
-
-void PixelYuv::ScaleYUV420(ImageInfo &imageInfo, NV12SizeInfo srcNV12SizeInfo, NV12SizeInfo dstNV12SizeInfo,
-        const uint8_t *src, uint8_t *dst, OpenSourceLibyuv::FilterMode filterMode)
-{
-    // Split VUplane
-    std::unique_ptr<uint8_t[]> uvData = std::make_unique<uint8_t[]>(NUM_2 * srcNV12SizeInfo.uSize);
-
-    // NV21
-    uint8_t *vData = uvData.get();
-    uint8_t *uData = uvData.get() + srcNV12SizeInfo.uSize;
-    // If it's in NV12 format，swap u and v
-    if (imageInfo.pixelFormat == PixelFormat::NV12) {
-        uint8_t *tempSwap = vData;
-        vData = uData;
-        uData = tempSwap;
-    }
-
-    const uint8_t *src_uv = src + GetYSize(srcNV12SizeInfo.width, srcNV12SizeInfo.height);
-    //CHECK_AND_RETURN_LOG(converter.SplitUVPlane == nullptr, "converter is null.");
-    auto converter = ConverterHandle::GetInstance().GetHandle();
-    converter.SplitUVPlane(src_uv, NUM_2 * srcNV12SizeInfo.halfWidth, vData, srcNV12SizeInfo.halfWidth, uData,
-    srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfHeight);
-
-    // malloc memory to store temp u v
-    std::unique_ptr<uint8_t[]> tempUVData = std::make_unique<uint8_t[]>(NUM_2 * srcNV12SizeInfo.uSize);
-    uint8_t *tempVData = tempUVData.get();
-    uint8_t *tempUData = tempUVData.get() + dstNV12SizeInfo.uSize;
-    if (imageInfo.pixelFormat == PixelFormat::NV12) {
-        uint8_t *tempSwap = tempVData;
-        tempVData = tempUData;
-        tempUData = tempSwap;
-    }
-
-    // resize u and v
-    //CHECK_AND_RETURN_LOG(converter.ScalePlane == nullptr, "converter is null.");
-    converter.ScalePlane(uData, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfHeight,
-     tempUData, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfHeight, filterMode);
-    converter.ScalePlane(vData, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfWidth, srcNV12SizeInfo.halfHeight,
-     tempVData, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfHeight, filterMode);
-
-    uint8_t *dst_uv = dst + GetYSize(dstNV12SizeInfo.width, dstNV12SizeInfo.height);
-    //CHECK_AND_RETURN_LOG(converter.MergeUVPlane == nullptr, "converter is null.");
-    converter.MergeUVPlane(tempVData, dstNV12SizeInfo.halfWidth, tempUData, dstNV12SizeInfo.halfWidth, dst_uv, NUM_2 * dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfWidth, dstNV12SizeInfo.halfHeight);
-
-    uData = vData = nullptr;
-    tempUData = tempVData = nullptr;
-    imageInfo.size.width = dstNV12SizeInfo.width;
-    imageInfo.size.height = dstNV12SizeInfo.height;
-    SetImageInfo(imageInfo, true);
-}
-
-static bool YUVRotateConvert(Size &size, int32_t degrees, int32_t &dstWidth, int32_t &dstHeight,
-    OpenSourceLibyuv::RotationMode &rotateNum)
-{
-    switch (degrees) {
-        case 0:
-            return true;
-        case degrees90:
-            dstWidth = size.height;
-            dstHeight = size.width;
-            rotateNum = OpenSourceLibyuv::RotationMode::kRotate90;
-            return false;
-        case degrees180:
-            rotateNum = OpenSourceLibyuv::RotationMode::kRotate180;
-            return false;
-        case degrees270:
-            dstWidth = size.height;
-            dstHeight = size.width;
-            rotateNum = OpenSourceLibyuv::RotationMode::kRotate270;
-            return false;
-        default:
-            return false;
-    }
-}
-
-static bool YUVRotateConvert(Size &size, int32_t degrees, int32_t &dstWidth, int32_t &dstHeight)
-{
-    switch (degrees) {
-        case 0:
-            return true;
-        case degrees90:
-            dstWidth = size.height;
-            dstHeight = size.width;
-            return false;
-        case degrees180:
-            return false;
-        case degrees270:
-            dstWidth = size.height;
-            dstHeight = size.width;
-            return false;
-        default:
-            return false;
-    }
-}
-
-void PixelYuv::rotate(float degrees)
-{
-    if (degrees == 0) {
-        return;
-    }
-    if (degrees < 0) {
-        degrees = degrees360 + degrees;
-    }
-    std::string str = "rotate() degrees  238 is "  + std::to_string(__LINE__) +  std::to_string(degrees);
-    writeLogrotate(str);
-    IMAGE_LOGE(" PixelYuv::rotate(degrees)");
-
-#endif
-static const int32_t degrees360 = 360; // 360度角
-
 #include "pixel_yuv.h"
 
 #include "image_utils.h"
@@ -465,6 +194,9 @@ static int32_t GetUVStride(int32_t width)
 
 void PixelYuv::rotate(float degrees)
 {
+    if (degrees == 0) {
+        return;
+    }
     uint32_t count = GetImageSize(imageInfo_.size.width, imageInfo_.size.height);
     Size desiredSize = {imageInfo_.size.width, imageInfo_.size.height};
     MemoryData memoryData = {nullptr, count, "Rotate ImageData", desiredSize};
@@ -504,7 +236,7 @@ uint32_t PixelYuv::crop(const Rect &rect)
 {
     int32_t rectSize = GetYSize(rect.width, rect.height);
     int32_t pixelSize = GetYSize(imageInfo_.size.width, imageInfo_.size.height);
-    if (rect.top < 0 || rect.left < 0 || rectSize > pixelSize) {
+    if (rect.top < 0 || rect.left < 0 || rectSize > pixelSize || rect.width <= 1 || rect.height <= 1) {
         IMAGE_LOGE("crop invalid param");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
@@ -610,8 +342,8 @@ bool PixelYuv::resize(float xAxis, float yAxis)
         IMAGE_LOGE("resize failed");
         return false;
     }
-    imageInfo.size.height = dstW;
-    imageInfo.size.width = dstH;
+    imageInfo.size.height = dstH;
+    imageInfo.size.width = dstW;
 
     SetPixelsAddr(dstMemory->data.data, dstMemory->extend.data, dstMemory->data.size, dstMemory->GetType(), nullptr);
     SetImageInfo(imageInfo, true);
@@ -664,7 +396,7 @@ void PixelYuv::flip(bool xAxis, bool yAxis)
 #else
 void PixelYuv::scale(float xAxis, float yAxis)
 {
-    ScaleYuv420(xAxis, yAxis);
+    PixelYuvUtils::ScaleYuv420(xAxis, yAxis, AntiAliasingOption::NONE);
 }
 
 constexpr int32_t ANTIALIASING_SIZE = 350;
@@ -685,149 +417,13 @@ void PixelYuv::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
     } else {
         operation = option;
     }
-    ScaleYuv420(xAxis, yAxis, operation);
+    PixelYuvUtils::ScaleYuv420(xAxis, yAxis, operation);
 }
 
 bool PixelYuv::resize(float xAxis, float yAxis)
 {
-    ScaleYuv420(xAxis, yAxis);
+    PixelYuvUtils::ScaleYuv420(xAxis, yAxis, AntiAliasingOption::NONE);
     return true;
-}
-
-void PixelYuv::ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option)
-{
-    libyuv::FilterMode filterMode = libyuv::FilterMode::kFilterNone;
-    PixelYuvUtils::ConvertYuvMode(filterMode, option);
-    ImageInfo imageInfo;
-    GetImageInfo(imageInfo);
-    int32_t srcW = imageInfo.size.width;
-    int32_t srcH = imageInfo.size.height;
-    int32_t dstW = srcW * xAxis;
-    int32_t dstH = srcH * yAxis;
-    const uint8_t *src = data_;
-    uint32_t pictureSize = GetImageSize(dstW, dstH);
-    Size desiredSize = {dstW, dstH};
-    MemoryData memoryData = {nullptr, pictureSize, "ScaleYuv420 ImageData", desiredSize};
-    auto dstMemory = MemoryManager::CreateMemory(allocatorType_, memoryData);
-    if (dstMemory == nullptr) {
-        IMAGE_LOGE("ScaleYuv420 CreateMemory failed");
-        return;
-    }
-    uint8_t *dst = reinterpret_cast<uint8_t *>(dstMemory->data.data);
-    if (imageInfo.pixelFormat == PixelFormat::YU12 || imageInfo.pixelFormat == PixelFormat::YV12) {
-        if (SUCCESS != libyuv::I420Scale(src, srcW, src + GetYSize(srcW, srcH), GetUStride(srcW),
-            src + GetVOffset(srcW, srcH), GetUStride(srcW), srcW, srcH, dst, dstW,
-            dst + GetYSize(dstW, dstH), GetUStride(dstW), dst + GetVOffset(dstW, dstH),
-            GetUStride(dstW), dstW, dstH, filterMode)) {
-            dstMemory->Release();
-            IMAGE_LOGE("Scale Yuv420P failed");
-            return;
-        }
-    }
-    if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21) {
-        uint32_t srcHalfW = GetUStride(srcW);
-        uint32_t srcHalfH = GetUVHeight(srcH);
-        uint32_t dstHalfW = GetUStride(dstW);
-        uint32_t dstHalfH = GetUVHeight(dstH);
-
-        // resize y_plane
-        libyuv::ScalePlane(src, srcW, srcW, srcH, dst, dstW, dstW, dstH, filterMode);
-        //Whether the row width is odd or even, U and Z are equal in size
-        uint32_t srcUSize = GetUStride(srcW) * GetUVHeight(srcH);
-        uint32_t dstUSize = GetUStride(dstW) * GetUVHeight(dstH);
-        // Split VUplane
-        std::unique_ptr<uint8_t[]> uvData = std::make_unique<uint8_t[]>(NUM_2 * srcUSize);
-
-        // NV21
-        uint8_t *vData = uvData.get();
-        uint8_t *uData = uvData.get() + srcUSize;
-        // If it's in NV12 format，swap u and v
-        if (imageInfo.pixelFormat == PixelFormat::NV12) {
-            uint8_t *tempSwap = vData;
-            vData = uData;
-            uData = tempSwap;
-        }
-
-        const uint8_t *src_uv = src + GetYSize(srcW, srcH);
-        libyuv::SplitUVPlane(src_uv, NUM_2 * srcHalfW, vData, srcHalfW, uData, srcHalfW, srcHalfW, srcHalfH);
-
-        // malloc memory to store temp u v
-        std::unique_ptr<uint8_t[]> tempUVData = std::make_unique<uint8_t[]>(NUM_2 * srcUSize);
-        uint8_t *tempVData = tempUVData.get();
-        uint8_t *tempUData = tempUVData.get() + dstUSize;
-        if (imageInfo.pixelFormat == PixelFormat::NV12) {
-            uint8_t *tempSwap = tempVData;
-            tempVData = tempUData;
-            tempUData = tempSwap;
-        }
-
-        // resize u and v
-        libyuv::ScalePlane(uData, srcHalfW, srcHalfW, srcHalfH, tempUData, dstHalfW, dstHalfW, dstHalfH, filterMode);
-        libyuv::ScalePlane(vData, srcHalfW, srcHalfW, srcHalfH, tempVData, dstHalfW, dstHalfW, dstHalfH, filterMode);
-
-        uint8_t *dst_uv = dst + GetYSize(dstW, dstH);
-        libyuv::MergeUVPlane(tempVData, dstHalfW, tempUData, dstHalfW, dst_uv, NUM_2 * dstHalfW, dstHalfW, dstHalfH);
-
-        uData = vData = nullptr;
-        tempUData = tempVData = nullptr;
-
-        SetPixelsAddr(reinterpret_cast<void *>(dst), dstMemory->extend.data,
-            dstMemory->data.size, dstMemory->GetType(), nullptr);
-        imageInfo.size.width = dstW;
-        imageInfo.size.height = dstH;
-        SetImageInfo(imageInfo, true);
-    }
-}
-
-bool PixelYuv::FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format)
-{
-    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
-        if (SUCCESS != libyuv::I420Copy(src, width, src + GetYSize(width, height), GetUStride(width),
-            src + GetVOffset(width, height), GetUStride(width), dst, width,
-            dst + GetYSize(width, height), GetUStride(width),
-            dst + GetVOffset(width, height), GetUStride(width), width, -height)) {
-            IMAGE_LOGE("Flip Yuv420P Copy failed");
-            return false;
-        }
-    }
-    if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
-        libyuv::NV12ToI420(src, width, src + GetYSize(width, height), GetUVStride(width),
-            dst, width, dst + GetYSize(width, height), GetUStride(width),
-            dst + GetVOffset(width, height), GetUStride(width), width, height);
-        if (SUCCESS != libyuv::I420Copy(dst, width, dst + GetYSize(width, height), GetUStride(width),
-            dst + GetVOffset(width, height), GetUStride(width), const_cast<uint8_t *>(src), width,
-            const_cast<uint8_t *>(src) + GetYSize(width, height), GetUStride(width),
-            const_cast<uint8_t *>(src) + GetVOffset(width, height), GetUStride(width), width, -height)) {
-            IMAGE_LOGE("Flip Yuv420SP Copy failed");
-            return false;
-        }
-        libyuv::I420ToNV12(src, width, src + GetYSize(width, height), GetUStride(width),
-            src + GetVOffset(width, height), GetUStride(width), dst, width,
-            dst + GetYSize(width, height), GetUVStride(width), width, height);
-    }
-    return true;
-}
-
-void PixelYuv::FlipYaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format)
-{
-    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
-        libyuv::I420Mirror(src, width, src + GetYSize(width, height), GetUStride(width),
-            src + GetVOffset(width, height), GetUStride(width), dst, width,
-            dst + GetYSize(width, height), GetUStride(width),
-            dst + GetVOffset(width, height), GetUStride(width), width, height);
-        }
-    if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
-        libyuv::NV12ToI420(src, width, src + GetYSize(width, height), GetUVStride(width), dst, width,
-            dst + GetYSize(width, height), GetUStride(width), dst + GetVOffset(width, height), GetUStride(width),
-            width, height);
-        libyuv::I420Mirror(dst, width, dst + GetYSize(width, height), GetUStride(width),
-            dst + GetVOffset(width, height), GetUStride(width), const_cast<uint8_t *>(src),
-            width, const_cast<uint8_t *>(src) + GetYSize(width, height), GetUStride(width),
-            const_cast<uint8_t *>(src) + GetVOffset(width, height), GetUStride(width), width, height);
-        libyuv::I420ToNV12(src, width, src + GetYSize(width, height), GetUStride(width),
-            src + GetVOffset(width, height), GetUStride(width), dst, width,
-            dst + GetYSize(width, height), GetUVStride(width), width, height);
-    }
 }
 
 void PixelYuv::flip(bool xAxis, bool yAxis)
@@ -854,14 +450,14 @@ void PixelYuv::flip(bool xAxis, bool yAxis)
 #endif
     dst = reinterpret_cast<uint8_t *>(dstMemory->data.data);
     if (xAxis) {
-        if (!FlipXaxis(src, dst, width, height, imageInfo.pixelFormat)) {
+        if (!PixelYuvUtils::FlipXaxis(src, dst, width, height, imageInfo.pixelFormat)) {
             IMAGE_LOGE("FlipXaxis failed");
             dstMemory->Release();
             return;
         }
     }
     if (yAxis) {
-        FlipYaxis(src, dst, width, height, imageInfo.pixelFormat);
+        PixelYuvUtils::FlipYaxis(src, dst, width, height, imageInfo.pixelFormat);
     }
     SetPixelsAddr(dst, dstMemory->extend.data, dstMemory->data.size, dstMemory->GetType(), nullptr);
     AssignYuvDataOnType(imageInfo.pixelFormat, width, height);
@@ -1051,7 +647,7 @@ bool PixelYuv::CheckPixelsInput(const uint8_t *dst, const uint64_t &bufferSize, 
             region.left, region.top, offset);
         return false;
     }
-    if (region.width <= 0 || region.height <= 0 || region.width > MAX_DIMENSION || region.height > MAX_DIMENSION) {
+    if (region.width <= 1 || region.height <= 1 || region.width > MAX_DIMENSION || region.height > MAX_DIMENSION) {
         IMAGE_LOGE("CheckPixelsInput width(%{public}d) or height(%{public}d) is < 0.", region.width,
             region.height);
         return false;
@@ -1217,228 +813,3 @@ uint32_t PixelYuv::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
 #endif
 } // namespace Media
 } // namespace OHOS
-
-
-/*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#include "image_utils_tools.h"
-#include <chrono>
-#include <dlfcn.h>
-#include <string>
-#include "image_log.h"
-#include "log_tags.h"
-
-namespace OHOS {
-namespace Media {
-namespace {
-#if (defined(__aarch64__) || defined(__x86_64__))
-const std::string YUV_LIB_PATH = "/system/lib64/platformsdk/libyuv.z.so";
-#else
-const std::string YUV_LIB_PATH = "/system/lib/platformsdk/libyuv.z.so";
-#endif
-const std::string GET_IMAGE_CONVERTER_FUNC = "GetImageConverter";
-}
-
-#ifdef DCAMERA_MMAP_RESERVE
-using GetImageConverterFunc = OHOS::OpenSourceLibyuv::ImageConverter (*)();
-#endif
-
-#ifdef DCAMERA_MMAP_RESERVE
-IMPLEMENT_SINGLE_INSTANCE(ConverterHandle);
-void ConverterHandle::InitConverter()
-{
-    dlHandler_ = dlopen(YUV_LIB_PATH.c_str(), RTLD_LAZY | RTLD_NODELETE);
-    if (dlHandler_ == nullptr) {
-        IMAGE_LOGD("Dlopen failed.");
-        return;
-    }
-    GetImageConverterFunc getConverter = (GetImageConverterFunc)dlsym(dlHandler_, GET_IMAGE_CONVERTER_FUNC.c_str());
-    if (getConverter == nullptr) {
-        IMAGE_LOGD("Function of converter is null.");
-        dlclose(dlHandler_);
-        dlHandler_ = nullptr;
-        return;
-    }
-    converter_ = getConverter();
-    isInited_.store(true);
-    IMAGE_LOGD("Initialize image converter success.");
-}
-
-void ConverterHandle::DeInitConverter()
-{
-    if (dlHandler_) {
-        dlclose(dlHandler_);
-        dlHandler_ = nullptr;
-    }
-    isInited_.store(false);
-}
-
-const OHOS::OpenSourceLibyuv::ImageConverter &ConverterHandle::GetHandle()
-{
-    if (!isInited_.load()) {
-        InitConverter();
-    }
-    return converter_;
-}
-
-} // namespace Media
-} // namespace OHOS
-#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
-
-
-/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#ifndef FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
-#define FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
-
-#include <atomic>
-#include "single_instance.h"
-
-#ifdef DCAMERA_MMAP_RESERVE
-#include "image_converter.h"
-#endif
-
-namespace OHOS {
-namespace Media {
-#ifdef DCAMERA_MMAP_RESERVE
-class ConverterHandle {
-    DECLARE_SINGLE_INSTANCE(ConverterHandle);
-
-public:
-    void InitConverter();
-    void DeInitConverter();
-    const OHOS::OpenSourceLibyuv::ImageConverter &GetHandle();
-
-    using DlHandle = void *;
-private:
-    std::atomic<bool> isInited_ = false;
-    DlHandle dlHandler_ = nullptr;
-    OHOS::OpenSourceLibyuv::ImageConverter converter_ = {0};
-};
-#endif
-} // namespace Media
-} // namespace OHOS
-#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
-
-/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#ifndef OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
-#define OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
-
-#include <stdint.h>
-
-namespace OHOS {
-namespace OpenSourceLibyuv {
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum FilterMode {
-    kFilterNone = 0,
-    kFilterLinear = 1,
-    kFilterBilinear = 2,
-    kFilterBox = 3
-} FilterModeEnum;
-
-typedef enum RotationMode {
-    kRotate0 = 0,
-    kRotate90 = 90,
-    kRotate180 = 180,
-    kRotate270 = 270,
-} RotationModeEnum;
-
-struct ImageConverter {
-    int32_t (*I420ToRGBA)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
-        const uint8_t* src_v, int src_stride_v, uint8_t* dst_rgba, int dst_stride_rgba,
-        int width, int height);
-    int32_t (*ARGBToNV12)(const uint8_t* src_argb, int src_stride_argb, uint8_t* dst_y, int dst_stride_y,
-        uint8_t* dst_uv, int dst_stride_uv, int width, int height);
-    int32_t (*I420Scale)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
-                        const uint8_t* src_v, int src_stride_v, int src_width, int src_height,
-                        uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u,
-                        uint8_t* dst_v, int dst_stride_v, int dst_width, int dst_height,
-                        enum FilterMode filtering);
-    int32_t (*NV12ToI420)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
-                            uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u,
-                            uint8_t *dst_v, int dst_stride_v, int width, int height);
-    int32_t (*I420ToNV21)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
-                            const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y,
-                            uint8_t *dst_vu, int dst_stride_vu, int width, int height);
-    void (*ScalePlane)(const uint8_t *src, int src_stride, int src_width, int src_height, uint8_t *dst,
-                        int dst_stride, int dst_width, int dst_height, enum FilterMode filtering);
-    void (*SplitUVPlane)(const uint8_t *src_uv, int src_stride_uv, uint8_t *dst_u, int dst_stride_u,
-                            uint8_t *dst_v, int dst_stride_v, int width, int height);
-    void (*MergeUVPlane)(const uint8_t *src_u, int src_stride_u, const uint8_t *src_v, int src_stride_v,
-                            uint8_t *dst_uv, int dst_stride_uv, int width, int height);
-    int32_t (*I420ToNV12)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
-                            const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_uv,
-                            int dst_stride_uv, int width, int height);
-    int32_t (*I420Mirror)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
-                            const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u,
-                            int dst_stride_u, uint8_t *dst_v, int dst_stride_v, int width, int height);
-    int32_t (*NV12ToI420Rotate)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
-                                uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u, uint8_t *dst_v,
-                                int dst_stride_v, int width, int height, enum RotationMode mode);
-    int32_t (*ARGBToI420)(const uint8_t *src_argb, int src_stride_argb, uint8_t *dst_y, int dst_stride_y,
-                            uint8_t *dst_u, int dst_stride_u, uint8_t *dst_v,
-                            int dst_stride_v, int width, int height);
-    int32_t (*NV12ToARGB)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
-                            uint8_t *dst_argb,
-                            int dst_stride_argb, int width, int height);
-    int32_t (*NV21ToARGB)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_vu, int src_stride_vu,
-                            uint8_t *dst_argb, int dst_stride_argb,
-                            int width, int height);
-    int32_t (*ARGBToBGRA)(const uint8_t *src_argb, int src_stride_argb, uint8_t *dst_bgra,
-                            int dst_stride_bgra, int width, int height);
-    int32_t (*I420Copy)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
-                        const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u,
-                        int dst_stride_u, uint8_t *dst_v, int dst_stride_v, int width, int height);
-};
-
-struct ImageConverter GetImageConverter(void);
-
-#ifdef __cplusplus
-}
-#endif
-} // namespace OpenSourceLibyuv
-} // namespace OHOS
-#endif // OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H

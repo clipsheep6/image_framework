@@ -87,6 +87,9 @@ struct PixelMemInfo {
     AllocatorType allocatorType = AllocatorType::SHARE_MEM_ALLOC;
 };
 
+class MetadataAccessor;
+class ExifMetadata;
+
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
 public:
     static std::atomic<uint32_t> currentId;
@@ -271,6 +274,27 @@ public:
         isAstc_ = isAstc;
     }
 
+    NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata()
+    {
+        return exifMetadata_;
+    }
+
+    NATIVEEXPORT void SetExifMetadata(std::shared_ptr<ExifMetadata> &ptr)
+    {
+        exifMetadata_ = ptr;
+    }
+
+    NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
+    NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
+        const std::string &path);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
+        const int fd);
+    static int32_t GetRGBxRowDataSize(const ImageInfo& info);
+    static int32_t GetRGBxByteCount(const ImageInfo& info);
+    static int32_t GetYUVByteCount(const ImageInfo& info);
+    static int32_t GetAllocatedByteCount(const ImageInfo& info);
+
 protected:
     void SetEditable(bool editable)
     {
@@ -369,7 +393,7 @@ private:
     static uint8_t *ReadAshmemDataFromParcel(Parcel &parcel, int32_t bufferSize);
     static int ReadFileDescriptor(Parcel &parcel);
     static bool WriteFileDescriptor(Parcel &parcel, int fd);
-    bool ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo);
+    static bool ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo);
     bool WriteImageInfo(Parcel &parcel) const;
     void WriteUint8(std::vector<uint8_t> &buff, uint8_t value) const;
     static uint8_t ReadUint8(std::vector<uint8_t> &buff, int32_t &cursor);
@@ -381,6 +405,11 @@ private:
     static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor);
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
     void UpdateImageInfo();
+    uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
+    uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> &metadataAccessor,
+        const std::string &key, const std::string &value);
+    static int32_t ConvertPixelAlpha(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
+        void *dstPixels, const ImageInfo &dstInfo);
 
     int32_t rowStride_ = 0;
     int32_t pixelBytes_ = 0;
@@ -402,6 +431,8 @@ private:
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
     YUVDataInfo yuvDataInfo_;
+    std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
+    std::shared_ptr<std::mutex> metadataMutex_ = std::make_shared<std::mutex>();
 };
 } // namespace Media
 } // namespace OHOS
