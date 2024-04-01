@@ -76,7 +76,7 @@ typedef struct PixelMapError {
 
 typedef struct BuildParam {
     int32_t offset_ = 0;
-    int32_t stride_ = 0;
+    int32_t width_ = 0;
     bool flag_ = true;
 } BUILD_PARAM;
 
@@ -270,6 +270,23 @@ public:
     {
         isAstc_ = isAstc;
     }
+
+    NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata()
+    {
+        return exifMetadata_;
+    }
+
+    NATIVEEXPORT void SetExifMetadata(std::shared_ptr<ExifMetadata> &ptr)
+    {
+        exifMetadata_ = ptr;
+    }
+
+    NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
+    NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
+        const std::string &path);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
+        const int fd);
 
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;

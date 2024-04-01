@@ -24,6 +24,7 @@ if (use_clang_ios) {
       "//commonlibrary/c_utils/base/include",
       "//foundation/multimedia/media_utils_lite/interfaces/kits",
       "//foundation/communication/ipc/utils/include",
+      "//third_party/ffmpeg",
     ]
 
     sources = [
@@ -64,6 +65,7 @@ if (use_clang_ios) {
       "//foundation/communication/ipc/utils/include",
       "$skia_root/skia",
       "${graphic_subsystem}/interfaces/inner_api/surface",
+      "//third_party/ffmpeg",
     ]
 
     sources = [
@@ -81,6 +83,7 @@ if (use_clang_ios) {
       deps = [
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
+        "//third_party/ffmpeg:libohosffmpeg_static",
       ]
     } else if (use_clang_mac) {
       defines = image_decode_mac_defines
@@ -93,6 +96,7 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
         "//third_party/bounds_checking_function:libsec_static",
+        "//third_party/ffmpeg:libohosffmpeg_static",
       ]
     } else if (use_clang_android) {
       defines = image_decode_android_defines
@@ -102,12 +106,14 @@ if (use_clang_ios) {
         "//commonlibrary/c_utils/base:utils",
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+        "//third_party/ffmpeg:libohosffmpeg_static",
       ]
     } else {
       defines = [ "DUAL_ADAPTER" ]
 
       deps = [
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+        "//third_party/ffmpeg:libohosffmpeg",
       ]
 
       external_deps = [
