@@ -291,6 +291,11 @@ public:
     NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
         const int fd);
 
+    static int32_t GetRGBxRowDataSize(const ImageInfo& info);
+    static int32_t GetRGBxByteCount(const ImageInfo& info);
+    static int32_t GetYUVByteCount(const ImageInfo& info);
+    static int32_t GetAllocatedByteCount(const ImageInfo& info);
+
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
     static constexpr uint8_t TLV_VARINT_MASK = 0x7F;

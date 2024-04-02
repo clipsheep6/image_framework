@@ -161,7 +161,6 @@ struct ImageInfo {
     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     int32_t baseDensity = 0;
     std::string encodedFormat;
-    int32_t alignSize = 1;
 };
 
 struct YUVDataInfo {

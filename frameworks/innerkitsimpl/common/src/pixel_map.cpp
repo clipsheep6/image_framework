@@ -56,6 +56,17 @@
 #include "surface_buffer.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "libswscale/swscale.h"
+#include "libavutil/opt.h"
+#include "libavutil/imgutils.h"
+#include "libavcodec/avcodec.h"
+#ifdef __cplusplus
+}
+#endif
+
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
@@ -243,7 +254,78 @@ static void MakePixelMap(void *dstPixels, int fd, std::unique_ptr<PixelMap> &dst
 #endif
 }
 
+static const map<PixelFormat, AVPixelFormat> FFMPEG_PIXEL_FORMAT_MAP = {
+    { PixelFormat::UNKNOWN, AVPixelFormat::AV_PIX_FMT_NONE },
+    { PixelFormat::ARGB_8888, AVPixelFormat::AV_PIX_FMT_ARGB },
+    { PixelFormat::RGB_565, AVPixelFormat::AV_PIX_FMT_RGB565 },
+    { PixelFormat::RGBA_8888, AVPixelFormat::AV_PIX_FMT_RGBA },
+    { PixelFormat::BGRA_8888, AVPixelFormat::AV_PIX_FMT_BGRA },
+    { PixelFormat::RGB_888, AVPixelFormat::AV_PIX_FMT_RGB24 },
+    { PixelFormat::NV21, AVPixelFormat::AV_PIX_FMT_NV21 },
+    { PixelFormat::NV12, AVPixelFormat::AV_PIX_FMT_NV12 },
+    { PixelFormat::CMYK, AVPixelFormat::AV_PIX_FMT_GBRP },
+};
 
+static AVPixelFormat PixelFormatToAVPixelFormat(const PixelFormat &pixelFormat)
+{
+    auto formatSearch = FFMPEG_PIXEL_FORMAT_MAP.find(pixelFormat);
+    return (formatSearch != FFMPEG_PIXEL_FORMAT_MAP.end()) ? formatSearch->second : AVPixelFormat::AV_PIX_FMT_NONE;
+}
+
+int32_t PixelMap::GetRGBxRowDataSize(const ImageInfo& info)
+{
+    if (info.pixelFormat <= PixelFormat::UNKNOWN || info.pixelFormat >= PixelFormat::NV21) {
+        IMAGE_LOGE("[ImageUtil]unsupport pixel format");
+        return -1;
+    }
+    int32_t pixelBytes = ImageUtils::GetPixelBytes(info.pixelFormat);
+    if (pixelBytes < 0) {
+        IMAGE_LOGE("[ImageUtil]get rgbx pixel bytes failed");
+        return -1;
+    }
+    return pixelBytes * info.size.width;
+}
+
+int32_t PixelMap::GetRGBxByteCount(const ImageInfo& info)
+{
+    if (info.pixelFormat == PixelFormat::NV21 || info.pixelFormat == PixelFormat::NV12) {
+        IMAGE_LOGE("[ImageUtil]unsupport pixel format");
+        return -1;
+    }
+    int32_t rowDataSize = GetRGBxRowDataSize(info);
+    if (rowDataSize < 0) {
+        IMAGE_LOGE("[ImageUtil]get rgbx row data size failed");
+        return -1;
+    }
+    return rowDataSize * info.size.height;
+}
+
+int32_t PixelMap::GetYUVByteCount(const ImageInfo& info)
+{
+    if (info.pixelFormat != PixelFormat::NV21 && info.pixelFormat != PixelFormat::NV12) {
+        IMAGE_LOGE("[ImageUtil]unsupport pixel format");
+        return -1;
+    }
+    if (info.size.width <= 0 || info.size.height <= 0) {
+        IMAGE_LOGE("[ImageUtil]image size error");
+        return -1;
+    }
+    AVPixelFormat avPixelFormat = PixelFormatToAVPixelFormat(info.pixelFormat);
+    if (avPixelFormat == AVPixelFormat::AV_PIX_FMT_NONE) {
+        IMAGE_LOGE("[ImageUtil]pixel format to ffmpeg pixel format failed");
+        return -1;
+    }
+    return av_image_get_buffer_size(avPixelFormat, info.size.width, info.size.height, 1);
+}
+
+int32_t PixelMap::GetAllocatedByteCount(const ImageInfo& info)
+{
+    if (info.pixelFormat == PixelFormat::NV21 || info.pixelFormat == PixelFormat::NV12) {
+        return GetYUVByteCount(info);
+    } else {
+        return GetRGBxByteCount(info);
+    }
+}
 
 unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLength, BUILD_PARAM &info,
     const InitializationOptions &opts, int &errorCode)
@@ -1092,7 +1174,7 @@ int32_t PixelMap::GetByteCount()
 {
     IMAGE_LOGD("GetByteCount");
     if (imageInfo_.pixelFormat == PixelFormat::NV12 || imageInfo_.pixelFormat == PixelFormat::NV21) {
-        return ImageUtils::GetYUVByteCount(imageInfo_);
+        return GetYUVByteCount(imageInfo_);
     } else {
         return rowDataSize_ * imageInfo_.size.height;
     }
