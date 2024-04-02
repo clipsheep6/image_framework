@@ -1056,7 +1056,7 @@ HWTEST_F(JpegDecoderTest, JpegDecoderTest0049, TestSize.Level3)
  * @tc.desc: Test of ModifyImageProperty
  * @tc.type: FUNC
  */
-HWTEST_F(JpegDecoderTest, ModifyImagePropertyTest006, TestSize.Level3)
+HWTEST_F(JpegDecoderTest, JpegDecoderTest0050, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "JpegDecoderTest: JpegDecoderTest0050 start";
     auto jpegDecoder = std::make_shared<JpegDecoder>();
