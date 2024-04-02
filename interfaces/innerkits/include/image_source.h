@@ -261,7 +261,7 @@ private:
     bool GetImageInfoForASTC(ImageInfo& imageInfo);
     bool ConvertYUV420ToRGBA(uint8_t *data, uint32_t size, bool isSupportOdd, bool isAddUV, uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapForYUV(uint32_t &errorCode);
-    std::unique_ptr<PixelMap> CreatePixelMapForASTC(uint32_t &errorCode);
+    std::unique_ptr<PixelMap> CreatePixelMapForASTC(uint32_t &errorCode, bool fastAstc = false);
     uint32_t GetFormatExtended(std::string &format);
     static std::unique_ptr<ImageSource> DoImageSourceCreate(
         std::function<std::unique_ptr<SourceStream>(void)> stream,
@@ -276,7 +276,7 @@ private:
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
-    uint32_t CreatExifMetadataByImageSource();
+    uint32_t CreatExifMetadataByImageSource(bool addFlag = false);
     void SetNumsAPICalled(std::string funcName);
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
