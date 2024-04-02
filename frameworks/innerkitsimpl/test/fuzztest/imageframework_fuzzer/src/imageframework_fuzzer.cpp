@@ -33,7 +33,7 @@ void BatchInsertFuzzer(const uint8_t* data, size_t size)
     Media::PixelMap::Create((uint32_t*)data, size, offset, 0, iopts, true);
     Media::BUILD_PARAM bp;
     bp.offset_ = 0;
-    bp.stride_ = 0;
+    bp.width_ = 0;
     bp.flag_ = true;
     int err = 0;
     Media::PixelMap::Create((uint32_t*)data, size, bp, iopts, err);
