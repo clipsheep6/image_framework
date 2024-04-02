@@ -873,7 +873,7 @@ HWTEST_F(JpegDecoderTest, JpegDecoderTest0041, TestSize.Level3)
     std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(size);
     auto streamPtr = BufferSourceStream::CreateSourceStream(data.get(), size);
     jpegDecoder->SetSource(*streamPtr.release());
-    std::string key = WHITE_BALANC;
+    std::string key = WHITE_BALANCE;
     std::string value = "";
     EXIFInfo exifInfo_;
     jpegDecoder->GetImagePropertyString(key, value);
@@ -1067,8 +1067,8 @@ HWTEST_F(JpegDecoderTest, JpegDecoderTest0050, TestSize.Level3)
     std::string key = "";
     std::string path = "";
     std::string value = "";
-    uint32_t size = 0;
-    int32_t result = jpegDecoder->ModifyImageProperty(0, key, value, size);
+    uint32_t usize = 0;
+    int32_t result = jpegDecoder->ModifyImageProperty(0, key, value, usize);
     ASSERT_EQ(result, Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT);
     GTEST_LOG_(INFO) << "JpegDecoderTest: JpegDecoderTest0050 end";
 }
