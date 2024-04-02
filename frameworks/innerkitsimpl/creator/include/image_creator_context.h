@@ -97,11 +97,11 @@ public:
 private:
     OHOS::sptr<IConsumerSurface> creatorConsumerSurface_;
     OHOS::sptr<Surface> creatorProducerSurface_;
-    int32_t width_;
-    int32_t height_;
-    int32_t format_;
-    int32_t capicity_;
-    std::string creatorKey_;
+    int32_t width_ = 0;
+    int32_t height_ = 0;
+    int32_t format_ = 0;
+    int32_t capicity_ = 0;
+    std::string creatorKey_ = "";
 };
 } // namespace Media
 } // namespace OHOS

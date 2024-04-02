@@ -421,7 +421,12 @@ void ImageUtils::DumpDataIfDumpEnabled(const char* data, const size_t& totalSize
 
 uint32_t ImageUtils::SaveDataToFile(const std::string& fileName, const char* data, const size_t& totalSize)
 {
-    std::ofstream outFile(fileName, std::ofstream::out);
+    std::string realPath;
+    if (!PathToRealPath(fileName, realPath)) {
+        return IMAGE_RESULT_SAVE_DATA_TO_FILE_FAILED;
+    }
+
+    std::ofstream outFile(realPath, std::ofstream::out);
     if (!outFile.is_open()) {
         IMAGE_LOGI("ImageUtils::SaveDataToFile write error, path=%{public}s", fileName.c_str());
         return IMAGE_RESULT_SAVE_DATA_TO_FILE_FAILED;
@@ -436,11 +441,13 @@ std::string ImageUtils::GetLocalTime()
     auto now = std::chrono::system_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
     std::time_t t = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::localtime(&t);
-
+    std::tm* tm = std::localtime(&t);
+    if (tm == nullptr) {
+        return "";
+    }
     std::stringstream ss;
     int millSecondWidth = 3;
-    ss << std::put_time(&tm, "%Y-%m-%d %H_%M_%S.") << std::setfill('0') << std::setw(millSecondWidth) << ms.count();
+    ss << std::put_time(tm, "%Y-%m-%d %H_%M_%S.") << std::setfill('0') << std::setw(millSecondWidth) << ms.count();
     return ss.str();
 }
 

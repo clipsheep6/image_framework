@@ -142,7 +142,7 @@ static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     if (pixelMap->GetAllocatorType() == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
-        rowStride = sbBuffer->GetStride();
+        rowStride = static_cast<uint64_t>(sbBuffer->GetStride());
     }
 #endif
 

@@ -100,7 +100,7 @@ static bool CopyLineData(uint8_t *dest, uint32_t destStride, const uint8_t *src,
         return false;
     }
     if (destStride > srcStride) {
-        int count = destStride - srcStride;
+        uint32_t count = destStride - srcStride;
         uint8_t lastValueinCurrentSrcLine = *(src + srcStride - 1);
         ret = memset_s(dest + srcStride, count, lastValueinCurrentSrcLine, count);
         if (ret != EOK) {

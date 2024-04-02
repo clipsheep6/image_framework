@@ -186,7 +186,7 @@ public:
         err.errorInfo = info;
     }
 
-    NATIVEEXPORT virtual void SetRowStride(uint32_t stride);
+    NATIVEEXPORT virtual void SetRowStride(int32_t stride);
     NATIVEEXPORT virtual int32_t GetRowStride()
     {
         return rowStride_;

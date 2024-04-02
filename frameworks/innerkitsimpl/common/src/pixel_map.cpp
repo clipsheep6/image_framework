@@ -198,7 +198,7 @@ bool CheckPixelmap(std::unique_ptr<PixelMap> &pixelMap, ImageInfo &imageInfo)
         IMAGE_LOGE("set image info fail");
         return false;
     }
-    uint32_t bufferSize = pixelMap->GetByteCount();
+    int32_t bufferSize = pixelMap->GetByteCount();
     if (bufferSize == 0 || (pixelMap->GetAllocatorType() == AllocatorType::HEAP_ALLOC &&
         bufferSize > PIXEL_MAP_MAX_RAM_SIZE)) {
         IMAGE_LOGE("AllocSharedMemory parameter is zero");
@@ -235,7 +235,7 @@ static void MakePixelMap(void *dstPixels, int fd, std::unique_ptr<PixelMap> &dst
 {
     void *fdBuffer = new int32_t();
     *static_cast<int32_t *>(fdBuffer) = fd;
-    uint32_t bufferSize = dstPixelMap->GetByteCount();
+    uint32_t bufferSize = static_cast<uint32_t>(dstPixelMap->GetByteCount());
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     dstPixelMap->SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::SHARE_MEM_ALLOC, nullptr);
 #else
@@ -744,7 +744,7 @@ bool PixelMap::GetPixelFormatDetail(const PixelFormat format)
     return true;
 }
 
-void PixelMap::SetRowStride(uint32_t stride)
+void PixelMap::SetRowStride(int32_t stride)
 {
     rowStride_ = stride;
 }
@@ -2084,7 +2084,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 
 PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
 {
-    PixelMap *pixelMap = new PixelMap();
+    PixelMap *pixelMap = new(std::nothrow) PixelMap();
     if (pixelMap == nullptr) {
         PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "pixelmap create failed");
         return nullptr;
@@ -2317,6 +2317,7 @@ PixelMap *PixelMap::DecodeTlv(std::vector<uint8_t> &buff)
         return nullptr;
     }
     if (dataSize != pixelMap->GetByteCount()) {
+        free(data);
         delete pixelMap;
         IMAGE_LOGE("pixel map tlv decode fail: dataSize not match");
         return nullptr;
@@ -2493,7 +2494,7 @@ uint32_t PixelMap::SetAlpha(const float percent)
 
     bool isPixelPremul = alphaType == AlphaType::IMAGE_ALPHA_TYPE_PREMUL;
     auto pixelFormat = GetPixelFormat();
-    uint32_t pixelsSize = GetByteCount();
+    uint32_t pixelsSize = static_cast<uint32_t>(GetByteCount());
     int8_t alphaIndex = GetAlphaIndex(pixelFormat);
     if (alphaIndex == INVALID_ALPHA_INDEX) {
         IMAGE_LOGE("Could not set alpha on %{public}s",
@@ -2514,7 +2515,7 @@ uint32_t PixelMap::SetAlpha(const float percent)
         } else {
             SetUintPixelAlpha(pixel, percent, pixelBytes_, alphaIndex, isPixelPremul);
         }
-        i += pixelBytes_;
+        i += static_cast<uint32_t>(pixelBytes_);
     }
     return SUCCESS;
 }
@@ -2586,7 +2587,7 @@ static void GenSrcTransInfo(SkTransInfo &srcInfo, ImageInfo &imageInfo, PixelMap
             IMAGE_LOGE("GenSrcTransInfo get surfacebuffer failed");
         }
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(pixelmap->GetFd());
-        rowStride = sbBuffer->GetStride();
+        rowStride = static_cast<uint64_t>(sbBuffer->GetStride());
     }
     srcInfo.bitmap.installPixels(srcInfo.info, static_cast<uint8_t *>(pixelmap->GetWritablePixels()), rowStride);
 }
@@ -2630,7 +2631,7 @@ static bool GendstTransInfo(SkTransInfo &srcInfo, SkTransInfo &dstInfo, SkMatrix
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
         }
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(memoryInfo.memory->extend.data);
-        rowStride = sbBuffer->GetStride();
+        rowStride = static_cast<uint64_t>(sbBuffer->GetStride());
     }
     dstInfo.bitmap.installPixels(dstInfo.info, memoryInfo.memory->data.data, rowStride);
 #else
@@ -2816,7 +2817,7 @@ uint32_t PixelMap::crop(const Rect &rect)
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
             return ERR_IMAGE_CROP;
         }
-        rowStride = reinterpret_cast<SurfaceBuffer*>(m->extend.data)->GetStride();
+        rowStride = static_cast<uint64_t>(reinterpret_cast<SurfaceBuffer*>(m->extend.data)->GetStride());
     }
 #endif
     if (!src.bitmap.readPixels(dst.info, m->data.data, rowStride, dstIRect.fLeft, dstIRect.fTop)) {
@@ -2877,7 +2878,7 @@ uint32_t PixelMap::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     if (GetAllocatorType() == AllocatorType::DMA_ALLOC && GetFd() != nullptr) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(GetFd());
-        rowStride = sbBuffer->GetStride();
+        rowStride = static_cast<uint64_t>(sbBuffer->GetStride());
     }
     srcData = static_cast<uint8_t *>(GetWritablePixels());
 #endif

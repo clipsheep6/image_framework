@@ -228,7 +228,7 @@ static int32_t ImageSourceNapiCreateFromUri(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromUri native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
+    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != IMAGE_RESULT_SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromUri napi create failed");
         args->outVal = nullptr;
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -261,7 +261,7 @@ static int32_t ImageSourceNapiCreateFromFd(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromFd native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
+    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != IMAGE_RESULT_SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromFd napi create failed");
         args->outVal = nullptr;
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -297,7 +297,7 @@ static int32_t ImageSourceNapiCreateFromData(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromData native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
+    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != IMAGE_RESULT_SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromData napi create failed");
         args->outVal = nullptr;
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -341,7 +341,7 @@ static int32_t ImageSourceNapiCreateFromRawFile(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromRawFile native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
-    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
+    if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != IMAGE_RESULT_SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromRawFile napi create failed");
         args->outVal = nullptr;
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -385,7 +385,7 @@ static int32_t ImageSourceNapiCreateIncremental(struct ImageSourceArgs* args)
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     if (ImageSourceCreateNapi(args->inEnv, args->outVal,
-        std::move(imageSource), std::move(incPixelMap), nullptr) != SUCCESS) {
+        std::move(imageSource), std::move(incPixelMap), nullptr) != IMAGE_RESULT_SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateIncremental napi create failed");
         args->outVal = nullptr;
         return IMAGE_RESULT_BAD_PARAMETER;
@@ -431,7 +431,9 @@ static int32_t ImageSourceNapiGetSupportedFormats(struct ImageSourceArgs* args)
             IMAGE_LOGD("ImageSourceNapiGetSupportedFormats nullptr format out buffer");
             return IMAGE_RESULT_BAD_PARAMETER;
         }
-        memcpy_s(formatList[i]->format, formatList[i]->size, formatStr.c_str(), formatStr.size());
+        if (memcpy_s(formatList[i]->format, formatList[i]->size, formatStr.c_str(), formatStr.size()) != EOK) {
+            return IMAGE_RESULT_BAD_PARAMETER;
+        }
         if (formatList[i]->size > formatStr.size()) {
             formatList[i]->size = formatStr.size();
         }
@@ -618,7 +620,9 @@ static int32_t ImageSourceNapiGetImageProperty(
         propertyVal->size = val.size();
         return IMAGE_RESULT_SUCCESS;
     }
-    memcpy_s(propertyVal->value, propertyVal->size, val.c_str(), val.size());
+    if (memcpy_s(propertyVal->value, propertyVal->size, val.c_str(), val.size()) != EOK) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
     if (propertyVal->size > val.size()) {
         propertyVal->size = val.size();
     }
@@ -626,7 +630,7 @@ static int32_t ImageSourceNapiGetImageProperty(
     return IMAGE_RESULT_SUCCESS;
 }
 
-static uint32_t NativePropertyModify(ImageSource* native, ImageResource &imageResource,
+static int32_t NativePropertyModify(ImageSource* native, ImageResource &imageResource,
     std::string &key, std::string &val)
 {
     auto type = imageResource.type;
