@@ -202,6 +202,7 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils_static",
       "${image_subsystem}/mock/native:log_mock_static",
       "${image_subsystem}/plugins/manager:pluginmanager_static",
+      ":heifparser",
     ]
     deps += skia_core
   } else if (use_clang_mac) {
@@ -212,6 +213,7 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/mock/native:log_mock_static",
       "${image_subsystem}/plugins/manager:pluginmanager_static",
       "${third_party_root}/bounds_checking_function:libsec_static",
+      ":heifparser",
     ]
   } else {
     include_dirs += [ "${commonlibrary_subsystem}/base/include" ]
@@ -223,6 +225,7 @@ ohos_shared_library("extplugin") {
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
       "//third_party/astc-encoder:astc_encoder_shared",
+      ":heifparser",
     ]
     if (defined(global_parts_info) &&
         defined(global_parts_info.open_source_libyuv)) {

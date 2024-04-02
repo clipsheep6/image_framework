@@ -17,6 +17,8 @@
 #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_HEIF_EXIF_METADATA_ACCESSOR_H
 
 #include "abstract_exif_metadata_accessor.h"
+#include "data_buf.h"
+#include "heif_parser.h"
 #include "metadata_stream.h"
 
 namespace OHOS {
@@ -30,6 +32,9 @@ public:
     virtual bool ReadBlob(DataBuf &blob) const override;
     virtual uint32_t Write() override;
     virtual uint32_t WriteBlob(DataBuf &blob) override;
+
+private:
+    bool GetExifItemData(std::shared_ptr<ImagePlugin::HeifParser> &parser, DataBuf &dataBuf);
 };
 } // namespace Media
 } // namespace OHOS

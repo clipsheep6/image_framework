@@ -57,6 +57,7 @@ config("image_external_config") {
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libjpegplugin/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/include",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin/include/heif_impl/heif_parser",
     "$skia_root/skia",
     "$skia_root/skia/include/core",
     "$skia_root/skia/include/codec",
@@ -200,6 +201,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
         "//third_party/ffmpeg:libohosffmpeg_static",
+        "${image_subsystem}/plugins/common/libs/image/libextplugin:heifparser",
       ]
       external_deps = [ "graphic_surface:surface" ]
     } else if (use_clang_mac) {
@@ -219,6 +221,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
         "//third_party/bounds_checking_function:libsec_statics",
         "//third_party/ffmpeg:libohosffmpeg_static",
+        "${image_subsystem}/plugins/common/libs/image/libextplugin:heifparser",
       ]
       external_deps = [ "graphic_surface:surface" ]
     } else {
@@ -230,6 +233,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
         "//third_party/ffmpeg:libohosffmpeg",
+        "${image_subsystem}/plugins/common/libs/image/libextplugin:heifparser",
       ]
       deps += skia_platform
 

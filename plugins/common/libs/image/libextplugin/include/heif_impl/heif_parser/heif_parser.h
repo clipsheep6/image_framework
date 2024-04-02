@@ -61,6 +61,8 @@ public:
 
     void GetTileImages(heif_item_id gridItemId, std::vector<std::shared_ptr<HeifImage>> &out);
 
+    void GetAllItemId(std::vector<heif_item_id> &itemIdList) const;
+
 private:
     // stream
     std::shared_ptr<HeifInputStream> inputStream_;
@@ -88,8 +90,6 @@ private:
     heif_error AssembleBoxes(HeifStreamReader &reader);
 
     heif_item_id GetPrimaryItemId() const;
-
-    void GetAllItemId(std::vector<heif_item_id> &itemIdList) const;
 
     bool HasItemId(heif_item_id itemId) const;
 
