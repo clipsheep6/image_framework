@@ -204,7 +204,7 @@ bool PngExifMetadataAccessor::GetExifEncodedBlob(uint8_t **dataBlob, uint32_t &s
 bool PngExifMetadataAccessor::WriteData(BufferMetadataStream &bufStream, uint8_t *data, uint32_t size)
 {
     if (bufStream.Write(data, size) != size) {
-        IMAGE_LOGE("Write the final marker failed");
+        IMAGE_LOGE("Write the bufStream failed");
         return false;
     }
     return true;
