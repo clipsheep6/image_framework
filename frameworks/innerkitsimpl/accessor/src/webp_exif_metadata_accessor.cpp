@@ -31,6 +31,7 @@
 namespace OHOS {
 namespace Media {
 namespace {
+byte WEBP_PAD_ODD = 0x00;
 constexpr auto WEBP_RIFF_SIZE = 4;
 constexpr auto WEBP_FILE_SIZE_BUFF_SIZE = 4;
 constexpr auto WEBP_CHUNK_HEAD_SIZE = 12;
@@ -119,6 +120,9 @@ bool WebpExifMetadataAccessor::ReadBlob(DataBuf &blob) const
         std::string strChunkId(reinterpret_cast<const char*>(chunkId.CData()), WEBP_CHUNK_ID_SIZE);
         if (strChunkId != WEBP_CHUNK_HEADER_EXIF) {
             imageStream_->Seek(size, SeekPos::CURRENT);
+            if (size % WEBP_BUF_SIZE) {
+                imageStream_->Seek(1, SeekPos::CURRENT);
+            }
             continue;
         }
 
@@ -290,11 +294,15 @@ bool WebpExifMetadataAccessor::UpdateExifMetadata(BufferMetadataStream &bufStrea
         }
         bufStream.Write(chunkHead.Data(), chunkHead.Size());
 
-        const uint32_t size = chunkHead.ReadUInt32(WEBP_CHUNK_ID_SIZE, littleEndian);
+        uint32_t size = chunkHead.ReadUInt32(WEBP_CHUNK_ID_SIZE, littleEndian);
         const ssize_t imgSize = imageStream_->GetSize();
         if (size > imgSize - imageStream_->Tell()) {
             IMAGE_LOGE("Read chunk length error.");
             return false;
+        }
+
+        if (size % WEBP_BUF_SIZE) {
+            ++size;
         }
 
         DataBuf chunkData(size);
@@ -306,6 +314,9 @@ bool WebpExifMetadataAccessor::UpdateExifMetadata(BufferMetadataStream &bufStrea
         std::string strChunkId(reinterpret_cast<const char *>(chunkHead.CData()), WEBP_CHUNK_ID_SIZE);
         if (strChunkId == WEBP_CHUNK_HEADER_EXIF) {
             bufStream.Write(dataBlob, size);
+            if (chunkData.Size() % WEBP_BUF_SIZE) {
+                bufStream.Write(&WEBP_PAD_ODD, 1);
+            }
             break;
         }
         bufStream.Write(chunkData.Data(), chunkData.Size());
@@ -329,6 +340,9 @@ bool WebpExifMetadataAccessor::InsertExifMetadata(BufferMetadataStream &bufStrea
     if (bufStream.Write(exifChunckSize.Data(), exifChunckSize.Size()) != exifChunckSize.Size() ||
         bufStream.Write(dataBlob, size) != size) {
         return false;
+    }
+    if (size % WEBP_BUF_SIZE) {
+        bufStream.Write(&WEBP_PAD_ODD, 1);
     }
     return true;
 }

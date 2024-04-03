@@ -371,6 +371,13 @@ HWTEST_F(WebpExifMetadataAccessorTest, Read005, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSunsetConf"), "8");
     ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneTextConf"), "11");
     ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneVersion"), "1");
+
+    ASSERT_TRUE(exifMetadata->SetValue("HwMnoteCaptureMode", "0"));
+
+    ASSERT_EQ(imageAccessor.Write(), 0);
+
+    ASSERT_EQ(imageAccessor.Read(), 0);
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteCaptureMode"), "0");
 }
 
 /**
@@ -795,9 +802,9 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write005, TestSize.Level3)
 
     auto exifMetadata = imageAccessor.Get();
     ASSERT_NE(exifMetadata, nullptr);
-    ASSERT_TRUE(exifMetadata->SetValue("SubsecTime", "543792")); //SetValue false
-    ASSERT_TRUE(exifMetadata->SetValue("SubsecTimeOriginal", "543792")); //SetValue false
-    ASSERT_TRUE(exifMetadata->SetValue("SubsecTimeDigitized", "543792")); //SetValue false
+    ASSERT_TRUE(exifMetadata->SetValue("SubsecTime", "543792"));
+    ASSERT_TRUE(exifMetadata->SetValue("SubsecTimeOriginal", "543792"));
+    ASSERT_TRUE(exifMetadata->SetValue("SubsecTimeDigitized", "543792"));
     ASSERT_TRUE(exifMetadata->SetValue("FlashpixVersion", "0200"));
     ASSERT_TRUE(exifMetadata->SetValue("ColorSpace", "1"));
     ASSERT_TRUE(exifMetadata->SetValue("PixelXDimension", "3456"));
@@ -906,7 +913,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write007, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("ImageUniqueID", "FXIC012"));
     ASSERT_TRUE(exifMetadata->SetValue("CameraOwnerName", "2a"));
     ASSERT_TRUE(exifMetadata->SetValue("BodySerialNumber", "x1"));
-    ASSERT_TRUE(exifMetadata->SetValue("LensSpecification", "1/1 5/2 3/1 2/1")); //SetValue false
+    ASSERT_TRUE(exifMetadata->SetValue("LensSpecification", "1/1 5/2 3/1 2/1"));
     ASSERT_TRUE(exifMetadata->SetValue("LensMake", "aaa"));
     ASSERT_TRUE(exifMetadata->SetValue("LensModel", "xxx"));
     ASSERT_TRUE(exifMetadata->SetValue("LensSerialNumber", "111a"));
@@ -1120,8 +1127,8 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write011, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("GPSDateStamp", "2022:01:11"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestBearing", "20/10"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestBearingRef", "M"));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSDestDistance", "1/10")); //SetValue false
-    ASSERT_TRUE(exifMetadata->SetValue("GPSDestDistanceRef", "K")); //SetValue false
+    ASSERT_TRUE(exifMetadata->SetValue("GPSDestDistance", "1/10"));
+    ASSERT_TRUE(exifMetadata->SetValue("GPSDestDistanceRef", "K"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitude", "33/1 22/1 11/1"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitudeRef", "S"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLongitude", "33/1 22/1 11/1"));
