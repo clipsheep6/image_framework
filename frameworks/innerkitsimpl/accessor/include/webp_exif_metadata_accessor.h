@@ -54,7 +54,7 @@ private:
     bool CopyRestData(BufferMetadataStream &bufStream);
     bool InsertExifMetadata(BufferMetadataStream &bufStream, uint8_t *dataBlob, uint32_t size);
     std::tuple<uint32_t, uint32_t> GetImageWidthAndHeight();
-    std::tuple<uint32_t, uint32_t> GetWidthAndHeightSub(const std::string &strChunkId, const DataBuf &chunkData);
+    std::tuple<uint32_t, uint32_t> GetWidthAndHeightFormChunk(const std::string &strChunkId, const DataBuf &chunkData);
 };
 } // namespace Media
 } // namespace OHOS

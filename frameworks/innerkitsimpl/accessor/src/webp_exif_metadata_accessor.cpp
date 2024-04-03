@@ -359,13 +359,13 @@ std::tuple<uint32_t, uint32_t> WebpExifMetadataAccessor::GetImageWidthAndHeight(
         std::string strChunkId(reinterpret_cast<const char *>(chunkHead.CData()), WEBP_CHUNK_ID_SIZE);
         if (strChunkId == WEBP_CHUNK_HEADER_VP8 || strChunkId == WEBP_CHUNK_HEADER_VP8L ||
             strChunkId == WEBP_CHUNK_HEADER_ANMF) {
-            return GetWidthAndHeightSub(strChunkId, chunkData);
+            return GetWidthAndHeightFormChunk(strChunkId, chunkData);
         }
     }
     return std::make_tuple(0, 0);
 }
 
-std::tuple<uint32_t, uint32_t> WebpExifMetadataAccessor::GetWidthAndHeightSub(const std::string &strChunkId,
+std::tuple<uint32_t, uint32_t> WebpExifMetadataAccessor::GetWidthAndHeightFormChunk(const std::string &strChunkId,
     const DataBuf &chunkData)
 {
     uint32_t width = 0;
@@ -496,7 +496,5 @@ bool WebpExifMetadataAccessor::WirteChunkVp8x(BufferMetadataStream &bufStream, c
     chunkData.Data()[0] |= WEBP_EXIF_FLAG_BIT;
     return bufStream.Write(chunkData.Data(), chunkData.Size()) == (ssize_t)chunkData.Size();
 }
-
-
 } // namespace Media
 } // namespace OHOS
