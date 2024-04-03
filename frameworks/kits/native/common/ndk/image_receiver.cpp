@@ -204,7 +204,7 @@ Image_ErrorCode OH_ImageReceiver2_GetReceivingSurfaceId(OH_ImageReceiver* receiv
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
     }
 
-    *surfaceId = std::stoul(strKey);
+    *surfaceId = std::stoull(strKey);
     if (*surfaceId <= 0) {
         IMAGE_LOGE("Bad data: key string empty.");
         return IMAGE_ERRORCODE_GET_DATA_ABNORMAL;
