@@ -35,6 +35,11 @@ public:
     static bool GetFileSize(const int fd, size_t &size);
     static bool GetInputStreamSize(std::istream &inputStream, size_t &size);
     static int32_t GetPixelBytes(const PixelFormat &pixelFormat);
+    static int32_t GetRGBxPixelBytes(const PixelFormat format);
+    static int32_t GetRGBxRowDataSize(const ImageInfo& info);
+    static int32_t GetRGBxByteCount(const ImageInfo& info);
+    static int32_t GetYUVByteCount(const ImageInfo& info);
+    static int32_t GetAllByteCount(const ImageInfo& info);
     static bool PathToRealPath(const std::string &path, std::string &realPath);
     static bool FloatCompareZero(float src);
     static AlphaType GetValidAlphaTypeByFormat(const AlphaType &dstType, const PixelFormat &format);

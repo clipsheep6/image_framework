@@ -290,6 +290,11 @@ public:
         const std::string &path);
     NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
         const int fd);
+    static int32_t GetRGBxPixelBytes(const PixelFormat format);
+    static int32_t GetRGBxRowDataSize(const ImageInfo& info);
+    static int32_t GetRGBxByteCount(const ImageInfo& info);
+    static int32_t GetYUVByteCount(const ImageInfo& info);
+    static int32_t GetAllByteCount(const ImageInfo& info);
 
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;

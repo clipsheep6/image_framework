@@ -160,6 +160,7 @@ static ImageInfo MakeImageInfo(int width, int height, PixelFormat pf, AlphaType 
     info.pixelFormat = pf;
     info.alphaType = at;
     info.colorSpace = cs;
+    info.alignSize = 1;
     return info;
 }
 } // namespace Media
