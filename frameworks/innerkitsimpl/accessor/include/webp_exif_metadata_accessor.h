@@ -18,11 +18,12 @@
 
 
 #include <tuple>
-#include "securec.h"
+
 #include "abstract_exif_metadata_accessor.h"
 #include "buffer_metadata_stream.h"
 #include "data_buf.h"
 #include "metadata_stream.h"
+#include "securec.h"
 
 namespace OHOS {
 namespace Media {

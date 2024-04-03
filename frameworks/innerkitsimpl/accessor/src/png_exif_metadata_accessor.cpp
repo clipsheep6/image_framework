@@ -232,10 +232,10 @@ bool PngExifMetadataAccessor::WriteExifData(BufferMetadataStream &bufStream, uin
         tmp = crc32(tmp, dataBlob, size);
         byte crc[PNG_CHUNK_CRC_SIZE];
         UL2Data(crc, tmp, bigEndian);
-        if ((!WriteData(bufStream, length, PNG_CHUNK_LENGTH_SIZE)) ||
-            (!WriteData(bufStream, typeExif, PNG_CHUNK_TYPE_SIZE)) ||
-            (!WriteData(bufStream, dataBlob, size)) ||
-            (!WriteData(bufStream, crc, PNG_CHUNK_CRC_SIZE))) {
+        if (!(WriteData(bufStream, length, PNG_CHUNK_LENGTH_SIZE) &&
+            WriteData(bufStream, typeExif, PNG_CHUNK_TYPE_SIZE) &&
+            WriteData(bufStream, dataBlob, size) &&
+            WriteData(bufStream, crc, PNG_CHUNK_CRC_SIZE))) {
             return false;
         }
     } else if (chunkType == PNG_CHUNK_TEXT || chunkType == PNG_CHUNK_ZTXT || chunkType == PNG_CHUNK_ITXT) {
