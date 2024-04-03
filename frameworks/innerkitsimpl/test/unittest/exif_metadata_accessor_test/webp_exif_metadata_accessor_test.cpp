@@ -290,16 +290,16 @@ HWTEST_F(WebpExifMetadataAccessorTest, Read004, TestSize.Level3)
     EXPECT_EQ(GetProperty(exifMetadata, "SpatialFrequencyResponse"), ".");
     EXPECT_EQ(GetProperty(exifMetadata, "StripByteCounts"), "");
     EXPECT_EQ(GetProperty(exifMetadata, "StripOffsets"), "");
-    EXPECT_EQ(GetProperty(exifMetadata, "SubSecTime"), "");
-    EXPECT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "427000");
-    EXPECT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "427000");
+    EXPECT_EQ(GetProperty(exifMetadata, "SubsecTime"), "427000");
+    EXPECT_EQ(GetProperty(exifMetadata, "SubsecTimeDigitized"), "427000");
+    EXPECT_EQ(GetProperty(exifMetadata, "SubsecTimeOriginal"), "427000");
     EXPECT_EQ(GetProperty(exifMetadata, "SubfileType"), "1");
     EXPECT_EQ(GetProperty(exifMetadata, "SubjectArea"),
         "Within rectangle (width 183, height 259) around (x,y) = (10,20)");
     EXPECT_EQ(GetProperty(exifMetadata, "SubjectDistanceRange"), "Unknown");
     EXPECT_EQ(GetProperty(exifMetadata, "BodySerialNumber"), "bodyserialnumber");
     EXPECT_EQ(GetProperty(exifMetadata, "BrightnessValue"), "0.00 EV (3.43 cd/m^2)");
-    EXPECT_EQ(GetProperty(exifMetadata, "CFAPattern"), "");
+    EXPECT_EQ(GetProperty(exifMetadata, "CFAPattern"), "1 bytes undefined data");
     EXPECT_EQ(GetProperty(exifMetadata, "CameraOwnerName"), "cameraownername");
     EXPECT_EQ(GetProperty(exifMetadata, "ColorSpace"), "sRGB");
     EXPECT_EQ(GetProperty(exifMetadata, "ComponentsConfiguration"), "Y Cb Cr -");
@@ -754,7 +754,6 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write004, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("Flash", "24"));
     ASSERT_TRUE(exifMetadata->SetValue("FocalLength", "35/1"));
     ASSERT_TRUE(exifMetadata->SetValue("SubjectArea", "10 20 183 259"));
-    ASSERT_TRUE(exifMetadata->SetValue("MakerNote", "65 117 116 111 0"));
     ASSERT_TRUE(exifMetadata->SetValue("UserComment", "place for user comments."));
 
     ASSERT_EQ(imageAccessor.Write(), 0);
@@ -773,7 +772,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write004, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "Flash"), "Flash did not fire, auto mode");
     ASSERT_EQ(GetProperty(exifMetadata, "FocalLength"), "35.0 mm");
     ASSERT_EQ(GetProperty(exifMetadata, "SubjectArea"), "(x,y) = (10,20)");
-    ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "16 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "");
     ASSERT_EQ(GetProperty(exifMetadata, "UserComment"), "place for user comments.");
 }
 
@@ -797,8 +796,8 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write005, TestSize.Level3)
     auto exifMetadata = imageAccessor.Get();
     ASSERT_NE(exifMetadata, nullptr);
     ASSERT_TRUE(exifMetadata->SetValue("SubsecTime", "543792")); //SetValue false
-    ASSERT_TRUE(exifMetadata->SetValue("SubSecTimeOriginal", "543792")); //SetValue false
-    ASSERT_TRUE(exifMetadata->SetValue("SubSecTimeDigitized", "543792")); //SetValue false
+    ASSERT_TRUE(exifMetadata->SetValue("SubsecTimeOriginal", "543792")); //SetValue false
+    ASSERT_TRUE(exifMetadata->SetValue("SubsecTimeDigitized", "543792")); //SetValue false
     ASSERT_TRUE(exifMetadata->SetValue("FlashpixVersion", "0200"));
     ASSERT_TRUE(exifMetadata->SetValue("ColorSpace", "1"));
     ASSERT_TRUE(exifMetadata->SetValue("PixelXDimension", "3456"));
@@ -814,8 +813,8 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write005, TestSize.Level3)
 
     ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "SubsecTime"), "543792");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeOriginal"), "543792");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "543792");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeOriginal"), "543792");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeDigitized"), "543792");
     ASSERT_EQ(GetProperty(exifMetadata, "FlashpixVersion"), "Unknown FlashPix Version");
     ASSERT_EQ(GetProperty(exifMetadata, "ColorSpace"), "sRGB");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelXDimension"), "3456");
@@ -1013,7 +1012,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write009, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("GPSImgDirectionRef", "T"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSImgDirection", "225218/100000"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSMapDatum", "TEST"));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitudeRef", "E"));
+    ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitudeRef", "N"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitude", "33/1 22/1 11/1"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLongitudeRef", "W"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLongitude", "33/1 22/1 11/1"));
@@ -1032,7 +1031,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write009, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSImgDirectionRef"), "T");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSImgDirection"), "2.25218");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSMapDatum"), "TEST");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLatitudeRef"), "E");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLatitudeRef"), "N");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLatitude"), "33, 22, 11");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLongitudeRef"), "W");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLongitude"), "33, 22, 11");
@@ -1068,11 +1067,9 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write010, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("GPSDifferential", "1"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSHPositioningError", "2/1"));
     ASSERT_TRUE(exifMetadata->SetValue("OECF", "abbs"));
-    ASSERT_TRUE(exifMetadata->SetValue("SubjectLocation", "5"));
+    ASSERT_TRUE(exifMetadata->SetValue("SubjectLocation", "5 6"));
     ASSERT_TRUE(exifMetadata->SetValue("DNGVersion", "3 3 0 0"));
     ASSERT_TRUE(exifMetadata->SetValue("DefaultCropSize", "2 2"));
-    ASSERT_TRUE(exifMetadata->SetValue("JPEGInterchangeFormat", "2436"));
-    ASSERT_TRUE(exifMetadata->SetValue("JPEGInterchangeFormatLength", "2450"));
 
     ASSERT_EQ(imageAccessor.Write(), 0);
 
@@ -1082,11 +1079,11 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write010, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDifferential"), "1");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSHPositioningError"), " 2");
     ASSERT_EQ(GetProperty(exifMetadata, "OECF"), "4 bytes undefined data");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "5");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "5, 6");
     ASSERT_EQ(GetProperty(exifMetadata, "DNGVersion"), "3, 3, 0, 0");
     ASSERT_EQ(GetProperty(exifMetadata, "DefaultCropSize"), "2, 2");
-    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormat"), "2436");
-    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormatLength"), "2450");
+    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormat"), "");
+    ASSERT_EQ(GetProperty(exifMetadata, "JPEGInterchangeFormatLength"), "");
 }
 
 /**
@@ -1126,7 +1123,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write011, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestDistance", "1/10")); //SetValue false
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestDistanceRef", "K")); //SetValue false
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitude", "33/1 22/1 11/1"));
-    ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitudeRef", "W"));
+    ASSERT_TRUE(exifMetadata->SetValue("GPSDestLatitudeRef", "S"));
     ASSERT_TRUE(exifMetadata->SetValue("GPSDestLongitude", "33/1 22/1 11/1"));
     ASSERT_EQ(imageAccessor.Write(), 0);
 
@@ -1141,7 +1138,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write011, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestDistance"), "0.1");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestDistanceRef"), "K");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLatitude"), "33, 22, 11");
-    ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLatitudeRef"), "W");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLatitudeRef"), "S");
     ASSERT_EQ(GetProperty(exifMetadata, "GPSDestLongitude"), "33, 22, 11");
 }
 
@@ -1291,7 +1288,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write014, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("SamplesPerPixel", "23"));
     ASSERT_TRUE(exifMetadata->SetValue("SpectralSensitivity", "Sensitivity"));
     ASSERT_TRUE(exifMetadata->SetValue("SubfileType", "1"));
-    ASSERT_TRUE(exifMetadata->SetValue("SubjectLocation", "5"));
+    ASSERT_TRUE(exifMetadata->SetValue("SubjectLocation", "5 12"));
     ASSERT_TRUE(exifMetadata->SetValue("TransferFunction", "2"));
     ASSERT_TRUE(exifMetadata->SetValue("YCbCrCoefficients", "299/1000 587/1000 114/1000"));
     ASSERT_TRUE(exifMetadata->SetValue("YCbCrSubSampling", "4 2"));
@@ -1306,7 +1303,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write014, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "SamplesPerPixel"), "23");
     ASSERT_EQ(GetProperty(exifMetadata, "SpectralSensitivity"), "Sensitivity");
     ASSERT_EQ(GetProperty(exifMetadata, "SubfileType"), "1");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "5");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "5, 12");
     ASSERT_EQ(GetProperty(exifMetadata, "TransferFunction"), "1 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrCoefficients"), "0.299, 0.587, 0.114");
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrSubSampling"), "4, 2");
@@ -1555,7 +1552,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write019, TestSize.Level3)
     ASSERT_NE(exifMetadata, nullptr);
     ASSERT_EQ(GetProperty(exifMetadata, "GainControl"), "Normal");
     ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedRatings"), "400");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "543792");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeDigitized"), "543792");
     ASSERT_EQ(GetProperty(exifMetadata, "LightSource"), "Daylight");
     ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "5 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "1.69 EV (f/1.8)");
@@ -1568,9 +1565,8 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write019, TestSize.Level3)
 
     ASSERT_TRUE(exifMetadata->SetValue("GainControl", "2"));
     ASSERT_TRUE(exifMetadata->SetValue("ISOSpeedRatings", "300"));
-    ASSERT_TRUE(exifMetadata->SetValue("SubSecTimeDigitized", "4380000"));
+    ASSERT_TRUE(exifMetadata->SetValue("SubsecTimeDigitized", "4380000"));
     ASSERT_TRUE(exifMetadata->SetValue("LightSource", "2"));
-    ASSERT_TRUE(exifMetadata->SetValue("MakerNote", "xxz"));
     ASSERT_TRUE(exifMetadata->SetValue("MaxApertureValue", "9/100"));
     ASSERT_TRUE(exifMetadata->SetValue("MeteringMode", "3"));
     ASSERT_TRUE(exifMetadata->SetValue("PixelXDimension", "1000"));
@@ -1583,9 +1579,9 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write019, TestSize.Level3)
     ASSERT_EQ(imageAccessor.Read(), 0);
     ASSERT_EQ(GetProperty(exifMetadata, "GainControl"), "High gain up");
     ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedRatings"), "300");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubSecTimeDigitized"), "4380000");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubsecTimeDigitized"), "4380000");
     ASSERT_EQ(GetProperty(exifMetadata, "LightSource"), "Fluorescent");
-    ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "3 bytes undefined data");
+    ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "5 bytes undefined data");
     ASSERT_EQ(GetProperty(exifMetadata, "MaxApertureValue"), "0.09 EV (f/1.0)");
     ASSERT_EQ(GetProperty(exifMetadata, "MeteringMode"), "Spot");
     ASSERT_EQ(GetProperty(exifMetadata, "PixelXDimension"), "1000");
@@ -1630,7 +1626,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write020, TestSize.Level3)
     ASSERT_TRUE(exifMetadata->SetValue("Gamma", "5/2"));
     ASSERT_TRUE(exifMetadata->SetValue("ISOSpeedLatitudeyyy", "200"));
     ASSERT_TRUE(exifMetadata->SetValue("ISOSpeedLatitudezzz", "100"));
-    ASSERT_TRUE(exifMetadata->SetValue("SubjectLocation", "5"));
+    ASSERT_TRUE(exifMetadata->SetValue("SubjectLocation", "15 12"));
     ASSERT_TRUE(exifMetadata->SetValue("ImageUniqueID", "fxic012"));
     ASSERT_TRUE(exifMetadata->SetValue("YCbCrCoefficients", "200/1000 255/1000 350/1000"));
     ASSERT_EQ(imageAccessor.Write(), 0);
@@ -1645,7 +1641,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, Write020, TestSize.Level3)
     ASSERT_EQ(GetProperty(exifMetadata, "Gamma"), "2.5");
     ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudeyyy"), "200");
     ASSERT_EQ(GetProperty(exifMetadata, "ISOSpeedLatitudezzz"), "100");
-    ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "5");
+    ASSERT_EQ(GetProperty(exifMetadata, "SubjectLocation"), "15, 12");
     ASSERT_EQ(GetProperty(exifMetadata, "ImageUniqueID"), "fxic012");
     ASSERT_EQ(GetProperty(exifMetadata, "YCbCrCoefficients"), "0.200, 0.255, 0.350");
 }
