@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <map>
 
-#include "buffer_metadata_stream.h"
 #include "SkBitmap.h"
 #include "SkImageEncoder.h"
 #ifdef IMAGE_COLORSPACE_FLAG
@@ -42,7 +41,6 @@
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #endif
-#include "tiff_parser.h"
 #include "hdr_helper.h"
 #include "vpe_utils.h"
 #include "image_mime_type.h"
@@ -135,16 +133,16 @@ bool IsAstc(const std::string &format)
     return format.find("image/astc") == 0;
 }
 
-static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, DataBuf &exifBlob, SkWStream& outStream,
+static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, Media::PixelMap *pixelmap, SkWStream& outStream,
     ImageInfo &imageInfo, PlEncodeOptions &opts)
 {
     auto metadataAccessor =
         MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten(), BufferMetadataStream::Dynamic);
     if (metadataAccessor != nullptr) {
-        if (metadataAccessor->WriteBlob(exifBlob) == SUCCESS) {
-            std::shared_ptr<MetadataStream> hasExifStream = metadataAccessor->GetOutputStream();
-            if (hasExifStream != nullptr &&
-                outStream.write(hasExifStream->GetAddr(), hasExifStream->GetSize())) {
+        auto metadataPtr = pixelmap->GetExifMetadata();
+        metadataAccessor->Set(metadataPtr);
+        if (metadataAccessor->Write() == SUCCESS) {
+            if (metadataAccessor->WriteToOutput(outStream)) {
                 return SUCCESS;
             }
         }
@@ -184,7 +182,7 @@ uint32_t ExtEncoder::FinalizeEncode()
     pixelmap_->GetImageInfo(imageInfo);
     imageDataStatistics.AddTitle("width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
     encodeFormat_ = iter->first;
-    ExtWStream wStream(output_);
+    ExtWStream wStream(output_);  
 
     switch (opts_.desiredDynamicRange) {
         case PlEncodeDynamicRange::AUTO:
@@ -276,18 +274,13 @@ uint32_t ExtEncoder::EncodeImageByBitmap(SkBitmap& bitmap, bool needExif, SkWStr
         return SUCCESS;
     }
 
-    unsigned char *dataPtr;
-    uint32_t datSize = 0;
-    auto exifData = pixelmap_->GetExifMetadata()->GetExifData();
-    TiffParser::Encode(&dataPtr, datSize, exifData);
-    DataBuf exifBlob(dataPtr, datSize);
     MetadataWStream tStream;
     if (!SkEncodeImage(&tStream, bitmap, encodeFormat_, opts_.quality)) {
         IMAGE_LOGE("Failed to encode image");
         ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Failed to encode image");
         return ERR_IMAGE_ENCODE_FAILED;
     }
-    return CreateAndWriteBlob(tStream, exifBlob, outStream, imageInfo, opts_);
+    return CreateAndWriteBlob(tStream, pixelmap_, outStream, imageInfo, opts_);
 }
 
 uint32_t ExtEncoder::EncodeImageByPixelMap(Media::PixelMap* pixelMap, bool needExif, SkWStream& outputStream)
