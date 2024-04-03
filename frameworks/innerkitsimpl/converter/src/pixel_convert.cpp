@@ -1106,7 +1106,6 @@ static bool FFMpegConvert(const void *srcPixels, const FFMPEG_CONVERT_INFO& srcI
     bool ret = true;
     AVFrame *inputFrame = nullptr;
     AVFrame *outputFrame = nullptr;
-    
 
     if (srcInfo.format == AVPixelFormat::AV_PIX_FMT_NONE ||
         dstInfo.format == AVPixelFormat::AV_PIX_FMT_NONE) {
