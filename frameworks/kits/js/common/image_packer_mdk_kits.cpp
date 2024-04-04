@@ -17,6 +17,7 @@
 
 #include <map>
 #include "image_log.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -164,6 +165,7 @@ static int32_t DoNativePacking(struct ImagePackerArgs* args)
         IMAGE_LOGE("DoNativePacking get native failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    nativeImagePacker->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     int32_t res = DoStartPacking(nativeImagePacker, args);
     if (res != IMAGE_RESULT_SUCCESS) {
         IMAGE_LOGE("DoNativePacking StartPacking failed");

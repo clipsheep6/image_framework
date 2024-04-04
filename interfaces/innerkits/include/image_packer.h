@@ -38,6 +38,7 @@ class AbsImageEncoder;
 
 namespace OHOS {
 namespace Media {
+enum class InvocationMode : uint32_t;
 struct PackOption {
     /**
      * Specify the file format of the output image.
@@ -71,11 +72,12 @@ public:
     uint32_t AddImage(ImageSource &source, uint32_t index);
     uint32_t FinalizePacking();
     uint32_t FinalizePacking(int64_t &packedSize);
-
+    void SetAPICalledType(InvocationMode type);
 protected:
     uint32_t StartPackingAdapter(PackerStream &outputStream, const PackOption &option);
 
 private:
+    void SetNumsAPICalled(std::string funcName);
     DISALLOW_COPY_AND_MOVE(ImagePacker);
     static void CopyOptionsToPlugin(const PackOption &opts, ImagePlugin::PlEncodeOptions &plOpts);
     uint32_t StartPackingImpl(const PackOption &option);
@@ -89,6 +91,8 @@ private:
     std::unique_ptr<ImagePlugin::AbsImageEncoder> encoder_;
     std::unique_ptr<ImagePlugin::AbsImageEncoder> exEncoder_;
     std::unique_ptr<PixelMap> pixelMap_;  // inner imagesource create, our manage the lifecycle
+    std::map<std::string, int32_t> numbersAPICalledMap_;
+    InvocationMode invocationMode_;
 };
 } // namespace Media
 } // namespace OHOS

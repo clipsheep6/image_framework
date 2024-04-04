@@ -24,6 +24,7 @@
 #include "image_utils.h"
 #include "media_errors.h"
 #include "securec.h"
+#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -438,7 +439,7 @@ bool SvgDecoder::BuildStream()
         }
         svgStream_ = std::make_unique<SkMemoryStream>(data.get(), length, true);
     }
-
+    ReportIfMemoryOverflow("SvgDecoder BuildStream", length);
     IMAGE_LOGD("[BuildStream] OUT");
     return true;
 }

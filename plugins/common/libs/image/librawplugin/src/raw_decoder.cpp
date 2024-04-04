@@ -19,6 +19,7 @@
 #include "image_trace.h"
 #include "jpeg_decoder.h"
 #include "raw_stream.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -282,6 +283,7 @@ uint32_t RawDecoder::DoDecodeHeaderByPiex()
         IMAGE_LOGE("DoDecodeHeaderByPiex getdata fail");
         return Media::ERR_IMAGE_MALLOC_ABNORMAL;
     }
+    ReportIfMemoryOverflow("RawDecoder DoDecodeHeaderByPiex", size);
 
     jpegStream_ = BufferSourceStream::CreateSourceStream(data.get(), size);
     if (!jpegStream_) {

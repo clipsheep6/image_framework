@@ -23,6 +23,7 @@
 #include "image_trace.h"
 #include "media_errors.h"
 #include "pixel_map_napi.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -345,6 +346,7 @@ napi_value ImagePackerNapi::CreateImagePacker(napi_env env, napi_callback_info i
         sImgPck_ = imagePacker;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok) {
+            sImgPck_->SetAPICalledType(InvocationMode::TS_CALL);
             return result;
         } else {
             IMAGE_LOGE("New instance could not be obtained");

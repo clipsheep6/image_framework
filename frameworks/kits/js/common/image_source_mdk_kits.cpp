@@ -18,6 +18,7 @@
 #include "image_log.h"
 #include "media_errors.h"
 #include "securec.h"
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -148,6 +149,7 @@ static int32_t ImageSourceNativeCreate(struct OhosImageSource* source,
     }
     if (nativeImageSource != nullptr) {
         result = std::move(nativeImageSource);
+        result->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
         IMAGE_LOGD("ImageSourceNativeCreate success");
         return IMAGE_RESULT_SUCCESS;
     }
@@ -228,6 +230,7 @@ static int32_t ImageSourceNapiCreateFromUri(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromUri native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    imageSource->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromUri napi create failed");
         args->outVal = nullptr;
@@ -261,6 +264,7 @@ static int32_t ImageSourceNapiCreateFromFd(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromFd native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    imageSource->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromFd napi create failed");
         args->outVal = nullptr;
@@ -297,6 +301,7 @@ static int32_t ImageSourceNapiCreateFromData(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromData native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    imageSource->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromData napi create failed");
         args->outVal = nullptr;
@@ -341,6 +346,7 @@ static int32_t ImageSourceNapiCreateFromRawFile(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateFromRawFile native create failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    imageSource->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     if (ImageSourceCreateNapi(args->inEnv, args->outVal, imageSource, nullptr, &resource) != SUCCESS) {
         IMAGE_LOGE("ImageSourceNapiCreateFromRawFile napi create failed");
         args->outVal = nullptr;
@@ -368,6 +374,7 @@ static int32_t ImageSourceNapiCreateIncremental(struct ImageSourceArgs* args)
         IMAGE_LOGE("ImageSourceNapiCreateIncremental native imagesource failed");
         return IMAGE_RESULT_BAD_PARAMETER;
     }
+    imageSource->SetAPICalledType(InvocationMode::Native_Development_Kit_CALL);
     if (args->dataArray.data != nullptr && args->dataArray.dataSize > SIZE_ZERO) {
         IMAGE_LOGD("ImageSourceNapiCreateIncremental update dataArray");
         imageSource->UpdateData(args->dataArray.data, args->dataArray.dataSize, false);

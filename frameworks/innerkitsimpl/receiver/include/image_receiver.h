@@ -29,6 +29,7 @@
 #include "display_type.h"
 #include "image_receiver_context.h"
 #include "native_image.h"
+#include "image_dfx.h"
 
 namespace OHOS {
 namespace Media {
@@ -71,16 +72,21 @@ public:
     void RegisterBufferAvaliableListener(
         std::shared_ptr<SurfaceBufferAvaliableListener> surfaceBufferAvaliableListener)
     {
+        SetNumsAPICalled("RegisterBufferAvaliableListener");
         surfaceBufferAvaliableListener_ = surfaceBufferAvaliableListener;
     }
     static sptr<Surface> getSurfaceById(std::string id);
     void ReleaseReceiver();
+    void SetAPICalledType(InvocationMode type);
 
     std::shared_ptr<IBufferProcessor> GetBufferProcessor();
     std::shared_ptr<NativeImage> NextNativeImage();
     std::shared_ptr<NativeImage> LastNativeImage();
 private:
+    void SetNumsAPICalled(std::string funcName);
     std::shared_ptr<IBufferProcessor> bufferProcessor_;
+    std::map<std::string, int32_t> numbersAPICalledMap_;
+    InvocationMode invocationMode_ = InvocationMode::INTERNAL_CALL;
 };
 class ImageReceiverSurfaceListener : public IBufferConsumerListener {
 public:

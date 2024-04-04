@@ -28,6 +28,7 @@
 #include "media_errors.h"
 #include "securec.h"
 #include "string_ex.h"
+#include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -648,6 +649,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
             dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
         }
     }
+    ReportIfMemoryOverflow("ExtDecoder Decode", byteCount);
     dstOptions_.fFrameIndex = index;
     DebugInfo(info_, dstInfo_, dstOptions_);
     uint64_t rowStride = dstInfo_.minRowBytes64();
@@ -828,6 +830,7 @@ uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
         IMAGE_LOGE("Alloc OutputBuffer failed, ret=%{public}d", ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
+    ReportIfMemoryOverflow("ExtDecoder AllocOutputBuffer", byteCount);
     BufferHandle *handle = (static_cast<SurfaceBuffer*>(context.pixelsBuffer.context))->GetBufferHandle();
     if (outputColorFmt_ == PIXEL_FMT_RGBA_8888) {
         outputBufferSize_.width = static_cast<uint32_t>(handle->stride) / NUM_4;
@@ -881,11 +884,15 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
     uint32_t ret = AllocOutputBuffer(context);
     if (ret != SUCCESS) {
         IMAGE_LOGE("Decode failed, Alloc OutputBuffer failed, ret=%{public}d", ret);
+        ReportHardWareDecodeError(orgImgSize_.width, orgImgSize_.height, static_cast<int32_t>(context.info.pixelFormat),
+            sampleSize_, "Alloc OutputBuffer failed");
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     ret = hwDecoder.Decode(codec_.get(), stream_, orgImgSize_, sampleSize_, outputBuffer_);
     if (ret != SUCCESS) {
         IMAGE_LOGE("failed to do jpeg hardware decode, err=%{public}d", ret);
+        ReportHardWareDecodeError(orgImgSize_.width, orgImgSize_.height, static_cast<int32_t>(context.info.pixelFormat),
+            sampleSize_, "failed to do jpeg hardware decode");
         ReleaseOutputBuffer(context, tmpAllocatorType);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }

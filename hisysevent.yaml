@@ -18,3 +18,87 @@ DECODED_IMAGE_TYPE_STATISTICS:
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   IMAGE_TYPE: {type: STRING, desc: Type of the decoded image for example png jpeg bmp gif ico and wbmp}
+
+MEMORY_OVERFLOW:
+  __BASE: {type: FAULT, level: CRITICAL, desc: The memory exceeds the threshold, preserve: true}
+  PNAMEID: {type: STRING, desc: package name}
+  OCCUPY_MEMORY: {type: UINT64, desc: The current memory}
+  EXCEEDED_MEMORY: {type: UINT64, desc: The out of memory}
+  MSG: {type: STRING, desc: message}
+
+DECODE_TIMEOUT:
+  __BASE: {type: FAULT, level: CRITICAL, desc: The decoding time exceeds the threshold, preserve: true}
+  PNAMEID: {type: STRING, desc: package name}
+  ENCODE_FORMAT: {type: STRING, desc: The encoding format}
+  DST_WIDTH: {type: UINT32, desc: The width of the desired image}
+  DST_HEIGHT: {type: UINT32, desc: The height of the desired image}
+  PIXEL_FORMAT: {type: INT32, desc: The pixel format of the desired image}
+  COLOR_SPACE: {type: INT32, desc: The color space of the desired image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+  TAKE_TIME: {type: UINT64, desc: The current decoding time}
+  EXCEEDED_TIME: {type: UINT64, desc: The out of time}
+  MSG: {type: STRING, desc: message}
+
+DECODE_INFORMATION:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Cause of the software decode failure, preserve: true}
+  PNAMEID: {type: STRING, desc: package name}
+  ENCODE_FORMAT: {type: STRING, desc: The encoding format}
+  DST_WIDTH: {type: UINT32, desc: The width of the desired image}
+  DST_HEIGHT: {type: UINT32, desc: The height of the desired image}
+  PIXEL_FORMAT: {type: INT32, desc: The pixel format of the desired image}
+  COLOR_SPACE: {type: INT32, desc: The color space of the desired image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+  TAKE_TIME: {type: UINT64, desc: The current decoding time}
+
+ENCODE_TIMEOUT:
+  __BASE: {type: FAULT, level: CRITICAL, desc: The encoding time exceeds the threshold, preserve: true}
+  PNAMEID: {type: STRING, desc: package name}
+  ENCODE_FORMAT: {type: STRING, desc: The encoding format}
+  QUALITY: {type: UINT32, desc:  The quality of image}
+  DST_WIDTH: {type: UINT32, desc: The width of image}
+  DST_HEIGHT: {type: STRING, desc: The height of image}
+  PIXEL_FORMAT: {type: INT32, desc: The pixel format of the image}
+  COLOR_SPACE: {type: INT32, desc: The color space of the desired image}
+  TAKE_TIME: {type: UINT64, desc: The current encoding time}
+  EXCEEDED_TIME: {type: UINT64, desc: The out of time}
+  MSG: {type: STRING, desc: message}
+
+ENCODE_INFORMATION:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Encode image information, preserve: true}
+  PNAMEID: {type: STRING, desc: package name}
+  ENCODE_FORMAT: {type: STRING, desc: The encoding format}
+  QUALITY: {type: UINT32, desc:  The quality of image}
+  DST_WIDTH: {type: UINT32, desc: The width of image}
+  DST_HEIGHT: {type: STRING, desc: The height of image}
+  PIXEL_FORMAT: {type: INT32, desc: The pixel format of the image}
+  COLOR_SPACE: {type: INT32, desc: The color space of the desired image}
+  TAKE_TIME: {type: UINT64, desc: The current encoding time}
+
+DECODE_FAULT:
+  __BASE: {type: FAULT, level: CRITICAL, desc: Cause of the software decode failure, preserve: true}
+  PNAMEID: {type: STRING, desc: package name}
+  ENCODE_FORMAT: {type: STRING, desc: The encoding format}
+  DST_WIDTH: {type: UINT32, desc: The width of the desired image}
+  DST_HEIGHT: {type: UINT32, desc: The height of the desired image}
+  PIXEL_FORMAT: {type: INT32, desc: The pixel format of the desired image}
+  COLOR_SPACE: {type: INT32, desc: The color space of the desired image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+  ERROR_CODE: {type: UINT32, desc: The error code}
+  MSG: {type: STRING, desc: message}
+
+HARDWARE_DECODE_FAULT:
+  __BASE: {type: FAULT, level: CRITICAL, desc: Cause of the hardware decode failure, preserve: true}
+  PNAMEID: {type: STRING, desc: package name}
+  SRC_WIDTH: {type: INT32, desc: The width of the source image}
+  SRC_HEIGHT: {type: INT32, desc: The height of the source image}
+  SAMPLE_SIZE: {type: UINT32, desc: The sample size}
+  PIXEL_FORMAT: {type: INT32, desc: The pixel format of the image}
+  MSG: {type: STRING, desc: message}
+
+INTERFACE_INVOKE:
+  __BASE: {type: STATISTIC, level: MINOR, desc: ImageReceiver usage, preserve: true}
+  PNAMEID: {type: STRING, desc: application name}
+  API_NAME: {type: STRING, desc: interface name}
+  INVOCATION_MODE: {type: UINT32, desc: The type of call}
+  OBJECT_ADDRESS: {type: UINT64, desc: The object address}
+  CALLED_NUM: {type: UINT32, desc: The number of times interface is called}

@@ -27,6 +27,7 @@
 #if defined(A_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_encoder.h"
 #endif
+#include "image_dfx.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -41,6 +42,7 @@ using namespace MultimediaPlugin;
 static constexpr uint8_t QUALITY_MAX = 100;
 const static std::string EXTENDED_ENCODER = "image/extended";
 static constexpr size_t SIZE_ZERO = 0;
+const static std::string MODULE_NAME = "ImagePacker";
 
 PluginServer &ImagePacker::pluginServer_ = ImageUtils::GetPluginServer();
 
@@ -180,6 +182,7 @@ uint32_t ImagePacker::StartPackingAdapter(PackerStream &outputStream, const Pack
 
 uint32_t ImagePacker::AddImage(PixelMap &pixelMap)
 {
+    SetNumsAPICalled("AddImagebypixelMap");
     ImageUtils::DumpPixelMapBeforeEncode(pixelMap);
     ImageTrace imageTrace("ImagePacker::AddImage by pixelMap");
     return DoEncodingFunc([this, &pixelMap](ImagePlugin::AbsImageEncoder* encoder) {
@@ -189,6 +192,7 @@ uint32_t ImagePacker::AddImage(PixelMap &pixelMap)
 
 uint32_t ImagePacker::AddImage(ImageSource &source)
 {
+    SetNumsAPICalled("AddImagebysource");
     ImageTrace imageTrace("ImagePacker::AddImage by imageSource");
     DecodeOptions opts;
     uint32_t ret = SUCCESS;
@@ -210,6 +214,7 @@ uint32_t ImagePacker::AddImage(ImageSource &source)
 
 uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 {
+    SetNumsAPICalled("AddImagebyindex");
     ImageTrace imageTrace("ImagePacker::AddImage by imageSource and index:%{public}u", index);
     DecodeOptions opts;
     uint32_t ret = SUCCESS;
@@ -231,6 +236,7 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 
 uint32_t ImagePacker::FinalizePacking()
 {
+    SetNumsAPICalled("FinalizePacking");
     ImageTrace imageTrace("ImagePacker::FinalizePacking");
     return DoEncodingFunc([](ImagePlugin::AbsImageEncoder* encoder) {
         auto res = encoder->FinalizeEncode();
@@ -327,11 +333,33 @@ uint32_t ImagePacker::DoEncodingFunc(std::function<uint32_t(ImagePlugin::AbsImag
     return (rets.size() == SIZE_ZERO)?ERR_IMAGE_DECODE_ABNORMAL:rets.front();
 }
 
+void ImagePacker::SetNumsAPICalled(std::string funcName)
+{
+    auto iter = numbersAPICalledMap_.find(funcName);
+    if (iter == numbersAPICalledMap_.end()) {
+        numbersAPICalledMap_.insert(std::pair<std::string, uint32_t>(funcName, 1));
+        return;
+    }
+    iter->second++;
+}
+
+void ImagePacker::SetAPICalledType(InvocationMode type)
+{
+    invocationMode_ = type;
+}
+
 // class reference need explicit constructor and destructor, otherwise unique_ptr<T> use unnormal
 ImagePacker::ImagePacker()
-{}
+{
+    invocationMode_ = InvocationMode::INTERNAL_CALL;
+}
 
 ImagePacker::~ImagePacker()
-{}
+{
+    for (auto iter : numbersAPICalledMap_) {
+        CountInterfaceInvokeNums(MODULE_NAME, iter.first, iter.second, static_cast<uint32_t>(invocationMode_),
+            reinterpret_cast<uint64_t>(this));
+    }
+}
 } // namespace Media
 } // namespace OHOS

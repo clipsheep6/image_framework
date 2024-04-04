@@ -30,11 +30,16 @@
 
 namespace OHOS {
 namespace Media {
+const static std::string MODULE_NAME = "ImageReceiver";
 ImageReceiver::~ImageReceiver()
 {
     std::lock_guard<std::mutex> guard(imageReceiverMutex_);
     if (receiverConsumerSurface_ != nullptr) {
         receiverConsumerSurface_->UnregisterConsumerListener();
+    }
+    for (auto iter : numbersAPICalledMap_) {
+        CountInterfaceInvokeNums(MODULE_NAME, iter.first, iter.second, static_cast<uint32_t>(invocationMode_),
+            reinterpret_cast<uint64_t>(this));
     }
     receiverConsumerSurface_ = nullptr;
     receiverProducerSurface_ = nullptr;
@@ -298,6 +303,22 @@ sptr<Surface> ImageReceiver::GetReceiverSurface()
     }
     return nullptr;
 }
+
+void ImageReceiver::SetNumsAPICalled(std::string funcName)
+{
+    auto iter = numbersAPICalledMap_.find(funcName);
+    if (iter == numbersAPICalledMap_.end()) {
+        numbersAPICalledMap_.insert(pair<std::string, uint32_t>(funcName, 1));
+        return;
+    }
+    iter->second++;
+}
+
+void ImageReceiver::SetAPICalledType(InvocationMode type)
+{
+    invocationMode_ = type;
+}
+
 
 void ImageReceiver::ReleaseReceiver()
 {
