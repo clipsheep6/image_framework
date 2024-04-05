@@ -906,15 +906,11 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
     if (GET_UINT32_BY_NAME(root, "resolutionQuality", resolutionQuality)) {
         opts->resolutionQuality = static_cast<ResolutionQuality>(resolutionQuality);
         IMAGE_LOGD("resolutionQuality %{public}x", opts->resolutionQuality);
-    } else {
-        IMAGE_LOGD("no resolutionQuality");
     }
     uint32_t decodingDynamicRange = NUM_0;
     if (GET_UINT32_BY_NAME(root, "dynamicRange", decodingDynamicRange)) {
         opts->decodingDynamicRange = static_cast<DynamicRange>(decodingDynamicRange);
         IMAGE_LOGD("dynamicRange %{public}x", opts->decodingDynamicRange);
-    } else {
-        IMAGE_LOGD("no dynamicRange");
     }
     napi_value nDesiredColorSpace = nullptr;
     if (napi_get_named_property(env, root, "desiredColorSpace", &nDesiredColorSpace) == napi_ok) {
