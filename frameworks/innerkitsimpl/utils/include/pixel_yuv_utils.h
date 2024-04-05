@@ -22,7 +22,7 @@
 #include "image_type.h"
 #include "iosfwd"
 #ifdef LIBYUV_ENABLE
-#include "image_converter.h"
+#include "image_convert_tools.h"
 #endif
 
 #ifdef __cplusplus

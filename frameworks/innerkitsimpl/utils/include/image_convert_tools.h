@@ -13,13 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
-#define FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_CONVERTER_TOOLS_H
+#define FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_CONVERTER_TOOLS_H
 
 #include <atomic>
 
 #ifdef DCAMERA_MMAP_RESERVE
-#include "image_convert_libyuv.h"
+#include "image_converter.h"
+#include "single_instance.h"
 #endif
 
 namespace OHOS {
@@ -42,4 +43,4 @@ private:
 #endif
 } // namespace Media
 } // namespace OHOS
-#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_CONVERTER_TOOLS_H
+#endif // FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_CONVERTER_TOOLS_H

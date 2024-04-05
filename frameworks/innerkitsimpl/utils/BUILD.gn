@@ -30,6 +30,7 @@ if (use_clang_ios) {
     sources = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "src/image_convert_tools.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
       "src/pixel_yuv_utils.cpp",
@@ -46,6 +47,13 @@ if (use_clang_ios) {
     #relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
     part_name = "image_framework"
+  }
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.open_source_libyuv)) {
+    cflags = [
+      "-DLIBYUV",
+      "-DDCAMERA_MMAP_RESERVE",
+    ]
   }
 } else {
   ohos_shared_library("image_utils") {
@@ -72,6 +80,7 @@ if (use_clang_ios) {
     sources = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "src/image_convert_tools.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
       "src/pixel_yuv_utils.cpp",
@@ -137,6 +146,13 @@ if (use_clang_ios) {
     innerapi_tags = [ "platformsdk_indirect" ]
     part_name = "image_framework"
   }
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.open_source_libyuv)) {
+    cflags = [
+      "-DLIBYUV",
+      "-DDCAMERA_MMAP_RESERVE",
+    ]
+  }
 }
 
 ohos_static_library("image_utils_static") {
@@ -151,12 +167,19 @@ ohos_static_library("image_utils_static") {
   ]
 
   sources = [
+    "src/image_convert_tools.cpp",
     "src/image_system_properties.cpp",
     "src/image_type_converter.cpp",
     "src/image_utils.cpp",
     "src/pixel_yuv_utils.cpp",
   ]
-
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.open_source_libyuv)) {
+    cflags = [
+      "-DLIBYUV",
+      "-DDCAMERA_MMAP_RESERVE",
+    ]
+  }
   if (use_mingw_win) {
     defines = image_decode_windows_defines
 
@@ -213,4 +236,11 @@ ohos_static_library("image_utils_static") {
   }
   subsystem_name = "multimedia"
   part_name = "image_framework"
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.open_source_libyuv)) {
+    cflags = [
+      "-DLIBYUV",
+      "-DDCAMERA_MMAP_RESERVE",
+    ]
+  }
 }

@@ -46,7 +46,8 @@
           "libjpeg-turbo",
           "libexif",
           "zlib",
-          "ffmpeg"
+          "ffmpeg",
+          "av_codec"
         ],
         "third_party": [
           "flutter",

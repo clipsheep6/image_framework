@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
-#define OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_CONVERTER_H
+#define FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_CONVERTER_H
 
 #include <cstdint>
 
@@ -93,4 +93,4 @@ struct ImageConverter GetImageConverter(void);
 #endif
 } // namespace OpenSourceLibyuv
 } // namespace OHOS
-#endif // OHOS_OPEN_SOURCE_LIBYUV_IMAGE_CONVERTER_H
+#endif // FRAMEWORKS_INNERKITSIMPL_UTILS_INCLUDE_IMAGE_CONVERTER_H
