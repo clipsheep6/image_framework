@@ -418,8 +418,8 @@ static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, co
 static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
     int32_t wantDensity, Size &dstSize, int32_t resolutionQuality)
 {
-    if (IsSizeVailed(wantSize) && ((resolutionQuality == resolutionQuality::HIGH) ||
-                                    (resolutionQuality == resolutionQuality::SUPER))) {
+    if (IsSizeVailed(wantSize) && ((resolutionQuality == ResolutionQuality::HIGH) ||
+                                    (resolutionQuality == ResolutionQuality::SUPER))) {
         CopySize(wantSize, dstSize);
     } else {
         CopySize(srcSize, dstSize);
@@ -2536,6 +2536,7 @@ void SetMetadata(sptr<SurfaceBuffer> surface, uint32_t cmMata)
 }
 #endif
 
+#ifdef AI_ENBALE
 #ifdef AI_DLOPEN
 static bool g_isAiSoInit = false;
 static void *g_aiSoHandle = nullptr;
@@ -2589,7 +2590,6 @@ static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output
 #else
 uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_ColorSpace_Info InputColorSpaceInfo)
 {
-#ifdef AI_ENABLE
     SetMetadata(input, InputColorSpaceInfo);
     SetMetadata(input, CM_MATEDATA_NONE);
     Parameter param;
@@ -2597,45 +2597,44 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_Co
     auto csc = ColorSpaceConverter::Create();
     csc->SetParameter(param);
     return  csc->Process(input, output);
-#else
-    return SUCCESS;
-#endif
 }
 #endif 
 
 uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, ResolutionQuality resolutionQuality)
 {
-#ifdef AI_ENABLE
     DetailEnhancerParameters parameter;
     parameter.level = resolutionQuality;
 
     DetailEnhancerImage *dei = DetailEnhancerImageCreate();
     dei->SetParameter(parameter);
     return qei->Process(input, output);
-#else
-    return SUCCESS;
-#endif
 }
+#endif
 
 uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 {
+#ifdef AI_ENBALE
     bool isAisr = false;
     bool isHdr = false;
     if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
         IMAGE_LOGD("[ImageSource] AIProcess imageSize ne opts_.desiredSize");
         isAisr = true;
     }
+
     if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR && context.dynamicRange != IMAGE_DYNAMIC_RANGE_HDR) {
         IMAGE_LOGD("[ImageSource] AIProcess need hdr");
         isHdr = true;
     }
-
+    if (!isAisr && !isHdr) {
+        IMAGE_LOGD("[ImageSource] no nedd Ai Process");
+        return SUCCESS;
+    }
     uint32_t byteCount = context.pixelsBuffer.bufferSize;
     Size dstInfo;
     dstInfo.width = context.outInfo.size.width;
     dstInfo.height = context.outInfo.size.height;
 
-    sptr<SurfaceBuffer> input = nullprt;
+    sptr<SurfaceBuffer> input = nullptr;
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
         IMAGE_LOGD("[ImageSource] AIProcess DMA_ALLOC");
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
@@ -2648,7 +2647,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
   
     sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
     if (isAisr && isHdr) {
-        auto res = AiSrProcess(input, output, context.resolutionQuality);
+        auto res = AiSrProcess(input, output, opts_.resolutionQuality);
         if (res != SUCCESS) {
             IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
             return res;
@@ -2659,13 +2658,13 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
     } else if (isHdr) {
         IMAGE_LOGD("[ImageSource] just AiHdr Process start");
         return AiHdrProcess(input, output);
-    } else if (isAisr){
-        IMAGE_LOGD("[ImageSource] just AiSr Process start");
-        return AiSrProcess(input, output, context.resolutionQuality);
     } else {
-        IMAGE_LOGD("[ImageSource] no Ai Process");
-        return SUCCESS;
-    }
+        IMAGE_LOGD("[ImageSource] just AiSr Process start");
+        return AiSrProcess(input, output, opts_.resolutionQuality);
+    } 
+#else
+    return SUCCESS;
+#endif
 }
 
 uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,

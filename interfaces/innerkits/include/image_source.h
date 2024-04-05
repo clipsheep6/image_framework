@@ -272,7 +272,7 @@ private:
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
-    uint32_t CreatExifMetadataByImageSource();
+
     uint32_t AIProcess(Size imageSize, ImagePlugin::DecodeContext &context);
     uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         ImagePlugin::DecodeContext &context, uint32_t &errorCode);
