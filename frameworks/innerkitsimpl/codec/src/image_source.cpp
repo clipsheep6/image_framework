@@ -2640,7 +2640,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         #endif      
     }
     if (!isAisr && !isHdr) {
-        IMAGE_LOGD("[ImageSource] no nedd Ai Process");
+        IMAGE_LOGD("[ImageSource] no nedd aisr and hdr Process");
         return SUCCESS;
     }
 #ifdef AI_ENBALE
