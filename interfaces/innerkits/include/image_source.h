@@ -277,6 +277,7 @@ private:
     uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         ImagePlugin::DecodeContext &context, uint32_t &errorCode);
 
+    uint32_t CreatExifMetadataByImageSource(bool addFlag = false);
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
