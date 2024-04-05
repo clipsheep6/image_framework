@@ -2531,7 +2531,7 @@ sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context
 }
 
 #ifdef AI_ENABLE
-void SetMetadata(sptr<SurfaceBuffer> surface, CM_ColorSpace_Info colorSpaceInfo)
+void SetMetadata(sptr<SurfaceBuffer> &surface, CM_ColorSpace_Info colorSpaceInfo)
 {
     std::vector<uint8_t> values;
     memcpy_s(values, sizeof(CM_ColorSpace_Info), static_cast<uint8_t*>&colorSpaceInfo, sizeof(CM_ColorSpace_Info));
@@ -2539,7 +2539,7 @@ void SetMetadata(sptr<SurfaceBuffer> surface, CM_ColorSpace_Info colorSpaceInfo)
     surface->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
 }
 
-void SetMetadata(sptr<SurfaceBuffer> surface, uint32_t cmMata)
+void SetMetadata(sptr<SurfaceBuffer> &surface, uint32_t cmMata)
 {
     std::vector<uint8_t> values;
     memcpy_s(values, sizeof(uint32_t), static_cast<uint8_t*>&cmMata, sizeof(uint32_t));
@@ -2563,7 +2563,8 @@ static bool CheckClBinIsExist(const std::string &name)
     return (access(name.c_str(), F_OK) != -1); // -1 means that the file is  not exist
 }
 
-static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_ColorSpace_Info InputColorSpaceInfo)
+static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output,
+    CM_ColorSpace_Info InputColorSpaceInfo)
 {
     if (!CheckClBinIsExist(g_aiSo)) {
         IMAGE_LOGE("ai AiHdrProcess: not find %{public}s!", g_aiSo.c_str());
@@ -2604,13 +2605,13 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_Co
 {
     SetMetadata(input, InputColorSpaceInfo);
     SetMetadata(input, CM_MATEDATA_NONE);
-    Parameter param;
-    param.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
+    Parameter parameter;
+    parameter.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
     auto csc = ColorSpaceConverter::Create();
     csc->SetParameter(param);
     return  csc->Process(input, output);
 }
-#endif 
+#endif
 
 uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, ResolutionQuality resolutionQuality)
 {
@@ -2636,10 +2637,9 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         IMAGE_LOGD("[ImageSource] decodingDynamicRange is hdr");
         #ifdef AI_ENBALE
         if (context.dynamicRange != DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
-            IMAGE_LOGD("[ImageSource] AIProcess need hdr");
             isHdr = true;
         }
-        #endif      
+        #endif
     }
     if (!isAisr && !isHdr) {
         IMAGE_LOGD("[ImageSource] no nedd aisr and hdr Process");
@@ -2670,13 +2670,10 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
             return res;
         }
         sptr<SurfaceBuffer> outputHdr = AllocBufferForContext(byteCount, context, dstInfo);
-        IMAGE_LOGD("[ImageSource] AiHdrProcess start");
         return AiHdrProcess(output, outputHdr);
     } else if (isHdr) {
-        IMAGE_LOGD("[ImageSource] just AiHdr Process start");
         return AiHdrProcess(input, output);
     } else {
-        IMAGE_LOGD("[ImageSource] just AiSr Process start");
         return AiSrProcess(input, output, opts_.resolutionQuality);
     }
 #else
@@ -2685,7 +2682,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 }
 
 uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
-        DecodeContext &context, uint32_t &errorCode)
+    DecodeContext &context, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
     hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);

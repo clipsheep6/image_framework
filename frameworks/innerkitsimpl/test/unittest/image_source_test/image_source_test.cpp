@@ -386,7 +386,7 @@ HWTEST_F(ImageSourceTest, CreatePixelMap003, TestSize.Level3)
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
 
-    ImageInfo imageInfo; 
+    ImageInfo imageInfo;
     pixelMap->GetImageInfo(imageInfo);
 
     ASSERT_EQ(imageInfo.isHdr, true);
