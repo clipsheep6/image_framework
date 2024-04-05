@@ -417,6 +417,7 @@ static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, co
     }
 }
 
+#ifdef AI_ENABLE
 static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
     int32_t wantDensity, Size &dstSize, int32_t resolutionQuality)
 {
@@ -432,6 +433,7 @@ static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, co
         dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
     }
 }
+#endif
 
 static void NotifyDecodeEvent(set<DecodeListener *> &listeners, DecodeEvent event, std::unique_lock<std::mutex> *guard)
 {
@@ -2630,10 +2632,10 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         isAisr = true;
     }
 
-    if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR) {
+    if (opts_.decodingDynamicRange == DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
         IMAGE_LOGD("[ImageSource] decodingDynamicRange is hdr");
         #ifdef AI_ENBALE
-        if (context.dynamicRange != IMAGE_DYNAMIC_RANGE_HDR) {
+        if (context.dynamicRange != DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
             IMAGE_LOGD("[ImageSource] AIProcess need hdr");
             isHdr = true;
         }  
