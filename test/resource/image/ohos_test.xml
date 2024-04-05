@@ -43,11 +43,14 @@
     </target>
     <target name="imagesourcetest">
         <preparer>
+            <option name="push" value="images/test.heic -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test.png -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test.gif -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/moving_test.gif -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_hw.heic -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_hw.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/test_exif.heic -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_exif.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_packing.jpg -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_packing_exif.jpg -> /data/local/tmp/image" src="res"/>
@@ -69,6 +72,7 @@
             <option name="push" value="images/raw1.dng -> /data/local/tmp/image" src="res"/>
             <option name="push" value="images/test_raw_file.jpg -> /data/test" src="res"/>
             <option name="push" value="images/exif/test_jpeg_readmetadata004.jpg -> /data/local/tmp/image" src="res"/>
+            <option name="push" value="images/hasNoExif.jpg -> /data/local/tmp/image" src="res"/>
         </preparer>
     </target>
     <target name="imagecolorspacetest">
@@ -249,6 +253,11 @@
     <target name="imagetiffparsertest">
         <preparer>
             <option name="push" value="images/test_exif.jpg -> /data/local/tmp/image" src="res"/>
+        </preparer>
+    </target>
+    <target name="pixelastctest">
+        <preparer>
+            <option name="push" value="images/test.astc -> /data/local/tmp/image" src="res"/>
         </preparer>
     </target>
 </configuration>
