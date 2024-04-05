@@ -2518,6 +2518,24 @@ sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context
     return sb;
 }
 
+#ifdef AI_ENABLE
+void SetMetadata(sptr<SurfaceBuffer> surface, CM_ColorSpace_Info colorSpaceInfo)
+{
+    std::vector<uint8_t> values;
+    memcpy_s(values, sizeof(CM_ColorSpace_Info), static_cast<uint8_t*>&colorSpaceInfo, sizeof(CM_ColorSpace_Info));
+
+    surface->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
+}
+
+void SetMetadata(sptr<SurfaceBuffer> surface, uint32_t cmMata)
+{
+    std::vector<uint8_t> values;
+    memcpy_s(values, sizeof(uint32_t), static_cast<uint8_t*>&cmMata, sizeof(uint32_t));
+
+    surface->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
+}
+#endif
+
 #ifdef AI_DLOPEN
 static bool g_isAiSoInit = false;
 static void *g_aiSoHandle = nullptr;
@@ -2525,14 +2543,14 @@ using AiProcess = uint32_t (*)(sptr<SurfaceBuffer> &, sptr<SurfaceBuffer> &);
 using SetParameter = void (*)(QualityEnhancerImage);
 static AiProcess g_aiProcessFunc = nullptr;
 static SetParameter g_aiSetParameterFunc = nullptr;
-const std::string g_aiSo = "/system/lib64/libai.z.so";
+const std::string g_aiSo = "/system/lib64/libvideoprocessingengine.z.so";
 
 static bool CheckClBinIsExist(const std::string &name)
 {
     return (access(name.c_str(), F_OK) != -1); // -1 means that the file is  not exist
 }
 
-static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_ColorSpace_Info InputColorSpaceInfo)
 {
     if (!CheckClBinIsExist(g_aiSo)) {
         IMAGE_LOGE("ai AiHdrProcess: not find %{public}s!", g_aiSo.c_str());
@@ -2542,18 +2560,18 @@ static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output
     if (!g_isAiSoInit) {
         g_aiSoHandle = dlopen(g_aiSo.c_str(), 1);
         if (g_aiSoHandle == nullptr) {
-            IMAGE_LOGE("ai libai dlopen failed!");
+            IMAGE_LOGE("libvideoprocessingenginelibai dlopen failed!");
             return false;
         }
         g_aiProcessFunc = reinterpret_cast<AiProcess>(dlsym(g_aiSoHandle, "Process"));
         if (g_aiProcessFunc == nullptr) {
-            IMAGE_LOGE("ai libai dlsym Process failed!");
+            IMAGE_LOGE("libvideoprocessingengine dlsym Process failed!");
             dlclose(g_aiSoHandle);
             return false;
         }
         g_aiSetParameterFunc = reinterpret_cast<SetParameter>(dlsym(g_aiSoHandle, "SetParameter"));
         if (g_aiSetParameterFunc == nullptr) {
-            IMAGE_LOGE("ai libai dlsym SetParameter failed!");
+            IMAGE_LOGE("libai dlsym SetParameter failed!");
             dlclose(g_aiSoHandle);
             return false;
         }
@@ -2569,13 +2587,11 @@ static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output
     }
 }
 #else
-uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_ColorSpace_Info InputColorSpaceInfo)
 {
 #ifdef AI_ENABLE
-    std::vector<uint8_t> values;
-
-    input->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
-    input->SetMetadata(ATTRKEY_COLORSPACE_INFO, values);
+    SetMetadata(input, InputColorSpaceInfo);
+    SetMetadata(input, CM_MATEDATA_NONE);
     Parameter param;
     param.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
     auto csc = ColorSpaceConverter::Create();
@@ -2587,14 +2603,14 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
 }
 #endif 
 
-uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, ResolutionQuality resolutionQuality)
 {
 #ifdef AI_ENABLE
-    QualityEnhancerParameter param;
-    param.features.QENH_FEATURE_AISR = 1;
+    DetailEnhancerParameters parameter;
+    parameter.level = resolutionQuality;
 
-    QualityEnhancerImage *qei = nullptr;
-    qei->SetParameter(param);
+    DetailEnhancerImage *dei = DetailEnhancerImageCreate();
+    dei->SetParameter(parameter);
     return qei->Process(input, output);
 #else
     return SUCCESS;
@@ -2632,7 +2648,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
   
     sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
     if (isAisr && isHdr) {
-        auto res = AiSrProcess(input, output);
+        auto res = AiSrProcess(input, output, context.resolutionQuality);
         if (res != SUCCESS) {
             IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
             return res;
@@ -2645,9 +2661,11 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         return AiHdrProcess(input, output);
     } else if (isAisr){
         IMAGE_LOGD("[ImageSource] just AiSr Process start");
-        return AiSrProcess(input, output);
+        return AiSrProcess(input, output, context.resolutionQuality);
+    } else {
+        IMAGE_LOGD("[ImageSource] no Ai Process");
+        return SUCCESS;
     }
-    return SUCCESS;
 }
 
 uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
