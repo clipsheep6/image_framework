@@ -24,6 +24,10 @@
 
 namespace OHOS {
 namespace Media {
+enum class ImageType {
+    TYPE_UNKNOWN = 0,
+    TYPE_PIXEL_MAP = 1
+};
 class PixelMapNapi {
 public:
     PixelMapNapi();
@@ -67,6 +71,8 @@ private:
 
     /* stattic method */
     static napi_value CreatePixelMap(napi_env env, napi_callback_info info);
+    static napi_value CreatePremultipliedPixelMap(napi_env env, napi_callback_info info);
+    static napi_value CreateUnpremultipliedPixelMap(napi_env env, napi_callback_info info);
     /* stattic method */
     static napi_value CreatePixelMapSync(napi_env env, napi_callback_info info);
     static void CreatePixelMapComplete(napi_env env, napi_status status, void *data);
@@ -82,9 +88,11 @@ private:
     static napi_value ReadPixelsToBuffer(napi_env env, napi_callback_info info);
     static napi_value ReadPixelsToBufferSync(napi_env env, napi_callback_info info);
     static napi_value ReadPixels(napi_env env, napi_callback_info info);
+    static napi_value ReadPixelsSync(napi_env env, napi_callback_info info);
     static napi_value WritePixels(napi_env env, napi_callback_info info);
     static napi_value WritePixelsSync(napi_env env, napi_callback_info info);
     static napi_value WriteBufferToPixels(napi_env env, napi_callback_info info);
+    static napi_value WriteBufferToPixelsSync(napi_env env, napi_callback_info info);
     static napi_value GetImageInfo(napi_env env, napi_callback_info info);
     static napi_value GetImageInfoSync(napi_env env, napi_callback_info info);
     static napi_value GetBytesNumberPerRow(napi_env env, napi_callback_info info);
@@ -93,22 +101,29 @@ private:
     static napi_value IsSupportAlpha(napi_env env, napi_callback_info info);
     static napi_value SetAlphaAble(napi_env env, napi_callback_info info);
     static napi_value CreateAlphaPixelmap(napi_env env, napi_callback_info info);
+    static napi_value CreateAlphaPixelmapSync(napi_env env, napi_callback_info info);
     static napi_value GetDensity(napi_env env, napi_callback_info info);
     static napi_value SetDensity(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value SetAlpha(napi_env env, napi_callback_info info);
+    static napi_value SetAlphaSync(napi_env env, napi_callback_info info);
 
     static napi_value Scale(napi_env env, napi_callback_info info);
     static napi_value ScaleSync(napi_env env, napi_callback_info info);
     static napi_value Translate(napi_env env, napi_callback_info info);
+    static napi_value TranslateSync(napi_env env, napi_callback_info info);
     static napi_value Rotate(napi_env env, napi_callback_info info);
+    static napi_value RotateSync(napi_env env, napi_callback_info info);
     static napi_value Flip(napi_env env, napi_callback_info info);
+    static napi_value FlipSync(napi_env env, napi_callback_info info);
     static napi_value Crop(napi_env env, napi_callback_info info);
+    static napi_value CropSync(napi_env env, napi_callback_info info);
 
     static napi_value GetColorSpace(napi_env env, napi_callback_info info);
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value ApplyColorSpace(napi_env env, napi_callback_info info);
+    static ImageType ParserImageType(napi_env env, napi_value argv);
 
     void release();
     static thread_local napi_ref sConstructor_;

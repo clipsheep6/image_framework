@@ -31,6 +31,7 @@ config("image_external_config") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/include",
     "//foundation/multimedia/image_framework/frameworks/kits/js/common/include",
     "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
     "//foundation/multimedia/utils/include",
@@ -107,6 +108,7 @@ if (use_clang_android) {
     sources = image_native_android_sources
     include_dirs = image_native_android_include_dirs
     deps = image_native_android_deps
+    deps += [ "//third_party/ffmpeg:libohosffmpeg_static" ]
     subsystem_name = "multimedia"
     part_name = "image_framework"
   }
@@ -119,6 +121,7 @@ if (use_clang_android) {
     include_dirs = image_native_ios_include_dirs
     sources = image_native_ios_sources
     deps = image_native_ios_deps
+    deps += [ "//third_party/ffmpeg:libohosffmpeg_static" ]
     external_deps = image_native_ios_external_deps
     subsystem_name = "multimedia"
     part_name = "image_framework"
@@ -141,6 +144,17 @@ if (use_clang_android) {
     ]
 
     sources = [
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/abstract_exif_metadata_accessor.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/buffer_metadata_stream.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/data_buf.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_formatter.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/file_metadata_stream.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/jpeg_exif_metadata_accessor.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/metadata_accessor_factory.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_exif_metadata_accessor.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
@@ -186,6 +200,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils_static",
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
+        "//third_party/ffmpeg:libohosffmpeg_static",
       ]
       external_deps = [ "graphic_surface:surface" ]
     } else if (use_clang_mac) {
@@ -204,6 +219,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager_static",
         "//third_party/bounds_checking_function:libsec_statics",
+        "//third_party/ffmpeg:libohosffmpeg_static",
       ]
       external_deps = [ "graphic_surface:surface" ]
     } else {
@@ -214,6 +230,7 @@ if (use_clang_android) {
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
+        "//third_party/ffmpeg:libohosffmpeg",
       ]
       deps += skia_platform
 
@@ -221,7 +238,6 @@ if (use_clang_android) {
       } else {
         deps += [ "//third_party/libpng:libpng" ]
       }
-      deps += [ "//third_party/ffmpeg:libohosffmpeg" ]
       external_deps = [
         "c_utils:utils",
         "graphic_2d:color_manager",
@@ -230,7 +246,11 @@ if (use_clang_android) {
         "hitrace:hitrace_meter",
         "ipc:ipc_core",
         "napi:ace_napi",
+        "zlib:libz",
       ]
+      if (enable_libexif) {
+        external_deps += [ "libexif:libexif" ]
+      }
     }
 
     if (purgeable_ashmem_enable && defined(global_parts_info) &&
@@ -251,6 +271,17 @@ ohos_static_library("image_static") {
   public_configs = [ ":image_external_config" ]
 
   sources = [
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/abstract_exif_metadata_accessor.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/buffer_metadata_stream.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/data_buf.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_formatter.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/file_metadata_stream.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/jpeg_exif_metadata_accessor.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/metadata_accessor_factory.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_exif_metadata_accessor.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
