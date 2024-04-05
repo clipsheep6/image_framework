@@ -198,7 +198,7 @@ const std::set<std::string> READ_ONLY_KEYS = {
     "HwMnoteBurstNumber",      "HwMnoteFaceVersion",
     "HwMnoteFaceConf",         "HwMnoteFaceSmileScore",
     "HwMnoteFaceRect",         "HwMnoteFaceLeyeCenter",
-    "HwMnoteFaceReyeCenter",   "HwMnoteFaceMouthCenter"
+    "HwMnoteFaceReyeCenter",   "HwMnoteFaceMouthCenter",
     "JPEGInterchangeFormat",   "JPEGInterchangeFormatLength",
     "MakerNote",
 };
