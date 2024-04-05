@@ -2569,7 +2569,7 @@ static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output
         IMAGE_LOGE("ai AiHdrProcess: not find %{public}s!", g_aiSo.c_str());
         return false;
     }
-    
+
     if (!g_isAiSoInit) {
         g_aiSoHandle = dlopen(g_aiSo.c_str(), 1);
         if (g_aiSoHandle == nullptr) {
@@ -2638,7 +2638,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         if (context.dynamicRange != DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
             IMAGE_LOGD("[ImageSource] AIProcess need hdr");
             isHdr = true;
-        }  
+        }
         #endif      
     }
     if (!isAisr && !isHdr) {
@@ -2661,7 +2661,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         input = AllocBufferForContext(byteCount, context, dstInfo);
         #endif
     }
-  
+
     sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
     if (isAisr && isHdr) {
         auto res = AiSrProcess(input, output, opts_.resolutionQuality);
@@ -2678,7 +2678,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
     } else {
         IMAGE_LOGD("[ImageSource] just AiSr Process start");
         return AiSrProcess(input, output, opts_.resolutionQuality);
-    } 
+    }
 #else
     return SUCCESS;
 #endif
