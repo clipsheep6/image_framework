@@ -2613,7 +2613,6 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, Resolu
 
 uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 {
-#ifdef AI_ENBALE
     bool isAisr = false;
     bool isHdr = false;
     if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
@@ -2621,14 +2620,20 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         isAisr = true;
     }
 
-    if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR && context.dynamicRange != IMAGE_DYNAMIC_RANGE_HDR) {
-        IMAGE_LOGD("[ImageSource] AIProcess need hdr");
-        isHdr = true;
+    if (opts_.decodingDynamicRange == IMAGE_DYNAMIC_RANGE_HDR) {
+        IMAGE_LOGD("[ImageSource] decodingDynamicRange is hdr");
+        #ifdef AI_ENBALE
+        if (context.dynamicRange != IMAGE_DYNAMIC_RANGE_HDR) {
+            IMAGE_LOGD("[ImageSource] AIProcess need hdr");
+            isHdr = true;
+        }  
+        #endif      
     }
     if (!isAisr && !isHdr) {
         IMAGE_LOGD("[ImageSource] no nedd Ai Process");
         return SUCCESS;
     }
+#ifdef AI_ENBALE
     uint32_t byteCount = context.pixelsBuffer.bufferSize;
     Size dstInfo;
     dstInfo.width = context.outInfo.size.width;
