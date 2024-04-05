@@ -2531,20 +2531,22 @@ sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context
 }
 
 #ifdef AI_ENABLE
-void SetMetadata(sptr<SurfaceBuffer> &surface, CM_ColorSpace_Info colorSpaceInfo)
+void SetMetadata(sptr<SurfaceBuffer> &buffer, CM_ColorSpace_Info colorSpaceInfo)
 {
     std::vector<uint8_t> values;
+    values.resize(sizeof(CM_ColorSpace_Info));
     memcpy_s(values, sizeof(CM_ColorSpace_Info), static_cast<uint8_t*>&colorSpaceInfo, sizeof(CM_ColorSpace_Info));
 
-    surface->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
+    buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
 }
 
-void SetMetadata(sptr<SurfaceBuffer> &surface, uint32_t cmMata)
+void SetMetadata(sptr<SurfaceBuffer> &buffer, uint32_t cmMata)
 {
     std::vector<uint8_t> values;
+    values.resize(sizeof(uint32_t));
     memcpy_s(values, sizeof(uint32_t), static_cast<uint8_t*>&cmMata, sizeof(uint32_t));
 
-    surface->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
+    buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
 }
 #endif
 
