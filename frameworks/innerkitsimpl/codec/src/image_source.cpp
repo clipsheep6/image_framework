@@ -2518,20 +2518,57 @@ sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context
     return sb;
 }
 
-uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
-{
-#ifdef AI_ENABLE
-    QualityEnhancerParameter param;
-    param.features.QENH_FEATURE_AISR = 1;
+#ifdef AI_DLOPEN
+static bool g_isAiSoInit = false;
+static void *g_aiSoHandle = nullptr;
+using AiProcess = uint32_t (*)(sptr<SurfaceBuffer> &, sptr<SurfaceBuffer> &);
+using SetParameter = void (*)(QualityEnhancerImage);
+static AiProcess g_aiProcessFunc = nullptr;
+static SetParameter g_aiSetParameterFunc = nullptr;
+const std::string g_aiSo = "/system/lib64/libai.z.so";
 
-    QualityEnhancerImage *qei = nullptr;
-    qei->SetParameter(param);
-    return qei->Process(input, output);
-#else
-    return SUCCESS;
-#endif
+static bool CheckClBinIsExist(const std::string &name)
+{
+    return (access(name.c_str(), F_OK) != -1); // -1 means that the file is  not exist
 }
 
+static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+{
+    if (!CheckClBinIsExist(g_aiSo)) {
+        IMAGE_LOGE("ai AiHdrProcess: not find %{public}s!", g_aiSo.c_str());
+        return false;
+    }
+    
+    if (!g_isAiSoInit) {
+        g_aiSoHandle = dlopen(g_aiSo.c_str(), 1);
+        if (g_aiSoHandle == nullptr) {
+            IMAGE_LOGE("ai libai dlopen failed!");
+            return false;
+        }
+        g_aiProcessFunc = reinterpret_cast<AiProcess>(dlsym(g_aiSoHandle, "Process"));
+        if (g_aiProcessFunc == nullptr) {
+            IMAGE_LOGE("ai libai dlsym Process failed!");
+            dlclose(g_aiSoHandle);
+            return false;
+        }
+        g_aiSetParameterFunc = reinterpret_cast<SetParameter>(dlsym(g_aiSoHandle, "SetParameter"));
+        if (g_aiSetParameterFunc == nullptr) {
+            IMAGE_LOGE("ai libai dlsym SetParameter failed!");
+            dlclose(g_aiSoHandle);
+            return false;
+        }
+        g_isAiSoInit = true;
+    }
+    Parameter parameter;
+    parameter.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
+    g_aiSetParameterFunc(parameter);
+
+    if (!g_aiProcessFunc(input, output)) {
+        IMAGE_LOGE("astc g_aiProcessFunc failed. notice: astc memory may be polluted!");
+        return false;
+    }
+}
+#else
 uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
 {
 #ifdef AI_ENABLE
@@ -2544,6 +2581,21 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
     auto csc = ColorSpaceConverter::Create();
     csc->SetParameter(param);
     return  csc->Process(input, output);
+#else
+    return SUCCESS;
+#endif
+}
+#endif 
+
+uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output)
+{
+#ifdef AI_ENABLE
+    QualityEnhancerParameter param;
+    param.features.QENH_FEATURE_AISR = 1;
+
+    QualityEnhancerImage *qei = nullptr;
+    qei->SetParameter(param);
+    return qei->Process(input, output);
 #else
     return SUCCESS;
 #endif
