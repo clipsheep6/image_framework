@@ -2650,10 +2650,8 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
 
     sptr<SurfaceBuffer> input = nullptr;
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
-        IMAGE_LOGD("[ImageSource] AIProcess DMA_ALLOC");
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
-        IMAGE_LOGD("[ImageSource] AIProcess ne DMA_ALLOC");
         #ifdef AI_ENABLE
         input = AllocBufferForContext(byteCount, context, dstInfo);
         #endif
