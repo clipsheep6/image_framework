@@ -2593,9 +2593,6 @@ static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output
         }
         g_isAiSoInit = true;
     }
-    Parameter parameter;
-    parameter.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
-    g_aiSetParameterFunc(parameter);
 
     if (!g_aiProcessFunc(input, output)) {
         IMAGE_LOGE("astc g_aiProcessFunc failed. notice: astc memory may be polluted!");
@@ -2607,10 +2604,8 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_Co
 {
     SetMetadata(input, InputColorSpaceInfo);
     SetMetadata(input, CM_MATEDATA_NONE);
-    Parameter parameter;
-    parameter.rederIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMCTRIC;
+
     auto csc = ColorSpaceConverter::Create();
-    csc->SetParameter(param);
     return  csc->Process(input, output);
 }
 #endif
