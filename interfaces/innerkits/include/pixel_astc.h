@@ -41,7 +41,7 @@ public:
     NATIVEEXPORT uint32_t SetAlpha(const float percent) override;
     NATIVEEXPORT bool SetAlphaType(const AlphaType &alphaType) override;
     NATIVEEXPORT void SetTransformered(bool isTransformered) override;
-    NATIVEEXPORT void SetRowStride(uint32_t stride) override;
+    NATIVEEXPORT void SetRowStride(int32_t stride) override;
 
     NATIVEEXPORT const uint8_t *GetPixel8(int32_t x, int32_t y) override;
     NATIVEEXPORT const uint16_t *GetPixel16(int32_t x, int32_t y) override;

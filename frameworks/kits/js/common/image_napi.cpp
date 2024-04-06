@@ -686,7 +686,7 @@ static bool JsGetComponentArgs(napi_env env, size_t argc, napi_value* argv, Imag
     if (context->isTestContext) {
         const int32_t TEST_FORMAT = 12;
         format = TEST_FORMAT;
-    } else {
+    } else if (native != nullptr) {
         native->GetFormat(format);
     }
 

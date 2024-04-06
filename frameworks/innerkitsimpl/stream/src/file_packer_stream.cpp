@@ -32,10 +32,9 @@ namespace Media {
 
 FilePackerStream::FilePackerStream(const std::string &filePath)
 {
-    int lastSlash = filePath.rfind("/");
     std::string dirPath;
     std::string fileName;
-    if (lastSlash >= 0) {
+    if (filePath.rfind("/") != std::string::npos) {
         dirPath = ExtractFilePath(filePath);
         fileName = ExtractFileName(filePath);
     } else {

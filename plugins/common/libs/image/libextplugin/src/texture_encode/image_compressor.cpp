@@ -45,7 +45,7 @@ constexpr uint8_t GLOBAL_WH_NUM_CL = 2;
 constexpr size_t MAX_MALLOC_BYTES = 10000000; // max 10MB
 constexpr size_t WORK_GROUP_SIZE = 8;
 
-const char *g_programSource = R"(
+const char *PROGRAM_SOURCE = R"(
 // Notice: the code from line 42 to line 1266 is openCL language
 // openCL cound only support C language style and could not support constexpr and static_cast in same platform
 #define DIM (4)
@@ -1378,8 +1378,8 @@ static CL_ASTC_STATUS AstcClBuildProgram(ClAstcHandle *clAstcHandle, const std::
     cl_int clRet;
     cl_program program = nullptr;
     if (!CheckClBinIsExist(clBinPath)) {
-        size_t sourceSize = strlen(g_programSource) + 1; // '\0' occupies 1 bytes
-        program = clCreateProgramWithSource(clAstcHandle->context, 1, &g_programSource, &sourceSize, &clRet);
+        size_t sourceSize = strlen(PROGRAM_SOURCE) + 1; // '\0' occupies 1 bytes
+        program = clCreateProgramWithSource(clAstcHandle->context, 1, &PROGRAM_SOURCE, &sourceSize, &clRet);
         if (clRet != CL_SUCCESS) {
             IMAGE_LOGE("astc clCreateProgramWithSource failed ret %{public}d!", clRet);
             return CL_ASTC_ENC_FAILED;

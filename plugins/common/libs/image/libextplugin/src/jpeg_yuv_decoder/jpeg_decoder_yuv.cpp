@@ -112,7 +112,7 @@ void JpegDecoderYuv::JpegCalculateOutputSize(uint32_t jpgwidth, uint32_t jpgheig
     dinfo.image_height = jpgheight;
     dinfo.global_state = DSTATE_READY;
     dinfo.num_components = 0;
-    dinfo.scale_num = factor.num;
+    dinfo.scale_num = static_cast<unsigned int>(factor.num);
     dinfo.scale_denom = factor.denom;
     jpeg_calc_output_dimensions(&dinfo);
     width = dinfo.output_width;
@@ -173,7 +173,7 @@ uint32_t JpegDecoderYuv::GetJpegDecompressedYuvSize(uint32_t width, uint32_t hei
     if (width == 0 || height == 0) {
         return 0;
     }
-    int totalSizeForDecodeData = 0;
+    uint32_t totalSizeForDecodeData = 0;
     for (int i = 0; i < YUVCOMPONENT_MAX - 1; i++) {
         if (subsample == TJSAMP_GRAY && i != YCOM) {
             break;
@@ -318,8 +318,8 @@ void JpegDecoderYuv::FillJpgOutYuvInfo(YuvPlaneInfo& info, uint32_t width, uint3
     info.imageWidth = width;
     info.imageHeight = height;
     for (int i = 0; i < YUVCOMPONENT_MAX - 1; i++) {
-        info.planeWidth[i] = info.strides[i] = tjPlaneWidth(i, width, samp);
-        info.planeHeight[i] = tjPlaneHeight(i, height, samp);
+        info.planeWidth[i] = info.strides[i] = static_cast<uint32_t>(tjPlaneWidth(i, width, samp));
+        info.planeHeight[i] = static_cast<uint32_t>(tjPlaneHeight(i, height, samp));
         if (samp == TJSAMP_GRAY && i != YCOM) {
             break;
         }
@@ -357,8 +357,8 @@ int JpegDecoderYuv::DecodeHeader(tjhandle dehandle, int& retSubsamp)
         decodeParameter_.jpegBufferSize_, &width,
         &height, &jpegSubsamp, &jpegColorSpace);
     retSubsamp = jpegSubsamp;
-    decodeParameter_.jpgwidth_ = width;
-    decodeParameter_.jpgheight_ = height;
+    decodeParameter_.jpgwidth_ = static_cast<uint32_t>(width);
+    decodeParameter_.jpgheight_ = static_cast<uint32_t>(height);
     if (ret != 0) {
         IMAGE_LOGE("JpegDecoderYuv tjDecompressHeader3, failed");
         return JpegYuvDecodeError_DecodeFailed;
@@ -385,9 +385,9 @@ int JpegDecoderYuv::DoDecodeToYuvPlane(DecodeContext &context, tjhandle dehandle
         IMAGE_LOGE("JpegDecoderYuv DoDecodeToYuvPlane, pre calcualted out size wrong");
         return JpegYuvDecodeError_InvalidParameter;
     }
-    int width = outw;
-    int height = outh;
-    int totalSizeForDecodeData = GetJpegDecompressedYuvSize(width, height, jpegSubsamp);
+    uint32_t width = outw;
+    uint32_t height = outh;
+    uint32_t totalSizeForDecodeData = GetJpegDecompressedYuvSize(width, height, jpegSubsamp);
     if (CanFastDecodeFrom420to420(width, height, totalSizeForDecodeData, jpegSubsamp)) {
         return DecodeFrom420To420(context, dehandle, width, height);
     }
@@ -400,7 +400,7 @@ int JpegDecoderYuv::DoDecodeToYuvPlane(DecodeContext &context, tjhandle dehandle
     YuvPlaneInfo jpegOutYuvInfo = { 0 };
     FillJpgOutYuvInfo(jpegOutYuvInfo, width, height, data, jpegSubsamp);
     ret = tjDecompressToYUVPlanes(dehandle, decodeParameter_.jpegBuffer_, decodeParameter_.jpegBufferSize_,
-        jpegOutYuvInfo.planes, width, nullptr, height, 0);
+        jpegOutYuvInfo.planes, static_cast<int>(width), nullptr, static_cast<int>(height), 0);
     if (ret != 0) {
         IMAGE_LOGE("JpegDecoderYuv tjDecompressToYUVPlanes failed, ret %{public}d", ret);
         return JpegYuvDecodeError_DecodeFailed;

@@ -103,7 +103,7 @@ private:
     SkImageInfo info_;
     SkImageInfo dstInfo_;
     SkCodec::Options dstOptions_;
-    SkIRect dstSubset_;
+    SkIRect dstSubset_ = SkIRect::MakeEmpty();
     int32_t frameCount_ = 0;
     EXIFInfo exifInfo_;
     uint8_t *gifCache_ = nullptr;

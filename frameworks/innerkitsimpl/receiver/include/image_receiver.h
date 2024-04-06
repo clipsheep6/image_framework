@@ -52,7 +52,7 @@ public:
     static inline int32_t pipeFd[2] = {};
     static inline std::string OPTION_FORMAT = "image/jpeg";
     static inline std::int32_t OPTION_QUALITY = 100;
-    static inline std::int32_t OPTION_NUMBERHINT = 1;
+    static inline std::uint32_t OPTION_NUMBERHINT = 1;
     static std::shared_ptr<ImageReceiver> CreateImageReceiver(int32_t width,
                                                               int32_t height,
                                                               int32_t format,

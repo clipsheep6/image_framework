@@ -245,7 +245,7 @@ bool PixelAstc::IsTransformered()
     return false;
 }
 
-void PixelAstc::SetRowStride(uint32_t stride)
+void PixelAstc::SetRowStride(int32_t stride)
 {
     IMAGE_LOGE("SetRowStride is not support on pixelastc");
 }

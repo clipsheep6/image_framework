@@ -20,6 +20,7 @@
 #include "file_source_stream.h"
 #include "v1_0/display_buffer_type.h"
 #include "mock_jpeg_hw_decode_flow.h"
+#include "directory_ex.h"
 
 namespace OHOS::ImagePlugin {
 using namespace OHOS::HDI::Codec::Image::V1_0;
@@ -106,8 +107,13 @@ bool JpegHwDecoderFlow::DumpDecodeResult()
         return false;
     }
 
+    std::string realPath;
+    if (!PathToRealPath(std::string(outputFilePath), realPath)) {
+        JPEG_HW_LOGE("PathToRealPath failed, pathName = %{public}s", outputFilePath);
+        return false;
+    }
     std::ofstream dumpOutFile;
-    dumpOutFile.open(std::string(outputFilePath), std::ios_base::binary | std::ios_base::trunc);
+    dumpOutFile.open(realPath, std::ios_base::binary | std::ios_base::trunc);
     if (!dumpOutFile.is_open()) {
         JPEG_HW_LOGE("failed to dump decode result");
         return false;

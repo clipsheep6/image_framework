@@ -30,6 +30,7 @@
 
 namespace OHOS {
 namespace Media {
+std::mutex mapMutex_;
 std::map<uint8_t*, ImageCreator*> ImageCreator::bufferCreatorMap_;
 ImageCreator::~ImageCreator()
 {
@@ -59,7 +60,9 @@ GSError ImageCreator::OnBufferRelease(sptr<SurfaceBuffer> &buffer)
         return GSERROR_NO_ENTRY;
     }
     icr->surfaceBufferReleaseListener_->OnSurfaceBufferRelease();
+    std::unique_lock<std::mutex> guard(mapMutex_);
     bufferCreatorMap_.erase(iter);
+    guard.unlock();
     return GSERROR_NO_ENTRY;
 }
 
@@ -227,7 +230,7 @@ int32_t ImageCreator::SaveSenderBufferAsImage(OHOS::sptr<OHOS::SurfaceBuffer> bu
     if (buffer != nullptr) {
         uint32_t *addr = static_cast<uint32_t *>(buffer->GetVirAddr());
         uint8_t *addr2 = nullptr;
-        int32_t size = buffer->GetSize();
+        uint32_t size = buffer->GetSize();
         if (!AllocHeapBuffer(size, &addr2)) {
             IMAGE_LOGE("AllocHeapBuffer failed");
             return ERR_MEDIA_INVALID_VALUE;
@@ -260,8 +263,10 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageCreator::DequeueImage()
         IMAGE_LOGD("error : request buffer is null");
     }
     if (buffer != nullptr && buffer->GetVirAddr() != nullptr) {
+        std::unique_lock<std::mutex> guard(mapMutex_);
         bufferCreatorMap_.insert(
             std::map<uint8_t*, ImageCreator*>::value_type(static_cast<uint8_t*>(buffer->GetVirAddr()), this));
+        guard.lock();
     }
     return iraContext_->currentCreatorBuffer_;
 }

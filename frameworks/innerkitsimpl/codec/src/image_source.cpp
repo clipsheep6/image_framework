@@ -123,7 +123,7 @@ static const std::string IMAGE_URL_PREFIX = "data:image/";
 static const std::string BASE64_URL_PREFIX = ";base64,";
 static const uint32_t FIRST_FRAME = 0;
 static const int INT_ZERO = 0;
-static const int INT_255 = 255;
+static const uint8_t INT_255 = 255;
 static const size_t SIZE_ZERO = 0;
 static const uint8_t NUM_0 = 0;
 static const uint8_t NUM_1 = 1;
@@ -398,7 +398,7 @@ static inline bool IsDensityChange(int32_t srcDensity, int32_t wantDensity)
 static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, int32_t wantDensity)
 {
     if (srcDensity != 0) {
-        return (prop * wantDensity + (srcDensity >> 1)) / srcDensity;
+        return (prop * wantDensity + (srcDensity / NUM_2)) / srcDensity;
     }
     return prop;
 }
@@ -494,7 +494,7 @@ bool IsSupportSize(const Size &size)
 
 bool IsWidthAligned(const int32_t &width)
 {
-    return ((width * NUM_4) & INT_255) == 0;
+    return ((static_cast<uint32_t>(width) * NUM_4) & INT_255) == 0;
 }
 
 bool IsPhotosLcd()
@@ -627,10 +627,10 @@ static void GetValidCropRect(const Rect &src, ImagePlugin::PlImageInfo &plInfo, 
     int32_t dstBottom = dst.top + dst.height;
     int32_t dstRight = dst.left + dst.width;
     if (dst.top >= 0 && dstBottom > 0 && static_cast<uint32_t>(dstBottom) > plInfo.size.height) {
-        dst.height = plInfo.size.height - dst.top;
+        dst.height = static_cast<int64_t>(plInfo.size.height) - dst.top;
     }
     if (dst.left >= 0 && dstRight > 0 && static_cast<uint32_t>(dstRight) > plInfo.size.width) {
-        dst.width = plInfo.size.width - dst.left;
+        dst.width = static_cast<int64_t>(plInfo.size.width) - dst.left;
     }
 }
 
@@ -2033,14 +2033,14 @@ bool ImageSource::ConvertYUV420ToRGBA(uint8_t *data, uint32_t size, bool isSuppo
     IMAGE_LOGD("[ImageSource]ConvertYUV420ToRGBA IN srcPixelFormat:%{public}d, srcSize:(%{public}d,"
         "%{public}d)",
         sourceOptions_.pixelFormat, sourceOptions_.size.width, sourceOptions_.size.height);
-    if ((!isSupportOdd) && (sourceOptions_.size.width & 1) == 1) {
+    if ((!isSupportOdd) && (sourceOptions_.size.width % NUM_2) == 1) {
         IMAGE_LOGE("[ImageSource]ConvertYUV420ToRGBA odd width, %{public}d", sourceOptions_.size.width);
         errorCode = ERR_IMAGE_DATA_UNSUPPORT;
         return false;
     }
 
-    const size_t width = sourceOptions_.size.width;
-    const size_t height = sourceOptions_.size.height;
+    const size_t width = static_cast<size_t>(sourceOptions_.size.width);
+    const size_t height = static_cast<size_t>(sourceOptions_.size.height);
     const size_t uvwidth = (isSupportOdd && isAddUV) ? (width + (width & 1)) : width;
     const uint8_t *yuvPlane = sourceStreamPtr_->GetDataPtr();
     const size_t yuvSize = sourceStreamPtr_->GetStreamSize();

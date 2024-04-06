@@ -233,6 +233,9 @@ static uint32_t HeapMemAlloc(DecodeContext &context, uint64_t count)
         return ERR_IMAGE_DATA_ABNORMAL;
     }
     auto out = static_cast<uint8_t *>(malloc(count));
+    if (out == nullptr) {
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
 #ifdef _WIN32
     if (memset_s(out, ZERO, count) != EOK) {
 #else
@@ -403,8 +406,8 @@ uint32_t ExtDecoder::GetImageSize(uint32_t index, PlSize &size)
         IMAGE_LOGE("GetImageSize failed, decode header failed.");
         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
     }
-    size.width = info_.width();
-    size.height = info_.height();
+    size.width = static_cast<uint32_t>(info_.width());
+    size.height = static_cast<uint32_t>(info_.height());
     return SUCCESS;
 }
 
@@ -450,7 +453,7 @@ uint32_t ExtDecoder::CheckDecodeOptions(uint32_t index, const PixelDecodeOptions
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
-    dstOptions_.fFrameIndex = index;
+    dstOptions_.fFrameIndex = static_cast<int>(index);
 #ifdef IMAGE_COLORSPACE_FLAG
     dstColorSpace_ = opts.plDesiredColorSpace;
 #endif
@@ -475,8 +478,8 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
         if (skEncodeFormat == SkEncodedImageFormat::kJPEG && IsYuv420Format(opts.desiredPixelFormat)) {
             info.pixelFormat = opts.desiredPixelFormat;
-            desiredSizeYuv_.width = std::abs((int)opts.desiredSize.width);
-            desiredSizeYuv_.height = std::abs((int)opts.desiredSize.height);
+            desiredSizeYuv_.width = static_cast<uint32_t>(std::abs((int)opts.desiredSize.width));
+            desiredSizeYuv_.height = static_cast<uint32_t>(std::abs((int)opts.desiredSize.height));
         }
     }
     // SK only support low down scale
@@ -509,8 +512,8 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         return resCode;
     }
 
-    info.size.width = dstInfo_.width();
-    info.size.height = dstInfo_.height();
+    info.size.width = static_cast<uint32_t>(dstInfo_.width());
+    info.size.height = static_cast<uint32_t>(dstInfo_.height());
     return SUCCESS;
 }
 
@@ -621,8 +624,8 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         return SUCCESS;
     }
 #endif
-    context.outInfo.size.width = dstInfo_.width();
-    context.outInfo.size.height = dstInfo_.height();
+    context.outInfo.size.width = static_cast<uint32_t>(dstInfo_.width());
+    context.outInfo.size.height = static_cast<uint32_t>(dstInfo_.height());
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
@@ -648,13 +651,13 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
             dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
         }
     }
-    dstOptions_.fFrameIndex = index;
+    dstOptions_.fFrameIndex = static_cast<int>(index);
     DebugInfo(info_, dstInfo_, dstOptions_);
     uint64_t rowStride = dstInfo_.minRowBytes64();
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     if (context.allocatorType == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-        rowStride = sbBuffer->GetStride();
+        rowStride = static_cast<uint64_t>(sbBuffer->GetStride());
     }
 #endif
     ReportImageType(skEncodeFormat);
@@ -740,8 +743,8 @@ uint32_t ExtDecoder::DecodeToYuv420(uint32_t index, DecodeContext &context)
     }
     JpegYuvFmt decodeOutFormat = GetJpegYuvOutFmt(context.info.pixelFormat);
     PlSize jpgSize;
-    jpgSize.width = info_.width();
-    jpgSize.height = info_.height();
+    jpgSize.width = static_cast<uint32_t>(info_.width());
+    jpgSize.height = static_cast<uint32_t>(info_.height());
     PlSize desiredSize = desiredSizeYuv_;
     bool bRet = JpegDecoderYuv::GetScaledSize(jpgSize.width, jpgSize.height, desiredSize.width, desiredSize.height);
     if (!bRet || desiredSize.width == 0 || desiredSize.height == 0) {
@@ -822,7 +825,8 @@ void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
 #ifdef JPEG_HW_DECODE_ENABLE
 uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
 {
-    uint64_t byteCount = static_cast<uint64_t>(hwDstInfo_.height()) * hwDstInfo_.width() * hwDstInfo_.bytesPerPixel();
+    uint64_t byteCount = static_cast<uint64_t>(hwDstInfo_.height()) * static_cast<uint64_t>(hwDstInfo_.width()) *
+        static_cast<uint64_t>(hwDstInfo_.bytesPerPixel());
     uint32_t ret = DmaMemAlloc(context, byteCount, hwDstInfo_);
     if (ret != SUCCESS) {
         IMAGE_LOGE("Alloc OutputBuffer failed, ret=%{public}d", ret);
@@ -870,8 +874,8 @@ void ExtDecoder::ReleaseOutputBuffer(DecodeContext &context, Media::AllocatorTyp
 uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
 {
     JpegHardwareDecoder hwDecoder;
-    orgImgSize_.width = info_.width();
-    orgImgSize_.height = info_.height();
+    orgImgSize_.width = static_cast<uint32_t>(info_.width());
+    orgImgSize_.height = static_cast<uint32_t>(info_.height());
 
     if (!CheckContext(context)) {
         return ERROR;
@@ -889,8 +893,8 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
         ReleaseOutputBuffer(context, tmpAllocatorType);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
-    context.outInfo.size.width = hwDstInfo_.width();
-    context.outInfo.size.height = hwDstInfo_.height();
+    context.outInfo.size.width = static_cast<uint32_t>(hwDstInfo_.width());
+    context.outInfo.size.height = static_cast<uint32_t>(hwDstInfo_.height());
     if (outputColorFmt_ == PIXEL_FMT_YCRCB_420_SP) {
         context.yuvInfo.imageSize = {hwDstInfo_.width(), hwDstInfo_.height()};
     }
@@ -924,7 +928,7 @@ uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uin
     if (index == 0 || gifCache_ == nullptr) {
         dstOptions_.fPriorFrame = SkCodec::kNoFrame;
     } else {
-        int preIndex = index - 1;
+        int preIndex = static_cast<int>(index) - 1;
         SkCodec::FrameInfo preInfo {};
         codec_->getFrameInfo(preIndex, &preInfo);
         if (preInfo.fDisposalMethod == SkCodecAnimation::DisposalMethod::kRestorePrevious) {
@@ -936,7 +940,7 @@ uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uin
     uint8_t* dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
     if (curInfo.fDisposalMethod != SkCodecAnimation::DisposalMethod::kRestorePrevious) {
         if (gifCache_ == nullptr) {
-            int dstHeight = dstInfo_.height();
+            uint64_t dstHeight = static_cast<uint64_t>(dstInfo_.height());
             uint64_t byteCount = rowStride * dstHeight;
             gifCache_ = static_cast<uint8_t *>(calloc(byteCount, 1));
         }
@@ -954,7 +958,7 @@ uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uin
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (curInfo.fDisposalMethod != SkCodecAnimation::DisposalMethod::kRestorePrevious) {
-        gifCacheIndex_ = index;
+        gifCacheIndex_ = static_cast<int>(index);
         uint8_t* dst = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
         return handleGifCache(dstBuffer, dst, dstInfo_, rowStride);
     }
@@ -1432,7 +1436,7 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
     if (!CheckIndexValied(SIZE_ZERO) && frameCount_ <= ZERO) {
         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
     }
-    num = frameCount_;
+    num = static_cast<uint32_t>(frameCount_);
     return SUCCESS;
 }
 

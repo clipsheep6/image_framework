@@ -123,7 +123,7 @@ int32_t NativeImage::SplitYUV422SPComponent()
     struct YUVData yuv;
     uint64_t uvStride = static_cast<uint64_t>((width + NUM_1) / NUM_2);
     yuv.ySize = static_cast<uint64_t>(width * height);
-    yuv.uvSize = static_cast<uint64_t>(height * uvStride);
+    yuv.uvSize = static_cast<uint64_t>(height) * uvStride;
     if (surfaceSize < (yuv.ySize + yuv.uvSize * NUM_2)) {
         IMAGE_LOGE("S size %{public}" PRIu64 " < y plane %{public}" PRIu64
             " + uv plane %{public}" PRIu64, surfaceSize, yuv.ySize, yuv.uvSize * NUM_2);
@@ -283,7 +283,7 @@ int32_t NativeImage::GetDataSize(uint64_t &size)
             extraDataSize, size);
     } else {
         IMAGE_LOGI("S ExtraGet dataSize %{public}d", extraDataSize);
-        size = extraDataSize;
+        size = static_cast<uint64_t>(extraDataSize);
     }
     return SUCCESS;
 }

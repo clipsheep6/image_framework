@@ -227,7 +227,7 @@ static bool InitMem(AstcEncoder *work, TextureEncodeOptions param)
     work->image_.dim_y = param.height_;
     work->image_.dim_z = 1;
     work->image_.data_type = ASTCENC_TYPE_U8;
-    work->image_.dim_stride = param.stride_;
+    work->image_.dim_stride = static_cast<unsigned int>(param.stride_);
     work->codec_context = nullptr;
     work->image_.data = nullptr;
     work->profile = ASTCENC_PRF_LDR_SRGB;

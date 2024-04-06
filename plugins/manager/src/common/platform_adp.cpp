@@ -54,7 +54,8 @@ FARPROC PlatformAdp::AdpGetSymAddress(HMODULE handle, const string &symbol)
 #else
 void *PlatformAdp::LoadLibrary(const std::string &packageName)
 {
-    return dlopen(packageName.c_str(), RTLD_LAZY);
+    const char* name = packageName.c_str();
+    return dlopen(name, RTLD_LAZY);
 }
 
 void PlatformAdp::FreeLibrary(void *handle)
