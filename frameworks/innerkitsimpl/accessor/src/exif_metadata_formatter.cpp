@@ -182,10 +182,11 @@ const std::set<std::string> READ_WRITE_KEYS = {
     "Gamma",
     "OffsetTime",
     "PhotographicSensitivity",
+    "HwMnoteCaptureMode",
 };
 
 const std::set<std::string> READ_ONLY_KEYS = {
-    "HwMnoteCaptureMode",      "HwMnotePhysicalAperture",
+    "HwMnotePhysicalAperture",
     "HwMnoteRollAngle",        "HwMnotePitchAngle",
     "HwMnoteSceneFoodConf",    "HwMnoteSceneStageConf",
     "HwMnoteSceneBlueSkyConf", "HwMnoteSceneGreenPlantConf",
@@ -1094,6 +1095,7 @@ std::multimap<std::string, std::string> ExifMetadatFormatter::valueFormatValidat
     { "ISOSpeedLatitudeyyy", ONE_INT_REGEX },
     { "ISOSpeedLatitudezzz", ONE_INT_REGEX },
     { "PhotographicSensitivity", ONE_INT_REGEX },
+    { "HwMnoteCaptureMode", ONE_INT_REGEX },
 };
 
 // validate the value range. For example GPSLatitudeRef the value must be 'N' or 'S'.

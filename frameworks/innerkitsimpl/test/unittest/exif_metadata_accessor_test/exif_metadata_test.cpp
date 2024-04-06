@@ -1064,7 +1064,6 @@ std::string BATCHDATA006[][3] = {
     {"SubfileType", "2", "2"},
     {"GPSHPositioningError", "5/2", "2.5"},
     {"PhotographicSensitivity", "1", "1"},
-
 };
 
 HWTEST_F(ExifMetadataTest, SetValueBatch006, TestSize.Level3)
