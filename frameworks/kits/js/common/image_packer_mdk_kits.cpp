@@ -193,6 +193,46 @@ static int32_t ImagePackerNapiPackToData(struct ImagePackerArgs* args)
     return DoNativePacking(args);
 }
 
+static int32_t ImagePackerNapiPackToDataMultiFrames(struct ImagePackerArgs* args)
+{
+    if (args == nullptr || args->inEnv == nullptr ||
+        args->inNapi == nullptr || args->inVal == nullptr ||
+        args->inOpts == nullptr || args->outData == nullptr ||
+        args->dataSize == nullptr || *(args->dataSize) == SIZE_ZERO) {
+        IMAGE_LOGE("ImagePackerNapiPackToDataMultiFrames bad parameter");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto nativeImagePacker = ImagePackerNapi::GetNative(args->inNapi);
+    if (nativeImagePacker == nullptr) {
+        IMAGE_LOGE("ImagePackerNapiPackToDataMultiFrames get native failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    PackOption option;
+    option.format = args->inOpts->format;
+    option.loop = args->loop;
+    option.delayTimes = args->delayTimes;
+    int32_t res = nativeImagePacker->StartPacking(args->outData, *(args->dataSize), option);
+    if (res != IMAGE_RESULT_SUCCESS) {
+        IMAGE_LOGE("ImagePackerNapiPackToDataMultiFrames StartPacking failed");
+        return res;
+    }
+    auto pixelMaps = PixelMapNapi::GetPixelMaps(args->inEnv, args->inVal);
+    if (pixelMaps != nullptr) {
+        for (auto &pixelMap : *pixelMaps.get()) {
+            nativeImagePacker->AddImage(*(pixelMap.get()));
+        }
+    } else {
+        IMAGE_LOGE("ImagePackerNapiPackToDataMultiFrames get pixelmaplist native failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    int64_t packedSize = SIZE_ZERO;
+    res = nativeImagePacker->FinalizePacking(packedSize);
+    if (args->dataSize != nullptr) {
+        *args->dataSize = packedSize;
+    }
+    return res;
+}
+
 static int32_t ImagePackerNapiPackToFile(struct ImagePackerArgs* args)
 {
     if (args == nullptr || args->inEnv == nullptr ||
@@ -204,10 +244,51 @@ static int32_t ImagePackerNapiPackToFile(struct ImagePackerArgs* args)
     return DoNativePacking(args);
 }
 
+static int32_t ImagePackerNapiPackToFileMultiFrames(struct ImagePackerArgs* args)
+{
+    if (args == nullptr || args->inEnv == nullptr ||
+        args->inNapi == nullptr || args->inVal == nullptr ||
+        args->inOpts == nullptr || args->inNum0 <= INVALID_FD) {
+        IMAGE_LOGE("ImagePackerNapiPackToFileMultiFrames bad parameter");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    auto nativeImagePacker = ImagePackerNapi::GetNative(args->inNapi);
+    if (nativeImagePacker == nullptr) {
+        IMAGE_LOGE("ImagePackerNapiPackToFileMultiFrames get native failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    PackOption option;
+    option.format = args->inOpts->format;
+    option.loop = args->loop;
+    option.delayTimes = args->delayTimes;
+    int32_t res = nativeImagePacker->StartPacking(args->inNum0, option);
+    if (res != IMAGE_RESULT_SUCCESS) {
+        IMAGE_LOGE("ImagePackerNapiPackToFileMultiFrames StartPacking failed");
+        return res;
+    }
+    auto pixelMaps = PixelMapNapi::GetPixelMaps(args->inEnv, args->inVal);
+    if (pixelMaps != nullptr) {
+        for (auto &pixelMap : *pixelMaps.get()) {
+            nativeImagePacker->AddImage(*(pixelMap.get()));
+        }
+    } else {
+        IMAGE_LOGE("ImagePackerNapiPackToFileMultiFrames get pixelmaplist native failed");
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    int64_t packedSize = SIZE_ZERO;
+    res = nativeImagePacker->FinalizePacking(packedSize);
+    if (args->dataSize != nullptr) {
+        *args->dataSize = packedSize;
+    }
+    return res;
+}
+
 static const std::map<int32_t, ImagePackerNativeFunc> g_CtxFunctions = {
     {ENV_FUNC_IMAGEPACKER_CREATE, ImagePackerNapiCreate},
     {CTX_FUNC_IMAGEPACKER_PACKTODATA, ImagePackerNapiPackToData},
+    {CTX_FUNC_IMAGEPACKER_PACKTODATAMULTIFRAMES, ImagePackerNapiPackToDataMultiFrames},
     {CTX_FUNC_IMAGEPACKER_PACKTOFILE, ImagePackerNapiPackToFile},
+    {CTX_FUNC_IMAGEPACKER_PACKTOFILEMULTIFRAMES, ImagePackerNapiPackToFileMultiFrames},
 };
 
 MIDK_EXPORT

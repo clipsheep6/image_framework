@@ -23,7 +23,7 @@ ohos_shared_library("gifplugin") {
     }
   }
   sources = [
-    "//foundation/multimedia/image_framework/plugins/common/libs/image/libgifplugin/src/gif_decoder.cpp",
+    "//foundation/multimedia/image_framework/plugins/common/libs/image/libgifplugin/src/gif_encoder.cpp",
     "//foundation/multimedia/image_framework/plugins/common/libs/image/libgifplugin/src/plugin_export.cpp",
   ]
 

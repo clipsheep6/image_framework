@@ -27,6 +27,8 @@ struct PlEncodeOptions {
     std::string format;
     uint8_t quality = 100;
     uint32_t numberHint = 1;
+    uint16_t loop = 0;
+    std::vector<uint16_t> delayTimes;
 };
 
 class AbsImageEncoder {
