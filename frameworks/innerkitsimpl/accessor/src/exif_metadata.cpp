@@ -457,13 +457,14 @@ bool ExifMetadata::SetHwMoteValue(const std::string &key, const std::string &val
         return false;
     }
 
-    MnoteHuaweiEntry *entry = exif_mnote_data_huawei_get_entry_by_tag((ExifMnoteDataHuawei*) md, MNOTE_HUAWEI_CAPTURE_MODE);
+    auto *entry = exif_mnote_data_huawei_get_entry_by_tag((ExifMnoteDataHuawei*) md, MNOTE_HUAWEI_CAPTURE_MODE);
     if (!entry) {
         return false;
     }
 
     const char *capture_buf = value.c_str();
-    int ret = mnote_huawei_entry_set_value(entry, capture_buf, sizeof(capture_buf));
+    int capture_buf_length = value.length();
+    int ret = mnote_huawei_entry_set_value(entry, capture_buf, capture_buf_length);
     return ret == 0 ? true : false;
 }
 
