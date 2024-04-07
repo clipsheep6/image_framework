@@ -22,7 +22,7 @@
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
 #endif
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "astc_codec.h"
 #endif
 
@@ -37,7 +37,7 @@
 #include "media_errors.h"
 #include "string_ex.h"
 #include "pixel_convert_adapter.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #endif
 #include "tiff_parser.h"
@@ -199,7 +199,7 @@ static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
     }
     uint64_t rowStride = skInfo.minRowBytes64();
 
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (pixelMap->GetAllocatorType() == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
         rowStride = sbBuffer->GetStride();
@@ -277,7 +277,7 @@ uint32_t ExtEncoder::FinalizeEncode()
     if (pixelmap_ == nullptr || output_ == nullptr) {
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (IsAstc(opts_.format)) {
         AstcCodec astcEncoder;
         astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);
