@@ -25,7 +25,7 @@
 #include "ostream_packer_stream.h"
 #include "plugin_server.h"
 #include "image_data_statistics.h"
-#if defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_encoder.h"
 #endif
 

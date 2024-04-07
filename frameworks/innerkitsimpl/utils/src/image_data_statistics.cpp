@@ -30,7 +30,8 @@ ImageDataStatistics::ImageDataStatistics(const std::string &title) : title_(titl
     start_time_ = GetNowTimeMillSeconds();
 }
 
-ImageDataStatistics::ImageDataStatistics(const char *fmt, ...)
+ImageDataStatistics::ImageDataStatistics(const char *fmt, ...) : title_(title),
+    memorythreshold_(MEMORY_THRESHOLD_BYTE), timethreshold_(TIME_THRESHOLD_MS), memorysize_(0)
 {
 #if !defined(_WIN32) && !defined(_APPLE)
     if (fmt == nullptr) {
@@ -54,7 +55,7 @@ ImageDataStatistics::ImageDataStatistics(const char *fmt, ...)
 ImageDataStatistics::~ImageDataStatistics()
 {
 #if !defined(_WIN32) && !defined(_APPLE)
-    if (memorysize_ >= memorythreshold_) {
+    if (memorysize_ > memorythreshold_) {
         IMAGE_LOGW("%{public}s The requested memory [%{public}llu] bytes exceeded the threshold [%{public}llu]bytes\n",
             title_.c_str(), static_cast<unsigned long long>(memorysize_),
             static_cast<unsigned long long>(memorythreshold_));
