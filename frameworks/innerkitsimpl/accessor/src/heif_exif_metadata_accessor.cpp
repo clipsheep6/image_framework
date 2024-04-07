@@ -18,6 +18,7 @@
 #include "image_log.h"
 #include "media_errors.h"
 #include "tiff_parser.h"
+#include <iostream>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -48,8 +49,14 @@ uint32_t HeifExifMetadataAccessor::Read()
 
     DataBuf dataBuf;
     if (!GetExifItemData(parser, dataBuf)) {
-        IMAGE_LOGE("The EXIF value is invalid.");
-        return ERR_MEDIA_VALUE_INVALID;
+        if (this->Create()) {
+            return SUCCESS;
+        } else {
+            IMAGE_LOGE("The EXIF value is invalid.");
+            return ERR_MEDIA_VALUE_INVALID;
+        }
+
+        std::cerr << "Creat ExifItemData.  xxxx3" << std::endl;
     }
 
     size_t byteOrderPos;
