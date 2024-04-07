@@ -63,6 +63,8 @@ public:
 
     void GetAllItemId(std::vector<heif_item_id> &itemIdList) const;
 
+    heif_error SetExifMetadata(const std::shared_ptr<HeifImage> &master_image, const uint8_t *data, uint32_t size);
+
 private:
     // stream
     std::shared_ptr<HeifInputStream> inputStream_;
@@ -164,8 +166,6 @@ private:
     void SetPrimaryImage(const std::shared_ptr<HeifImage> &image);
 
     uint32_t GetExifHeaderOffset(const uint8_t *data, uint32_t size);
-
-    heif_error SetExifMetadata(const std::shared_ptr<HeifImage> &master_image, const uint8_t *data, uint32_t size);
 
     heif_error SetMetadata(const std::shared_ptr<HeifImage> &image, const std::vector<uint8_t> &data,
                       const char *item_type, const char *content_type);

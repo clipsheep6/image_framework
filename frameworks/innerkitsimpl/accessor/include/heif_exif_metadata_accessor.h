@@ -18,7 +18,9 @@
 
 #include "abstract_exif_metadata_accessor.h"
 #include "data_buf.h"
+#include "heif_image.h"
 #include "heif_parser.h"
+#include "heif_type.h"
 #include "metadata_stream.h"
 
 namespace OHOS {
@@ -34,7 +36,9 @@ public:
     virtual uint32_t WriteBlob(DataBuf &blob) override;
 
 private:
+    bool CheckTiffPos(const byte* buff, size_t size, size_t &byteOrderPos);
     bool GetExifItemData(std::shared_ptr<ImagePlugin::HeifParser> &parser, DataBuf &dataBuf);
+    bool GetExifItemId(std::shared_ptr<ImagePlugin::HeifParser> parser, ImagePlugin::heif_item_id &exifItemId);
 };
 } // namespace Media
 } // namespace OHOS

@@ -15,7 +15,6 @@
 
 #include "heif_exif_metadata_accessor.h"
 #include "heif_error.h"
-#include "heif_image.h"
 #include "image_log.h"
 #include "media_errors.h"
 #include "tiff_parser.h"
@@ -49,9 +48,8 @@ uint32_t HeifExifMetadataAccessor::Read()
     DataBuf dataBuf;
     GetExifItemData(parser, dataBuf);
 
-    // find the byte order "II 0x2a00" "MM 0x002a"
-    size_t byteOrderPos = TiffParser::FindTiffPos(dataBuf.CData(), dataBuf.Size());
-    if (byteOrderPos == std::numeric_limits<size_t>::max()) {
+    size_t byteOrderPos;
+    if (!CheckTiffPos(dataBuf.CData(), dataBuf.Size(), byteOrderPos)) {
         IMAGE_LOGE("Failed to parse Exif metadata: cannot find tiff byte order");
         return ERR_IMAGE_SOURCE_DATA;
     }
@@ -72,9 +70,76 @@ bool HeifExifMetadataAccessor::ReadBlob(DataBuf &blob) const
     return false;
 }
 
+bool HeifExifMetadataAccessor::GetExifItemId(std::shared_ptr<ImagePlugin::HeifParser> parser, ImagePlugin::heif_item_id &exifItemId)
+{
+    exifItemId = 0xffff;
+    std::vector<ImagePlugin::heif_item_id> itemIdList;
+    parser->GetAllItemId(itemIdList);
+    for (auto id:itemIdList) {
+        auto type = parser->GetItemType(id);
+        if (type == EXIF_ID) {
+           exifItemId = id;
+           return true;
+        }
+    }
+
+    return false;
+}
+
 uint32_t HeifExifMetadataAccessor::Write()
 {
-    return 0;
+    ExifData* exifData = this->Get()->GetExifData();
+    if (exifData == nullptr)
+    {
+        IMAGE_LOGE("Heif Exif format are not supported.");
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+
+    uint_8* dataBlob = nullptr;
+    size_t size = 0;
+    TiffParser::Encode(&dataBlob, size, exifData);
+
+    if (dataBlob == nullptr) {
+        IMAGE_LOGE("Failed to encode exif matatdata.");
+        return ERR_MEDIA_WRITE_PARCEL_FAIL;
+    }
+
+    size_t byteOrderPos;
+    DataBuf dataBuf(dataBlob, size);
+    if (!CheckTiffPos(dataBuf.CData(), dataBuf.Size(), byteOrderPos)) {
+        return ERR_MEDIA_WRITE_PARCEL_FAIL;
+    }
+
+    std::shared_ptr<ImagePlugin::HeifParser> parser;
+    heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(),
+        imageStream_->GetSize(), false, &parser);
+
+    if (parseRet != heif_error_ok)
+    {
+        IMAGE_LOGE("The EXIF data failed to be written to the file.");
+        return ERR_MEDIA_WRITE_PARCEL_FAIL;
+    }
+
+    auto image = parser->GetPrimaryImage();
+    heif_error setRet = parser->SetExifMetadata(image, dataBuf.CData(), dataBuf.Size());
+    if (setRet != heif_error::heif_error_ok) {
+        IMAGE_LOGE("The EXIF data failed to be written to the file.");
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+
+    HeifStreamWriter writer;
+    parser->Write(writer);
+
+    size_t dataSize = writer.GetDataSize();
+
+    if (dataSize == 0) {
+        IMAGE_LOGE("The EXIF data failed to be written to the file.");
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+
+    const uint8_t *buf = writer.GetData().data();
+    imageStream_->Write(const_cast<uint8_t *>(buf), dataSize);
+    return SUCCESS;
 }
 
 uint32_t HeifExifMetadataAccessor::WriteBlob(DataBuf &blob)
@@ -82,18 +147,21 @@ uint32_t HeifExifMetadataAccessor::WriteBlob(DataBuf &blob)
     return 0;
 }
 
+bool HeifExifMetadataAccessor::CheckTiffPos(const byte *buff, size_t size, size_t &byteOrderPos)
+{
+    // find the byte order "II 0x2a00" "MM 0x002a"
+    byteOrderPos = TiffParser::FindTiffPos(buff, size);
+    if (byteOrderPos == std::numeric_limits<size_t>::max()) {
+        return false;
+    }
+    return true;
+}
+
 bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &parser, DataBuf &dataBuf)
 {
-    int32_t exifItemId = 0xffff;
-    std::vector<heif_item_id> itemIdList;
-    parser->GetAllItemId(itemIdList);
-    for (auto id:itemIdList) {
-        auto type = parser->GetItemType(id);
-        if (type == EXIF_ID) {
-           exifItemId = id;
-           break;
-        }
-    }
+    ImagePlugin::heif_item_id exifItemId = 0xffff;
+    GetExifItemId(parser, exifItemId);
+
     if (exifItemId == 0xffff) {
         return false;
     }
@@ -103,5 +171,6 @@ bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &pars
     dataBuf = DataBuf(item.data(), item.size());
     return true;
 }
+
 } // namespace Media
 } // namespace OHOS
