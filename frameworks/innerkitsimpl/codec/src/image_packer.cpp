@@ -92,8 +92,6 @@ uint32_t ImagePacker::StartPackingImpl(const PackOption &option)
 uint32_t ImagePacker::StartPacking(uint8_t *outputData, uint32_t maxSize, const PackOption &option)
 {
     ImageTrace imageTrace("ImagePacker::StartPacking by outputData");
-    ImageDataStatistics imageDataStatistics("[ImagePacker]StartPacking by outputData format %s, quality %d",
-        option.format.c_str(), option.quality);
     if (!IsPackOptionValid(option)) {
         IMAGE_LOGE("array startPacking option invalid %{public}s, %{public}u.", option.format.c_str(),
             option.quality);
@@ -117,8 +115,6 @@ uint32_t ImagePacker::StartPacking(uint8_t *outputData, uint32_t maxSize, const 
 uint32_t ImagePacker::StartPacking(const std::string &filePath, const PackOption &option)
 {
     ImageTrace imageTrace("ImagePacker::StartPacking by filePath");
-    ImageDataStatistics imageDataStatistics("[ImagePacker]StartPacking by filePath fromat %s, quality %d",
-        option.format.c_str(), option.quality);
     if (!IsPackOptionValid(option)) {
         IMAGE_LOGE("filepath startPacking option invalid %{public}s, %{public}u.", option.format.c_str(),
             option.quality);
@@ -137,8 +133,6 @@ uint32_t ImagePacker::StartPacking(const std::string &filePath, const PackOption
 uint32_t ImagePacker::StartPacking(const int &fd, const PackOption &option)
 {
     ImageTrace imageTrace("ImagePacker::StartPacking by fd");
-    ImageDataStatistics imageDataStatistics("[ImagePacker]StartPacking by fd format %s, quality %d",
-        option.format.c_str(), option.quality);
     if (!IsPackOptionValid(option)) {
         IMAGE_LOGE("fd startPacking option invalid %{public}s, %{public}u.", option.format.c_str(), option.quality);
         return ERR_IMAGE_INVALID_PARAMETER;
@@ -156,8 +150,6 @@ uint32_t ImagePacker::StartPacking(const int &fd, const PackOption &option)
 uint32_t ImagePacker::StartPacking(std::ostream &outputStream, const PackOption &option)
 {
     ImageTrace imageTrace("ImagePacker::StartPacking by outputStream");
-    ImageDataStatistics imageDataStatistics("[ImagePacker]StartPacking by outputStream format %s, %d",
-        option.format.c_str(), option.quality);
     if (!IsPackOptionValid(option)) {
         IMAGE_LOGE("outputStream startPacking option invalid %{public}s, %{public}u.", option.format.c_str(),
             option.quality);
@@ -192,9 +184,6 @@ uint32_t ImagePacker::AddImage(PixelMap &pixelMap)
     ImageUtils::DumpPixelMapBeforeEncode(pixelMap);
     ImageTrace imageTrace("ImagePacker::AddImage by pixelMap");
 
-    ImageDataStatistics imageDataStatistics("[ImagePacker]AddImage width %d, height %d, format %d, colorspace %d",
-        pixelMap.GetWidth(), pixelMap.GetHeight(), pixelMap.GetPixelFormat(), pixelMap.GetColorSpace());
-
     return DoEncodingFunc([this, &pixelMap](ImagePlugin::AbsImageEncoder* encoder) {
         return encoder->AddImage(pixelMap);
     });
@@ -203,7 +192,6 @@ uint32_t ImagePacker::AddImage(PixelMap &pixelMap)
 uint32_t ImagePacker::AddImage(ImageSource &source)
 {
     ImageTrace imageTrace("ImagePacker::AddImage by imageSource");
-    ImageDataStatistics imageDataStatistics("[ImagePacker]AddImage by imageSource");
     DecodeOptions opts;
     uint32_t ret = SUCCESS;
     if (pixelMap_ != nullptr) {
@@ -214,6 +202,7 @@ uint32_t ImagePacker::AddImage(ImageSource &source)
         IMAGE_LOGE("image source create pixel map failed.");
         return ret;
     }
+
     if (pixelMap_ == nullptr || pixelMap_.get() == nullptr) {
         IMAGE_LOGE("create the pixel map unique_ptr fail.");
         return ERR_IMAGE_MALLOC_ABNORMAL;
@@ -225,7 +214,6 @@ uint32_t ImagePacker::AddImage(ImageSource &source)
 uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 {
     ImageTrace imageTrace("ImagePacker::AddImage by imageSource and index %{public}u", index);
-    ImageDataStatistics imageDataStatistics("[ImagePacker]AddImage by imageSource and index %u", index);
     DecodeOptions opts;
     uint32_t ret = SUCCESS;
     if (pixelMap_ != nullptr) {
@@ -247,7 +235,6 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 uint32_t ImagePacker::FinalizePacking()
 {
     ImageTrace imageTrace("ImagePacker::FinalizePacking");
-    ImageDataStatistics imageDataStatistics("[ImagePacker] FinalizePacking");
     return DoEncodingFunc([](ImagePlugin::AbsImageEncoder* encoder) {
         auto res = encoder->FinalizeEncode();
         if (res != SUCCESS) {
@@ -259,6 +246,7 @@ uint32_t ImagePacker::FinalizePacking()
 
 uint32_t ImagePacker::FinalizePacking(int64_t &packedSize)
 {
+    ImageDataStatistics imageDataStatistics("[ImagePacker]FinalizePacking.");
     uint32_t ret = FinalizePacking();
     if (packerStream_ != nullptr) {
         packerStream_->Flush();

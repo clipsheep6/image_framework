@@ -20,18 +20,16 @@
 
 namespace OHOS {
 namespace Media {
-static constexpr int32_t FORMAT_BUF_SIZE = 128;
+static constexpr int32_t FORMAT_BUF_SIZE = 254;
 static constexpr uint64_t MEMORY_THRESHOLD_BYTE = 314572800;
 static constexpr uint64_t TIME_THRESHOLD_MS = 500;
 
-ImageDataStatistics::ImageDataStatistics(const std::string &title) : title_(title),
-    memorythreshold_(MEMORY_THRESHOLD_BYTE), timethreshold_(TIME_THRESHOLD_MS), memorysize_(0)
+ImageDataStatistics::ImageDataStatistics(const std::string &title) : title_(title), memorySize_(0)
 {
-    start_time_ = GetNowTimeMillSeconds();
+    startTime_ = GetNowTimeMillSeconds();
 }
 
-ImageDataStatistics::ImageDataStatistics(const char *fmt, ...) : title_(title),
-    memorythreshold_(MEMORY_THRESHOLD_BYTE), timethreshold_(TIME_THRESHOLD_MS), memorysize_(0)
+ImageDataStatistics::ImageDataStatistics(const char *fmt, ...) : memorySize_(0)
 {
 #if !defined(_WIN32) && !defined(_APPLE)
     if (fmt == nullptr) {
@@ -48,25 +46,26 @@ ImageDataStatistics::ImageDataStatistics(const char *fmt, ...) : title_(title),
             title_ = "ImageDataTraceFmt Format Error";
         }
     }
-    start_time_ = GetNowTimeMillSeconds();
+    startTime_ = GetNowTimeMillSeconds();
 #endif
 }
 
 ImageDataStatistics::~ImageDataStatistics()
 {
 #if !defined(_WIN32) && !defined(_APPLE)
-    if (memorysize_ > memorythreshold_) {
-        IMAGE_LOGW("%{public}s The requested memory [%{public}llu] bytes exceeded the threshold [%{public}llu]bytes\n",
-            title_.c_str(), static_cast<unsigned long long>(memorysize_),
-            static_cast<unsigned long long>(memorythreshold_));
+    uint64_t endTime = GetNowTimeMillSeconds();
+    uint64_t timeInterval = endTime - startTime_;
+
+    if ((memorySize_ != 0) && (memorySize_ > MEMORY_THRESHOLD_BYTE)) {
+        IMAGE_LOGD("%{public}s The requested memory [%{public}lu]bytes, exceeded the threshold [%{public}lu]bytes\n",
+            title_.c_str(), static_cast<unsigned long>(memorySize_), static_cast<unsigned long>(MEMORY_THRESHOLD_BYTE));
     }
-    end_time_ = GetNowTimeMillSeconds();
-    uint64_t timeInterval = end_time_ - start_time_;
-    if (timeInterval > timethreshold_) {
-        IMAGE_LOGW("%{public}s Runtime [%{public}llu/%{public}llu],start time: %{public}llu, end time: %{public}llu\n",
-            title_.c_str(), static_cast<unsigned long long>(timeInterval),
-            static_cast<unsigned long long>(timethreshold_), static_cast<unsigned long long>(start_time_),
-            static_cast<unsigned long long>(end_time_));
+
+    if (timeInterval > TIME_THRESHOLD_MS) {
+        IMAGE_LOGD("%{public}s Costtime: [%{public}llu]ms timethreshold: [%{public}llu]ms," \
+            "startTime: [%{public}llu]ms, endTime: [%{public}llu]ms\n", title_.c_str(),
+            static_cast<unsigned long long>(timeInterval), static_cast<unsigned long long>(TIME_THRESHOLD_MS),
+            static_cast<unsigned long long>(startTime_), static_cast<unsigned long long>(endTime));
     }
 #endif
 }
@@ -77,19 +76,9 @@ uint64_t ImageDataStatistics::GetNowTimeMillSeconds()
     return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 }
 
-void ImageDataStatistics::SetRequestMemory(uint64_t size)
+void ImageDataStatistics::SetRequestMemory(uint32_t size)
 {
-    memorysize_ = size;
-}
-
-void ImageDataStatistics::SetTimeThreshold(uint64_t size)
-{
-    timethreshold_ = size;
-}
-
-void ImageDataStatistics::SetMemoryThreshold(uint64_t size)
-{
-    memorythreshold_ = size;
+    memorySize_ = size;
 }
 
 void ImageDataStatistics::AddTitle(const std::string title)
@@ -116,11 +105,5 @@ void ImageDataStatistics::AddTitle(const char *fmt, ...)
     }
 #endif
 }
-
-std::string ImageDataStatistics::GetTitle()
-{
-    return title_;
-}
-
 } // namespace Media
 } // namespace OHOS

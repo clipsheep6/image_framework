@@ -26,20 +26,14 @@ public:
     explicit ImageDataStatistics(const std::string &title);
     explicit ImageDataStatistics(const char *fmt, ...);
     ~ImageDataStatistics();
-    void SetRequestMemory(uint64_t size);
-    void SetTimeThreshold(uint64_t size);
-    void SetMemoryThreshold(uint64_t size);
+    void SetRequestMemory(uint32_t size);
     void AddTitle(const std::string title);
     void AddTitle(const char *fmt, ...);
-    std::string GetTitle();
 private:
     uint64_t GetNowTimeMillSeconds();
     std::string title_;
-    uint64_t start_time_;
-    uint64_t end_time_;
-    uint64_t memorythreshold_;
-    uint64_t timethreshold_;
-    uint64_t memorysize_;
+    uint64_t startTime_;
+    uint32_t memorySize_;
 };
 } // namespace Media
 } // namespace OHOS
