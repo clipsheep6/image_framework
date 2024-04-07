@@ -27,12 +27,44 @@ static inline std::string FuzzString(const uint8_t *data, size_t size)
     return {reinterpret_cast<const char*>(data), size};
 }
 
+static inline int FuzzInt(const uint8_t *data, size_t size)
+{
+    return static_cast<int>(*data);
+}
+
+
 void CreateImageSourceByPathname(const uint8_t* data, size_t size)
 {
     uint32_t errCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(FuzzString(data, size), opts, errCode);
 }
+
+void CreatePixelMapFuzzer(const uint8_t* data, size_t size)
+{
+    uint32_t errCode = 0;
+    Media::SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(data, size, opts, errCode);
+    Media::DecodeOptions dopts;
+    uint32_t errorCode;
+    uint32_t index = 1;
+    imageSource->CreatePixelMap(dopts, errorCode);
+    imageSource->CreatePixelMapEx(index, dopts, errorCode);
+    imageSource->CreateIncrementalPixelMap(index, dopts, errorCode);
+}
+
+void CreateImageSourceFuzzer(const uint8_t* data, size_t size)
+{
+    Media::SourceOptions opts;
+    uint32_t errorCode;
+    uint32_t offset = 0;
+    uint32_t length = 1;
+    Media::ImageSource::CreateImageSource(data, size, opts, errorCode);
+    Media::ImageSource::CreateImageSource(FuzzString(data, size), opts, errorCode);
+    Media::ImageSource::CreateImageSource(FuzzInt(data, size), opts, errorCode);
+    Media::ImageSource::CreateImageSource(FuzzInt(data, size), offset, length, opts, errorCode);
+}
+
 } // namespace Media
 } // namespace OHOS
 
@@ -41,5 +73,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::Media::CreateImageSourceByPathname(data, size);
+    OHOS::Media::CreatePixelMapFuzzer(data, size);
+    OHOS::Media::CreateImageSourceFuzzer(data, size);
     return 0;
 }
