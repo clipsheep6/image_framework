@@ -42,11 +42,15 @@ uint32_t HeifExifMetadataAccessor::Read()
     heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(),
         imageStream_->GetSize(), false, &parser);
     if (parseRet != heif_error_ok) {
+        IMAGE_LOGE("The image source data is incorrect.");
         return ERR_IMAGE_SOURCE_DATA;
     }
 
     DataBuf dataBuf;
-    GetExifItemData(parser, dataBuf);
+    if (!GetExifItemData(parser, dataBuf)) {
+        IMAGE_LOGE("The EXIF value is invalid.");
+        return ERR_MEDIA_VALUE_INVALID;
+    }
 
     size_t byteOrderPos;
     if (!CheckTiffPos(dataBuf.CData(), dataBuf.Size(), byteOrderPos)) {
@@ -116,14 +120,14 @@ uint32_t HeifExifMetadataAccessor::Write()
 
     if (parseRet != heif_error_ok)
     {
-        IMAGE_LOGE("The EXIF data failed to be written to the file.");
-        return ERR_MEDIA_WRITE_PARCEL_FAIL;
+        IMAGE_LOGE("The EXIF data failed to parser.");
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
     auto image = parser->GetPrimaryImage();
     heif_error setRet = parser->SetExifMetadata(image, dataBuf.CData(), dataBuf.Size());
     if (setRet != heif_error::heif_error_ok) {
-        IMAGE_LOGE("The EXIF data failed to be written to the file.");
+        IMAGE_LOGE("The EXIF data failed to set values.");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
@@ -167,7 +171,10 @@ bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &pars
     }
 
     std::vector<uint8_t> item;
-    parser->GetItemData(exifItemId, &item);
+    if (parser->GetItemData(exifItemId, &item) != heif_error::heif_error_ok) {
+        return false;
+    }
+
     dataBuf = DataBuf(item.data(), item.size());
     return true;
 }
