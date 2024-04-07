@@ -403,23 +403,8 @@ static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, in
     return prop;
 }
 
-static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize, int32_t wantDensity,
-    Size &dstSize)
-{
-    if (IsSizeVailed(wantSize)) {
-        CopySize(wantSize, dstSize);
-    } else {
-        CopySize(srcSize, dstSize);
-    }
-    if (IsDensityChange(srcDensity, wantDensity)) {
-        dstSize.width = GetScalePropByDensity(dstSize.width, srcDensity, wantDensity);
-        dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
-    }
-}
-
-#ifdef AI_ENABLE
 static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
-    int32_t wantDensity, Size &dstSize, int32_t resolutionQuality)
+    int32_t wantDensity, Size &dstSize, ResolutionQuality resolutionQuality)
 {
     if (IsSizeVailed(wantSize) && ((resolutionQuality == ResolutionQuality::HIGH) ||
                                     (resolutionQuality == ResolutionQuality::SUPER))) {
@@ -433,7 +418,6 @@ static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, co
         dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
     }
 }
-#endif
 
 static void NotifyDecodeEvent(set<DecodeListener *> &listeners, DecodeEvent event, std::unique_lock<std::mutex> *guard)
 {
@@ -2621,10 +2605,9 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, Resolu
 }
 #endif
 
-uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
+uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &isHdr)
 {
     bool isAisr = false;
-    bool isHdr = false;
     if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
         IMAGE_LOGD("[ImageSource] AIProcess imageSize ne opts_.desiredSize");
         isAisr = true;
@@ -2639,9 +2622,10 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context)
         #endif
     }
     if (!isAisr && !isHdr) {
-        IMAGE_LOGD("[ImageSource] no nedd aisr and hdr Process");
+        IMAGE_LOGD("[ImageSource] no need aisr and hdr Process");
         return SUCCESS;
     }
+    IMAGE_LOGI("[ImageSource] =====test====== need aisr or hdr Process :%{public}d hdr:%{public}d", isAisr, isHdr);
 #ifdef AI_ENBALE
     uint32_t byteCount = context.pixelsBuffer.bufferSize;
     Size dstInfo;
@@ -2681,13 +2665,9 @@ uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, 
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
     hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
-#ifdef AI_ENABLE
+
     TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
         opts_.desiredSize, opts_.resolutionQuality);
-#else
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize);
-#endif
     errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
