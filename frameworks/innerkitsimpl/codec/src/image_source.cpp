@@ -569,12 +569,13 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
         IMAGE_LOGE("[ImageSource] Decode data fail, ret:%{public}u.", ret);
     }
 
-#ifdef AI_ENABLE
-    auto res = AIProcess(<Size>(context.outInfo.size), context);
+    bool isHdr = false;
+    auto res = AIProcess(info.size, context, isHdr);
     if (res != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] AIProcess fail, ret:%{public}u.", res);
+        IMAGE_LOGE("[ImageSource] AIProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
+        isHdr = false;
     }
-#endif
+
     if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
         // hardware decode success, update plInfo.size
         IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
@@ -2626,8 +2627,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &is
         return SUCCESS;
     }
     IMAGE_LOGI("[ImageSource] =====test====== need aisr or hdr Process :%{public}d hdr:%{public}d", isAisr, isHdr);
-#ifdef AI_ENBALE
-    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+
     Size dstInfo;
     dstInfo.width = context.outInfo.size.width;
     dstInfo.height = context.outInfo.size.height;
@@ -2636,11 +2636,13 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &is
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
+        IMAGE_LOGI("[ImageSource] =====test====== AllocBufferForContext");
         #ifdef AI_ENABLE
+        uint32_t byteCount = context.pixelsBuffer.bufferSize;
         input = AllocBufferForContext(byteCount, context, dstInfo);
         #endif
     }
-
+#ifdef AI_ENBALE
     sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
     if (isAisr && isHdr) {
         auto res = AiSrProcess(input, output, opts_.resolutionQuality);
@@ -2656,6 +2658,16 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &is
         return AiSrProcess(input, output, opts_.resolutionQuality);
     }
 #else
+    IMAGE_LOGI("[ImageSource] =====test====== AllocBufferForContext output");
+    if (isAisr && isHdr) {
+        IMAGE_LOGI("[ImageSource] =====test====== AiSrProcess start");
+        IMAGE_LOGI("[ImageSource] =====test====== AllocBufferForContext outputHdr");
+        IMAGE_LOGI("[ImageSource] =====test====== AiHdrProcess start");
+    } else if (isHdr) {
+        IMAGE_LOGI("[ImageSource] =====test====== just AiHdrProcess start");
+    } else {
+        IMAGE_LOGI("[ImageSource] =====test====== just AiSrProcess start");
+    }
     return SUCCESS;
 #endif
 }
