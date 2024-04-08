@@ -380,6 +380,9 @@ private:
                    : true;
     }
 
+    void FreeDngExtData();
+    void FreePixmapData();
+
     static void ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size);
     static bool UpdatePixelMapMemInfo(PixelMap *pixelMap, ImageInfo &imgInfo, PixelMemInfo &pixelMemInfo);
     bool WriteImageData(Parcel &parcel, size_t size) const;
