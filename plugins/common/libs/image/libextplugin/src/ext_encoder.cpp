@@ -62,7 +62,7 @@ static const std::map<SkEncodedImageFormat, std::string> FORMAT_NAME = {
     {SkEncodedImageFormat::kPKM, ""},
     {SkEncodedImageFormat::kKTX, ""},
     {SkEncodedImageFormat::kASTC, ""},
-    {SkEncodedImageFormat::kDNG, ""},
+    {SkEncodedImageFormat::kDNG, "image/dng"},
     {SkEncodedImageFormat::kHEIF, "image/heif"},
 };
 
@@ -180,8 +180,8 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     if (pixelmap_->GetExifMetadata() == nullptr ||
         pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
         ExtWStream wStream(output_);
-        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality)) {
-            IMAGE_LOGE("Failed to encode image");
+        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality, (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
+            IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
             return ERR_IMAGE_ENCODE_FAILED;
         }
         return SUCCESS;
@@ -193,8 +193,8 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     TiffParser::Encode(&dataPtr, datSize, exifData);
     DataBuf exifBlob(dataPtr, datSize);
     MetadataWStream tStream;
-    if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality)) {
-        IMAGE_LOGE("Failed to encode image");
+    if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality, (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
+        IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
         return ERR_IMAGE_ENCODE_FAILED;
     }
 
