@@ -97,7 +97,7 @@ const std::set<std::string> READ_WRITE_KEYS = {
     "ReferenceBlackWhite",
     "Copyright",
     "SubsecTime",
-    "SubSecTimeOriginal",
+    "SubsecTimeOriginal",
     "SubSecTimeDigitized",
     "FlashpixVersion",
     "ColorSpace",
