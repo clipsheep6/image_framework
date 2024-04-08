@@ -115,19 +115,13 @@ void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
         purgeableMemPtr_ = nullptr;
     }
 #endif
-    if (dngExternalData_ != nullptr && releaseExtDataFunc_ != nullptr) {
-        IMAGE_LOGD("PixelMap::FreePixelMap call releaseExtDataFunc_");
-        releaseExtDataFunc_(dngExternalData_);
-        dngExternalData_ = nullptr;
-        releaseExtDataFunc_ = nullptr;
-    }
+    // free dng external data
+    FreeDngExtData();
     if (data_ == nullptr) {
         return;
     }
-
-    if (freePixelMapProc_ != nullptr) {
-        freePixelMapProc_(data_, context_, pixelsSize_);
-    }
+    // free pixmap data
+    FreePixmapData();
     
     switch (allocatorType_) {
         case AllocatorType::HEAP_ALLOC: {
@@ -164,6 +158,22 @@ void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
     }
 }
 
+void PixelMap::FreeDngExtData()
+{
+    if (dngExternalData_ != nullptr && releaseExtDataFunc_ != nullptr) {
+        IMAGE_LOGD("PixelMap::FreePixelMap call releaseExtDataFunc_");
+        releaseExtDataFunc_(dngExternalData_);
+        dngExternalData_ = nullptr;
+        releaseExtDataFunc_ = nullptr;
+    }
+}
+void PixelMap::FreePixmapData()
+{
+    if (freePixelMapProc_ != nullptr) {
+        freePixelMapProc_(data_, context_, pixelsSize_);
+    }
+}
+
 void PixelMap::ReleaseSharedMemory(void *addr, void *context, uint32_t size)
 {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
@@ -178,7 +188,8 @@ void PixelMap::ReleaseSharedMemory(void *addr, void *context, uint32_t size)
 #endif
 }
 
-void PixelMap::SetDngExternalData(void *dngExternalData, FreeExtData extFunc) {
+void PixelMap::SetDngExternalData(void *dngExternalData, FreeExtData extFunc)
+{
     IMAGE_LOGE("SetDngExternalData IN");
     dngExternalData_ = dngExternalData;
     releaseExtDataFunc_ = extFunc;

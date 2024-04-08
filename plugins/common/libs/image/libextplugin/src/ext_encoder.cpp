@@ -180,7 +180,8 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     if (pixelmap_->GetExifMetadata() == nullptr ||
         pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
         ExtWStream wStream(output_);
-        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality, (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
+        if (!SkEncodeImage(&wStream, bitmap, iter->first, opts_.quality,
+            (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
             IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
             return ERR_IMAGE_ENCODE_FAILED;
         }
@@ -193,7 +194,8 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     TiffParser::Encode(&dataPtr, datSize, exifData);
     DataBuf exifBlob(dataPtr, datSize);
     MetadataWStream tStream;
-    if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality, (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
+    if (!SkEncodeImage(&tStream, bitmap, iter->first, opts_.quality,
+                       (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
         IMAGE_LOGE("ExtEncoder::FinalizeEncode encode failed");
         return ERR_IMAGE_ENCODE_FAILED;
     }
