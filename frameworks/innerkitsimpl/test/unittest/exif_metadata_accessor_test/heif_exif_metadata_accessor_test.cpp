@@ -28,11 +28,10 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace Multimedia {
-
 namespace {
-    static const std::string IMAGE_INPUT_HEIF_EXIF_PATH = "/data/local/tmp/image/test_exif.heic";
-    static const std::string IMAGE_INPUT_HEIF_HW_EXIF_PATH = "/data/local/tmp/image/test_hw.heic";
-    static const std::string IMAGE_INPUT_HEIF_NO_EXIF_PATH = "/data/local/tmp/image/test.heic";
+static const std::string IMAGE_INPUT_HEIF_EXIF_PATH = "/data/local/tmp/image/test_exif.heic";
+static const std::string IMAGE_INPUT_HEIF_HW_EXIF_PATH = "/data/local/tmp/image/test_hw.heic";
+static const std::string IMAGE_INPUT_HEIF_NO_EXIF_PATH = "/data/local/tmp/image/test.heic";
 }
 
 class HeifExifMetadataAccessorTest : public testing::Test {
@@ -43,12 +42,11 @@ public:
 };
 
 std::string HeifExifMetadataAccessorTest::GetProperty(const std::shared_ptr<ExifMetadata> &metadata,
-                                                      const std::string &key)
+    const std::string &key)
 {
     std::string value;
     metadata->GetValue(key, value);
     std::cerr << "key: " << key << ", value: " << value << std::endl;
-    // GTEST_LOG_(INFO) << "key:" << key << "value:" << value;
     return value;
 }
 
@@ -81,9 +79,6 @@ HWTEST_F(HeifExifMetadataAccessorTest, Read001, TestSize.Level3)
     GetProperty(exifMetadata, "DateTime");
     GetProperty(exifMetadata, "WhiteBalance");
 
-    // ASSERT_EQ(GetProperty(exifMetadata, "CameraOwnerName"), "9, 7, 8");
-    // ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitudeRef"), "Top-right");
-    // ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "1000");
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read001 start";
 }
 
@@ -114,6 +109,5 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write001, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write001 start";
 }
-
 } // namespace Multimedia
 } // namespace OHOS

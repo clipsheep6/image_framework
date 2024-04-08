@@ -40,8 +40,7 @@ HeifExifMetadataAccessor::~HeifExifMetadataAccessor() {}
 uint32_t HeifExifMetadataAccessor::Read()
 {
     std::shared_ptr<HeifParser> parser;
-    heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(),
-        imageStream_->GetSize(), false, &parser);
+    heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(), imageStream_->GetSize(), false, &parser);
     if (parseRet != heif_error_ok) {
         IMAGE_LOGE("The image source data is incorrect.");
         return ERR_IMAGE_SOURCE_DATA;
@@ -65,7 +64,7 @@ uint32_t HeifExifMetadataAccessor::Read()
         return ERR_IMAGE_SOURCE_DATA;
     }
     ExifData *exifData = nullptr;
-    TiffParser::Decode(dataBuf.CData(byteOrderPos), dataBuf.Size() - byteOrderPos , &exifData);
+    TiffParser::Decode(dataBuf.CData(byteOrderPos), dataBuf.Size() - byteOrderPos, &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Decode tiffBuf error.");
         return ERR_EXIF_DECODE_FAILED;
@@ -81,16 +80,17 @@ bool HeifExifMetadataAccessor::ReadBlob(DataBuf &blob) const
     return false;
 }
 
-bool HeifExifMetadataAccessor::GetExifItemId(std::shared_ptr<ImagePlugin::HeifParser> parser, ImagePlugin::heif_item_id &exifItemId)
+bool HeifExifMetadataAccessor::GetExifItemId(std::shared_ptr<ImagePlugin::HeifParser> parser,
+    ImagePlugin::heif_item_id &exifItemId)
 {
     exifItemId = 0xffff;
     std::vector<ImagePlugin::heif_item_id> itemIdList;
     parser->GetAllItemId(itemIdList);
-    for (auto id:itemIdList) {
+    for (auto id : itemIdList) {
         auto type = parser->GetItemType(id);
         if (type == EXIF_ID) {
-           exifItemId = id;
-           return true;
+            exifItemId = id;
+            return true;
         }
     }
 
@@ -99,14 +99,13 @@ bool HeifExifMetadataAccessor::GetExifItemId(std::shared_ptr<ImagePlugin::HeifPa
 
 uint32_t HeifExifMetadataAccessor::Write()
 {
-    ExifData* exifData = this->Get()->GetExifData();
-    if (exifData == nullptr)
-    {
+    ExifData *exifData = this->Get()->GetExifData();
+    if (exifData == nullptr) {
         IMAGE_LOGE("Heif Exif format are not supported.");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
 
-    uint_8* dataBlob = nullptr;
+    uint_8 *dataBlob = nullptr;
     size_t size = 0;
     TiffParser::Encode(&dataBlob, size, exifData);
 
@@ -122,11 +121,9 @@ uint32_t HeifExifMetadataAccessor::Write()
     }
 
     std::shared_ptr<ImagePlugin::HeifParser> parser;
-    heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(),
-        imageStream_->GetSize(), false, &parser);
+    heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(), imageStream_->GetSize(), false, &parser);
 
-    if (parseRet != heif_error_ok)
-    {
+    if (parseRet != heif_error_ok) {
         IMAGE_LOGE("The EXIF data failed to parser.");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
@@ -185,6 +182,5 @@ bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &pars
     dataBuf = DataBuf(item.data(), item.size());
     return true;
 }
-
 } // namespace Media
 } // namespace OHOS

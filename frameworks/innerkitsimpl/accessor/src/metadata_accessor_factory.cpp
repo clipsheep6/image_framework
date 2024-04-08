@@ -105,7 +105,7 @@ EncodedFormat MetadataAccessorFactory::GetImageType(std::shared_ptr<MetadataStre
         return EncodedFormat::WEBP;
     }
 
-    if (memcmp(buff + 4, heifHeader, sizeof(heifHeader) * sizeof(byte)) == 0) {
+    if (memcmp(buff + IMAGE_HEIF_HEADER_OFFSET, heifHeader, sizeof(heifHeader) * sizeof(byte)) == 0) {
         return EncodedFormat::HEIF;
     }
 
