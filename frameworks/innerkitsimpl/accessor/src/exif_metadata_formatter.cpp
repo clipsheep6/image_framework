@@ -183,6 +183,7 @@ const std::set<std::string> READ_WRITE_KEYS = {
     "CompositeImage",
     "Gamma",
     "OffsetTime",
+    "PhotographicSensitivity",
     "MakerNote"
 };
 
