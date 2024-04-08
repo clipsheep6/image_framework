@@ -121,9 +121,11 @@ public:
     NATIVEEXPORT virtual const uint16_t *GetPixel16(int32_t x, int32_t y);
     NATIVEEXPORT virtual const uint32_t *GetPixel32(int32_t x, int32_t y);
     NATIVEEXPORT virtual bool GetARGB32Color(int32_t x, int32_t y, uint32_t &color);
-    NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
-                                    CustomFreePixelMap func, void *dngExternalData = nullptr, FreeExtData extFunc = nullptr);
-    void* GetDngExternalData() const {
+    NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, 
+                                            AllocatorType type, CustomFreePixelMap func,
+                                            void *dngExternalData = nullptr, FreeExtData extFunc = nullptr);
+    void* GetDngExternalData() const
+    {
         if (dngExternalData_ != nullptr) {
             return dngExternalData_;
         }

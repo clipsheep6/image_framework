@@ -478,8 +478,7 @@ static bool parsePackOptions(napi_env env, napi_value root, PackOption* opts)
         }
         // Does not support DNG encoding from Arkts
         opts->format = std::string(buffer);
-        if (opts->format.compare("image/dng") == 0)
-        {
+        if (opts->format.compare("image/dng") == 0) {
             return false;
         }
     } else if (isFormatArray) {
