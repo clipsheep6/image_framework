@@ -34,6 +34,7 @@ namespace OHOS {
 namespace Media {
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
+using FreeExtData = void (*)(void *extData);
 
 typedef struct {
     float scaleX;
@@ -121,7 +122,14 @@ public:
     NATIVEEXPORT virtual const uint32_t *GetPixel32(int32_t x, int32_t y);
     NATIVEEXPORT virtual bool GetARGB32Color(int32_t x, int32_t y, uint32_t &color);
     NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
-                                    CustomFreePixelMap func);
+                                    CustomFreePixelMap func, void *dngExternalData = nullptr, FreeExtData extFunc = nullptr);
+    void* GetDngExternalData() const {
+        if (dngExternalData_ != nullptr) {
+            return dngExternalData_;
+        }
+        return nullptr;
+    }
+    void SetDngExternalData(void *dngExternalData, FreeExtData extFunc);
     NATIVEEXPORT virtual int32_t GetPixelBytes();
     NATIVEEXPORT virtual int32_t GetRowBytes();
     NATIVEEXPORT virtual int32_t GetByteCount();
@@ -405,6 +413,8 @@ private:
     int32_t pixelBytes_ = 0;
     TransColorProc colorProc_ = nullptr;
     void *context_ = nullptr;
+    void *dngExternalData_ = nullptr;
+    FreeExtData releaseExtDataFunc_ = nullptr;
     CustomFreePixelMap custFreePixelMap_ = nullptr;
     CustomFreePixelMap freePixelMapProc_ = nullptr;
     AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;

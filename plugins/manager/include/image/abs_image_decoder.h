@@ -73,6 +73,8 @@ struct DecodeContext {
     PlYuvDataInfo yuvInfo;
     // Out: output the final pixelMap Info, only size is used now.
     PlImageInfo outInfo;
+    void* dngExternalData = nullptr;
+    Media::FreeExtData releaseExtDataFunc = nullptr;
 };
 
 struct ProgDecodeContext {
