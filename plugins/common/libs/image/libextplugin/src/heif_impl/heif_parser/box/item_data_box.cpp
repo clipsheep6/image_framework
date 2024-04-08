@@ -141,6 +141,36 @@ heif_error HeifIlocBox::AppendData(heif_item_id itemId, const std::vector<uint8_
     return heif_error_ok;
 }
 
+heif_error HeifIlocBox::UpdateData(heif_item_id itemID, const std::vector<uint8_t> &data, uint8_t constructionMethod)
+{
+    // check whether this item ID already exists
+    size_t idx;
+    for (idx = 0; idx < items_.size(); idx++) {
+        if (items_[idx].itemId == itemID) {
+            break;
+        }
+    }
+
+    // No item existing return
+    if (idx == items_.size()) {
+        return heif_error_item_not_found;
+    }
+
+    Extent extent;
+    extent.data = data;
+    if (constructionMethod == CONSTRUCTION_METHOD_IDAT_OFFSET) {
+        extent.offset = idatOffset_;
+        extent.length = data.size();
+        idatOffset_ += (int) data.size();
+    }
+
+    // clean any old extends
+    items_[idx].extents.clear();
+    // push  the new extend in
+    items_[idx].extents.push_back(std::move(extent));
+    return heif_error_ok;
+}
+
 void HeifIlocBox::InferFullBoxVersion()
 {
     int minVersion = items_.size() < 0xFFFF ? HEIF_BOX_VERSION_ZERO : HEIF_BOX_VERSION_TWO;

@@ -18,7 +18,6 @@
 #include "image_log.h"
 #include "media_errors.h"
 #include "tiff_parser.h"
-#include <iostream>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -54,8 +53,6 @@ uint32_t HeifExifMetadataAccessor::Read()
             IMAGE_LOGE("The EXIF value is invalid.");
             return ERR_MEDIA_VALUE_INVALID;
         }
-
-        std::cerr << "Creat ExifItemData.  xxxx3" << std::endl;
     }
 
     size_t byteOrderPos;
@@ -71,7 +68,6 @@ uint32_t HeifExifMetadataAccessor::Read()
     }
 
     exifMetadata_ = std::make_shared<ExifMetadata>(exifData);
-
     return SUCCESS;
 }
 
@@ -129,10 +125,21 @@ uint32_t HeifExifMetadataAccessor::Write()
     }
 
     auto image = parser->GetPrimaryImage();
-    heif_error setRet = parser->SetExifMetadata(image, dataBuf.CData(), dataBuf.Size());
-    if (setRet != heif_error::heif_error_ok) {
-        IMAGE_LOGE("The EXIF data failed to set values.");
-        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    ImagePlugin::heif_item_id exifItemId;
+    bool result = GetExifItemId(parser, exifItemId);
+
+    if (!result) {
+        heif_error setRet = parser->UpdateExifMetadata(image, dataBuf.CData(), dataBuf.Size(), exifItemId);
+        if (setRet != heif_error::heif_error_ok) {
+            IMAGE_LOGE("The EXIF data failed to update values.");
+            return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        }
+    } else {
+        heif_error setRet = parser->SetExifMetadata(image, dataBuf.CData(), dataBuf.Size());
+        if (setRet != heif_error::heif_error_ok) {
+            IMAGE_LOGE("The EXIF data failed to set values.");
+            return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        }
     }
 
     HeifStreamWriter writer;

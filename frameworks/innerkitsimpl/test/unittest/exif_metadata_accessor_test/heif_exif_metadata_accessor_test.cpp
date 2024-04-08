@@ -107,7 +107,46 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write001, TestSize.Level3)
     exifMetadata = imageAccessor.Get();
     GetProperty(exifMetadata, "Model");
 
-    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write001 start";
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write001 end";
+}
+
+
+/**
+ * @tc.name: Read001
+ * @tc.desc: test the Heif format get exif properties
+ * @tc.type: FUNC
+ */
+HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Append001 start";
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_NO_EXIF_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
+    HeifExifMetadataAccessor imageAccessor(stream);
+    uint32_t result = imageAccessor.Read();
+    ASSERT_EQ(result, 0);
+    auto exifMetadata = imageAccessor.Get();
+
+    if (exifMetadata == nullptr) {
+        bool ret = imageAccessor.Create();
+        ASSERT_EQ(ret, true);
+        GTEST_LOG_(INFO) << "Create exif matadata success...";
+        exifMetadata = imageAccessor.Get();
+    }
+
+    bool retSet = exifMetadata->SetValue("Model", "test");
+    ASSERT_EQ(retSet, true);
+    retSet = exifMetadata->SetValue("GPSLatitudeRef", "N");
+    ASSERT_EQ(retSet, true);
+    retSet = exifMetadata->SetValue("GPSLongitudeRef", "E");
+    ASSERT_EQ(retSet, true);
+
+    uint32_t errcode = imageAccessor.Write();
+    ASSERT_EQ(errcode, SUCCESS);
+
+    exifMetadata = imageAccessor.Get();
+    GetProperty(exifMetadata, "Model");
+
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write001 end";
 }
 } // namespace Multimedia
 } // namespace OHOS

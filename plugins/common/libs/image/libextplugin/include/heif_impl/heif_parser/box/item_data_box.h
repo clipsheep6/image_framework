@@ -59,6 +59,8 @@ public:
                      const std::vector<uint8_t> &data,
                      uint8_t constructionMethod = 0);
 
+    heif_error UpdateData(heif_item_id itemID, const std::vector<uint8_t> &data, uint8_t constructionMethod);
+
     void InferFullBoxVersion() override;
 
     heif_error Write(HeifStreamWriter &writer) const override;

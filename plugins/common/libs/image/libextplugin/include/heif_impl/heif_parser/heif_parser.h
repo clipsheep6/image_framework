@@ -65,6 +65,9 @@ public:
 
     heif_error SetExifMetadata(const std::shared_ptr<HeifImage> &master_image, const uint8_t *data, uint32_t size);
 
+    heif_error UpdateExifMetadata(const std::shared_ptr<HeifImage> &master_image, const uint8_t *data,
+                                  uint32_t size, heif_item_id itemId);
+
 private:
     // stream
     std::shared_ptr<HeifInputStream> inputStream_;
@@ -169,6 +172,8 @@ private:
 
     heif_error SetMetadata(const std::shared_ptr<HeifImage> &image, const std::vector<uint8_t> &data,
                       const char *item_type, const char *content_type);
+
+    uint8_t GetConstructMethod(const heif_item_id& id);
 };
 } // namespace ImagePlugin
 } // namespace OHOS
