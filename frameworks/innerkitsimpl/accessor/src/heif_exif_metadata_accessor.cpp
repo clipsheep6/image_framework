@@ -47,12 +47,8 @@ uint32_t HeifExifMetadataAccessor::Read()
 
     DataBuf dataBuf;
     if (!GetExifItemData(parser, dataBuf)) {
-        if (this->Create()) {
-            return SUCCESS;
-        } else {
-            IMAGE_LOGE("The EXIF value is invalid.");
-            return ERR_MEDIA_VALUE_INVALID;
-        }
+        IMAGE_LOGE("The EXIF value is invalid.");
+        return ERR_MEDIA_VALUE_INVALID;
     }
 
     size_t byteOrderPos;
