@@ -476,7 +476,12 @@ static bool parsePackOptions(napi_env env, napi_value root, PackOption* opts)
             IMAGE_LOGE("Parse pack option format failed");
             return false;
         }
+        // Does not support DNG encoding from Arkts
         opts->format = std::string(buffer);
+        if (opts->format.compare("image/dng") == 0)
+        {
+            return false;
+        }
     } else if (isFormatArray) {
         uint32_t len = 0;
         if (napi_get_array_length(env, tmpValue, &len) != napi_ok) {

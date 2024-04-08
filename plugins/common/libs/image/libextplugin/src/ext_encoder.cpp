@@ -76,7 +76,7 @@ static const std::map<SkEncodedImageFormat, std::string> FORMAT_NAME = {
     {SkEncodedImageFormat::kPKM, ""},
     {SkEncodedImageFormat::kKTX, ""},
     {SkEncodedImageFormat::kASTC, ""},
-    {SkEncodedImageFormat::kDNG, ""},
+    {SkEncodedImageFormat::kDNG, "image/dng"},
     {SkEncodedImageFormat::kHEIF, IMAGE_HEIF_FORMAT},
 };
 
