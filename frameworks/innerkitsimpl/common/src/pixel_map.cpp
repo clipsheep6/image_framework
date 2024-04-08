@@ -207,7 +207,9 @@ void PixelMap::SetTransformered(bool isTransformered)
     isTransformered_ = isTransformered;
 }
 
-void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type, CustomFreePixelMap func, void *dngExternalData, FreeExtData extFunc)
+void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size,
+                             AllocatorType type, CustomFreePixelMap func,
+                             void *dngExternalData, FreeExtData extFunc)
 {
     if (data_ != nullptr) {
         IMAGE_LOGD("SetPixelsAddr release the existed data first");
