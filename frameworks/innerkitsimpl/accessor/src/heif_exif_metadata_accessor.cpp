@@ -118,7 +118,6 @@ uint32_t HeifExifMetadataAccessor::Write()
 
     std::shared_ptr<ImagePlugin::HeifParser> parser;
     heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(), imageStream_->GetSize(), false, &parser);
-
     if (parseRet != heif_error_ok) {
         IMAGE_LOGE("The EXIF data failed to parser.");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
@@ -127,16 +126,15 @@ uint32_t HeifExifMetadataAccessor::Write()
     auto image = parser->GetPrimaryImage();
     ImagePlugin::heif_item_id exifItemId;
     bool result = GetExifItemId(parser, exifItemId);
-
     if (!result) {
-        heif_error setRet = parser->UpdateExifMetadata(image, dataBuf.CData(), dataBuf.Size(), exifItemId);
-        if (setRet != heif_error::heif_error_ok) {
+        if (parser->UpdateExifMetadata(image, dataBuf.CData(), dataBuf.Size(), exifItemId)
+                        != heif_error::heif_error_ok) {
             IMAGE_LOGE("The EXIF data failed to update values.");
             return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
     } else {
-        heif_error setRet = parser->SetExifMetadata(image, dataBuf.CData(), dataBuf.Size());
-        if (setRet != heif_error::heif_error_ok) {
+        if (parser->SetExifMetadata(image, dataBuf.CData(), dataBuf.Size())
+                        != heif_error::heif_error_ok) {
             IMAGE_LOGE("The EXIF data failed to set values.");
             return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
@@ -144,9 +142,7 @@ uint32_t HeifExifMetadataAccessor::Write()
 
     HeifStreamWriter writer;
     parser->Write(writer);
-
     size_t dataSize = writer.GetDataSize();
-
     if (dataSize == 0) {
         IMAGE_LOGE("The EXIF data failed to be written to the file.");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;

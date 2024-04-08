@@ -640,7 +640,8 @@ heif_error HeifParser::SetExifMetadata(const std::shared_ptr<HeifImage> &image, 
     return SetMetadata(image, content, "Exif", nullptr);
 }
 
-heif_error HeifParser::UpdateExifMetadata(const std::shared_ptr<HeifImage> &master_image, const uint8_t *data, uint32_t size, heif_item_id itemId)
+heif_error HeifParser::UpdateExifMetadata(const std::shared_ptr<HeifImage> &master_image, const uint8_t *data,
+                                          uint32_t size, heif_item_id itemId)
 {
     uint32_t offset = GetExifHeaderOffset(data, size);
     if (offset >= (unsigned int) size) {
@@ -653,11 +654,14 @@ heif_error HeifParser::UpdateExifMetadata(const std::shared_ptr<HeifImage> &mast
     for (int index = 0; index < UINT32_BYTES_NUM; ++index) {
         content[index] = (uint8_t)offsetFourcc[index];
     }
-    memcpy_s(content.data() + UINT32_BYTES_NUM, size, data, size);
+
+    if (memcpy_s(content.data() + UINT32_BYTES_NUM, size, data, size) != 0) {
+        return heif_invalid_exif_data;
+    }
+
     uint8_t construction_method = GetConstructMethod(itemId);
 
-    ilocBox_->UpdateData(itemId, content, construction_method);
-    return heif_error_ok;
+    return ilocBox_->UpdateData(itemId, content, construction_method);
 }
 
 heif_error HeifParser::SetMetadata(const std::shared_ptr<HeifImage> &image, const std::vector<uint8_t> &data,
