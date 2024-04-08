@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <cerrno>
 #include <fcntl.h>
 #include <string>
@@ -40,7 +41,10 @@ BufferMetadataStream::~BufferMetadataStream()
 
 ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
 {
-    buffer_.insert(buffer_.end(), data, data + size);
+    if (currentOffset_ + size > buffer_.capacity()) {
+        buffer_.resize(currentOffset_ + size);
+    }
+    std::copy(data, data + size, buffer_.begin() + currentOffset_);
     currentOffset_ += size;
     return size;
 }
@@ -50,6 +54,9 @@ ssize_t BufferMetadataStream::Read(uint8_t *buf, ssize_t size)
     if (buf == nullptr) {
         IMAGE_LOGE("The buffer provided for reading is null. Please provide a valid buffer.");
         return -1;
+    }
+    if (size == 0) {
+        return 0;
     }
     ssize_t bytesToRead = std::min(size, static_cast<ssize_t>(buffer_.size() - static_cast<size_t>(currentOffset_)));
     std::copy(buffer_.begin() + currentOffset_, buffer_.begin() + currentOffset_ + bytesToRead, buf);
@@ -137,8 +144,8 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
     size_t estimatedSize = src.GetSize();
 
     // Adjust estimatedSize to be a multiple of 4096
-    estimatedSize = ((estimatedSize + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE)
-                    * METADATA_STREAM_PAGE_SIZE;
+    estimatedSize =
+        ((estimatedSize + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) * METADATA_STREAM_PAGE_SIZE;
     buffer_.reserve(estimatedSize);
 
     // Determine the size of the tempBuffer
