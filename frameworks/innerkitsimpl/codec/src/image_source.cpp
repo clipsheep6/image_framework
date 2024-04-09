@@ -550,7 +550,7 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
-void UpdatepPlImageInfo(DecodeContext context, bool isHdr, PlColorSpace colorSpace, ImagePlugin::PlImageInfo &plInfo)
+void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageInfo &plInfo)
 {
     if (isHdr) {
         plInfo.colorSpace = colorSpace;
@@ -589,13 +589,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     }
 
     bool isHdr = false;
-    PlColorSpace colorSpace = PlColorSpace::UNKNOWN;
-    auto res = AIProcess(info.size, context, isHdr, colorSpace);
+    auto res = AIProcess(info.size, context, isHdr);
     if (res != SUCCESS) {
         IMAGE_LOGE("[ImageSource] AIProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
     }
 
-    UpdatepPlImageInfo(context, isHdr, colorSpace, plInfo);
+    UpdatepPlImageInfo(context, isHdr, plInfo);
 
     PixelMapAddrInfos addrInfos;
     ContextToAddrInfos(context, addrInfos);
@@ -2537,7 +2536,7 @@ static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &conte
         .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
         .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
     };
-    GGSError ret = sb->Alloc(requestConfig);
+    GSError ret = sb->Alloc(requestConfig);
     IMAGE_LOGE("[ImageSource]AllocBufferForContext after sb.Alloc, (ret:%{public}u).", ret);
     if (ret != GSERROR_OK) {
         IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
@@ -2668,7 +2667,7 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, Resolu
 }
 #endif
 
-bool ImageSource::NeedAIProcess(bool needAisr, bool needHdr)
+bool ImageSource::NeedAIProcess(Size imageSize, bool needAisr, bool needHdr)
 {
     if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
         IMAGE_LOGD("[ImageSource] AIProcess imageSize ne opts_.desiredSize");
@@ -2689,14 +2688,14 @@ bool ImageSource::NeedAIProcess(bool needAisr, bool needHdr)
         return false;
     }
     IMAGE_LOGI("[ImageSource] =====test====== need aisr or hdr Process :%{public}d hdr:%{public}d", needAisr, needHdr);
-    return true
+    return true;
 }
 
-uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &isHdr, PlColorSpace &colorSpace)
+uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &isHdr)
 {
     bool needAisr = false;
     bool needHdr = false;
-    auto ret = NeedAIProcess(needAisr, needHdr);
+    auto ret = NeedAIProcess(imageSize, needAisr, needHdr);
     if (!ret) {
         return SUCCESS;
     }
@@ -2726,13 +2725,13 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &is
             return res;
         }
         sptr<SurfaceBuffer> outputHdr = AllocBufferForContext(byteCount, context, dstInfo);
-        return AiHdrProcess(output, outputHdr, isHdr, colorSpace);
+        return AiHdrProcess(output, outputHdr, isHdr, context.colorSpace);
         #else
         IMAGE_LOGI("[ImageSource] aisr and AiHdr Process");
         #endif
     } else if (needHdr) {
         #ifdef AI_ENBALE
-        return AiHdrProcess(input, output, isHdr, colorSpace);
+        return AiHdrProcess(input, output, isHdr, context.colorSpace);
         #else
         IMAGE_LOGI("[ImageSource] AiHdrProcess");
         #endif
