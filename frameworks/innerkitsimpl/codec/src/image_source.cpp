@@ -550,6 +550,25 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
+void UpdatepPlImageInfo(DecodeContext context, bool isHdr, PlColorSpace colorSpace, ImagePlugin::PlImageInfo &plInfo)
+{
+    if (isHdr) {
+        plInfo.colorSpace = colorSpace;
+    }
+    if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
+        // hardware decode success, update plInfo.size
+        IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
+            "(%{public}u, %{public}u)", plInfo.size.width, plInfo.size.height, context.outInfo.size.width,
+            context.outInfo.size.height);
+        plInfo.size = context.outInfo.size;
+    }
+    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
+        context.yuvInfo.imageSize.width != 0) {
+        plInfo.yuvDataInfo = context.yuvInfo;
+        plInfo.size = context.yuvInfo.imageSize;
+    }
+}
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
     uint64_t decodeStartTime = GetNowTimeMicroSeconds();
@@ -570,33 +589,21 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     }
 
     bool isHdr = false;
-    auto res = AIProcess(info.size, context, isHdr);
+    auto res = AIProcess(info.size, context, isHdr, colorSpace);
     if (res != SUCCESS) {
         IMAGE_LOGE("[ImageSource] AIProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
         isHdr = false;
     }
 
-    if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
-        // hardware decode success, update plInfo.size
-        IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
-            "(%{public}u, %{public}u)", plInfo.size.width, plInfo.size.height, context.outInfo.size.width,
-            context.outInfo.size.height);
-        plInfo.size = context.outInfo.size;
-    }
-    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
-        context.yuvInfo.imageSize.width != 0) {
-        plInfo.yuvDataInfo = context.yuvInfo;
-        plInfo.size = context.yuvInfo.imageSize;
-    }
+    UpdatepPlImageInfo(context, isHdr, colorSpace, plInfo);
+
     PixelMapAddrInfos addrInfos;
     ContextToAddrInfos(context, addrInfos);
     auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, errorCode);
     if (pixelMap == nullptr) {
         return nullptr;
     }
-    if (isHdr) {
-        pixelMap->SetIsHdr(true);
-    }
+
     if (!context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
     }
@@ -2483,9 +2490,11 @@ bool ImageSource::IsSupportGenAstc()
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
 
-sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
+static SurfaceBuffer* CopyContextIntoSurfaceBuffer(uint32_t count, DecodeContext &context, Size &sizeInfo)
 {
+    IMAGE_LOGE("[CopyContextIntoSurfaceBuffer]enter");
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
+    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer requestConfig, sizeInfo.width:%{public}u,height:%{public}u.", sizeInfo.width, sizeInfo.height);
     BufferRequestConfig requestConfig = {
         .width = sizeInfo.width,
         .height = sizeInfo.height,
@@ -2497,12 +2506,46 @@ sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context
         .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
     };
     GSError ret = sb->Alloc(requestConfig);
+    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer after sb.Alloc, (ret:%{public}u).", ret);
     if (ret != GSERROR_OK) {
         IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
         return {};
     }
     void* nativeBuffer = sb.GetRefPtr();
     int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer after sb.SurfaceBuffer_Reference, (err:%{public}u).", err);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("NativeBufferReference failed");
+        return {};
+    }
+    memcpy_s(static_cast<void*>(sb->GetVirAddr()), count, context.pixelsBuffer.buffer, context.pixelsBuffer.bufferSize);
+    return sb;
+}
+
+static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
+{
+    IMAGE_LOGE("[AllocBufferForContext]enter");
+    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
+    IMAGE_LOGE("[ImageSource]AllocBufferForContext requestConfig, sizeInfo.width:%{public}u,height:%{public}u.", sizeInfo.width, sizeInfo.height);
+    BufferRequestConfig requestConfig = {
+        .width = sizeInfo.width,
+        .height = sizeInfo.height,
+        .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
+        .timeout = 0,
+        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
+        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
+    };
+    GGSError ret = sb->Alloc(requestConfig);
+    IMAGE_LOGE("[ImageSource]AllocBufferForContext after sb.Alloc, (ret:%{public}u).", ret);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
+        return {};
+    }
+    void* nativeBuffer = sb.GetRefPtr();
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    IMAGE_LOGE("[ImageSource]AllocBufferForContext after sb.SurfaceBuffer_Reference, (err:%{public}u).", err);
     if (err != OHOS::GSERROR_OK) {
         IMAGE_LOGE("NativeBufferReference failed");
         return {};
@@ -2512,121 +2555,151 @@ sptr<SurfaceBuffer> AllocBufferForContext(uint32_t count, DecodeContext &context
     context.pixelsBuffer.context = nativeBuffer;
     context.allocatorType = AllocatorType::DMA_ALLOC;
     context.freeFunc = nullptr;
+    IMAGE_LOGE("[ImageSource]AllocBufferForContext done: context.pixelsBuffer.bufferSize=count:%{public}u.", count);
     return sb;
 }
 
 #ifdef AI_ENABLE
-void SetMetadata(sptr<SurfaceBuffer> &buffer, CM_ColorSpace_Info colorSpaceInfo)
+static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
 {
-    std::vector<uint8_t> values;
-    values.resize(sizeof(CM_ColorSpace_Info));
-    memcpy_s(values, sizeof(CM_ColorSpace_Info), static_cast<uint8_t*>&colorSpaceInfo, sizeof(CM_ColorSpace_Info));
-
-    buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
+    std::vector<uint8_t> metadata;
+    metadata.resize(sizeof(value));
+    (void)memcpy_s(metadata.data(), metadata.size(), &value, sizeof(value));
+    uint32_t err = buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, metadata);
+    IMAGE_LOGD("Buffer set metadata type, ret: %{public}d\n", err);
 }
 
-void SetMetadata(sptr<SurfaceBuffer> &buffer, uint32_t cmMata)
+static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorspaceInfo)
 {
-    std::vector<uint8_t> values;
-    values.resize(sizeof(uint32_t));
-    memcpy_s(values, sizeof(uint32_t), static_cast<uint8_t*>&cmMata, sizeof(uint32_t));
-
-    buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, values);
-}
-#endif
-
-#ifdef AI_ENBALE
-#ifdef AI_DLOPEN
-static bool g_isAiSoInit = false;
-static void *g_aiSoHandle = nullptr;
-using AiProcess = uint32_t (*)(sptr<SurfaceBuffer> &, sptr<SurfaceBuffer> &);
-using SetParameter = void (*)(QualityEnhancerImage);
-static AiProcess g_aiProcessFunc = nullptr;
-static SetParameter g_aiSetParameterFunc = nullptr;
-const std::string g_aiSo = "/system/lib64/libvideoprocessingengine.z.so";
-
-static bool CheckClBinIsExist(const std::string &name)
-{
-    return (access(name.c_str(), F_OK) != -1); // -1 means that the file is  not exist
+    std::vector<uint8_t> metadata;
+    metadata.resize(sizeof(CM_ColorSpaceInfo));
+    (void)memcpy_s(metadata.data(), metadata.size(), &colorspaceInfo, sizeof(CM_ColorSpaceInfo));
+    uint32_t err = buffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, metadata);
+    IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
 }
 
-static uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output,
-    CM_ColorSpace_Info InputColorSpaceInfo)
+constexpr CM_ColorSpaceInfo INPUT_COLORSPACE_INFO = {
+        COLORPRIMARIES_P3_D65, TRANSFUNC_SRGB, MATRIX_BT601_N, RANGE_LIMITED
+};
+
+constexpr CM_ColorSpaceInfo OUTPUT_COLORSPACE_INFO = {
+        COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
+};
+
+void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType, CM_ColorSpaceInfo &colorSpaceInfo)
 {
-    if (!CheckClBinIsExist(g_aiSo)) {
-        IMAGE_LOGE("ai AiHdrProcess: not find %{public}s!", g_aiSo.c_str());
-        return false;
-    }
+    uint32_t colorSpace = static_cast<uint32_t>(colorSpaceType);
+    colorSpaceInfo.primaries = static_cast<CM_ColorPrimaries>(colorSpace & CM_ColorSpaceMask::CM_PRIMARIES_MASK);
+    colorSpaceInfo.transfunc = static_cast<CM_TransFunc>((colorSpace & CM_ColorSpaceMask::CM_TRANSFUNC_MASK) >> TRANSFUNC_OFFSET);
+    colorSpaceInfo.matrix = static_cast<CM_Matrix>((colorSpace & CM_ColorSpaceMask::CM_MATRIX_MASK) >> MATRIX_OFFSET);
+    colorSpaceInfo.range = static_cast<CM_Range>((colorSpace & CM_ColorSpaceMask::CM_RANGE_MASK) >> RANGE_OFFSET);
+}
 
-    if (!g_isAiSoInit) {
-        g_aiSoHandle = dlopen(g_aiSo.c_str(), 1);
-        if (g_aiSoHandle == nullptr) {
-            IMAGE_LOGE("libvideoprocessingenginelibai dlopen failed!");
-            return false;
-        }
-        g_aiProcessFunc = reinterpret_cast<AiProcess>(dlsym(g_aiSoHandle, "Process"));
-        if (g_aiProcessFunc == nullptr) {
-            IMAGE_LOGE("libvideoprocessingengine dlsym Process failed!");
-            dlclose(g_aiSoHandle);
-            return false;
-        }
-        g_aiSetParameterFunc = reinterpret_cast<SetParameter>(dlsym(g_aiSoHandle, "SetParameter"));
-        if (g_aiSetParameterFunc == nullptr) {
-            IMAGE_LOGE("libai dlsym SetParameter failed!");
-            dlclose(g_aiSoHandle);
-            return false;
-        }
-        g_isAiSoInit = true;
-    }
-
-    if (!g_aiProcessFunc(input, output)) {
-        IMAGE_LOGE("astc g_aiProcessFunc failed. notice: astc memory may be polluted!");
-        return false;
+static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
+{
+    IMAGE_LOGE("[ImageSource]ConvertColorSpaceType colorSpace=%{public}u", colorSpace);
+    switch (colorSpace) {
+        case PlColorSpace::DISPLAY_P3:
+            return CM_ColorSpaceType::CM_P3_LIMIT;
+        default:
+            return CM_ColorSpaceType::CM_P3_LIMIT; // CM_SRGB_LIMIT;
     }
 }
-#else
-uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, CM_ColorSpace_Info InputColorSpaceInfo)
-{
-    SetMetadata(input, InputColorSpaceInfo);
-    SetMetadata(input, CM_MATEDATA_NONE);
 
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, bool &isHdr, PlColorSpace &colorSpace)
+{
+    IMAGE_LOGI("[ImageSource]AiHdrProcess enter....................");
+
+    int32_t ret;
     auto csc = ColorSpaceConverter::Create();
-    return  csc->Process(input, output);
+    if (csc == nullptr) {
+        IMAGE_LOGE("Create Detail enhancer failed");
+        return -1;
+    }
+    ColorSpaceConverterParameter parameter;
+    parameter.renderIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMETRIC;
+    ret = csc->SetParameter(parameter);
+    IMAGE_LOGI("[ImageSource]AiHdrProcess SetParameter ret=%{public}u", ret);
+
+    CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(context.colorSpace);
+    CM_ColorSpaceInfo colorSpaceInfo;
+    ConvertColorSpaceTypeToInfo(colorSpaceType, colorSpaceInfo);
+
+    SetMeatadata(output, OUTPUT_COLORSPACE_INFO);
+    SetMeatadata(output, CM_IMAGE_HDR_VIVID_SINGLE);
+	SetMeatadata(input, colorSpaceInfo);
+    SetMeatadata(input, CM_METADATA_NONE);
+
+    ret = csc->Process(input, output);
+    if (ret != VPE_ALGO_ERR_OK) {
+        IMAGE_LOGE("[ImageSource]AiHdrProcess csc->Process ret=%{public}u", ret);
+    }
+    isHdr = true;
+    return ret;
 }
-#endif
 
 uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, ResolutionQuality resolutionQuality)
 {
-    DetailEnhancerParameters parameter;
-    parameter.level = resolutionQuality;
+    auto detailEnh = DetailEnhancerImage::Create();
+    if (detailEnh == nullptr) {
+        IMAGE_LOGE("Create Detail enhancer failed");
+        return ERR_IMAGE_DETAIL_ENHANCER_CREATE_FAIL;
+    }
+    // deafult level DETAIL_ENH_LEVEL_SUPER
+    DetailEnhancerParameters param {
+        .uri = "",
+        .level = DETAIL_ENH_LEVEL_SUPER,
+    };
 
-    DetailEnhancerImage *dei = DetailEnhancerImageCreate();
-    dei->SetParameter(parameter);
-    return qei->Process(input, output);
+    if (resolutionQuality != ResolutionQuality::SUPER) {
+        param.level = DETAIL_ENH_LEVEL_HIGH;
+    }
+    auto ret = detailEnh->SetParameter(param);
+    if (ret != VPE_ALGO_ERR_OK) {
+        IMAGE_LOGE("DetailEnhancerImage SetParameter failed!");
+        return ret;
+    }
+
+    int32_t ret = detailEnh->Process(input, output);
+    if (ret != VPE_ALGO_ERR_OK){
+        IMAGE_LOGE("DetailEnhancerImage Processed failed");
+    }
+    return ret;
 }
 #endif
 
-uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &isHdr)
+bool ImageSource::NeedAIProcess(bool needAisr, bool needHdr)
 {
-    bool isAisr = false;
     if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
         IMAGE_LOGD("[ImageSource] AIProcess imageSize ne opts_.desiredSize");
-        isAisr = true;
+        needAisr = true;
     }
 
     if (opts_.decodingDynamicRange == DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
         IMAGE_LOGD("[ImageSource] decodingDynamicRange is hdr");
         #ifdef AI_ENBALE
         if (context.dynamicRange != DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
-            isHdr = true;
+            needHdr = true;
         }
         #endif
     }
-    if (!isAisr && !isHdr) {
+
+    if (!needAisr && !needHdr) {
         IMAGE_LOGD("[ImageSource] no need aisr and hdr Process");
-        return SUCCESS;
+        return false;
     }
     IMAGE_LOGI("[ImageSource] =====test====== need aisr or hdr Process :%{public}d hdr:%{public}d", isAisr, isHdr);
+    return true
+}
+
+uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &isHdr, PlColorSpace &colorSpace)
+{
+    bool needAisr = false;
+    bool needHdr = false;
+    auto ret = NeedAIProcess(needAisr, needHdr);
+    if (!ret) {
+        return SUCCESS;
+    }
 
     Size dstInfo;
     dstInfo.width = context.outInfo.size.width;
@@ -2637,39 +2710,39 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &is
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
         IMAGE_LOGI("[ImageSource] =====test====== AllocBufferForContext");
-        #ifdef AI_ENABLE
+        #ifdef AI_ENBALE
         uint32_t byteCount = context.pixelsBuffer.bufferSize;
         input = AllocBufferForContext(byteCount, context, dstInfo);
         #endif
     }
-#ifdef AI_ENBALE
+    #ifdef AI_ENBALE
     sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
-    if (isAisr && isHdr) {
+    #endif
+    if (needAisr && needHdr) {
+        #ifdef AI_ENBALE
         auto res = AiSrProcess(input, output, opts_.resolutionQuality);
         if (res != SUCCESS) {
             IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
             return res;
         }
         sptr<SurfaceBuffer> outputHdr = AllocBufferForContext(byteCount, context, dstInfo);
-        return AiHdrProcess(output, outputHdr);
-    } else if (isHdr) {
-        return AiHdrProcess(input, output);
+        return AiHdrProcess(output, outputHdr, isHdr, colorSpace);
+        #else
+        IMAGE_LOGI("[ImageSource] aisr and AiHdr Process");
+        #endif
+    } else if (needHdr) {
+        #ifdef AI_ENBALE
+        return AiHdrProcess(input, output, isHdr, colorSpace);
+        #else
+        IMAGE_LOGI("[ImageSource] AiHdrProcess");
+        #endif
     } else {
+        #ifdef AI_ENBALE
         return AiSrProcess(input, output, opts_.resolutionQuality);
+        #else
+        IMAGE_LOGI("[ImageSource] AiSrProcess ");
+        #endif
     }
-#else
-    IMAGE_LOGI("[ImageSource] =====test====== AllocBufferForContext output");
-    if (isAisr && isHdr) {
-        IMAGE_LOGI("[ImageSource] =====test====== AiSrProcess start");
-        IMAGE_LOGI("[ImageSource] =====test====== AllocBufferForContext outputHdr");
-        IMAGE_LOGI("[ImageSource] =====test====== AiHdrProcess start");
-    } else if (isHdr) {
-        IMAGE_LOGI("[ImageSource] =====test====== just AiHdrProcess start");
-    } else {
-        IMAGE_LOGI("[ImageSource] =====test====== just AiSrProcess start");
-    }
-    return SUCCESS;
-#endif
 }
 
 uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
