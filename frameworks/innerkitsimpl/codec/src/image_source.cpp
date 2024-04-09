@@ -56,6 +56,9 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
+#ifdef AI_ENABLE
+#include "detail_enhancer_image.h"
+#endif
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -159,6 +162,12 @@ constexpr uint8_t BYTE_POS_3 = 3;
 const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress.z.so";
 const auto KEY_SIZE = 2;
 const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
+
+#ifdef AI_ENABLE
+static constexpr uint32_t TRANSFUNC_OFFSET = 8;
+static constexpr uint32_t MATRIX_OFFSET = 16;
+static constexpr uint32_t RANGE_OFFSET = 21;
+#endif
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
@@ -2489,6 +2498,7 @@ bool ImageSource::IsSupportGenAstc()
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
 
+#ifdef AI_ENABLE
 static SurfaceBuffer* CopyContextIntoSurfaceBuffer(uint32_t count, DecodeContext &context, Size &sizeInfo)
 {
     IMAGE_LOGE("[CopyContextIntoSurfaceBuffer]enter");
@@ -2557,6 +2567,7 @@ static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &conte
     IMAGE_LOGE("[ImageSource]AllocBufferForContext done: context.pixelsBuffer.bufferSize=count:%{public}u.", count);
     return sb;
 }
+#endif
 
 #ifdef AI_ENABLE
 static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
