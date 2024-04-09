@@ -553,7 +553,7 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
 void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageInfo &plInfo)
 {
     if (isHdr) {
-        plInfo.colorSpace = colorSpace;
+        plInfo.colorSpace = context.colorSpace;
     }
     if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
         // hardware decode success, update plInfo.size
