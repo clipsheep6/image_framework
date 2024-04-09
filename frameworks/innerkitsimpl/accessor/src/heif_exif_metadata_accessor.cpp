@@ -98,7 +98,7 @@ uint32_t HeifExifMetadataAccessor::Write()
     }
 
     uint_8 *dataBlob = nullptr;
-    size_t size = 0;
+    uint32_t size = 0;
     TiffParser::Encode(&dataBlob, size, exifData);
 
     if (dataBlob == nullptr) {
