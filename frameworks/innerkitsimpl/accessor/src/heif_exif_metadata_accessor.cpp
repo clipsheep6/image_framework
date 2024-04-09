@@ -112,6 +112,11 @@ uint32_t HeifExifMetadataAccessor::Write()
         return ERR_MEDIA_WRITE_PARCEL_FAIL;
     }
 
+    return WriteMetadata(dataBuf);
+}
+
+uint32_t HeifExifMetadataAccessor::WriteMetadata(DataBuf &dataBuf)
+{
     std::shared_ptr<ImagePlugin::HeifParser> parser;
     heif_error parseRet = HeifParser::MakeFromMemory(imageStream_->GetAddr(), imageStream_->GetSize(), false, &parser);
     if (parseRet != heif_error_ok) {
