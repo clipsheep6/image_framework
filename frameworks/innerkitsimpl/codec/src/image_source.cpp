@@ -593,7 +593,6 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     auto res = AIProcess(info.size, context, isHdr, colorSpace);
     if (res != SUCCESS) {
         IMAGE_LOGE("[ImageSource] AIProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
-        isHdr = false;
     }
 
     UpdatepPlImageInfo(context, isHdr, colorSpace, plInfo);
@@ -2689,7 +2688,7 @@ bool ImageSource::NeedAIProcess(bool needAisr, bool needHdr)
         IMAGE_LOGD("[ImageSource] no need aisr and hdr Process");
         return false;
     }
-    IMAGE_LOGI("[ImageSource] =====test====== need aisr or hdr Process :%{public}d hdr:%{public}d", isAisr, isHdr);
+    IMAGE_LOGI("[ImageSource] =====test====== need aisr or hdr Process :%{public}d hdr:%{public}d", needAisr, needHdr);
     return true
 }
 
