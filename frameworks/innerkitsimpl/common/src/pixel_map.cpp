@@ -330,7 +330,6 @@ int32_t PixelMap::GetAllocatedByteCount(const ImageInfo& info)
 unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLength, BUILD_PARAM &info,
     const InitializationOptions &opts, int &errorCode)
 {
-    IMAGE_LOGE("[PixelMap]Create: make pixelmap failed!");
     int offset = info.offset_;
     if (!CheckParams(colors, colorLength, offset, info.width_, opts)) {
         return nullptr;
