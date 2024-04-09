@@ -1373,6 +1373,20 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write007, TestSize.Level3)
     delete []buf;
 }
 
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write008, TestSize.Level3)
+{
+    BufferMetadataStream stream;
+    byte *buf = new byte[2000];
+    byte *buf2 = new byte[500];
+    ASSERT_TRUE(stream.Open());
+    stream.Write(buf, 2000);
+    stream.Write(buf2, 500);
+    stream.Write(buf2, 500);
+    ASSERT_EQ(stream.GetSize(), 3000);
+    delete []buf;
+    delete []buf2;
+}
+
 /**
  * @tc.name: BufferMetadataStream_Close001
  * @tc.desc: Test the Close function of BufferMetadataStream with an empty stream

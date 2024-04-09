@@ -41,7 +41,7 @@ BufferMetadataStream::~BufferMetadataStream()
 
 ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
 {
-    if (currentOffset_ + size > buffer_.capacity()) {
+    if (currentOffset_ + size > buffer_.size()) {
         buffer_.resize(currentOffset_ + size);
     }
     std::copy(data, data + size, buffer_.begin() + currentOffset_);
