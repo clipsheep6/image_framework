@@ -284,18 +284,6 @@ static uint8_t GetYuv420U(uint32_t x, uint32_t y, Size &size, PixelFormat format
                 return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1));
             }
             return *(in + width * height + (y / NUM_2) * width + (x & ~1));
-        case PixelFormat::YU12:
-            if (width & 1) {
-                return *(in + y / NUM_2 + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
-            }
-            return *(in + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
-        case PixelFormat::YV12:
-            if (width & 1) {
-                return *(in + height / NUM_2 + y / NUM_2 + (width * height) + (width / NUM_2) * (height / NUM_2) +
-                            (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
-            }
-            return *(in + (width * height) + (width / NUM_2) * (height / NUM_2) +
-                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
         default:
             break;
     }
@@ -318,19 +306,6 @@ static uint8_t GetYuv420V(uint32_t x, uint32_t y, Size &size, PixelFormat format
                 return *(in + y / NUM_2 * NUM_2 + width * height + (y / NUM_2) * (width - 1) + (x & ~1) + 1);
             }
             return *(in + width * height + (y / NUM_2) * width + (x & ~1) + 1);
-        case PixelFormat::YU12:
-            if (width & 1) {
-                return *(in + height / NUM_2 + y / NUM_2 + (width * height) + (width / NUM_2) * (height / NUM_2) +
-                            (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
-            }
-            return *(in + (width * height) + (width / NUM_2) * (height / NUM_2) +
-                        (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
-            break;
-        case PixelFormat::YV12:
-            if (width & 1) {
-                return *(in + y / NUM_2 + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
-            }
-            return *(in + (width * height) + (y / NUM_2) * (width / NUM_2) + (x / NUM_2));
         default:
             break;
     }

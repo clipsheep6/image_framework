@@ -768,6 +768,10 @@ static void CopyYuvInfo(YUVDataInfo &yuvInfo, ImagePlugin::PlImageInfo &plInfo)
     yuvInfo.u_stride = plInfo.yuvDataInfo.u_stride;
     yuvInfo.v_stride = plInfo.yuvDataInfo.v_stride;
     yuvInfo.uv_stride = plInfo.yuvDataInfo.uv_stride;
+    yuvInfo.yOffset = plInfo.yuvDataInfo.yOffset;
+    yuvInfo.uOffset = plInfo.yuvDataInfo.uOffset;
+    yuvInfo.vOffset = plInfo.yuvDataInfo.vOffset;
+    yuvInfo.uvOffset = plInfo.yuvDataInfo.uvOffset;
 }
 
 static bool ResizePixelmap(std::unique_ptr<PixelMap>& pixelMap, uint64_t imageId, DecodeOptions &opts)

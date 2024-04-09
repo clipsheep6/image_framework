@@ -230,7 +230,7 @@ uint32_t JpegDecoderYuv::GetJpegDecompressedYuvSize(uint32_t width, uint32_t hei
     return totalSizeForDecodeData;
 }
 
-void JpegDecoderYuv::InitYuvDataOutInfoTo420(uint32_t width, uint32_t height, PlYuvDataInfo &info)
+void JpegDecoderYuv::InitYuvDataOutInfoTo420(uint32_t width, uint32_t height, PlYuvDataInfo &info, JpegYuvFmt fmt)
 {
     if (width == 0 || height == 0) {
         return;
@@ -244,6 +244,14 @@ void JpegDecoderYuv::InitYuvDataOutInfoTo420(uint32_t width, uint32_t height, Pl
     info.y_stride = info.y_width;
     info.u_stride = info.uv_width;
     info.v_stride = info.uv_width;
+    info.yOffset = 0;
+    if (fmt == OutFmt_YU12) {
+        info.uOffset = info.y_height * info.y_stride;
+        info.vOffset = info.uOffset + info.uv_height * info.u_stride;
+    } else {
+        info.vOffset = info.y_height * info.y_stride;
+        info.uOffset = info.vOffset + info.uv_height * info.v_stride;
+    }
 }
 
 void JpegDecoderYuv::InitYuvDataOutInfoTo420NV(uint32_t width, uint32_t height, PlYuvDataInfo &info)
@@ -259,6 +267,8 @@ void JpegDecoderYuv::InitYuvDataOutInfoTo420NV(uint32_t width, uint32_t height, 
     info.uv_height = Get420OutPlaneHeight(UCOM, height);
     info.y_stride = info.y_width;
     info.uv_stride = info.uv_width + info.uv_width;
+    info.yOffset = 0;
+    info.uvOffset = info.y_height * info.y_stride;
 }
 
 void JpegDecoderYuv::InitYuvDataOutInfo(uint32_t width, uint32_t height, PlYuvDataInfo &info)
@@ -336,7 +346,7 @@ int JpegDecoderYuv::DoDecode(DecodeContext &context, JpegDecoderYuvParameter &de
     tjDestroy(dehandle);
     if (ret == JpegYuvDecodeError_Success) {
         if (JpegDecoderYuv::IsYU12YV12Format(decodeParameter_.outfmt_)) {
-            JpegDecoderYuv::InitYuvDataOutInfoTo420(outwidth, outheight, context.yuvInfo);
+            JpegDecoderYuv::InitYuvDataOutInfoTo420(outwidth, outheight, context.yuvInfo, decodeParameter_.outfmt_);
         } else {
             JpegDecoderYuv::InitYuvDataOutInfoTo420NV(outwidth, outheight, context.yuvInfo);
         }

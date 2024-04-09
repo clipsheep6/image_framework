@@ -29,7 +29,7 @@
 #include "image_log.h"
 #include "image_mdk_common.h"
 #include "image_system_properties.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #endif
 
@@ -176,11 +176,6 @@ static int32_t GetVOffset(int32_t width, int32_t height)
 #endif
 
 // The stride of u and v are the same, Yuv420P u, v single planer
-static int32_t GetUStride(int32_t width)
-{
-    return (width + 1) / NUM_2;
-}
-
 static int32_t GetUVHeight(int32_t height)
 {
     return (height + 1) / NUM_2;
@@ -202,7 +197,7 @@ void PixelYuv::rotate(float degrees)
         IMAGE_LOGE("rotate CreateMemory failed");
         return;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (dstMemory->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -244,7 +239,7 @@ uint32_t PixelYuv::crop(const Rect &rect)
         IMAGE_LOGE("crop CreateMemory failed");
         return ERR_IMAGE_CROP;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (dstMemory->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -286,7 +281,7 @@ void PixelYuv::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
         IMAGE_LOGE("scale CreateMemory failed");
         return;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (dstMemory->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -323,7 +318,7 @@ bool PixelYuv::resize(float xAxis, float yAxis)
         IMAGE_LOGE("resize CreateMemory failed");
         return false;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (dstMemory->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -365,7 +360,7 @@ void PixelYuv::flip(bool xAxis, bool yAxis)
         IMAGE_LOGE("flip CreateMemory failed");
         return;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (dstMemory->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -574,7 +569,7 @@ void PixelYuv::flip(bool xAxis, bool yAxis)
         IMAGE_LOGE("flip CreateMemory failed");
         return;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (dstMemory->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -626,7 +621,10 @@ uint32_t PixelYuv::WritePixels(const uint8_t *source, const uint64_t &bufferSize
     srcInfo.size.height = region.height;
     srcInfo.size.width = region.width;
     srcInfo.pixelFormat = imageInfo_.pixelFormat;
-    if (!PixelYuvUtils::WriteYuvConvert(source + offset, srcInfo, data_, dstPosition, imageInfo_)) {
+    PixelYuvInfo pixelYuvInfo;
+    pixelYuvInfo.imageInfo = imageInfo_;
+    pixelYuvInfo.yuvDataInfo = yuvDataInfo_;
+    if (!PixelYuvUtils::WriteYuvConvert(source + offset, srcInfo, data_, dstPosition, pixelYuvInfo)) {
         IMAGE_LOGE("write pixel by rect call WriteYuvConvert fail.");
         return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
     }
@@ -673,7 +671,7 @@ void PixelYuv::translate(float xAxis, float yAxis)
         IMAGE_LOGE("translate CreateMemory failed");
         return;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (dstMemory->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -682,13 +680,14 @@ void PixelYuv::translate(float xAxis, float yAxis)
 #endif
     XYaxis xyAxis = {xAxis, yAxis};
     uint8_t *dst = reinterpret_cast<uint8_t *>(dstMemory->data.data);
-    PixelYuvUtils::SetTranslateDataDefault(dst, width, height);
+    PixelYuvInfo pixelYuvInfo;
+    pixelYuvInfo.imageInfo = imageInfo_;
+    pixelYuvInfo.yuvDataInfo = yuvDataInfo_;
+    PixelYuvUtils::SetTranslateDataDefault(dst, pixelYuvInfo);
     if (!PixelYuvUtils::YuvTranslate(data_, imageInfo_, dst, xyAxis)) {
         dstMemory->Release();
         return;
     }
-    imageInfo_.size.width = width;
-    imageInfo_.size.height = height;
 
     SetPixelsAddr(dst, nullptr, dstSize, dstMemory->GetType(), nullptr);
 }
@@ -703,7 +702,11 @@ uint32_t PixelYuv::ReadPixel(const Position &pos, uint32_t &dst)
         IMAGE_LOGE("read pixel by pos source data is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
     }
-    PixelYuvUtils::YuvReadPixel(data_, imageInfo_.size, imageInfo_.pixelFormat, pos, dst);
+    PixelYuvInfo pixelYuvInfo;
+    pixelYuvInfo.imageInfo = imageInfo_;
+    pixelYuvInfo.yuvDataInfo = yuvDataInfo_;
+    PixelYuvUtils::YuvReadPixel(data_, pixelYuvInfo, pos, dst);
+    imageInfo_.size = pixelYuvInfo.imageInfo.size;
     return SUCCESS;
 }
 
@@ -713,7 +716,12 @@ bool PixelYuv::WritePixels(const uint32_t &color)
         IMAGE_LOGE("erase pixels by color current pixel map data is null.");
         return false;
     }
-    PixelYuvUtils::Yuv420WritePixels(imageInfo_.size, data_, imageInfo_.pixelFormat, color);
+
+    PixelYuvInfo pixelYuvInfo;
+    pixelYuvInfo.imageInfo = imageInfo_;
+    pixelYuvInfo.yuvDataInfo = yuvDataInfo_;
+    PixelYuvUtils::Yuv420WritePixels(pixelYuvInfo, data_, color);
+    imageInfo_.size = pixelYuvInfo.imageInfo.size;
     return true;
 }
 
@@ -727,7 +735,11 @@ uint32_t PixelYuv::WritePixel(const Position &pos, const uint32_t &color)
         IMAGE_LOGE("write pixel by pos but current pixelmap data is nullptr.");
         return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
     }
-    PixelYuvUtils::YuvWritePixel(data_, imageInfo_.size, imageInfo_.pixelFormat, pos, color);
+    PixelYuvInfo pixelYuvInfo;
+    pixelYuvInfo.imageInfo = imageInfo_;
+    pixelYuvInfo.yuvDataInfo = yuvDataInfo_;
+    PixelYuvUtils::YuvWritePixel(data_, pixelYuvInfo, pos, color);
+    imageInfo_.size = pixelYuvInfo.imageInfo.size;
     return SUCCESS;
 }
 
@@ -820,13 +832,6 @@ uint32_t PixelYuv::GetImageSize(int32_t width, int32_t height)
 
 void PixelYuv::AssignYuvDataOnType(PixelFormat format, int32_t width, int32_t height)
 {
-    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
-        yuvDataInfo_.y_width = width;
-        yuvDataInfo_.y_height = height;
-        yuvDataInfo_.y_stride = width;
-        yuvDataInfo_.u_stride = GetUStride(width);
-        yuvDataInfo_.v_stride = GetUStride(width);
-    }
     if (format == PixelFormat::NV12 || format == PixelFormat::NV21) {
         yuvDataInfo_.y_width = width;
         yuvDataInfo_.y_height = height;
@@ -839,8 +844,7 @@ void PixelYuv::AssignYuvDataOnType(PixelFormat format, int32_t width, int32_t he
 
 bool PixelYuv::IsYuvFormat(PixelFormat format)
 {
-    return format == PixelFormat::NV21 || format == PixelFormat::NV12 ||
-        format == PixelFormat::YU12 || format == PixelFormat::YV12;
+    return format == PixelFormat::NV21 || format == PixelFormat::NV12;
 }
 
 #ifdef IMAGE_COLORSPACE_FLAG
@@ -904,7 +908,7 @@ uint32_t PixelYuv::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
     src.info = ToSkImageInfo(imageInfo_, ToSkColorSpace(this));
     uint64_t rowStride = src.info.minRowBytes();
     uint8_t *srcData = data_;
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (GetAllocatorType() == AllocatorType::DMA_ALLOC && GetFd() != nullptr) {
         SurfaceBuffer *sbBuffer = reinterpret_cast<SurfaceBuffer *>(GetFd());
         rowStride = sbBuffer->GetStride();

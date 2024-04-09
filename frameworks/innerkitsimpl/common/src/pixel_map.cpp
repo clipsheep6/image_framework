@@ -2214,8 +2214,7 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
     }
     pixelMemInfo.isAstc = pixelMap->IsAstc();
     delete tmpPixelMap;
-    if (imgInfo.pixelFormat == PixelFormat::NV21 || imgInfo.pixelFormat == PixelFormat::NV12 ||
-        imgInfo.pixelFormat == PixelFormat::YU12 || imgInfo.pixelFormat == PixelFormat::YV12) {
+    if (imgInfo.pixelFormat == PixelFormat::NV21 || imgInfo.pixelFormat == PixelFormat::NV12) {
         pixelMap = new PixelYuv();
     } else {
         pixelMap = new PixelMap();

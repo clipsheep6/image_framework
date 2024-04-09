@@ -142,10 +142,7 @@ static uint32_t RGBToRGBx(PixelMap *pixelMap, SkImageInfo &skInfo, TmpBufferHold
 
 static bool IsYuvImage(PixelFormat format)
 {
-    if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
-        return true;
-    }
-    return false;
+    return format == PixelFormat::NV21 || format == PixelFormat::NV12;
 }
 
 static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::PixelMap *pixelMap,

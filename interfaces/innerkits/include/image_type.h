@@ -200,6 +200,10 @@ struct YUVDataInfo {
     uint32_t u_stride = 0;
     uint32_t v_stride = 0;
     uint32_t uv_stride = 0;
+    uint32_t yOffset = 0;
+    uint32_t uOffset = 0;
+    uint32_t vOffset = 0;
+    uint32_t uvOffset = 0;
 };
 
 struct FillColor {

@@ -66,14 +66,19 @@ struct YuvImageInfo {
     int32_t height;
 };
 
+struct PixelYuvInfo {
+    ImageInfo imageInfo;
+    YUVDataInfo yuvDataInfo;
+};
+
 class PixelYuvUtils {
 public:
     static int32_t YuvConvertOption(const AntiAliasingOption &option);
     static bool WriteYuvConvert(const void *srcPixels, const ImageInfo &srcInfo, void *dstPixels,
-        const Position &dstPos, const ImageInfo &dstInfo);
+        const Position &dstPos, const PixelYuvInfo &pixelYuvInfo);
     static bool ReadYuvConvert(const void *srcPixels, const Position &srcPos, const ImageInfo &srcInfo,
         void *dstPixels, const ImageInfo &dstInfo);
-    static void SetTranslateDataDefault(uint8_t *srcPixels, int32_t width, int32_t height);
+    static void SetTranslateDataDefault(uint8_t *srcPixels, PixelYuvInfo &pixelYuvInfo);
     static uint8_t GetYuv420Y(uint32_t x, uint32_t y, int32_t width, const uint8_t *in);
     static uint8_t GetYuv420U(uint32_t x, uint32_t y, Size &size, PixelFormat format,
         const uint8_t *in);
@@ -96,10 +101,10 @@ public:
         PixelFormat pixelFormat);
     static bool Yuv420ToARGB(const uint8_t *in, uint8_t *out, int32_t width, int32_t height,
         PixelFormat pixelFormat);
-    static bool Yuv420WritePixels(Size &size, uint8_t *srcPixels, const PixelFormat &format, const uint32_t &color);
-    static bool YuvReadPixel(const uint8_t *srcPixels, Size &size, const PixelFormat &format, const Position &pos,
+    static bool Yuv420WritePixels(PixelYuvInfo &pixelYuvInfo, uint8_t *srcPixels, const uint32_t &color);
+    static bool YuvReadPixel(const uint8_t *srcPixels, PixelYuvInfo &pixelYuvInfo, const Position &pos,
         uint32_t &dst);
-    static bool YuvWritePixel(uint8_t *srcPixels, Size &size, const PixelFormat &format, const Position &pos,
+    static bool YuvWritePixel(uint8_t *srcPixels, PixelYuvInfo &pixelYuvInfo, const Position &pos,
         const uint32_t &color);
     static bool YuvTranslate(const uint8_t *srcPixels, ImageInfo &info, uint8_t *dstPixels, XYaxis &xyAxis);
     static bool YuvCrop(uint8_t *srcData, YuvImageInfo &srcInfo, uint8_t *dstData, const Rect &rect);
