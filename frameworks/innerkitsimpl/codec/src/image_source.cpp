@@ -589,6 +589,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     }
 
     bool isHdr = false;
+    PlColorSpace colorSpace = PlColorSpace::UNKNOWN;
     auto res = AIProcess(info.size, context, isHdr, colorSpace);
     if (res != SUCCESS) {
         IMAGE_LOGE("[ImageSource] AIProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
