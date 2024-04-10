@@ -744,6 +744,7 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
 {
     napi_value result = nullptr;
     auto imageInfo = static_cast<ImageInfo*>(data);
+    auto rImageSource = static_cast<ImageSource*>(ptr);
     napi_create_object(env, &result);
 
     napi_value size = nullptr;
