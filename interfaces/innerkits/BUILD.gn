@@ -410,10 +410,10 @@ ohos_static_library("image_static") {
       "hilog:libhilog",
     ]
   }
-  
+
   if (enable_sr_hdr_converter) {
-      defines += [ "IMAGE_AI_ENABLE" ]
-      external_deps += [ "video_processing_engine:videoprocessingengine" ]
+    defines += [ "IMAGE_AI_ENABLE" ]
+    external_deps += [ "video_processing_engine:videoprocessingengine" ]
   }
 
   subsystem_name = "multimedia"

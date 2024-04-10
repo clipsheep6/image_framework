@@ -290,7 +290,6 @@ private:
     void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
                                   int32_t wantDensity, Size &dstSize);
     
-
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;

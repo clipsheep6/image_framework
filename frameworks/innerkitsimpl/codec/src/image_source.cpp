@@ -661,7 +661,7 @@ static void SetPixelMapColorSpace(bool isHdr, unique_ptr<PixelMap>& pixelMap,
         pixelMap->SetIsHdr(isHdr);
         pixelMap->InnerSetColorSpace(OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::BT2020_HLG));
     } else {
-#ifdef IMAGE_COLORSPACE_FLAG  
+#ifdef IMAGE_COLORSPACE_FLAG
         bool isSupportICCProfile = decoder->IsSupportICCProfile();
         if (isSupportICCProfile) {
             OHOS::ColorManager::ColorSpace grColorSpace = mainDecoder_->getGrColorSpace();
@@ -2627,13 +2627,12 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &is
         return ERR_IMAGE_COLOR_SPACE_CONVERTER_CREATE_FAIL;
     }
     ColorSpaceConverterParameter parameter;
-    parameter.renderIntent = VideoProcessingEngine::RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMETRIC;
     ret = csc->SetParameter(parameter);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("[ImageSource]AiHdrProcess SetParameter failed!");
         CopyContext(backupContext, context);
         return ret;
-    }    
+    }
     IMAGE_LOGD("[ImageSource]AiHdrProcess SetParameter ret=%{public}u", ret);
 
     CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(colorSpace);
