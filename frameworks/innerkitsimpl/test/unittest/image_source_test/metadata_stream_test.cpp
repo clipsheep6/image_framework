@@ -1384,6 +1384,36 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write007, TestSize.Level3)
     ASSERT_STREQ((char *)stream.GetAddr(false), "this is a very long text");
 }
 
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write008, TestSize.Level3)
+{
+    BufferMetadataStream stream;
+    byte *buf = new byte[13];
+    ASSERT_TRUE(stream.Open());
+    stream.Write((uint8_t *)"Hello, world!", 13);
+    stream.Seek(4, SeekPos::BEGIN);
+    stream.Write((uint8_t *)"a", 1);
+    stream.Write((uint8_t *)"b", 1);
+    stream.Seek(0, SeekPos::BEGIN);
+    stream.Read(buf, 13);
+    ASSERT_STREQ((char *)buf, "Hellab world!");
+    delete[] buf;
+}
+
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write009, TestSize.Level3)
+{
+    BufferMetadataStream stream;
+    byte *buf = new byte[2000];
+    byte *buf2 = new byte[500];
+    ASSERT_TRUE(stream.Open());
+    stream.Write(buf, 2000);
+    stream.Write(buf2, 500);
+    stream.Write(buf2, 500);
+    ASSERT_EQ(stream.GetSize(), 3000);
+    ASSERT_EQ(stream.capacity_, 4096);
+    delete[] buf;
+    delete[] buf2;
+}
+
 /**
  * @tc.name: BufferMetadataStream_Close001
  * @tc.desc: Test the Close function of BufferMetadataStream with an empty stream

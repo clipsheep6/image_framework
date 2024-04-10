@@ -34,7 +34,8 @@
 
 namespace OHOS {
 namespace Media {
-BufferMetadataStream::BufferMetadataStream() {
+BufferMetadataStream::BufferMetadataStream()
+{
     buffer_ = nullptr;
     capacity_ = 0;
     bufferSize_ = 0;
@@ -43,8 +44,7 @@ BufferMetadataStream::BufferMetadataStream() {
     originData_ = nullptr;
 }
 
-BufferMetadataStream::BufferMetadataStream(byte *originData, size_t size,
-                                     MemoryMode mode)
+BufferMetadataStream::BufferMetadataStream(byte *originData, size_t size, MemoryMode mode)
 {
     buffer_ = originData;
     this->originData_ = originData;
@@ -65,19 +65,17 @@ ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
     if (currentOffset_ + static_cast<long>(size) > capacity_) {
         // If the memory mode is Fix, we cannot expand the buffer
         IMAGE_LOGD("BufferImageStream::Write, currentOffset:%{public}ld, size:%{public}u, "
-                   "capacity:%{public}ld",
-                   currentOffset_, size, capacity_);
+            "capacity:%{public}ld",
+            currentOffset_, size, capacity_);
         if (memoryMode_ == Fix) {
             IMAGE_LOGE("BufferImageStream::Write failed, currentOffset:%{public}ld, "
-                       "size:%{public}u, capacity:%{public}ld",
-                       currentOffset_, size, capacity_);
+                "size:%{public}u, capacity:%{public}ld",
+                currentOffset_, size, capacity_);
             return -1;
         }
         // Calculate the new capacity, ensuring it is a multiple of
         // BUFFER_IMAGE_STREAM_PAGE_SIZE
-        long newCapacity =
-            ((currentOffset_ + size + METADATA_STREAM_PAGE_SIZE - 1) /
-             METADATA_STREAM_PAGE_SIZE) *
+        long newCapacity = ((currentOffset_ + size + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) *
             METADATA_STREAM_PAGE_SIZE;
         // Allocate the new buffer
         byte *newBuffer = new byte[newCapacity];
@@ -91,20 +89,18 @@ ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
         std::fill_n(newBuffer, newCapacity, 0);
         // If there is existing data, copy it to the new buffer
         if (buffer_ != nullptr) {
-            IMAGE_LOGD(
-                "BufferImageStream::Write, before memcpy_s, currentOffset:%{public}ld, "
+            IMAGE_LOGD("BufferImageStream::Write, before memcpy_s, currentOffset:%{public}ld, "
                 "size:%{public}u, capacity:%{public}ld, newCapacity:%{public}ld",
                 currentOffset_, size, capacity_, newCapacity);
             memcpy_s(newBuffer, newCapacity, buffer_, capacity_);
-            IMAGE_LOGD(
-                "BufferImageStream::Write, after memcpy_s, currentOffset:%{public}ld, "
+            IMAGE_LOGD("BufferImageStream::Write, after memcpy_s, currentOffset:%{public}ld, "
                 "size:%{public}u, capacity:%{public}ld, newCapacity:%{public}ld",
                 currentOffset_, size, capacity_, newCapacity);
             // If the old buffer was not externally allocated, delete it
             if (originData_ != buffer_) {
                 delete[] buffer_;
             }
-        }else{
+        } else {
             IMAGE_LOGD("buffer is nullptr");
         }
         // Update the buffer and capacity
@@ -113,16 +109,16 @@ ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
     }
     // Copy the new data into the buffer
     IMAGE_LOGD("BufferImageStream::Write, before memcpy_s, currentOffset:%{public}ld, "
-               "size:%{public}u, capacity:%{public}ld",
-               currentOffset_, size, capacity_);
+        "size:%{public}u, capacity:%{public}ld",
+        currentOffset_, size, capacity_);
     memcpy_s(buffer_ + currentOffset_, capacity_ - currentOffset_, data, size);
     // Update the current offset and buffer size
     currentOffset_ += size;
     bufferSize_ = std::max(currentOffset_, bufferSize_);
     // Return the number of bytes written
     IMAGE_LOGD("BufferImageStream::Write, after memcpy_s, currentOffset:%{public}ld, "
-            "size:%{public}u, capacity:%{public}ld",
-            currentOffset_, size, capacity_);
+        "size:%{public}u, capacity:%{public}ld",
+        currentOffset_, size, capacity_);
     return size;
 }
 
@@ -130,13 +126,12 @@ ssize_t BufferMetadataStream::Read(uint8_t *buf, ssize_t size)
 {
     if (currentOffset_ >= bufferSize_) {
         IMAGE_LOGE("BufferImageStream::Read failed, currentOffset:%{public}ld, "
-                   "bufferSize:%{public}ld",
-                   currentOffset_, bufferSize_);
+            "bufferSize:%{public}ld",
+            currentOffset_, bufferSize_);
         return -1;
     }
 
-    long bytesToRead =
-        std::min(static_cast<long>(size), bufferSize_ - currentOffset_);
+    long bytesToRead = std::min(static_cast<long>(size), bufferSize_ - currentOffset_);
     memcpy_s(buf, size, buffer_ + currentOffset_, bytesToRead);
     currentOffset_ += bytesToRead;
     return bytesToRead;
@@ -146,8 +141,8 @@ int BufferMetadataStream::ReadByte()
 {
     if (currentOffset_ >= bufferSize_) {
         IMAGE_LOGE("BufferImageStream::ReadByte failed, "
-                   "currentOffset:%{public}ld, bufferSize:%{public}ld",
-                   currentOffset_, bufferSize_);
+            "currentOffset:%{public}ld, bufferSize:%{public}ld",
+            currentOffset_, bufferSize_);
         return -1;
     }
 
@@ -160,17 +155,17 @@ int BufferMetadataStream::ReadByte()
 long BufferMetadataStream::Seek(long offset, SeekPos pos)
 {
     switch (pos) {
-    case SeekPos::BEGIN:
-        currentOffset_ = offset;
-        break;
-    case SeekPos::CURRENT:
-        currentOffset_ += offset;
-        break;
-    case SeekPos::END:
-        currentOffset_ = bufferSize_ + offset;
-        break;
-    default:
-        return -1;
+        case SeekPos::BEGIN:
+            currentOffset_ = offset;
+            break;
+        case SeekPos::CURRENT:
+            currentOffset_ += offset;
+            break;
+        case SeekPos::END:
+            currentOffset_ = bufferSize_ + offset;
+            break;
+        default:
+            return -1;
     }
 
     if (currentOffset_ > bufferSize_) {
@@ -197,8 +192,7 @@ bool BufferMetadataStream::IsOpen()
 
 void BufferMetadataStream::Close()
 {
-    if (memoryMode_ == Dynamic && buffer_ != originData_ &&
-        buffer_ != nullptr) {
+    if (memoryMode_ == Dynamic && buffer_ != originData_ && buffer_ != nullptr) {
         delete[] buffer_;
         buffer_ = nullptr;
         IMAGE_LOGD("BufferImageStream::Close, buffer_ is deleted");
@@ -232,17 +226,15 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
         if (src.GetSize() > static_cast<ssize_t>(capacity_)) {
             // 固定内存，且超长就不拷贝了，拷了数据也不完整
             IMAGE_LOGE("BufferImageStream::CopyFrom failed, src "
-                       "size:%{public}zu, capacity:%{public}ld",
-                       src.GetSize(), capacity_);
+                "size:%{public}zu, capacity:%{public}ld",
+                src.GetSize(), capacity_);
             return false;
         }
     }
     // Clear the current buffer
     if (memoryMode_ == Dynamic) {
         delete[] buffer_;
-        size_t estimatedSize =
-            ((src.GetSize() + METADATA_STREAM_PAGE_SIZE - 1) /
-             METADATA_STREAM_PAGE_SIZE) *
+        size_t estimatedSize = ((src.GetSize() + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) *
             METADATA_STREAM_PAGE_SIZE; // Ensure it is a multiple of 4k
         buffer_ = new byte[estimatedSize];
         capacity_ = estimatedSize;
@@ -252,15 +244,13 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
     currentOffset_ = 0;
     bufferSize_ = 0;
     // Read data from the source ImageStream and write it to the current buffer
-    size_t buffer_size =
-        std::min((ssize_t)METADATA_STREAM_PAGE_SIZE, src.GetSize());
+    size_t buffer_size = std::min((ssize_t)METADATA_STREAM_PAGE_SIZE, src.GetSize());
     byte tempBuffer[buffer_size];
     src.Seek(0, SeekPos::BEGIN);
     while (!src.IsEof()) {
         size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
         if (bytesRead > 0) {
-            IMAGE_LOGD("BufferImageStream::CopyFrom, bytesRead:%{public}zu",
-                       bytesRead);
+            IMAGE_LOGD("BufferImageStream::CopyFrom, bytesRead:%{public}zu", bytesRead);
             if (Write(tempBuffer, bytesRead) == -1) {
                 // Write failed, return false, and release the buffer
                 IMAGE_LOGE("BufferImageStream::CopyFrom failed, Write failed");
