@@ -187,11 +187,12 @@ public:
      */
     ssize_t GetSize() override;
 
-FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TESTED:
-    /* *
-     * @brief Closes the FileMetadataStream.
-     */
-    virtual void Close() override;
+    FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TESTED :
+        /* *
+         * @brief Closes the FileMetadataStream.
+         */
+        virtual void
+        Close() override;
 
     /* *
      * @brief Releases a memory map.
@@ -251,6 +252,8 @@ FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TE
      * @return true if the file is truncated successfully, false otherwise.
      */
     bool TruncateFile(size_t totalBytesWritten, MetadataStream &src, ssize_t src_cur);
+    bool ReadFromSourceAndWriteToFile(MetadataStream &src, byte *tempBuffer, ssize_t buffer_size,
+        ssize_t &totalBytesWritten);
 
     /* *
      * @brief Initializes the FileMetadataStream with a file path and a file descriptor.

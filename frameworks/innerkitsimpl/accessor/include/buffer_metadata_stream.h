@@ -36,10 +36,7 @@ namespace Media {
  * @brief A class for handling image streams in memory.
  *
  * This class provides methods for reading from and seeking within an image
- * stream in memory. The maximum size of the stream is limited by
- * std::vector<uint8_t>::size_type, which is 4GB. Although MetadataStream can
- * address a maximum space of 'long', in memory mode, the maximum space is
- * limited by std::vector<uint8_t>::size_type.
+ * stream in memory.
  */
 class BufferMetadataStream : public MetadataStream {
 public:
@@ -53,6 +50,12 @@ public:
      */
     BufferMetadataStream();
 
+    /* *
+     * @brief Constructs a new BufferMetadataStream object with specified data, size and memory mode.
+     * @param originData The original data to be used for the BufferMetadataStream.
+     * @param size The size of the original data.
+     * @param mode The memory mode to be used for the BufferMetadataStream.
+     */
     BufferMetadataStream(byte *originData, size_t size, MemoryMode mode);
 
     /* *
@@ -134,16 +137,14 @@ public:
     virtual bool Flush() override;
 
     /* *
-     * Get the memory address of the BufferMetadataStream.
-     * Since the data of BufferMetadataStream is stored in a std::vector<uint8_t>,
-     * this function directly returns the pointer to the data using the
-     * std::vector::data() function. Note that this function ignores the
-     * isWriteable parameter, because the data of BufferMetadataStream is always
-     * writable.
-     *
      * @param isWriteable This parameter is ignored, the data of
      * BufferMetadataStream is always writable.
      * @return Returns a pointer to the data of BufferMetadataStream.
+     * The read/write characteristics of the memory pointed to by the
+     * returned addr pointer depend on whether it comes from managed
+     * memory or is allocated by itself. If it is self-allocated, it
+     * can be both read and written. If it is managed, it depends on
+     * the read/write properties of the managed memory.
      */
     virtual byte *GetAddr(bool isWriteable = false) override;
 
@@ -166,9 +167,15 @@ public:
      * @return Returns the size of the BufferMetadataStream.
      */
     virtual ssize_t GetSize() override;
+
+    /* *
+     * Release the managed memory to the external.
+     *
+     * @return Returns the pointer to the released memory.
+     */
     byte *Release();
 
-FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_PRIVATE_UNLESS_TESTED:
+private:
     /* *
      * @brief Closes the BufferImageStream.
      */

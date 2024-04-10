@@ -17,6 +17,7 @@
 #include <cstring>
 #include <cstring>
 #include <fcntl.h>
+#include <new>
 #include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -228,9 +229,13 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
         if (buffer_ != nullptr) {
             delete[] buffer_;
         }
-        size_t estimatedSize = ((src.GetSize() + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) *
-            METADATA_STREAM_PAGE_SIZE; // Ensure it is a multiple of 4k
-        buffer_ = new byte[estimatedSize];
+        ssize_t estimatedSize = ((src.GetSize() + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) *
+            METADATA_STREAM_PAGE_SIZE; // Ensure it is a multiple of 32k
+        buffer_ = new (std::nothrow) byte[estimatedSize];
+        if (buffer_ == nullptr) {
+            IMAGE_LOGE("BufferImageStream::CopyFrom failed, not enough memory");
+            return false;
+        }
         capacity_ = estimatedSize;
     }
 
@@ -283,6 +288,7 @@ ssize_t BufferMetadataStream::GetSize()
 {
     return bufferSize_;
 }
+
 byte *BufferMetadataStream::Release()
 {
     byte *ret = buffer_;
