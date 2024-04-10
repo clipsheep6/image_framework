@@ -56,7 +56,7 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
-#ifdef AI_ENABLE
+#ifdef IMAGE_AI_ENABLE
 #include "detail_enhancer_image.h"
 #endif
 
@@ -163,7 +163,7 @@ const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress
 const auto KEY_SIZE = 2;
 const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
 
-#ifdef AI_ENABLE
+#ifdef IMAGE_AI_ENABLE
 static constexpr uint32_t TRANSFUNC_OFFSET = 8;
 static constexpr uint32_t MATRIX_OFFSET = 16;
 static constexpr uint32_t RANGE_OFFSET = 21;
@@ -2498,7 +2498,7 @@ bool ImageSource::IsSupportGenAstc()
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
 
-#ifdef AI_ENABLE
+#ifdef IMAGE_AI_ENABLE
 static SurfaceBuffer* CopyContextIntoSurfaceBuffer(uint32_t count, DecodeContext &context, Size &sizeInfo)
 {
     IMAGE_LOGE("[CopyContextIntoSurfaceBuffer]enter");
@@ -2531,7 +2531,7 @@ static SurfaceBuffer* CopyContextIntoSurfaceBuffer(uint32_t count, DecodeContext
     return sb;
 }
 
-static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo)
+static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo, int32_t pixelFormat)
 {
     IMAGE_LOGE("[AllocBufferForContext]enter");
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
@@ -2540,7 +2540,7 @@ static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &conte
         .width = sizeInfo.width,
         .height = sizeInfo.height,
         .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
-        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
+        .format = pixelFormat,
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
         .timeout = 0,
         .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
@@ -2569,7 +2569,7 @@ static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &conte
 }
 #endif
 
-#ifdef AI_ENABLE
+#ifdef IMAGE_AI_ENABLE
 static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
 {
     std::vector<uint8_t> metadata;
@@ -2616,22 +2616,26 @@ static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
     }
 }
 
-uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, bool &isHdr, PlColorSpace &colorSpace)
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context)
 {
-    IMAGE_LOGI("[ImageSource]AiHdrProcess enter....................");
-
+    IMAGE_LOGD("[ImageSource]AiHdrProcess enter....................");
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_1010102);
     int32_t ret;
     auto csc = ColorSpaceConverter::Create();
     if (csc == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
-        return -1;
+        return ERR_IMAGE_COLOR_SPACE_CONVERTER_CREATE_FAIL;
     }
     ColorSpaceConverterParameter parameter;
     parameter.renderIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMETRIC;
     ret = csc->SetParameter(parameter);
-    IMAGE_LOGI("[ImageSource]AiHdrProcess SetParameter ret=%{public}u", ret);
+    IMAGE_LOGD("[ImageSource]AiHdrProcess SetParameter ret=%{public}u", ret);
 
-    CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(context.colorSpace);
+    CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(colorSpace);
     CM_ColorSpaceInfo colorSpaceInfo;
     ConvertColorSpaceTypeToInfo(colorSpaceType, colorSpaceInfo);
 
@@ -2648,8 +2652,14 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, bool 
     return ret;
 }
 
-uint32_t AiSrProcess(sptr<SurfaceBuffer>input, sptr<SurfaceBuffer>output, ResolutionQuality resolutionQuality)
+uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, ResolutionQuality resolutionQuality)
 {
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+
+    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_8888);
     auto detailEnh = DetailEnhancerImage::Create();
     if (detailEnh == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
@@ -2687,7 +2697,8 @@ bool ImageSource::NeedAIProcess(Size imageSize, bool needAisr, bool needHdr)
 
     if (opts_.decodingDynamicRange == DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
         IMAGE_LOGD("[ImageSource] decodingDynamicRange is hdr");
-        #ifdef AI_ENBALE
+        needHdr = true;
+        #ifdef IMAGE_DYNAMIC_RANGE_ENBALE
         if (context.dynamicRange != DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
             needHdr = true;
         }
@@ -2698,7 +2709,7 @@ bool ImageSource::NeedAIProcess(Size imageSize, bool needAisr, bool needHdr)
         IMAGE_LOGD("[ImageSource] no need aisr and hdr Process");
         return false;
     }
-    IMAGE_LOGI("[ImageSource] =====test====== need aisr or hdr Process :%{public}d hdr:%{public}d", needAisr, needHdr);
+    IMAGE_LOGD("[ImageSource] need aisr or hdr Process :%{public}d hdr:%{public}d", needAisr, needHdr);
     return true;
 }
 
@@ -2711,46 +2722,44 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &is
         return SUCCESS;
     }
 
-    Size dstInfo;
-    dstInfo.width = context.outInfo.size.width;
-    dstInfo.height = context.outInfo.size.height;
-
     sptr<SurfaceBuffer> input = nullptr;
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
-        IMAGE_LOGI("[ImageSource] =====test====== AllocBufferForContext");
-        #ifdef AI_ENBALE
+        #ifdef IMAGE_AI_ENABLE
+        Size dstSize;
+        dstSize.width = context.outInfo.size.width;
+        dstSize.height = context.outInfo.size.height;
         uint32_t byteCount = context.pixelsBuffer.bufferSize;
-        input = AllocBufferForContext(byteCount, context, dstInfo);
+        input = AllocBufferForContext(byteCount, context, dstSize, GRAPHIC_PIXEL_FMT_RGBA_8888);
         #endif
     }
-    #ifdef AI_ENBALE
-    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo);
-    #endif
+
     if (needAisr && needHdr) {
-        #ifdef AI_ENBALE
-        auto res = AiSrProcess(input, output, opts_.resolutionQuality);
+        #ifdef IMAGE_AI_ENABLE
+        auto res = AiSrProcess(input, context, opts_.resolutionQuality);
         if (res != SUCCESS) {
             IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
             return res;
         }
-        sptr<SurfaceBuffer> outputHdr = AllocBufferForContext(byteCount, context, dstInfo);
-        return AiHdrProcess(output, outputHdr, isHdr, context.colorSpace);
-        #else
-        IMAGE_LOGI("[ImageSource] aisr and AiHdr Process");
+        res = AiHdrProcess(output, context);
+        if (res == SUCCESS) {
+            isHdr = true;
+            context.pixelFormat = PlPixelFormat::RGBA_1010102;
+        }
+        IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
         #endif
     } else if (needHdr) {
-        #ifdef AI_ENBALE
-        return AiHdrProcess(input, output, isHdr, context.colorSpace);
-        #else
-        IMAGE_LOGI("[ImageSource] AiHdrProcess");
+        #ifdef IMAGE_AI_ENABLE
+        res = AiHdrProcess(input, context);
+        if (res == SUCCESS) {
+            isHdr = true;
+            context.pixelFormat = PlPixelFormat::RGBA_1010102;
+        }
         #endif
     } else {
-        #ifdef AI_ENBALE
-        return AiSrProcess(input, output, opts_.resolutionQuality);
-        #else
-        IMAGE_LOGI("[ImageSource] AiSrProcess ");
+        #ifdef IMAGE_AI_ENABLE
+        return AiSrProcess(input, context, opts_.resolutionQuality);
         #endif
     }
     return SUCCESS;
