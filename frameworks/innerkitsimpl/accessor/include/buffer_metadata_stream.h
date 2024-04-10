@@ -173,7 +173,8 @@ FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_PRIVATE_UNLESS_
      * @brief Closes the BufferImageStream.
      */
     virtual void Close() override;
-    bool ReadAndWriteData(MetadataStream &src, byte* tempBuffer, size_t buffer_size);
+    bool ReadAndWriteData(MetadataStream &src);
+    void HandleWriteFailure();
 
     /* *
      * @brief The memory buffer of the BufferImageStream.

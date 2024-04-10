@@ -210,6 +210,9 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
         IMAGE_LOGE("BufferImageStream::CopyFrom failed, src is not open");
         return false;
     }
+    if (src.GetSize() == 0) {
+        return true;
+    }
     if (memoryMode_ == Fix) {
         if (src.GetSize() > static_cast<ssize_t>(capacity_)) {
             // If the memory is fixed and the source size is too large, do not copy the data
@@ -222,7 +225,9 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
 
     // Clear the current buffer
     if (memoryMode_ == Dynamic) {
-        delete[] buffer_;
+        if (buffer_ != nullptr) {
+            delete[] buffer_;
+        }
         size_t estimatedSize = ((src.GetSize() + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) *
             METADATA_STREAM_PAGE_SIZE; // Ensure it is a multiple of 4k
         buffer_ = new byte[estimatedSize];
@@ -233,35 +238,45 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
     bufferSize_ = 0;
 
     // Read data from the source ImageStream and write it to the current buffer
-    size_t buffer_size = std::min((ssize_t)METADATA_STREAM_PAGE_SIZE, src.GetSize());
-    byte tempBuffer[buffer_size];
-    if (!ReadAndWriteData(src, tempBuffer, buffer_size)) {
+    if (!ReadAndWriteData(src)) {
         return false;
     }
     return true;
 }
 
-bool BufferMetadataStream::ReadAndWriteData(MetadataStream &src, byte *tempBuffer, size_t buffer_size)
+bool BufferMetadataStream::ReadAndWriteData(MetadataStream &src)
 {
     src.Seek(0, SeekPos::BEGIN);
+    ssize_t buffer_size = std::min((ssize_t)METADATA_STREAM_PAGE_SIZE, src.GetSize());
+    byte *tempBuffer = new (std::nothrow) byte[buffer_size];
+    if (tempBuffer == nullptr) {
+        IMAGE_LOGE("BufferImageStream::ReadAndWriteData failed, not enough memory");
+        return false;
+    }
     while (!src.IsEof()) {
-        size_t bytesRead = src.Read(tempBuffer, buffer_size);
+        ssize_t bytesRead = src.Read(tempBuffer, buffer_size);
         if (bytesRead > 0) {
-            IMAGE_LOGD("BufferImageStream::CopyFrom, bytesRead:%{public}zu", bytesRead);
             if (Write(tempBuffer, bytesRead) == -1) {
                 IMAGE_LOGE("BufferImageStream::CopyFrom failed, Write failed");
-                if (memoryMode_ == Dynamic) {
-                    delete[] buffer_;
-                    buffer_ = nullptr;
-                    capacity_ = 0;
-                }
-                bufferSize_ = 0;
-                currentOffset_ = 0;
+                HandleWriteFailure();
+                delete[] tempBuffer;
                 return false;
             }
         }
     }
+    delete[] tempBuffer;
     return true;
+}
+
+void BufferMetadataStream::HandleWriteFailure()
+{
+    if (memoryMode_ == Dynamic) {
+        delete[] buffer_;
+        buffer_ = nullptr;
+        capacity_ = 0;
+    }
+    bufferSize_ = 0;
+    currentOffset_ = 0;
 }
 
 ssize_t BufferMetadataStream::GetSize()
