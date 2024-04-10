@@ -164,7 +164,6 @@ bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &pars
 {
     ImagePlugin::heif_item_id exifItemId = 0xffff;
     heif_error result = parser->GetExifItemId(exifItemId);
-
     if (result != heif_error_ok) {
         return false;
     }
@@ -173,7 +172,6 @@ bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &pars
     if (parser->GetItemData(exifItemId, &item) != heif_error::heif_error_ok) {
         return false;
     }
-
     dataBuf = DataBuf(item.data(), item.size());
     return true;
 }
