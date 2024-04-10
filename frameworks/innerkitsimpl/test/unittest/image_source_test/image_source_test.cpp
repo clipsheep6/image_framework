@@ -380,7 +380,7 @@ HWTEST_F(ImageSourceTest, CreatePixelMap003, TestSize.Level3)
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.decodingDynamicRange = DynamicRange::IMAGE_DYNAMIC_RANGE_HDR;
+    decodeOpts.desiredDynamicRange  = DecodeDynamicRange::HDR;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);

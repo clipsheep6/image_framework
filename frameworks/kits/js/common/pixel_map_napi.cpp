@@ -1837,10 +1837,9 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
     napi_create_string_utf8(env, imageInfo->encodedFormat.c_str(),
         imageInfo->encodedFormat.length(), &encodedFormatValue);
     napi_set_named_property(env, result, "mimeType", encodedFormatValue);
-
-    napi_value isHdr = nullptr;
-    napi_create_int32(env, static_cast<int32_t>(imageInfo->isHdr), &isHdr);
-    napi_set_named_property(env, result, "isHdr", isHdr);
+    napi_value isHdrValue = nullptr;
+    napi_get_boolean(env, rPixelMap->IsHdr(), &isHdrValue);
+    napi_set_named_property(env, result, "isHdr", isHdrValue);
 
     return result;
 }

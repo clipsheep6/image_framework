@@ -775,9 +775,9 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
         &encodedFormatValue);
     napi_set_named_property(env, result, "mimeType", encodedFormatValue);
 
-    napi_value isHdr = nullptr;
-    napi_create_int32(env, static_cast<int32_t>(imageInfo->isHdr), &isHdr);
-    napi_set_named_property(env, result, "isHdr", isHdr);
+    napi_value isHdrValue = nullptr;
+    napi_get_boolean(env, rImageSource->IsHdrImage(), &isHdrValue);
+    napi_set_named_property(env, result, "isHdr", isHdrValue);
 
     return result;
 }
@@ -870,6 +870,32 @@ static PixelFormat ParsePixlForamt(int32_t val)
     return PixelFormat::UNKNOWN;
 }
 
+static ResolutionQuality ParseResolutionQuality(napi_env env, napi_value root)
+{
+    uint32_t resolutionQuality = NUM_0;
+    if (!GET_UINT32_BY_NAME(root, "resolutionQuality", resolutionQuality)) {
+        IMAGE_LOGD("no resolutionQuality");
+        return ResolutionQuality::LOW;
+    }
+    if (resolutionQuality <= static_cast<uint32_t>(ResolutionQuality::SUPER)) {
+        return ResolutionQuality(resolutionQuality);
+    }
+    return ResolutionQuality::LOW;
+}
+
+static DecodeDynamicRange ParseDynamicRange(napi_env env, napi_value root)
+{
+    uint32_t desiredDynamicRange = NUM_0;
+    if (!GET_UINT32_BY_NAME(root, "desiredDynamicRange", desiredDynamicRange)) {
+        IMAGE_LOGD("no desiredDynamicRange");
+        return DecodeDynamicRange::AUTO;
+    }
+    if (desiredDynamicRange <= static_cast<uint32_t>(DecodeDynamicRange::SDR)) {
+        return DecodeDynamicRange(desiredDynamicRange);
+    }
+    return DecodeDynamicRange::AUTO;
+}
+
 static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* opts, std::string &error)
 {
     uint32_t tmpNumber = 0;
@@ -907,11 +933,9 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
         opts->resolutionQuality = static_cast<ResolutionQuality>(resolutionQuality);
         IMAGE_LOGD("resolutionQuality %{public}x", opts->resolutionQuality);
     }
-    uint32_t decodingDynamicRange = NUM_0;
-    if (GET_UINT32_BY_NAME(root, "desiredDynamicRange", decodingDynamicRange)) {
-        opts->decodingDynamicRange = static_cast<DynamicRange>(decodingDynamicRange);
-        IMAGE_LOGD("desiredDynamicRange %{public}x", opts->decodingDynamicRange);
-    }
+    opts->resolutionQuality = ParseResolutionQuality(env, root);
+    opts->desiredDynamicRange = ParseDynamicRange(env, root);
+    
     napi_value nDesiredColorSpace = nullptr;
     if (napi_get_named_property(env, root, "desiredColorSpace", &nDesiredColorSpace) == napi_ok) {
         opts->desiredColorSpaceInfo = OHOS::ColorManager::GetColorSpaceByJSObject(env, nDesiredColorSpace);

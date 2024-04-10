@@ -115,6 +115,7 @@ enum class PixelFormat : int32_t {
     ASTC_4x4 = 11,
     ASTC_6x6 = 12,
     ASTC_8x8 = 13,
+    RGBA_1010102 = 14,
 };
 
 enum class AlphaType : int32_t {
@@ -143,10 +144,10 @@ enum class ResolutionQuality : int32_t {
     LOW
 };
 
-enum class DynamicRange : int32_t {
-    IMAGE_DYNAMIC_RANGE_AUTO,
-    IMAGE_DYNAMIC_RANGE_SDR,
-    IMAGE_DYNAMIC_RANGE_HDR
+enum class DecodeDynamicRange : int32_t {
+    AUTO = 0,
+    SDR = 1,
+    HDR = 2,
 };
 
 struct Position {
@@ -226,7 +227,7 @@ struct DecodeOptions {
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
     bool fastAstc = false;
-    DynamicRange decodingDynamicRange = DynamicRange::IMAGE_DYNAMIC_RANGE_AUTO;
+    DecodeDynamicRange desiredDynamicRange  = DecodeDynamicRange::AUTO;
     ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
 };
 

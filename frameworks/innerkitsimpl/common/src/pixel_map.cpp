@@ -802,6 +802,10 @@ bool PixelMap::GetPixelFormatDetail(const PixelFormat format)
             colorProc_ = RGB565ToARGB;
             break;
         }
+        case PixelFormat::RGBA_1010102: {
+            pixelBytes_ = ARGB_8888_BYTES;
+            break;
+        }
         case PixelFormat::RGB_888: {
             pixelBytes_ = RGB_888_BYTES;
             colorProc_ = RGB888ToARGB;
