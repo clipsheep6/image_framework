@@ -1571,15 +1571,17 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput002, TestSize.Level3)
 HWTEST_F(ImagePixelMapTest, CheckPixelsInput003, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: CheckPixelsInput003 start";
+    // 8 means pixelmap width and height
     std::unique_ptr<PixelMap> pixelMap = CreatePixelMapCommon(8, 8);;
     ASSERT_NE(pixelMap.get(), nullptr);
     ImageInfo imageInfo;
     pixelMap->GetImageInfo(imageInfo);
 
+    // 1 means bytecount
     uint8_t *source = static_cast<uint8_t *>(malloc(1));
     uint64_t bufferSize = static_cast<uint64_t>(pixelMap->GetByteCount());
-    uint32_t stride = 0;
-    uint32_t offset = 0;
+    uint32_t stride = 0; // 0 means stride for test
+    uint32_t offset = 0; // 0 means offset for test
     struct Rect region = {.left = 0, .top = 0, .width = imageInfo.size.width, .height = imageInfo.size.height};
     uint32_t status = 0;
 
@@ -1589,25 +1591,30 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput003, TestSize.Level3)
     ASSERT_NE(region.top < 0 ? 0 : 1, 0);
     ASSERT_NE(stride > std::numeric_limits<int32_t>::max() ? 0 : 1, 0);
     ASSERT_NE(static_cast<uint64_t>(offset) > bufferSize ? 0 : 1, 0);
+    // -1 means region width for test
     region.width = -1;
     ASSERT_EQ(region.width < 0 ? 0 : 1, 0);
     status = pixelMap->WritePixels(source, bufferSize, offset, stride, region);
     ASSERT_EQ(status, ERR_IMAGE_INVALID_PARAMETER);
     region.width = imageInfo.size.width;
     ASSERT_NE(region.width < 0 ? 0 : 1, 0);
+    // -1 means region height for test
     region.height = -1;
     ASSERT_EQ(region.height < 0 ? 0 : 1, 0);
     status = pixelMap->WritePixels(source, bufferSize, offset, stride, region);
     ASSERT_EQ(status, ERR_IMAGE_INVALID_PARAMETER);
     region.height = imageInfo.size.height;
     ASSERT_NE(region.height < 0 ? 0 : 1, 0);
+    // INT32_MAX >> 2 means region max width/height
     int maxDimension = INT32_MAX >> 2;
+    // 1 used to check overflow
     region.width = maxDimension + 1;
     ASSERT_EQ(region.width > maxDimension ? 0 : 1, 0);
     status = pixelMap->WritePixels(source, bufferSize, offset, stride, region);
     ASSERT_EQ(status, ERR_IMAGE_INVALID_PARAMETER);
     region.width = imageInfo.size.width;
     ASSERT_NE(region.width > maxDimension ? 0 : 1, 0);
+    // 1 used to check overflow
     region.height = maxDimension + 1;
     ASSERT_EQ(region.height > maxDimension ? 0 : 1, 0);
     status = pixelMap->WritePixels(source, bufferSize, offset, stride, region);
@@ -1627,6 +1634,7 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput003, TestSize.Level3)
 HWTEST_F(ImagePixelMapTest, CheckPixelsInput004, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: CheckPixelsInput004 start";
+    // 8 means pixelmap width and height
     std::unique_ptr<PixelMap> pixelMap = CreatePixelMapCommon(8, 8);;
     ASSERT_NE(pixelMap.get(), nullptr);
 
@@ -1635,8 +1643,8 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput004, TestSize.Level3)
 
     uint8_t *source4 = static_cast<uint8_t *>(malloc(1));
     uint64_t size4 = static_cast<uint64_t>(pixelMap->GetByteCount());
-    uint32_t stride4 = 0;
-    uint32_t offset4 = 0;
+    uint32_t stride4 = 0; // 0 means stride for test
+    uint32_t offset4 = 0; // 0 means offset for test
     struct Rect region4 = {.left = 0, .top = 0, .width = info.size.width, .height = info.size.height};
     uint32_t status = 0;
 
@@ -1647,6 +1655,7 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput004, TestSize.Level3)
     ASSERT_NE(stride4 > std::numeric_limits<int32_t>::max() ? 0 : 1, 0);
     ASSERT_NE(static_cast<uint64_t>(offset4) > size4 ? 0 : 1, 0);
 
+    // INT32_MAX >> 2 means region max width/height
     int maxDimension = INT32_MAX >> 2;
     ASSERT_NE(region4.width < 0 ? 0 : 1, 0);
     ASSERT_NE(region4.height < 0 ? 0 : 1, 0);
@@ -1654,20 +1663,24 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput004, TestSize.Level3)
     ASSERT_NE(region4.height > maxDimension ? 0 : 1, 0);
 
     int32_t left = pixelMap->GetWidth() - region4.width;
+    // 1 for test
     region4.left = left + 1;
     ASSERT_EQ(region4.left > left ? 0 : 1, 0);
     status = pixelMap->WritePixels(source4, size4, offset4, stride4, region4);
     ASSERT_EQ(status, ERR_IMAGE_INVALID_PARAMETER);
 
+    // 0 for test
     region4.left = 0;
     ASSERT_NE(region4.left > left ? 0 : 1, 0);
 
     int32_t top = pixelMap->GetHeight() - region4.height;
+    // 1 for test
     region4.top = top + 1;
     ASSERT_EQ(region4.top > top ? 0 : 1, 0);
     status = pixelMap->WritePixels(source4, size4, offset4, stride4, region4);
     ASSERT_EQ(status, ERR_IMAGE_INVALID_PARAMETER);
 
+    // 0 for test
     region4.top = 0;
     ASSERT_NE(region4.top > top ? 0 : 1, 0);
 
@@ -1683,6 +1696,7 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput004, TestSize.Level3)
 HWTEST_F(ImagePixelMapTest, CheckPixelsInput005, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: CheckPixelsInput005 start";
+    // 8 means pixelmap width and height
     std::unique_ptr<PixelMap> pixelMap = CreatePixelMapCommon(8, 8);;
     ASSERT_NE(pixelMap.get(), nullptr);
 
@@ -1691,8 +1705,8 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput005, TestSize.Level3)
 
     uint8_t *source5 = static_cast<uint8_t *>(malloc(1));
     uint64_t size5 = static_cast<uint64_t>(pixelMap->GetByteCount());
-    uint32_t stride5 = 0;
-    uint32_t offset5 = 0;
+    uint32_t stride5 = 0; // 0 means stride for test
+    uint32_t offset5 = 0; // 0 means offset for test
     struct Rect region5 = {.left = 0, .top = 0, .width = info.size.width, .height = info.size.height};
     uint32_t status = 0;
 
@@ -1703,6 +1717,7 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput005, TestSize.Level3)
     ASSERT_NE(stride5 > std::numeric_limits<int32_t>::max() ? 0 : 1, 0);
     ASSERT_NE(static_cast<uint64_t>(offset5) > size5 ? 0 : 1, 0);
 
+    // INT32_MAX >> 2 means region max width/height
     int maxDimension = INT32_MAX >> 2;
     ASSERT_NE(region5.width < 0 ? 0 : 1, 0);
     ASSERT_NE(region5.height < 0 ? 0 : 1, 0);
@@ -1712,7 +1727,9 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput005, TestSize.Level3)
     ASSERT_NE(region5.left > pixelMap->GetWidth() - region5.width ? 0 : 1, 0);
     ASSERT_NE(region5.top > pixelMap->GetHeight() - region5.height ? 0 : 1, 0);
 
+    // 4 means pixel bytes
     uint32_t regionStride = static_cast<uint32_t>(region5.width) * 4;
+    // 1 for test
     stride5 = regionStride - 1;
     ASSERT_EQ(stride5 < regionStride ? 0 : 1, 0);
     status = pixelMap->WritePixels(source5, size5, offset5, stride5, region5);
@@ -1721,6 +1738,7 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput005, TestSize.Level3)
     stride5 = regionStride;
     ASSERT_NE(stride5 < regionStride ? 0 : 1, 0);
 
+    // 1 for test
     size5 = regionStride - 1;
     ASSERT_EQ(size5 < regionStride ? 0 : 1, 0);
     status = pixelMap->WritePixels(source5, size5, offset5, stride5, region5);
@@ -1738,15 +1756,17 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput005, TestSize.Level3)
 HWTEST_F(ImagePixelMapTest, CheckPixelsInput006, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: CheckPixelsInput006 start";
+    // 8 means pixelmap width and height
     std::unique_ptr<PixelMap> pixelMap = CreatePixelMapCommon(8, 8);;
     ASSERT_NE(pixelMap.get(), nullptr);
     ImageInfo info;
     pixelMap->GetImageInfo(info);
 
+    // 1 means bytecount
     uint8_t *source6 = static_cast<uint8_t *>(malloc(1));
     uint64_t size6 = static_cast<uint64_t>(pixelMap->GetByteCount());
-    uint32_t stride6 = 0;
-    uint32_t offset6 = 0;
+    uint32_t stride6 = 0; // 0 means stride for test
+    uint32_t offset6 = 0; // 0 means offset for test
     struct Rect region6 = {.left = 0, .top = 0, .width = info.size.width, .height = info.size.height};
     uint32_t status = 0;
     ASSERT_NE(source6, nullptr);
@@ -1756,6 +1776,7 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput006, TestSize.Level3)
     ASSERT_NE(stride6 > std::numeric_limits<int32_t>::max() ? 0 : 1, 0);
     ASSERT_NE(static_cast<uint64_t>(offset6) > size6 ? 0 : 1, 0);
 
+    // INT32_MAX >> 2 means region max width/height
     int maxDimension = INT32_MAX >> 2;
     ASSERT_NE(region6.width < 0 ? 0 : 1, 0);
     ASSERT_NE(region6.height < 0 ? 0 : 1, 0);
@@ -1767,13 +1788,16 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput006, TestSize.Level3)
     stride6 = regionStride;
     ASSERT_NE(stride6 < regionStride ? 0 : 1, 0);
     ASSERT_NE(size6 < regionStride ? 0 : 1, 0);
+    // 1 for test
     offset6 = static_cast<uint32_t>(size6 - regionStride) + 1;
     ASSERT_EQ(static_cast<uint64_t>(offset6) > (size6 - regionStride) ? 0 : 1, 0);
     status = pixelMap->WritePixels(source6, size6, offset6, stride6, region6);
     ASSERT_EQ(status, ERR_IMAGE_INVALID_PARAMETER);
+    // 0 for test
     offset6 = 0;
     ASSERT_NE(static_cast<uint64_t>(offset6) > (size6 - regionStride) ? 0 : 1, 0);
     uint64_t lastLinePos = offset6 + static_cast<uint64_t>(region6.height - 1) * stride6;
+    // 1 for test
     size6 = lastLinePos + regionStride - 1;
     ASSERT_EQ(lastLinePos > (size6  - regionStride) ? 0 : 1, 0);
     status = pixelMap->WritePixels(source6, size6, offset6, stride6, region6);
@@ -1794,13 +1818,14 @@ HWTEST_F(ImagePixelMapTest, CheckPixelsInput006, TestSize.Level3)
 HWTEST_F(ImagePixelMapTest, SetAlpha001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAlpha001 start";
+    // 64 means data length
     const uint32_t dataLength = 64;
     uint32_t data[64] = {0};
     InitializationOptions opts;
     opts.pixelFormat = OHOS::Media::PixelFormat::RGBA_F16;
     opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_PREMUL;
-    opts.size.width = 8;
-    opts.size.height = 8;
+    opts.size.width = 8; // 8 means pielmap width
+    opts.size.height = 8; // 8 means pielmap height
     std::unique_ptr<PixelMap> pixelmap = PixelMap::Create(data, dataLength, opts);
     ASSERT_NE(pixelmap.get(), nullptr);
 
@@ -1808,17 +1833,17 @@ HWTEST_F(ImagePixelMapTest, SetAlpha001, TestSize.Level3)
     ASSERT_NE(alphaType, AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN);
     ASSERT_NE(alphaType, AlphaType::IMAGE_ALPHA_TYPE_OPAQUE);
 
-    float percent = 0.5f;
+    float percent = 0.5f; // 0.5f means alpha value
     ASSERT_NE(percent <= 0 ? 0 : 1, 0);
     ASSERT_NE(percent > 1 ? 0 : 1, 0);
 
     ASSERT_EQ(pixelmap->GetPixelFormat(), PixelFormat::RGBA_F16);
 
-    int8_t alphaIndex = 3;
+    int8_t alphaIndex = 3; // 3 means alphaIndex
     ASSERT_NE(alphaIndex, -1);
 
     int32_t pixelByte = pixelmap->GetPixelBytes();
-    ASSERT_EQ(pixelByte, 8);
+    ASSERT_EQ(pixelByte, 8); // 8 means pixelByte
     ASSERT_NE(pixelmap->GetPixelFormat(), PixelFormat::ALPHA_8);
 
     uint32_t pixelsSize = pixelmap->GetByteCount();
@@ -1839,13 +1864,14 @@ HWTEST_F(ImagePixelMapTest, SetAlpha001, TestSize.Level3)
 HWTEST_F(ImagePixelMapTest, SetAlpha002, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: SetAlpha002 start";
+    // 64 means data length
     const uint32_t dataLength = 64;
     uint32_t data[64] = {0};
     InitializationOptions opts;
     opts.pixelFormat = OHOS::Media::PixelFormat::ALPHA_8;
     opts.alphaType = AlphaType::IMAGE_ALPHA_TYPE_PREMUL;
-    opts.size.width = 8;
-    opts.size.height = 8;
+    opts.size.width = 8; // 8 means pielmap width
+    opts.size.height = 8; // 8 means pielmap height
     std::unique_ptr<PixelMap> pixelmap2 = PixelMap::Create(data, dataLength, opts);
     ASSERT_NE(pixelmap2.get(), nullptr);
 
@@ -1853,17 +1879,17 @@ HWTEST_F(ImagePixelMapTest, SetAlpha002, TestSize.Level3)
     ASSERT_NE(alphaType, AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN);
     ASSERT_NE(alphaType, AlphaType::IMAGE_ALPHA_TYPE_OPAQUE);
 
-    float percent = 0.8f;
+    float percent = 0.8f; // 0.8f means alpha value
     ASSERT_NE(percent <= 0 ? 0 : 1, 0);
     ASSERT_NE(percent > 1 ? 0 : 1, 0);
 
     ASSERT_EQ(pixelmap2->GetPixelFormat(), PixelFormat::ALPHA_8);
 
-    int8_t alphaIndex = 0;
+    int8_t alphaIndex = 0; // 0 means alphaIndex
     ASSERT_NE(alphaIndex, -1);
 
     int32_t pixelByte = pixelmap2->GetPixelBytes();
-    ASSERT_EQ(pixelByte, 1);
+    ASSERT_EQ(pixelByte, 1); // 1 means pixelByte
     ASSERT_NE(pixelmap2->GetPixelFormat(), PixelFormat::RGBA_F16);
 
     uint32_t pixelsSize = pixelmap2->GetByteCount();
@@ -1883,6 +1909,7 @@ HWTEST_F(ImagePixelMapTest, SetAlpha002, TestSize.Level3)
 HWTEST_F(ImagePixelMapTest, TlvEncode001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: TlvEncode001 start";
+    // 8 means pixelmap width and height
     std::unique_ptr<PixelMap> pixelMap = CreatePixelMapCommon(8, 8);;
     ASSERT_NE(pixelMap.get(), nullptr);
 
@@ -1897,17 +1924,14 @@ HWTEST_F(ImagePixelMapTest, TlvEncode001, TestSize.Level3)
 }
 
 /**
- * @tc.name: ImagePixelMap008
- * @tc.desc: RGB_888 pixel format pixel map operation
+ * @tc.name: TransformData001
+ * @tc.desc: ASTC transform test
  * @tc.type: FUNC
  */
 HWTEST_F(ImagePixelMapTest, TransformData001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "ImagePixelMapTest: TransformData001 start";
-    /**
-     * @tc.steps: step1. Set image info and alloc pixel map memory.
-     * @tc.expected: step1. The pixel map info is correct.
-     */
+    // 3 means bytesPerPixel
     int8_t bytesPerPixel = 3;
     int8_t rowDataSize = PIXEL_MAP_TEST_WIDTH * bytesPerPixel;
     ImageInfo imgInfo;
@@ -1921,14 +1945,15 @@ HWTEST_F(ImagePixelMapTest, TransformData001, TestSize.Level3)
     void *buffer = malloc(pixelsSize);
     EXPECT_NE(buffer, nullptr);
     pixelMap.SetPixelsAddr(buffer, nullptr, pixelsSize, AllocatorType::HEAP_ALLOC, nullptr);
-    TransformData transformDate = {1.5, 1.5, 0, -1, -1, -1, -1, 0, 0, false, false};
-    pixelMap.SetTransformData(transformDate);
-    TransformData transformDate2;
-    pixelMap.GetTransformData(transformDate2);
-    EXPECT_EQ(transformDate2.scaleX, transformDate.scaleX);
-    EXPECT_EQ(transformDate2.scaleY, transformDate.scaleY);
-    EXPECT_EQ(transformDate2.flipX, transformDate.flipX);
-    EXPECT_EQ(transformDate2.flipY, transformDate.flipY);
+    // {1.5, 1.5, 0, -1, -1, -1, -1, 0, 0, false, false} means astc transform data
+    TransformData transformData = {1.5, 1.5, 0, -1, -1, -1, -1, 0, 0, false, false};
+    pixelMap.SetTransformData(transformData);
+    TransformData transformData2;
+    pixelMap.GetTransformData(transformData2);
+    EXPECT_EQ(transformData2.scaleX, transformData.scaleX);
+    EXPECT_EQ(transformData2.scaleY, transformData.scaleY);
+    EXPECT_EQ(transformData2.flipX, transformData.flipX);
+    EXPECT_EQ(transformData2.flipY, transformData.flipY);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: TransformData001 end";
 }
 } // namespace Multimedia
