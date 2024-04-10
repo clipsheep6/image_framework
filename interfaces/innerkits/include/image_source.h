@@ -106,7 +106,7 @@ enum class SourceInfoState : int32_t {
     FILE_INFO_PARSED = 5
 };
 
-enum class HdrType : int32_t {
+enum class ImageHdrType : int32_t {
     UNKNOWN,
     SDR,
     HDR_ISO_DUAL,
@@ -318,7 +318,7 @@ private:
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
-    HdrType sourceHdrType_; // source image hdr type;
+    ImageHdrType sourceHdrType_; // source image hdr type;
 };
 } // namespace Media
 } // namespace OHOS
