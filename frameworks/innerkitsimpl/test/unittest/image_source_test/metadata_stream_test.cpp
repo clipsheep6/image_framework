@@ -1371,7 +1371,7 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write006, TestSize.Level3)
  * correctly handle dynamic buffer size
  * @tc.type: FUNC
  */
-HWTEST_F(MetadataStreamTest, BufferImageStream_Write006, TestSize.Level3)
+HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write007, TestSize.Level3)
 {
     char text[] = "Hello, world!";
     BufferMetadataStream stream((byte *)text, sizeof(text), BufferMetadataStream::Dynamic);
