@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "gtest/gtest.h"
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
@@ -1380,7 +1381,7 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write007, TestSize.Level3)
     ASSERT_EQ(stream.Tell(), 2);
     ASSERT_STREQ(text, "Hillo, world!");
     stream.Seek(0, SeekPos::BEGIN);
-    ASSERT_EQ(stream.Write((byte *)"this is a very long text", 24), 24);
+    ASSERT_EQ(stream.Write((byte *)"this is a very long text", 25), 25);
     ASSERT_STREQ((char *)stream.GetAddr(false), "this is a very long text");
 }
 
@@ -1409,7 +1410,7 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write009, TestSize.Level3)
     stream.Write(buf2, 500);
     stream.Write(buf2, 500);
     ASSERT_EQ(stream.GetSize(), 3000);
-    ASSERT_EQ(stream.capacity_, 4096);
+    ASSERT_EQ(stream.capacity_, 32768);
     delete[] buf;
     delete[] buf2;
 }

@@ -15,8 +15,8 @@
 
 #include <cerrno>
 #include <cstring>
+#include <cstring>
 #include <fcntl.h>
-#include <string.h>
 #include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -63,62 +63,51 @@ ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
 {
     // Check if the new data will fit into the current buffer
     if (currentOffset_ + static_cast<long>(size) > capacity_) {
-        // If the memory mode is Fix, we cannot expand the buffer
-        IMAGE_LOGD("BufferImageStream::Write, currentOffset:%{public}ld, size:%{public}u, "
-            "capacity:%{public}ld",
-            currentOffset_, size, capacity_);
         if (memoryMode_ == Fix) {
             IMAGE_LOGE("BufferImageStream::Write failed, currentOffset:%{public}ld, "
                 "size:%{public}u, capacity:%{public}ld",
                 currentOffset_, size, capacity_);
             return -1;
         }
+
         // Calculate the new capacity, ensuring it is a multiple of
         // BUFFER_IMAGE_STREAM_PAGE_SIZE
         long newCapacity = ((currentOffset_ + size + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) *
             METADATA_STREAM_PAGE_SIZE;
+
         // Allocate the new buffer
-        byte *newBuffer = new byte[newCapacity];
-        IMAGE_LOGD("BufferImageStream::Write, newCapacity:%{public}ld", newCapacity);
+        byte *newBuffer = new (std::nothrow) byte[newCapacity];
+
         // Check if the allocation was successful
         if (newBuffer == nullptr) {
             IMAGE_LOGE("BufferImageStream::Write failed, newBuffer is nullptr");
             return -1;
         }
-        // Initialize the new memory
-        std::fill_n(newBuffer, newCapacity, 0);
+
+        // Removed std::fill_n for efficiency. If zero-initialization is needed,
+        // consider doing it manually where necessary.
         // If there is existing data, copy it to the new buffer
         if (buffer_ != nullptr) {
-            IMAGE_LOGD("BufferImageStream::Write, before memcpy_s, currentOffset:%{public}ld, "
-                "size:%{public}u, capacity:%{public}ld, newCapacity:%{public}ld",
-                currentOffset_, size, capacity_, newCapacity);
-            memcpy_s(newBuffer, newCapacity, buffer_, capacity_);
-            IMAGE_LOGD("BufferImageStream::Write, after memcpy_s, currentOffset:%{public}ld, "
-                "size:%{public}u, capacity:%{public}ld, newCapacity:%{public}ld",
-                currentOffset_, size, capacity_, newCapacity);
+            memcpy_s(newBuffer, newCapacity, buffer_, bufferSize_);
+
             // If the old buffer was not externally allocated, delete it
             if (originData_ != buffer_) {
                 delete[] buffer_;
             }
-        } else {
-            IMAGE_LOGD("buffer is nullptr");
         }
+
         // Update the buffer and capacity
         buffer_ = newBuffer;
         capacity_ = newCapacity;
     }
+
     // Copy the new data into the buffer
-    IMAGE_LOGD("BufferImageStream::Write, before memcpy_s, currentOffset:%{public}ld, "
-        "size:%{public}u, capacity:%{public}ld",
-        currentOffset_, size, capacity_);
     memcpy_s(buffer_ + currentOffset_, capacity_ - currentOffset_, data, size);
+
     // Update the current offset and buffer size
     currentOffset_ += size;
     bufferSize_ = std::max(currentOffset_, bufferSize_);
-    // Return the number of bytes written
-    IMAGE_LOGD("BufferImageStream::Write, after memcpy_s, currentOffset:%{public}ld, "
-        "size:%{public}u, capacity:%{public}ld",
-        currentOffset_, size, capacity_);
+
     return size;
 }
 
@@ -217,20 +206,20 @@ byte *BufferMetadataStream::GetAddr(bool isWriteable)
 
 bool BufferMetadataStream::CopyFrom(MetadataStream &src)
 {
-    IMAGE_LOGD("BufferImageStream::CopyFrom come in");
     if (!src.IsOpen()) {
         IMAGE_LOGE("BufferImageStream::CopyFrom failed, src is not open");
         return false;
     }
     if (memoryMode_ == Fix) {
         if (src.GetSize() > static_cast<ssize_t>(capacity_)) {
-            // 固定内存，且超长就不拷贝了，拷了数据也不完整
+            // If the memory is fixed and the source size is too large, do not copy the data
             IMAGE_LOGE("BufferImageStream::CopyFrom failed, src "
                 "size:%{public}zu, capacity:%{public}ld",
                 src.GetSize(), capacity_);
             return false;
         }
     }
+
     // Clear the current buffer
     if (memoryMode_ == Dynamic) {
         delete[] buffer_;
@@ -240,19 +229,26 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
         capacity_ = estimatedSize;
     }
 
-    // Pre-allocate memory based on the estimated size
     currentOffset_ = 0;
     bufferSize_ = 0;
+
     // Read data from the source ImageStream and write it to the current buffer
     size_t buffer_size = std::min((ssize_t)METADATA_STREAM_PAGE_SIZE, src.GetSize());
     byte tempBuffer[buffer_size];
+    if (!ReadAndWriteData(src, tempBuffer, buffer_size)) {
+        return false;
+    }
+    return true;
+}
+
+bool BufferMetadataStream::ReadAndWriteData(MetadataStream &src, byte *tempBuffer, size_t buffer_size)
+{
     src.Seek(0, SeekPos::BEGIN);
     while (!src.IsEof()) {
-        size_t bytesRead = src.Read(tempBuffer, sizeof(tempBuffer));
+        size_t bytesRead = src.Read(tempBuffer, buffer_size);
         if (bytesRead > 0) {
             IMAGE_LOGD("BufferImageStream::CopyFrom, bytesRead:%{public}zu", bytesRead);
             if (Write(tempBuffer, bytesRead) == -1) {
-                // Write failed, return false, and release the buffer
                 IMAGE_LOGE("BufferImageStream::CopyFrom failed, Write failed");
                 if (memoryMode_ == Dynamic) {
                     delete[] buffer_;
