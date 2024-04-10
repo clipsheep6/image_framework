@@ -13,8 +13,11 @@
  * limitations under the License.
  */
 
-#include "heif_exif_metadata_accessor.h"
 #include "heif_error.h"
+#include "heif_exif_metadata_accessor.h"
+#include "heif_image.h"
+#include "heif_type.h"
+
 #include "image_log.h"
 #include "media_errors.h"
 #include "tiff_parser.h"
@@ -28,7 +31,6 @@
 namespace OHOS {
 namespace Media {
 using namespace ImagePlugin;
-const auto EXIF_ID = "Exif\0\0";
 
 HeifExifMetadataAccessor::HeifExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
     : AbstractExifMetadataAccessor(stream)
@@ -72,23 +74,6 @@ bool HeifExifMetadataAccessor::ReadBlob(DataBuf &blob) const
     return false;
 }
 
-bool HeifExifMetadataAccessor::GetExifItemId(std::shared_ptr<ImagePlugin::HeifParser> parser,
-    ImagePlugin::heif_item_id &exifItemId)
-{
-    exifItemId = 0xffff;
-    std::vector<ImagePlugin::heif_item_id> itemIdList;
-    parser->GetAllItemId(itemIdList);
-    for (auto id : itemIdList) {
-        auto type = parser->GetItemType(id);
-        if (type == EXIF_ID) {
-            exifItemId = id;
-            return true;
-        }
-    }
-
-    return false;
-}
-
 uint32_t HeifExifMetadataAccessor::Write()
 {
     ExifData *exifData = this->Get()->GetExifData();
@@ -126,8 +111,8 @@ uint32_t HeifExifMetadataAccessor::WriteMetadata(DataBuf &dataBuf)
 
     auto image = parser->GetPrimaryImage();
     ImagePlugin::heif_item_id exifItemId;
-    bool result = GetExifItemId(parser, exifItemId);
-    if (!result) {
+    heif_error result = parser->GetExifItemId(exifItemId);
+    if (result == heif_error_ok) {
         if (parser->UpdateExifMetadata(image, dataBuf.CData(), dataBuf.Size(), exifItemId)
                         != heif_error::heif_error_ok) {
             IMAGE_LOGE("The EXIF data failed to update values.");
@@ -150,6 +135,9 @@ uint32_t HeifExifMetadataAccessor::WriteMetadata(DataBuf &dataBuf)
     }
 
     const uint8_t *buf = writer.GetData().data();
+    if (buf == nullptr) {
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
     imageStream_->Write(const_cast<uint8_t *>(buf), dataSize);
     return SUCCESS;
 }
@@ -161,6 +149,9 @@ uint32_t HeifExifMetadataAccessor::WriteBlob(DataBuf &blob)
 
 bool HeifExifMetadataAccessor::CheckTiffPos(const byte *buff, size_t size, size_t &byteOrderPos)
 {
+    if (buff == nullptr) {
+        return false;
+    }
     // find the byte order "II 0x2a00" "MM 0x002a"
     byteOrderPos = TiffParser::FindTiffPos(buff, size);
     if (byteOrderPos == std::numeric_limits<size_t>::max()) {
@@ -172,9 +163,9 @@ bool HeifExifMetadataAccessor::CheckTiffPos(const byte *buff, size_t size, size_
 bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &parser, DataBuf &dataBuf)
 {
     ImagePlugin::heif_item_id exifItemId = 0xffff;
-    GetExifItemId(parser, exifItemId);
+    heif_error result = parser->GetExifItemId(exifItemId);
 
-    if (exifItemId == 0xffff) {
+    if (result != heif_error_ok) {
         return false;
     }
 

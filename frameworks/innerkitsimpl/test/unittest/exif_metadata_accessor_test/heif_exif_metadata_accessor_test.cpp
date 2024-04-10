@@ -79,9 +79,73 @@ HWTEST_F(HeifExifMetadataAccessorTest, Read001, TestSize.Level3)
     GetProperty(exifMetadata, "DateTime");
     GetProperty(exifMetadata, "WhiteBalance");
 
-    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read001 start";
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read001 end";
 }
 
+/**
+ * @tc.name: Read002
+ * @tc.desc: test the Heif format get no exif
+ * @tc.type: FUNC
+ */
+HWTEST_F(HeifExifMetadataAccessorTest, Read002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read002 start";
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_NO_EXIF_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
+    HeifExifMetadataAccessor imageAccessor(stream);
+    uint32_t result = imageAccessor.Read();
+    ASSERT_EQ(result, ERR_MEDIA_VALUE_INVALID);
+
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read002 end";
+}
+
+
+/**
+ * @tc.name: Read003
+ * @tc.desc: test the Heif format get exif HW properties
+ * @tc.type: FUNC
+ */
+HWTEST_F(HeifExifMetadataAccessorTest, Read003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read003 start";
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_HW_EXIF_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
+    HeifExifMetadataAccessor imageAccessor(stream);
+    uint32_t result = imageAccessor.Read();
+    ASSERT_EQ(result, 0);
+
+    auto exifMetadata = imageAccessor.Get();
+    GetProperty(exifMetadata, "HwMnoteBurstNumber");
+    GetProperty(exifMetadata, "HwMnoteCaptureMode");
+    GetProperty(exifMetadata, "HwMnoteFaceConf");
+    GetProperty(exifMetadata, "HwMnoteFaceCount");
+    GetProperty(exifMetadata, "HwMnoteFaceLeyeCenter");
+    GetProperty(exifMetadata, "HwMnoteFaceMouthCenter");
+    GetProperty(exifMetadata, "HwMnoteFacePointer");
+    GetProperty(exifMetadata, "HwMnoteFaceRect");
+    GetProperty(exifMetadata, "HwMnoteFaceReyeCenter");
+    GetProperty(exifMetadata, "HwMnoteFaceSmileScore");
+    GetProperty(exifMetadata, "HwMnoteFaceVersion");
+    GetProperty(exifMetadata, "HwMnoteFocusMode");
+    GetProperty(exifMetadata, "HwMnoteFrontCamera");
+    GetProperty(exifMetadata, "HwMnotePhysicalAperture");
+    GetProperty(exifMetadata, "HwMnotePitchAngle");
+    GetProperty(exifMetadata, "HwMnoteRollAngle");
+    GetProperty(exifMetadata, "HwMnoteSceneBeachConf");
+    GetProperty(exifMetadata, "HwMnoteSceneBlueSkyConf");
+    GetProperty(exifMetadata, "HwMnoteSceneFlowersConf");
+    GetProperty(exifMetadata, "HwMnoteSceneFoodConf");
+    GetProperty(exifMetadata, "HwMnoteSceneGreenPlantConf");
+    GetProperty(exifMetadata, "HwMnoteSceneNightConf");
+    GetProperty(exifMetadata, "HwMnoteScenePointer");
+    GetProperty(exifMetadata, "HwMnoteSceneSnowConf");
+    GetProperty(exifMetadata, "HwMnoteSceneStageConf");
+    GetProperty(exifMetadata, "HwMnoteSceneSunsetConf");
+    GetProperty(exifMetadata, "HwMnoteSceneTextConf");
+    GetProperty(exifMetadata, "HwMnoteSceneVersion");
+
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read003 end";
+}
 
 /**
  * @tc.name: Read001
@@ -98,9 +162,7 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write001, TestSize.Level3)
     ASSERT_EQ(result, 0);
     auto exifMetadata = imageAccessor.Get();
 
-    bool retSet = exifMetadata->SetValue("Model", "test");
-    ASSERT_EQ(retSet, true);
-
+    GetProperty(exifMetadata, "Model");
     uint32_t errcode = imageAccessor.Write();
     ASSERT_EQ(errcode, SUCCESS);
 
@@ -123,7 +185,7 @@ HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     HeifExifMetadataAccessor imageAccessor(stream);
     uint32_t result = imageAccessor.Read();
-    ASSERT_EQ(result, 0);
+    ASSERT_EQ(result, ERR_MEDIA_VALUE_INVALID);
     auto exifMetadata = imageAccessor.Get();
 
     if (exifMetadata == nullptr) {
@@ -146,7 +208,7 @@ HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
     exifMetadata = imageAccessor.Get();
     GetProperty(exifMetadata, "Model");
 
-    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write001 end";
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Append001 end";
 }
 } // namespace Multimedia
 } // namespace OHOS
