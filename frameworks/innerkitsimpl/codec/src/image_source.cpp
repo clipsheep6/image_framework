@@ -2588,10 +2588,6 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
     IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
 }
 
-constexpr CM_ColorSpaceInfo INPUT_COLORSPACE_INFO = {
-        COLORPRIMARIES_P3_D65, TRANSFUNC_SRGB, MATRIX_BT601_N, RANGE_LIMITED
-};
-
 constexpr CM_ColorSpaceInfo OUTPUT_COLORSPACE_INFO = {
         COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
 };
