@@ -43,10 +43,17 @@ namespace Media {
  */
 class BufferMetadataStream : public MetadataStream {
 public:
+    enum MemoryMode {
+        Fix,    // Memory is fixed at construction and cannot be changed
+        Dynamic // Memory can be changed
+    };
+
     /* *
      * @brief Constructs a new BufferMetadataStream object.
      */
     BufferMetadataStream();
+
+    BufferMetadataStream(byte *originData, size_t size, MemoryMode mode);
 
     /* *
      * @brief Destructs the BufferMetadataStream object.
@@ -159,22 +166,47 @@ public:
      * @return Returns the size of the BufferMetadataStream.
      */
     virtual ssize_t GetSize() override;
+    byte *Release();
 
 FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_PRIVATE_UNLESS_TESTED:
-    /* *
-     * @brief Closes the BufferMetadataStream.
+    /**
+     * @brief Closes the BufferImageStream.
      */
     virtual void Close() override;
 
-    /* *
-     * @brief The memory buffer of the BufferMetadataStream.
+    /**
+     * @brief The memory buffer of the BufferImageStream.
      */
-    std::vector<uint8_t> buffer_;
+    byte *buffer_;
 
-    /* *
-     * @brief The current offset in the BufferMetadataStream.
+    /**
+     * @brief The original pointer saved when constructed with originData.
+     * It is needed when closing to determine whether to release the buffer.
+     */
+    byte *originData_;
+
+    /**
+     * @brief The pre-allocated memory capacity of the buffer.
+     */
+    long capacity_;
+
+    /**
+     * @brief The data size of the buffer.
+     * Since it is in memory, bufferSize will not exceed the maximum length of
+     * memory, so size_t is not used here.
+     */
+    long bufferSize_;
+
+    /**
+     * @brief The current offset in the BufferImageStream.
      */
     long currentOffset_;
+
+    /**
+     * @brief The memory mode, which can be fixed memory or dynamic memory.
+     * See MemoryMode for details.
+     */
+    MemoryMode memoryMode_;
 };
 } // namespace Media
 } // namespace OHOS
