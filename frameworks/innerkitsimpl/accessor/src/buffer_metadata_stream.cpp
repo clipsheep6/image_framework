@@ -25,6 +25,7 @@
 
 #include "buffer_metadata_stream.h"
 #include "image_log.h"
+#include "metadata_stream.h"
 #include "securec.h"
 
 #undef LOG_DOMAIN
@@ -253,6 +254,9 @@ bool BufferMetadataStream::ReadAndWriteData(MetadataStream &src)
 {
     src.Seek(0, SeekPos::BEGIN);
     ssize_t buffer_size = std::min((ssize_t)METADATA_STREAM_PAGE_SIZE, src.GetSize());
+    if (buffer_size > METADATA_STREAM_PAGE_SIZE) {
+        return false;
+    }
     byte *tempBuffer = new (std::nothrow) byte[buffer_size];
     if (tempBuffer == nullptr) {
         IMAGE_LOGE("BufferImageStream::ReadAndWriteData failed, not enough memory");
