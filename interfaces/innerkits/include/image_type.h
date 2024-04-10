@@ -115,6 +115,7 @@ enum class PixelFormat : int32_t {
     ASTC_4x4 = 11,
     ASTC_6x6 = 12,
     ASTC_8x8 = 13,
+    RGBA_1010102 = 14,
 };
 
 enum class AlphaType : int32_t {
@@ -135,6 +136,18 @@ enum class FinalOutputStep : int32_t {
     ROTATE_CHANGE = 2,
     SIZE_CHANGE = 3,
     DENSITY_CHANGE = 4
+};
+enum class ResolutionQuality : int32_t {
+    SUPER,
+    HIGH,
+    MEDIUM,
+    LOW
+};
+
+enum class DecodeDynamicRange : int32_t {
+    AUTO = 0,
+    SDR = 1,
+    HDR = 2,
 };
 
 struct Position {
@@ -161,6 +174,7 @@ struct ImageInfo {
     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     int32_t baseDensity = 0;
     std::string encodedFormat;
+    bool isHdr = false;
 };
 
 struct YUVDataInfo {
@@ -213,6 +227,8 @@ struct DecodeOptions {
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
     bool fastAstc = false;
+    DecodeDynamicRange desiredDynamicRange  = DecodeDynamicRange::AUTO;
+    ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
 };
 
 enum class ScaleMode : int32_t {

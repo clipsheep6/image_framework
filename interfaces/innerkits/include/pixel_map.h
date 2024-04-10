@@ -285,6 +285,9 @@ public:
         exifMetadata_ = ptr;
     }
 
+    bool IsHdr();
+    uint32_t SetIsHdr(bool isHdr);
+
     NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
     NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
     NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,

@@ -130,6 +130,7 @@ int32_t ImageUtils::GetPixelBytes(const PixelFormat &pixelFormat)
         case PixelFormat::ARGB_8888:
         case PixelFormat::BGRA_8888:
         case PixelFormat::RGBA_8888:
+        case PixelFormat::RGBA_1010102:
         case PixelFormat::CMYK:
             pixelBytes = ARGB8888_BYTES;
             break;
