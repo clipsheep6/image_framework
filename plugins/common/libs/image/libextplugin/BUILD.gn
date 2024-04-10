@@ -150,6 +150,7 @@ ohos_shared_library("extplugin") {
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_exif_metadata_accessor.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/webp_exif_metadata_accessor.cpp",
     "src/ext_decoder.cpp",
     "src/ext_encoder.cpp",
     "src/ext_pixel_convert.cpp",
@@ -236,6 +237,13 @@ ohos_shared_library("extplugin") {
       "libjpeg-turbo:turbojpeg",
       "zlib:libz",
     ]
+
+    if (defined(global_parts_info) &&
+        defined(global_parts_info.graphic_graphic_2d_ext)) {
+      defines += [ "SUT_ENCODE_ENABLE" ]
+      include_dirs += [ "${ipc_subsystem}/graphic/graphic_2d_ext/texture_supercompress/encode/include" ]
+      external_deps += [ "graphic_2d_ext:textureSuperCompress" ]
+    }
 
     if (enable_jpeg_hw_decode) {
       external_deps += [
