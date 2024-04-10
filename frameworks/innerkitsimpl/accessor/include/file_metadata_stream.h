@@ -187,12 +187,11 @@ public:
      */
     ssize_t GetSize() override;
 
-    FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TESTED :
-        /* *
-         * @brief Closes the FileMetadataStream.
-         */
-        virtual void
-        Close() override;
+private:
+    /* *
+     * @brief Closes the FileMetadataStream.
+     */
+    virtual void Close() override;
 
     /* *
      * @brief Releases a memory map.

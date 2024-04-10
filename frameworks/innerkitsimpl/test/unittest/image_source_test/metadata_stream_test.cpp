@@ -40,8 +40,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_TESTS_PRIVATE
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_BUFFER_METADATA_STREAM_TESTS_PRIVATE
 #include "metadata_stream.h"
 #include "buffer_metadata_stream.h"
 #include "file_metadata_stream.h"
