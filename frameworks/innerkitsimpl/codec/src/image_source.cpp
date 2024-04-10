@@ -598,9 +598,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     }
 
     bool isHdr = false;
-    auto res = AIProcess(info.size, context, isHdr);
+    auto res = ImageAiProcess(info.size, context, isHdr);
     if (res != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] AIProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
+        IMAGE_LOGE("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
     }
 
     UpdatepPlImageInfo(context, isHdr, plInfo);
@@ -2713,7 +2713,7 @@ bool ImageSource::CheckDecodeOptions(Size imageSize, bool needAisr, bool needHdr
     return true;
 }
 
-uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &isHdr)
+uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, bool &isHdr)
 {
     bool needAisr = false;
     bool needHdr = false;
