@@ -276,7 +276,7 @@ private:
     std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts,
                                                      uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
-                                                    PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
+                                                    PixelMapAddrInfos &addrInfos, bool isHdr, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,

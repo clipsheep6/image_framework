@@ -664,7 +664,6 @@ static void SetPixelMapColorSpace(bool isHdr, unique_ptr<PixelMap>& pixelMap,
 #ifdef IMAGE_COLORSPACE_FLAG
         bool isSupportICCProfile = decoder->IsSupportICCProfile();
         if (isSupportICCProfile) {
-            OHOS::ColorManager::ColorSpace grColorSpace = mainDecoder_->getGrColorSpace();
             OHOS::ColorManager::ColorSpace grColorSpace = decoder->getGrColorSpace();
             pixelMap->InnerSetColorSpace(grColorSpace);
         }
@@ -677,7 +676,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
 {
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
 
-    SetPixelMapColorSpace(isHdr, pixelMap);
+    SetPixelMapColorSpace(isHdr, pixelMap, mainDecoder_);
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
