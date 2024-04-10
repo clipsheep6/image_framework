@@ -106,6 +106,15 @@ enum class SourceInfoState : int32_t {
     FILE_INFO_PARSED = 5
 };
 
+enum class HdrType : int32_t {
+    UNKNOWN,
+    SDR,
+    HDR_ISO_DUAL,
+    HDR_CUVA,
+    HDR_VIVID_DUAL,
+    HDR_VIVID_SINGLE
+};
+
 struct ImageDecodingStatus {
     ImageInfo imageInfo;
     ImageDecodingState imageState = ImageDecodingState::UNRESOLVED;
@@ -209,6 +218,7 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
+    NATIVEEXPORT bool IsHdrImage();
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -279,6 +289,7 @@ private:
                                       ImagePlugin::DecodeContext &context, uint32_t &errorCode);
     void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
                                   int32_t wantDensity, Size &dstSize);
+    
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
@@ -308,6 +319,7 @@ private:
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
+    HdrType sourceHdrType_; // source image hdr type;
 };
 } // namespace Media
 } // namespace OHOS

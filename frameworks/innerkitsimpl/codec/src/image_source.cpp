@@ -2687,6 +2687,14 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
 }
 #endif
 
+bool ImageSource::IsHdrImage()
+{
+    if (sourceHdrType_ != HdrType::UNKNOWN) {
+        return sourceHdrType_ > HdrType::SDR;
+    }
+    return false;
+}
+
 bool ImageSource::CheckDecodeOptions(Size imageSize, bool needAisr, bool needHdr)
 {
     if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
@@ -2696,12 +2704,9 @@ bool ImageSource::CheckDecodeOptions(Size imageSize, bool needAisr, bool needHdr
 
     if (opts_.decodingDynamicRange == DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
         IMAGE_LOGD("[ImageSource] CheckDecodeOptions decodingDynamicRange is hdr");
-        needHdr = true;
-        #ifdef IMAGE_DYNAMIC_RANGE_ENBALE
-        if (context.dynamicRange != DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
+        if (IsHdrImage()) {
             needHdr = true;
         }
-        #endif
     }
 
     if (!needAisr && !needHdr) {
