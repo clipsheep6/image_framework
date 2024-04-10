@@ -561,6 +561,7 @@ void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageI
 {
     if (isHdr) {
         plInfo.colorSpace = context.colorSpace;
+        plInfo.pixelFormat = context.pixelFormat;
     }
     if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
         // hardware decode success, update plInfo.size
@@ -605,7 +606,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
 
     PixelMapAddrInfos addrInfos;
     ContextToAddrInfos(context, addrInfos);
-    auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, errorCode);
+    auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, isHdr, errorCode);
     if (pixelMap == nullptr) {
         return nullptr;
     }
@@ -653,18 +654,30 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
     }
 }
 
+static void SetPixelMapColorSpace(bool isHdr, unique_ptr<PixelMap>& pixelMap,
+    std::unique_ptr<ImagePlugin::AbsImageDecoder>& decoder)
+{
+    if (isHdr) {
+        pixelMap->SetIsHdr(isHdr);
+        pixelMap->InnerSetColorSpace(OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::BT2020_HLG));
+    } else {
+#ifdef IMAGE_COLORSPACE_FLAG  
+        bool isSupportICCProfile = decoder->IsSupportICCProfile();
+        if (isSupportICCProfile) {
+            OHOS::ColorManager::ColorSpace grColorSpace = mainDecoder_->getGrColorSpace();
+            OHOS::ColorManager::ColorSpace grColorSpace = decoder->getGrColorSpace();
+            pixelMap->InnerSetColorSpace(grColorSpace);
+        }
+#endif
+    }
+}
+
 unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo, PixelMapAddrInfos &addrInfos,
-    uint32_t &errorCode)
+    bool isHdr, uint32_t &errorCode)
 {
     unique_ptr<PixelMap> pixelMap = make_unique<PixelMap>();
-#ifdef IMAGE_COLORSPACE_FLAG
-    // add graphic colorspace object to pixelMap.
-    bool isSupportICCProfile = mainDecoder_->IsSupportICCProfile();
-    if (isSupportICCProfile) {
-        OHOS::ColorManager::ColorSpace grColorSpace = mainDecoder_->getGrColorSpace();
-        pixelMap->InnerSetColorSpace(grColorSpace);
-    }
-#endif
+
+    SetPixelMapColorSpace(isHdr, pixelMap);
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     errorCode = UpdatePixelMapInfo(opts_, plInfo, *(pixelMap.get()), opts_.fitDensity, true);
     if (errorCode != SUCCESS) {
@@ -2587,9 +2600,19 @@ static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
             return CM_ColorSpaceType::CM_P3_LIMIT; // CM_SRGB_LIMIT;
     }
 }
-
-uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context)
+static void CopyContext(DecodeContext &src, DecodeContext &dst)
 {
+    dst.pixelsBuffer.buffer = src.pixelsBuffer.buffer ;
+    dst.pixelsBuffer.bufferSize = src.pixelsBuffer.bufferSize;
+    dst.pixelsBuffer.context = src.pixelsBuffer.context;
+    dst.allocatorType = src.allocatorType;
+    dst.freeFunc = src.freeFunc;
+}
+
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
+{
+    DecodeContext backupContext;
+    CopyContext(context, backupContext);
     IMAGE_LOGD("[ImageSource]AiHdrProcess enter....................");
     uint32_t byteCount = context.pixelsBuffer.bufferSize;
     Size dstInfo;
@@ -2600,11 +2623,17 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context)
     auto csc = ColorSpaceConverter::Create();
     if (csc == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
+        CopyContext(backupContext, context);
         return ERR_IMAGE_COLOR_SPACE_CONVERTER_CREATE_FAIL;
     }
     ColorSpaceConverterParameter parameter;
     parameter.renderIntent = VideoProcessingEngine::RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMETRIC;
     ret = csc->SetParameter(parameter);
+    if (ret != VPE_ALGO_ERR_OK) {
+        IMAGE_LOGE("[ImageSource]AiHdrProcess SetParameter failed!");
+        CopyContext(backupContext, context);
+        return ret;
+    }    
     IMAGE_LOGD("[ImageSource]AiHdrProcess SetParameter ret=%{public}u", ret);
 
     CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(colorSpace);
@@ -2619,13 +2648,18 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context)
     ret = csc->Process(input, output);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("[ImageSource]AiHdrProcess csc->Process ret=%{public}u", ret);
+        CopyContext(backupContext, context);
+    } else {
+        isHdr = true;
+        context.pixelFormat = PlPixelFormat::RGBA_1010102;
     }
-    isHdr = true;
     return ret;
 }
 
 uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, ResolutionQuality resolutionQuality)
 {
+    DecodeContext backupContext;
+    CopyContext(context, backupContext);
     uint32_t byteCount = context.pixelsBuffer.bufferSize;
     Size dstInfo;
     dstInfo.width = context.outInfo.size.width;
@@ -2635,6 +2669,7 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     auto detailEnh = DetailEnhancerImage::Create();
     if (detailEnh == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
+        CopyContext(backupContext, context);
         return ERR_IMAGE_DETAIL_ENHANCER_CREATE_FAIL;
     }
     // deafult level DETAIL_ENH_LEVEL_SUPER
@@ -2649,12 +2684,14 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     auto ret = detailEnh->SetParameter(param);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("DetailEnhancerImage SetParameter failed!");
+        CopyContext(backupContext, context);
         return ret;
     }
 
     int32_t ret = detailEnh->Process(input, output);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("DetailEnhancerImage Processed failed");
+        CopyContext(backupContext, context);
     }
     return ret;
 }
@@ -2694,8 +2731,8 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
 {
     bool needAisr = false;
     bool needHdr = false;
-    auto ret = CheckDecodeOptions(imageSize, needAisr, needHdr);
-    if (!ret) {
+    auto bRet = CheckDecodeOptions(imageSize, needAisr, needHdr);
+    if (!bRet) {
         return SUCCESS;
     }
 
@@ -2708,38 +2745,30 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
         dstSize.width = context.outInfo.size.width;
         dstSize.height = context.outInfo.size.height;
         uint32_t byteCount = context.pixelsBuffer.bufferSize;
-        input = AllocBufferForContext(byteCount, context, dstSize, GRAPHIC_PIXEL_FMT_RGBA_8888);
+        input = CopyContextIntoSurfaceBuffer(byteCount, context, dstSize);
         #endif
     }
-
+    uint32_t res = SUCCESS;
     if (needAisr && needHdr) {
-        #ifdef IMAGE_AI_ENABLE
-        auto res = AiSrProcess(input, context, opts_.resolutionQuality);
+#ifdef IMAGE_AI_ENABLE
+        res = AiSrProcess(input, context, opts_.resolutionQuality);
         if (res != SUCCESS) {
             IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
             return res;
         }
-        res = AiHdrProcess(output, context);
-        if (res == SUCCESS) {
-            isHdr = true;
-            context.pixelFormat = PlPixelFormat::RGBA_1010102;
-        }
+        res = AiHdrProcess(output, context, isHdr);
         IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
-        #endif
+#endif
     } else if (needHdr) {
-        #ifdef IMAGE_AI_ENABLE
-        res = AiHdrProcess(input, context);
-        if (res == SUCCESS) {
-            isHdr = true;
-            context.pixelFormat = PlPixelFormat::RGBA_1010102;
-        }
-        #endif
+#ifdef IMAGE_AI_ENABLE
+        res = AiHdrProcess(input, context, isHdr);
+#endif
     } else {
-        #ifdef IMAGE_AI_ENABLE
-        return AiSrProcess(input, context, opts_.resolutionQuality);
-        #endif
+#ifdef IMAGE_AI_ENABLE
+        res = AiSrProcess(input, context, opts_.resolutionQuality);
+#endif
     }
-    return SUCCESS;
+    return res;
 }
 
 uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
@@ -2749,7 +2778,7 @@ uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, 
     hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
 
     TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize, opts_.resolutionQuality);
+        opts_.desiredSize);
     errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
