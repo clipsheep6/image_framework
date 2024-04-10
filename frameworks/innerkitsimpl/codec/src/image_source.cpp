@@ -2688,15 +2688,15 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
 }
 #endif
 
-bool ImageSource::NeedAIProcess(Size imageSize, bool needAisr, bool needHdr)
+bool ImageSource::CheckDecodeOptions(Size imageSize, bool needAisr, bool needHdr)
 {
     if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
-        IMAGE_LOGD("[ImageSource] AIProcess imageSize ne opts_.desiredSize");
+        IMAGE_LOGD("[ImageSource] CheckDecodeOptions imageSize ne opts_.desiredSize");
         needAisr = true;
     }
 
     if (opts_.decodingDynamicRange == DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
-        IMAGE_LOGD("[ImageSource] decodingDynamicRange is hdr");
+        IMAGE_LOGD("[ImageSource] CheckDecodeOptions decodingDynamicRange is hdr");
         needHdr = true;
         #ifdef IMAGE_DYNAMIC_RANGE_ENBALE
         if (context.dynamicRange != DynamicRange::IMAGE_DYNAMIC_RANGE_HDR) {
@@ -2717,7 +2717,7 @@ uint32_t ImageSource::AIProcess(Size imageSize, DecodeContext &context, bool &is
 {
     bool needAisr = false;
     bool needHdr = false;
-    auto ret = NeedAIProcess(imageSize, needAisr, needHdr);
+    auto ret = CheckDecodeOptions(imageSize, needAisr, needHdr);
     if (!ret) {
         return SUCCESS;
     }

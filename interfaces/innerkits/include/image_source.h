@@ -273,7 +273,7 @@ private:
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
 
-    bool NeedAIProcess(Size imageSize, bool needAisr, bool needHdr);
+    bool CheckDecodeOptions(Size imageSize, bool needAisr, bool needHdr);
     uint32_t AIProcess(Size imageSize, ImagePlugin::DecodeContext &context, bool &isHdr);
     uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
         ImagePlugin::DecodeContext &context, uint32_t &errorCode);
