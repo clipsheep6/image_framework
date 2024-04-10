@@ -412,11 +412,11 @@ static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, in
     return prop;
 }
 
-static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
-    int32_t wantDensity, Size &dstSize, ResolutionQuality resolutionQuality)
+void ImageSource::TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
+    int32_t wantDensity, Size &dstSize)
 {
-    if (IsSizeVailed(wantSize) && ((resolutionQuality == ResolutionQuality::HIGH) ||
-                                    (resolutionQuality == ResolutionQuality::SUPER))) {
+    if (IsSizeVailed(wantSize) && ((opts_.resolutionQuality == ResolutionQuality::HIGH) ||
+                                    (opts_.resolutionQuality == ResolutionQuality::SUPER))) {
         CopySize(wantSize, dstSize);
     } else {
         CopySize(srcSize, dstSize);
@@ -2503,7 +2503,8 @@ static SurfaceBuffer* CopyContextIntoSurfaceBuffer(uint32_t count, DecodeContext
 {
     IMAGE_LOGE("[CopyContextIntoSurfaceBuffer]enter");
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
-    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer requestConfig, sizeInfo.width:%{public}u,height:%{public}u.", sizeInfo.width, sizeInfo.height);
+    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
+               sizeInfo.width, sizeInfo.height);
     BufferRequestConfig requestConfig = {
         .width = sizeInfo.width,
         .height = sizeInfo.height,
@@ -2535,7 +2536,8 @@ static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &conte
 {
     IMAGE_LOGE("[AllocBufferForContext]enter");
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
-    IMAGE_LOGE("[ImageSource]AllocBufferForContext requestConfig, sizeInfo.width:%{public}u,height:%{public}u.", sizeInfo.width, sizeInfo.height);
+    IMAGE_LOGE("[ImageSource]AllocBufferForContext requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
+               sizeInfo.width, sizeInfo.height);
     BufferRequestConfig requestConfig = {
         .width = sizeInfo.width,
         .height = sizeInfo.height,
@@ -2589,14 +2591,15 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
 }
 
 constexpr CM_ColorSpaceInfo OUTPUT_COLORSPACE_INFO = {
-        COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
+    COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
 };
 
 void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType, CM_ColorSpaceInfo &colorSpaceInfo)
 {
     uint32_t colorSpace = static_cast<uint32_t>(colorSpaceType);
     colorSpaceInfo.primaries = static_cast<CM_ColorPrimaries>(colorSpace & CM_ColorSpaceMask::CM_PRIMARIES_MASK);
-    colorSpaceInfo.transfunc = static_cast<CM_TransFunc>((colorSpace & CM_ColorSpaceMask::CM_TRANSFUNC_MASK) >> TRANSFUNC_OFFSET);
+    colorSpaceInfo.transfunc = static_cast<CM_TransFunc>((colorSpace & CM_ColorSpaceMask::CM_TRANSFUNC_MASK)
+                               >> TRANSFUNC_OFFSET);
     colorSpaceInfo.matrix = static_cast<CM_Matrix>((colorSpace & CM_ColorSpaceMask::CM_MATRIX_MASK) >> MATRIX_OFFSET);
     colorSpaceInfo.range = static_cast<CM_Range>((colorSpace & CM_ColorSpaceMask::CM_RANGE_MASK) >> RANGE_OFFSET);
 }
@@ -2627,7 +2630,7 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context)
         return ERR_IMAGE_COLOR_SPACE_CONVERTER_CREATE_FAIL;
     }
     ColorSpaceConverterParameter parameter;
-    parameter.renderIntent = RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMETRIC;
+    parameter.renderIntent = VideoProcessingEngine::RenderIntent::RENDER_INTENT_ABSOLUTE_COLORIMETRIC;
     ret = csc->SetParameter(parameter);
     IMAGE_LOGD("[ImageSource]AiHdrProcess SetParameter ret=%{public}u", ret);
 
@@ -2637,7 +2640,7 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context)
 
     SetMeatadata(output, OUTPUT_COLORSPACE_INFO);
     SetMeatadata(output, CM_IMAGE_HDR_VIVID_SINGLE);
-	SetMeatadata(input, colorSpaceInfo);
+    SetMeatadata(input, colorSpaceInfo);
     SetMeatadata(input, CM_METADATA_NONE);
 
     ret = csc->Process(input, output);
@@ -2677,7 +2680,7 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     }
 
     int32_t ret = detailEnh->Process(input, output);
-    if (ret != VPE_ALGO_ERR_OK){
+    if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("DetailEnhancerImage Processed failed");
     }
     return ret;
