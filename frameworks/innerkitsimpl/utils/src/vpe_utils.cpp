@@ -36,9 +36,7 @@ using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 static constexpr uint32_t TRANSFUNC_OFFSET = 8;
 static constexpr uint32_t MATRIX_OFFSET = 16;
 static constexpr uint32_t RANGE_OFFSET = 21;
-constexpr uint8_t INDEX_ZERO = 0;
-constexpr uint8_t INDEX_ONE = 1;
-constexpr uint8_t INDEX_TWO = 2;
+
 const static char* VPE_SO_NAME = "libvideoprocessingengine.z.so";
 void* VpeUtils::vpeHandle_ = nullptr;
 int32_t VpeUtils::instanceHdrId_ = VPE_ERROR_FAILED;
