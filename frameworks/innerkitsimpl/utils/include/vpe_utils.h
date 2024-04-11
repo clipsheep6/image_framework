@@ -35,7 +35,7 @@ class VpeUtils {
 public:
     VpeUtils();
     ~VpeUtils();
-    static bool CheckCapacityAi(bool &capSr, bool &capHdr);
+    bool CheckCapacityAi(bool &capSr, bool &capHdr);
 
     int32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output);
     int32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output);
