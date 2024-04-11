@@ -2486,39 +2486,6 @@ bool ImageSource::IsSupportGenAstc()
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
 
-static SurfaceBuffer* CopyContextIntoSurfaceBuffer(uint32_t count, DecodeContext &context, Size &sizeInfo)
-{
-    IMAGE_LOGE("[CopyContextIntoSurfaceBuffer]enter");
-    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
-    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
-               sizeInfo.width, sizeInfo.height);
-    BufferRequestConfig requestConfig = {
-        .width = sizeInfo.width,
-        .height = sizeInfo.height,
-        .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
-        .format = GRAPHIC_PIXEL_FMT_RGBA_8888, // PixelFormat
-        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
-        .timeout = 0,
-        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
-        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
-    };
-    GSError ret = sb->Alloc(requestConfig);
-    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer after sb.Alloc, (ret:%{public}u).", ret);
-    if (ret != GSERROR_OK) {
-        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
-        return {};
-    }
-    void* nativeBuffer = sb.GetRefPtr();
-    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
-    IMAGE_LOGE("[ImageSource]CopyContextIntoSurfaceBuffer after sb.SurfaceBuffer_Reference, (err:%{public}u).", err);
-    if (err != OHOS::GSERROR_OK) {
-        IMAGE_LOGE("NativeBufferReference failed");
-        return {};
-    }
-    memcpy_s(static_cast<void*>(sb->GetVirAddr()), count, context.pixelsBuffer.buffer, context.pixelsBuffer.bufferSize);
-    return sb;
-}
-
 static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &context, Size &sizeInfo, int32_t pixelFormat)
 {
     IMAGE_LOGE("[AllocBufferForContext]enter");
