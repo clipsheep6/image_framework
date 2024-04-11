@@ -45,6 +45,7 @@ class AbsImageDecoder;
 struct DataStreamBuffer;
 struct PixelDecodeOptions;
 struct PlImageInfo;
+struct DecodeContext;
 } // namespace ImagePlugin
 } // namespace OHOS
 
@@ -103,6 +104,15 @@ enum class SourceInfoState : int32_t {
     UNSUPPORTED_FORMAT = 3,
     FILE_INFO_ERROR = 4,
     FILE_INFO_PARSED = 5
+};
+
+enum class ImageHdrType : int32_t {
+    UNKNOWN,
+    SDR,
+    HDR_ISO_DUAL,
+    HDR_CUVA,
+    HDR_VIVID_DUAL,
+    HDR_VIVID_SINGLE
 };
 
 struct ImageDecodingStatus {
@@ -208,6 +218,7 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
+    NATIVEEXPORT bool IsHdrImage();
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -265,13 +276,20 @@ private:
     std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts,
                                                      uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
-                                                    PixelMapAddrInfos &addrInfos, uint32_t &errorCode);
+                                                    PixelMapAddrInfos &addrInfos, bool isHdr, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
+    bool CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needHdr);
     uint32_t CreatExifMetadataByImageSource(bool addFlag = false);
+    uint32_t ImageAiProcess(Size imageSize, ImagePlugin::DecodeContext &context, bool &isHdr);
+    uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+                                      ImagePlugin::DecodeContext &context, uint32_t &errorCode);
+    void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
+                                  int32_t wantDensity, Size &dstSize);
+    
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
@@ -300,6 +318,7 @@ private:
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
+    ImageHdrType sourceHdrType_; // source image hdr type;
 };
 } // namespace Media
 } // namespace OHOS

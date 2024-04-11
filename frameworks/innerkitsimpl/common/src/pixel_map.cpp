@@ -801,6 +801,10 @@ bool PixelMap::GetPixelFormatDetail(const PixelFormat format)
             colorProc_ = RGB565ToARGB;
             break;
         }
+        case PixelFormat::RGBA_1010102: {
+            pixelBytes_ = ARGB_8888_BYTES;
+            break;
+        }
         case PixelFormat::RGB_888: {
             pixelBytes_ = RGB_888_BYTES;
             colorProc_ = RGB888ToARGB;
@@ -1569,6 +1573,22 @@ bool PixelMap::IsStrideAlignment()
     }
     IMAGE_LOGE("IsStrideAlignment error ");
     return false;
+}
+
+bool PixelMap::IsHdr()
+{
+    return imageInfo_.isHdr;
+}
+
+uint32_t PixelMap::SetIsHdr(bool isHdr)
+{
+    ImageInfo dstInfo = imageInfo_;
+    dstInfo.isHdr = isHdr;
+    uint32_t ret = SetImageInfo(dstInfo, true);
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("SetIsHdr call SetImageInfo Failed. ret:%{public}u", ret);
+    }
+    return ret;
 }
 
 AllocatorType PixelMap::GetAllocatorType()
