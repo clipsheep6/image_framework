@@ -2818,7 +2818,7 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
             IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
             return res;
         }
-        inputhdr = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
+        sptr<SurfaceBuffer> inputhdr = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
         res = AiHdrProcessDl(inputhdr, context, isHdr);
         IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);  
 #endif
