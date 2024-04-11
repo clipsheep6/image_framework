@@ -86,7 +86,8 @@ ssize_t BufferMetadataStream::Write(uint8_t *data, ssize_t size)
             return -1;
         }
 
-        // Removed std::fill_n for efficiency. If zero-initialization is needed,
+        std::memset(newBuffer, 0, newCapacity);
+
         // consider doing it manually where necessary.
         // If there is existing data, copy it to the new buffer
         if (buffer_ != nullptr) {
@@ -233,6 +234,7 @@ bool BufferMetadataStream::CopyFrom(MetadataStream &src)
         ssize_t estimatedSize = ((src.GetSize() + METADATA_STREAM_PAGE_SIZE - 1) / METADATA_STREAM_PAGE_SIZE) *
             METADATA_STREAM_PAGE_SIZE; // Ensure it is a multiple of 32k
         buffer_ = new (std::nothrow) byte[estimatedSize];
+        std::memset(buffer_, 0, estimatedSize);
         if (buffer_ == nullptr) {
             IMAGE_LOGE("BufferImageStream::CopyFrom failed, not enough memory");
             return false;
@@ -258,6 +260,7 @@ bool BufferMetadataStream::ReadAndWriteData(MetadataStream &src)
         return false;
     }
     byte *tempBuffer = new (std::nothrow) byte[buffer_size];
+    std::memset(tempBuffer, 0, buffer_size);
     if (tempBuffer == nullptr) {
         IMAGE_LOGE("BufferImageStream::ReadAndWriteData failed, not enough memory");
         return false;

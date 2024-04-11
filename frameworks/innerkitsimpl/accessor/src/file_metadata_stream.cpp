@@ -405,6 +405,7 @@ bool FileMetadataStream::CopyDataFromSource(MetadataStream &src, ssize_t &totalB
         HandleFileError("Memory allocation", filePath_, -1, -1, buffer_size);
         return false;
     }
+    std::memset(tempBuffer, 0, buffer_size);
 
     Seek(0, SeekPos::BEGIN);
     src.Seek(0, SeekPos::BEGIN); // Set the position of src to 0
