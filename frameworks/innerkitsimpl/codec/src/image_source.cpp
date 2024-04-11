@@ -166,11 +166,9 @@ constexpr uint8_t BYTE_POS_3 = 3;
 const auto KEY_SIZE = 2;
 const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
 
-#ifdef IMAGE_AI_ENABLE
 static constexpr uint32_t TRANSFUNC_OFFSET = 8;
 static constexpr uint32_t MATRIX_OFFSET = 16;
 static constexpr uint32_t RANGE_OFFSET = 21;
-#endif
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
@@ -2488,7 +2486,6 @@ bool ImageSource::IsSupportGenAstc()
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
 
-#ifdef IMAGE_AI_ENABLE
 static SurfaceBuffer* CopyContextIntoSurfaceBuffer(uint32_t count, DecodeContext &context, Size &sizeInfo)
 {
     IMAGE_LOGE("[CopyContextIntoSurfaceBuffer]enter");
@@ -2559,7 +2556,6 @@ static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &conte
     IMAGE_LOGE("[ImageSource]AllocBufferForContext done: context.pixelsBuffer.bufferSize=count:%{public}u.", count);
     return sb;
 }
-#endif
 
 static void CopyContext(DecodeContext &src, DecodeContext &dst)
 {
@@ -2686,7 +2682,7 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &
     int32_t res = utils->ColorSpaceConverterImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
         //FreeContextBuffer
-        IMAGE_LOGE("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess failed! ${public}d", res);
+        IMAGE_LOGE("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess failed! %{public}d", res);
         CopyContext(backupContext, context);
     } else {
         IMAGE_LOGD("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess Succ!");
@@ -2753,7 +2749,7 @@ uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, Resolut
     int32_t res = utils->DetailEnhancerImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
         //FreeContextBuffer
-        IMAGE_LOGE("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess failed! ${public}d", res);
+        IMAGE_LOGE("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess failed! %{public}d", res);
         CopyContext(backupContext, context);
     } else {
         IMAGE_LOGD("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess Succ!");
@@ -2822,7 +2818,8 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
             IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
             return res;
         }
-        res = AiHdrProcessDl(output, context, isHdr);
+        inputhdr = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
+        res = AiHdrProcessDl(inputhdr, context, isHdr);
         IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);  
 #endif
     } else if (needHdr) {

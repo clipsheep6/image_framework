@@ -36,7 +36,9 @@ using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 static constexpr uint32_t TRANSFUNC_OFFSET = 8;
 static constexpr uint32_t MATRIX_OFFSET = 16;
 static constexpr uint32_t RANGE_OFFSET = 21;
-
+constexpr uint8_t INDEX_ZERO = 0;
+constexpr uint8_t INDEX_ONE = 1;
+constexpr uint8_t INDEX_TWO = 2;
 const static char* VPE_SO_NAME = "libvideoprocessingengine.z.so";
 void* VpeUtils::vpeHandle_ = nullptr;
 int32_t VpeUtils::instanceHdrId_ = VPE_ERROR_FAILED;
@@ -192,7 +194,7 @@ int32_t VpeUtils::DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<S
 }
 
 // surfacebuffer metadata
-static GSError SetColorSpaceInfo(sptr<SurfaceBuffer>& buffer, const CM_ColorSpaceInfo& colorSpaceInfo)
+GSError VpeUtils::SetColorSpaceInfo(sptr<SurfaceBuffer>& buffer, const CM_ColorSpaceInfo& colorSpaceInfo)
 {
     std::vector<uint8_t> colorSpaceInfoVec;
     auto ret = MetadataManager::ConvertMetadataToVec(colorSpaceInfo, colorSpaceInfoVec);
@@ -202,7 +204,7 @@ static GSError SetColorSpaceInfo(sptr<SurfaceBuffer>& buffer, const CM_ColorSpac
     return buffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec);
 }
 
-static bool GetColorSpaceInfo(const sptr<SurfaceBuffer>& buffer, CM_ColorSpaceInfo& colorSpaceInfo)
+bool VpeUtils::GetColorSpaceInfo(const sptr<SurfaceBuffer>& buffer, CM_ColorSpaceInfo& colorSpaceInfo)
 {
     std::vector<uint8_t> colorSpaceInfoVec;
     auto ret = buffer->GetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec);
