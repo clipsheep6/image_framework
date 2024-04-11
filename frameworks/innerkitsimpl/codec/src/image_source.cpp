@@ -2765,7 +2765,7 @@ bool ImageSource::CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needH
 
     if (opts_.desiredDynamicRange  == DecodeDynamicRange::HDR && capHdr) {
         IMAGE_LOGD("[ImageSource] CheckDecodeOptions desiredDynamicRange is hdr");
-        if (IsHdrImage()) {
+        if (!IsHdrImage()) {
             needHdr = true;
         }
     }
