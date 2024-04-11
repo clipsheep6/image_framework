@@ -54,10 +54,11 @@ VpeUtils::VpeUtils()
 
 VpeUtils::~VpeUtils()
 {   
-    DetailEnhancerDestory(instanceSrId_);
+    DetailEnhancerDestory(&instanceSrId_);
     ColorSpaceConverterDestory(&instanceHdrId_);
     dlclose(vpeHandle_);
-    instanceId_ = VPE_ERROR_FAILED;
+    instanceSrId_ = VPE_ERROR_FAILED;
+    instanceHdrId_ = VPE_ERROR_FAILED;
 }
 
 int32_t VpeUtils::ColorSpaceConverterCreate(int32_t* instanceId)
@@ -288,72 +289,6 @@ bool VpeUtils::SetSbStaticMetadata(sptr<SurfaceBuffer>& buffer, const std::vecto
 bool VpeUtils::GetSbStaticMetadata(const sptr<SurfaceBuffer>& buffer, std::vector<uint8_t>& staticMetadata)
 {
     return buffer->GetMetadata(ATTRKEY_HDR_STATIC_METADATA, staticMetadata) == GSERROR_OK;
-}
-
-static HDRVividGainmapMetadata GetDefaultGainmapMetadata()
-{
-    const float gainmapMax = 1.0f;
-    const float gainmapMin = 0.0f;
-    const float gamma = 1.0f;
-    const float offsetDenominator = 64.0;
-    const float baseOffset = 1.0 / offsetDenominator;
-    const float alternateOffset = 1.0 / offsetDenominator;
-    HDRVividGainmapMetadata gainmapMetadata;
-    gainmapMetadata.enhanceClippedThreholdMaxGainmap[INDEX_ZERO] = gainmapMax;
-    gainmapMetadata.enhanceClippedThreholdMaxGainmap[INDEX_ONE] = gainmapMax;
-    gainmapMetadata.enhanceClippedThreholdMaxGainmap[INDEX_TWO] = gainmapMax;
-    gainmapMetadata.enhanceClippedThreholdMinGainmap[INDEX_ZERO] = gainmapMin;
-    gainmapMetadata.enhanceClippedThreholdMinGainmap[INDEX_ONE] = gainmapMin;
-    gainmapMetadata.enhanceClippedThreholdMinGainmap[INDEX_TWO] = gainmapMin;
-    gainmapMetadata.enhanceMappingGamma[INDEX_ZERO] = gamma;
-    gainmapMetadata.enhanceMappingGamma[INDEX_ONE] = gamma;
-    gainmapMetadata.enhanceMappingGamma[INDEX_TWO] = gamma;
-    gainmapMetadata.enhanceMappingBaselineOffset[INDEX_ZERO] = baseOffset;
-    gainmapMetadata.enhanceMappingBaselineOffset[INDEX_ONE] = baseOffset;
-    gainmapMetadata.enhanceMappingBaselineOffset[INDEX_TWO] = baseOffset;
-    gainmapMetadata.enhanceMappingAlternateOffset[INDEX_ZERO] = alternateOffset;
-    gainmapMetadata.enhanceMappingAlternateOffset[INDEX_ONE] = alternateOffset;
-    gainmapMetadata.enhanceMappingAlternateOffset[INDEX_TWO] = alternateOffset;
-    return gainmapMetadata;
-}
-
-static CM_HDR_Metadata_Type ConvertHdrType(ImageHdrType hdrType)
-{
-    switch (hdrType) {
-        case ImageHdrType::HDR_VIVID_DUAL :
-        case ImageHdrType::HDR_CUVA :
-            return CM_IMAGE_HDR_VIVID_DUAL;
-        case ImageHdrType::HDR_ISO_DUAL :
-            return CM_IMAGE_HDR_ISO_DUAL;
-        default:
-            return CM_METADATA_NONE;
-    }
-    return CM_METADATA_NONE;
-}
-
-void VpeUtils::SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, bool isGainmap, ImageHdrType type,
-    CM_ColorSpaceType color, HdrMetadata& metadata)
-{
-    CM_HDR_Metadata_Type cmHdrType = ConvertHdrType(type);
-    VpeUtils::SetSbMetadataType(buffer, cmHdrType);
-    VpeUtils::SetSbColorSpaceType(buffer, color);
-    if (type == ImageHdrType::HDR_CUVA) {
-        return;
-    }
-    if (!isGainmap) {
-        VpeUtils::SetSbDynamicMetadata(buffer, metadata.dynamicMetadata);
-        VpeUtils::SetSbStaticMetadata(buffer, metadata.staticMetadata);
-    }
-    std::vector<uint8_t> gainmapMetadataVec(sizeof(HDRVividGainmapMetadata));
-    if (metadata.gainmapMetadataFlag) {
-        memcpy_s(gainmapMetadataVec.data(), gainmapMetadataVec.size(),
-            &metadata.gainmapMetadata, sizeof(HDRVividGainmapMetadata));
-    } else {
-        HDRVividGainmapMetadata defaultGainmapMetadata = GetDefaultGainmapMetadata();
-        memcpy_s(gainmapMetadataVec.data(), gainmapMetadataVec.size(),
-            &defaultGainmapMetadata, sizeof(HDRVividGainmapMetadata));
-    }
-    VpeUtils::SetSbDynamicMetadata(buffer, gainmapMetadataVec);
 }
 }
 }
