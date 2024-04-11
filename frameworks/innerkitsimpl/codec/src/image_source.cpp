@@ -63,7 +63,6 @@
 #include "astc_superDecompress.h"
 #endif
 #include "vpe_utils.h"
-#include "image_mime_type.h"
 #include "v1_0/buffer_handle_meta_key_type.h"
 #include "v1_0/cm_color_space.h"
 #include "v1_0/hdr_static_metadata.h"
