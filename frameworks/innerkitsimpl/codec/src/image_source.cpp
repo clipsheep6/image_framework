@@ -2745,7 +2745,7 @@ bool ImageSource::CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needH
 {
     bool capSr = false;
     bool capHdr = false;
-    bRet = CheckCapacityAi(capSr, capHdr);
+    auto bRet = CheckCapacityAi(capSr, capHdr);
     if (!bRet) {
         return SUCCESS;
     }
