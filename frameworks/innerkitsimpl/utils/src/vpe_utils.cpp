@@ -50,7 +50,7 @@ VpeUtils::VpeUtils()
 }
 
 VpeUtils::~VpeUtils()
-{   
+{
     if (instanceHdrId_ != VPE_ERROR_FAILED) {
         ColorSpaceConverterDestory(&instanceHdrId_);
         instanceHdrId_ = VPE_ERROR_FAILED;

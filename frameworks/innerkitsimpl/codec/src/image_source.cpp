@@ -2562,7 +2562,11 @@ static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
 {
     std::vector<uint8_t> metadata;
     metadata.resize(sizeof(value));
-    (void)memcpy_s(metadata.data(), metadata.size(), &value, sizeof(value));
+    errno_t ret = memcpy_s(metadata.data(), metadata.size(), &value, sizeof(value));
+    if (ret != 0) {
+        IMAGE_LOGE("value to metadata fail, error:%{public}d", ret);
+        return ERR_SHAMEM_DATA_ABNORMAL;
+    }
     uint32_t err = buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, metadata);
     IMAGE_LOGD("Buffer set metadata type, ret: %{public}d\n", err);
 }
@@ -2571,7 +2575,12 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
 {
     std::vector<uint8_t> metadata;
     metadata.resize(sizeof(CM_ColorSpaceInfo));
-    (void)memcpy_s(metadata.data(), metadata.size(), &colorspaceInfo, sizeof(CM_ColorSpaceInfo));
+
+    errno_t ret = memcpy_s(metadata.data(), metadata.size(), &colorspaceInfo, sizeof(CM_ColorSpaceInfo));
+    if (ret != 0) {
+        IMAGE_LOGE("colorspaceInfo to metadata fail, error:%{public}d", ret);
+        return ERR_SHAMEM_DATA_ABNORMAL;
+    }
     uint32_t err = buffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, metadata);
     IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
 }
@@ -2803,7 +2812,7 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
         }
         sptr<SurfaceBuffer> inputhdr = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
         res = AiHdrProcessDl(inputhdr, context, isHdr);
-        IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);  
+        IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
 #endif
     } else if (needHdr) {
 #ifdef IMAGE_AI_ENABLE
