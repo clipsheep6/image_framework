@@ -62,6 +62,30 @@ VpeUtils::~VpeUtils()
     dlclose(vpeHandle_);
 }
 
+bool VpeUtils::CheckCapacityAi(bool &capSr, bool &capHdr)
+{
+    capSr = false;
+    capHdr = false;
+    int32_t instanceHdrId = VPE_ERROR_FAILED;
+
+    auto res = ColorSpaceConverterCreate(&instanceHdrId);
+    if (res == VPE_ERROR_OK && instanceHdrId != VPE_ERROR_FAILED) {
+        capSr = true;
+    }
+
+    int32_t instanceSrId = VPE_ERROR_FAILED;
+
+    res = DetailEnhancerCreate(&instanceSrId);
+    if (res == VPE_ERROR_OK && instanceSrId != VPE_ERROR_FAILED) {
+        capHdr = true;
+    }
+
+    if (capSr || capHdr) {
+        return true;
+    }
+    return false;
+}
+
 int32_t VpeUtils::ColorSpaceConverterCreate(int32_t* instanceId)
 {
     if (!vpeHandle_) {

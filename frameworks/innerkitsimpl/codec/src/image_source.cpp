@@ -2732,15 +2732,30 @@ bool ImageSource::IsHdrImage()
     return false;
 }
 
-bool ImageSource::CheckDecodeOptions(Size imageSize, bool needAisr, bool needHdr)
+static bool CheckCapacityAi(bool &capSr, bool &capHdr)
 {
-    if (imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) {
+    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
+    auto ret = utils->CheckCapacityAi(capSr, capHdr);
+
+    IMAGE_LOGD("[ImageSource] CheckCapacityAi %{public}d %{public}d %{public}d", ret, capSr, capHdr);
+    return ret;
+}
+
+bool ImageSource::CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needHdr)
+{
+    bool capSr = false;
+    bool capHdr = false;
+    bRet = CheckCapacityAi(capSr, capHdr);
+    if (!bRet) {
+        return SUCCESS;
+    }
+    if ((imageSize.height != opts_.desiredSize.height || imageSize.width != opts_.desiredSize.width) && capSr) {
         IMAGE_LOGD("[ImageSource] CheckDecodeOptions imageSize ne opts_.desiredSize");
         needAisr = true;
     }
 
-    if (opts_.desiredDynamicRange  == DecodeDynamicRange::HDR) {
-        IMAGE_LOGD("[ImageSource] CheckDecodeOptions desiredDynamicRange  is hdr");
+    if (opts_.desiredDynamicRange  == DecodeDynamicRange::HDR && capHdr) {
+        IMAGE_LOGD("[ImageSource] CheckDecodeOptions desiredDynamicRange is hdr");
         if (IsHdrImage()) {
             needHdr = true;
         }
@@ -2762,11 +2777,12 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
     if (!bRet) {
         return SUCCESS;
     }
-
+   
     sptr<SurfaceBuffer> input = nullptr;
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
+        IMAGE_LOGD("[ImageSource] ImageAiProcess allocatorType %{public}u", context.allocatorType);
         return SUCCESS;
     }
     uint32_t res = SUCCESS;
