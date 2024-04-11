@@ -194,7 +194,7 @@ int32_t VpeUtils::DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<S
 }
 
 // surfacebuffer metadata
-GSError VpeUtils::SetColorSpaceInfo(sptr<SurfaceBuffer>& buffer, const CM_ColorSpaceInfo& colorSpaceInfo)
+static GSError SetColorSpaceInfo(sptr<SurfaceBuffer>& buffer, const CM_ColorSpaceInfo& colorSpaceInfo)
 {
     std::vector<uint8_t> colorSpaceInfoVec;
     auto ret = MetadataManager::ConvertMetadataToVec(colorSpaceInfo, colorSpaceInfoVec);
@@ -204,7 +204,7 @@ GSError VpeUtils::SetColorSpaceInfo(sptr<SurfaceBuffer>& buffer, const CM_ColorS
     return buffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec);
 }
 
-bool VpeUtils::GetColorSpaceInfo(const sptr<SurfaceBuffer>& buffer, CM_ColorSpaceInfo& colorSpaceInfo)
+static bool GetColorSpaceInfo(const sptr<SurfaceBuffer>& buffer, CM_ColorSpaceInfo& colorSpaceInfo)
 {
     std::vector<uint8_t> colorSpaceInfoVec;
     auto ret = buffer->GetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec);

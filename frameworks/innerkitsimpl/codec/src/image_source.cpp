@@ -2591,7 +2591,6 @@ static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
     }
 }
 
-#ifdef IMAGE_AI_ENABLE
 static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
 {
     std::vector<uint8_t> metadata;
@@ -2610,6 +2609,7 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
     IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
 }
 
+#ifdef IMAGE_AI_ENABLE
 uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
 {
     DecodeContext backupContext;
@@ -2673,11 +2673,11 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &
     CM_ColorSpaceInfo colorSpaceInfo;
     ConvertColorSpaceTypeToInfo(colorSpaceType, colorSpaceInfo);
 
-    VpeUtils::SetColorSpaceInfo(output, OUTPUT_COLORSPACE_INFO);
-    VpeUtils::SetSbMetadataType(output, CM_IMAGE_HDR_VIVID_SINGLE);
-
-    VpeUtils::SetColorSpaceInfo(input, colorSpaceInfo);
-    VpeUtils::SetSbMetadataType(input, CM_METADATA_NONE);
+    SetMeatadata(output, OUTPUT_COLORSPACE_INFO);
+    SetMeatadata(output, CM_IMAGE_HDR_VIVID_SINGLE);
+    SetMeatadata(input, colorSpaceInfo);
+    SetMeatadata(input, CM_METADATA_NONE);
+    
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->ColorSpaceConverterImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
