@@ -51,11 +51,15 @@ VpeUtils::VpeUtils()
 
 VpeUtils::~VpeUtils()
 {   
-    DetailEnhancerDestory(&instanceSrId_);
-    ColorSpaceConverterDestory(&instanceHdrId_);
+    if (instanceHdrId_ != VPE_ERROR_FAILED) {
+        ColorSpaceConverterDestory(&instanceHdrId_);
+        instanceHdrId_ = VPE_ERROR_FAILED;
+    }
+    if (instanceSrId_ != VPE_ERROR_FAILED) {
+        DetailEnhancerDestory(&instanceSrId_);
+        instanceSrId_ = VPE_ERROR_FAILED;
+    }
     dlclose(vpeHandle_);
-    instanceSrId_ = VPE_ERROR_FAILED;
-    instanceHdrId_ = VPE_ERROR_FAILED;
 }
 
 int32_t VpeUtils::ColorSpaceConverterCreate(int32_t* instanceId)
