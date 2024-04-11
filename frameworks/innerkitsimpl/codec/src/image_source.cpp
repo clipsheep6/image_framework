@@ -2619,6 +2619,7 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &is
     dstInfo.width = context.outInfo.size.width;
     dstInfo.height = context.outInfo.size.height;
     sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_1010102);
+    
     int32_t ret;
     auto csc = ColorSpaceConverter::Create();
     if (csc == nullptr) {
@@ -2654,7 +2655,43 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &is
     }
     return ret;
 }
+#endif
 
+uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
+{
+    DecodeContext backupContext;
+    CopyContext(context, backupContext);
+    IMAGE_LOGD("[ImageSource]AiHdrProcessDl enter....................");
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_1010102);
+
+    CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(colorSpace);
+    CM_ColorSpaceInfo colorSpaceInfo;
+    ConvertColorSpaceTypeToInfo(colorSpaceType, colorSpaceInfo);
+
+    VpeUtils::SetColorSpaceInfo(output, OUTPUT_COLORSPACE_INFO);
+    VpeUtils::SetSbMetadataType(output, CM_IMAGE_HDR_VIVID_SINGLE);
+
+    VpeUtils::SetColorSpaceInfo(input, colorSpaceInfo);
+    VpeUtils::SetSbMetadataType(input, CM_METADATA_NONE);
+    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
+    int32_t res = utils->ColorSpaceConverterComposeImage(input, output);
+    if (ret != VPE_ERROR_OK) {
+        //FreeContextBuffer
+        IMAGE_LOGE("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess failed! ${public}d", ret);
+        CopyContext(backupContext, context);
+    } else {
+        IMAGE_LOGD("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess Succ!");
+        isHdr = true;
+        context.pixelFormat = PlPixelFormat::RGBA_1010102;
+    }
+    return ret;
+}
+
+#ifdef IMAGE_AI_ENABLE
 uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, ResolutionQuality resolutionQuality)
 {
     DecodeContext backupContext;
@@ -2695,6 +2732,29 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     return ret;
 }
 #endif
+
+uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, ResolutionQuality resolutionQuality)
+{
+    DecodeContext backupContext;
+    CopyContext(context, backupContext);
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+
+    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_8888);
+
+    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
+    int32_t res = utils->DetailEnhancerImageProcess(input, output);
+    if (ret != VPE_ERROR_OK) {
+        //FreeContextBuffer
+        IMAGE_LOGE("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess failed! ${public}d", ret);
+        CopyContext(backupContext, context);
+    } else {
+        IMAGE_LOGD("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess Succ!");
+    }
+    return ret;
+}
 
 bool ImageSource::IsHdrImage()
 {
@@ -2739,13 +2799,7 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
-        #ifdef IMAGE_AI_ENABLE
-        Size dstSize;
-        dstSize.width = context.outInfo.size.width;
-        dstSize.height = context.outInfo.size.height;
-        uint32_t byteCount = context.pixelsBuffer.bufferSize;
-        input = CopyContextIntoSurfaceBuffer(byteCount, context, dstSize);
-        #endif
+        return SUCCESS;
     }
     uint32_t res = SUCCESS;
     if (needAisr && needHdr) {
@@ -2757,14 +2811,26 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
         }
         res = AiHdrProcess(output, context, isHdr);
         IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
+#else
+        res = AiSrProcessDl(input, context, opts_.resolutionQuality);
+        if (res != SUCCESS) {
+            IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);
+            return res;
+        }
+        res = AiHdrProcessDl(output, context, isHdr);
+        IMAGE_LOGD("[ImageSource] AiSrProcess fail %{public}u", res);  
 #endif
     } else if (needHdr) {
 #ifdef IMAGE_AI_ENABLE
         res = AiHdrProcess(input, context, isHdr);
+#else
+        res = AiHdrProcessDl(input, context, isHdr);
 #endif
     } else {
 #ifdef IMAGE_AI_ENABLE
         res = AiSrProcess(input, context, opts_.resolutionQuality);
+#else
+        res = AiSrProcessDl(input, context, opts_.resolutionQuality);
 #endif
     }
     return res;
