@@ -2565,7 +2565,7 @@ static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
     errno_t ret = memcpy_s(metadata.data(), metadata.size(), &value, sizeof(value));
     if (ret != 0) {
         IMAGE_LOGE("value to metadata fail, error:%{public}d", ret);
-        return ERR_SHAMEM_DATA_ABNORMAL;
+        return;
     }
     uint32_t err = buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, metadata);
     IMAGE_LOGD("Buffer set metadata type, ret: %{public}d\n", err);
@@ -2579,7 +2579,7 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
     errno_t ret = memcpy_s(metadata.data(), metadata.size(), &colorspaceInfo, sizeof(CM_ColorSpaceInfo));
     if (ret != 0) {
         IMAGE_LOGE("colorspaceInfo to metadata fail, error:%{public}d", ret);
-        return ERR_SHAMEM_DATA_ABNORMAL;
+        return;
     }
     uint32_t err = buffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, metadata);
     IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
