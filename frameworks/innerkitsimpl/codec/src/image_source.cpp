@@ -2669,7 +2669,7 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &
     dstInfo.height = context.outInfo.size.height;
     sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_1010102);
 
-    CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(colorSpace);
+    CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(context.colorSpace);
     CM_ColorSpaceInfo colorSpaceInfo;
     ConvertColorSpaceTypeToInfo(colorSpaceType, colorSpaceInfo);
 
@@ -2677,7 +2677,7 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &
     SetMeatadata(output, CM_IMAGE_HDR_VIVID_SINGLE);
     SetMeatadata(input, colorSpaceInfo);
     SetMeatadata(input, CM_METADATA_NONE);
-    
+
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->ColorSpaceConverterImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
