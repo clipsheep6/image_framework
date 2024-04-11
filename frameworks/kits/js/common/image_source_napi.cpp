@@ -1320,9 +1320,11 @@ napi_value ImageSourceNapi::GetImageInfoSync(napi_env env, napi_callback_info in
 static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
     std::shared_ptr<ImageSource> imageSource, uint32_t index, DecodeOptions decodeOpts, uint32_t &status)
 {
+    IMAGE_LOGI("CreatePixelMapInner IN");
     if (thisPtr == nullptr || imageSource == nullptr) {
         IMAGE_LOGE("Invailed args");
         status = ERROR;
+        return nullptr;
     }
 
     std::shared_ptr<PixelMap> pixelMap;
@@ -1336,9 +1338,11 @@ static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
     }
 
     if (status != SUCCESS || !IMG_NOT_NULL(pixelMap)) {
+        status = ERROR;
         IMAGE_LOGE("Create PixelMap error");
+        return nullptr;
     }
-
+    IMAGE_LOGI("CreatePixelMapInner OUT");
     return pixelMap;
 }
 
