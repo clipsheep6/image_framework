@@ -63,6 +63,10 @@
 #include "astc_superDecompress.h"
 #endif
 #include "vpe_utils.h"
+#include "image_mime_type.h"
+#include "v1_0/buffer_handle_meta_key_type.h"
+#include "v1_0/cm_color_space.h"
+#include "v1_0/hdr_static_metadata.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -75,6 +79,7 @@ namespace Media {
 using namespace std;
 using namespace ImagePlugin;
 using namespace MultimediaPlugin;
+using namespace HDI::Display::Graphic::Common::V1_0;
 
 static const map<PixelFormat, PlPixelFormat> PIXEL_FORMAT_MAP = {
     { PixelFormat::UNKNOWN, PlPixelFormat::UNKNOWN },     { PixelFormat::ARGB_8888, PlPixelFormat::ARGB_8888 },
@@ -2557,23 +2562,13 @@ static SurfaceBuffer* AllocBufferForContext(uint32_t count, DecodeContext &conte
 }
 #endif
 
-#ifdef IMAGE_AI_ENABLE
-static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
+static void CopyContext(DecodeContext &src, DecodeContext &dst)
 {
-    std::vector<uint8_t> metadata;
-    metadata.resize(sizeof(value));
-    (void)memcpy_s(metadata.data(), metadata.size(), &value, sizeof(value));
-    uint32_t err = buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, metadata);
-    IMAGE_LOGD("Buffer set metadata type, ret: %{public}d\n", err);
-}
-
-static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorspaceInfo)
-{
-    std::vector<uint8_t> metadata;
-    metadata.resize(sizeof(CM_ColorSpaceInfo));
-    (void)memcpy_s(metadata.data(), metadata.size(), &colorspaceInfo, sizeof(CM_ColorSpaceInfo));
-    uint32_t err = buffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, metadata);
-    IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
+    dst.pixelsBuffer.buffer = src.pixelsBuffer.buffer ;
+    dst.pixelsBuffer.bufferSize = src.pixelsBuffer.bufferSize;
+    dst.pixelsBuffer.context = src.pixelsBuffer.context;
+    dst.allocatorType = src.allocatorType;
+    dst.freeFunc = src.freeFunc;
 }
 
 constexpr CM_ColorSpaceInfo OUTPUT_COLORSPACE_INFO = {
@@ -2600,13 +2595,24 @@ static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
             return CM_ColorSpaceType::CM_P3_LIMIT; // CM_SRGB_LIMIT;
     }
 }
-static void CopyContext(DecodeContext &src, DecodeContext &dst)
+
+#ifdef IMAGE_AI_ENABLE
+static void SetMeatadata(SurfaceBuffer *buffer, uint32_t value)
 {
-    dst.pixelsBuffer.buffer = src.pixelsBuffer.buffer ;
-    dst.pixelsBuffer.bufferSize = src.pixelsBuffer.bufferSize;
-    dst.pixelsBuffer.context = src.pixelsBuffer.context;
-    dst.allocatorType = src.allocatorType;
-    dst.freeFunc = src.freeFunc;
+    std::vector<uint8_t> metadata;
+    metadata.resize(sizeof(value));
+    (void)memcpy_s(metadata.data(), metadata.size(), &value, sizeof(value));
+    uint32_t err = buffer->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, metadata);
+    IMAGE_LOGD("Buffer set metadata type, ret: %{public}d\n", err);
+}
+
+static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorspaceInfo)
+{
+    std::vector<uint8_t> metadata;
+    metadata.resize(sizeof(CM_ColorSpaceInfo));
+    (void)memcpy_s(metadata.data(), metadata.size(), &colorspaceInfo, sizeof(CM_ColorSpaceInfo));
+    uint32_t err = buffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, metadata);
+    IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
 }
 
 uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
@@ -2678,17 +2684,17 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &
     VpeUtils::SetColorSpaceInfo(input, colorSpaceInfo);
     VpeUtils::SetSbMetadataType(input, CM_METADATA_NONE);
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
-    int32_t res = utils->ColorSpaceConverterComposeImage(input, output);
-    if (ret != VPE_ERROR_OK) {
+    int32_t res = utils->ColorSpaceConverterImageProcess(input, output);
+    if (res != VPE_ERROR_OK) {
         //FreeContextBuffer
-        IMAGE_LOGE("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess failed! ${public}d", ret);
+        IMAGE_LOGE("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess failed! ${public}d", res);
         CopyContext(backupContext, context);
     } else {
         IMAGE_LOGD("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess Succ!");
         isHdr = true;
         context.pixelFormat = PlPixelFormat::RGBA_1010102;
     }
-    return ret;
+    return res;
 }
 
 #ifdef IMAGE_AI_ENABLE
@@ -2746,14 +2752,14 @@ uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, Resolut
 
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->DetailEnhancerImageProcess(input, output);
-    if (ret != VPE_ERROR_OK) {
+    if (res != VPE_ERROR_OK) {
         //FreeContextBuffer
-        IMAGE_LOGE("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess failed! ${public}d", ret);
+        IMAGE_LOGE("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess failed! ${public}d", res);
         CopyContext(backupContext, context);
     } else {
         IMAGE_LOGD("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess Succ!");
     }
-    return ret;
+    return res;
 }
 
 bool ImageSource::IsHdrImage()
