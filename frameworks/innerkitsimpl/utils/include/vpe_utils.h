@@ -19,7 +19,6 @@
 #include "v1_0/cm_color_space.h"
 #include "v1_0/hdr_static_metadata.h"
 #include "surface_buffer.h"
-#include "hdr_type.h"
 
 namespace OHOS {
 namespace Media {
@@ -50,8 +49,6 @@ public:
     static bool GetSbDynamicMetadata(const sptr<SurfaceBuffer>& buffer, std::vector<uint8_t>& dynamicMetadata);
     static bool SetSbStaticMetadata(sptr<SurfaceBuffer>& buffer, const std::vector<uint8_t>& staticMetadata);
     static bool GetSbStaticMetadata(const sptr<SurfaceBuffer>& buffer, std::vector<uint8_t>& staticMetadata);
-    static void SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, bool isGainmap, ImageHdrType type,
-        HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType color, HdrMetadata& metadata);
 
 private:
     int32_t ColorSpaceConverterCreate(int32_t* instanceId);

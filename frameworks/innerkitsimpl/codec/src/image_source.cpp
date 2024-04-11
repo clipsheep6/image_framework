@@ -62,6 +62,7 @@
 #ifdef SUT_DECODE_ENABLE
 #include "astc_superDecompress.h"
 #endif
+#include "vpe_utils.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
