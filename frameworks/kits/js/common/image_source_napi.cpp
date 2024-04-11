@@ -23,9 +23,7 @@
 #include "hitrace_meter.h"
 #include "exif_metadata_formatter.h"
 #include "image_dfx.h"
-#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "color_space_object_convertor.h"
-#endif
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -1039,7 +1037,7 @@ static bool isRawFileDescriptor(napi_env env, napi_value argValue, ImageSourceAs
     if (!hasNamedProperty(env, argValue, "fd") ||
         !hasNamedProperty(env, argValue, "offset") ||
         !hasNamedProperty(env, argValue, "length")) {
-        IMAGE_LOGE("RawFileDescriptor mismatch");
+        IMAGE_LOGD("RawFileDescriptor mismatch");
         return false;
     }
     if (parseRawFileItem(env, argValue, "fd", &(context->rawFileInfo.fd)) &&
@@ -1348,8 +1346,7 @@ static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
 
 static void CreatePixelMapExecute(napi_env env, void *data)
 {
-    uint32_t executeId = static_cast<uint32_t>(ImageNapiUtils::GetNowTimeMicroSeconds());
-    IMAGE_LOGI("CreatePixelMapExecute IN, id: %{public}u", executeId);
+    IMAGE_LOGD("CreatePixelMapExecute IN");
     if (data == nullptr) {
         IMAGE_LOGE("data is nullptr");
         return;
@@ -1373,13 +1370,12 @@ static void CreatePixelMapExecute(napi_env env, void *data)
         context->errMsg = "Create PixelMap error";
         IMAGE_LOGE("Create PixelMap error");
     }
-    IMAGE_LOGI("CreatePixelMapExecute OUT, id: %{public}u", executeId);
+    IMAGE_LOGD("CreatePixelMapExecute OUT");
 }
 
 static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
 {
-    uint32_t completeId = static_cast<uint32_t>(ImageNapiUtils::GetNowTimeMicroSeconds());
-    IMAGE_LOGI("CreatePixelMapComplete IN, id: %{public}u", completeId);
+    IMAGE_LOGD("CreatePixelMapComplete IN");
     napi_value result = nullptr;
     auto context = static_cast<ImageSourceAsyncContext*>(data);
 
@@ -1388,7 +1384,7 @@ static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
     } else {
         napi_get_undefined(env, &result);
     }
-    IMAGE_LOGI("CreatePixelMapComplete OUT, id: %{public}u", completeId);
+    IMAGE_LOGD("CreatePixelMapComplete OUT");
     ImageSourceCallbackRoutine(env, context, result);
 }
 

@@ -26,6 +26,7 @@
 #if !defined(_WIN32) && !defined(_APPLE)
 #include "hitrace_meter.h"
 #include "image_trace.h"
+#include "image_data_statistics.h"
 #endif
 #include "exif_metadata.h"
 #include "file_source_stream.h"
@@ -57,6 +58,9 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
+#ifdef SUT_DECODE_ENABLE
+#include "astc_superDecompress.h"
+#endif
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -142,12 +146,7 @@ static const uint8_t ASTC_HEADER_BLOCK_X = 4;
 static const uint8_t ASTC_HEADER_BLOCK_Y = 5;
 static const uint8_t ASTC_HEADER_DIM_X = 7;
 static const uint8_t ASTC_HEADER_DIM_Y = 10;
-static bool g_isSutDecInit = false;
-static void *g_textureDecSoHandle = nullptr;
-using GetSuperCompressAstcSize = size_t (*)(const uint8_t *, size_t);
-using SuperDecompressTexture = bool (*)(const uint8_t *, size_t, uint8_t *, size_t &);
-static GetSuperCompressAstcSize g_sutDecSoGetSizeFunc = nullptr;
-static SuperDecompressTexture g_sutDecSoDecFunc = nullptr;
+#ifdef SUT_DECODE_ENABLE
 constexpr uint8_t ASTC_HEAD_BYTES = 16;
 constexpr uint8_t ASTC_MAGIC_0 = 0x13;
 constexpr uint8_t ASTC_MAGIC_1 = 0xAB;
@@ -157,7 +156,7 @@ constexpr uint8_t BYTE_POS_0 = 0;
 constexpr uint8_t BYTE_POS_1 = 1;
 constexpr uint8_t BYTE_POS_2 = 2;
 constexpr uint8_t BYTE_POS_3 = 3;
-const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress.z.so";
+#endif
 const auto KEY_SIZE = 2;
 const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
 
@@ -167,7 +166,6 @@ ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
 uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
 {
     IMAGE_LOGD("[ImageSource]get supported image type.");
-
     formats.clear();
     vector<ClassInfo> classInfos;
     uint32_t ret =
@@ -227,6 +225,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(unique_ptr<istream> is, c
     uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with stream.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with stream.");
     return DoImageSourceCreate(
         [&is]() {
             auto stream = IstreamSourceStream::CreateSourceStream(move(is));
@@ -242,7 +241,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const uint8_t *data, uint
     uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with buffer.");
-
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with buffer.");
     if (data == nullptr || size == 0) {
         IMAGE_LOGE("[ImageSource]parameter error.");
         errorCode = ERR_MEDIA_INVALID_PARAM;
@@ -266,6 +265,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
     uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with pathName.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with pathName.");
     if (pathName.size() == SIZE_ZERO) {
         IMAGE_LOGE("[ImageSource]parameter error.");
         return nullptr;
@@ -288,6 +288,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const std::string &pathNa
 unique_ptr<ImageSource> ImageSource::CreateImageSource(const int fd, const SourceOptions &opts, uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with fd.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with fd.");
     return DoImageSourceCreate(
         [&fd]() {
             auto streamPtr = FileSourceStream::CreateSourceStream(fd);
@@ -303,6 +304,7 @@ unique_ptr<ImageSource> ImageSource::CreateImageSource(const int fd, int32_t off
     const SourceOptions &opts, uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create Imagesource with fd offset and length.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateImageSource with offset.");
     return DoImageSourceCreate(
         [&fd, offset, length]() {
             auto streamPtr = FileSourceStream::CreateSourceStream(fd, offset, length);
@@ -318,6 +320,8 @@ unique_ptr<ImageSource> ImageSource::CreateIncrementalImageSource(const Incremen
     uint32_t &errorCode)
 {
     IMAGE_LOGD("[ImageSource]create incremental ImageSource.");
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreateIncrementalImageSource width = %d, height = %d," \
+        "format = %d", opts.sourceOptions.size.width, opts.sourceOptions.size.height, opts.sourceOptions.pixelFormat);
     auto sourcePtr = DoImageSourceCreate(
         [&opts]() {
             auto streamPtr = IncrementalSourceStream::CreateSourceStream(opts.incrementalMode);
@@ -556,6 +560,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
 {
     ImageEvent imageEvent;
     SetDecodeInfoOptions(index, opts, imageEvent);
+    ImageDataStatistics imageDataStatistics("[ImageSource] CreatePixelMapExtended.");
     uint64_t decodeStartTime = GetNowTimeMicroSeconds();
     opts_ = opts;
     ImageInfo info;
@@ -586,6 +591,11 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
     }
     SetDecodeInfoOptions(index, opts, context, imageEvent);
+    imageDataStatistics.AddTitle("imageSize: [%d, %d], desireSize: [%d, %d], imageFormat: %s, desirePixelFormat: %d," \
+        "memorySize: %d, memoryType: %d", context.outInfo.size.width, context.outInfo.size.height,
+        info.size.width, info.size.height, sourceInfo_.encodedFormat.c_str(), context.pixelFormat,
+        context.pixelsBuffer.bufferSize, context.allocatorType);
+    imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
     ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
     ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
     guard.unlock();
@@ -922,6 +932,8 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
 unique_ptr<IncrementalPixelMap> ImageSource::CreateIncrementalPixelMap(uint32_t index, const DecodeOptions &opts,
     uint32_t &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource] CreateIncrementalPixelMap width = %d, height = %d," \
+        "pixelformat = %d", opts.desiredSize.width, opts.desiredSize.height, opts.desiredPixelFormat);
     IncrementalPixelMap *incPixelMapPtr = new (std::nothrow) IncrementalPixelMap(index, opts, this);
     if (incPixelMapPtr == nullptr) {
         IMAGE_LOGE("[ImageSource]create the incremental pixel map unique_ptr fail.");
@@ -1034,6 +1046,7 @@ void ImageSource::DetachIncrementalDecoding(PixelMap &pixelMap)
 
 uint32_t ImageSource::UpdateData(const uint8_t *data, uint32_t size, bool isCompleted)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]UpdateData");
     if (sourceStreamPtr_ == nullptr) {
         IMAGE_LOGE("[ImageSource]image source update data, source stream is null.");
         return ERR_IMAGE_INVALID_PARAMETER;
@@ -1068,7 +1081,6 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
             info.size.width, info.size.height);
         return ERR_IMAGE_DECODE_FAILED;
     }
-
     imageInfo = info;
     return SUCCESS;
 }
@@ -1110,6 +1122,7 @@ uint32_t ImageSource::ModifyImageProperty(std::shared_ptr<MetadataAccessor> meta
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
     const std::string &path)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]ModifyImageProperty by path.");
     if (!std::filesystem::exists(path)) {
         return ERR_IMAGE_SOURCE_DATA;
     }
@@ -1123,6 +1136,7 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key, const std::string &value,
     const int fd)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]ModifyImageProperty by fd.");
     if (fd <= STDERR_FILENO) {
         return ERR_IMAGE_SOURCE_DATA;
     }
@@ -1190,6 +1204,7 @@ uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &
 uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
+    ImageDataStatistics imageDataStatistics("[ImageSource]GetImagePropertyInt.");
     std::string strValue;
     uint32_t ret = GetImagePropertyCommon(index, key, strValue);
 
@@ -1204,6 +1219,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
 uint32_t ImageSource::GetImagePropertyString(uint32_t index, const std::string &key, std::string &value)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
+    ImageDataStatistics imageDataStatistics("[ImageSource]GetImagePropertyString.");
     return GetImagePropertyCommon(index, key, value);
 }
 
@@ -2248,11 +2264,7 @@ bool ImageSource::GetImageInfoForASTC(ImageInfo &imageInfo)
     return true;
 }
 
-static bool CheckClBinIsExist(const std::string &name)
-{
-    return (access(name.c_str(), F_OK) != -1); // -1 means that the file is  not exist
-}
-
+#ifdef SUT_DECODE_ENABLE
 static size_t GetAstcSizeBytes(const uint8_t *fileBuf, size_t fileSize)
 {
     if ((fileBuf == nullptr) || (fileSize <= ASTC_HEAD_BYTES)) {
@@ -2264,33 +2276,7 @@ static size_t GetAstcSizeBytes(const uint8_t *fileBuf, size_t fileSize)
         IMAGE_LOGI("astc GetAstcSizeBytes input is pure astc!");
         return fileSize;
     }
-    if (!CheckClBinIsExist(g_textureSuperDecSo)) {
-        IMAGE_LOGE("astc is not pure astc, but not find %{public}s!", g_textureSuperDecSo.c_str());
-        return 0;
-    }
-    if (!g_isSutDecInit) {
-        g_textureDecSoHandle = dlopen(g_textureSuperDecSo.c_str(), 1);
-        if (g_textureDecSoHandle == nullptr) {
-            IMAGE_LOGE("astc libtextureSuperDecompress dlopen failed!");
-            return 0;
-        }
-        g_sutDecSoGetSizeFunc =
-            reinterpret_cast<GetSuperCompressAstcSize>(dlsym(g_textureDecSoHandle, "GetSuperCompressAstcSize"));
-        if (g_sutDecSoGetSizeFunc == nullptr) {
-            IMAGE_LOGE("astc GetSuperCompressAstcSize dlsym failed!");
-            dlclose(g_textureDecSoHandle);
-            return 0;
-        }
-        g_sutDecSoDecFunc =
-            reinterpret_cast<SuperDecompressTexture>(dlsym(g_textureDecSoHandle, "SuperDecompressTexture"));
-        if (g_sutDecSoDecFunc == nullptr) {
-            IMAGE_LOGE("astc g_sutDecSoDecFunc dlsym failed!");
-            dlclose(g_textureDecSoHandle);
-            return 0;
-        }
-        g_isSutDecInit = true;
-    }
-    return g_sutDecSoGetSizeFunc(fileBuf, fileSize);
+    return Rosen::TextureSuperCodecDec::GetSuperCompressAstcSize(fileBuf, fileSize);
 }
 
 static bool TextureSuperCompressDecode(const uint8_t *inData, size_t inBytes, uint8_t *outData, size_t outBytes)
@@ -2300,11 +2286,7 @@ static bool TextureSuperCompressDecode(const uint8_t *inData, size_t inBytes, ui
         IMAGE_LOGE("astc TextureSuperCompressDecode input check failed!");
         return false;
     }
-    if (g_sutDecSoDecFunc == nullptr) {
-        IMAGE_LOGE("astc SuperDecompressTexture is not dlsym from so!");
-        return false;
-    }
-    if (!g_sutDecSoDecFunc(inData, inBytes, outData, outBytes)) {
+    if (!Rosen::TextureSuperCodecDec::SuperDecompressTexture(inData, inBytes, outData, outBytes)) {
         IMAGE_LOGE("astc SuperDecompressTexture process failed!");
         return false;
     }
@@ -2314,6 +2296,7 @@ static bool TextureSuperCompressDecode(const uint8_t *inData, size_t inBytes, ui
     }
     return true;
 }
+#endif
 
 static bool ReadFileAndResoveAstc(size_t fileSize, size_t astcSize, unique_ptr<PixelAstc> &pixelAstc,
     std::unique_ptr<SourceStream> &sourceStreamPtr)
@@ -2341,17 +2324,21 @@ static bool ReadFileAndResoveAstc(size_t fileSize, size_t astcSize, unique_ptr<P
     *static_cast<int32_t *>(fdPtr) = fd;
     pixelAstc->SetPixelsAddr(data, fdPtr, astcSize, Media::AllocatorType::SHARE_MEM_ALLOC, nullptr);
     bool successMemCpyOrDec = true;
+#ifdef SUT_DECODE_ENABLE
     if (fileSize < astcSize) {
         if (TextureSuperCompressDecode(sourceStreamPtr->GetDataPtr(), fileSize, data, astcSize) != true) {
             IMAGE_LOGE("[ImageSource] astc SuperDecompressTexture failed!");
             successMemCpyOrDec = false;
         }
     } else {
+#endif
         if (memcpy_s(data, fileSize, sourceStreamPtr->GetDataPtr(), fileSize) != 0) {
             IMAGE_LOGE("[ImageSource] astc memcpy_s failed!");
             successMemCpyOrDec = false;
         }
+#ifdef SUT_DECODE_ENABLE
     }
+#endif
     if (!successMemCpyOrDec) {
         int32_t *fdPtrInt = static_cast<int32_t *>(fdPtr);
         delete[] fdPtrInt;
@@ -2386,11 +2373,15 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode, boo
     }
     pixelAstc->SetEditable(false);
     size_t fileSize = sourceStreamPtr_->GetStreamSize();
+#ifdef SUT_DECODE_ENABLE
     size_t astcSize = GetAstcSizeBytes(sourceStreamPtr_->GetDataPtr(), fileSize);
     if (astcSize == 0) {
         IMAGE_LOGE("[ImageSource] astc GetAstcSizeBytes failed.");
         return nullptr;
     }
+#else
+    size_t astcSize = fileSize;
+#endif
     if (fastAstc && sourceStreamPtr_->GetStreamType() == ImagePlugin::FILE_STREAM_TYPE && fileSize == astcSize) {
         void *fdBuffer = new int32_t();
         *static_cast<int32_t *>(fdBuffer) = static_cast<FileSourceStream *>(sourceStreamPtr_.get())->GetMMapFd();
@@ -2431,6 +2422,7 @@ bool ImageSource::GetASTCInfo(const uint8_t *fileData, size_t fileSize, ASTCInfo
 
 unique_ptr<vector<unique_ptr<PixelMap>>> ImageSource::CreatePixelMapList(const DecodeOptions &opts, uint32_t &errorCode)
 {
+    ImageDataStatistics imageDataStatistics("[ImageSource]CreatePixelMapList.");
     DumpInputData();
     auto frameCount = GetFrameCount(errorCode);
     if (errorCode != SUCCESS) {

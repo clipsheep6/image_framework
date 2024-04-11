@@ -37,6 +37,7 @@
 #include "media_errors.h"
 #include "string_ex.h"
 #include "image_dfx.h"
+#include "image_data_statistics.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #endif
@@ -182,6 +183,8 @@ static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, DataBuf &exifBlob, 
 
 uint32_t ExtEncoder::DoFinalizeEncode()
 {
+    ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
+        opts_.format.c_str(), opts_.quality);
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
             return IsSameTextStr(item.second, opts_.format);
@@ -196,6 +199,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     TmpBufferHolder holder;
     ImageInfo imageInfo;
     pixelmap_->GetImageInfo(imageInfo);
+    imageDataStatistics.AddTitle("width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
     auto errorCode = BuildSkBitmap(pixelmap_, bitmap, iter->first, holder);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("Failed to build SkBitmap");
@@ -236,6 +240,8 @@ uint32_t ExtEncoder::FinalizeEncode()
     }
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (IsAstc(opts_.format)) {
+        ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
+            opts_.format.c_str(), opts_.quality);
         AstcCodec astcEncoder;
         astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);
         return astcEncoder.ASTCEncode();

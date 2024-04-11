@@ -63,6 +63,7 @@ namespace {
     constexpr static float QUARTER = 0.25;
     constexpr static float ONE_EIGHTH = 0.125;
     constexpr static uint64_t ICC_HEADER_SIZE = 132;
+    constexpr static size_t SMALL_FILE_SIZE = 1000 * 1000 * 10;
 }
 
 namespace OHOS {
@@ -633,7 +634,11 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
     bool isOutputYuv420Format = IsYuv420Format(context.info.pixelFormat);
     if (isOutputYuv420Format && skEncodeFormat == SkEncodedImageFormat::kJPEG) {
-        return DecodeToYuv420(index, context);
+#if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
+    return 0;
+#else
+    return DecodeToYuv420(index, context);
+#endif
     }
     uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
     uint8_t *dstBuffer = nullptr;
@@ -1220,17 +1225,18 @@ static uint32_t ProcessWithStreamData(InputDataStream *input,
         return Media::ERR_MEDIA_INVALID_VALUE;
     }
 
-    auto tmpBuffer = std::make_unique<uint8_t[]>(inputSize);
+    size_t copySize = std::min(inputSize, SMALL_FILE_SIZE);
+    auto tmpBuffer = std::make_unique<uint8_t[]>(copySize);
     auto savePos = input->Tell();
     input->Seek(SIZE_ZERO);
     uint32_t readSize = 0;
-    bool ret = input->Read(inputSize, tmpBuffer.get(), inputSize, readSize);
+    bool ret = input->Read(copySize, tmpBuffer.get(), copySize, readSize);
     input->Seek(savePos);
     if (!ret) {
         IMAGE_LOGE("InputDataStream read failed.");
         return Media::ERR_IMAGE_DATA_ABNORMAL;
     }
-    return process(tmpBuffer.get(), inputSize);
+    return process(tmpBuffer.get(), copySize);
 }
 
 static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
