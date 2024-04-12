@@ -115,13 +115,19 @@ void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
         purgeableMemPtr_ = nullptr;
     }
 #endif
-    // free dng external data
-    FreeDngExtData();
+    if (dngExternalData_ != nullptr && releaseExtDataFunc_ != nullptr) {
+        IMAGE_LOGD("PixelMap::FreePixelMap call releaseExtDataFunc_");
+        releaseExtDataFunc_(dngExternalData_);
+        dngExternalData_ = nullptr;
+        releaseExtDataFunc_ = nullptr;
+    }
     if (data_ == nullptr) {
         return;
     }
-    // free pixmap data
-    FreePixmapData();
+
+    if (freePixelMapProc_ != nullptr) {
+        freePixelMapProc_(data_, context_, pixelsSize_);
+    }
     
     switch (allocatorType_) {
         case AllocatorType::HEAP_ALLOC: {
@@ -158,22 +164,6 @@ void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
     }
 }
 
-void PixelMap::FreeDngExtData()
-{
-    if (dngExternalData_ != nullptr && releaseExtDataFunc_ != nullptr) {
-        IMAGE_LOGD("PixelMap::FreePixelMap call releaseExtDataFunc_");
-        releaseExtDataFunc_(dngExternalData_);
-        dngExternalData_ = nullptr;
-        releaseExtDataFunc_ = nullptr;
-    }
-}
-void PixelMap::FreePixmapData()
-{
-    if (freePixelMapProc_ != nullptr) {
-        freePixelMapProc_(data_, context_, pixelsSize_);
-    }
-}
-
 void PixelMap::ReleaseSharedMemory(void *addr, void *context, uint32_t size)
 {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
@@ -188,7 +178,7 @@ void PixelMap::ReleaseSharedMemory(void *addr, void *context, uint32_t size)
 #endif
 }
 
-void PixelMap::SetDngExternalData(void *dngExternalData, FreeExtData extFunc)
+void PixelMap::SetDngExternalData(void *dngExternalData, FreeExtData extFunc) 
 {
     IMAGE_LOGE("SetDngExternalData IN");
     dngExternalData_ = dngExternalData;
@@ -207,9 +197,7 @@ void PixelMap::SetTransformered(bool isTransformered)
     isTransformered_ = isTransformered;
 }
 
-void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size,
-                             AllocatorType type, CustomFreePixelMap func,
-                             void *dngExternalData, FreeExtData extFunc)
+void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type, CustomFreePixelMap func)
 {
     if (data_ != nullptr) {
         IMAGE_LOGD("SetPixelsAddr release the existed data first");
@@ -223,11 +211,7 @@ void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size,
     pixelsSize_ = size;
     allocatorType_ = type;
     custFreePixelMap_ = func;
-    if (dngExternalData_ != nullptr && releaseExtDataFunc_ != nullptr) {
-        IMAGE_LOGD("SetPixelsAddr set dngExternalData_id");
-        dngExternalData_ = dngExternalData;
-        releaseExtDataFunc_ = extFunc;
-    }
+   
     if (type == AllocatorType::DMA_ALLOC && rowDataSize_ != 0) {
         UpdateImageInfo();
     }
