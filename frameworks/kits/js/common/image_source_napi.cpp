@@ -928,11 +928,7 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
     } else {
         IMAGE_LOGD("no SVGResize percentage");
     }
-    uint32_t resolutionQuality = NUM_0;
-    if (GET_UINT32_BY_NAME(root, "resolutionQuality", resolutionQuality)) {
-        opts->resolutionQuality = static_cast<ResolutionQuality>(resolutionQuality);
-        IMAGE_LOGD("resolutionQuality %{public}x", opts->resolutionQuality);
-    }
+
     opts->resolutionQuality = ParseResolutionQuality(env, root);
     opts->desiredDynamicRange = ParseDynamicRange(env, root);
     

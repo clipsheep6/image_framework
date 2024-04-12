@@ -2586,31 +2586,18 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
 }
 
 #ifdef IMAGE_AI_ENABLE
-uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
+static uint32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output)
 {
-    DecodeContext backupContext;
-    CopyContext(context, backupContext);
-    IMAGE_LOGD("[ImageSource]AiHdrProcess enter....................");
-    uint32_t byteCount = context.pixelsBuffer.bufferSize;
-    Size dstInfo;
-    dstInfo.width = context.outInfo.size.width;
-    dstInfo.height = context.outInfo.size.height;
-    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_1010102);
-    
     int32_t ret;
     auto csc = ColorSpaceConverter::Create();
     if (csc == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        CopyContext(backupContext, context);
         return ERR_IMAGE_COLOR_SPACE_CONVERTER_CREATE_FAIL;
     }
     ColorSpaceConverterParameter parameter;
     ret = csc->SetParameter(parameter);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("[ImageSource]AiHdrProcess SetParameter failed!");
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        CopyContext(backupContext, context);
         return ret;
     }
     IMAGE_LOGD("[ImageSource]AiHdrProcess SetParameter ret=%{public}u", ret);
@@ -2626,15 +2613,34 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &is
 
     ret = csc->Process(input, output);
     if (ret != VPE_ALGO_ERR_OK) {
-        IMAGE_LOGE("[ImageSource]AiHdrProcess csc->Process ret=%{public}u", ret);
+        IMAGE_LOGE("DetailEnhancerImage Processed failed %{public}d", ret);
+    }
+    return ret;
+}
+
+uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
+{
+    DecodeContext backupContext;
+    CopyContext(context, backupContext);
+    IMAGE_LOGD("[ImageSource]AiHdrProcess enter....................");
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_1010102);
+    
+    int32_t res = ColorSpaceConverterImageProcess(input, output);
+    if (res != VPE_ERROR_OK) {
+        IMAGE_LOGE("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess failed! %{public}d", res);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
     } else {
+        IMAGE_LOGD("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess Succ!");
+        FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
         isHdr = true;
         context.pixelFormat = PlPixelFormat::RGBA_1010102;
-        FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
     }
-    return ret;
+    return res;
 }
 #endif
 
@@ -2674,21 +2680,11 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &
 }
 
 #ifdef IMAGE_AI_ENABLE
-uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, ResolutionQuality resolutionQuality)
+static uint32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output, ResolutionQuality resolutionQuality)
 {
-    DecodeContext backupContext;
-    CopyContext(context, backupContext);
-    uint32_t byteCount = context.pixelsBuffer.bufferSize;
-    Size dstInfo;
-    dstInfo.width = context.outInfo.size.width;
-    dstInfo.height = context.outInfo.size.height;
-
-    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_8888);
     auto detailEnh = DetailEnhancerImage::Create();
     if (detailEnh == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        CopyContext(backupContext, context);
         return ERR_IMAGE_DETAIL_ENHANCER_CREATE_FAIL;
     }
     // deafult level DETAIL_ENH_LEVEL_SUPER
@@ -2703,18 +2699,35 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     auto ret = detailEnh->SetParameter(param);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("DetailEnhancerImage SetParameter failed!");
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        CopyContext(backupContext, context);
         return ret;
     }
 
     int32_t ret = detailEnh->Process(input, output);
     if (ret != VPE_ALGO_ERR_OK) {
+        IMAGE_LOGE("DetailEnhancerImage Processed failed %{public}d", ret);
+    }
+    return ret;
+}
+
+uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, ResolutionQuality resolutionQuality)
+{
+    DecodeContext backupContext;
+    CopyContext(context, backupContext);
+    uint32_t byteCount = context.pixelsBuffer.bufferSize;
+    Size dstInfo;
+    dstInfo.width = context.outInfo.size.width;
+    dstInfo.height = context.outInfo.size.height;
+
+    sptr<SurfaceBuffer> output = AllocBufferForContext(byteCount, context, dstInfo, GRAPHIC_PIXEL_FMT_RGBA_8888);
+    int32_t ret = DetailEnhancerImageProcess(input, output);
+    if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("DetailEnhancerImage Processed failed");
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
+    } else {
+        FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
+        IMAGE_LOGD("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess Succ!");
     }
-    FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
     return ret;
 }
 #endif
