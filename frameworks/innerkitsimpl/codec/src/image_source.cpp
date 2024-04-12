@@ -159,6 +159,15 @@ constexpr uint8_t BYTE_POS_3 = 3;
 #endif
 const auto KEY_SIZE = 2;
 const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
+const static std::map<std::string, uint32_t> ORIENTATION_INT_MAP = {
+    {"Top-left", 0},
+    {"Bottom-right", 180},
+    {"Right-top", 90},
+    {"Left-bottom", 270},
+};
+const static string IMAGE_DELAY_TIME = "DelayTime";
+const static string IMAGE_DISPOSAL_TYPE = "DisposalType";
+const static int32_t ZERO = 0;
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
@@ -627,10 +636,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     if (!context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
     }
-    IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
-        "imageSize: (%{public}d, %{public}d), cost %{public}lu us",
-        static_cast<unsigned long>(imageId_), opts.desiredSize.width, opts.desiredSize.height, info.size.width,
-        info.size.height, static_cast<unsigned long>(GetNowTimeMicroSeconds() - decodeStartTime));
+    if ("image/gif" != sourceInfo_.encodedFormat) {
+        IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
+            "imageSize: (%{public}d, %{public}d), cost %{public}lu us",
+            static_cast<unsigned long>(imageId_), opts.desiredSize.width, opts.desiredSize.height, info.size.width,
+            info.size.height, static_cast<unsigned long>(GetNowTimeMicroSeconds() - decodeStartTime));
+    }
 
     if (CreatExifMetadataByImageSource() == SUCCESS) {
         pixelMap->SetExifMetadata(exifMetadata_);
@@ -1123,12 +1134,14 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
     const std::string &path)
 {
     ImageDataStatistics imageDataStatistics("[ImageSource]ModifyImageProperty by path.");
+    
+#if !defined(IOS_PLATFORM)
     if (!std::filesystem::exists(path)) {
         return ERR_IMAGE_SOURCE_DATA;
     }
+#endif
 
     std::unique_lock<std::mutex> guard(decodingMutex_);
-
     auto metadataAccessor = MetadataAccessorFactory::Create(path);
     return ModifyImageProperty(metadataAccessor, key, value);
 }
@@ -1210,9 +1223,26 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
     ImageDataStatistics imageDataStatistics("[ImageSource]GetImagePropertyInt.");
+
+    if (key.empty()) {
+        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+    // keep aline with previous logical for delay time and disposal type
+    if (IMAGE_DELAY_TIME.compare(key) == ZERO || IMAGE_DISPOSAL_TYPE.compare(key) == ZERO) {
+        IMAGE_LOGD("GetImagePropertyInt special key: %{public}s", key.c_str());
+        uint32_t ret = mainDecoder_->GetImagePropertyInt(index, key, value);
+        return ret;
+    }
     std::string strValue;
     uint32_t ret = GetImagePropertyCommon(index, key, strValue);
-
+    if (key == "Orientation") {
+        if (ORIENTATION_INT_MAP.count(strValue) == 0) {
+            IMAGE_LOGD("ORIENTATION_INT_MAP not find %{public}s", strValue.c_str());
+            return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        }
+        strValue = std::to_string(ORIENTATION_INT_MAP.at(strValue));
+    }
+    IMAGE_LOGD("convert string to int %{public}s", strValue.c_str());
     std::from_chars_result res = std::from_chars(strValue.data(), strValue.data() + strValue.size(), value);
     if (res.ec != std::errc()) {
         return ERR_IMAGE_SOURCE_DATA;
