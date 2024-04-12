@@ -33,6 +33,7 @@ static const std::string IMAGE_INPUT_HEIF_HW_EXIF_PATH = "/data/local/tmp/image/
 static const std::string IMAGE_INPUT_HEIF_NO_EXIF_PATH = "/data/local/tmp/image/test.heic";
 static const std::string IMAGE_INPUT_HEIF_APPEND_EXIF_PATH = "/data/local/tmp/image/test_append_exif.heic";
 static const std::string IMAGE_HEIF_DEST = "/data/local/tmp/image/test_exif_packer.heic";
+static const std::string IMAGE_OUTPUT_WRITE1_HEIF_PATH = "/data/local/tmp/image/test_heif_writemetadata002.heic";
 }
 
 class HeifExifMetadataAccessorTest : public testing::Test {
@@ -65,19 +66,18 @@ HWTEST_F(HeifExifMetadataAccessorTest, Read001, TestSize.Level3)
     ASSERT_EQ(result, 0);
     auto exifMetadata = imageAccessor.Get();
     ASSERT_NE(exifMetadata, nullptr);
-    GetProperty(exifMetadata, "CameraOwnerName");
-    GetProperty(exifMetadata, "GPSLatitudeRef");
-    GetProperty(exifMetadata, "GPSLongitudeRef");
-    GetProperty(exifMetadata, "GPSLatitude");
-    GetProperty(exifMetadata, "GPSLongitude");
 
-    GetProperty(exifMetadata, "DateTimeOriginal");
-    GetProperty(exifMetadata, "Make");
-    GetProperty(exifMetadata, "Model");
-    GetProperty(exifMetadata, "DateTimeOriginal");
-    GetProperty(exifMetadata, "SceneType");
-    GetProperty(exifMetadata, "DateTime");
-    GetProperty(exifMetadata, "WhiteBalance");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitudeRef"), "N");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "E");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitude"), "31, 15, 4.71");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitude"), "121, 35, 43.32");
+    ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2024:03:18 18:15:41");
+    ASSERT_EQ(GetProperty(exifMetadata, "Make"), "Apple");
+    ASSERT_EQ(GetProperty(exifMetadata, "Model"), "iPhone 13");
+    ASSERT_EQ(GetProperty(exifMetadata, "DateTimeOriginal"), "2024:03:18 18:15:41");
+    ASSERT_EQ(GetProperty(exifMetadata, "SceneType"), "Directly photographed");
+    ASSERT_EQ(GetProperty(exifMetadata, "DateTime"), "2024:03:18 18:15:41");
+    ASSERT_EQ(GetProperty(exifMetadata, "WhiteBalance"), "Auto white balance");
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read001 end";
 }
@@ -182,6 +182,25 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write001, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write001 end";
 }
+
+/**
+ * @tc.name: Write002
+ * @tc.desc: test Write from nonexisting image file, return error number
+ * @tc.type: FUNC
+ */
+HWTEST_F(HeifExifMetadataAccessorTest, Write002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write002 start";
+
+    std::shared_ptr<MetadataStream> writeStream = std::make_shared<FileMetadataStream>(IMAGE_OUTPUT_WRITE1_HEIF_PATH);
+    ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
+    HeifExifMetadataAccessor imageWriteAccessor(writeStream);
+
+    uint32_t errcode = imageWriteAccessor.Write();
+    ASSERT_EQ(errcode, ERR_IMAGE_DECODE_EXIF_UNSUPPORT); 
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write002 end";
+}
+
 
 
 /**
