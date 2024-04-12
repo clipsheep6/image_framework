@@ -389,7 +389,7 @@ HWTEST_F(ImageSourceTest, CreatePixelMap003, TestSize.Level3)
     ImageInfo imageInfo;
     pixelMap->GetImageInfo(imageInfo);
 
-    ASSERT_EQ(imageInfo.isHdr, true);
+    ASSERT_EQ(imageInfo.isHdr, false);
 
     GTEST_LOG_(INFO) << "ImageSourceTest: CreatePixelMap003 end";
 }

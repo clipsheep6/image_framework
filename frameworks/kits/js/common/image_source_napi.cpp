@@ -744,7 +744,6 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
 {
     napi_value result = nullptr;
     auto imageInfo = static_cast<ImageInfo*>(data);
-    auto rImageSource = static_cast<ImageSource*>(ptr);
     napi_create_object(env, &result);
 
     napi_value size = nullptr;
@@ -777,7 +776,7 @@ STATIC_NAPI_VALUE_FUNC(GetImageInfo)
     napi_set_named_property(env, result, "mimeType", encodedFormatValue);
 
     napi_value isHdrValue = nullptr;
-    napi_get_boolean(env, rImageSource->IsHdrImage(), &isHdrValue);
+    napi_get_boolean(env, imageInfo->isHdr, &isHdrValue);
     napi_set_named_property(env, result, "isHdr", isHdrValue);
 
     return result;
