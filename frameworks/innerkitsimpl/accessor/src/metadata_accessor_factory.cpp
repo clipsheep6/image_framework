@@ -32,6 +32,7 @@ namespace OHOS {
 namespace Media {
 const int IMAGE_HEADER_SIZE = 12;
 const int WEBP_HEADER_OFFSET = 8;
+const int IMAGE_HEIF_HEADER_OFFSET = 4;
 const byte jpegHeader[] = { 0xff, 0xd8, 0xff };
 const byte pngHeader[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 const byte webpHeader[] = { 0x57, 0x45, 0x42, 0x50 };
