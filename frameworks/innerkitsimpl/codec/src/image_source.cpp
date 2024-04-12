@@ -2585,42 +2585,6 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
     IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
 }
 
-static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer)
-{
-    if (func != nullptr) {
-        func(buffer.buffer, buffer.context, buffer.bufferSize);
-        return;
-    }
-
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-    if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
-        int *fd = static_cast<int *>(buffer.context);
-        if (buffer.buffer != nullptr) {
-            ::munmap(buffer.buffer, buffer.bufferSize);
-        }
-        if (fd != nullptr) {
-            ::close(*fd);
-        }
-        return;
-    } else if (allocType == AllocatorType::DMA_ALLOC) {
-        if (buffer.buffer != nullptr) {
-            ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer *>(buffer.context));
-            buffer.context = nullptr;
-        }
-    } else if (allocType == AllocatorType::HEAP_ALLOC) {
-        if (buffer.buffer != nullptr) {
-            free(buffer.buffer);
-            buffer.buffer = nullptr;
-        }
-    }
-#else
-    if (buffer.buffer != nullptr) {
-        free(buffer.buffer);
-        buffer.buffer = nullptr;
-    }
-#endif
-}
-
 #ifdef IMAGE_AI_ENABLE
 uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
 {
