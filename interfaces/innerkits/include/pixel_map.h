@@ -121,11 +121,9 @@ public:
     NATIVEEXPORT virtual const uint16_t *GetPixel16(int32_t x, int32_t y);
     NATIVEEXPORT virtual const uint32_t *GetPixel32(int32_t x, int32_t y);
     NATIVEEXPORT virtual bool GetARGB32Color(int32_t x, int32_t y, uint32_t &color);
-    NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, 
-                                            AllocatorType type, CustomFreePixelMap func,
-                                            void *dngExternalData = nullptr, FreeExtData extFunc = nullptr);
-    void* GetDngExternalData() const
-    {
+    NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
+                                    CustomFreePixelMap func);
+    void* GetDngExternalData() const {
         if (dngExternalData_ != nullptr) {
             return dngExternalData_;
         }
@@ -380,9 +378,6 @@ private:
                    : true;
     }
 
-    void FreeDngExtData();
-    void FreePixmapData();
-
     static void ReleaseMemory(AllocatorType allocType, void *addr, void *context, uint32_t size);
     static bool UpdatePixelMapMemInfo(PixelMap *pixelMap, ImageInfo &imgInfo, PixelMemInfo &pixelMemInfo);
     bool WriteImageData(Parcel &parcel, size_t size) const;
@@ -416,8 +411,6 @@ private:
     int32_t pixelBytes_ = 0;
     TransColorProc colorProc_ = nullptr;
     void *context_ = nullptr;
-    void *dngExternalData_ = nullptr;
-    FreeExtData releaseExtDataFunc_ = nullptr;
     CustomFreePixelMap custFreePixelMap_ = nullptr;
     CustomFreePixelMap freePixelMapProc_ = nullptr;
     AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;
@@ -445,6 +438,8 @@ private:
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
     YUVDataInfo yuvDataInfo_;
+	void *dngExternalData_ = nullptr;
+    FreeExtData releaseExtDataFunc_ = nullptr;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     std::shared_ptr<std::mutex> metadataMutex_ = std::make_shared<std::mutex>();
 };
