@@ -195,13 +195,10 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write002, TestSize.Level3)
     std::shared_ptr<MetadataStream> writeStream = std::make_shared<FileMetadataStream>(IMAGE_OUTPUT_WRITE1_HEIF_PATH);
     ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
     HeifExifMetadataAccessor imageWriteAccessor(writeStream);
-
     uint32_t errcode = imageWriteAccessor.Write();
     ASSERT_EQ(errcode, ERR_IMAGE_DECODE_EXIF_UNSUPPORT); 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write002 end";
 }
-
-
 
 /**
  * @tc.name: Read001
