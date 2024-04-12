@@ -21,13 +21,13 @@
 #include "image_trace.h"
 #include "log_tags.h"
 #include "color_space_object_convertor.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "js_runtime_utils.h"
 #include "napi_message_sequence.h"
+#include "pixel_map_from_surface.h"
 #endif
 #include "hitrace_meter.h"
 #include "pixel_map.h"
-#include "pixel_map_from_surface.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -55,7 +55,7 @@ static const std::map<std::string, std::set<uint32_t>> ETS_API_ERROR_CODE = {
 static const std::string CLASS_NAME = "PixelMap";
 static const std::int32_t NEW_INSTANCE_ARGC = 1;
 thread_local napi_ref PixelMapNapi::sConstructor_ = nullptr;
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 NAPI_MessageSequence* napi_messageSequence = nullptr;
 #endif
 
@@ -432,7 +432,9 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMapSync", CreatePixelMapSync),
         DECLARE_NAPI_STATIC_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_STATIC_FUNCTION(CREATE_PIXEL_MAP_FROM_PARCEL.c_str(), CreatePixelMapFromParcel),
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMapFromSurface", CreatePixelMapFromSurface),
+#endif
     };
 
     napi_value constructor = nullptr;
@@ -1031,6 +1033,7 @@ napi_value PixelMapNapi::CreatePixelMapSync(napi_env env, napi_callback_info inf
     return result;
 }
 
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
 STATIC_EXEC_FUNC(CreatePixelMapFromSurface)
 {
     auto context = static_cast<PixelMapAsyncContext*>(data);
@@ -1145,6 +1148,7 @@ napi_value PixelMapNapi::CreatePixelMapFromSurface(napi_env env, napi_callback_i
         nullptr, IMAGE_LOGE("fail to create async work"));
     return result;
 }
+#endif
 
 napi_value PixelMapNapi::CreatePixelMap(napi_env env, std::shared_ptr<PixelMap> pixelmap)
 {
@@ -1175,7 +1179,7 @@ napi_value PixelMapNapi::CreatePixelMap(napi_env env, std::shared_ptr<PixelMap> 
 
 STATIC_EXEC_FUNC(Unmarshalling)
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     auto context = static_cast<PixelMapAsyncContext*>(data);
 
     auto messageParcel = napi_messageSequence->GetMessageParcel();
@@ -1216,7 +1220,7 @@ void PixelMapNapi::UnmarshallingComplete(napi_env env, napi_status status, void 
 
 napi_value PixelMapNapi::Unmarshalling(napi_env env, napi_callback_info info)
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (PixelMapNapi::GetConstructor() == nullptr) {
         napi_value exports = nullptr;
         napi_create_object(env, &exports);
@@ -1281,7 +1285,7 @@ napi_value PixelMapNapi::ThrowExceptionError(napi_env env,
 }
 
 napi_value PixelMapNapi::CreatePixelMapFromParcel(napi_env env, napi_callback_info info)
-#if defined(IOS_PLATFORM) || defined(A_PLATFORM)
+#if defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
 {
     napi_value result = nullptr;
     return result;
@@ -2305,8 +2309,6 @@ napi_value PixelMapNapi::Release(napi_env env, napi_callback_info info)
     IMG_CREATE_CREATE_ASYNC_WORK_WITH_QOS(env, status, "Release",
         [](napi_env env, void *data)
         {
-            uint32_t executeId = static_cast<uint32_t>(ImageNapiUtils::GetNowTimeMicroSeconds());
-            IMAGE_LOGI("PixelMap Release, id: %{public}u", executeId);
         }, EmptyResultComplete, asyncContext, asyncContext->work, napi_qos_user_initiated);
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
@@ -3109,7 +3111,7 @@ napi_value PixelMapNapi::SetColorSpace(napi_env env, napi_callback_info info)
 
 napi_value PixelMapNapi::Marshalling(napi_env env, napi_callback_info info)
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     NapiValues nVal;
     nVal.argc = NUM_1;
     napi_value argValue[NUM_1] = {0};

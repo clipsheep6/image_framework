@@ -20,7 +20,7 @@
 
 #include "ext_pixel_convert.h"
 #include "image_log.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "hisysevent.h"
 #endif
 #include "image_system_properties.h"
@@ -28,8 +28,12 @@
 #include "media_errors.h"
 #include "securec.h"
 #include "string_ex.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
+#endif
+#ifdef HEIF_HW_DECODE_ENABLE
+#include "heif_impl/HeifDecoder.h"
+#include "hardware/heif_hw_decoder.h"
 #endif
 
 #undef LOG_DOMAIN
@@ -63,12 +67,13 @@ namespace {
     constexpr static float QUARTER = 0.25;
     constexpr static float ONE_EIGHTH = 0.125;
     constexpr static uint64_t ICC_HEADER_SIZE = 132;
+    constexpr static size_t SMALL_FILE_SIZE = 1000 * 1000 * 10;
 }
 
 namespace OHOS {
 namespace ImagePlugin {
 using namespace Media;
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 using namespace OHOS::HDI::Base;
 #endif
 using namespace std;
@@ -156,7 +161,7 @@ static void SetDecodeContextBuffer(DecodeContext &context,
 
 static uint32_t ShareMemAlloc(DecodeContext &context, uint64_t count)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
     IMAGE_LOGE("Unsupport share mem alloc");
     return ERR_IMAGE_DATA_UNSUPPORT;
 #else
@@ -186,7 +191,7 @@ static uint32_t ShareMemAlloc(DecodeContext &context, uint64_t count)
 
 uint32_t ExtDecoder::DmaMemAlloc(DecodeContext &context, uint64_t count, SkImageInfo &dstInfo)
 {
-#if defined(_WIN32) || defined(_APPLE) || defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#if defined(_WIN32) || defined(_APPLE) || defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
     IMAGE_LOGE("Unsupport dma mem alloc");
     return ERR_IMAGE_DATA_UNSUPPORT;
 #else
@@ -244,6 +249,37 @@ static uint32_t HeapMemAlloc(DecodeContext &context, uint64_t count)
     }
     SetDecodeContextBuffer(context, AllocatorType::HEAP_ALLOC, out, count, nullptr);
     return SUCCESS;
+}
+
+uint32_t ExtDecoder::HeifYUVMemAlloc(OHOS::ImagePlugin::DecodeContext &context)
+{
+#ifdef HEIF_HW_DECODE_ENABLE
+    HeifHardwareDecoder decoder;
+    GraphicPixelFormat graphicPixelFormat = context.info.pixelFormat
+            == PlPixelFormat::NV12 ? GRAPHIC_PIXEL_FMT_YCBCR_420_SP : GRAPHIC_PIXEL_FMT_YCRCB_420_SP;
+    sptr<SurfaceBuffer> hwBuffer
+            = decoder.AllocateOutputBuffer(info_.width(), info_.height(), graphicPixelFormat);
+    if (hwBuffer == nullptr) {
+        IMAGE_LOGE("HeifHardwareDecoder AllocateOutputBuffer return null");
+        return ERR_DMA_NOT_EXIST;
+    }
+
+    void* nativeBuffer = hwBuffer.GetRefPtr();
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("HeifYUVMemAlloc Reference failed");
+        return ERR_DMA_DATA_ABNORMAL;
+    }
+
+    IMAGE_LOGI("ExtDecoder::HeifYUVMemAlloc sb stride is %{public}d, height is %{public}d, size is %{public}d",
+               hwBuffer->GetStride(), hwBuffer->GetHeight(), hwBuffer->GetSize());
+    uint64_t yuvBufferSize = JpegDecoderYuv::GetYuvOutSize(info_.width(), info_.height());
+    SetDecodeContextBuffer(context, AllocatorType::DMA_ALLOC,
+                           static_cast<uint8_t*>(hwBuffer->GetVirAddr()), yuvBufferSize, nativeBuffer);
+    return SUCCESS;
+#else
+    return ERR_IMAGE_DATA_UNSUPPORT;
+#endif
 }
 
 ExtDecoder::ExtDecoder() : codec_(nullptr), frameCount_(ZERO)
@@ -306,7 +342,7 @@ bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
     return true;
 }
 
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) {
     if (info_.isEmpty() && !DecodeHeader()) {
         IMAGE_LOGE("DecodeHeader failed in GetHardwareScaledSize!");
@@ -478,12 +514,15 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
             desiredSizeYuv_.width = std::abs((int)opts.desiredSize.width);
             desiredSizeYuv_.height = std::abs((int)opts.desiredSize.height);
         }
+        if (skEncodeFormat == SkEncodedImageFormat::kHEIF && IsYuv420Format(opts.desiredPixelFormat)) {
+            info.pixelFormat = opts.desiredPixelFormat;
+        }
     }
     // SK only support low down scale
     int dstWidth = opts.desiredSize.width;
     int dstHeight = opts.desiredSize.height;
     float scale = ZERO;
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (IsSupportHardwareDecode()) {
         // get dstInfo for hardware decode
         if (IsLowDownScale(opts.desiredSize, info_) && GetHardwareScaledSize(dstWidth, dstHeight, scale)) {
@@ -623,6 +662,9 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 #endif
     context.outInfo.size.width = dstInfo_.width();
     context.outInfo.size.height = dstInfo_.height();
+    if (IsHeifToYuvDecode(context)) {
+        return DoHeifToYuvDecode(context);
+    }
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
@@ -630,7 +672,11 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
     bool isOutputYuv420Format = IsYuv420Format(context.info.pixelFormat);
     if (isOutputYuv420Format && skEncodeFormat == SkEncodedImageFormat::kJPEG) {
-        return DecodeToYuv420(index, context);
+#if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
+    return 0;
+#else
+    return DecodeToYuv420(index, context);
+#endif
     }
     uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
     uint8_t *dstBuffer = nullptr;
@@ -651,7 +697,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     dstOptions_.fFrameIndex = index;
     DebugInfo(info_, dstInfo_, dstOptions_);
     uint64_t rowStride = dstInfo_.minRowBytes64();
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (context.allocatorType == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
         rowStride = sbBuffer->GetStride();
@@ -803,7 +849,7 @@ void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
 {
     IMAGE_LOGD("ExtDecoder::ReportImageType format %{public}d start", skEncodeFormat);
     static constexpr char IMAGE_FWK_UE[] = "IMAGE_FWK_UE";
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     int32_t ret = HiSysEventWrite(
             IMAGE_FWK_UE,
             "DECODED_IMAGE_TYPE_STATISTICS",
@@ -1215,17 +1261,18 @@ static uint32_t ProcessWithStreamData(InputDataStream *input,
         return Media::ERR_MEDIA_INVALID_VALUE;
     }
 
-    auto tmpBuffer = std::make_unique<uint8_t[]>(inputSize);
+    size_t copySize = std::min(inputSize, SMALL_FILE_SIZE);
+    auto tmpBuffer = std::make_unique<uint8_t[]>(copySize);
     auto savePos = input->Tell();
     input->Seek(SIZE_ZERO);
     uint32_t readSize = 0;
-    bool ret = input->Read(inputSize, tmpBuffer.get(), inputSize, readSize);
+    bool ret = input->Read(copySize, tmpBuffer.get(), copySize, readSize);
     input->Seek(savePos);
     if (!ret) {
         IMAGE_LOGE("InputDataStream read failed.");
         return Media::ERR_IMAGE_DATA_ABNORMAL;
     }
-    return process(tmpBuffer.get(), inputSize);
+    return process(tmpBuffer.get(), copySize);
 }
 
 static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
@@ -1450,12 +1497,41 @@ bool ExtDecoder::IsSupportHardwareDecode() {
         && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
 }
 
-bool ExtDecoder::IsYuv420Format(PlPixelFormat format)
+bool ExtDecoder::IsYuv420Format(PlPixelFormat format) const
 {
     if (format == PlPixelFormat::NV12 || format == PlPixelFormat::NV21) {
         return true;
     }
     return false;
+}
+
+bool ExtDecoder::IsHeifToYuvDecode(const DecodeContext &context) const
+{
+    return codec_->getEncodedFormat() == SkEncodedImageFormat::kHEIF && IsYuv420Format(context.info.pixelFormat);
+}
+
+uint32_t ExtDecoder::DoHeifToYuvDecode(OHOS::ImagePlugin::DecodeContext &context)
+{
+#ifdef HEIF_HW_DECODE_ENABLE
+    auto decoder = reinterpret_cast<HeifDecoder*>(codec_->getHeifContext());
+    if (decoder == nullptr) {
+        IMAGE_LOGE("YUV Decode HeifDecoder is nullptr");
+        return ERR_IMAGE_DATA_UNSUPPORT;
+    }
+    uint32_t allocRet = HeifYUVMemAlloc(context);
+    if (allocRet != SUCCESS) {
+        return allocRet;
+    }
+    auto dstBuffer = reinterpret_cast<SurfaceBuffer*>(context.pixelsBuffer.context);
+    decoder->setOutputColor(context.info.pixelFormat
+        == PlPixelFormat::NV12 ? kHeifColorFormat_NV12 : kHeifColorFormat_NV21);
+    decoder->setDstBuffer(reinterpret_cast<uint8_t *>(context.pixelsBuffer.buffer),
+                          dstBuffer->GetStride(), context.pixelsBuffer.context);
+    bool decodeRet = decoder->decode(nullptr);
+    return decodeRet ? SUCCESS : ERR_IMAGE_DATA_UNSUPPORT;
+#else
+    return ERR_IMAGE_DATA_UNSUPPORT;
+#endif
 }
 } // namespace ImagePlugin
 } // namespace OHOS

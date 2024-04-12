@@ -22,7 +22,7 @@
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
 #endif
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "astc_codec.h"
 #endif
 
@@ -36,7 +36,8 @@
 #include "image_utils.h"
 #include "media_errors.h"
 #include "string_ex.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#include "image_data_statistics.h"
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #endif
 #include "tiff_parser.h"
@@ -139,7 +140,7 @@ static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
 
     uint64_t rowStride = skInfo.minRowBytes64();
 
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (pixelMap->GetAllocatorType() == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
         rowStride = sbBuffer->GetStride();
@@ -158,8 +159,26 @@ bool IsAstc(const std::string &format)
     return format.find("image/astc") == 0;
 }
 
+static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, DataBuf &exifBlob, OutputDataStream* output)
+{
+    if (output == nullptr) {
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+    auto metadataAccessor = MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
+    if (metadataAccessor != nullptr) {
+        if (metadataAccessor->WriteBlob(exifBlob) == SUCCESS) {
+            if (metadataAccessor->WriteToOutput(*output)) {
+                return SUCCESS;
+            }
+        }
+    }
+    return ERR_IMAGE_ENCODE_FAILED;
+}
+
 uint32_t ExtEncoder::DoFinalizeEncode()
 {
+    ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
+        opts_.format.c_str(), opts_.quality);
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
             return IsSameTextStr(item.second, opts_.format);
@@ -171,6 +190,9 @@ uint32_t ExtEncoder::DoFinalizeEncode()
 
     SkBitmap bitmap;
     TmpBufferHolder holder;
+    ImageInfo imageInfo;
+    pixelmap_->GetImageInfo(imageInfo);
+    imageDataStatistics.AddTitle("width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
     auto errorCode = BuildSkBitmap(pixelmap_, bitmap, iter->first, holder);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("Failed to build SkBitmap");
@@ -198,13 +220,8 @@ uint32_t ExtEncoder::DoFinalizeEncode()
         return ERR_IMAGE_ENCODE_FAILED;
     }
 
-    auto metadataAccessor = MetadataAccessorFactory::Create(tStream.GetAddr(), tStream.bytesWritten());
-    if (metadataAccessor != nullptr) {
-        if (metadataAccessor->WriteBlob(exifBlob) == SUCCESS) {
-            if (metadataAccessor->WriteToOutput(*output_)) {
-                return SUCCESS;
-            }
-        }
+    if (CreateAndWriteBlob(tStream, exifBlob, output_) == SUCCESS) {
+        return SUCCESS;
     }
     if (!output_->Write(tStream.GetAddr(), tStream.bytesWritten())) {
         return ERR_IMAGE_ENCODE_FAILED;
@@ -218,8 +235,10 @@ uint32_t ExtEncoder::FinalizeEncode()
     if (pixelmap_ == nullptr || output_ == nullptr) {
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (IsAstc(opts_.format)) {
+        ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
+            opts_.format.c_str(), opts_.quality);
         AstcCodec astcEncoder;
         astcEncoder.SetAstcEncode(output_, opts_, pixelmap_);
         return astcEncoder.ASTCEncode();

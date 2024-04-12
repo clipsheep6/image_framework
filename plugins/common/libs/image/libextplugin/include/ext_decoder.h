@@ -21,7 +21,7 @@
 
 #include "SkCodec.h"
 #include "abs_image_decoder.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "display_type.h"
 #include "hardware/jpeg_hw_decoder.h"
 #endif
@@ -29,7 +29,7 @@
 #include "exif_info.h"
 #include "nocopyable.h"
 #include "plugin_class_base.h"
-#include "jpeg_decoder_yuv.h"
+#include "jpeg_yuv_decoder/jpeg_decoder_yuv.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -79,7 +79,9 @@ private:
     bool IsSupportCropOnDecode();
     bool IsSupportCropOnDecode(SkIRect &target);
     bool IsSupportHardwareDecode();
-    bool IsYuv420Format(PlPixelFormat format);
+    bool IsYuv420Format(PlPixelFormat format) const;
+    bool IsHeifToYuvDecode(const DecodeContext &context) const;
+    uint32_t DoHeifToYuvDecode(DecodeContext &context);
     bool ConvertInfoToAlphaType(SkAlphaType &alphaType, PlAlphaType &outputType);
     bool ConvertInfoToColorType(SkColorType &format, PlPixelFormat &outputFormat);
     bool GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res);
@@ -96,6 +98,7 @@ private:
     void ReportImageType(SkEncodedImageFormat skEncodeFormat);
     bool CheckContext(const DecodeContext &context);
     uint32_t DmaMemAlloc(DecodeContext &context, uint64_t count, SkImageInfo &dstInfo);
+    uint32_t HeifYUVMemAlloc(DecodeContext &context);
 
     ImagePlugin::InputDataStream *stream_ = nullptr;
     uint32_t streamOff_ = 0;
@@ -112,7 +115,7 @@ private:
     std::shared_ptr<OHOS::ColorManager::ColorSpace> dstColorSpace_ = nullptr;
 #endif
 
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     // hardware
     OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer outputBuffer_;
     SkImageInfo hwDstInfo_;

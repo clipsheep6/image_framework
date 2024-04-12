@@ -40,7 +40,10 @@
 #include "hitrace_meter.h"
 #include "image_system_properties.h"
 #include "pixel_map.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+#ifdef IOS_PLATFORM
+#include <sys/syscall.h>
+#endif
 #include "surface_buffer.h"
 #else
 #include "refbase.h"
@@ -165,7 +168,7 @@ uint32_t ImageUtils::RegisterPluginServer()
     vector<string> pluginPaths = { "" };
 #elif defined(_APPLE)
     vector<string> pluginPaths = { "./" };
-#elif defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#elif defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
     vector<string> pluginPaths = {};
 #else
     vector<string> pluginPaths = { "/system/etc/multimediaplugin/image" };
@@ -450,6 +453,15 @@ std::string ImageUtils::GetPixelMapName(PixelMap* pixelMap)
         IMAGE_LOGE("ImageUtils::GetPixelMapName error, pixelMap is null");
         return "";
     }
+#ifdef IOS_PLATFORM
+    std::string pixelMapStr = "_pixelMap_w" + std::to_string(pixelMap->GetWidth()) +
+        "_h" + std::to_string(pixelMap->GetHeight()) +
+        "_rowStride" + std::to_string(pixelMap->GetRowStride()) +
+        "_total" + std::to_string(pixelMap->GetRowStride() * pixelMap->GetHeight()) +
+        "_pid" + std::to_string(getpid()) +
+        "_tid" + std::to_string(syscall(SYS_thread_selfid)) +
+        "_uniqueId" + std::to_string(pixelMap->GetUniqueId());
+#else
     std::string pixelMapStr = "_pixelMap_w" + std::to_string(pixelMap->GetWidth()) +
         "_h" + std::to_string(pixelMap->GetHeight()) +
         "_rowStride" + std::to_string(pixelMap->GetRowStride()) +
@@ -457,6 +469,7 @@ std::string ImageUtils::GetPixelMapName(PixelMap* pixelMap)
         "_pid" + std::to_string(getpid()) +
         "_tid" + std::to_string(gettid()) +
         "_uniqueId" + std::to_string(pixelMap->GetUniqueId());
+#endif
     return pixelMapStr;
 }
 } // namespace Media
