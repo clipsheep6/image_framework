@@ -605,7 +605,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     if (ret != SUCCESS) {
         IMAGE_LOGE("[ImageSource] Decode data fail, ret:%{public}u.", ret);
     }
-
+    imageDataStatistics.AddTitle("imageSize: [%d, %d], desireSize: [%d, %d], imageFormat: %s, desirePixelFormat: %d," \
+        "memorySize: %d, memoryType: %d", context.outInfo.size.width, context.outInfo.size.height,
+        info.size.width, info.size.height, sourceInfo_.encodedFormat.c_str(), context.pixelFormat,
+        context.pixelsBuffer.bufferSize, context.allocatorType);
+    imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
+    
     bool isHdr = false;
     auto res = ImageAiProcess(info.size, context, isHdr);
     if (res != SUCCESS) {
@@ -2897,11 +2902,7 @@ uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, 
     if (context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
     }
-    imageDataStatistics.AddTitle("imageSize: [%d, %d], desireSize: [%d, %d], imageFormat: %s, desirePixelFormat: %d," \
-        "memorySize: %d, memoryType: %d", context.outInfo.size.width, context.outInfo.size.height,
-        info.size.width, info.size.height, sourceInfo_.encodedFormat.c_str(), context.pixelFormat,
-        context.pixelsBuffer.bufferSize, context.allocatorType);
-    imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
+
     ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
     ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
     guard.unlock();
