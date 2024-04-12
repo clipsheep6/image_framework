@@ -266,9 +266,10 @@ heif_error HeifIlocBox::WriteMdatBox(HeifStreamWriter &writer)
     return heif_error_ok;
 }
 
-heif_error HeifIlocBox::ReadToExtentData(Item &item, const std::shared_ptr<HeifInputStream> &stream, const std::shared_ptr<HeifIdatBox> &idatBox)
+heif_error HeifIlocBox::ReadToExtentData(Item &item, const std::shared_ptr<HeifInputStream> &stream,
+                                        const std::shared_ptr<HeifIdatBox> &idatBox)
 {
-     for (auto &extent: item.extents) {
+    for (auto &extent: item.extents) {
         if (!extent.data.empty()) {
             continue;
         }

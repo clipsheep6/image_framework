@@ -22,8 +22,6 @@
 #include "log_tags.h"
 #include "media_errors.h"
 
-#include <iostream>
-
 using namespace OHOS::Media;
 using namespace testing::ext;
 
@@ -31,8 +29,10 @@ namespace OHOS {
 namespace Multimedia {
 namespace {
 static const std::string IMAGE_INPUT_HEIF_EXIF_PATH = "/data/local/tmp/image/test_exif.heic";
-static const std::string IMAGE_INPUT_HEIF_HW_EXIF_PATH = "/data/local/tmp/image/test_hw.heic";
+static const std::string IMAGE_INPUT_HEIF_HW_EXIF_PATH = "/data/local/tmp/image/test_hw_property.heic";
 static const std::string IMAGE_INPUT_HEIF_NO_EXIF_PATH = "/data/local/tmp/image/test.heic";
+static const std::string IMAGE_INPUT_HEIF_APPEND_EXIF_PATH = "/data/local/tmp/image/test_append_exif.heic";
+static const std::string IMAGE_HEIF_DEST = "/data/local/tmp/image/test_exif_packer.heic";
 }
 
 class HeifExifMetadataAccessorTest : public testing::Test {
@@ -47,7 +47,6 @@ std::string HeifExifMetadataAccessorTest::GetProperty(const std::shared_ptr<Exif
 {
     std::string value;
     metadata->GetValue(key, value);
-    std::cerr << "key: " << key << ", value: " << value << std::endl;
     return value;
 }
 
@@ -116,40 +115,51 @@ HWTEST_F(HeifExifMetadataAccessorTest, Read003, TestSize.Level3)
     ASSERT_EQ(result, 0);
 
     auto exifMetadata = imageAccessor.Get();
-    GetProperty(exifMetadata, "HwMnoteBurstNumber");
-    GetProperty(exifMetadata, "HwMnoteCaptureMode");
-    GetProperty(exifMetadata, "HwMnoteFaceConf");
-    GetProperty(exifMetadata, "HwMnoteFaceCount");
-    GetProperty(exifMetadata, "HwMnoteFaceLeyeCenter");
-    GetProperty(exifMetadata, "HwMnoteFaceMouthCenter");
-    GetProperty(exifMetadata, "HwMnoteFacePointer");
-    GetProperty(exifMetadata, "HwMnoteFaceRect");
-    GetProperty(exifMetadata, "HwMnoteFaceReyeCenter");
-    GetProperty(exifMetadata, "HwMnoteFaceSmileScore");
-    GetProperty(exifMetadata, "HwMnoteFaceVersion");
-    GetProperty(exifMetadata, "HwMnoteFocusMode");
-    GetProperty(exifMetadata, "HwMnoteFrontCamera");
-    GetProperty(exifMetadata, "HwMnotePhysicalAperture");
-    GetProperty(exifMetadata, "HwMnotePitchAngle");
-    GetProperty(exifMetadata, "HwMnoteRollAngle");
-    GetProperty(exifMetadata, "HwMnoteSceneBeachConf");
-    GetProperty(exifMetadata, "HwMnoteSceneBlueSkyConf");
-    GetProperty(exifMetadata, "HwMnoteSceneFlowersConf");
-    GetProperty(exifMetadata, "HwMnoteSceneFoodConf");
-    GetProperty(exifMetadata, "HwMnoteSceneGreenPlantConf");
-    GetProperty(exifMetadata, "HwMnoteSceneNightConf");
-    GetProperty(exifMetadata, "HwMnoteScenePointer");
-    GetProperty(exifMetadata, "HwMnoteSceneSnowConf");
-    GetProperty(exifMetadata, "HwMnoteSceneStageConf");
-    GetProperty(exifMetadata, "HwMnoteSceneSunsetConf");
-    GetProperty(exifMetadata, "HwMnoteSceneTextConf");
-    GetProperty(exifMetadata, "HwMnoteSceneVersion");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteBurstNumber"), "2");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteCaptureMode"), "1");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceConf"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceCount"), "2");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceLeyeCenter"), "1 2 3 4");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceMouthCenter"), "1 2 3 4 5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFacePointer"), "122");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceRect"), "1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceReyeCenter"), "5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceSmileScore"), "1 2 3 4 5 6 7 8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFaceVersion"), "1");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFocusMode"), "7");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteFrontCamera"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePhysicalAperture"), "6");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnotePitchAngle"), "5");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteRollAngle"), "4");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBeachConf"), "6");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneBlueSkyConf"), "4");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFlowersConf"), "9");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneFoodConf"), "2");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneGreenPlantConf"), "5");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneNightConf"), "10");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteScenePointer"), "256");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSnowConf"), "7");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneStageConf"), "3");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneSunsetConf"), "8");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneTextConf"), "11");
+    ASSERT_EQ(GetProperty(exifMetadata, "HwMnoteSceneVersion"), "1");
+    ASSERT_EQ(GetProperty(exifMetadata, "MakerNote"), "HwMnoteCaptureMode:1,HwMnoteBurstNumber:2,HwMnoteFrontCamera:3,"
+        "HwMnoteRollAngle:4,HwMnotePitchAngle:5,HwMnotePhysicalAperture:6,"
+        "HwMnoteFocusMode:7,HwMnoteFacePointer:122,HwMnoteFaceVersion:1,"
+        "HwMnoteFaceCount:2,HwMnoteFaceConf:3,HwMnoteFaceSmileScore:1 2 3 4 5 6 7 8,"
+        "HwMnoteFaceRect:1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8,"
+        "HwMnoteFaceLeyeCenter:1 2 3 4,HwMnoteFaceReyeCenter:5 6 7 8,"
+        "HwMnoteFaceMouthCenter:1 2 3 4 5 6 7 8,HwMnoteScenePointer:256,"
+        "HwMnoteSceneVersion:1,HwMnoteSceneFoodConf:2,HwMnoteSceneStageConf:3,"
+        "HwMnoteSceneBlueSkyConf:4,HwMnoteSceneGreenPlantConf:5,HwMnoteSceneBeachConf:6,"
+        "HwMnoteSceneSnowConf:7,HwMnoteSceneSunsetConf:8,HwMnoteSceneFlowersConf:9,"
+        "HwMnoteSceneNightConf:10,HwMnoteSceneTextConf:11");
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read003 end";
 }
 
 /**
- * @tc.name: Read001
+ * @tc.name: Write001
  * @tc.desc: test the Heif format get exif properties
  * @tc.type: FUNC
  */
@@ -161,14 +171,14 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write001, TestSize.Level3)
     HeifExifMetadataAccessor imageAccessor(stream);
     uint32_t result = imageAccessor.Read();
     ASSERT_EQ(result, 0);
-    auto exifMetadata = imageAccessor.Get();
 
-    GetProperty(exifMetadata, "Model");
+    auto exifMetadata = imageAccessor.Get();
+    exifMetadata->SetValue("Model", "test heif");
     uint32_t errcode = imageAccessor.Write();
     ASSERT_EQ(errcode, SUCCESS);
 
     exifMetadata = imageAccessor.Get();
-    GetProperty(exifMetadata, "Model");
+    ASSERT_EQ(GetProperty(exifMetadata, "Model"), "test heif");
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write001 end";
 }
@@ -182,7 +192,7 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write001, TestSize.Level3)
 HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Append001 start";
-    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_NO_EXIF_PATH);
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_APPEND_EXIF_PATH);
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     HeifExifMetadataAccessor imageAccessor(stream);
     uint32_t result = imageAccessor.Read();
@@ -213,26 +223,5 @@ HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
 }
 
 
-/**
- * @tc.name: Read100
- * @tc.desc: test the Heif format get exif properties
- * @tc.type: FUNC
- */
-HWTEST_F(HeifExifMetadataAccessorTest, Read100, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read100 start";
-    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_NO_EXIF_PATH);
-    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
-    HeifExifMetadataAccessor imageAccessor(stream);
-    uint32_t result = imageAccessor.Read();
-    ASSERT_EQ(result, 0);
-    auto exifMetadata = imageAccessor.Get();
-    ASSERT_NE(exifMetadata, nullptr);
-    GetProperty(exifMetadata, "Model");
-    GetProperty(exifMetadata, "GPSLatitudeRef");
-    GetProperty(exifMetadata, "GPSLongitudeRef");
-
-    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read100 end";
-}
 } // namespace Multimedia
 } // namespace OHOS
