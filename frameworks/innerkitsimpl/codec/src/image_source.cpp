@@ -2745,9 +2745,6 @@ uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, Resolut
 
 bool ImageSource::IsHdrImage()
 {
-    if (sourceHdrType_ != ImageHdrType::UNKNOWN) {
-        return sourceHdrType_ > ImageHdrType::SDR;
-    }
     return false;
 }
 
