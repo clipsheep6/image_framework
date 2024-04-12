@@ -167,6 +167,8 @@ private:
 
     void SetColorProfile(heif_item_id itemId, const std::shared_ptr<const HeifColorProfile> &profile);
 
+    void CheckExtentData();
+
     // writing functions for images
     void SetPrimaryImage(const std::shared_ptr<HeifImage> &image);
 

@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+#include "buffer_metadata_stream.h"
 #include "file_metadata_stream.h"
 #include "heif_exif_metadata_accessor.h"
 #include "log_tags.h"
@@ -209,6 +210,29 @@ HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
     GetProperty(exifMetadata, "Model");
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Append001 end";
+}
+
+
+/**
+ * @tc.name: Read100
+ * @tc.desc: test the Heif format get exif properties
+ * @tc.type: FUNC
+ */
+HWTEST_F(HeifExifMetadataAccessorTest, Read100, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read100 start";
+    std::shared_ptr<MetadataStream> stream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_NO_EXIF_PATH);
+    ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
+    HeifExifMetadataAccessor imageAccessor(stream);
+    uint32_t result = imageAccessor.Read();
+    ASSERT_EQ(result, 0);
+    auto exifMetadata = imageAccessor.Get();
+    ASSERT_NE(exifMetadata, nullptr);
+    GetProperty(exifMetadata, "Model");
+    GetProperty(exifMetadata, "GPSLatitudeRef");
+    GetProperty(exifMetadata, "GPSLongitudeRef");
+
+    GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read100 end";
 }
 } // namespace Multimedia
 } // namespace OHOS

@@ -143,6 +143,10 @@ heif_error HeifIlocBox::AppendData(heif_item_id itemId, const std::vector<uint8_
 
 heif_error HeifIlocBox::UpdateData(heif_item_id itemID, const std::vector<uint8_t> &data, uint8_t constructionMethod)
 {
+    if (0 != constructionMethod) {
+        return heif_invalid_exif_data;
+    }
+
     // check whether this item ID already exists
     size_t idx;
     for (idx = 0; idx < items_.size(); idx++) {
@@ -158,11 +162,7 @@ heif_error HeifIlocBox::UpdateData(heif_item_id itemID, const std::vector<uint8_
 
     Extent extent;
     extent.data = data;
-    if (constructionMethod == CONSTRUCTION_METHOD_IDAT_OFFSET) {
-        extent.offset = idatOffset_;
-        extent.length = data.size();
-        idatOffset_ += (int) data.size();
-    }
+    extent.length = data.size();
 
     // clean any old extends
     items_[idx].extents.clear();
@@ -173,7 +173,7 @@ heif_error HeifIlocBox::UpdateData(heif_item_id itemID, const std::vector<uint8_
 
 void HeifIlocBox::InferFullBoxVersion()
 {
-    int minVersion = items_.size() < 0xFFFF ? HEIF_BOX_VERSION_ZERO : HEIF_BOX_VERSION_TWO;
+    int minVersion = items_.size() < 0xFFFF ? HEIF_BOX_VERSION_ONE : HEIF_BOX_VERSION_TWO;
     offsetSize_ = 0;
     lengthSize_ = 0;
     baseOffsetSize_ = 0;
@@ -187,7 +187,7 @@ void HeifIlocBox::InferFullBoxVersion()
 
     offsetSize_ = UINT32_BYTES_NUM;
     lengthSize_ = UINT32_BYTES_NUM;
-    baseOffsetSize_ = UINT32_BYTES_NUM;
+    baseOffsetSize_ = 0;
     indexSize_ = 0;
 
     SetVersion((uint8_t)minVersion);
@@ -243,7 +243,7 @@ heif_error HeifIlocBox::WriteMdatBox(HeifStreamWriter &writer)
 
     for (const auto &item: items_) {
         mdatTotalSize += (item.constructionMethod != CONSTRUCTION_METHOD_FILE_OFFSET) ?
-            mdatTotalSize : item.GetExtentsTotalSize();
+            0 : item.GetExtentsTotalSize();
     }
 
     // need add header bytes
@@ -254,10 +254,8 @@ heif_error HeifIlocBox::WriteMdatBox(HeifStreamWriter &writer)
         if (item.constructionMethod != CONSTRUCTION_METHOD_FILE_OFFSET) {
             continue;
         }
-        item.baseOffset = writer.GetPos();
-
         for (auto &extent: item.extents) {
-            extent.offset = writer.GetPos() - item.baseOffset;
+            extent.offset = writer.GetPos();
             extent.length = extent.data.size();
 
             writer.Write(extent.data);
@@ -265,6 +263,37 @@ heif_error HeifIlocBox::WriteMdatBox(HeifStreamWriter &writer)
     }
 
     PackIlocHeader(writer);
+    return heif_error_ok;
+}
+
+heif_error HeifIlocBox::ReadToExtentData(Item &item, const std::shared_ptr<HeifInputStream> &stream, const std::shared_ptr<HeifIdatBox> &idatBox)
+{
+     for (auto &extent: item.extents) {
+        if (!extent.data.empty()) {
+            continue;
+        }
+        if (item.constructionMethod == CONSTRUCTION_METHOD_FILE_OFFSET) {
+            bool ret = stream->Seek(extent.offset + item.baseOffset);
+            if (!ret) {
+                return heif_error_eof;
+            }
+            ret = stream->CheckSize(extent.length, -1);
+            if (!ret) {
+                return heif_error_eof;
+            }
+            extent.data.resize(extent.length);
+            ret = stream->Read(extent.data.data(), static_cast<size_t>(extent.length));
+            if (!ret) {
+                return heif_error_eof;
+            }
+        } else if (item.constructionMethod == CONSTRUCTION_METHOD_IDAT_OFFSET) {
+            if (!idatBox) {
+                return heif_error_no_idat;
+            }
+            idatBox->ReadData(stream, extent.offset + item.baseOffset, extent.length, extent.data);
+        }
+    }
+
     return heif_error_ok;
 }
 
@@ -319,6 +348,10 @@ heif_error HeifIdatBox::ParseContent(HeifStreamReader &reader)
 
 heif_error HeifIdatBox::Write(HeifStreamWriter &writer) const
 {
+    if (dataForWriting_.empty()) {
+        return heif_error_ok;
+    }
+
     size_t boxStart = ReserveHeader(writer);
 
     writer.Write(dataForWriting_);

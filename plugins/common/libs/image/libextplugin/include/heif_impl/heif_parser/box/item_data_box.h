@@ -67,6 +67,9 @@ public:
 
     heif_error WriteMdatBox(HeifStreamWriter &writer);
 
+    heif_error ReadToExtentData(Item &item, const std::shared_ptr<HeifInputStream> &stream,
+                                const std::shared_ptr<HeifIdatBox> &idatBox);
+
 protected:
     heif_error ParseContent(HeifStreamReader &reader) override;
 

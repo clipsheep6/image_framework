@@ -59,6 +59,7 @@ heif_error HeifParser::MakeFromStream(const std::shared_ptr<HeifInputStream> &st
 
 void HeifParser::Write(HeifStreamWriter &writer)
 {
+    CheckExtentData();
     for (auto &box: topBoxes_) {
         box->InferAllFullBoxVersion();
         box->Write(writer);
@@ -597,6 +598,14 @@ void HeifParser::SetColorProfile(heif_item_id itemId, const std::shared_ptr<cons
     auto colr = std::make_shared<HeifColrBox>();
     colr->SetColorProfile(profile);
     AddProperty(itemId, colr, false);
+}
+
+void HeifParser::CheckExtentData()
+{
+    const std::vector<HeifIlocBox::Item>& items = ilocBox_->GetItems();
+    for (const HeifIlocBox::Item& item: items) {
+        ilocBox_->ReadToExtentData(const_cast<HeifIlocBox::Item &>(item), inputStream_, idatBox_);
+    }
 }
 
 void HeifParser::SetPrimaryImage(const std::shared_ptr<HeifImage> &image)

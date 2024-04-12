@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
+#include "buffer_metadata_stream.h"
 #include "heif_error.h"
 #include "heif_exif_metadata_accessor.h"
 #include "heif_image.h"
 #include "heif_type.h"
-
 #include "image_log.h"
 #include "media_errors.h"
 #include "tiff_parser.h"
@@ -138,7 +138,11 @@ uint32_t HeifExifMetadataAccessor::WriteMetadata(DataBuf &dataBuf)
     if (buf == nullptr) {
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
-    imageStream_->Write(const_cast<uint8_t *>(buf), dataSize);
+
+    BufferMetadataStream tmpBufStream;
+    tmpBufStream.Write(const_cast<uint8_t *>(buf), dataSize);
+    imageStream_->Seek(0, SeekPos::BEGIN);
+    imageStream_->CopyFrom(tmpBufStream);
     return SUCCESS;
 }
 
