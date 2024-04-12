@@ -196,7 +196,7 @@ HWTEST_F(HeifExifMetadataAccessorTest, Write002, TestSize.Level3)
     ASSERT_TRUE(writeStream->Open(OpenMode::ReadWrite));
     HeifExifMetadataAccessor imageWriteAccessor(writeStream);
     uint32_t errcode = imageWriteAccessor.Write();
-    ASSERT_EQ(errcode, ERR_IMAGE_DECODE_EXIF_UNSUPPORT); 
+    ASSERT_EQ(errcode, ERR_IMAGE_DECODE_EXIF_UNSUPPORT);
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Write002 end";
 }
 
