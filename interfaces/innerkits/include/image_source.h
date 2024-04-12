@@ -319,6 +319,7 @@ private:
     uint64_t imageId_; // generated from the last six bits of the current timestamp
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     ImageHdrType sourceHdrType_ = ImageHdrType::UNKNOWN; // source image hdr type;
+    bool isExifReadFailed = false;
 };
 } // namespace Media
 } // namespace OHOS

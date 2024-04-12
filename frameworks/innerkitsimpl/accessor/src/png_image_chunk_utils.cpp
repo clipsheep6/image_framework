@@ -15,6 +15,7 @@
 
 #include <libexif/exif-data.h>
 #include <zlib.h>
+#include <array>
 
 #include "data_buf.h"
 #include "exif_metadata.h"
@@ -63,7 +64,7 @@ int PngImageChunkUtils::ParseTextChunk(const DataBuf &chunkData, TextChunkType c
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
 
-    bool foundExifKeyword = FindExifKeyword(keyword.CData());
+    bool foundExifKeyword = FindExifKeyword(keyword.CData(), keyword.Size());
     if (!foundExifKeyword) {
         IMAGE_LOGI("Ignoring the text chunk without an Exif keyword");
         return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
@@ -205,8 +206,12 @@ DataBuf PngImageChunkUtils::GetRawTextFromChunk(const DataBuf &chunkData, size_t
     return rawText;
 }
 
-bool PngImageChunkUtils::FindExifKeyword(const byte *keyword)
+bool PngImageChunkUtils::FindExifKeyword(const byte *keyword, size_t size)
 {
+    if ((keyword == nullptr) || (size < PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE)) {
+        IMAGE_LOGE("FindExifKeyword:Unexpected chunk keyword or size");
+        return false;
+    }
     if ((memcmp(PNG_PROFILE_EXIF, keyword, PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE) == 0) ||
         (memcmp(PNG_PROFILE_APP1, keyword, PNG_CHUNK_KEYWORD_EXIF_APP1_SIZE) == 0)) {
         return true;
@@ -222,7 +227,7 @@ bool PngImageChunkUtils::FindExifFromTxt(DataBuf &chunkData)
         return false;
     }
 
-    bool foundExifKeyword = FindExifKeyword(keyword.CData());
+    bool foundExifKeyword = FindExifKeyword(keyword.CData(), keyword.Size());
     if (!foundExifKeyword) {
         IMAGE_LOGI("The text chunk is without exif keyword");
         return false;
