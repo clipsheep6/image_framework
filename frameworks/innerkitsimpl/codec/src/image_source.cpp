@@ -2585,6 +2585,42 @@ static void SetMeatadata(SurfaceBuffer *buffer, const CM_ColorSpaceInfo &colorsp
     IMAGE_LOGD("Buffer set colorspace info, ret: %{public}d\n", err);
 }
 
+static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer)
+{
+    if (func != nullptr) {
+        func(buffer.buffer, buffer.context, buffer.bufferSize);
+        return;
+    }
+
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
+        int *fd = static_cast<int *>(buffer.context);
+        if (buffer.buffer != nullptr) {
+            ::munmap(buffer.buffer, buffer.bufferSize);
+        }
+        if (fd != nullptr) {
+            ::close(*fd);
+        }
+        return;
+    } else if (allocType == AllocatorType::DMA_ALLOC) {
+        if (buffer.buffer != nullptr) {
+            ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer *>(buffer.context));
+            buffer.context = nullptr;
+        }
+    } else if (allocType == AllocatorType::HEAP_ALLOC) {
+        if (buffer.buffer != nullptr) {
+            free(buffer.buffer);
+            buffer.buffer = nullptr;
+        }
+    }
+#else
+    if (buffer.buffer != nullptr) {
+        free(buffer.buffer);
+        buffer.buffer = nullptr;
+    }
+#endif
+}
+
 #ifdef IMAGE_AI_ENABLE
 uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &isHdr)
 {
@@ -2601,6 +2637,7 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &is
     auto csc = ColorSpaceConverter::Create();
     if (csc == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
         return ERR_IMAGE_COLOR_SPACE_CONVERTER_CREATE_FAIL;
     }
@@ -2608,6 +2645,7 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &is
     ret = csc->SetParameter(parameter);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("[ImageSource]AiHdrProcess SetParameter failed!");
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
         return ret;
     }
@@ -2625,10 +2663,12 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, bool &is
     ret = csc->Process(input, output);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("[ImageSource]AiHdrProcess csc->Process ret=%{public}u", ret);
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
     } else {
         isHdr = true;
         context.pixelFormat = PlPixelFormat::RGBA_1010102;
+        FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
     }
     return ret;
 }
@@ -2657,11 +2697,12 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, bool &
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->ColorSpaceConverterImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
-        //FreeContextBuffer
         IMAGE_LOGE("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess failed! %{public}d", res);
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
     } else {
         IMAGE_LOGD("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess Succ!");
+        FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
         isHdr = true;
         context.pixelFormat = PlPixelFormat::RGBA_1010102;
     }
@@ -2682,6 +2723,7 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     auto detailEnh = DetailEnhancerImage::Create();
     if (detailEnh == nullptr) {
         IMAGE_LOGE("Create Detail enhancer failed");
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
         return ERR_IMAGE_DETAIL_ENHANCER_CREATE_FAIL;
     }
@@ -2697,6 +2739,7 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     auto ret = detailEnh->SetParameter(param);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("DetailEnhancerImage SetParameter failed!");
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
         return ret;
     }
@@ -2704,8 +2747,10 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer>input, DecodeContext &context, Resolutio
     int32_t ret = detailEnh->Process(input, output);
     if (ret != VPE_ALGO_ERR_OK) {
         IMAGE_LOGE("DetailEnhancerImage Processed failed");
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
     }
+    FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
     return ret;
 }
 #endif
@@ -2724,10 +2769,11 @@ uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &context, Resolut
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->DetailEnhancerImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
-        //FreeContextBuffer
         IMAGE_LOGE("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess failed! %{public}d", res);
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(backupContext, context);
     } else {
+        FreeContextBuffer(backupContext.freeFunc, backupContext.allocatorType, backupContext.pixelsBuffer);
         IMAGE_LOGD("[ImageSource]AiSrProcessDl DetailEnhancerImageProcess Succ!");
     }
     return res;
@@ -2792,7 +2838,7 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, DecodeContext &context, boo
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
         IMAGE_LOGD("[ImageSource] ImageAiProcess allocatorType %{public}u", context.allocatorType);
-        return SUCCESS;
+        return IMAGE_RESULT_CREATE_SURFAC_FAILED;
     }
     uint32_t res = SUCCESS;
     if (needAisr && needHdr) {

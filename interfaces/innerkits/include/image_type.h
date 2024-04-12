@@ -227,7 +227,7 @@ struct DecodeOptions {
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
     bool fastAstc = false;
-    DecodeDynamicRange desiredDynamicRange  = DecodeDynamicRange::AUTO;
+    DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::AUTO;
     ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
 };
 
