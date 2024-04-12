@@ -76,7 +76,13 @@ bool HeifExifMetadataAccessor::ReadBlob(DataBuf &blob) const
 
 uint32_t HeifExifMetadataAccessor::Write()
 {
-    ExifData *exifData = this->Get()->GetExifData();
+    auto exfiMetadata = this->Get();
+    if (exfiMetadata == nullptr) {
+        IMAGE_LOGE("Heif metadata are not supported.");
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+
+    ExifData *exifData = exfiMetadata->GetExifData();
     if (exifData == nullptr) {
         IMAGE_LOGE("Heif Exif format are not supported.");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
