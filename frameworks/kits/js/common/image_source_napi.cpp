@@ -1755,6 +1755,17 @@ static void ModifyImagePropertyExecute(napi_env env, void *data)
     }
 }
 
+static std::string ObtainStringErrorCode(napi_env env, uint32_t errCode)
+{
+    std::string errMsg = "errCode: ";
+    if (errCode == ERR_IMAGE_DECODE_ABNORMAL || errCode == ERR_IMAGE_UNKNOWN_FORMAT ||
+        errCode == ERR_IMAGE_DECODE_FAILED) {
+        return (errMsg + std::to_string(errCode));
+    } else {
+        return (errMsg + std::to_string(ERROR));
+    }
+}
+
 static void GetImagePropertiesExecute(napi_env env, void *data)
 {
     auto context = static_cast<ImageSourceAsyncContext*>(data);
@@ -1769,12 +1780,12 @@ static void GetImagePropertiesExecute(napi_env env, void *data)
         if (status == SUCCESS) {
             context->kVStrArray.emplace_back(std::make_pair(*keyStrIt, valueStr));
         } else {
-            context->kVStrArray.emplace_back(std::make_pair(*keyStrIt, ""));
+            std::string errCode = ObtainStringErrorCode(env, status);
+            context->kVStrArray.emplace_back(std::make_pair(*keyStrIt, errCode));
             context->errMsgArray.insert(std::make_pair(status, *keyStrIt));
-            IMAGE_LOGE("errCode: %{public}u , exif key: %{public}s", status, keyStrIt->c_str());
         }
     }
-     context->status = context->kVStrArray.size() == context->errMsgArray.size() ? ERROR : SUCCESS;
+    context->status = context->kVStrArray.size() == context->errMsgArray.size() ? ERROR : SUCCESS;
 }
 
 static std::unique_ptr<ImageSourceAsyncContext> UnwrapContextForModify(napi_env env, napi_callback_info info)
