@@ -51,6 +51,7 @@ struct DecodeContext;
 
 namespace OHOS {
 namespace Media {
+class ImageEvent;
 struct SourceOptions {
     std::string formatHint;
     int32_t baseDensity = 0;
@@ -219,6 +220,7 @@ public:
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
     NATIVEEXPORT bool IsHdrImage();
+    void SetSource(const std::string &source);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -290,6 +292,9 @@ private:
     void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
                                   int32_t wantDensity, Size &dstSize);
     
+    void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, ImageEvent &imageEvent);
+    void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImagePlugin::DecodeContext &context,
+        ImageEvent &imageEvent);
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
@@ -319,6 +324,7 @@ private:
     uint64_t imageId_; // generated from the last six bits of the current timestamp
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     ImageHdrType sourceHdrType_ = ImageHdrType::UNKNOWN; // source image hdr type;
+    std::string source_; // Image source fd buffer etc
     bool isExifReadFailed = false;
 };
 } // namespace Media
