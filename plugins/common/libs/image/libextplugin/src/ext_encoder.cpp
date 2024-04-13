@@ -36,6 +36,7 @@
 #include "image_utils.h"
 #include "media_errors.h"
 #include "string_ex.h"
+#include "image_dfx.h"
 #include "image_data_statistics.h"
 #include "image_dfx.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
