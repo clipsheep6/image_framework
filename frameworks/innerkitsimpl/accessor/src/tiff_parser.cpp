@@ -83,6 +83,9 @@ size_t TiffParser::FindTiffPos(const DataBuf &dataBuf)
 size_t TiffParser::FindTiffPos(const byte *dataBuf, size_t bufLength)
 {
     size_t tiffPos = std::numeric_limits<size_t>::max();
+    if (dataBuf == nullptr) {
+        return tiffPos;
+    }
 
     for (size_t i = 0; i < bufLength - TIFF_BYTEORDER_SIZE; i++) {
         if (memcmp(dataBuf + i, tiffByteOrderII.data(), tiffByteOrderII.size()) == 0) {
