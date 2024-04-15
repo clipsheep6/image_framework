@@ -133,7 +133,7 @@ static const map<PlAlphaType, SkAlphaType> ALPHA_TYPE_MAP = {
 static const map<SkEncodedImageFormat, string> FORMAT_NAME = {
     { SkEncodedImageFormat::kBMP, "image/bmp" },
     { SkEncodedImageFormat::kGIF, "image/gif" },
-    { SkEncodedImageFormat::kICO, "image/png" },
+    { SkEncodedImageFormat::kICO, "image/x-ico" },
     { SkEncodedImageFormat::kJPEG, "image/jpeg" },
     { SkEncodedImageFormat::kPNG, "image/png" },
     { SkEncodedImageFormat::kWBMP, "image/bmp" },
@@ -663,9 +663,8 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 #endif
     context.outInfo.size.width = dstInfo_.width();
     context.outInfo.size.height = dstInfo_.height();
-    context.info.size.width = info_.width();
-    context.info.size.height = info_.height();
     if (IsHeifToYuvDecode(context)) {
+        context.isHardDecode = true;
         return DoHeifToYuvDecode(context);
     }
     uint32_t res = PreDecodeCheck(index);
@@ -680,6 +679,9 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
 #else
     return DecodeToYuv420(index, context);
 #endif
+    }
+    if (skEncodeFormat == SkEncodedImageFormat::kHEIF) {
+        context.isHardDecode = true;
     }
     uint64_t byteCount = static_cast<uint64_t>(dstInfo_.computeMinByteSize());
     uint8_t *dstBuffer = nullptr;
@@ -869,7 +871,8 @@ void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
     IMAGE_LOGD("ExtDecoder::ReportImageType format %{public}d success", skEncodeFormat);
 }
 #ifdef JPEG_HW_DECODE_ENABLE
-uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
+uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context,
+    OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer& outputBuffer)
 {
     uint64_t byteCount = static_cast<uint64_t>(hwDstInfo_.height()) * hwDstInfo_.width() * hwDstInfo_.bytesPerPixel();
     uint32_t ret = DmaMemAlloc(context, byteCount, hwDstInfo_);
@@ -884,8 +887,8 @@ uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context)
         outputBufferSize_.width = static_cast<uint32_t>(handle->stride);
     }
     outputBufferSize_.height = static_cast<uint32_t>(handle->height);
-    outputBuffer_.buffer = new NativeBuffer(handle);
-    outputBuffer_.fenceFd = -1;
+    outputBuffer.buffer = new NativeBuffer(handle);
+    outputBuffer.fenceFd = -1;
     return SUCCESS;
 }
 
@@ -913,7 +916,6 @@ void ExtDecoder::ReleaseOutputBuffer(DecodeContext &context, Media::AllocatorTyp
     context.freeFunc = nullptr;
     context.pixelsBuffer.bufferSize = 0;
     context.pixelsBuffer.context = nullptr;
-    outputBuffer_.buffer = nullptr;
 }
 
 uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
@@ -927,13 +929,14 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
     }
 
     Media::AllocatorType tmpAllocatorType = context.allocatorType;
-    uint32_t ret = AllocOutputBuffer(context);
+    OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer outputBuffer;
+    uint32_t ret = AllocOutputBuffer(context, outputBuffer);
     if (ret != SUCCESS) {
         IMAGE_LOGE("Decode failed, Alloc OutputBuffer failed, ret=%{public}d", ret);
         context.hardDecodeError = "Decode failed, Alloc OutputBuffer failed, ret=" + std::to_string(ret);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
-    ret = hwDecoder.Decode(codec_.get(), stream_, orgImgSize_, sampleSize_, outputBuffer_);
+    ret = hwDecoder.Decode(codec_.get(), stream_, orgImgSize_, sampleSize_, outputBuffer);
     if (ret != SUCCESS) {
         IMAGE_LOGE("failed to do jpeg hardware decode, err=%{public}d", ret);
         context.hardDecodeError = "failed to do jpeg hardware decode, err=" + std::to_string(ret);

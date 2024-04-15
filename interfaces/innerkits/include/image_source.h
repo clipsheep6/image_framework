@@ -292,9 +292,10 @@ private:
     void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
                                   int32_t wantDensity, Size &dstSize);
     
-    void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, ImageEvent &imageEvent);
-    void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImagePlugin::DecodeContext &context,
+    void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImageInfo &info, ImageEvent &imageEvent);
+    void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImagePlugin::PlImageInfo &plInfo,
         ImageEvent &imageEvent);
+    void UpdateDecodeInfoOptions(const ImagePlugin::DecodeContext &context, ImageEvent &imageEvent);
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
