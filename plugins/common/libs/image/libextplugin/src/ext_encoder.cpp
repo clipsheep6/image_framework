@@ -199,7 +199,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     TmpBufferHolder holder;
     ImageInfo imageInfo;
     pixelmap_->GetImageInfo(imageInfo);
-    imageDataStatistics.AddTitle("width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
+    imageDataStatistics.AddTitle(" width = %d, height =%d.", imageInfo.size.width, imageInfo.size.height);
     auto errorCode = BuildSkBitmap(pixelmap_, bitmap, iter->first, holder);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("Failed to build SkBitmap");
