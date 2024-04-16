@@ -2584,7 +2584,7 @@ static void ConvertUintPixelAlpha(uint8_t *rpixel,
     }
 }
 
-uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
+uint32_t PixelMap::CheckAlphaFormatInput(PixelMap &wPixelMap, const bool isPremul)
 {
     ImageInfo dstImageInfo;
     wPixelMap.GetImageInfo(dstImageInfo);
@@ -2592,9 +2592,15 @@ uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
     int32_t dstPixelBytes = wPixelMap.GetPixelBytes();
     void* dstData = wPixelMap.GetWritablePixels();
     int32_t stride = wPixelMap.GetRowStride();
+
     if (dstData == nullptr || data_ == nullptr) {
         IMAGE_LOGE("read pixels by dstPixelMap or srcPixelMap data is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
+    if (!((GetAlphaType() == AlphaType::IMAGE_ALPHA_TYPE_PREMUL && !isPremul) ||
+        (GetAlphaType() == AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL && isPremul))) {
+        IMAGE_LOGE("alpha type error");
+        return COMMON_ERR_INVALID_PARAMETER;
     }
     if (imageInfo_.size.height != dstImageInfo.size.height || imageInfo_.size.width != dstImageInfo.size.width) {
         IMAGE_LOGE("dstPixelMap size mismtach srcPixelMap");
@@ -2624,6 +2630,23 @@ uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
             dstPixelBytes);
         return COMMON_ERR_INVALID_PARAMETER;
     }
+    return SUCCESS;
+}
+
+uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
+{
+    uint32_t res = CheckAlphaFormatInput(wPixelMap, isPremul);
+    if (res != SUCCESS) {
+        return res;
+    }
+
+    ImageInfo dstImageInfo;
+    wPixelMap.GetImageInfo(dstImageInfo);
+    void* dstData = wPixelMap.GetWritablePixels();
+    int32_t stride = wPixelMap.GetRowStride();
+
+    PixelFormat srcPixelFormat = GetPixelFormat();
+    int8_t srcAlphaIndex = GetAlphaIndex(srcPixelFormat);
     int32_t index = 0;
     for (int32_t i = 0; i < imageInfo_.size.height; ++i) {
         for (int32_t j = 0; j < stride; j+=pixelBytes_) {
