@@ -111,10 +111,15 @@ enum class PixelFormat : int32_t {
     RGBA_F16 = 7,
     NV21 = 8,  // Each pixel is sorted on 3/2 bytes.
     NV12 = 9,
-    CMYK = 10,
-    ASTC_4x4 = 11,
-    ASTC_6x6 = 12,
-    ASTC_8x8 = 13,
+    RGBA_1010102 = 12,
+    NV12_P010 = 13,
+    NV21_P010 = 14,
+    CMYK = 30,
+    ASTC_4x4 = 31,
+    ASTC_6x6 = 32,
+    ASTC_8x8 = 33,
+    YU12 = 34,  // Each pixel is sorted on 3/2 bytes.
+    YV12 = 35,
 };
 
 enum class AlphaType : int32_t {

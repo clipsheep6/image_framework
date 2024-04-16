@@ -804,6 +804,11 @@ bool PixelMap::GetPixelFormatDetail(const PixelFormat format)
             colorProc_ = RGB888ToARGB;
             break;
         }
+        case PixelFormat::RGBA_1010102: {
+            pixelBytes_ = RGBA_1010102_BYTES;
+            colorProc_ = RGBA1010102ToARGB;
+            break;
+        }
         case PixelFormat::NV12:
         case PixelFormat::NV21: {
             pixelBytes_ = YUV420_BYTES;
@@ -1114,6 +1119,25 @@ bool PixelMap::RGB888ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, 
         uint8_t colorG = *src++;
         uint8_t colorB = *src++;
         *out++ = GetColorARGB(BYTE_FULL, colorR, colorG, colorB);
+    }
+    return true;
+}
+
+bool PixelMap::RGBA1010102ToARGB(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount)
+{
+    if (((inCount / RGBA_1010102_BYTES) != outCount) && ((inCount % RGBA_1010102_BYTES) != 0)) {
+        IMAGE_LOGE("input count:%{public}u is not match to output count:%{public}u.", inCount, outCount);
+        return false;
+    }
+    const uint32_t *src = reinterpret_cast<const uint32_t *>(in);
+    for (uint32_t i = 0; i < outCount; i++) {
+        uint32_t color = *src++;
+        uint32_t *dstColor = out++;
+        uint32_t r = (color >> 24) & 0xff;
+        uint32_t g = (color >> 14) & 0xff;
+        uint32_t b = (color >> 4 ) & 0xff;
+        uint32_t a = (color & 0x3) * 0x55;
+        *dstColor = b | (g << 8) | (r << 16) | (a << 24);
     }
     return true;
 }
@@ -2893,7 +2917,10 @@ void PixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
 
 bool PixelMap::resize(float xAxis, float yAxis)
 {
-    if (imageInfo_.pixelFormat == PixelFormat::NV12 || imageInfo_.pixelFormat == PixelFormat::NV21) {
+    if (imageInfo_.pixelFormat == PixelFormat::NV12 ||
+        imageInfo_.pixelFormat == PixelFormat::NV21 ||
+        imageInfo_.pixelFormat == PixelFormat::NV12_P010 ||
+        imageInfo_.pixelFormat == PixelFormat::NV21_P010) {
         IMAGE_LOGE("resize temp disabled for YUV data");
         return true;
     }
