@@ -21,6 +21,9 @@
 #include <memory>
 #include "image_type.h"
 
+static constexpr uint32_t PIXELCONVERT_SUCCESS = 0;               // success
+static constexpr uint32_t ERR_PIXELCONVERT_ERROR = -1;  // error
+
 namespace OHOS {
 namespace Media {
 enum class AlphaConvertType : uint32_t {
@@ -35,6 +38,13 @@ enum class AlphaConvertType : uint32_t {
 struct ProcFuncExtension {
     AlphaConvertType alphaConvertType;
 };
+
+typedef struct PixelsConvertInfo {
+    void *pixels = nullptr;
+    int32_t length = 0;
+    ImageInfo imageInfo;
+    int32_t alignSize = 1;
+} PIXELS_CONVERT_INFO;
 
 // These values SHOULD be sync with image_type.h PixelFormat
 constexpr uint32_t GRAY_BIT = 0x80000001; /* Tow value image, just white or black. */
@@ -181,8 +191,7 @@ public:
     static std::unique_ptr<PixelConvert> Create(const ImageInfo &srcInfo, const ImageInfo &dstInfo);
     void Convert(void *destinationPixels, const uint8_t *sourcePixels, uint32_t sourcePixelsNum);
 
-    static int32_t PixelsConvert(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
-        void *dstPixels, const ImageInfo &dstInfo);
+    static int32_t PixelsConvert(const PIXELS_CONVERT_INFO &srcPixelsInfo, PIXELS_CONVERT_INFO &dstPixelsInfo);
 
 private:
     PixelConvert(ProcFuncType funcPtr, ProcFuncExtension extension, bool isNeedConvert);

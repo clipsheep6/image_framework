@@ -1144,17 +1144,21 @@ static bool FFMpegConvert(const void *srcPixels, const FFMPEG_CONVERT_INFO& srcI
     return ret;
 }
 
-static int32_t ConvertFromYUV(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
-    void *dstPixels, const ImageInfo &dstInfo)
+static int32_t ConvertFromYUV(const PIXELS_CONVERT_INFO &srcPixelsInfo, PIXELS_CONVERT_INFO &dstPixelsInfo)
 {
+    const void *srcPixels = srcPixelsInfo.pixels;
+    const int32_t srcLength = srcPixelsInfo.length;
+    const ImageInfo &srcInfo = srcPixelsInfo.imageInfo;
+    void *dstPixels = dstPixelsInfo.pixels;
+    const ImageInfo &dstInfo = dstPixelsInfo.imageInfo;
     if (srcPixels == nullptr || dstPixels == nullptr || srcLength <= 0) {
         IMAGE_LOGE("[PixelMap]Convert: src pixels or dst pixels or src pixels length invalid.");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
     if ((srcInfo.pixelFormat != PixelFormat::NV21 && srcInfo.pixelFormat != PixelFormat::NV12) ||
         (dstInfo.pixelFormat == PixelFormat::NV21 || dstInfo.pixelFormat == PixelFormat::NV12)) {
         IMAGE_LOGE("[PixelMap]Convert: src or dst pixel format invalid.");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
     FFMPEG_CONVERT_INFO srcFFmpegInfo = {PixelFormatToAVPixelFormat(srcInfo.pixelFormat),
@@ -1165,19 +1169,19 @@ static int32_t ConvertFromYUV(const void *srcPixels, const int32_t srcLength, co
         tmpFFmpegInfo.alignSize);
     if (tmpPixelsLen <= 0) {
         IMAGE_LOGE("[PixelMap]Convert: Get tmp pixels length failed!");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
     uint8_t* tmpPixels = new uint8_t[tmpPixelsLen];
     if (tmpPixels == nullptr) {
         IMAGE_LOGE("[PixelMap]Convert: alloc memory failed!");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
     memset_s(tmpPixels, tmpPixelsLen, 0, tmpPixelsLen);
     if (!FFMpegConvert(srcPixels, srcFFmpegInfo, (void *)tmpPixels, tmpFFmpegInfo)) {
         IMAGE_LOGE("[PixelMap]Convert: ffmpeg convert failed!");
         delete[] tmpPixels;
         tmpPixels = nullptr;
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
     ImageInfo tmpInfo = srcInfo;
@@ -1188,26 +1192,31 @@ static int32_t ConvertFromYUV(const void *srcPixels, const int32_t srcLength, co
         IMAGE_LOGE("[PixelMap]Convert: ConvertFromYUV: pixel convert in adapter failed.");
         delete[] tmpPixels;
         tmpPixels = nullptr;
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
     delete[] tmpPixels;
     tmpPixels = nullptr;
 
-    return PixelMap::GetRGBxByteCount(dstInfo);
+    dstPixelsInfo.length = PixelMap::GetRGBxByteCount(dstInfo);
+    return PIXELCONVERT_SUCCESS;
 }
 
-static int32_t ConvertToYUV(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
-    void *dstPixels, const ImageInfo &dstInfo)
+static int32_t ConvertToYUV(const PIXELS_CONVERT_INFO &srcPixelsInfo, PIXELS_CONVERT_INFO &dstPixelsInfo)
 {
+    const void *srcPixels = srcPixelsInfo.pixels;
+    const int32_t srcLength = srcPixelsInfo.length;
+    const ImageInfo &srcInfo = srcPixelsInfo.imageInfo;
+    void *dstPixels = dstPixelsInfo.pixels;
+    const ImageInfo &dstInfo = dstPixelsInfo.imageInfo;
     if (srcPixels == nullptr || dstPixels == nullptr || srcLength <= 0) {
         IMAGE_LOGE("[PixelMap]Convert: src pixels or dst pixels or src pixel length invalid");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
     if ((srcInfo.pixelFormat == PixelFormat::NV21 || srcInfo.pixelFormat == PixelFormat::NV12) ||
         (dstInfo.pixelFormat != PixelFormat::NV21 && dstInfo.pixelFormat != PixelFormat::NV12)) {
         IMAGE_LOGE("[PixelMap]Convert: src or dst pixel format invalid.");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
     ImageInfo tmpInfo = srcInfo;
@@ -1215,12 +1224,12 @@ static int32_t ConvertToYUV(const void *srcPixels, const int32_t srcLength, cons
     int tmpPixelsLen = PixelMap::GetRGBxByteCount(tmpInfo);
     if (tmpPixelsLen <= 0) {
         IMAGE_LOGE("[PixelMap]Convert: Get tmp pixels length failed!");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
     uint8_t* tmpPixels = new uint8_t[tmpPixelsLen];
     if (tmpPixels == nullptr) {
         IMAGE_LOGE("[PixelMap]Convert: alloc memory failed!");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
     memset_s(tmpPixels, tmpPixelsLen, 0, tmpPixelsLen);
 
@@ -1230,7 +1239,7 @@ static int32_t ConvertToYUV(const void *srcPixels, const int32_t srcLength, cons
         IMAGE_LOGE("[PixelMap]Convert: ConvertToYUV: pixel convert in adapter failed.");
         delete[] tmpPixels;
         tmpPixels = nullptr;
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
     FFMPEG_CONVERT_INFO srcFFmpegInfo = {PixelFormatToAVPixelFormat(PixelFormat::RGB_888),
@@ -1241,22 +1250,27 @@ static int32_t ConvertToYUV(const void *srcPixels, const int32_t srcLength, cons
         IMAGE_LOGE("[PixelMap]Convert: ffmpeg convert failed!");
         delete[] tmpPixels;
         tmpPixels = nullptr;
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
     delete[] tmpPixels;
     tmpPixels = nullptr;
 
-    return av_image_get_buffer_size(dstFFmpegInfo.format, dstFFmpegInfo.width, dstFFmpegInfo.height,
+    dstPixelsInfo.length = av_image_get_buffer_size(dstFFmpegInfo.format, dstFFmpegInfo.width, dstFFmpegInfo.height,
         dstFFmpegInfo.alignSize);
+    return PIXELCONVERT_SUCCESS;
 }
 
-int32_t PixelConvert::PixelsConvert(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
-    void *dstPixels, const ImageInfo &dstInfo)
+int32_t PixelConvert::PixelsConvert(const PIXELS_CONVERT_INFO &srcPixelsInfo, PIXELS_CONVERT_INFO &dstPixelsInfo)
 {
+    const void *srcPixels = srcPixelsInfo.pixels;
+    const int32_t srcLength = srcPixelsInfo.length;
+    const ImageInfo &srcInfo = srcPixelsInfo.imageInfo;
+    void *dstPixels = dstPixelsInfo.pixels;
+    const ImageInfo &dstInfo = dstPixelsInfo.imageInfo;
     if (srcPixels == nullptr || dstPixels == nullptr || srcLength <= 0) {
         IMAGE_LOGE("[PixelMap]Convert: src pixels or dst pixels or src pixels length invalid.");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
     if ((srcInfo.pixelFormat == PixelFormat::NV12 || srcInfo.pixelFormat == PixelFormat::NV21) &&
@@ -1267,25 +1281,26 @@ int32_t PixelConvert::PixelsConvert(const void *srcPixels, const int32_t srcLeng
             dstInfo.size.width, dstInfo.size.height, 1};
         if (!FFMpegConvert(srcPixels, srcFFmpegInfo, (void *)dstPixels, dstFFmpegInfo)) {
             IMAGE_LOGE("[PixelMap]Convert: ffmpeg convert failed!");
-            return -1;
+            return ERR_PIXELCONVERT_ERROR;
         }
         return av_image_get_buffer_size(dstFFmpegInfo.format, dstFFmpegInfo.width, dstFFmpegInfo.height,
             dstFFmpegInfo.alignSize);
     }
     if (srcInfo.pixelFormat == PixelFormat::NV12 || srcInfo.pixelFormat == PixelFormat::NV21) {
-        return ConvertFromYUV(srcPixels, srcLength, srcInfo, dstPixels, dstInfo);
+        return ConvertFromYUV(srcPixelsInfo, dstPixelsInfo);
     } else if (dstInfo.pixelFormat == PixelFormat::NV12 || dstInfo.pixelFormat == PixelFormat::NV21) {
-        return ConvertToYUV(srcPixels, srcLength, srcInfo, dstPixels, dstInfo);
+        return ConvertToYUV(srcPixelsInfo, dstPixelsInfo);
     }
 
     Position pos;
     if (!PixelConvertAdapter::WritePixelsConvert(srcPixels, PixelMap::GetRGBxRowDataSize(srcInfo), srcInfo,
         dstPixels, pos, PixelMap::GetRGBxRowDataSize(dstInfo), dstInfo)) {
         IMAGE_LOGE("[PixelMap]Convert: PixelsConvert: pixel convert in adapter failed.");
-        return -1;
+        return ERR_PIXELCONVERT_ERROR;
     }
 
-    return PixelMap::GetRGBxByteCount(dstInfo);
+    dstPixelsInfo.length = PixelMap::GetRGBxByteCount(dstInfo);
+    return PIXELCONVERT_SUCCESS;
 }
 
 PixelConvert::PixelConvert(ProcFuncType funcPtr, ProcFuncExtension extension, bool isNeedConvert)
