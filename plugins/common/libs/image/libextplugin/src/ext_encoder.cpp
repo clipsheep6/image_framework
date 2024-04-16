@@ -183,7 +183,7 @@ static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, DataBuf &exifBlob, 
 
 uint32_t ExtEncoder::DoFinalizeEncode()
 {
-    ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
+    ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d,",
         opts_.format.c_str(), opts_.quality);
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
@@ -199,7 +199,7 @@ uint32_t ExtEncoder::DoFinalizeEncode()
     TmpBufferHolder holder;
     ImageInfo imageInfo;
     pixelmap_->GetImageInfo(imageInfo);
-    imageDataStatistics.AddTitle("width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
+    imageDataStatistics.AddTitle(" width = %d, height =%d.", imageInfo.size.width, imageInfo.size.height);
     auto errorCode = BuildSkBitmap(pixelmap_, bitmap, iter->first, holder);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("Failed to build SkBitmap");
