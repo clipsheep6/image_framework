@@ -183,7 +183,7 @@ static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, DataBuf &exifBlob, 
 
 uint32_t ExtEncoder::DoFinalizeEncode()
 {
-    ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
+    ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d,",
         opts_.format.c_str(), opts_.quality);
     auto iter = std::find_if(FORMAT_NAME.begin(), FORMAT_NAME.end(),
         [this](const std::map<SkEncodedImageFormat, std::string>::value_type item) {
