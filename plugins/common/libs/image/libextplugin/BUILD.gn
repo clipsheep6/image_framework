@@ -150,6 +150,7 @@ ohos_shared_library("extplugin") {
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_exif_metadata_accessor.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/webp_exif_metadata_accessor.cpp",
     "src/ext_decoder.cpp",
     "src/ext_encoder.cpp",
     "src/ext_pixel_convert.cpp",
@@ -215,6 +216,7 @@ ohos_shared_library("extplugin") {
     deps = [
       ":exifhelper",
       "${image_subsystem}//frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
+      ":heifimpl",
       "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
       "${image_subsystem}/interfaces/innerkits:image_native",
       "${image_subsystem}/plugins/manager:pluginmanager",
@@ -229,6 +231,7 @@ ohos_shared_library("extplugin") {
       ]
     }
     deps += skia_platform
+
     external_deps = [
       "c_utils:utils",
       "graphic_2d:color_manager",
@@ -238,6 +241,11 @@ ohos_shared_library("extplugin") {
       "libjpeg-turbo:turbojpeg",
       "zlib:libz",
     ]
+
+    if (defined(global_parts_info) &&
+        defined(global_parts_info.graphic_graphic_2d_ext)) {
+      defines += [ "SUT_ENCODE_ENABLE" ]
+    }
 
     if (enable_jpeg_hw_decode) {
       external_deps += [
@@ -253,6 +261,17 @@ ohos_shared_library("extplugin") {
       ]
       defines += [ "JPEG_HW_DECODE_ENABLE" ]
     }
+    if (enable_heif_hw_decode) {
+      defines += [ "HEIF_HW_DECODE_ENABLE" ]
+      include_dirs += [
+        "include/heif_impl/heif_parser",
+        "//third_party/openmax/api/1.1.2",
+      ]
+      external_deps += [
+        "drivers_interface_codec:codec_idl_headers",
+        "drivers_peripheral_codec:libcodec_hdi_omx_client",
+      ]
+    }
   }
   cflags = [
     "-DIMAGE_COLORSPACE_FLAG",
@@ -266,6 +285,7 @@ ohos_shared_library("extplugin") {
     cflags += [ "-DLIBYUV_ENABLE" ]
     external_deps += [ "libyuv:yuv" ]
   }
+  external_deps += [ "zlib:libz" ]
 
   subsystem_name = "multimedia"
   part_name = "image_framework"

@@ -85,9 +85,9 @@ struct PixelMemInfo {
     void* context = nullptr;
     int32_t bufferSize = 0;
     AllocatorType allocatorType = AllocatorType::SHARE_MEM_ALLOC;
+    bool isAstc = false;
 };
 
-class MetadataAccessor;
 class ExifMetadata;
 
 class PixelMap : public Parcelable, public PIXEL_MAP_ERR {
@@ -287,10 +287,8 @@ public:
 
     NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
     NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
-    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
-        const std::string &path);
-    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value,
-        const int fd);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
+
     static int32_t GetRGBxRowDataSize(const ImageInfo& info);
     static int32_t GetRGBxByteCount(const ImageInfo& info);
     static int32_t GetYUVByteCount(const ImageInfo& info);
@@ -406,9 +404,6 @@ private:
     static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor);
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
     void UpdateImageInfo();
-    uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
-    uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> &metadataAccessor,
-        const std::string &key, const std::string &value);
 
     static int32_t ConvertPixelAlpha(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
         void *dstPixels, const ImageInfo &dstInfo);
