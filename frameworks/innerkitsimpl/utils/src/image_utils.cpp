@@ -24,6 +24,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 #include "__config"
 #include "image_log.h"
@@ -40,7 +41,10 @@
 #include "hitrace_meter.h"
 #include "image_system_properties.h"
 #include "pixel_map.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+#ifdef IOS_PLATFORM
+#include <sys/syscall.h>
+#endif
 #include "surface_buffer.h"
 #else
 #include "refbase.h"
@@ -165,7 +169,7 @@ uint32_t ImageUtils::RegisterPluginServer()
     vector<string> pluginPaths = { "" };
 #elif defined(_APPLE)
     vector<string> pluginPaths = { "./" };
-#elif defined(A_PLATFORM) || defined(IOS_PLATFORM)
+#elif defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
     vector<string> pluginPaths = {};
 #else
     vector<string> pluginPaths = { "/system/etc/multimediaplugin/image" };
@@ -419,6 +423,31 @@ void ImageUtils::DumpDataIfDumpEnabled(const char* data, const size_t& totalSize
     IMAGE_LOGI("ImageUtils::DumpDataIfDumpEnabled success, path = %{public}s", fileName.c_str());
 }
 
+uint64_t ImageUtils::GetNowTimeMilliSeconds()
+{
+    auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+}
+
+std::string ImageUtils::GetCurrentProcessName()
+{
+    std::string processName;
+    std::ifstream cmdlineFile("/proc/self/cmdline");
+    if (cmdlineFile.is_open()) {
+        std::ostringstream oss;
+        oss << cmdlineFile.rdbuf();
+        cmdlineFile.close();
+
+        //Extrace process name from the command line
+        std::string cmdline = oss.str();
+        size_t pos = cmdline.find_first_of('\0');
+        if (pos != std::string::npos) {
+            processName = cmdline.substr(0, pos);
+        }
+    }
+    return processName;
+}
+
 uint32_t ImageUtils::SaveDataToFile(const std::string& fileName, const char* data, const size_t& totalSize)
 {
     std::ofstream outFile(fileName, std::ofstream::out);
@@ -450,6 +479,15 @@ std::string ImageUtils::GetPixelMapName(PixelMap* pixelMap)
         IMAGE_LOGE("ImageUtils::GetPixelMapName error, pixelMap is null");
         return "";
     }
+#ifdef IOS_PLATFORM
+    std::string pixelMapStr = "_pixelMap_w" + std::to_string(pixelMap->GetWidth()) +
+        "_h" + std::to_string(pixelMap->GetHeight()) +
+        "_rowStride" + std::to_string(pixelMap->GetRowStride()) +
+        "_total" + std::to_string(pixelMap->GetRowStride() * pixelMap->GetHeight()) +
+        "_pid" + std::to_string(getpid()) +
+        "_tid" + std::to_string(syscall(SYS_thread_selfid)) +
+        "_uniqueId" + std::to_string(pixelMap->GetUniqueId());
+#else
     std::string pixelMapStr = "_pixelMap_w" + std::to_string(pixelMap->GetWidth()) +
         "_h" + std::to_string(pixelMap->GetHeight()) +
         "_rowStride" + std::to_string(pixelMap->GetRowStride()) +
@@ -457,6 +495,7 @@ std::string ImageUtils::GetPixelMapName(PixelMap* pixelMap)
         "_pid" + std::to_string(getpid()) +
         "_tid" + std::to_string(gettid()) +
         "_uniqueId" + std::to_string(pixelMap->GetUniqueId());
+#endif
     return pixelMapStr;
 }
 } // namespace Media

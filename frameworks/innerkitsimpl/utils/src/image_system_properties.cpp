@@ -15,7 +15,7 @@
 
 #include "image_system_properties.h"
 
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -30,6 +30,7 @@ extern char* __progname;
 }
 namespace OHOS {
 namespace Media {
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
 std::string getCurrentProcessName()
 {
     std::string processName;
@@ -47,13 +48,13 @@ std::string getCurrentProcessName()
             processName = cmdline.substr(0, pos);
         }
     }
-
     return processName;
 }
+#endif
 
 bool ImageSystemProperties::GetSkiaEnabled()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.skdecode.enabled", true);
 #else
     return true;
@@ -63,7 +64,7 @@ bool ImageSystemProperties::GetSkiaEnabled()
 // surfacebuffer tmp switch, only used for test
 bool ImageSystemProperties::GetSurfaceBufferEnabled()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.surfacebuffer.enabled", false);
 #else
     return false;
@@ -72,8 +73,9 @@ bool ImageSystemProperties::GetSurfaceBufferEnabled()
 
 bool ImageSystemProperties::GetDmaEnabled()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
-    return system::GetBoolParameter("persist.multimedia.image.dma.enabled", false);
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
+    static bool isPhone = system::GetParameter("const.product.devicetype", "pc") == "phone";
+    return system::GetBoolParameter("persist.multimedia.image.dma.enabled", true) && isPhone;
 #else
     return false;
 #endif
@@ -81,7 +83,7 @@ bool ImageSystemProperties::GetDmaEnabled()
 
 bool ImageSystemProperties::GetAntiAliasingEnabled()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.AntiAliasing.enabled", true);
 #else
     return false;
@@ -90,12 +92,16 @@ bool ImageSystemProperties::GetAntiAliasingEnabled()
 
 bool ImageSystemProperties::GetDumpImageEnabled()
 {
+#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.dumpimage.enabled", false);
+#else
+    return false;
+#endif
 }
 
 bool ImageSystemProperties::GetHardWareDecodeEnabled()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.hardwaredecode.enabled", false);
 #else
     return false;
@@ -104,7 +110,7 @@ bool ImageSystemProperties::GetHardWareDecodeEnabled()
 
 bool ImageSystemProperties::GetAstcHardWareEncodeEnabled()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.AstcHardWareEncode.enabled", true);
 #else
     return false;
@@ -113,7 +119,7 @@ bool ImageSystemProperties::GetAstcHardWareEncodeEnabled()
 
 bool ImageSystemProperties::GetSutEncodeEnabled()
 {
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.SutEncode.enabled", false);
 #else
     return false;
@@ -122,7 +128,7 @@ bool ImageSystemProperties::GetSutEncodeEnabled()
 
 bool ImageSystemProperties::GetMediaLibraryAstcEnabled()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
     return system::GetBoolParameter("persist.multimedia.image.GenAstc.enabled", true);
 #else
     return false;
@@ -131,7 +137,7 @@ bool ImageSystemProperties::GetMediaLibraryAstcEnabled()
 
 bool ImageSystemProperties::IsPhotos()
 {
-#if !defined(IOS_PLATFORM) &&!defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
     static std::string processName = getCurrentProcessName();
     return processName == "com.huawei.hmos.photos";
 #else

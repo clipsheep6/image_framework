@@ -22,9 +22,8 @@
 #include "image_trace.h"
 #include "hitrace_meter.h"
 #include "exif_metadata_formatter.h"
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#include "image_dfx.h"
 #include "color_space_object_convertor.h"
-#endif
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -1039,7 +1038,7 @@ static bool isRawFileDescriptor(napi_env env, napi_value argValue, ImageSourceAs
     if (!hasNamedProperty(env, argValue, "fd") ||
         !hasNamedProperty(env, argValue, "offset") ||
         !hasNamedProperty(env, argValue, "length")) {
-        IMAGE_LOGE("RawFileDescriptor mismatch");
+        IMAGE_LOGD("RawFileDescriptor mismatch");
         return false;
     }
     if (parseRawFileItem(env, argValue, "fd", &(context->rawFileInfo.fd)) &&
@@ -1334,6 +1333,7 @@ static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
         IMAGE_LOGD("Get Incremental PixelMap!!!");
         pixelMap = incPixelMap;
     } else {
+        decodeOpts.invokeType = JS_INTERFACE;
         pixelMap = imageSource->CreatePixelMapEx((index >= NUM_0) ? index : NUM_0,
             decodeOpts, status);
     }
@@ -1347,8 +1347,7 @@ static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
 
 static void CreatePixelMapExecute(napi_env env, void *data)
 {
-    uint32_t executeId = static_cast<uint32_t>(ImageNapiUtils::GetNowTimeMicroSeconds());
-    IMAGE_LOGI("CreatePixelMapExecute IN, id: %{public}u", executeId);
+    IMAGE_LOGD("CreatePixelMapExecute IN");
     if (data == nullptr) {
         IMAGE_LOGE("data is nullptr");
         return;
@@ -1373,13 +1372,12 @@ static void CreatePixelMapExecute(napi_env env, void *data)
         context->errMsg = "Create PixelMap error";
         IMAGE_LOGE("Create PixelMap error");
     }
-    IMAGE_LOGI("CreatePixelMapExecute OUT, id: %{public}u", executeId);
+    IMAGE_LOGD("CreatePixelMapExecute OUT");
 }
 
 static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
 {
-    uint32_t completeId = static_cast<uint32_t>(ImageNapiUtils::GetNowTimeMicroSeconds());
-    IMAGE_LOGI("CreatePixelMapComplete IN, id: %{public}u", completeId);
+    IMAGE_LOGD("CreatePixelMapComplete IN");
     napi_value result = nullptr;
     auto context = static_cast<ImageSourceAsyncContext*>(data);
 
@@ -1388,7 +1386,7 @@ static void CreatePixelMapComplete(napi_env env, napi_status status, void *data)
     } else {
         napi_get_undefined(env, &result);
     }
-    IMAGE_LOGI("CreatePixelMapComplete OUT, id: %{public}u", completeId);
+    IMAGE_LOGD("CreatePixelMapComplete OUT");
     ImageSourceCallbackRoutine(env, context, result);
 }
 
@@ -1682,15 +1680,14 @@ static std::unique_ptr<ImageSourceAsyncContext> UnwrapContext(napi_env env, napi
     return context;
 }
 
-static bool CheckExifDataValue(const std::string &key, const std::string &value, std::string &errorInfo)
+static uint32_t CheckExifDataValue(const std::string &key, const std::string &value, std::string &errorInfo)
 {
-    bool isError = ExifMetadatFormatter::Validate(key, value);
-    if (isError) {
+    uint32_t status = ExifMetadatFormatter::Validate(key, value);
+    if (status != SUCCESS) {
         errorInfo = key + "has invalid exif value: ";
         errorInfo.append(value);
-        return false;
     }
-    return true;
+    return status;
 }
 
 static void ModifyImagePropertiesExecute(napi_env env, void *data)
@@ -1703,9 +1700,11 @@ static void ModifyImagePropertiesExecute(napi_env env, void *data)
     uint32_t status = SUCCESS;
     for (auto recordIterator = context->kVStrArray.begin(); recordIterator != context->kVStrArray.end();
         ++recordIterator) {
-        if (!CheckExifDataValue(recordIterator->first, recordIterator->second, context->errMsg)) {
+        IMAGE_LOGD("CheckExifDataValue");
+        status = CheckExifDataValue(recordIterator->first, recordIterator->second, context->errMsg);
+        IMAGE_LOGD("Check ret status: %{public}d", status);
+        if (status != SUCCESS) {
             IMAGE_LOGE("There is invalid exif data parameter");
-            status = ERR_MEDIA_VALUE_INVALID;
             context->errMsgArray.insert(std::make_pair(status, context->errMsg));
             continue;
         }
@@ -1738,9 +1737,12 @@ static void ModifyImagePropertyExecute(napi_env env, void *data)
         IMAGE_LOGE("empty context");
         return;
     }
-    if (!CheckExifDataValue(context->keyStr, context->valueStr, context->errMsg)) {
+    IMAGE_LOGD("ModifyImagePropertyExecute CheckExifDataValue");
+    uint32_t status = CheckExifDataValue(context->keyStr, context->valueStr, context->errMsg);
+    IMAGE_LOGD("ModifyImagePropertyExecute Check ret status: %{public}d", status);
+    if (status != SUCCESS) {
         IMAGE_LOGE("There is invalid exif data parameter");
-        context->status = ERR_MEDIA_VALUE_INVALID;
+        context->status = status;
         return;
     }
     if (!IsSameTextStr(context->pathName, "")) {
@@ -2185,6 +2187,7 @@ STATIC_EXEC_FUNC(CreatePixelMapList)
     uint32_t errorCode = 0;
     uint32_t frameCount = context->rImageSource->GetFrameCount(errorCode);
     if ((errorCode == SUCCESS) && (context->index >= NUM_0) && (context->index < frameCount)) {
+        context->decodeOpts.invokeType = JS_INTERFACE;
         context->pixelMaps = context->rImageSource->CreatePixelMapList(context->decodeOpts, errorCode);
     }
     if ((errorCode == SUCCESS) && IMG_NOT_NULL(context->pixelMaps)) {
