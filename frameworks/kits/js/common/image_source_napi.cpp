@@ -849,7 +849,7 @@ static bool ParseRegion(napi_env env, napi_value root, Rect* region)
 static bool IsSupportPixelFormat(int32_t val)
 {
     if (val >= static_cast<int32_t>(PixelFormat::UNKNOWN) &&
-        val <= static_cast<int32_t>(PixelFormat::NV12)) {
+        val < static_cast<int32_t>(PixelFormat::EXTERNAL_MAX)) {
         return true;
     }
 
@@ -858,7 +858,7 @@ static bool IsSupportPixelFormat(int32_t val)
 
 static PixelFormat ParsePixlForamt(int32_t val)
 {
-    if (val <= static_cast<int32_t>(PixelFormat::CMYK)) {
+    if (val < static_cast<int32_t>(PixelFormat::EXTERNAL_MAX)) {
         return PixelFormat(val);
     }
 
