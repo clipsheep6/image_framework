@@ -47,7 +47,7 @@ ohos_shared_library("pixelmap_ndk") {
   part_name = "image_framework"
 }
 
-ohos_shared_library("ohpixelmap") {
+ohos_shared_library("pixelmap") {
   output_extension = "so"
   sanitize = {
     cfi = true

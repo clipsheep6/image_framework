@@ -132,7 +132,7 @@
                 "pixelmap_native.h"
               ]
             },
-            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixelmap_ndk:ohpixelmap"
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixelmap_ndk:pixelmap"
           },
           {
             "header": {
@@ -237,15 +237,6 @@
               ]
             },
             "name": "//foundation/multimedia/image_framework/frameworks/kits/native/common/ndk:image_receiver"
-          },
-          {
-            "header": {
-              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/image",
-              "header_files": [
-                "image_source_native.h"
-              ]
-            },
-            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:ohimagesource"
           }
         ],
         "test": [
