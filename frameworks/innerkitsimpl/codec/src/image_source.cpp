@@ -294,6 +294,7 @@ unique_ptr<ImageSource> ImageSource::DoImageSourceCreate(std::function<unique_pt
     errorCode = ERR_IMAGE_SOURCE_DATA;
     auto streamPtr = stream();
     if (streamPtr == nullptr) {
+        IMAGE_LOGE("[ImageSource]streamPtr is null.");
         ReportCreateImageSourceFault(opts.size.width, opts.size.height, traceName, "stream failed");
         return nullptr;
     }
