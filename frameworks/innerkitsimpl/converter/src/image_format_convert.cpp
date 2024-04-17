@@ -213,7 +213,7 @@ bool ImageFormatConvert::MakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMa
 {
     std::unique_ptr<PixelMap> pixelMap;
     if (info.pixelFormat == PixelFormat::NV21 || info.pixelFormat == PixelFormat::NV12) {
-        pixelMap = std::make_unique<PixelYUV>();
+        pixelMap = std::make_unique<PixelYuv>();
     } else {
         pixelMap = std::make_unique<PixelMap>();
     }

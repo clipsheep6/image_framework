@@ -29,6 +29,8 @@
 #endif
 #include "hitrace_meter.h"
 #include "pixel_map.h"
+#include "image_format_convert.h"
+#include "pixel_map_from_surface.h"
 #include <securec.h>
 
 #undef LOG_DOMAIN
@@ -37,6 +39,11 @@
 #undef LOG_TAG
 #define LOG_TAG "PixelMapNapi"
 
+using OHOS::HiviewDFX::HiLog;
+namespace {
+    static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE_FORAMT_CONVERT_NAPI,
+        "PixelMapNapi" };
+}
 namespace {
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;

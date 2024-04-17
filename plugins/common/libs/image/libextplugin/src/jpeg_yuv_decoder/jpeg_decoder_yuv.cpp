@@ -245,7 +245,7 @@ void JpegDecoderYuv::InitYuvDataOutInfoTo420(uint32_t width, uint32_t height, Pl
     info.u_stride = info.uv_width;
     info.v_stride = info.uv_width;
     info.yOffset = 0;
-    if (fmt == OutFmt_YU12) {
+    if (fmt == JpegYuvFmt::OutFmt_YU12) {
         info.uOffset = info.y_height * info.y_stride;
         info.vOffset = info.uOffset + info.uv_height * info.u_stride;
     } else {

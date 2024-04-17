@@ -47,7 +47,7 @@ ohos_shared_library("pixelmap_ndk") {
   part_name = "image_framework"
 }
 
-ohos_shared_library("pixelmap") {
+ohos_shared_library("ohpixelmap") {
   output_extension = "so"
   sanitize = {
     cfi = true
@@ -72,6 +72,10 @@ ohos_shared_library("pixelmap") {
     "$SUBSYSTEM_DIR/frameworks/innerkitsimpl/egl_image:egl_image",
     "$SUBSYSTEM_DIR/interfaces/innerkits:image_native",
   ]
+
+    external_deps = [
+      "graphic_2d:libgl"
+    ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"

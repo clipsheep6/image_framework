@@ -20,9 +20,9 @@
 #include <cstring>
 #include "securec.h"
 #include <map>
-// #ifdef LIBYUV
-// #include "libyuv/convert.h"
-#endif
+#include "log_tags.h"
+#include "image_log.h"
+#include "hilog/log.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,7 +112,7 @@ static void NV12ToRGB565Manual(const uint8_t *srcBuffer, const Size &imageSize, 
     if (!swsContext) {
         IMAGE_LOGD("Error to create SwsContext.");
         sws_freeContext(swsContext);
-        return false;
+        return;
     }
 
     int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
@@ -478,8 +478,7 @@ bool NV12ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
-    const uint8_t *srcY = srcBuffer;
-    const uint8_t *srcUV = srcBuffer + imageSize.width * imageSize.height ;
+
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height * NUM_2);
     if (destBufferSize <= NUM_0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
@@ -491,6 +490,8 @@ bool NV12ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         return false;
     }
 #ifdef DCAMERA_MMAP_RESERVE
+    const uint8_t *srcY = srcBuffer;
+    const uint8_t *srcUV = srcBuffer + imageSize.width * imageSize.height ;
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
     int dstStrideRGB565 = imageSize.width * NUM_2;
     int widthEven = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1) / NUM_2 * NUM_2;
@@ -1202,8 +1203,7 @@ bool NV12ToRGB(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
-    const uint8_t *srcY = srcBuffer;
-    const uint8_t *srcUV = srcBuffer + imageSize.width * imageSize.height;
+
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height * NUM_3);
     if (destBufferSize <= NUM_0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
@@ -1215,12 +1215,14 @@ bool NV12ToRGB(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
         return false;
     }
 #ifdef DCAMERA_MMAP_RESERVE
+    const uint8_t *srcY = srcBuffer;
+    const uint8_t *srcUV = srcBuffer + imageSize.width * imageSize.height;
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
     auto &convertHandle = ConverterHandle.GetInstance();
     if (&converterHandle) {
         const ImageConverter &converter_ = convertHandle->GetHandle();
         if (&converter_) {
-            converter_.NV12ToRGB24Matrix(srcBuffer, imageSize.width, srcUV + NUM_1, (imageSize.width + NUM_1) /
+            converter_.NV12ToRGB24Matrix(srcY, imageSize.width, srcUV + NUM_1, (imageSize.width + NUM_1) /
                 NUM_2 * NUM_2, *destBuffer, imageSize.width * NUM_3, yuvConstants, imageSize.width, imageSize.height);
         }
     }
@@ -1255,8 +1257,6 @@ bool NV21ToRGB(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
         return false;
     }
-    const uint8_t *srcY = srcBuffer;
-    const uint8_t *srcUV = srcBuffer + imageSize.width * imageSize.height;
 
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height * NUM_3);
     if (destBufferSize <= NUM_0) {

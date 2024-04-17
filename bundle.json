@@ -118,8 +118,7 @@
                 "image_packer_napi.h",
                 "image_source_napi.h",
                 "native_module_ohos_image.h",
-                "pixel_map_napi.h",
-                "image_format_convert_napi.h"
+                "pixel_map_napi.h"
               ],
               "header_base": "//foundation/multimedia/image_framework/interfaces/kits/js/common/include"
             },
@@ -133,7 +132,7 @@
                 "pixelmap_native.h"
               ]
             },
-            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixelmap_ndk:pixelmap"
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixelmap_ndk:ohpixelmap"
           },
           {
             "header": {
@@ -211,15 +210,6 @@
             "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_packer"
           },
           {
-            "header": {
-              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/",
-              "header_files": [
-                "image_format_convert_mdk.h"
-              ]
-            },
-            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:image_format_convert_ndk"          
-          },
-          {
             "header":{
               "header_files":[
                 "pixel_map_from_surface.h"
@@ -247,6 +237,15 @@
               ]
             },
             "name": "//foundation/multimedia/image_framework/frameworks/kits/native/common/ndk:image_receiver"
+          },
+          {
+            "header": {
+              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/image",
+              "header_files": [
+                "image_source_native.h"
+              ]
+            },
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk:ohimagesource"
           }
         ],
         "test": [

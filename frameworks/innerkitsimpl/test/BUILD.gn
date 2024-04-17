@@ -1089,7 +1089,7 @@ ohos_unittest("ndktest2") {
     "$image_subsystem/frameworks/kits/js/common/ndk:image_ndk",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_packer",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_source",
-    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
+    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:ohpixelmap",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]

@@ -135,7 +135,7 @@ ohos_shared_library("image_source") {
   ]
 
   deps = [
-    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
+    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:ohpixelmap",
     "$image_subsystem/interfaces/innerkits:image_native",
     "$image_subsystem/interfaces/kits/js/common:image",
   ]
@@ -174,7 +174,7 @@ ohos_shared_library("image_packer") {
 
   deps = [
     "$image_subsystem/frameworks/kits/js/common/ndk:image_source",
-    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
+    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:ohpixelmap",
     "$image_subsystem/interfaces/innerkits:image_native",
     "$image_subsystem/interfaces/kits/js/common:image",
   ]
@@ -189,17 +189,25 @@ ohos_shared_library("image_packer") {
   part_name = "image_framework"
 }
 
-ohos_shared_library("image_format_convert_ndk") {
+ohos_shared_library("ohimagesource") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
     debug = false
   }
 
-  sources = [ "image_format_convert_mdk.cpp" ]
+  sources = [ "image_source_native.cpp",
+              "image_source_native_impl.cpp",
+              ]
+
   public_configs = [ ":native_public_config" ]
-  deps = [ "$image_subsystem/interfaces/kits/js/common:image",
-           "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap_ndk2" ]
+
+  deps = ["$image_subsystem/interfaces/kits/js/common:image",
+          "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:ohpixelmap",
+          "$image_subsystem/interfaces/innerkits:image_native",
+          ]
+          
+  external_deps = ["c_utils:utils"]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
