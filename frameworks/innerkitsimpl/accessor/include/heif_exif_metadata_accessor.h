@@ -34,7 +34,7 @@ public:
     virtual uint32_t WriteBlob(DataBuf &blob) override;
 
 private:
-    bool CheckTiffPos(const byte* buff, size_t size, size_t &byteOrderPos);
+    bool CheckTiffPos(byte* buff, size_t size, size_t &byteOrderPos);
     bool GetExifItemData(std::shared_ptr<ImagePlugin::HeifParser> &parser, DataBuf &dataBuf);
     uint32_t WriteMetadata(DataBuf &dataBuf);
 };

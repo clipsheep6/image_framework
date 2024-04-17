@@ -54,7 +54,7 @@ uint32_t HeifExifMetadataAccessor::Read()
     }
 
     size_t byteOrderPos;
-    if (!CheckTiffPos(dataBuf.CData(), dataBuf.Size(), byteOrderPos)) {
+    if (!CheckTiffPos(const_cast<byte *>(dataBuf.CData()), dataBuf.Size(), byteOrderPos)) {
         IMAGE_LOGE("Failed to parse Exif metadata: cannot find tiff byte order");
         return ERR_IMAGE_SOURCE_DATA;
     }
@@ -99,7 +99,7 @@ uint32_t HeifExifMetadataAccessor::Write()
 
     size_t byteOrderPos;
     DataBuf dataBuf(dataBlob, size);
-    if (!CheckTiffPos(dataBuf.CData(), dataBuf.Size(), byteOrderPos)) {
+    if (!CheckTiffPos(const_cast<byte *>(dataBuf.CData()), dataBuf.Size(), byteOrderPos)) {
         return ERR_MEDIA_WRITE_PARCEL_FAIL;
     }
 
@@ -154,14 +154,15 @@ uint32_t HeifExifMetadataAccessor::WriteMetadata(DataBuf &dataBuf)
 
 uint32_t HeifExifMetadataAccessor::WriteBlob(DataBuf &blob)
 {
-    return 0;
+    return SUCCESS;
 }
 
-bool HeifExifMetadataAccessor::CheckTiffPos(const byte *buff, size_t size, size_t &byteOrderPos)
+bool HeifExifMetadataAccessor::CheckTiffPos(byte *buff, size_t size, size_t &byteOrderPos)
 {
     if (buff == nullptr) {
         return false;
     }
+
     // find the byte order "II 0x2a00" "MM 0x002a"
     byteOrderPos = TiffParser::FindTiffPos(buff, size);
     if (byteOrderPos == std::numeric_limits<size_t>::max()) {

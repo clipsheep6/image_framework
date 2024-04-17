@@ -166,6 +166,7 @@ heif_error HeifIlocBox::UpdateData(heif_item_id itemID, const std::vector<uint8_
 
     // clean any old extends
     items_[idx].extents.clear();
+
     // push  the new extend in
     items_[idx].extents.push_back(std::move(extent));
     return heif_error_ok;

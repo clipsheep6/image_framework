@@ -26,7 +26,6 @@
 #include "astc_codec.h"
 #endif
 
-#include "data_buf.h"
 #include "ext_pixel_convert.h"
 #include "ext_wstream.h"
 #include "metadata_accessor_factory.h"
