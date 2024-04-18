@@ -123,16 +123,16 @@ if (use_clang_ios) {
       deps += [ "//third_party/ffmpeg:libohosffmpeg" ]
     } else {
       defines = [ "DUAL_ADAPTER" ]
-      include_dirs += [ "//third_party/ffmpeg" ]
+
       deps = [
         "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
       ]
-      deps += [ "//third_party/ffmpeg:libohosffmpeg" ]
 
       sources += [ "src/image_dfx.cpp" ]
       sources += [ "src/image_data_statistics.cpp" ]
       external_deps += [
         "c_utils:utils",
+        "ffmpeg:libohosffmpeg",
         "graphic_2d:color_manager",
         "graphic_surface:surface",
         "hilog:libhilog",
@@ -233,20 +233,19 @@ ohos_static_library("image_utils_static") {
     sources += [ "src/image_data_statistics.cpp" ]
     deps += [ "//third_party/ffmpeg:libohosffmpeg" ]
   } else {
-    include_dirs += [ "//third_party/ffmpeg" ]
     sources += [ "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp" ]
     sources += [ "src/image_dfx.cpp" ]
     sources += [ "src/image_data_statistics.cpp" ]
     deps = [
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
-    deps += [ "//third_party/ffmpeg:libohosffmpeg" ]
 
     external_deps = [
       "c_utils:utils",
       "drivers_interface_display:display_commontype_idl_headers",
       "graphic_2d:color_manager",
       "graphic_surface:surface",
+      "ffmpeg:libohosffmpeg",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "hitrace:hitrace_meter",
