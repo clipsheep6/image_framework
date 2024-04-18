@@ -244,7 +244,7 @@ public:
     {
         return grColorSpace_;
     }
-    NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
+    NATIVEEXPORT virtual uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
     // -------[inner api for ImageSource/ImagePacker codec] it will get a colorspace object pointer----end-------
 #endif
 
@@ -293,6 +293,27 @@ public:
     static int32_t GetRGBxByteCount(const ImageInfo& info);
     static int32_t GetYUVByteCount(const ImageInfo& info);
     static int32_t GetAllocatedByteCount(const ImageInfo& info);
+
+protected:
+    void SetEditable(bool editable)
+    {
+        editable_ = editable;
+    }
+    bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
+    uint8_t *data_ = nullptr;
+    // this info SHOULD be the final info for decoded pixelmap, not the original image info
+    ImageInfo imageInfo_;
+    int32_t rowDataSize_ = 0;
+    bool editable_ = false;
+    AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;
+    void *context_ = nullptr;
+    uint32_t pixelsSize_ = 0;
+    CustomFreePixelMap custFreePixelMap_ = nullptr;
+#ifdef IMAGE_COLORSPACE_FLAG
+    std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
+#else
+    std::shared_ptr<uint8_t> grColorSpace_ = nullptr;
+#endif
 
 private:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
@@ -346,10 +367,6 @@ private:
     bool WriteAstcRealSizeToParcel(Parcel &parcel) const;
     bool ReadAstcRealSize(Parcel &parcel, PixelMap *pixelMap);
     uint32_t SetRowDataSizeForImageInfo(ImageInfo info);
-    void SetEditable(bool editable)
-    {
-        editable_ = editable;
-    }
 
     void ResetPixelMap()
     {
@@ -375,7 +392,7 @@ private:
     static uint8_t *ReadAshmemDataFromParcel(Parcel &parcel, int32_t bufferSize);
     static int ReadFileDescriptor(Parcel &parcel);
     static bool WriteFileDescriptor(Parcel &parcel, int fd);
-    bool ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo);
+    static bool ReadImageInfo(Parcel &parcel, ImageInfo &imgInfo);
     bool WriteImageInfo(Parcel &parcel) const;
     void WriteUint8(std::vector<uint8_t> &buff, uint8_t value) const;
     static uint8_t ReadUint8(std::vector<uint8_t> &buff, int32_t &cursor);
@@ -386,24 +403,14 @@ private:
         const int32_t &height, const int32_t &rowDataSize, const int32_t &rowStride) const;
     static uint8_t *ReadData(std::vector<uint8_t> &buff, int32_t size, int32_t &cursor);
     static void ReadTlvAttr(std::vector<uint8_t> &buff, ImageInfo &info, int32_t &type, int32_t &size, uint8_t **data);
-    bool DoTranslation(TransInfos &infos, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     void UpdateImageInfo();
 
     static int32_t ConvertPixelAlpha(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
         void *dstPixels, const ImageInfo &dstInfo);
-    uint8_t *data_ = nullptr;
-    // this info SHOULD be the final info for decoded pixelmap, not the original image info
-    ImageInfo imageInfo_;
-    int32_t rowDataSize_ = 0;
     int32_t rowStride_ = 0;
     int32_t pixelBytes_ = 0;
     TransColorProc colorProc_ = nullptr;
-    void *context_ = nullptr;
-    CustomFreePixelMap custFreePixelMap_ = nullptr;
     CustomFreePixelMap freePixelMapProc_ = nullptr;
-    AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;
-    uint32_t pixelsSize_ = 0;
-    bool editable_ = false;
     bool useSourceAsResponse_ = false;
     bool isTransformered_ = false;
     std::shared_ptr<std::mutex> transformMutex_ = std::make_shared<std::mutex>();
@@ -413,12 +420,6 @@ private:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
-
-#ifdef IMAGE_COLORSPACE_FLAG
-    std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
-#else
-    std::shared_ptr<uint8_t> grColorSpace_ = nullptr;
-#endif
 
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     std::shared_ptr<PurgeableMem::PurgeableMemBase> purgeableMemPtr_ = nullptr;

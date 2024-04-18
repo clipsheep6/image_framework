@@ -36,6 +36,7 @@
 #include "pubdef.h"
 #include "exif_metadata.h"
 #include "image_mdk_common.h"
+#include "pixel_yuv.h"
 
 #ifndef _WIN32
 #include "securec.h"
@@ -2050,11 +2051,6 @@ bool PixelMap::ReadAstcRealSize(Parcel &parcel, PixelMap *pixelMap)
 bool PixelMap::ReadPropertiesFromParcel(Parcel &parcel, ImageInfo &imgInfo,
     AllocatorType &allocatorType, int32_t &bufferSize, PIXEL_MAP_ERR &error)
 {
-    if (!ReadImageInfo(parcel, imgInfo)) {
-        IMAGE_LOGE("read imageInfo fail");
-        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "read imageInfo fail");
-        return false;
-    }
     bool isEditable = parcel.ReadBool();
     SetEditable(isEditable);
     bool isAstc = parcel.ReadBool();
@@ -2169,13 +2165,22 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel)
 
 PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
 {
-    PixelMap *pixelMap = new PixelMap();
+    PixelMap *pixelMap = nullptr;
+    ImageInfo imgInfo;
+    if (!ReadImageInfo(parcel, imgInfo)) {
+        IMAGE_LOGE("read imageInfo fail");
+        PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "read imageInfo fail");
+        return nullptr;
+    }
+    if (imgInfo.pixelFormat == PixelFormat::NV21 || imgInfo.pixelFormat == PixelFormat::NV12) {
+        pixelMap = new PixelYuv();
+    } else {
+        pixelMap = new PixelMap();
+    }
     if (pixelMap == nullptr) {
         PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "pixelmap create failed");
         return nullptr;
     }
-
-    ImageInfo imgInfo;
     PixelMemInfo pixelMemInfo;
     if (!pixelMap->ReadPropertiesFromParcel(parcel, imgInfo, pixelMemInfo.allocatorType,
         pixelMemInfo.bufferSize, error)) {
