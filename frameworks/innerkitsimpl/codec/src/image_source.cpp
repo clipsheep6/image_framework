@@ -3095,7 +3095,7 @@ DecodeContext DoImageAiProcess(sptr<SurfaceBuffer> &input, AiParamIn &aiParamIn,
                 return hdrCtx;
             }
         } else {
-            errorCode = AiHdrProcess(inputHdr, aiCtx, aiParamIn, aiParamOut);
+            errorCode = AiHdrProcess(inputHdr, hdrCtx, aiParamIn, aiParamOut);
             if (errorCode != SUCCESS) {
                 IMAGE_LOGE("[ImageSource] AiHdrProcess fail %{public}u", errorCode);
                 return {};
@@ -3142,7 +3142,7 @@ DecodeContext DoImageAiProcessDl(sptr<SurfaceBuffer> &input, AiParamIn &aiParamI
                 return hdrCtx;
             }
         } else {
-            errorCode = AiHdrProcessDl(inputHdr, aiCtx, aiParamIn, aiParamOut);
+            errorCode = AiHdrProcessDl(inputHdr, hdrCtx, aiParamIn, aiParamOut);
             if (errorCode != SUCCESS) {
                 IMAGE_LOGE("[ImageSource] AiHdrProcessDl fail %{public}u", errorCode);
                 return {};
