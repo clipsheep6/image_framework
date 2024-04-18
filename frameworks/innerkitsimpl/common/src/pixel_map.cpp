@@ -344,14 +344,16 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
     if (info.flag_) {
         format = ((opts.srcPixelFormat == PixelFormat::UNKNOWN) ? PixelFormat::BGRA_8888 : opts.srcPixelFormat);
     }
-    ImageInfo srcImageInfo =
+    PIXELS_CONVERT_INFO srcPixelsInfo;
+    PIXELS_CONVERT_INFO dstPixelsInfo;
+    srcPixelsInfo.imageInfo =
         MakeImageInfo(info.width_, opts.size.height, format, AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL);
     PixelFormat dstPixelFormat = (opts.pixelFormat == PixelFormat::UNKNOWN ? PixelFormat::RGBA_8888 : opts.pixelFormat);
     AlphaType dstAlphaType =
         (opts.alphaType == AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN) ? AlphaType::IMAGE_ALPHA_TYPE_PREMUL : opts.alphaType;
     dstAlphaType = ImageUtils::GetValidAlphaTypeByFormat(dstAlphaType, dstPixelFormat);
-    ImageInfo dstImageInfo = MakeImageInfo(opts.size.width, opts.size.height, dstPixelFormat, dstAlphaType);
-    if (!CheckPixelmap(dstPixelMap, dstImageInfo)) {
+    dstPixelsInfo.imageInfo = MakeImageInfo(opts.size.width, opts.size.height, dstPixelFormat, dstAlphaType);
+    if (!CheckPixelmap(dstPixelMap, dstPixelsInfo.imageInfo)) {
         IMAGE_LOGE("[PixelMap]Create: check pixelmap failed!");
         errorCode = IMAGE_RESULT_DATA_ABNORMAL;
         return nullptr;
@@ -365,9 +367,12 @@ unique_ptr<PixelMap> PixelMap::Create(const uint32_t *colors, uint32_t colorLeng
         errorCode = IMAGE_RESULT_ERR_SHAMEM_NOT_EXIST;
         return nullptr;
     }
-    int32_t dstLength = PixelConvert::PixelsConvert(reinterpret_cast<const void *>(colors + offset),
-                                                    colorLength, srcImageInfo, dstPixels, dstImageInfo);
-    if (dstLength < 0) {
+    
+    srcPixelsInfo.pixels = (void *)(colors + offset);
+    srcPixelsInfo.length = colorLength;
+    dstPixelsInfo.pixels = dstPixels;
+    int32_t result = PixelConvert::PixelsConvert(srcPixelsInfo, dstPixelsInfo);
+    if (result != 0) {
         IMAGE_LOGE("[PixelMap]Create: pixel convert failed.");
         ReleaseBuffer(AllocatorType::SHARE_MEM_ALLOC, fd, bufferSize, &dstPixels);
         dstPixels = nullptr;
@@ -1182,7 +1187,7 @@ ColorSpace PixelMap::GetColorSpace()
     return imageInfo_.colorSpace;
 }
 
-AlphaType PixelMap::GetAlphaType()
+AlphaType PixelMap:: GetAlphaType()
 {
     return imageInfo_.alphaType;
 }
@@ -2602,7 +2607,7 @@ static void ConvertUintPixelAlpha(uint8_t *rpixel,
     }
 }
 
-uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
+uint32_t PixelMap::CheckAlphaFormatInput(PixelMap &wPixelMap, const bool isPremul)
 {
     ImageInfo dstImageInfo;
     wPixelMap.GetImageInfo(dstImageInfo);
@@ -2610,9 +2615,15 @@ uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
     int32_t dstPixelBytes = wPixelMap.GetPixelBytes();
     void* dstData = wPixelMap.GetWritablePixels();
     int32_t stride = wPixelMap.GetRowStride();
+
     if (dstData == nullptr || data_ == nullptr) {
         IMAGE_LOGE("read pixels by dstPixelMap or srcPixelMap data is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
+    }
+    if (!((GetAlphaType() == AlphaType::IMAGE_ALPHA_TYPE_PREMUL && !isPremul) ||
+        (GetAlphaType() == AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL && isPremul))) {
+        IMAGE_LOGE("alpha type error");
+        return COMMON_ERR_INVALID_PARAMETER;
     }
     if (imageInfo_.size.height != dstImageInfo.size.height || imageInfo_.size.width != dstImageInfo.size.width) {
         IMAGE_LOGE("dstPixelMap size mismtach srcPixelMap");
@@ -2642,6 +2653,23 @@ uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
             dstPixelBytes);
         return COMMON_ERR_INVALID_PARAMETER;
     }
+    return SUCCESS;
+}
+
+uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
+{
+    uint32_t res = CheckAlphaFormatInput(wPixelMap, isPremul);
+    if (res != SUCCESS) {
+        return res;
+    }
+
+    ImageInfo dstImageInfo;
+    wPixelMap.GetImageInfo(dstImageInfo);
+    void* dstData = wPixelMap.GetWritablePixels();
+    int32_t stride = wPixelMap.GetRowStride();
+
+    PixelFormat srcPixelFormat = GetPixelFormat();
+    int8_t srcAlphaIndex = GetAlphaIndex(srcPixelFormat);
     int32_t index = 0;
     for (int32_t i = 0; i < imageInfo_.size.height; ++i) {
         for (int32_t j = 0; j < stride; j+=pixelBytes_) {
@@ -2649,6 +2677,11 @@ uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
             ConvertUintPixelAlpha(data_ + index, pixelBytes_, srcAlphaIndex, isPremul,
                 static_cast<uint8_t*>(dstData) + index);
         }
+    }
+    if (isPremul == true){
+        wPixelMap.SetAlphaType(AlphaType::IMAGE_ALPHA_TYPE_PREMUL);
+    } else {
+        wPixelMap.SetAlphaType(AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL);
     }
     return SUCCESS;
 }
