@@ -59,12 +59,15 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
-#ifdef IMAGE_AI_ENABLE
-#include "detail_enhancer_image.h"
-#endif
 #ifdef SUT_DECODE_ENABLE
 #include "astc_superDecompress.h"
 #endif
+
+#ifdef IMAGE_AI_ENABLE
+#include "detail_enhancer_image.h"
+#include "colorspace_converter.h"
+#endif
+
 #include "vpe_utils.h"
 #include "v1_0/buffer_handle_meta_key_type.h"
 #include "v1_0/cm_color_space.h"
@@ -262,6 +265,26 @@ const static int32_t ZERO = 0;
 static constexpr uint32_t TRANSFUNC_OFFSET = 8;
 static constexpr uint32_t MATRIX_OFFSET = 16;
 static constexpr uint32_t RANGE_OFFSET = 21;
+
+struct AiParamIn {
+    uint32_t byteCount;
+    Size dstSize;
+    bool needAisr = false;
+    bool needHdr = false;
+    ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
+    PlColorSpace colorSpace = PlColorSpace::UNKNOWN;
+    uint64_t stride = 0x8;
+    int32_t pixelFormat = GRAPHIC_PIXEL_FMT_RGBA_8888;
+};
+struct AiParamOut {
+    bool isAisr = false;
+    bool isHdr = false;
+    PlPixelFormat pixelFormat = PlPixelFormat::RGBA_8888;
+    PlColorSpace colorSpace = PlColorSpace::UNKNOWN;
+};
+using AiParamIn = struct AiParamIn;
+using AiParamOut = struct AiParamOut;
+
 static uint32_t ImageAiProcess(Size imageSize, ImagePlugin::DecodeContext &context, bool &isAisr, bool &isHdr);
 static void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageInfo &plInfo);
 
@@ -663,26 +686,6 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
-void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageInfo &plInfo)
-{
-    if (isHdr) {
-        plInfo.colorSpace = context.colorSpace;
-        plInfo.pixelFormat = context.pixelFormat;
-    }
-    if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
-        // hardware decode success, update plInfo.size
-        IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
-            "(%{public}u, %{public}u)", plInfo.size.width, plInfo.size.height, context.outInfo.size.width,
-            context.outInfo.size.height);
-        plInfo.size = context.outInfo.size;
-    }
-    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
-        context.yuvInfo.imageSize.width != 0) {
-        plInfo.yuvDataInfo = context.yuvInfo;
-        plInfo.size = context.yuvInfo.imageSize;
-    }
-}
-
 unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
 {
     ImageEvent imageEvent;
@@ -713,7 +716,8 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
 
     bool isHdr = false;
-    auto res = ImageAiProcess(info.size, context, isHdr);
+    bool isAisr = false;
+    auto res = ImageAiProcess(info.size, context, isAisr, isHdr);
     if (res != SUCCESS) {
         IMAGE_LOGE("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
     }
@@ -722,7 +726,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
 
     PixelMapAddrInfos addrInfos;
     ContextToAddrInfos(context, addrInfos);
-    auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, isHdr, errorCode);
+    auto pixelMap = CreatePixelMapByInfos(plInfo, addrInfos, isAisr, isHdr, errorCode);
     if (pixelMap == nullptr) {
         return nullptr;
     }
@@ -2755,27 +2759,34 @@ uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, 
     return SUCCESS;
 }
 
-static void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageInfo &plInfo)
+static void CopyContext(DecodeContext &src, DecodeContext &dst)
 {
-    if (isHdr) {
-        plInfo.colorSpace = context.colorSpace;
-        plInfo.pixelFormat = context.pixelFormat;
-    }
-
-    if (plInfo.size.width != context.outInfo.size.width || plInfo.size.height != context.outInfo.size.height) {
-        // hardware decode success, update plInfo.size
-        IMAGE_LOGI("hardware decode success, soft decode dstInfo:(%{public}u, %{public}u), use hardware dstInfo:"
-            "(%{public}u, %{public}u)", plInfo.size.width, plInfo.size.height, context.outInfo.size.width,
-            context.outInfo.size.height);
-        plInfo.size = context.outInfo.size;
-    }
-    if ((plInfo.pixelFormat == PlPixelFormat::NV12 || plInfo.pixelFormat == PlPixelFormat::NV21) &&
-        context.yuvInfo.imageSize.width != 0) {
-        plInfo.yuvDataInfo = context.yuvInfo;
-        plInfo.size = context.yuvInfo.imageSize;
-    }
+    dst.pixelsBuffer.buffer = src.pixelsBuffer.buffer ;
+    dst.pixelsBuffer.bufferSize = src.pixelsBuffer.bufferSize;
+    dst.pixelsBuffer.context = src.pixelsBuffer.context;
+    dst.allocatorType = src.allocatorType;
+    dst.freeFunc = src.freeFunc;
+    dst.outInfo.size.width = src.outInfo.size.width;
+    dst.outInfo.size.height = src.outInfo.size.height;
 }
 
+constexpr CM_ColorSpaceInfo INPUT_COLORSPACE_INFO = {
+        COLORPRIMARIES_P3_D65, TRANSFUNC_SRGB, MATRIX_BT601_N, RANGE_LIMITED
+};
+
+constexpr CM_ColorSpaceInfo OUTPUT_COLORSPACE_INFO = {
+    COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
+};
+
+void VpeUtils::ConvertColorSpaceInfoToType(CM_ColorSpaceInfo &colorSpaceInfo, CM_ColorSpaceType& colorSpaceType)
+{
+    uint32_t primaries = static_cast<uint32_t>(colorSpaceInfo.primaries);
+    uint32_t transfunc = static_cast<uint32_t>(colorSpaceInfo.transfunc);
+    uint32_t matrix = static_cast<uint32_t>(colorSpaceInfo.matrix);
+    uint32_t range = static_cast<uint32_t>(colorSpaceInfo.range);
+    colorSpaceType = static_cast<CM_ColorSpaceType>(primaries | (transfunc << TRANSFUNC_OFFSET) |
+        (matrix << MATRIX_OFFSET) | (range << RANGE_OFFSET));
+}
 
 void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType, CM_ColorSpaceInfo &colorSpaceInfo)
 {
@@ -2789,12 +2800,13 @@ void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType, CM_Col
 
 static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
 {
-    IMAGE_LOGE("[ImageSource]ConvertColorSpaceType colorSpace=%{public}u", colorSpace);
+    ConvertColorSpaceInfoToType(INPUT_COLORSPACE_INFO, defaultColorspaceType);
+    IMAGE_LOGD("[ImageSource]ConvertColorSpaceType colorSpace=%{public}u", colorSpace);
     switch (colorSpace) {
         case PlColorSpace::DISPLAY_P3:
-            return CM_ColorSpaceType::CM_P3_LIMIT;
+            return defaultColorspaceType;
         default:
-            return CM_ColorSpaceType::CM_P3_LIMIT; // CM_SRGB_LIMIT;
+            return defaultColorspaceType;
     }
 }
 
@@ -2894,7 +2906,7 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx, AiParam
 
     SetMeatadata(output, OUTPUT_COLORSPACE_INFO);
     SetMeatadata(output, CM_IMAGE_HDR_VIVID_SINGLE);
-    SetMeatadata(input, INPUT_COLORSPACE_INFO);
+    SetMeatadata(input, colorSpaceInfo);
     SetMeatadata(input, CM_METADATA_NONE);
     int32_t res = ColorSpaceConverterImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
@@ -2919,7 +2931,7 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx, AiPar
 
     SetMeatadata(output, OUTPUT_COLORSPACE_INFO);
     SetMeatadata(output, CM_IMAGE_HDR_VIVID_SINGLE);
-    SetMeatadata(input, INPUT_COLORSPACE_INFO);
+    SetMeatadata(input, colorSpaceInfo);
     SetMeatadata(input, CM_METADATA_NONE);
 
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
@@ -2977,7 +2989,7 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &srCtx, AiParamIn
     srCtx.pixelsBuffer.bufferSize = output->GetSize();
     srCtx.outInfo.size.width = output->GetSurfaceBufferWidth();
     srCtx.outInfo.size.height = output->GetSurfaceBufferHeight();
-    IMAGE_LOGE("[ImageSource]AiSrProcess DetailEnhancerImage %{public}d %{public}d %{public}d", srCtx.outInfo.size.width,
+    IMAGE_LOGD("[ImageSource]AiSrProcess DetailEnhancerImage %{public}d %{public}d %{public}d", srCtx.outInfo.size.width,
             srCtx.outInfo.size.height, srCtx.pixelsBuffer.bufferSize);
     return ret;
 }
@@ -2993,6 +3005,11 @@ uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &srCtx, AiParamIn
         IMAGE_LOGE("[ImageSource]AiSrProcess DetailEnhancerImage Processed failed");
         FreeContextBuffer(srCtx.freeFunc, srCtx.allocatorType, srCtx.pixelsBuffer);
     }
+    srCtx.pixelsBuffer.bufferSize = output->GetSize();
+    srCtx.outInfo.size.width = output->GetSurfaceBufferWidth();
+    srCtx.outInfo.size.height = output->GetSurfaceBufferHeight();
+    IMAGE_LOGD("[ImageSource]AiSrProcess DetailEnhancerImage %{public}d %{public}d %{public}d", srCtx.outInfo.size.width,
+            srCtx.outInfo.size.height, srCtx.pixelsBuffer.bufferSize);
     return res;
 }
 
@@ -3016,9 +3033,6 @@ static bool CheckDecodeOptions(Size imageSize, DecodeOptions opts, bool isHdrIma
     bool capSr = false;
     bool capHdr = false;
     auto bRet = CheckCapacityAi(capSr, capHdr);
-    bRet = 1;
-    capSr = 1;
-    capHdr = 1;
     if (!bRet) {
         IMAGE_LOGE("[ImageSource] CheckDecodeOptions return SUCCESS");
         return SUCCESS;
