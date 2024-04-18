@@ -77,6 +77,7 @@ struct DecodeContext {
     bool isHardDecode = false;
     // Out: hard decode error message
     std::string hardDecodeError;
+    uint32_t rowStride;
 };
 
 struct ProgDecodeContext {

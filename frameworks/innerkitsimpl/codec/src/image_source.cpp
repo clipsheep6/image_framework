@@ -834,7 +834,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
         pixelMap->rotate(opts_.rotateNewDegrees);
     }
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
-    if (opts_.desiredSize.height != pixelMap->GetHeight() || opts_.desiredSize.width != pixelMap->GetWidth() &&
+    if ((opts_.desiredSize.height != pixelMap->GetHeight() || opts_.desiredSize.width != pixelMap->GetWidth()) &&
             !isAisr && !isHdr) {
         float xScale = static_cast<float>(opts_.desiredSize.width) / pixelMap->GetWidth();
         float yScale = static_cast<float>(opts_.desiredSize.height) / pixelMap->GetHeight();
@@ -2778,7 +2778,7 @@ constexpr CM_ColorSpaceInfo OUTPUT_COLORSPACE_INFO = {
     COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
 };
 
-void VpeUtils::ConvertColorSpaceInfoToType(CM_ColorSpaceInfo &colorSpaceInfo, CM_ColorSpaceType& colorSpaceType)
+void ConvertColorSpaceInfoToType(CM_ColorSpaceInfo &colorSpaceInfo, CM_ColorSpaceType& colorSpaceType)
 {
     uint32_t primaries = static_cast<uint32_t>(colorSpaceInfo.primaries);
     uint32_t transfunc = static_cast<uint32_t>(colorSpaceInfo.transfunc);
@@ -2800,6 +2800,7 @@ void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType, CM_Col
 
 static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
 {
+    CM_ColorSpaceType defaultColorspaceType;
     ConvertColorSpaceInfoToType(INPUT_COLORSPACE_INFO, defaultColorspaceType);
     IMAGE_LOGD("[ImageSource]ConvertColorSpaceType colorSpace=%{public}u", colorSpace);
     switch (colorSpace) {
@@ -2870,6 +2871,40 @@ static SurfaceBuffer* CopyContextIntoSurfaceBuffer(Size dstSize, DecodeContext &
     dstCtx.allocatorType = AllocatorType::DMA_ALLOC;
     dstCtx.freeFunc = nullptr;
 
+    return sb;
+}
+
+static SurfaceBuffer* AllocBufferForContext( AiParamIn &aiParamIn, DecodeContext &context)
+{
+    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
+    IMAGE_LOGD("[ImageSource]AllocBufferForContext requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
+               sizeInfo.width, sizeInfo.height);
+    BufferRequestConfig requestConfig = {
+        .width = aiParamIn.dstSize.width,
+        .height = aiParamIn.dstSize.height,
+        .strideAlignment = aiParamIn.stride, // set 0x8 as default value to alloc SurfaceBufferImpl
+        .format = aiParamIn.pixelFormat,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
+        .timeout = 0,
+        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
+        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
+    };
+    GSError ret = sb->Alloc(requestConfig);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
+        return {};
+    }
+    void* nativeBuffer = sb.GetRefPtr();
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("NativeBufferReference failed");
+        return {};
+    }
+    context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
+    context.pixelsBuffer.bufferSize = count;
+    context.pixelsBuffer.context = nativeBuffer;
+    context.allocatorType = AllocatorType::DMA_ALLOC;
+    context.freeFunc = nullptr;
     return sb;
 }
 

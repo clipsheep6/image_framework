@@ -708,6 +708,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         rowStride = sbBuffer->GetStride();
     }
 #endif
+    context.rowStride = rowStride;
     ReportImageType(skEncodeFormat);
     IMAGE_LOGD("decode format %{public}d", skEncodeFormat);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
