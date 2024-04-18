@@ -19,9 +19,10 @@
 #include <charconv>
 #include <chrono>
 #include <cstring>
+#include <dlfcn.h>
 #include <filesystem>
 #include <vector>
-#include <dlfcn.h>
+
 #include "buffer_source_stream.h"
 #if !defined(_WIN32) && !defined(_APPLE)
 #include "hitrace_meter.h"
@@ -164,7 +165,88 @@ constexpr uint8_t BYTE_POS_0 = 0;
 constexpr uint8_t BYTE_POS_1 = 1;
 constexpr uint8_t BYTE_POS_2 = 2;
 constexpr uint8_t BYTE_POS_3 = 3;
+static const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress.z.so";
+
+using GetSuperCompressAstcSize = size_t (*)(const uint8_t *, size_t);
+using SuperDecompressTexture = bool (*)(const uint8_t *, size_t, uint8_t *, size_t &);
+
+class SutDecSoManager {
+public:
+    SutDecSoManager();
+    ~SutDecSoManager();
+    bool LoadSutDecSo();
+    GetSuperCompressAstcSize sutDecSoGetSizeFunc_;
+    SuperDecompressTexture sutDecSoDecFunc_;
+private:
+    bool sutDecSoOpened_;
+    void *textureDecSoHandle_;
+};
+
+static SutDecSoManager g_sutDecSoManager;
+
+SutDecSoManager::SutDecSoManager()
+{
+    sutDecSoOpened_ = false;
+    textureDecSoHandle_ = nullptr;
+    sutDecSoGetSizeFunc_ = nullptr;
+    sutDecSoDecFunc_ = nullptr;
+}
+
+SutDecSoManager::~SutDecSoManager()
+{
+    if (!sutDecSoOpened_ || textureDecSoHandle_ == nullptr) {
+        IMAGE_LOGD("[ImageSource] astcenc dec so is not be opened when dlclose!");
+        return;
+    }
+    if (dlclose(textureDecSoHandle_) != 0) {
+        IMAGE_LOGD("[ImageSource] astcenc dlclose failed: %{public}s!", g_textureSuperDecSo.c_str());
+        return;
+    } else {
+        IMAGE_LOGD("[ImageSource] astcenc dlclose success: %{public}s!", g_textureSuperDecSo.c_str());
+        return;
+    }
+}
+
+static bool CheckClBinIsExist(const std::string &name)
+{
+    return (access(name.c_str(), F_OK) != -1); // -1 means that the file is  not exist
+}
+
+bool SutDecSoManager::LoadSutDecSo()
+{
+    if (!sutDecSoOpened_) {
+        if (!CheckClBinIsExist(g_textureSuperDecSo)) {
+            IMAGE_LOGE("[ImageSource] %{public}s! is not found", g_textureSuperDecSo.c_str());
+            return false;
+        }
+        textureDecSoHandle_ = dlopen(g_textureSuperDecSo.c_str(), 1);
+        if (textureDecSoHandle_ == nullptr) {
+            IMAGE_LOGE("[ImageSource] astc libtextureSuperDecompress dlopen failed!");
+            return false;
+        }
+        sutDecSoGetSizeFunc_ =
+            reinterpret_cast<GetSuperCompressAstcSize>(dlsym(textureDecSoHandle_, "GetSuperCompressAstcSize"));
+        if (sutDecSoGetSizeFunc_ == nullptr) {
+            IMAGE_LOGE("[ImageSource] astc GetSuperCompressAstcSize dlsym failed!");
+            dlclose(textureDecSoHandle_);
+            textureDecSoHandle_ = nullptr;
+            return false;
+        }
+        sutDecSoDecFunc_ =
+            reinterpret_cast<SuperDecompressTexture>(dlsym(textureDecSoHandle_, "SuperDecompressTexture"));
+        if (sutDecSoDecFunc_ == nullptr) {
+            IMAGE_LOGE("[ImageSource] astc SuperDecompressTexture dlsym failed!");
+            dlclose(textureDecSoHandle_);
+            textureDecSoHandle_ = nullptr;
+            return false;
+        }
+        IMAGE_LOGD("[ImageSource] astcenc dlopen success: %{public}s!", g_textureSuperDecSo.c_str());
+        sutDecSoOpened_ = true;
+    }
+    return true;
+}
 #endif
+
 const auto KEY_SIZE = 2;
 const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
 const static std::map<std::string, uint32_t> ORIENTATION_INT_MAP = {
@@ -623,9 +705,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     }
     UpdateDecodeInfoOptions(context, imageEvent);
     imageDataStatistics.AddTitle("imageSize: [%d, %d], desireSize: [%d, %d], imageFormat: %s, desirePixelFormat: %d,"
-        "memorySize: %d, memoryType: %d", context.outInfo.size.width, context.outInfo.size.height, info.size.width,
-        info.size.height, sourceInfo_.encodedFormat.c_str(), context.pixelFormat, context.pixelsBuffer.bufferSize,
-        context.allocatorType);
+        "memorySize: %d, memoryType: %d", info.size.width, info.size.height, opts.desiredSize.width,
+        opts.desiredSize.height, sourceInfo_.encodedFormat.c_str(), opts.desiredPixelFormat,
+        context.pixelsBuffer.bufferSize, context.allocatorType);
     imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
     
     bool isHdr = false;
@@ -770,10 +852,10 @@ void ImageSource::SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts
     options.sourceHeight = info.size.height;
     options.desireSizeWidth = opts.desiredSize.width;
     options.desireSizeHeight = opts.desiredSize.height;
-    options.desireRegionWidth = opts.desiredRegion.width;
-    options.desireRegionHeight = opts.desiredRegion.height;
-    options.desireRegionX = opts.desiredRegion.left;
-    options.desireRegionY = opts.desiredRegion.top;
+    options.desireRegionWidth = opts.CropRect.width;
+    options.desireRegionHeight = opts.CropRect.height;
+    options.desireRegionX = opts.CropRect.left;
+    options.desireRegionY = opts.CropRect.top;
     options.desirePixelFormat = static_cast<int32_t>(opts.desiredPixelFormat);
     options.index = index;
     options.fitDensity = opts.fitDensity;
@@ -795,10 +877,10 @@ void ImageSource::SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts
     options.sourceHeight = plInfo.size.height;
     options.desireSizeWidth = opts.desiredSize.width;
     options.desireSizeHeight = opts.desiredSize.height;
-    options.desireRegionWidth = opts.desiredRegion.width;
-    options.desireRegionHeight = opts.desiredRegion.height;
-    options.desireRegionX = opts.desiredRegion.left;
-    options.desireRegionY = opts.desiredRegion.top;
+    options.desireRegionWidth = opts.CropRect.width;
+    options.desireRegionHeight = opts.CropRect.height;
+    options.desireRegionX = opts.CropRect.left;
+    options.desireRegionY = opts.CropRect.top;
     options.desirePixelFormat = static_cast<int32_t>(opts.desiredPixelFormat);
     options.index = index;
     options.fitDensity = opts.fitDensity;
@@ -1343,7 +1425,7 @@ void ImageSource::RemoveDecodeListener(DecodeListener *listener)
     }
 }
 
-ImageSource::~ImageSource()
+ImageSource::~ImageSource() __attribute__((no_sanitize("cfi")))
 {
     IMAGE_LOGD("ImageSource destructor enter");
     std::lock_guard<std::mutex> guard(listenerMutex_);
@@ -2340,7 +2422,11 @@ static size_t GetAstcSizeBytes(const uint8_t *fileBuf, size_t fileSize)
         IMAGE_LOGI("astc GetAstcSizeBytes input is pure astc!");
         return fileSize;
     }
-    return Rosen::TextureSuperCodecDec::GetSuperCompressAstcSize(fileBuf, fileSize);
+    if (!g_sutDecSoManager.LoadSutDecSo() || g_sutDecSoManager.sutDecSoGetSizeFunc_ == nullptr) {
+        IMAGE_LOGE("[ImageSource] SUT dec so dlopen failed or sutDecSoGetSizeFunc_ is nullptr!");
+        return 0;
+    }
+    return g_sutDecSoManager.sutDecSoGetSizeFunc_(fileBuf, fileSize);
 }
 
 static bool TextureSuperCompressDecode(const uint8_t *inData, size_t inBytes, uint8_t *outData, size_t outBytes)
@@ -2350,7 +2436,11 @@ static bool TextureSuperCompressDecode(const uint8_t *inData, size_t inBytes, ui
         IMAGE_LOGE("astc TextureSuperCompressDecode input check failed!");
         return false;
     }
-    if (!Rosen::TextureSuperCodecDec::SuperDecompressTexture(inData, inBytes, outData, outBytes)) {
+    if (!g_sutDecSoManager.LoadSutDecSo() || g_sutDecSoManager.sutDecSoDecFunc_ == nullptr) {
+        IMAGE_LOGE("[ImageSource] SUT dec so dlopen failed or sutDecSoDecFunc_ is nullptr!");
+        return false;
+    }
+    if (!g_sutDecSoManager.sutDecSoDecFunc_(inData, inBytes, outData, outBytes)) {
         IMAGE_LOGE("astc SuperDecompressTexture process failed!");
         return false;
     }
