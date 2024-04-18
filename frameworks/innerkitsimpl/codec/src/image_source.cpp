@@ -285,7 +285,7 @@ struct AiParamOut {
 using AiParamIn = struct AiParamIn;
 using AiParamOut = struct AiParamOut;
 
-static uint32_t ImageAiProcess(Size imageSize, ImagePlugin::DecodeContext &context, bool &isAisr, bool &isHdr);
+static uint32_t ImageAiProcess(Size imageSize, DecodeOptions opts, ImagePlugin::DecodeContext &context, bool &isAisr, bool &isHdr);
 static void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageInfo &plInfo);
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
@@ -715,9 +715,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
         context.pixelsBuffer.bufferSize, context.allocatorType);
     imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
 
-    bool isHdr = false;
+    bool isHdr = IsHdrImage();
     bool isAisr = false;
-    auto res = ImageAiProcess(info.size, context, isAisr, isHdr);
+    auto res = ImageAiProcess(info.size, opts, context, isAisr, isHdr);
     if (res != SUCCESS) {
         IMAGE_LOGE("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
     }
