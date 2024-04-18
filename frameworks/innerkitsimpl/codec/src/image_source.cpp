@@ -2726,39 +2726,6 @@ bool ImageSource::IsSupportGenAstc()
     return ImageSystemProperties::GetMediaLibraryAstcEnabled();
 }
 
-uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
-    DecodeContext &context, uint32_t &errorCode)
-{
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
-
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize);
-    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
-        return ERR_IMAGE_DATA_UNSUPPORT;
-    }
-
-    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
-    context.info.pixelFormat = plInfo.pixelFormat;
-    errorCode = mainDecoder_->Decode(index, context);
-    if (context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
-    }
-
-    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
-    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
-    guard.unlock();
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        return ERR_IMAGE_DATA_UNSUPPORT;
-    }
-    return SUCCESS;
-}
-
 static void CopyContext(DecodeContext &src, DecodeContext &dst)
 {
     dst.pixelsBuffer.buffer = src.pixelsBuffer.buffer ;
@@ -2778,7 +2745,7 @@ constexpr CM_ColorSpaceInfo OUTPUT_COLORSPACE_INFO = {
     COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
 };
 
-void ConvertColorSpaceInfoToType(CM_ColorSpaceInfo &colorSpaceInfo, CM_ColorSpaceType& colorSpaceType)
+static void ConvertColorSpaceInfoToType(CM_ColorSpaceInfo &colorSpaceInfo, CM_ColorSpaceType& colorSpaceType)
 {
     uint32_t primaries = static_cast<uint32_t>(colorSpaceInfo.primaries);
     uint32_t transfunc = static_cast<uint32_t>(colorSpaceInfo.transfunc);
@@ -2788,7 +2755,7 @@ void ConvertColorSpaceInfoToType(CM_ColorSpaceInfo &colorSpaceInfo, CM_ColorSpac
         (matrix << MATRIX_OFFSET) | (range << RANGE_OFFSET));
 }
 
-void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType, CM_ColorSpaceInfo &colorSpaceInfo)
+static void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType, CM_ColorSpaceInfo &colorSpaceInfo)
 {
     uint32_t colorSpace = static_cast<uint32_t>(colorSpaceType);
     colorSpaceInfo.primaries = static_cast<CM_ColorPrimaries>(colorSpace & CM_ColorSpaceMask::CM_PRIMARIES_MASK);
@@ -2878,7 +2845,7 @@ static SurfaceBuffer* AllocBufferForContext( AiParamIn &aiParamIn, DecodeContext
 {
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
     IMAGE_LOGD("[ImageSource]AllocBufferForContext requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
-               sizeInfo.width, sizeInfo.height);
+               aiParamIn.dstSize.width, aiParamIn.dstSize.height);
     BufferRequestConfig requestConfig = {
         .width = aiParamIn.dstSize.width,
         .height = aiParamIn.dstSize.height,
@@ -3092,6 +3059,7 @@ static bool CheckDecodeOptions(Size imageSize, DecodeOptions opts, bool isHdrIma
     return true;
 }
 
+#ifdef IMAGE_AI_ENABLE
 DecodeContext DoImageAiProcess(sptr<SurfaceBuffer> &input, AiParamIn &aiParamIn, AiParamOut &aiParamOut,
                                uint32_t &errorCode)
 {
@@ -3138,6 +3106,7 @@ DecodeContext DoImageAiProcess(sptr<SurfaceBuffer> &input, AiParamIn &aiParamIn,
     }
     return aiCtx;
 }
+#endif
 
 DecodeContext DoImageAiProcessDl(sptr<SurfaceBuffer> &input, AiParamIn &aiParamIn, AiParamOut &aiParamOut,
                                uint32_t &errorCode)
