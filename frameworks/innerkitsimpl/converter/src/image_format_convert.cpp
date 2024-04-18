@@ -14,14 +14,15 @@
  */
 
 #include "image_format_convert.h"
-#include "pixel_yuv.h"
+
+#include <memory>
+#include <map>
 #include "image_source.h"
 #include "image_log.h"
 #include "hilog/log.h"
-#include "media_errors.h"
 #include "log_tags.h"
-#include <memory>
-#include <map>
+#include "media_errors.h"
+#include "pixel_yuv.h"
 
 namespace {
     constexpr uint8_t NUM_0 = 0;
@@ -52,10 +53,6 @@ static const std::map<std::pair<PixelFormat, PixelFormat>, ConvertFunction> g_cv
     {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV12), RGBToNV12},
     {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV21), RGBAF16ToNV21},
     {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV12), RGBAF16ToNV12},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_565), NV21ToRGB565},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_8888), NV21ToRGBA},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::BGRA_8888), NV21ToBGRA},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_888), NV21ToRGB},
     {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_F16), NV21ToRGBAF16},
     {std::make_pair(PixelFormat::NV21, PixelFormat::NV12), NV21ToNV12},
     {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_565), NV12ToRGB565},
@@ -64,6 +61,13 @@ static const std::map<std::pair<PixelFormat, PixelFormat>, ConvertFunction> g_cv
     {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_888), NV12ToRGB},
     {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_F16), NV12ToRGBAF16},
     {std::make_pair(PixelFormat::NV12, PixelFormat::NV21), NV12ToNV21}
+};
+
+static const std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> g_yuvCvtFuncMap = {
+    {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_888), NV21ToRGB},
+    {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_8888), NV21ToRGBA},
+    {std::make_pair(PixelFormat::NV21, PixelFormat::BGRA_8888), NV21ToBGRA},
+    {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_565), NV21ToRGB565}
 };
 
 uint32_t ImageFormatConvert::ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo)
@@ -98,19 +102,28 @@ uint32_t ImageFormatConvert::ConvertImageFormat(const ConvertDataInfo &srcDataIn
 uint32_t ImageFormatConvert::ConvertImageFormat(std::shared_ptr<PixelMap> &srcPiexlMap, PixelFormat destFormat)
 {
     if (srcPiexlMap == nullptr) {
-        IMAGE_LOGD("source pixel map is null");
+        IMAGE_LOGE("source pixel map is null");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
     if (!IsSupport(destFormat)) {
-        IMAGE_LOGD("destination format not support");
+        IMAGE_LOGE("destination format not support");
         return ERR_MEDIA_FORMAT_UNSUPPORT;
     }
 
     PixelFormat srcFormat = srcPiexlMap->GetPixelFormat();
+    if ((srcFormat == PixelFormat::NV21) || (srcFormat == PixelFormat::NV12)) {
+        uint32_t ret = YUVConvertImageFormatOption(srcPiexlMap, srcFormat, destFormat);
+        if (ret != SUCCESS) {
+            IMAGE_LOGE("convert yuv format failed");
+            return ret;
+        }
+        return SUCCESS;
+    }
+
     ConvertFunction cvtFunc = GetConvertFuncByFormat(srcFormat, destFormat);
     if (cvtFunc == nullptr) {
-        IMAGE_LOGD("get convert function by format failed!");
+        IMAGE_LOGE("get convert function by format failed!");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
@@ -119,7 +132,7 @@ uint32_t ImageFormatConvert::ConvertImageFormat(std::shared_ptr<PixelMap> &srcPi
     uint8_buffer_type destBuffer = nullptr;
     size_t destBufferSize = 0;
     if (!cvtFunc(srcBuffer, size, &destBuffer, destBufferSize, srcPiexlMap->GetColorSpace())) {
-        IMAGE_LOGD("format convert failed!");
+        IMAGE_LOGE("format convert failed!");
         return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
     }
 
@@ -132,10 +145,9 @@ uint32_t ImageFormatConvert::ConvertImageFormat(std::shared_ptr<PixelMap> &srcPi
     destInfo.pixelFormat = destFormat;
     destInfo.size = srcInfo.size;
     if (!MakeDestPixelMap(srcPiexlMap, destBuffer, destBufferSize, destInfo, srcPiexlMap->GetAllocatorType())) {
-        IMAGE_LOGD("create pixel map failed");
+        IMAGE_LOGE("create pixel map failed");
         return ERR_IMAGE_PIXELMAP_CREATE_FAILED;
     }
-
     return SUCCESS;
 }
 
@@ -167,6 +179,43 @@ bool ImageFormatConvert::CheckConvertDataInfo(const ConvertDataInfo &convertData
     }
 
     return true;
+}
+
+
+uint32_t ImageFormatConvert::YUVConvertImageFormatOption(std::shared_ptr<PixelMap> &srcPiexlMap, const PixelFormat &srcFormat,
+                                                         PixelFormat destFormat)
+{
+    YUVConvertFunction yuvCvtFunc = YUVGetConvertFuncByFormat(srcFormat, destFormat);
+    if (yuvCvtFunc == nullptr) {
+        IMAGE_LOGE("get convert function by format failed!");
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    const_uint8_buffer_type data = srcPiexlMap->GetPixels();
+    YUVDataInfo yDInfo;
+    PixelYuv pixelYUV;
+    pixelYUV.GetImageYUVInfo(yDInfo);
+    uint8_buffer_type destBuffer = nullptr;
+    size_t destBufferSize = 0;
+    if (!yuvCvtFunc(data, yDInfo, &destBuffer, destBufferSize, srcPiexlMap->GetColorSpace())) {
+        IMAGE_LOGE("format convert failed!");
+        return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
+    }
+
+    ImageInfo srcInfo;
+    srcPiexlMap->GetImageInfo(srcInfo);
+    ImageInfo destInfo;
+    destInfo.alphaType = srcInfo.alphaType;
+    destInfo.baseDensity = srcInfo.baseDensity;
+    destInfo.colorSpace = srcInfo.colorSpace;
+    destInfo.pixelFormat = destFormat;
+    destInfo.size = srcInfo.size;
+    if (!MakeDestPixelMap(srcPiexlMap, destBuffer, destBufferSize, destInfo, srcPiexlMap->GetAllocatorType())) {
+        IMAGE_LOGE("create pixel map failed");
+        return ERR_IMAGE_PIXELMAP_CREATE_FAILED;
+    }
+
+    return SUCCESS;
 }
 
 size_t ImageFormatConvert::GetBufferSizeByFormat(PixelFormat format, const Size &size)
@@ -202,6 +251,16 @@ ConvertFunction ImageFormatConvert::GetConvertFuncByFormat(PixelFormat srcFormat
     auto iter = g_cvtFuncMap.find(std::make_pair(srcFormat, destFormat));
     if (iter == g_cvtFuncMap.end()) {
         IMAGE_LOGD("current format is not supported or format is wrong");
+        return nullptr;
+    }
+    return iter->second;
+}
+
+YUVConvertFunction ImageFormatConvert::YUVGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat)
+{
+    auto iter = g_yuvCvtFuncMap.find(std::make_pair(srcFormat, destFormat));
+    if (iter == g_yuvCvtFuncMap.end()) {
+        IMAGE_LOGE("current format is not supported or format is wrong");
         return nullptr;
     }
     return iter->second;

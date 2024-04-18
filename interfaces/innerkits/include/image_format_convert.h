@@ -16,11 +16,12 @@
 #ifndef INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H_
 #define INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H_
 
-#include "pixel_map.h"
+#include <memory>
+
 #include "image_format_convert_utils.h"
 #include "image_plugin_type.h"
 #include "image_type.h"
-#include <memory>
+#include "pixel_map.h"
 
 namespace OHOS {
 namespace Media {
@@ -44,8 +45,11 @@ public:
 private:
     static bool IsValidSize(const Size &size);
     static bool CheckConvertDataInfo(const ConvertDataInfo &convertDataInfo);
+    static uint32_t YUVConvertImageFormatOption(std::shared_ptr<PixelMap> &srcPiexlMap, const PixelFormat &srcFormat,
+                                                PixelFormat destFormat);
     static size_t GetBufferSizeByFormat(PixelFormat format, const Size &size);
     static ConvertFunction GetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat);
+    static YUVConvertFunction YUVGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat);
     static bool MakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
                                  const size_t destBufferSize, ImageInfo &info, AllocatorType allcatorType);
     static bool IsSupport(PixelFormat format);

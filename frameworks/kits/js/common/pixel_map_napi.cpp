@@ -3366,7 +3366,6 @@ static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType sr
         result);
 
     context->status = ImageFormatConvert::ConvertImageFormat(context->rPixelMap, context->destFormat);
-
     if (context->status == SUCCESS) {
         result = PixelMapNapi::CreatePixelMap(env, context->rPixelMap);
         return result;
