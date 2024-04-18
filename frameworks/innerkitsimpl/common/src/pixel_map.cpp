@@ -1183,7 +1183,7 @@ ColorSpace PixelMap::GetColorSpace()
     return imageInfo_.colorSpace;
 }
 
-AlphaType PixelMap::GetAlphaType()
+AlphaType PixelMap:: GetAlphaType()
 {
     return imageInfo_.alphaType;
 }
@@ -2654,6 +2654,11 @@ uint32_t PixelMap::ConvertAlphaFormat(PixelMap &wPixelMap, const bool isPremul)
             ConvertUintPixelAlpha(data_ + index, pixelBytes_, srcAlphaIndex, isPremul,
                 static_cast<uint8_t*>(dstData) + index);
         }
+    }
+    if (isPremul == true){
+        wPixelMap.SetAlphaType(AlphaType::IMAGE_ALPHA_TYPE_PREMUL);
+    } else {
+        wPixelMap.SetAlphaType(AlphaType::IMAGE_ALPHA_TYPE_UNPREMUL);
     }
     return SUCCESS;
 }
