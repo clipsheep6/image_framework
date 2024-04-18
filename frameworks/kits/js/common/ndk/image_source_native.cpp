@@ -52,6 +52,7 @@ struct OH_DecodingOptions {
     uint32_t rotate;
     struct Image_Size desiredSize;
     struct Image_Region desiredRegion;
+    ResolutionQuality resolutionQuality;
 };
 
 struct OH_ImageSource_Info {
@@ -186,6 +187,28 @@ Image_ErrorCode OH_DecodingOptions_SetDesiredRegion(OH_DecodingOptions *options,
 }
 
 MIDK_EXPORT
+Image_ErrorCode OH_DecodingOptions_GetResolutionQuality(OH_DecodingOptions *options,
+    ResolutionQuality *resolutionQuality)
+{
+    if (options == nullptr || resolutionQuality == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    resolutionQuality = options->resolutionQuality;
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
+Image_ErrorCode OH_DecodingOptions_SetResolutionQuality(OH_DecodingOptions *options,
+    ResolutionQuality resolutionQuality)
+{
+    if (options == nullptr) {
+        return IMAGE_RESULT_BAD_PARAMETER;
+    }
+    options->resolutionQuality = resolutionQuality;
+    return IMAGE_RESULT_SUCCESS;
+}
+
+MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptions_Release(OH_DecodingOptions *options)
 {
     if (options == nullptr) {
@@ -273,6 +296,7 @@ static void ParseDecodingOps(DecodeOptions &decOps, struct OH_DecodingOptions *o
         default:
             decOps.desiredPixelFormat = PixelFormat::UNKNOWN;
     }
+    decOps.resolutionQuality = ops->resolutionQuality;
 }
 
 static void ParseImageSourceInfo(struct OH_ImageSource_Info *source, ImageInfo &info)

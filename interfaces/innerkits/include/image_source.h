@@ -277,8 +277,8 @@ private:
         const SourceOptions &opts, uint32_t &errorCode, const std::string traceName = "");
     std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts,
                                                      uint32_t &errorCode);
-    std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
-                                                    PixelMapAddrInfos &addrInfos, bool isHdr, uint32_t &errorCode);
+    std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo, PixelMapAddrInfos &addrInfos,
+                                                    bool isAisr, bool isHdr, uint32_t &errorCode);
     void DumpInputData(const std::string& fileSuffix = "dat");
     static uint64_t GetNowTimeMicroSeconds();
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,
@@ -286,7 +286,6 @@ private:
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
     bool CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needHdr);
     uint32_t CreatExifMetadataByImageSource(bool addFlag = false);
-    uint32_t ImageAiProcess(Size imageSize, ImagePlugin::DecodeContext &context, bool &isHdr);
     uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
                                       ImagePlugin::DecodeContext &context, uint32_t &errorCode);
     void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
