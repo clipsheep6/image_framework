@@ -519,8 +519,8 @@ static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, in
 void ImageSource::TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
     int32_t wantDensity, Size &dstSize)
 {
-    if (IsSizeVailed(wantSize) && ((opts_.resolutionQuality == ResolutionQuality::HIGH) ||
-                                    (opts_.resolutionQuality == ResolutionQuality::SUPER))) {
+    if (IsSizeVailed(wantSize) && ((opts_.resolutionQuality == ResolutionQuality::LOW) ||
+                                    (opts_.resolutionQuality == ResolutionQuality::MEDIUM))) {
         CopySize(wantSize, dstSize);
     } else {
         CopySize(srcSize, dstSize);
