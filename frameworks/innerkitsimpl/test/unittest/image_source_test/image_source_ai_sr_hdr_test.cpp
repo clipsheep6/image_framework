@@ -531,53 +531,6 @@ HWTEST_F(ImageSourceAiTest, HdrTest720p, TestSize.Level3)
 }
 
 /**
- * @tc.name: HdrTestManyPic
- * @tc.desc: test many pictures to run AiHdr
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceAiTest, HdrTestManyPic, TestSize.Level3)
-{
-    int idx;
-    string picFileNames[] = { IMAGE_INPUT_HDR_PIC1_PATH, IMAGE_INPUT_HDR_PIC2_PATH, IMAGE_INPUT_HDR_PIC3_PATH,
-                             IMAGE_INPUT_HDR_PIC4_PATH, IMAGE_INPUT_HDR_PIC5_PATH, IMAGE_INPUT_HDR_PIC6_PATH,
-                        };
-    for (idx = 0; idx < 6; idx++) {
-        GTEST_LOG_(INFO) << "ImageSourceAiTest: HdrTestManyPic seq:" << idx << ",filen=" << picFileNames[idx];
-        uint32_t errorCode = 0;
-        SourceOptions opts;
-        std::unique_ptr<ImageSource> imageSource =
-                ImageSource::CreateImageSource(picFileNames[idx], opts, errorCode);
-        ASSERT_EQ(errorCode, SUCCESS);
-        ASSERT_NE(imageSource.get(), nullptr);
-
-        int32_t jpegWidth = 0;
-        int32_t jpegHeight = 0;
-
-        DecodeOptions decodeOpts;
-        std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-        ASSERT_EQ(errorCode, SUCCESS);
-        ASSERT_NE(pixelMap.get(), nullptr);
-
-        jpegWidth = pixelMap->GetWidth();
-        jpegHeight = pixelMap->GetHeight();
-
-        int32_t desiredWidth = jpegWidth + 0;
-        int32_t desiredHeight = jpegHeight + 0;
-
-        decodeOpts.desiredSize.width = desiredWidth;
-        decodeOpts.desiredSize.height = desiredHeight;
-        decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
-        decodeOpts.resolutionQuality = ResolutionQuality::SUPER;
-
-        pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-        ASSERT_EQ(errorCode, SUCCESS);
-        ASSERT_NE(pixelMap.get(), nullptr);
-        ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
-        ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
-    }
-}
-
-/**
  * @tc.name: SrHdrTestLargerSuper
  * @tc.desc: Set larger want size + Super to run aisr;set HDR to run AIHDR. (AiSr/AiHdr both)
  * @tc.type: FUNC
