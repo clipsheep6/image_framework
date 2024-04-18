@@ -96,69 +96,17 @@ ohos_shared_library("image_packer_ndk") {
   part_name = "image_framework"
 }
 
-ohos_shared_library("image_source") {
-  output_extension = "so"
+ohos_shared_library("image_format_convert_ndk") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
     debug = false
   }
 
-  sources = [
-    "image_source_native.cpp",
-    "image_source_native_impl.cpp",
-  ]
-
-  include_dirs = [
-    "include",
-    "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include",
-    "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include/image",
-    "$BASE_DIR/multimedia/image_framework/interfaces/innerkits/include",
-    "$BASE_DIR/multimedia/image_framework/frameworks/kits/js/common/pixelmap_ndk",
-  ]
-
-  deps = [
-    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
-    "$image_subsystem/interfaces/innerkits:image_native",
-    "$image_subsystem/interfaces/kits/js/common:image",
-  ]
-
-  external_deps = [ "c_utils:utils" ]
-
-  innerapi_tags = [ "ndk" ]
-  subsystem_name = "multimedia"
-  part_name = "image_framework"
-}
-
-ohos_shared_library("image_packer") {
-  output_extension = "so"
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-
-  sources = [
-    "image_packer_native.cpp",
-    "image_packer_native_impl.cpp",
-  ]
-
-  include_dirs = [
-    "include",
-    "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include",
-    "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include/image",
-    "$BASE_DIR/multimedia/image_framework/interfaces/innerkits/include",
-    "$BASE_DIR/multimedia/image_framework/frameworks/kits/js/common/pixelmap_ndk",
-  ]
-
-  deps = [
-    "$image_subsystem/frameworks/kits/js/common/ndk:image_source",
-    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
-    "$image_subsystem/interfaces/innerkits:image_native",
-    "$image_subsystem/interfaces/kits/js/common:image",
-  ]
-
-  external_deps = [ "c_utils:utils" ]
+  sources = [ "image_format_convert_mdk.cpp" ]
+  public_configs = [ ":native_public_config" ]
+  deps = [ "$image_subsystem/interfaces/kits/js/common:image",
+           "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap_ndk2" ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"

@@ -18,6 +18,7 @@
 #include "image_log.h"
 #include "image_napi_utils.h"
 #include "image_pixel_map_napi.h"
+#include "image_source_napi.h"
 #include "image_trace.h"
 #include "log_tags.h"
 #include "color_space_object_convertor.h"
@@ -28,6 +29,8 @@
 #endif
 #include "hitrace_meter.h"
 #include "pixel_map.h"
+#include "pixel_map_from_surface.h"
+#include <securec.h>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -42,6 +45,12 @@ namespace {
     constexpr uint32_t NUM_3 = 3;
     constexpr uint32_t NUM_4 = 4;
 }
+
+enum class FormatType:int8_t {
+    UNKNOWN,
+    YUV,
+    RGB
+};
 
 namespace OHOS {
 namespace Media {
@@ -92,7 +101,12 @@ struct PixelMapAsyncContext {
     bool yBarg = false;
     std::shared_ptr<OHOS::ColorManager::ColorSpace> colorSpace;
     std::string surfaceId;
+    PixelFormat destFormat = PixelFormat::UNKNOWN;
+    FormatType srcFormatType = FormatType::UNKNOWN;
+    FormatType dstFormatType = FormatType::UNKNOWN;
 };
+using PixelMapAsyncContextPtr = std::unique_ptr<PixelMapAsyncContext>;
+std::shared_ptr<PixelMap> srcPixelMap = nullptr;
 
 class AgainstTransferGC {
 public:
@@ -423,6 +437,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("unmarshalling", Unmarshalling),
         DECLARE_NAPI_GETTER("isEditable", GetIsEditable),
         DECLARE_NAPI_GETTER("isStrideAlignment", GetIsStrideAlignment),
+        DECLARE_NAPI_FUNCTION("convertPixelFormat", ConvertPixelMapFormat),
     };
 
     napi_property_descriptor static_prop[] = {
@@ -434,7 +449,7 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_STATIC_FUNCTION(CREATE_PIXEL_MAP_FROM_PARCEL.c_str(), CreatePixelMapFromParcel),
 #if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMapFromSurface", CreatePixelMapFromSurface),
-#endif
+        DECLARE_NAPI_STATIC_FUNCTION("convertPixelFormat", ConvertPixelMapFormat),
     };
 
     napi_value constructor = nullptr;
@@ -3228,6 +3243,229 @@ napi_value PixelMapNapi::ApplyColorSpace(napi_env env, napi_callback_info info)
         if (nVal.status == napi_ok) {
             nVal.context.release();
         }
+    }
+    return nVal.result;
+}
+
+static bool IsMatchFormatType(FormatType type, PixelFormat format)
+{
+    if (type == FormatType::YUV) {
+        switch (format) {
+            case PixelFormat::NV21:
+            case PixelFormat::NV12:{
+                return true;
+            }
+            default:{
+                return false;
+            }
+        }
+    } else if (type == FormatType::RGB) {
+        switch (format) {
+            case PixelFormat::ARGB_8888:
+            case PixelFormat::RGB_565:
+            case PixelFormat::RGBA_8888:
+            case PixelFormat::BGRA_8888:
+            case PixelFormat::RGB_888:
+            case PixelFormat::RGBA_F16:{
+                return true;
+            }
+            default:{
+                return false;
+            }
+        }
+    } else {
+        return false;
+    }
+}
+
+
+STATIC_EXEC_FUNC(GeneralError)
+{
+    auto context = static_cast<PixelMapAsyncContext*>(data);
+    context->status = IMAGE_RESULT_CREATE_FORMAT_CONVERT_FAILED;
+}
+
+static FormatType TypeFormat(PixelFormat &pixelForamt)
+{
+    switch (pixelForamt)
+    {
+        case PixelFormat::ARGB_8888:
+        case PixelFormat::RGB_565:
+        case PixelFormat::RGBA_8888:
+        case PixelFormat::BGRA_8888:
+        case PixelFormat::RGB_888:
+        case PixelFormat::RGBA_F16:{
+            return FormatType::RGB;
+        }
+        case PixelFormat::NV21:
+        case PixelFormat::NV12:{
+            return FormatType::YUV;
+        }
+        default:
+            return FormatType::UNKNOWN;
+    }
+}
+
+static uint32_t GetNativePixelMapInfo(napi_env &env, PixelMapAsyncContext* context)
+{
+    PixelFormat destPixelFormat = context->destFormat;
+    std::shared_ptr<PixelMap> pixelMap = nullptr;
+    IMG_NAPI_CHECK_BUILD_ERROR(IsMatchFormatType(context->dstFormatType, destPixelFormat),
+        BuildContextError(env, context->error, "dest format is wrong!", ERR_IMAGE_INVALID_PARAMETER),
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
+    IMG_NAPI_CHECK_BUILD_ERROR(IsMatchFormatType(context->srcFormatType, srcPixelMap->GetPixelFormat()),
+        BuildContextError(env, context->error, "source format is wrong!", ERR_IMAGE_INVALID_PARAMETER),
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
+    return SUCCESS;
+}
+
+static uint32_t GetNativeConvertInfo(napi_env &env, napi_callback_info &info, PixelMapAsyncContext* context)
+{
+    napi_status status = napi_invalid_arg;
+    napi_value thisVar = nullptr;
+    size_t argc = NUM_1;
+    napi_value argv[NUM_1] = {nullptr};
+    IMG_JS_ARGS(env, info, status, argc, argv, thisVar);
+    IMG_NAPI_CHECK_BUILD_ERROR(IMG_IS_OK(status),
+        BuildContextError(env, context->error, "fail to napi_get_cb_info", ERROR), context->status = ERROR, ERROR);
+    IMG_NAPI_CHECK_BUILD_ERROR(argc == NUM_1,
+        BuildContextError(env, context->error, "incorrect number of parametersarguments!", ERR_IMAGE_INVALID_PARAMETER),
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
+    napi_value constructor = nullptr;
+    napi_value global = nullptr;
+    napi_get_global(env, &global);
+    status = napi_get_named_property(env, global, "PixelFormat", &constructor);
+    IMG_NAPI_CHECK_BUILD_ERROR(IMG_IS_OK(status),
+        BuildContextError(env, context->error, "Get PixelMapNapi property failed!", ERR_IMAGE_PROPERTY_NOT_EXIST),
+        context->status = ERR_IMAGE_PROPERTY_NOT_EXIST, ERR_IMAGE_PROPERTY_NOT_EXIST);
+    bool isPixelFormat = false;
+    if (context->destFormat == PixelFormat::UNKNOWN) {
+        isPixelFormat = false;
+    } else {
+        isPixelFormat = true;
+    }
+    if (isPixelFormat) {
+            return GetNativePixelMapInfo(env, context);
+    }
+    IMG_NAPI_CHECK_BUILD_ERROR(false,
+        BuildContextError(env, context->error, "wrong arguments!", ERR_IMAGE_INVALID_PARAMETER),
+        context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
+}
+
+static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType srcFormatType, std::string workName, 
+    PixelMapAsyncContext* context)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    if (context == nullptr) {
+        HiLog::Error(LABEL, "context is nullptr");
+        return nullptr;
+    }
+    context->status = SUCCESS;
+    context->srcFormatType = srcFormatType;
+    uint32_t ret = GetNativeConvertInfo(env, info, context);
+    napi_create_promise(env, &(context->deferred), &result);
+    PixelMapAsyncContextPtr asyncContext = std::make_unique<PixelMapAsyncContext>(*context);
+    IMG_NAPI_CHECK_BUILD_ERROR(asyncContext->error == nullptr,
+        asyncContext->status = IMAGE_RESULT_CREATE_FORMAT_CONVERT_FAILED,
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
+        GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result);
+
+    IMG_NAPI_CHECK_BUILD_ERROR(ret == SUCCESS,
+        BuildContextError(env, asyncContext->error, "get native convert info failed!", ret),
+        IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
+        GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
+        result);
+    std::shared_ptr<PixelMap> destPixelMap = nullptr;
+    context->status = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destPixelMap,
+                                                             context->destFormat);
+    if (context->status == SUCCESS) {
+        result = PixelMapNapi::CreatePixelMap(env, destPixelMap);
+        return result;
+    }
+    return result;
+}
+
+static napi_value YUVToRGB(napi_env env, napi_callback_info &info, PixelMapAsyncContext* context)
+{
+    return Convert(env, info, FormatType::YUV, "YUVToRGB", context);
+}
+
+static napi_value RGBToYUV(napi_env env, napi_callback_info &info,  PixelMapAsyncContext* context)
+{
+    return Convert(env, info, FormatType::RGB, "RGBToYUV", context);
+}
+
+static napi_value PixelFormatConvert(napi_env env, napi_callback_info &info, PixelMapAsyncContext* context) 
+{
+    napi_value result = nullptr;
+    napi_create_promise(env, &(context->deferred), &result);
+    PixelFormat dstFormat = context->destFormat;
+
+    if (dstFormat != PixelFormat::UNKNOWN) {
+        context->dstFormatType = TypeFormat(dstFormat);
+        if (context->dstFormatType == FormatType::YUV) {
+            result = RGBToYUV(env, info, context);
+        } else if (context->dstFormatType == FormatType::RGB) {
+            result = YUVToRGB(env, info, context);
+        }
+    }
+
+    HiLog::Error(LABEL,"PixelFormatConvert end + function: %{public}s",__func__);
+    return result;
+}
+
+napi_value PixelMapNapi::ConvertPixelMapFormat(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    napi_value argValue[NUM_1];
+    size_t argc = NUM_1;
+    nVal.argc = argc;
+    nVal.argv = argValue;
+    
+    HiLog::Error(LABEL,"ConvertFormat IN");
+    if (!prepareNapiEnv(env, info, &nVal))
+    {
+        return nVal.result;
+    }
+    if (nVal.argc >= 1 && ImageNapiUtils::getType(env, nVal.argv[nVal.argc - 1]) == napi_function) {
+        napi_create_reference(env, nVal.argv[nVal.argc - 1], nVal.refCount, &(nVal.context->callbackRef));
+    }
+    if (!nVal.context)
+    {
+        HiLog::Error(LABEL, "Invalid context");
+        return nullptr; 
+    }
+    napi_get_undefined(env, &nVal.result);
+    if (nVal.argc != NUM_1)
+    {
+        IMAGE_LOGE("Invalid args count");
+        nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
+    }
+    if (nVal.context->callbackRef == nullptr)
+    {
+        napi_create_promise(env, &(nVal.context->deferred), &(nVal.result));
+    } else {
+        napi_get_undefined(env, &(nVal.result));
+    }
+    if (ImageSourceNapi::srcPixelMap_ != nullptr) {
+        srcPixelMap = ImageSourceNapi::srcPixelMap_;
+    }
+    if (IMG_NOT_NULL(srcPixelMap)) {
+        HiLog::Error(LABEL,"srcPixelMap is not null");
+    } else {
+        HiLog::Error(LABEL,"srcPixelMap is null");
+    }
+    napi_value jsArg = nVal.argv[0];
+    int32_t pixelFormatInt;
+    napi_get_value_int32(env, jsArg, &pixelFormatInt);
+    nVal.context->destFormat = static_cast<PixelFormat>(pixelFormatInt);
+    
+    nVal.result = PixelFormatConvert(env, info, nVal.context.get());
+    if (nVal.result == nullptr) {
+        return nVal.result;
     }
     return nVal.result;
 }
