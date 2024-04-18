@@ -19,6 +19,7 @@
 #include <string>
 #include <chrono>
 #include "buffer_packer_stream.h"
+#include "color_space.h"
 #include "image_type.h"
 #include "image_utils.h"
 #include "image_source.h"
@@ -602,6 +603,7 @@ void JpgYuvTest::WritesYuv420(std::string &srcjpg, PixelFormat outfmt, std::stri
 
     uint32_t res = pixelMap->WritePixels(imageSize.color);
     GTEST_LOG_(INFO) << "jpgYuvTest: res = " << res;
+    ASSERT_EQ(res, 1);
 
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
     const uint8_t *buffer = nullptr;
@@ -614,7 +616,7 @@ void JpgYuvTest::WritesYuv420(std::string &srcjpg, PixelFormat outfmt, std::stri
     imageSize.width = pixelMap->GetWidth();
     imageSize.height = pixelMap->GetHeight();
     GTEST_LOG_(INFO) << "JpgYuvTest: ret size(" << imageSize.width << ", " << imageSize.height << ")";
-    std::string outpath = "/tmp/";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "Writes";
     YuvWriteToFile(outpath, imageSize, outname, data, size);
 }
 
@@ -959,7 +961,7 @@ HWTEST_F(JpgYuvTest, JpgYuvTest024, TestSize.Level3)
                     break;
             }
             outname.append(outNamePart2[j]);
-            ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, NUM_2, NUM_2, 0, 0};
+            ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, NUM_2, NUM_2, 0, 0};
             ScaleYuv420(jpgpath, outfmt[j], outname, imageSize, options[i]);
         }
     }
@@ -981,7 +983,7 @@ HWTEST_F(JpgYuvTest, JpgYuvTest025, TestSize.Level3)
         std::string outname;
         outname.append("testhw");
         outname.append(outNamePart2[j]);
-        ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, NUM_2, NUM_2, 0, 0};
+        ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, NUM_2, NUM_2, 0, 0};
         ResizeYuv420(jpgpath, outfmt[j], outname, imageSize);
     }
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest025 end";
@@ -1020,7 +1022,7 @@ HWTEST_F(JpgYuvTest, JpgYuvTest026, TestSize.Level3)
                     break;
             }
             outname.append(outNamePart2[j]);
-            ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
+            ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
             FlipYuv420(jpgpath, outfmt[j], outname, imageSize, i);
         }
     }
@@ -1102,7 +1104,7 @@ HWTEST_F(JpgYuvTest, JpgYuvTest027, TestSize.Level3)
                     break;
             }
             outname.append(outNamePart2[j]);
-            ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
+            ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
             ApplyColorSpaceYuv420(jpgpath, outfmt[j], outname, imageSize, colorSpaces[i]);
         }
     }
@@ -1125,7 +1127,7 @@ HWTEST_F(JpgYuvTest, jpgYuvTest028, TestSize.Level3)
         std::string outname;
         outname.append("testhw");
         outname.append(outNamePart2[j]);
-        ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
+        ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
         Coordinate coordinate = {1, 1};
         TranslateYuv420(jpgpath, outfmt[j], outname, imageSize, coordinate);
     }
@@ -1150,7 +1152,7 @@ HWTEST_F(JpgYuvTest, jpgYuvTest029, TestSize.Level3)
         Position pos;
         pos.x = 1;
         pos.y = 1;
-        ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
+        ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
         ReadYuv420(jpgpath, outfmt[j], outname, pos, imageSize);
     }
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest029 end";
@@ -1174,7 +1176,7 @@ HWTEST_F(JpgYuvTest, jpgYuvTest030, TestSize.Level3)
         Position pos;
         pos.x = 1;
         pos.y = 1;
-        ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
+        ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
         WriteYuv420(jpgpath, outfmt[j], outname, pos, imageSize);
     }
     GTEST_LOG_(INFO) << "JpgYuvTest: jpgYuvTest030 end";
@@ -1195,7 +1197,7 @@ HWTEST_F(JpgYuvTest, jpgYuvTest031, TestSize.Level3)
         std::string outname;
         outname.append("testhw");
         outname.append(outNamePart2[j]);
-        ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
+        ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT, 0, 0, 0, 0};
         WritesYuv420(jpgpath, outfmt[j], outname, imageSize);
     }
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest031 end";

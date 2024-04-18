@@ -64,10 +64,6 @@ struct YuvImageInfo {
     AVPixelFormat format = AVPixelFormat::AV_PIX_FMT_NONE;
     int32_t width;
     int32_t height;
-};
-
-struct PixelYuvInfo {
-    ImageInfo imageInfo;
     YUVDataInfo yuvDataInfo;
 };
 
@@ -75,14 +71,14 @@ class PixelYuvUtils {
 public:
     static int32_t YuvConvertOption(const AntiAliasingOption &option);
     static bool WriteYuvConvert(const void *srcPixels, const ImageInfo &srcInfo, void *dstPixels,
-        const Position &dstPos, const PixelYuvInfo &pixelYuvInfo);
-    static bool ReadYuvConvert(const void *srcPixels, const Position &srcPos, const ImageInfo &srcInfo,
+        const Position &dstPos, const YUVDataInfo &yuvDataInfo);
+    static bool ReadYuvConvert(const void *srcPixels, const Position &srcPos, YuvImageInfo &srcInfo,
         void *dstPixels, const ImageInfo &dstInfo);
-    static void SetTranslateDataDefault(uint8_t *srcPixels, PixelYuvInfo &pixelYuvInfo);
-    static uint8_t GetYuv420Y(uint32_t x, uint32_t y, int32_t width, const uint8_t *in);
-    static uint8_t GetYuv420U(uint32_t x, uint32_t y, Size &size, PixelFormat format,
+    static void SetTranslateDataDefault(uint8_t *srcPixels, int32_t width, int32_t height);
+    static uint8_t GetYuv420Y(uint32_t x, uint32_t y, YUVDataInfo &info, const uint8_t *in);
+    static uint8_t GetYuv420U(uint32_t x, uint32_t y, YUVDataInfo &info, PixelFormat format,
         const uint8_t *in);
-    static uint8_t GetYuv420V(uint32_t x, uint32_t y, Size &size, PixelFormat format,
+    static uint8_t GetYuv420V(uint32_t x, uint32_t y, YUVDataInfo &info, PixelFormat format,
         const uint8_t *in);
     static AVPixelFormat ConvertFormat(const PixelFormat &pixelFormat);
     #ifdef LIBYUV_ENABLE
@@ -95,24 +91,26 @@ public:
         const PixelFormat &format);
     static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
     #else
-    static bool BGRAToYuv420(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height,
+    static bool BGRAToYuv420(const uint8_t *src, YuvImageInfo &srcInfo, uint8_t *dst, YuvImageInfo &dstInfo);
+
+    static bool Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, 
+        YuvImageInfo &dstInfo);
+    static bool Yuv420ToARGB(const uint8_t *in, uint8_t *out, YUVDataInfo &info,
         PixelFormat pixelFormat);
-    static bool Yuv420ToBGRA(const uint8_t *in, uint8_t *out, int32_t width, int32_t height,
-        PixelFormat pixelFormat);
-    static bool Yuv420ToARGB(const uint8_t *in, uint8_t *out, int32_t width, int32_t height,
-        PixelFormat pixelFormat);
-    static bool Yuv420WritePixels(PixelYuvInfo &pixelYuvInfo, uint8_t *srcPixels, const uint32_t &color);
-    static bool YuvReadPixel(const uint8_t *srcPixels, PixelYuvInfo &pixelYuvInfo, const Position &pos,
-        uint32_t &dst);
-    static bool YuvWritePixel(uint8_t *srcPixels, PixelYuvInfo &pixelYuvInfo, const Position &pos,
+    static bool YuvTranslate(const uint8_t *srcPixels, YUVDataInfo &info, uint8_t *dstPixels, XYaxis &xyAxis,
+        const PixelFormat &format);
+    static bool Yuv420WritePixels(const YUVDataInfo &yuvDataInfo, uint8_t *srcPixels, const PixelFormat &format,
         const uint32_t &color);
-    static bool YuvTranslate(const uint8_t *srcPixels, ImageInfo &info, uint8_t *dstPixels, XYaxis &xyAxis);
+    static bool YuvReadPixel(const uint8_t *srcPixels, const YUVDataInfo &yuvDataInfo, const PixelFormat &format,
+        const Position &pos, uint32_t &dst);
+    static bool YuvWritePixel(uint8_t *srcPixels, const YUVDataInfo &yuvDataInfo, const PixelFormat &format,
+        const Position &pos, const uint32_t &color);
     static bool YuvCrop(uint8_t *srcData, YuvImageInfo &srcInfo, uint8_t *dstData, const Rect &rect);
     static bool YuvRotate(uint8_t *srcData, YuvImageInfo &srcInfo,
         uint8_t *dstData, YuvImageInfo &dstInfo, int32_t degrees);
-    static bool YuvFlip(const uint8_t *srcData, YuvImageInfo &srcInfo, uint8_t *dstData, bool xAxis);
+    static bool YuvFlip(uint8_t *srcData, YuvImageInfo &srcInfo, uint8_t *dstData, bool xAxis);
     static bool YuvReversal(uint8_t *srcData, YuvImageInfo &srcInfo, uint8_t *dstData, YuvImageInfo &dstInfo);
-    static int32_t YuvScale(const uint8_t *srcPixels, YuvImageInfo &srcInfo,
+    static int32_t YuvScale(uint8_t *srcPixels, YuvImageInfo &srcInfo,
         uint8_t *dstPixels, YuvImageInfo &dstInfo, int32_t module);
     #endif
 };
