@@ -191,10 +191,10 @@ Image_ErrorCode OH_DecodingOptions_GetResolutionQuality(OH_DecodingOptions *opti
     ResolutionQuality *resolutionQuality)
 {
     if (options == nullptr || resolutionQuality == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_BAD_PARAMETER;
     }
-    resolutionQuality = options->resolutionQuality;
-    return IMAGE_RESULT_SUCCESS;
+    *resolutionQuality = options->resolutionQuality;
+    return IMAGE_SUCCESS;
 }
 
 MIDK_EXPORT
@@ -202,10 +202,10 @@ Image_ErrorCode OH_DecodingOptions_SetResolutionQuality(OH_DecodingOptions *opti
     ResolutionQuality resolutionQuality)
 {
     if (options == nullptr) {
-        return IMAGE_RESULT_BAD_PARAMETER;
+        return IMAGE_BAD_PARAMETER;
     }
     options->resolutionQuality = resolutionQuality;
-    return IMAGE_RESULT_SUCCESS;
+    return IMAGE_SUCCESS;
 }
 
 MIDK_EXPORT
