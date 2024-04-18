@@ -2767,8 +2767,10 @@ static void ConvertColorSpaceTypeToInfo(const CM_ColorSpaceType& colorSpaceType,
 
 static CM_ColorSpaceType ConvertColorSpaceType(PlColorSpace colorSpace)
 {
-    CM_ColorSpaceType defaultColorspaceType;
-    ConvertColorSpaceInfoToType(INPUT_COLORSPACE_INFO, defaultColorspaceType);
+    CM_ColorSpaceType defaultColorspaceType ;
+    CM_ColorSpaceInfo defaultColorspaceInfo = INPUT_COLORSPACE_INFO;
+
+    ConvertColorSpaceInfoToType(defaultColorspaceInfo, defaultColorspaceType);
     IMAGE_LOGD("[ImageSource]ConvertColorSpaceType colorSpace=%{public}u", colorSpace);
     switch (colorSpace) {
         case PlColorSpace::DISPLAY_P3:
@@ -2868,7 +2870,7 @@ static SurfaceBuffer* AllocBufferForContext( AiParamIn &aiParamIn, DecodeContext
         return {};
     }
     context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
-    context.pixelsBuffer.bufferSize = count;
+    context.pixelsBuffer.bufferSize = aiParamIn.byteCount;
     context.pixelsBuffer.context = nativeBuffer;
     context.allocatorType = AllocatorType::DMA_ALLOC;
     context.freeFunc = nullptr;
@@ -3003,7 +3005,7 @@ uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &srCtx, AiParamIn
 
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->DetailEnhancerImageProcess(input, output);
-    if (res != VPE_ALGO_ERR_OK) {
+    if (res != VPE_ERROR_OK) {
         IMAGE_LOGE("[ImageSource]AiSrProcess DetailEnhancerImage Processed failed");
         FreeContextBuffer(srCtx.freeFunc, srCtx.allocatorType, srCtx.pixelsBuffer);
     }
