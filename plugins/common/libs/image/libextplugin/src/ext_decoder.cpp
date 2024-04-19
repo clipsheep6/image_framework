@@ -734,8 +734,9 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     context.dngExternalData = codec_->getExternalData().release();
     context.releaseExtDataFunc = [](void* extData)->void {
         SkCodec::ExternalData* p = nullptr;
-        if((p = static_cast<SkCodec::ExternalData*>(extData)) != nullptr)
+        if((p = static_cast<SkCodec::ExternalData*>(extData)) != nullptr) {
             delete p;
+        }
     };
 
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
