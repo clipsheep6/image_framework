@@ -71,18 +71,18 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
             /**
              * @tc.steps: step3. compress the pixel map to dng jpeg WEBP PNG file.
              * @tc.expected: step3. pack pixel map success and compare the jpeg compress file size.
-             */            
-            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);            
+             */
+            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);
             ASSERT_NE(packDngSize, 0);
-            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);            
+            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);
             ASSERT_NE(packJpegSize, 0);
-            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);            
+            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);
             ASSERT_NE(packWebpSize, 0);
-            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);            
+            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);
             ASSERT_NE(packPngSize, 0);
         }
 
@@ -117,7 +117,7 @@ namespace OHOS {
             /**
              * @tc.steps: step3. compress the pixel map to dng jpeg WEBP PNG file.
              * @tc.expected: step3. pack pixel map success and compare the jpeg compress file size.
-             */            
+             */
             int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);
             ASSERT_NE(packDngSize, 0);
             int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);
@@ -154,18 +154,18 @@ namespace OHOS {
             decodeOpts.desiredPixelFormat = PixelFormat::RGB_565;
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
             /**
              * @tc.steps: step3. compress the pixel map to dng jpeg WEBP PNG file.
              * @tc.expected: step3. pack pixel map success and compare the jpeg compress file size.
-             */            
-            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);            
+             */
+            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);
             ASSERT_NE(packDngSize, 0);
-            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);            
+            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);
             ASSERT_NE(packJpegSize, 0);
-            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);            
+            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);
             ASSERT_NE(packWebpSize, 0);
-            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);            
+            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);
             ASSERT_NE(packPngSize, 0);
         }
 
@@ -200,14 +200,14 @@ namespace OHOS {
             /**
              * @tc.steps: step3. compress the pixel map to dng jpeg WEBP PNG file.
              * @tc.expected: step3. pack pixel map success and compare the jpeg compress file size.
-             */            
-            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);            
+             */
+            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);
             ASSERT_NE(packDngSize, 0);
-            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);            
+            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);
             ASSERT_NE(packJpegSize, 0);
-            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);            
+            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);
             ASSERT_NE(packWebpSize, 0);
-            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);            
+            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);
             ASSERT_NE(packPngSize, 0);
         }
 
@@ -233,18 +233,18 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
             /**
              * @tc.steps: step3. compress the pixel map to jpeg file.
              * @tc.expected: step3. pack pixel map success and compare the jpeg compress file size.
-             */            
-            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);            
+             */
+            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);
             ASSERT_NE(packDngSize, 0);
-            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);            
+            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);
             ASSERT_NE(packJpegSize, 0);
-            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);            
+            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);
             ASSERT_NE(packWebpSize, 0);
-            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);            
+            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);
             ASSERT_NE(packPngSize, 0);
         }
 
@@ -494,7 +494,7 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
         }
 
         /**
@@ -524,7 +524,7 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
         }
 
         /**
@@ -554,7 +554,7 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
         }
 
         /**
@@ -614,7 +614,7 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
         }
 
         /**
