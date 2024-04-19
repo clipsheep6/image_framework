@@ -14,6 +14,7 @@
  */
 
 #define private public
+#define protected public
 #include <gtest/gtest.h>
 #include "image_type.h"
 #include "image_utils.h"
@@ -2245,6 +2246,8 @@ HWTEST_F(PixelMapTest, ConvertAlphaFormatTest008, TestSize.Level3)
     ASSERT_NE(ret, SUCCESS);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ConvertAlphaFormatTest008 end";
 }
+
+/**
  * @tc.name: PixelMapTest031
  * @tc.desc: Marshalling
  * @tc.type: FUNC

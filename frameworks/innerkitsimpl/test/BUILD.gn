@@ -1378,7 +1378,7 @@ ohos_unittest("jpgyuvtest") {
   external_deps = [
     "c_utils:utils",
     "graphic_2d:color_manager",
-    ]
+  ]
 }
 
 ohos_unittest("heifyuvtest") {
@@ -1718,15 +1718,15 @@ ohos_unittest("imageformatconverttest") {
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_format_convert_test.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp"
-    ]
+    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
+  ]
   deps = [
+    "$graphic_subsystem/utils/color_manager:color_manager",
     "${image_subsystem}/../../../third_party/googletest:gtest_main",
     "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
-    "$graphic_subsystem/utils/color_manager:color_manager",
     "${image_subsystem}/interfaces/innerkits:image_native",
-    "//third_party/googletest:gmock_main",
     "//third_party/ffmpeg:libohosffmpeg",
+    "//third_party/googletest:gmock_main",
   ]
   external_deps = [
     "c_utils:utils",
@@ -1740,7 +1740,6 @@ ohos_unittest("imageformatconverttest") {
 group("unittest") {
   testonly = true
   deps = [
-    ":imageformatconverttest",
     ":attrdatatest",
     ":bmpplugintest",
     ":colorconvertertest",
@@ -1760,6 +1759,7 @@ group("unittest") {
     ":imageaccessortest",
     ":imagecolorspacetest",
     ":imageeventtest",
+    ":imageformatconverttest",
     ":imagepixelmapparceltest",
     ":imagepixelmaptest",
     ":imagesourcetest",
