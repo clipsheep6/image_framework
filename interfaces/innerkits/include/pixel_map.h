@@ -123,7 +123,8 @@ public:
     NATIVEEXPORT virtual bool GetARGB32Color(int32_t x, int32_t y, uint32_t &color);
     NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
                                     CustomFreePixelMap func);
-    void* GetDngExternalData() const {
+    void* GetDngExternalData() const
+    {
         if (dngExternalData_ != nullptr) {
             return dngExternalData_;
         }
@@ -403,6 +404,8 @@ private:
 
     static int32_t ConvertPixelAlpha(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
         void *dstPixels, const ImageInfo &dstInfo);
+    void FreeDngExtData();
+    void FreePixelMapData();
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
     ImageInfo imageInfo_;
@@ -438,7 +441,7 @@ private:
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
     YUVDataInfo yuvDataInfo_;
-	void *dngExternalData_ = nullptr;
+    void *dngExternalData_ = nullptr;
     FreeExtData releaseExtDataFunc_ = nullptr;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     std::shared_ptr<std::mutex> metadataMutex_ = std::make_shared<std::mutex>();

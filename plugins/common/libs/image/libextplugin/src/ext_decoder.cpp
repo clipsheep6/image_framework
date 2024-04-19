@@ -732,11 +732,11 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     context.dngExternalData = codec_->getExternalData().release();
-    context.releaseExtDataFunc = [](void* extData)->void{ 
+    context.releaseExtDataFunc = [](void* extData)->void{
             SkCodec::ExternalData* p = nullptr;
-            if((p = static_cast<SkCodec::ExternalData*>(extData)) != nullptr) 
+            if((p = static_cast<SkCodec::ExternalData*>(extData)) != nullptr)
                 delete p;
-        };           
+        };
 
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
         return RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), static_cast<uint8_t*>(context.pixelsBuffer.buffer),
