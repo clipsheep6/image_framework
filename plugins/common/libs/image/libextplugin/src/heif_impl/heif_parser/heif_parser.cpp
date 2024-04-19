@@ -25,7 +25,6 @@
 namespace OHOS {
 namespace ImagePlugin {
 
-const auto EXIF_ID = "Exif\0\0";
 HeifParser::HeifParser() = default;
 
 HeifParser::~HeifParser() = default;
@@ -673,22 +672,6 @@ heif_error HeifParser::UpdateExifMetadata(const std::shared_ptr<HeifImage> &mast
     uint8_t construction_method = GetConstructMethod(itemId);
 
     return ilocBox_->UpdateData(itemId, content, construction_method);
-}
-
-heif_error HeifParser::GetExifItemId(heif_item_id &exifItemId)
-{
-    exifItemId = 0xffff;
-    std::vector<heif_item_id> itemIdList;
-    GetAllItemId(itemIdList);
-    for (auto id : itemIdList) {
-        auto type = GetItemType(id);
-        if (type == EXIF_ID) {
-            exifItemId = id;
-            return heif_error_ok;
-        }
-    }
-
-    return heif_invalid_exif_data;
 }
 
 heif_error HeifParser::SetMetadata(const std::shared_ptr<HeifImage> &image, const std::vector<uint8_t> &data,

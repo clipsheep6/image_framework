@@ -94,7 +94,7 @@ HWTEST_F(HeifExifMetadataAccessorTest, Read002, TestSize.Level3)
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     HeifExifMetadataAccessor imageAccessor(stream);
     uint32_t result = imageAccessor.Read();
-    ASSERT_EQ(result, ERR_MEDIA_VALUE_INVALID);
+    ASSERT_EQ(result, ERR_IMAGE_SOURCE_DATA);
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Read002 end";
 }
@@ -212,7 +212,7 @@ HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
     ASSERT_TRUE(stream->Open(OpenMode::ReadWrite));
     HeifExifMetadataAccessor imageAccessor(stream);
     uint32_t result = imageAccessor.Read();
-    ASSERT_EQ(result, ERR_MEDIA_VALUE_INVALID);
+    ASSERT_EQ(result, ERR_IMAGE_SOURCE_DATA);
     auto exifMetadata = imageAccessor.Get();
 
     if (exifMetadata == nullptr) {
@@ -228,12 +228,18 @@ HWTEST_F(HeifExifMetadataAccessorTest, Append001, TestSize.Level3)
     ASSERT_EQ(retSet, true);
     retSet = exifMetadata->SetValue("GPSLongitudeRef", "E");
     ASSERT_EQ(retSet, true);
-
     uint32_t errcode = imageAccessor.Write();
     ASSERT_EQ(errcode, SUCCESS);
 
-    exifMetadata = imageAccessor.Get();
-    GetProperty(exifMetadata, "Model");
+    std::shared_ptr<MetadataStream> newStream = std::make_shared<FileMetadataStream>(IMAGE_INPUT_HEIF_APPEND_EXIF_PATH);
+    ASSERT_TRUE(newStream->Open(OpenMode::ReadWrite));
+    HeifExifMetadataAccessor imageAccessorNew(newStream);
+    result = imageAccessorNew.Read();
+    ASSERT_EQ(result, 0);
+    auto newExifdata = imageAccessorNew.Get();
+    ASSERT_EQ(GetProperty(exifMetadata, "Model"), "test");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLatitudeRef"), "N");
+    ASSERT_EQ(GetProperty(exifMetadata, "GPSLongitudeRef"), "E");
 
     GTEST_LOG_(INFO) << "HeifExifMetadataAccessorTest: Append001 end";
 }

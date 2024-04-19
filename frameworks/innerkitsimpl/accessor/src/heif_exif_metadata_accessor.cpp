@@ -32,6 +32,8 @@ namespace OHOS {
 namespace Media {
 using namespace ImagePlugin;
 
+const auto EXIF_ID = "Exif\0\0";
+
 HeifExifMetadataAccessor::HeifExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
     : AbstractExifMetadataAccessor(stream)
 {}
@@ -50,7 +52,7 @@ uint32_t HeifExifMetadataAccessor::Read()
     DataBuf dataBuf;
     if (!GetExifItemData(parser, dataBuf)) {
         IMAGE_LOGE("The EXIF value is invalid.");
-        return ERR_MEDIA_VALUE_INVALID;
+        return ERR_IMAGE_SOURCE_DATA;
     }
 
     size_t byteOrderPos;
@@ -117,8 +119,8 @@ uint32_t HeifExifMetadataAccessor::WriteMetadata(DataBuf &dataBuf)
 
     auto image = parser->GetPrimaryImage();
     ImagePlugin::heif_item_id exifItemId;
-    heif_error result = parser->GetExifItemId(exifItemId);
-    if (result == heif_error_ok) {
+
+    if (GetExifItemIdByHeifParser(parser, exifItemId)) {
         if (parser->UpdateExifMetadata(image, dataBuf.CData(), dataBuf.Size(), exifItemId)
                         != heif_error::heif_error_ok) {
             IMAGE_LOGE("The EXIF data failed to update values.");
@@ -174,8 +176,7 @@ bool HeifExifMetadataAccessor::CheckTiffPos(byte *buff, size_t size, size_t &byt
 bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &parser, DataBuf &dataBuf)
 {
     ImagePlugin::heif_item_id exifItemId = 0xffff;
-    heif_error result = parser->GetExifItemId(exifItemId);
-    if (result != heif_error_ok) {
+    if (!GetExifItemIdByHeifParser(parser, exifItemId)) {
         return false;
     }
 
@@ -185,6 +186,24 @@ bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &pars
     }
     dataBuf = DataBuf(item.data(), item.size());
     return true;
+}
+
+bool HeifExifMetadataAccessor::GetExifItemIdByHeifParser(std::shared_ptr<ImagePlugin::HeifParser> &parser,
+    ImagePlugin::heif_item_id &exifItemId)
+{
+    auto image = parser->GetPrimaryImage();
+    const std::vector<std::shared_ptr<HeifMetadata>> metadata = image->GetAllMetadata();
+    for (auto meta: metadata) {
+        if (meta == nullptr) {
+            continue;
+        }
+
+        if (meta->itemType == EXIF_ID) {
+            exifItemId = meta->itemId;
+            return true;
+        }
+    }
+    return false;
 }
 } // namespace Media
 } // namespace OHOS

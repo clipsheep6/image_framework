@@ -21,7 +21,6 @@
 #include "data_buf.h"
 #include "exif_metadata.h"
 #include "metadata_stream.h"
-// #include "output_data_stream.h"
 #include "ext_wstream.h"
 
 namespace OHOS {

@@ -36,6 +36,8 @@ public:
 private:
     bool CheckTiffPos(byte* buff, size_t size, size_t &byteOrderPos);
     bool GetExifItemData(std::shared_ptr<ImagePlugin::HeifParser> &parser, DataBuf &dataBuf);
+    bool GetExifItemIdByHeifParser(std::shared_ptr<ImagePlugin::HeifParser> &parser,
+        ImagePlugin::heif_item_id &exifItemId);
     uint32_t WriteMetadata(DataBuf &dataBuf);
 };
 } // namespace Media

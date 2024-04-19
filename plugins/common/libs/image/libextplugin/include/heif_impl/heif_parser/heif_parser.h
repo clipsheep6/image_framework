@@ -68,8 +68,6 @@ public:
     heif_error UpdateExifMetadata(const std::shared_ptr<HeifImage> &master_image, const uint8_t *data,
                                   uint32_t size, heif_item_id itemId);
 
-    heif_error GetExifItemId(heif_item_id &exifItemId);
-
 private:
     // stream
     std::shared_ptr<HeifInputStream> inputStream_;
