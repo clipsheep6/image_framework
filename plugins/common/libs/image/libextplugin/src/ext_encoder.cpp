@@ -268,7 +268,8 @@ uint32_t ExtEncoder::EncodeImageByBitmap(SkBitmap& bitmap, bool needExif, SkWStr
     pixelmap_->GetImageInfo(imageInfo);
     if (!needExif || pixelmap_->GetExifMetadata() == nullptr ||
         pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
-        if (!SkEncodeImage(&outStream, bitmap, encodeFormat_, opts_.quality, (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
+        if (!SkEncodeImage(&outStream, bitmap, encodeFormat_, opts_.quality,
+            (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
             IMAGE_LOGE("Failed to encode image");
             ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Failed to encode image");
             return ERR_IMAGE_ENCODE_FAILED;
@@ -282,7 +283,8 @@ uint32_t ExtEncoder::EncodeImageByBitmap(SkBitmap& bitmap, bool needExif, SkWStr
     TiffParser::Encode(&dataPtr, datSize, exifData);
     DataBuf exifBlob(dataPtr, datSize);
     MetadataWStream tStream;
-    if (!SkEncodeImage(&tStream, bitmap, encodeFormat_, opts_.quality, (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
+    if (!SkEncodeImage(&tStream, bitmap, encodeFormat_, opts_.quality,
+        (SkCodec::ExternalData*)(pixelmap_->GetDngExternalData()))) {
         IMAGE_LOGE("Failed to encode image");
         ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Failed to encode image");
         return ERR_IMAGE_ENCODE_FAILED;

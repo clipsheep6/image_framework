@@ -59,7 +59,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/x-raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -99,7 +100,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -111,18 +113,18 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
             /**
              * @tc.steps: step3. compress the pixel map to dng jpeg WEBP PNG file.
              * @tc.expected: step3. pack pixel map success and compare the jpeg compress file size.
              */            
-            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);            
+            int64_t packDngSize = OHOS::ImageSourceUtil::PackDNGImage(IMAGE_OUTPUT_DNG_PATH, pixelMap);
             ASSERT_NE(packDngSize, 0);
-            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);            
+            int64_t packJpegSize = OHOS::ImageSourceUtil::PackJPEGImage(IMAGE_OUTPUT_JPEG_PATH, pixelMap);
             ASSERT_NE(packJpegSize, 0);
-            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);            
+            int64_t packWebpSize = OHOS::ImageSourceUtil::PackWEBPImage(IMAGE_OUTPUT_WEBP_PATH, pixelMap);
             ASSERT_NE(packWebpSize, 0);
-            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);            
+            int64_t packPngSize = OHOS::ImageSourceUtil::PackPNGImage(IMAGE_OUTPUT_PNG_PATH, pixelMap);
             ASSERT_NE(packPngSize, 0);
         }
 
@@ -140,7 +142,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/x-raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -180,7 +183,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -216,14 +220,15 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
              * @tc.steps: step2. decode image source to pixel map using pixel format BGRA_8888.
              * @tc.expected: step2. decode image source to pixel map success.
              */
-            DecodeOptions decodeOpts;            
+            DecodeOptions decodeOpts;
             decodeOpts.desiredPixelFormat = PixelFormat::RGBA_F16;
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
@@ -256,7 +261,8 @@ namespace OHOS {
              */
             uint32_t errorCode = 0;
             SourceOptions opts;
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -285,7 +291,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/png";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
         }
@@ -310,7 +317,8 @@ namespace OHOS {
             ASSERT_EQ(ret, true);
             uint32_t errorCode = 0;
             SourceOptions opts;
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(buffer, bufferSize, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(buffer, bufferSize, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -358,7 +366,8 @@ namespace OHOS {
             ASSERT_EQ(isOpen, true);
             uint32_t errorCode = 0;
             SourceOptions opts;
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(std::move(fs), opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(std::move(fs), opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -391,7 +400,8 @@ namespace OHOS {
              */
             uint32_t errorCode = 0;
             SourceOptions opts;
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -429,8 +439,8 @@ namespace OHOS {
         HWTEST_F(ImageSourceRawTest, RawImageWrongDecode011, TestSize.Level3)
         {
             /**
-             * @tc.steps: step1. create image source by buffer source stream and default format hit, modify data buffer to wrong
-             * format.
+             * @tc.steps: step1. create image source by buffer source stream and default format hit,
+             *modify data buffer to wrong format.
              * @tc.expected: step1. create image source success.
              */
             size_t bufferSize = 0;
@@ -443,7 +453,8 @@ namespace OHOS {
             buffer[0] = 43;
             uint32_t errorCode = 0;
             SourceOptions opts;
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(buffer, bufferSize, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(buffer, bufferSize, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -470,7 +481,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -499,7 +511,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -528,7 +541,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -557,7 +571,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -569,7 +584,7 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);            
+            ASSERT_NE(pixelMap.get(), nullptr);
         }
 
         /**
@@ -586,7 +601,8 @@ namespace OHOS {
             uint32_t errorCode = 0;
             SourceOptions opts;
             opts.formatHint = "image/raw";
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_RAW_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -616,7 +632,8 @@ namespace OHOS {
             SourceOptions opts;
             std::string IMAGE_ENCODEDFORMAT = "image/x-raw";
             opts.formatHint = IMAGE_ENCODEDFORMAT;
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource =
+                ImageSource::CreateImageSource(IMAGE_INPUT_DNG_PATH, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
@@ -646,6 +663,6 @@ namespace OHOS {
             pixelMap->GetImageInfo(imageinfo2);
             EXPECT_EQ(imageinfo2.encodedFormat.empty(), false);
             GTEST_LOG_(INFO) << "ImageSourceRawTest: RawGetEncodedFormat001 imageinfo2: " << imageinfo2.encodedFormat;
-        }    
+        }
     } // namespace Multimedia
 } // namespace OHOS
