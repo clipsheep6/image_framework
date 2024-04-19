@@ -1202,6 +1202,5 @@ HWTEST_F(JpgYuvTest, jpgYuvTest031, TestSize.Level3)
     }
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest031 end";
 }
-
 }
 }

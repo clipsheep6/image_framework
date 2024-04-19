@@ -40,15 +40,6 @@ static const uint8_t NUM_2 = 2;
 
 #ifndef LIBYUV_ENABLE
 static const int32_t degrees360 = 360;
-
-constexpr int32_t INT_128 = 128;
-
-constexpr int32_t INT_255 = 255;
-const float YUV_TO_RGB_PARAM_1 = 1.402;
-const float YUV_TO_RGB_PARAM_2 = 0.344136;
-const float YUV_TO_RGB_PARAM_3 = 0.714136;
-const float YUV_TO_RGB_PARAM_4 = 1.772;
-
 #else
 static const uint8_t NUM_4 = 4;
 constexpr int32_t DCAMERA_MEMORY_OPT_ERROR = -1;
@@ -771,9 +762,6 @@ uint8_t PixelYuvUtils::GetYuv420V(uint32_t x, uint32_t y, YUVDataInfo &info, Pix
     return SUCCESS;
 }
 
-
-
-
 #ifdef LIBYUV_ENABLE
 bool PixelYuvUtils::BGRAToYuv420(const uint8_t *src, uint8_t *dst, int srcW, int srcH, PixelFormat pixelFormat)
 {
@@ -833,7 +821,6 @@ bool PixelYuvUtils::Yuv420ToARGB(const uint8_t *sample, uint8_t *dst_argb,
 }
 #else
 
-
 bool PixelYuvUtils::BGRAToYuv420(const uint8_t *src, YuvImageInfo &srcInfo, uint8_t *dst, YuvImageInfo &dstInfo)
 {
     if (YuvScale(const_cast<uint8_t *>(src), srcInfo, dst, dstInfo, SWS_BICUBIC) != SUCCESS) {
@@ -843,10 +830,7 @@ bool PixelYuvUtils::BGRAToYuv420(const uint8_t *src, YuvImageInfo &srcInfo, uint
     return true;
 }
 
-
-
-bool PixelYuvUtils::Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, 
-    YuvImageInfo &dstInfo)
+bool PixelYuvUtils::Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, YuvImageInfo &dstInfo)
 {
     if (YuvScale(const_cast<uint8_t *>(in), srcInfo, out, dstInfo, SWS_BICUBIC) != SUCCESS) {
         IMAGE_LOGE("Yuv420ToBGRA failed");
@@ -855,31 +839,11 @@ bool PixelYuvUtils::Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8
     return true;
 }
 
-bool PixelYuvUtils::Yuv420ToARGB(const uint8_t *in, uint8_t *out, YUVDataInfo &info,
-    PixelFormat pixelFormat)
+bool PixelYuvUtils::Yuv420ToARGB(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, YuvImageInfo &dstInfo)
 {
-    if (!in || !out || info.y_stride <= 0 || info.y_height <= 0) {
+    if (YuvScale(const_cast<uint8_t *>(in), srcInfo, out, dstInfo, SWS_BICUBIC) != SUCCESS) {
+        IMAGE_LOGE("Yuv420ToBGRA failed");
         return false;
-    }
-    for (int32_t i = 0; i < info.y_height; i++) {
-        for (int32_t j = 0; j < info.y_stride; j++) {
-            uint8_t Y = GetYuv420Y(j, i, info, in);
-            uint8_t U = GetYuv420U(j, i, info, pixelFormat, in);
-            uint8_t V = GetYuv420V(j, i, info, pixelFormat, in);
-
-            int32_t colorR = Y + YUV_TO_RGB_PARAM_1 * (V - INT_128);
-            int32_t colorG = Y - YUV_TO_RGB_PARAM_2 * (U - INT_128) - YUV_TO_RGB_PARAM_3 * (V - INT_128);
-            int32_t colorB = Y + YUV_TO_RGB_PARAM_4 * (U - INT_128);
-
-            colorR = colorR > INT_255 ? INT_255 : (colorR < 0 ? 0 : colorR);
-            colorG = colorG > INT_255 ? INT_255 : (colorG < 0 ? 0 : colorG);
-            colorB = colorB > INT_255 ? INT_255 : (colorB < 0 ? 0 : colorB);
-
-            *out++ = 0xFF;
-            *out++ = colorR;
-            *out++ = colorG;
-            *out++ = colorB;
-        }
     }
     return true;
 }

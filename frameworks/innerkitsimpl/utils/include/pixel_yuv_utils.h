@@ -95,8 +95,7 @@ public:
 
     static bool Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, 
         YuvImageInfo &dstInfo);
-    static bool Yuv420ToARGB(const uint8_t *in, uint8_t *out, YUVDataInfo &info,
-        PixelFormat pixelFormat);
+    static bool Yuv420ToARGB(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, YuvImageInfo &dstInfo);
     static bool YuvTranslate(const uint8_t *srcPixels, YUVDataInfo &info, uint8_t *dstPixels, XYaxis &xyAxis,
         const PixelFormat &format);
     static bool Yuv420WritePixels(const YUVDataInfo &yuvDataInfo, uint8_t *srcPixels, const PixelFormat &format,
