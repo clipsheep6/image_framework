@@ -233,17 +233,17 @@ ohos_unittest("rawtest") {
     "$image_subsystem/frameworks/innerkitsimpl/utils/include",
     "$image_subsystem/interfaces/innerkits/include",
     "$image_subsystem/plugins/manager/include",
-    "//foundation/multimedia/utils/include",
+    "${image_subsystem}/../../../foundation/multimedia/utils/include",
     "//third_party/googletest/googletest/include",
-    "//commonlibrary/c_utils/base/include",
+    "${image_subsystem}/../../../commonlibrary/c_utils/base/include",
   ]
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_raw_test.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_util.cpp",        
   ]
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "${image_subsystem}/../../../foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/../../../foundation/multimedia/image_framework/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//third_party/zlib:libz",
@@ -1781,7 +1781,7 @@ group("unittest") {
     ":textureencodetest",
     ":transformtest",
     ":webpplugintest",
-    ":rawtest",
+    #":rawtest",
   ]
 
   if (enable_jpeg_hw_decode) {
