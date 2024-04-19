@@ -35,11 +35,12 @@ struct ConvertDataInfo {
     ColorSpace colorSpace = ColorSpace::SRGB;
 };
 
-class ImageFormatConvert {
+class ImageFormatConvert
+{
+    friend class ImageFormatConvertTest;
 public:
     static uint32_t ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo);
-    static uint32_t ConvertImageFormat(const std::shared_ptr<PixelMap> srcPiexlMap,
-                                       std::shared_ptr<PixelMap> &destPiexlMap, PixelFormat destFormat);
+    static uint32_t ConvertImageFormat(std::shared_ptr<PixelMap> &srcPiexlMap, PixelFormat destFormat);
 private:
     static bool IsValidSize(const Size &size);
     static bool CheckConvertDataInfo(const ConvertDataInfo &convertDataInfo);

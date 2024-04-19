@@ -39,11 +39,6 @@
 #undef LOG_TAG
 #define LOG_TAG "PixelMapNapi"
 
-using OHOS::HiviewDFX::HiLog;
-namespace {
-    static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_TAG_DOMAIN_ID_IMAGE_FORAMT_CONVERT_NAPI,
-        "PixelMapNapi" };
-}
 namespace {
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
@@ -3269,7 +3264,6 @@ static bool IsMatchFormatType(FormatType type, PixelFormat format)
     }
 }
 
-
 STATIC_EXEC_FUNC(GeneralError)
 {
     auto context = static_cast<PixelMapAsyncContext*>(data);
@@ -3304,7 +3298,7 @@ static uint32_t GetNativePixelMapInfo(napi_env &env, PixelMapAsyncContext* conte
     IMG_NAPI_CHECK_BUILD_ERROR(IsMatchFormatType(context->dstFormatType, destPixelFormat),
         BuildContextError(env, context->error, "dest format is wrong!", ERR_IMAGE_INVALID_PARAMETER),
         context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
-    IMG_NAPI_CHECK_BUILD_ERROR(IsMatchFormatType(context->srcFormatType, srcPixelMap->GetPixelFormat()),
+    IMG_NAPI_CHECK_BUILD_ERROR(IsMatchFormatType(context->srcFormatType, context->rPixelMap->GetPixelFormat()),
         BuildContextError(env, context->error, "source format is wrong!", ERR_IMAGE_INVALID_PARAMETER),
         context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
     return SUCCESS;
@@ -3329,12 +3323,14 @@ static uint32_t GetNativeConvertInfo(napi_env &env, napi_callback_info &info, Pi
     IMG_NAPI_CHECK_BUILD_ERROR(IMG_IS_OK(status),
         BuildContextError(env, context->error, "Get PixelMapNapi property failed!", ERR_IMAGE_PROPERTY_NOT_EXIST),
         context->status = ERR_IMAGE_PROPERTY_NOT_EXIST, ERR_IMAGE_PROPERTY_NOT_EXIST);
+
     bool isPixelFormat = false;
     if (context->destFormat == PixelFormat::UNKNOWN) {
         isPixelFormat = false;
     } else {
         isPixelFormat = true;
     }
+
     if (isPixelFormat) {
             return GetNativePixelMapInfo(env, context);
     }
@@ -3350,7 +3346,6 @@ static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType sr
     napi_get_undefined(env, &result);
     napi_status status;
     if (context == nullptr) {
-        HiLog::Error(LABEL, "context is nullptr");
         return nullptr;
     }
     context->status = SUCCESS;
@@ -3369,11 +3364,11 @@ static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType sr
         IMG_CREATE_CREATE_ASYNC_WORK(env, status, (workName + "GeneralError").c_str(),
         GeneralErrorExec, GeneralErrorComplete, asyncContext, asyncContext->work),
         result);
-    std::shared_ptr<PixelMap> destPixelMap = nullptr;
-    context->status = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destPixelMap,
-                                                             context->destFormat);
+
+    context->status = ImageFormatConvert::ConvertImageFormat(context->rPixelMap, context->destFormat);
+
     if (context->status == SUCCESS) {
-        result = PixelMapNapi::CreatePixelMap(env, destPixelMap);
+        result = PixelMapNapi::CreatePixelMap(env, context->rPixelMap);
         return result;
     }
     return result;
@@ -3403,58 +3398,46 @@ static napi_value PixelFormatConvert(napi_env env, napi_callback_info &info, Pix
             result = YUVToRGB(env, info, context);
         }
     }
-
-    HiLog::Error(LABEL,"PixelFormatConvert end + function: %{public}s",__func__);
     return result;
 }
 
 napi_value PixelMapNapi::ConvertPixelMapFormat(napi_env env, napi_callback_info info)
 {
     NapiValues nVal;
-    napi_value argValue[NUM_1];
-    size_t argc = NUM_1;
+    napi_value argValue[NUM_2];
+    size_t argc = NUM_2;
     nVal.argc = argc;
     nVal.argv = argValue;
-    
-    HiLog::Error(LABEL,"ConvertFormat IN");
-    if (!prepareNapiEnv(env, info, &nVal))
-    {
+
+    if (!prepareNapiEnv(env, info, &nVal)) {
         return nVal.result;
     }
+    nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
     if (nVal.argc >= 1 && ImageNapiUtils::getType(env, nVal.argv[nVal.argc - 1]) == napi_function) {
         napi_create_reference(env, nVal.argv[nVal.argc - 1], nVal.refCount, &(nVal.context->callbackRef));
     }
-    if (!nVal.context)
-    {
-        HiLog::Error(LABEL, "Invalid context");
-        return nullptr; 
+
+    if (!nVal.context) {
+        return nullptr;
     }
     napi_get_undefined(env, &nVal.result);
-    if (nVal.argc != NUM_1)
-    {
+    if (nVal.argc != NUM_1) {
         IMAGE_LOGE("Invalid args count");
         nVal.context->status = ERR_IMAGE_INVALID_PARAMETER;
     }
-    if (nVal.context->callbackRef == nullptr)
-    {
+
+    if (nVal.context->callbackRef == nullptr) {
         napi_create_promise(env, &(nVal.context->deferred), &(nVal.result));
     } else {
         napi_get_undefined(env, &(nVal.result));
     }
-    if (ImageSourceNapi::srcPixelMap_ != nullptr) {
-        srcPixelMap = ImageSourceNapi::srcPixelMap_;
-    }
-    if (IMG_NOT_NULL(srcPixelMap)) {
-        HiLog::Error(LABEL,"srcPixelMap is not null");
-    } else {
-        HiLog::Error(LABEL,"srcPixelMap is null");
-    }
+
     napi_value jsArg = nVal.argv[0];
     int32_t pixelFormatInt;
     napi_get_value_int32(env, jsArg, &pixelFormatInt);
     nVal.context->destFormat = static_cast<PixelFormat>(pixelFormatInt);
-    
     nVal.result = PixelFormatConvert(env, info, nVal.context.get());
+    nVal.context->nConstructor->nativePixelMap_ = nVal.context->rPixelMap;
     if (nVal.result == nullptr) {
         return nVal.result;
     }

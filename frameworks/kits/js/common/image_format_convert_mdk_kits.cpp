@@ -78,7 +78,7 @@ static int32_t ImageConvertExec(ImageFormatConvertArgs *args)
         return IMAGE_RESULT_INVALID_PARAMETER;
     }
 
-    uint32_t ret = ImageFormatConvert::ConvertImageFormat(args->srcPixelMap, args->destPixelMap, args->destPixelFormat);
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(args->srcPixelMap, args->destPixelFormat);
     if (ret != IMAGE_RESULT_SUCCESS) {
         HiLog::Error(LABEL, "fail to convert format");
         return ret;

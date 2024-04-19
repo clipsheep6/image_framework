@@ -95,8 +95,7 @@ uint32_t ImageFormatConvert::ConvertImageFormat(const ConvertDataInfo &srcDataIn
     return SUCCESS;
 }
 
-uint32_t ImageFormatConvert::ConvertImageFormat(const std::shared_ptr<PixelMap> srcPiexlMap,
-    std::shared_ptr<PixelMap> &destPiexlMap, PixelFormat destFormat)
+uint32_t ImageFormatConvert::ConvertImageFormat(std::shared_ptr<PixelMap> &srcPiexlMap, PixelFormat destFormat)
 {
     if (srcPiexlMap == nullptr) {
         IMAGE_LOGD("source pixel map is null");
@@ -132,7 +131,7 @@ uint32_t ImageFormatConvert::ConvertImageFormat(const std::shared_ptr<PixelMap> 
     destInfo.colorSpace = srcInfo.colorSpace;
     destInfo.pixelFormat = destFormat;
     destInfo.size = srcInfo.size;
-    if (!MakeDestPixelMap(destPiexlMap, destBuffer, destBufferSize, destInfo, srcPiexlMap->GetAllocatorType())) {
+    if (!MakeDestPixelMap(srcPiexlMap, destBuffer, destBufferSize, destInfo, srcPiexlMap->GetAllocatorType())) {
         IMAGE_LOGD("create pixel map failed");
         return ERR_IMAGE_PIXELMAP_CREATE_FAILED;
     }
