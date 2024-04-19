@@ -196,7 +196,7 @@ namespace OHOS {
             std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(pixelMap, nullptr);
-            ASSERT_NE(pixelMap.get(), nullptr);        
+            ASSERT_NE(pixelMap.get(), nullptr);
             /**
              * @tc.steps: step3. compress the pixel map to dng jpeg WEBP PNG file.
              * @tc.expected: step3. pack pixel map success and compare the jpeg compress file size.
