@@ -15,6 +15,8 @@
 
 #include "vpe_utils.h"
 
+#include <dlfcn.h>
+
 #include "hilog/log.h"
 #include "log_tags.h"
 #include "image_log.h"
@@ -22,7 +24,6 @@
 #include "metadata_convertor.h"
 #include "external_window.h"
 #include "native_window.h"
-#include <dlfcn.h>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -36,13 +37,15 @@ using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 static constexpr uint32_t TRANSFUNC_OFFSET = 8;
 static constexpr uint32_t MATRIX_OFFSET = 16;
 static constexpr uint32_t RANGE_OFFSET = 21;
+constexpr uint8_t INDEX_ZERO = 0;
+constexpr uint8_t INDEX_ONE = 1;
+constexpr uint8_t INDEX_TWO = 2;
 const static char* VPE_SO_NAME = "libvideoprocessingengine.z.so";
-void* VpeUtils::vpeHandle_ = nullptr;
-int32_t VpeUtils::instanceHdrId_ = VPE_ERROR_FAILED;
-int32_t VpeUtils::instanceSrId_ = VPE_ERROR_FAILED;
 using CreateT = int32_t (*)(int32_t*);
-using ImageProcessT =
-    int32_t (*)(int32_t, OHNativeWindowBuffer*, OHNativeWindowBuffer*);
+using ComposeImageT =
+    int32_t (*)(int32_t, OHNativeWindowBuffer*, OHNativeWindowBuffer*, OHNativeWindowBuffer*, bool);
+using DecomposeImageT =
+    int32_t (*)(int32_t, OHNativeWindowBuffer*, OHNativeWindowBuffer*, OHNativeWindowBuffer*);
 using DestoryT = int32_t (*)(int32_t*);
 
 VpeUtils::VpeUtils()
@@ -51,170 +54,97 @@ VpeUtils::VpeUtils()
 
 VpeUtils::~VpeUtils()
 {
-    if (instanceHdrId_ != VPE_ERROR_FAILED) {
-        ColorSpaceConverterDestory(&instanceHdrId_);
-        instanceHdrId_ = VPE_ERROR_FAILED;
-    }
-    if (instanceSrId_ != VPE_ERROR_FAILED) {
-        DetailEnhancerDestory(&instanceSrId_);
-        instanceSrId_ = VPE_ERROR_FAILED;
-    }
-    dlclose(vpeHandle_);
 }
 
-bool VpeUtils::CheckCapacityAi(bool &capSr, bool &capHdr)
+int32_t VpeUtils::ColorSpaceConverterCreate(void* handle, int32_t* instanceId)
 {
-    capSr = false;
-    capHdr = false;
-    int32_t instanceHdrId = VPE_ERROR_FAILED;
-
-    auto res = ColorSpaceConverterCreate(&instanceHdrId);
-    if (res == VPE_ERROR_OK && instanceHdrId != VPE_ERROR_FAILED) {
-        capSr = true;
-    }
-
-    int32_t instanceSrId = VPE_ERROR_FAILED;
-
-    res = DetailEnhancerCreate(&instanceSrId);
-    if (res == VPE_ERROR_OK && instanceSrId != VPE_ERROR_FAILED) {
-        capHdr = true;
-    }
-
-    if (capSr || capHdr) {
-        return true;
-    }
-    return false;
-}
-
-int32_t VpeUtils::ColorSpaceConverterCreate(int32_t* instanceId)
-{
-    if (!vpeHandle_) {
-        vpeHandle_ = dlopen(VPE_SO_NAME, RTLD_LAZY);
-    }
-    if (vpeHandle_ == nullptr) {
+    if (handle == nullptr) {
         return VPE_ERROR_FAILED;
     }
-    CreateT create = (CreateT)dlsym(vpeHandle_, "ColorSpaceConverter_Create");
+    CreateT create = (CreateT)dlsym(handle, "ColorSpaceConverterCreate");
     if (!create) {
         return VPE_ERROR_FAILED;
     }
     return create(instanceId);
 }
 
-int32_t VpeUtils::ColorSpaceConverterDestory(int32_t* instanceId)
+int32_t VpeUtils::ColorSpaceConverterDestory(void* handle, int32_t* instanceId)
 {
-    if (*instanceId == VPE_ERROR_FAILED) {
+    if (*instanceId == VPE_ERROR_FAILED || handle == nullptr) {
         return VPE_ERROR_FAILED;
     }
-    if (!vpeHandle_) {
-        vpeHandle_ = dlopen(VPE_SO_NAME, RTLD_LAZY);
-        if (vpeHandle_ == nullptr) {
-            return VPE_ERROR_FAILED;
-        }
-    }
-    DestoryT destory = (DestoryT)dlsym(vpeHandle_, "ColorSpaceConverter_Destory");
+    DestoryT destory = (DestoryT)dlsym(handle, "ColorSpaceConverterDestroy");
     if (!destory) {
         return VPE_ERROR_FAILED;
     }
     return destory(instanceId);
 }
 
-int32_t VpeUtils::ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output)
+int32_t VpeUtils::ColorSpaceConverterComposeImage(VpeSurfaceBuffers& sb, bool legacy)
 {
     std::lock_guard<std::mutex> lock(vpeMtx_);
-    if (!vpeHandle_) {
-        vpeHandle_ = dlopen(VPE_SO_NAME, RTLD_LAZY);
-        if (vpeHandle_ == nullptr) {
-            return VPE_ERROR_FAILED;
-        }
+    void* vpeHandle = dlopen(VPE_SO_NAME, RTLD_LAZY);
+    if (vpeHandle == nullptr) {
+        return VPE_ERROR_FAILED;
     }
+    
     int32_t res;
-    if (instanceHdrId_ == VPE_ERROR_FAILED) {
-        res = ColorSpaceConverterCreate(&instanceHdrId_);
-        if (instanceHdrId_ == VPE_ERROR_FAILED || res != VPE_ERROR_OK) {
-            instanceHdrId_ = VPE_ERROR_FAILED;
-            return VPE_ERROR_FAILED;
-        }
-    }
-    ImageProcessT imageProcess = (ImageProcessT)dlsym(vpeHandle_, "ColorSpaceConverter_ProcessImage");
-    if (!imageProcess) {
+    int32_t instanceId;
+    res = ColorSpaceConverterCreate(vpeHandle, &instanceId);
+    if (instanceId == VPE_ERROR_FAILED || res != VPE_ERROR_OK) {
         return VPE_ERROR_FAILED;
     }
-    if (input == nullptr || output == nullptr) {
-        return VPE_ERROR_FAILED;
-    }
-    OHNativeWindowBuffer* sdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&input);
 
-    OHNativeWindowBuffer* hdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&output);
-    res = imageProcess(instanceHdrId_, sdr, hdr);
+    ComposeImageT composeImage = (ComposeImageT)dlsym(vpeHandle, "ColorSpaceConverterComposeImage");
+    if (!composeImage) {
+        return VPE_ERROR_FAILED;
+    }
+    if (sb.sdr == nullptr || sb.gainmap == nullptr || sb.hdr == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+    OHNativeWindowBuffer* sdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&sb.sdr);
+    OHNativeWindowBuffer* gainmap = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&sb.gainmap);
+    OHNativeWindowBuffer* hdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&sb.hdr);
+    res = composeImage(instanceId, sdr, gainmap, hdr, legacy);
     OH_NativeWindow_DestroyNativeWindowBuffer(sdr);
+    OH_NativeWindow_DestroyNativeWindowBuffer(gainmap);
     OH_NativeWindow_DestroyNativeWindowBuffer(hdr);
+    ColorSpaceConverterDestory(vpeHandle, &instanceId);
+    dlclose(vpeHandle);
     return res;
 }
 
-int32_t VpeUtils::DetailEnhancerCreate(int32_t* instanceId)
-{
-    if (!vpeHandle_) {
-        vpeHandle_ = dlopen(VPE_SO_NAME, RTLD_LAZY);
-    }
-    if (vpeHandle_ == nullptr) {
-        return VPE_ERROR_FAILED;
-    }
-    CreateT create = (CreateT)dlsym(vpeHandle_, "DetailEnhancer_Create");
-    if (!create) {
-        return VPE_ERROR_FAILED;
-    }
-    return create(instanceId);
-}
-
-int32_t VpeUtils::DetailEnhancerDestory(int32_t* instanceId)
-{
-    if (*instanceId == VPE_ERROR_FAILED) {
-        return VPE_ERROR_FAILED;
-    }
-    if (!vpeHandle_) {
-        vpeHandle_ = dlopen(VPE_SO_NAME, RTLD_LAZY);
-        if (vpeHandle_ == nullptr) {
-            return VPE_ERROR_FAILED;
-        }
-    }
-    DestoryT destory = (DestoryT)dlsym(vpeHandle_, "DetailEnhancer_Destory");
-    if (!destory) {
-        return VPE_ERROR_FAILED;
-    }
-    return destory(instanceId);
-}
-
-int32_t VpeUtils::DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output)
+int32_t VpeUtils::ColorSpaceConverterDecomposeImage(VpeSurfaceBuffers& sb)
 {
     std::lock_guard<std::mutex> lock(vpeMtx_);
-    if (!vpeHandle_) {
-        vpeHandle_ = dlopen(VPE_SO_NAME, RTLD_LAZY);
-        if (vpeHandle_ == nullptr) {
-            return VPE_ERROR_FAILED;
-        }
+    void* vpeHandle = dlopen(VPE_SO_NAME, RTLD_LAZY);
+    if (vpeHandle == nullptr) {
+        return VPE_ERROR_FAILED;
     }
+ 
     int32_t res;
-    if (instanceSrId_ == VPE_ERROR_FAILED) {
-        res = DetailEnhancerCreate(&instanceSrId_);
-        if (instanceSrId_ == VPE_ERROR_FAILED || res != VPE_ERROR_OK) {
-            instanceSrId_ = VPE_ERROR_FAILED;
-            return VPE_ERROR_FAILED;
-        }
-    }
-    ImageProcessT imageProcess = (ImageProcessT)dlsym(vpeHandle_, "DetailEnhancer_ProcessImage");
-    if (!imageProcess) {
+    int32_t instanceId;
+    res = ColorSpaceConverterCreate(vpeHandle, &instanceId);
+    if (instanceId == VPE_ERROR_FAILED || res != VPE_ERROR_OK) {
         return VPE_ERROR_FAILED;
     }
-    if (input == nullptr || output == nullptr) {
+    
+    DecomposeImageT decomposeImage = (DecomposeImageT)dlsym(vpeHandle, "ColorSpaceConverterDecomposeImage");
+    if (!decomposeImage) {
         return VPE_ERROR_FAILED;
     }
-    OHNativeWindowBuffer* sdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&input);
-
-    OHNativeWindowBuffer* hdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&output);
-    res = imageProcess(instanceSrId_, sdr, hdr);
+    if (sb.sdr == nullptr || sb.gainmap == nullptr || sb.hdr == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+    OHNativeWindowBuffer* sdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&sb.sdr);
+    OHNativeWindowBuffer* gainmap = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&sb.gainmap);
+    OHNativeWindowBuffer* hdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&sb.hdr);
+    res = decomposeImage(instanceId, hdr, sdr, gainmap);
     OH_NativeWindow_DestroyNativeWindowBuffer(sdr);
+    OH_NativeWindow_DestroyNativeWindowBuffer(gainmap);
     OH_NativeWindow_DestroyNativeWindowBuffer(hdr);
+    ColorSpaceConverterDestory(vpeHandle, &instanceId);
+    dlclose(vpeHandle);
     return res;
 }
 
@@ -314,6 +244,73 @@ bool VpeUtils::SetSbStaticMetadata(sptr<SurfaceBuffer>& buffer, const std::vecto
 bool VpeUtils::GetSbStaticMetadata(const sptr<SurfaceBuffer>& buffer, std::vector<uint8_t>& staticMetadata)
 {
     return buffer->GetMetadata(ATTRKEY_HDR_STATIC_METADATA, staticMetadata) == GSERROR_OK;
+}
+
+static HDRVividGainmapMetadata GetDefaultGainmapMetadata()
+{
+    const float gainmapMax = 1.0f;
+    const float gainmapMin = 0.0f;
+    const float gamma = 1.0f;
+    const float offsetDenominator = 64.0;
+    const float baseOffset = 1.0 / offsetDenominator;
+    const float alternateOffset = 1.0 / offsetDenominator;
+    HDRVividGainmapMetadata gainmapMetadata;
+    gainmapMetadata.enhanceClippedThreholdMaxGainmap[INDEX_ZERO] = gainmapMax;
+    gainmapMetadata.enhanceClippedThreholdMaxGainmap[INDEX_ONE] = gainmapMax;
+    gainmapMetadata.enhanceClippedThreholdMaxGainmap[INDEX_TWO] = gainmapMax;
+    gainmapMetadata.enhanceClippedThreholdMinGainmap[INDEX_ZERO] = gainmapMin;
+    gainmapMetadata.enhanceClippedThreholdMinGainmap[INDEX_ONE] = gainmapMin;
+    gainmapMetadata.enhanceClippedThreholdMinGainmap[INDEX_TWO] = gainmapMin;
+    gainmapMetadata.enhanceMappingGamma[INDEX_ZERO] = gamma;
+    gainmapMetadata.enhanceMappingGamma[INDEX_ONE] = gamma;
+    gainmapMetadata.enhanceMappingGamma[INDEX_TWO] = gamma;
+    gainmapMetadata.enhanceMappingBaselineOffset[INDEX_ZERO] = baseOffset;
+    gainmapMetadata.enhanceMappingBaselineOffset[INDEX_ONE] = baseOffset;
+    gainmapMetadata.enhanceMappingBaselineOffset[INDEX_TWO] = baseOffset;
+    gainmapMetadata.enhanceMappingAlternateOffset[INDEX_ZERO] = alternateOffset;
+    gainmapMetadata.enhanceMappingAlternateOffset[INDEX_ONE] = alternateOffset;
+    gainmapMetadata.enhanceMappingAlternateOffset[INDEX_TWO] = alternateOffset;
+    return gainmapMetadata;
+}
+
+static CM_HDR_Metadata_Type ConvertHdrType(ImageHdrType hdrType)
+{
+    switch (hdrType) {
+        case ImageHdrType::HDR_VIVID_DUAL :
+        case ImageHdrType::HDR_CUVA :
+            return CM_IMAGE_HDR_VIVID_DUAL;
+        case ImageHdrType::HDR_ISO_DUAL :
+            return CM_IMAGE_HDR_ISO_DUAL;
+        default:
+            return CM_METADATA_NONE;
+    }
+    return CM_METADATA_NONE;
+}
+
+void VpeUtils::SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, bool isGainmap, ImageHdrType type,
+    CM_ColorSpaceType color, HdrMetadata& metadata)
+{
+    CM_HDR_Metadata_Type cmHdrType = ConvertHdrType(type);
+    VpeUtils::SetSbMetadataType(buffer, cmHdrType);
+    VpeUtils::SetSbColorSpaceType(buffer, color);
+    if (type == ImageHdrType::HDR_CUVA) {
+        return;
+    }
+    if (!isGainmap) {
+        VpeUtils::SetSbDynamicMetadata(buffer, metadata.dynamicMetadata);
+        VpeUtils::SetSbStaticMetadata(buffer, metadata.staticMetadata);
+        return;
+    }
+    std::vector<uint8_t> gainmapMetadataVec(sizeof(HDRVividGainmapMetadata));
+    if (metadata.gainmapMetadataFlag) {
+        memcpy_s(gainmapMetadataVec.data(), gainmapMetadataVec.size(),
+            &metadata.gainmapMetadata, sizeof(HDRVividGainmapMetadata));
+    } else {
+        HDRVividGainmapMetadata defaultGainmapMetadata = GetDefaultGainmapMetadata();
+        memcpy_s(gainmapMetadataVec.data(), gainmapMetadataVec.size(),
+            &defaultGainmapMetadata, sizeof(HDRVividGainmapMetadata));
+    }
+    VpeUtils::SetSbDynamicMetadata(buffer, gainmapMetadataVec);
 }
 }
 }

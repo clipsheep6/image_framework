@@ -219,6 +219,7 @@ ohos_static_library("image_utils_static") {
       external_deps += [ "startup:syspara" ]
     }
   }
+
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }

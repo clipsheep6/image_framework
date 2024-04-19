@@ -77,7 +77,7 @@ typedef enum {
     * High dynamic range.
     */
     IMAGE_DYNAMIC_RANGE_HDR = 2,
-}IMAGE_DYNAMIC_RANGE;
+} IMAGE_DYNAMIC_RANGE;
 
 /**
  * @brief Create a pointer for OH_ImageSource_Info struct.
@@ -111,7 +111,7 @@ Image_ErrorCode OH_ImageSourceInfo_GetHeight(OH_ImageSource_Info *info, uint32_t
 /**
  * @brief Get isHdr for OH_ImageSource_Info struct.
  *
- * @param info The {@link OH_ImageSource_Info} pointer will be operated.
+ * @param info The OH_ImageSource_Info pointer will be operated.
  * @param isHdr Whether the image has a high dynamic range.
  * @return Returns {@link Image_ErrorCode}
  * @since 12
@@ -250,6 +250,30 @@ Image_ErrorCode OH_DecodingOptions_GetDesiredRegion(OH_DecodingOptions *options,
  */
 Image_ErrorCode OH_DecodingOptions_SetDesiredRegion(OH_DecodingOptions *options,
     Image_Region *desiredRegion);
+
+/**
+ * @brief Set desiredDynamicRange number for OH_DecodingOptions struct.
+ *
+ * @param options The OH_DecodingOptions pointer will be operated.
+ * @param desiredDynamicRange the number of desired dynamic range {@link IMAGE_DYNAMIC_RANGE}.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_DecodingOptions_GetResolutionQuality
+ * @since 12
+ */
+Image_ErrorCode OH_DecodingOptions_GetDesiredDynamicRange(OH_DecodingOptions *options,
+    int32_t *desiredDynamicRange);
+
+/**
+ * @brief Set desiredDynamicRange number for OH_DecodingOptions struct.
+ *
+ * @param options The OH_DecodingOptions pointer will be operated.
+ * @param desiredDynamicRange the number of desired dynamic range {@link IMAGE_DYNAMIC_RANGE}.
+ * @return Returns {@link Image_ErrorCode}
+ * @see OH_DecodingOptions_SetResolutionQuality
+ * @since 12
+ */
+Image_ErrorCode OH_DecodingOptions_SetDesiredDynamicRange(OH_DecodingOptions *options,
+    int32_t desiredDynamicRange);
 
 /**
  * @brief Get Resolution Quality for DecodingOptions struct.

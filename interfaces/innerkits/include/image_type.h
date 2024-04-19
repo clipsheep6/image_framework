@@ -118,6 +118,19 @@ enum class PixelFormat : int32_t {
     RGBA_1010102 = 14,
 };
 
+enum class DecodeDynamicRange : int32_t {
+    AUTO = 0,
+    SDR = 1,
+    HDR = 2,
+};
+
+enum class EncodeDynamicRange : int32_t {
+    AUTO = 0, //10bit jpeg will be encode as HDR_VIVID_DUAL, others will be encode as SDR
+    SDR,
+    HDR_VIVID_DUAL,
+    HDR_VIVID_SINGLE,
+};
+
 enum class AlphaType : int32_t {
     IMAGE_ALPHA_TYPE_UNKNOWN = 0,
     IMAGE_ALPHA_TYPE_OPAQUE = 1,   // image pixels are stored as opaque.
@@ -230,6 +243,7 @@ struct DecodeOptions {
     DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::AUTO;
     ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
     uint16_t invokeType = 0;
+    DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::AUTO;
 };
 
 enum class ScaleMode : int32_t {

@@ -418,6 +418,7 @@ ohos_static_library("image_static") {
   }
 
   external_deps += [ "zlib:libz" ]
+
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }

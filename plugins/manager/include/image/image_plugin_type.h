@@ -99,6 +99,18 @@ enum class PlPixelFormat {
     RGBA_1010102 = 14,
 };
 
+enum class PlDynamicRange : int32_t {
+    DEFAULT = 0,
+    SDR = 1,
+};
+
+enum class PlEncodeDynamicRange : int32_t {
+    AUTO = 0,
+    SDR,
+    HDR_VIVID_DUAL,
+    HDR_VIVID_SINGLE,
+};
+
 enum class PlAlphaType : int32_t {
     IMAGE_ALPHA_TYPE_UNKNOWN = 0,
     IMAGE_ALPHA_TYPE_OPAQUE = 1,
