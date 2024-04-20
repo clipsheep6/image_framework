@@ -107,15 +107,6 @@ enum class SourceInfoState : int32_t {
     FILE_INFO_PARSED = 5
 };
 
-enum class ImageHdrType : int32_t {
-    UNKNOWN,
-    SDR,
-    HDR_ISO_DUAL,
-    HDR_CUVA,
-    HDR_VIVID_DUAL,
-    HDR_VIVID_SINGLE
-};
-
 struct ImageDecodingStatus {
     ImageInfo imageInfo;
     ImageDecodingState imageState = ImageDecodingState::UNRESOLVED;
@@ -223,7 +214,6 @@ public:
 #endif
     NATIVEEXPORT bool IsHdrImage();
     void SetSource(const std::string &source);
-    NATIVEEXPORT bool IsHdrImage();
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -280,8 +270,6 @@ private:
         const SourceOptions &opts, uint32_t &errorCode, const std::string traceName = "");
     std::unique_ptr<PixelMap> CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts,
                                                      uint32_t &errorCode);
-    std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo, PixelMapAddrInfos &addrInfos,
-                                                    bool isAisr, bool isHdr, uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapByInfos(ImagePlugin::PlImageInfo &plInfo,
                                                     ImagePlugin::DecodeContext& context, uint32_t &errorCode);
     bool ApplyGainMap(ImageHdrType hdrType, ImagePlugin::DecodeContext& baseCtx,
@@ -310,6 +298,12 @@ private:
     void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImagePlugin::PlImageInfo &plInfo,
         ImageEvent &imageEvent);
     void UpdateDecodeInfoOptions(const ImagePlugin::DecodeContext &context, ImageEvent &imageEvent);
+
+    uint32_t DoAiHdrProcessDl(const ImagePlugin::DecodeContext &srcCtx, ImagePlugin::DecodeContext &dstCtx,
+                              bool needAisr, bool needHdr);
+    uint32_t ImageAiProcess(Size imageSize, const DecodeOptions &opts, bool isHdr,
+                            ImagePlugin::DecodeContext &context);
+
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
     static MultimediaPlugin::PluginServer &pluginServer_;
@@ -337,9 +331,8 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
-    ImageHdrType sourceHdrType_; // source image hdr type;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
-    ImageHdrType sourceHdrType_ = ImageHdrType::UNKNOWN; // source image hdr type;
+    ImageHdrType sourceHdrType_; // source image hdr type;
     std::string source_; // Image source fd buffer etc
     bool isExifReadFailed = false;
 };
