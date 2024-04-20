@@ -1312,7 +1312,7 @@ bool NV21ToRGBA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
 
     destBufferSize = static_cast<size_t>(yDInfo.y_width * yDInfo.y_height * NUM_4);
     if (destBufferSize <= 0) {
-        IMAGE_LOGE("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation00!");
         return false;
     }
 
@@ -1361,7 +1361,7 @@ bool NV21ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
 
     destBufferSize = static_cast<size_t>(yDInfo.y_width * yDInfo.y_height * NUM_4);
     if (destBufferSize <= 0) {
-        IMAGE_LOGE("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation01!");
         return false;
     }
 
@@ -1409,7 +1409,7 @@ bool NV21ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t *
 
     destBufferSize = static_cast<size_t>(yDInfo.y_width * yDInfo.y_height * NUM_2);
     if (destBufferSize <= NUM_0) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGD("Invalid destination buffer size calculation02!");
         return false;
     }
 

@@ -115,7 +115,7 @@ uint32_t ImageFormatConvert::ConvertImageFormat(std::shared_ptr<PixelMap> &srcPi
     if ((srcFormat == PixelFormat::NV21) || (srcFormat == PixelFormat::NV12)) {
         uint32_t ret = YUVConvertImageFormatOption(srcPiexlMap, srcFormat, destFormat);
         if (ret != SUCCESS) {
-            IMAGE_LOGE("convert yuv format failed");
+            IMAGE_LOGE("convert yuv format failed!");
             return ret;
         }
         return SUCCESS;
@@ -193,8 +193,7 @@ uint32_t ImageFormatConvert::YUVConvertImageFormatOption(std::shared_ptr<PixelMa
 
     const_uint8_buffer_type data = srcPiexlMap->GetPixels();
     YUVDataInfo yDInfo;
-    PixelYuv pixelYUV;
-    pixelYUV.GetImageYUVInfo(yDInfo);
+    srcPiexlMap.get()->GetImageYUVInfo(yDInfo);
     uint8_buffer_type destBuffer = nullptr;
     size_t destBufferSize = 0;
     if (!yuvCvtFunc(data, yDInfo, &destBuffer, destBufferSize, srcPiexlMap->GetColorSpace())) {
@@ -275,11 +274,11 @@ bool ImageFormatConvert::MakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMa
     } else {
         pixelMap = std::make_unique<PixelMap>();
     }
-    pixelMap->SetPixelsAddr(destBuffer, nullptr, destBufferSize, allcatorType, nullptr);
     if (pixelMap->SetImageInfo(info) != SUCCESS) {
         IMAGE_LOGD("set imageInfo failed");
         return false;
     }
+    pixelMap->SetPixelsAddr(destBuffer, nullptr, destBufferSize, allcatorType, nullptr);
     destPixelMap = std::move(pixelMap);
     return true;
 }

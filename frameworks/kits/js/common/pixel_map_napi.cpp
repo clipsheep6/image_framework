@@ -25,12 +25,12 @@
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "js_runtime_utils.h"
 #include "napi_message_sequence.h"
+#include "pixel_map_from_surface.h"
 #include "transaction/rs_interfaces.h"
 #endif
 #include "hitrace_meter.h"
 #include "pixel_map.h"
 #include "image_format_convert.h"
-#include "pixel_map_from_surface.h"
 #include <securec.h>
 
 #undef LOG_DOMAIN

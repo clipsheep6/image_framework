@@ -192,36 +192,6 @@ static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::Pixe
     return SUCCESS;
 }
 
-static uint32_t BuildSkBitmap(Media::PixelMap *pixelMap, SkBitmap &bitmap,
-    SkEncodedImageFormat format, TmpBufferHolder &holder)
-{
-    uint32_t res = SUCCESS;
-    SkImageInfo skInfo;
-    ImageData imageData;
-    pixelMap->GetImageInfo(imageData.info);
-    uint32_t width  = imageData.info.size.width;
-    uint32_t height = imageData.info.size.height;
-    std::unique_ptr<uint8_t[]> dstData = std::make_unique<uint8_t[]>(width * height * NUM_3);
-    imageData.dst = dstData.get();
-    if (pixelToSkInfo(imageData, skInfo, pixelMap, holder, format) != SUCCESS) {
-        IMAGE_LOGE("ExtEncoder::BuildSkBitmap pixel convert failed");
-        return ERR_IMAGE_ENCODE_FAILED;
-    }
-    uint64_t rowStride = skInfo.minRowBytes64();
-
-#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-    if (pixelMap->GetAllocatorType() == Media::AllocatorType::DMA_ALLOC) {
-        SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
-        rowStride = sbBuffer->GetStride();
-    }
-#endif
-    if (!bitmap.installPixels(skInfo, imageData.pixels, rowStride)) {
-        IMAGE_LOGE("ExtEncoder::BuildSkBitmap to skbitmap failed");
-        return ERR_IMAGE_INVALID_PARAMETER;
-    }
-    return res;
-}
-
 bool IsAstc(const std::string &format)
 {
     return format.find("image/astc") == 0;
@@ -413,6 +383,59 @@ static HdrMetadata GetHdrMetadata(sptr<SurfaceBuffer>& hdr, sptr<SurfaceBuffer>&
         metadata.extendMetaFlag = true;
     }
     return metadata;
+}
+
+uint32_t ExtEncoder::EncodeImageByBitmap(SkBitmap& bitmap, bool needExif, SkWStream& outStream)
+{
+    ImageInfo imageInfo;
+    pixelmap_->GetImageInfo(imageInfo);
+    if (!needExif || pixelmap_->GetExifMetadata() == nullptr ||
+        pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
+        if (!SkEncodeImage(&outStream, bitmap, encodeFormat_, opts_.quality)) {
+            IMAGE_LOGE("Failed to encode image");
+            ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Failed to encode image");
+            return ERR_IMAGE_ENCODE_FAILED;
+        }
+        return SUCCESS;
+    }
+
+    MetadataWStream tStream;
+    if (!SkEncodeImage(&tStream, bitmap, encodeFormat_, opts_.quality)) {
+        IMAGE_LOGE("Failed to encode image");
+        ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Failed to encode image");
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+    return CreateAndWriteBlob(tStream, pixelmap_, outStream, imageInfo, opts_);
+}
+
+uint32_t ExtEncoder::EncodeImageByPixelMap(PixelMap* pixelMap, bool needExif, SkWStream& outputStream)
+{
+    SkBitmap bitmap;
+    TmpBufferHolder holder;
+    SkImageInfo skInfo = ToSkInfo(pixelMap);
+    ImageData imageData;
+    pixelMap->GetImageInfo(imageData.info);
+    uint32_t width  = imageData.info.size.width;
+    uint32_t height = imageData.info.size.height;
+    std::unique_ptr<uint8_t[]> dstData = std::make_unique<uint8_t[]>(width * height * NUM_3);
+    imageData.dst = dstData.get();
+    if (pixelToSkInfo(imageData, skInfo, pixelMap, holder, encodeFormat_) != SUCCESS) {
+        IMAGE_LOGE("ExtEncoder::EncodeImageByPixelMap pixel convert failed");
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+    uint64_t rowStride = skInfo.minRowBytes64();
+
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    if (pixelMap->GetAllocatorType() == AllocatorType::DMA_ALLOC) {
+        SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
+        rowStride = sbBuffer->GetStride();
+    }
+#endif
+    if (!bitmap.installPixels(skInfo, imageData.pixels, rowStride)) {
+        IMAGE_LOGE("ExtEncoder::EncodeImageByPixelMap to SkBitmap failed");
+        return ERR_IMAGE_ENCODE_FAILED;
+    }
+    return EncodeImageByBitmap(bitmap, needExif, outputStream);
 }
 
 uint32_t ExtEncoder::EncodeImageBySurfaceBuffer(sptr<SurfaceBuffer>& surfaceBuffer, SkImageInfo info,
