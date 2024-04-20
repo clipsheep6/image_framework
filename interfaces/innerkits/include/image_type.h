@@ -150,6 +150,7 @@ enum class FinalOutputStep : int32_t {
     SIZE_CHANGE = 3,
     DENSITY_CHANGE = 4
 };
+
 enum class ResolutionQuality : int32_t {
     SUPER,
     HIGH,

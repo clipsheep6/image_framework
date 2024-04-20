@@ -303,6 +303,8 @@ private:
                               bool needAisr, bool needHdr);
     uint32_t ImageAiProcess(Size imageSize, const DecodeOptions &opts, bool isHdr,
                             ImagePlugin::DecodeContext &context);
+    ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info, 
+        ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";

@@ -52,7 +52,7 @@ struct OH_DecodingOptions {
     uint32_t rotate;
     struct Image_Size desiredSize;
     struct Image_Region desiredRegion;
-    ResolutionQuality resolutionQuality;
+    int32_t resolutionQuality;
     int32_t desiredDynamicRange;
 };
 
@@ -73,6 +73,16 @@ static DecodeDynamicRange ParseImageDynamicRange(int32_t val)
 
     return DecodeDynamicRange::AUTO;
 }
+
+static ResolutionQuality ParseImageResolutionQuality(int32_t val)
+{
+    if (val <= static_cast<int32_t>(ResolutionQuality::LOW)) {
+        return ResolutionQuality(val);
+    }
+
+    return ResolutionQuality::LOW;
+}
+
 
 MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptions_Create(OH_DecodingOptions **options)
@@ -200,7 +210,7 @@ Image_ErrorCode OH_DecodingOptions_SetDesiredRegion(OH_DecodingOptions *options,
 
 MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptions_GetResolutionQuality(OH_DecodingOptions *options,
-    ResolutionQuality *resolutionQuality)
+    int32_t *resolutionQuality)
 {
     if (options == nullptr || resolutionQuality == nullptr) {
         return IMAGE_BAD_PARAMETER;
@@ -211,7 +221,7 @@ Image_ErrorCode OH_DecodingOptions_GetResolutionQuality(OH_DecodingOptions *opti
 
 MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptions_SetResolutionQuality(OH_DecodingOptions *options,
-    ResolutionQuality resolutionQuality)
+    int32_t resolutionQuality)
 {
     if (options == nullptr) {
         return IMAGE_BAD_PARAMETER;
@@ -340,7 +350,7 @@ static void ParseDecodingOps(DecodeOptions &decOps, struct OH_DecodingOptions *o
         default:
             decOps.desiredPixelFormat = PixelFormat::UNKNOWN;
     }
-    decOps.resolutionQuality = ops->resolutionQuality;
+    decOps.resolutionQuality = ParseImageResolutionQuality(ops->resolutionQuality);
 }
 
 static void ParseImageSourceInfo(struct OH_ImageSource_Info *source, ImageInfo &info)
