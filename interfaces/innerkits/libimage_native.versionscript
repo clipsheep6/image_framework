@@ -34,6 +34,7 @@
     *IncrementalSourceStream*CreateSourceStream*;
     *NativeImage*;
     *ImageFormatConvert*;
+    *PixelYuv*;
   local:
     *;
 };
