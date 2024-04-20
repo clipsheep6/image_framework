@@ -312,5 +312,10 @@ void VpeUtils::SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, bool isGainmap,
     }
     VpeUtils::SetSbDynamicMetadata(buffer, gainmapMetadataVec);
 }
+
+static void VpeUtils::SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, CM_ColorSpaceType color)
+{
+    VpeUtils::SetSbColorSpaceType(buffer, color);
+}
 }
 }

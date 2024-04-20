@@ -157,12 +157,6 @@ enum class ResolutionQuality : int32_t {
     LOW
 };
 
-enum class DecodeDynamicRange : int32_t {
-    AUTO = 0,
-    SDR = 1,
-    HDR = 2,
-};
-
 struct Position {
     int32_t x = 0;
     int32_t y = 0;
@@ -240,10 +234,9 @@ struct DecodeOptions {
     std::shared_ptr<OHOS::ColorManager::ColorSpace> desiredColorSpaceInfo = nullptr;
     bool preferDma = false;
     bool fastAstc = false;
-    DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::AUTO;
-    ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
     uint16_t invokeType = 0;
     DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::AUTO;
+    ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
 };
 
 enum class ScaleMode : int32_t {

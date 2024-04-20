@@ -2804,14 +2804,51 @@ static uint32_t AllocHdrSurfaceBuffer(DecodeContext& context, ImageHdrType hdrTy
     int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
     if (err != OHOS::GSERROR_OK) {
         IMAGE_LOGE("NativeBufferReference failed");
-        return {};
+        return ERR_DMA_DATA_ABNORMAL;
     }
-    context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
-    context.pixelsBuffer.bufferSize = aiParamIn.byteCount;
-    context.pixelsBuffer.context = nativeBuffer;
-    context.allocatorType = AllocatorType::DMA_ALLOC;
-    context.freeFunc = nullptr;
-    return sb;
+    SetHdrContext(context, sb, nativeBuffer);
+    CM_HDR_Metadata_Type type;
+    if (hdrType == ImageHdrType::HDR_VIVID_DUAL || hdrType == ImageHdrType::HDR_CUVA) {
+        type = CM_IMAGE_HDR_VIVID_SINGLE;
+    } else if (hdrType == ImageHdrType::HDR_ISO_DUAL) {
+        type = CM_IMAGE_HDR_ISO_SINGLE;
+    }
+    VpeUtils::SetSbMetadataType(sb, type);
+    VpeUtils::SetSbColorSpaceType(sb, CM_BT2020_HLG_LIMIT);
+    return SUCCESS;
+}
+
+uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+    DecodeContext &context, uint32_t &errorCode)
+{
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
+
+    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
+        opts_.desiredSize);
+    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
+        return ERR_IMAGE_DATA_UNSUPPORT;
+    }
+
+    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
+    context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
+    context.info.pixelFormat = plInfo.pixelFormat;
+    errorCode = mainDecoder_->Decode(index, context);
+    if (context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
+    }
+
+    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
+    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
+    guard.unlock();
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
+        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
+        return ERR_IMAGE_DATA_UNSUPPORT;
+    }
+    return SUCCESS;
 }
 
 DecodeContext ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo info, ImagePlugin::PlImageInfo& plInfo,
@@ -2990,6 +3027,44 @@ bool ImageSource::ComposeHdrImage(ImageHdrType hdrType, DecodeContext& baseCtx, 
     return true;
 }
 
+static void SetSrContext(DecodeContext& context, sptr<SurfaceBuffer>& sb, void* fd)
+{
+    context.allocatorType = AllocatorType::DMA_ALLOC;
+    context.freeFunc = nullptr;
+    context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
+    context.pixelsBuffer.bufferSize = sb->GetSize();
+    context.pixelsBuffer.context = fd;
+}
+
+static SurfaceBuffer* AllocSrSurfaceBuffer(DecodeContext &context, uint32_t format)
+{
+    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
+    IMAGE_LOGD("[ImageSource]AllocBufferForContext requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
+               context.info.size.width, context.info.size.height);
+    BufferRequestConfig requestConfig = {
+        .width = context.info.size.width,
+        .height = context.info.size.height,
+        .strideAlignment = context.info.size.width, // set 0x8 as default value to alloc SurfaceBufferImpl
+        .format = format,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
+        .timeout = 0,
+        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
+        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
+    };
+    GSError ret = sb->Alloc(requestConfig);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
+        return ERR_DMA_NOT_EXIST;
+    }
+    void* nativeBuffer = sb.GetRefPtr();
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("NativeBufferReference failed");
+        return ERR_DMA_DATA_ABNORMAL;
+    }
+    SetSrContext(context, sb, nativeBuffer);
+    return sb;
+}
 
 static void CopyContext(DecodeContext &src, DecodeContext &dst)
 {
@@ -3108,40 +3183,6 @@ static SurfaceBuffer* CopyContextIntoSurfaceBuffer(Size dstSize, DecodeContext &
     return sb;
 }
 
-static SurfaceBuffer* AllocBufferForContext( AiParamIn &aiParamIn, DecodeContext &context)
-{
-    sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
-    IMAGE_LOGD("[ImageSource]AllocBufferForContext requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
-               aiParamIn.dstSize.width, aiParamIn.dstSize.height);
-    BufferRequestConfig requestConfig = {
-        .width = aiParamIn.dstSize.width,
-        .height = aiParamIn.dstSize.height,
-        .strideAlignment = aiParamIn.stride, // set 0x8 as default value to alloc SurfaceBufferImpl
-        .format = aiParamIn.pixelFormat,
-        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA,
-        .timeout = 0,
-        .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
-        .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
-    };
-    GSError ret = sb->Alloc(requestConfig);
-    if (ret != GSERROR_OK) {
-        IMAGE_LOGE("SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
-        return {};
-    }
-    void* nativeBuffer = sb.GetRefPtr();
-    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
-    if (err != OHOS::GSERROR_OK) {
-        IMAGE_LOGE("NativeBufferReference failed");
-        return {};
-    }
-    context.pixelsBuffer.buffer = static_cast<uint8_t*>(sb->GetVirAddr());
-    context.pixelsBuffer.bufferSize = aiParamIn.byteCount;
-    context.pixelsBuffer.context = nativeBuffer;
-    context.allocatorType = AllocatorType::DMA_ALLOC;
-    context.freeFunc = nullptr;
-    return sb;
-}
-
 #ifdef IMAGE_AI_ENABLE
 static uint32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> &input, sptr<SurfaceBuffer> &output)
 {
@@ -3190,18 +3231,18 @@ uint32_t AiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx, AiParam
 }
 #endif
 
-uint32_t AiHdrProcessDl(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx, AiParamIn &aiParamIn, AiParamOut &aiParamOut)
+uint32_t AiHdrProcessDl(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx)
 {
-    sptr<SurfaceBuffer> output = AllocBufferForContext(aiParamIn, hdrCtx);
+    VpeUtils::SetSbMetadataType(input, CM_METADATA_NONE);
+    CM_ColorSpaceType cmColorSpaceType = ConvertColorSpaceType(mainDecoder_->getGrColorSpace());
+    VpeUtils::SetSurfaceBufferInfo(input, cmColorSpaceType);
 
-    CM_ColorSpaceType colorSpaceType = ConvertColorSpaceType(aiParamIn.colorSpace);
-    CM_ColorSpaceInfo colorSpaceInfo;
-    ConvertColorSpaceTypeToInfo(colorSpaceType, colorSpaceInfo);
-
-    SetMeatadata(output, OUTPUT_COLORSPACE_INFO);
-    SetMeatadata(output, CM_IMAGE_HDR_VIVID_SINGLE);
-    SetMeatadata(input, colorSpaceInfo);
-    SetMeatadata(input, CM_METADATA_NONE);
+    uint32_t errorCode = AllocHdrSurfaceBuffer(hdrCtx, hdrContext.hdrType);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("HDR SurfaceBuffer Alloc failed, %{public}d", errorCode);
+        return errorCode;
+    }
+    sptr<SurfaceBuffer> output(reinterpret_cast<SurfaceBuffer*>(hdrCtx.pixelsBuffer.context));
 
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->ColorSpaceConverterImageProcess(input, output);
@@ -3210,8 +3251,6 @@ uint32_t AiHdrProcessDl(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx, AiPar
         FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
     } else {
         IMAGE_LOGD("[ImageSource]AiHdrProcessDl ColorSpaceConverterImageProcess Succ!");
-        aiParamOut.isHdr = true;
-        aiParamOut.pixelFormat = PlPixelFormat::RGBA_1010102;
     }
     return res;
 }
@@ -3264,9 +3303,9 @@ uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &srCtx, AiParamIn
 }
 #endif
 
-uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &srCtx, AiParamIn aiParamIn)
+uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &srCtx)
 {
-    sptr<SurfaceBuffer> output = AllocBufferForContext(aiParamIn, srCtx);
+    sptr<SurfaceBuffer> output = AllocSrSurfaceBuffer(srCtx, GRAPHIC_PIXEL_FMT_RGBA_8888);
 
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res = utils->DetailEnhancerImageProcess(input, output);
@@ -3280,14 +3319,6 @@ uint32_t AiSrProcessDl(sptr<SurfaceBuffer>input, DecodeContext &srCtx, AiParamIn
     IMAGE_LOGD("[ImageSource]AiSrProcess DetailEnhancerImage %{public}d %{public}d %{public}d", srCtx.outInfo.size.width,
             srCtx.outInfo.size.height, srCtx.pixelsBuffer.bufferSize);
     return res;
-}
-
-bool ImageSource::IsHdrImage()
-{
-    if (sourceHdrType_ != ImageHdrType::UNKNOWN) {
-        return sourceHdrType_ > ImageHdrType::SDR;
-    }
-    return false;
 }
 
 static bool CheckCapacityAi(bool &capSr, bool &capHdr)
@@ -3325,7 +3356,6 @@ static bool CheckDecodeOptions(Size imageSize, DecodeOptions opts, bool isHdrIma
     IMAGE_LOGD("[ImageSource] need aisr or hdr Process :aisr %{public}d hdr:%{public}d", needAisr, needHdr);
     return true;
 }
-
 
 #ifdef IMAGE_AI_ENABLE
 DecodeContext DoImageAiProcess(sptr<SurfaceBuffer> &input, AiParamIn &aiParamIn, AiParamOut &aiParamOut,
@@ -3385,7 +3415,7 @@ DecodeContext DoImageAiProcessDl(sptr<SurfaceBuffer> &input, AiParamIn &aiParamI
         aiParamIn.pixelFormat = GRAPHIC_PIXEL_FMT_RGBA_8888;
         errorCode = AiSrProcessDl(input, aiCtx, aiParamIn);
         if (errorCode != SUCCESS) {
-            IMAGE_LOGE("[ImageSource] AiSrProcessDl fail %{public}u", errorCode);
+            IMAGE_LOGE("[ImageSource] AiSrProcess fail %{public}u", errorCode);
         } else {
             aiParamOut.isAisr = true;
         }
@@ -3398,7 +3428,8 @@ DecodeContext DoImageAiProcessDl(sptr<SurfaceBuffer> &input, AiParamIn &aiParamI
             inputHdr = reinterpret_cast<SurfaceBuffer*> (aiCtx.pixelsBuffer.context);
             errorCode = AiHdrProcessDl(inputHdr, hdrCtx, aiParamIn, aiParamOut);
             if (errorCode != SUCCESS) {
-                IMAGE_LOGE("[ImageSource] AiHdrProcessDl fail %{public}u", errorCode);
+                errorCode = ERR_IMAGE_AI_ONLY_SR_SUCCESS;
+                IMAGE_LOGE("[ImageSource] AiHdrProcess fail %{public}u", errorCode);
                 return aiCtx;
             } else {
                 hdrCtx.pixelsBuffer.bufferSize = aiCtx.pixelsBuffer.bufferSize;
@@ -3410,7 +3441,7 @@ DecodeContext DoImageAiProcessDl(sptr<SurfaceBuffer> &input, AiParamIn &aiParamI
         } else {
             errorCode = AiHdrProcessDl(inputHdr, hdrCtx, aiParamIn, aiParamOut);
             if (errorCode != SUCCESS) {
-                IMAGE_LOGE("[ImageSource] AiHdrProcessDl fail %{public}u", errorCode);
+                IMAGE_LOGE("[ImageSource] AiHdrProcess fail %{public}u", errorCode);
                 return {};
             }
             hdrCtx.pixelsBuffer.bufferSize = aiParamIn.byteCount;
@@ -3436,24 +3467,25 @@ static uint32_t ImageAiProcess(Size imageSize, DecodeOptions opts, DecodeContext
     aiParamIn.colorSpace = context.colorSpace;
     aiParamIn.stride = context.rowStride;
 
-    DecodeContext inCtx;
+    DecodeContext tmpCtx;
 
     sptr<SurfaceBuffer> input = nullptr;
     IMAGE_LOGD("[ImageSource] ImageAiProcess allocatorType %{public}u", context.allocatorType);
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
         input = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
     } else {
-        input = CopyContextIntoSurfaceBuffer(imageSize, context, inCtx);
+        input = CopyContextIntoSurfaceBuffer(imageSize, context, tmpCtx);
     }
     uint32_t errorCode = SUCCESS;
     AiParamOut aiParamOut;
+
 #ifdef IMAGE_AI_ENABLE
     auto aiCtx = DoImageAiProcess(input, aiParamIn, aiParamOut, errorCode);
 #else
-    auto aiCtx = DoImageAiProcessDl(input, aiParamIn, aiParamOut, errorCode);
+    auto ret = DoImageAiProcessDl(input, aiParamIn, aiParamOut, errorCode);
 #endif
     if (errorCode == SUCCESS || errorCode == ERR_IMAGE_AI_ONLY_SR_SUCCESS) {
-        FreeContextBuffer(inCtx.freeFunc, inCtx.allocatorType, inCtx.pixelsBuffer);
+        FreeContextBuffer(tmpCtx.freeFunc, tmpCtx.allocatorType, tmpCtx.pixelsBuffer);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         CopyContext(aiCtx, context);
         isAisr = aiParamOut.isAisr;
@@ -3464,39 +3496,6 @@ static uint32_t ImageAiProcess(Size imageSize, DecodeOptions opts, DecodeContext
         }
     }
     return errorCode;
-}
-
-uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
-    DecodeContext &context, uint32_t &errorCode)
-{
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
-
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize);
-    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
-        return ERR_IMAGE_DATA_UNSUPPORT;
-    }
-
-    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
-    context.info.pixelFormat = plInfo.pixelFormat;
-    errorCode = mainDecoder_->Decode(index, context);
-    if (context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
-    }
-
-    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
-    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
-    guard.unlock();
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        return ERR_IMAGE_DATA_UNSUPPORT;
-    }
-    return SUCCESS;
 }
 
 static void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::PlImageInfo &plInfo)
@@ -3518,17 +3517,6 @@ static void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::P
         plInfo.yuvDataInfo = context.yuvInfo;
         plInfo.size = context.yuvInfo.imageSize;
     }
-        return ERR_DMA_DATA_ABNORMAL;
-    }
-    SetHdrContext(context, sb, nativeBuffer);
-    CM_HDR_Metadata_Type type;
-    if (hdrType == ImageHdrType::HDR_VIVID_DUAL || hdrType == ImageHdrType::HDR_CUVA) {
-        type = CM_IMAGE_HDR_VIVID_SINGLE;
-    } else if (hdrType == ImageHdrType::HDR_ISO_DUAL) {
-        type = CM_IMAGE_HDR_ISO_SINGLE;
-    }
-    VpeUtils::SetSbMetadataType(sb, type);
-    VpeUtils::SetSbColorSpaceType(sb, CM_BT2020_HLG_LIMIT);
     return SUCCESS;
 #endif
 }

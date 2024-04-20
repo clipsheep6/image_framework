@@ -52,6 +52,7 @@ public:
     static bool GetSbStaticMetadata(const sptr<SurfaceBuffer>& buffer, std::vector<uint8_t>& staticMetadata);
     static void SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, bool isGainmap, ImageHdrType type,
         HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType color, HdrMetadata& metadata);
+    static void SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, CM_ColorSpaceType color);
 
 private:
     int32_t ColorSpaceConverterCreate(void* handle, int32_t* instanceId);
