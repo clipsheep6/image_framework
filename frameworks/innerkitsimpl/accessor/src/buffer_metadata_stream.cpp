@@ -293,6 +293,11 @@ ssize_t BufferMetadataStream::GetSize()
     return bufferSize_;
 }
 
+bool BufferMetadataStream::ReleaseAddr()
+{
+    return true;
+}
+
 byte *BufferMetadataStream::Release()
 {
     byte *ret = buffer_;

@@ -55,6 +55,26 @@ void TiffParser::Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifD
     IMAGE_LOGD("Encode dataPtr size is: %{public}u", size);
 }
 
+void TiffParser::DecodeDngExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData, unsigned int &maxAddr)
+{
+    if (dataPtr == nullptr) {
+        return;
+    }
+    *exifData = exif_data_new();
+    exif_data_unset_option(*exifData, EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS);
+    exif_data_unset_option(*exifData, EXIF_DATA_OPTION_FOLLOW_SPECIFICATION);
+    exif_data_load_data_dng(*exifData, &maxAddr, dataPtr, size);
+}
+
+void TiffParser::EncodeDngExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData, unsigned int delta, unsigned int offset)
+{
+    if (exifData == nullptr) {
+        return;
+    }
+    exif_data_save_data_dng(exifData, dataPtr, &size, delta, offset);
+    IMAGE_LOGE("Encode dng dataPtr size is: %{public}u", size);
+}
+
 void TiffParser::DecodeJpegExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData)
 {
     IMAGE_LOGD("Decoding Jpeg Exif data.");

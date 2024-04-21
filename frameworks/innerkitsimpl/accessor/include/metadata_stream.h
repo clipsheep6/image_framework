@@ -166,6 +166,8 @@ public:
      */
     virtual ssize_t GetSize() = 0;
 
+    virtual bool ReleaseAddr() = 0;
+
 private:
     /* *
      * Close the image stream

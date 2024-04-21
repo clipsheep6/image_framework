@@ -31,6 +31,9 @@ public:
     bool ReadBlob(DataBuf &blob) const override;
     virtual uint32_t Write() override;
     uint32_t WriteBlob(DataBuf &blob) override;
+private:
+    uint32_t WriteExif(unsigned int ifd0Offset, unsigned int ifd1Offset, unsigned int delta, unsigned int writePos);
+    unsigned int maxAddr = 0;
 };
 } // namespace Media
 } // namespace OHOS

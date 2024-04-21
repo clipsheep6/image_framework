@@ -175,6 +175,8 @@ public:
      */
     byte *Release();
 
+    virtual bool ReleaseAddr() override;
+
 private:
     /* *
      * @brief Closes the BufferImageStream.
