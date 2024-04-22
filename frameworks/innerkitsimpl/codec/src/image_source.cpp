@@ -3126,7 +3126,7 @@ static uint32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> &input, sptr
 }
 #endif
 
-static uint32_t AiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx,
+static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx,
                                      CM_ColorSpaceType cmColorSpaceType)
 {
     VpeUtils::SetSbMetadataType(input, CM_METADATA_NONE);
@@ -3146,10 +3146,10 @@ static uint32_t AiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx,
     res = utils->ColorSpaceConverterImageProcess(input, output);
 #endif
     if (res != VPE_ERROR_OK) {
-        IMAGE_LOGE("[ImageSource]AiHdrProcess ColorSpaceConverterImageProcess failed! %{public}d", res);
+        IMAGE_LOGE("[ImageSource]DoAiHdrProcess ColorSpaceConverterImageProcess failed! %{public}d", res);
         FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
     } else {
-        IMAGE_LOGD("[ImageSource]AiHdrProcess ColorSpaceConverterImageProcess Succ!");
+        IMAGE_LOGD("[ImageSource]DoAiHdrProcess ColorSpaceConverterImageProcess Succ!");
         hdrCtx.hdrType = ImageHdrType::HDR_VIVID_SINGLE;
         hdrCtx.pixelsBuffer.bufferSize = output->GetSize();
         hdrCtx.outInfo.size.width = output->GetSurfaceBufferWidth();
@@ -3255,7 +3255,7 @@ static bool IsNecessaryAiProcess(const Size &imageSize, const DecodeOptions &opt
     return true;
 }
 
-static void CopyContextSrcInfo(const DecodeContext &srcCtx, DecodeContext &dstCtx)
+static void CopySrcInfoOfContext(const DecodeContext &srcCtx, DecodeContext &dstCtx)
 {
     dstCtx.info.size.width = srcCtx.info.size.width;
     dstCtx.info.size.height = srcCtx.info.size.height;
@@ -3263,7 +3263,7 @@ static void CopyContextSrcInfo(const DecodeContext &srcCtx, DecodeContext &dstCt
     dstCtx.hdrType = srcCtx.hdrType;
 }
 
-static void CopyContextOutInfo(const DecodeContext &srcCtx, DecodeContext &dstCtx)
+static void CopyOutInfoOfContext(const DecodeContext &srcCtx, DecodeContext &dstCtx)
 {
     dstCtx.pixelsBuffer.buffer = srcCtx.pixelsBuffer.buffer ;
     dstCtx.pixelsBuffer.bufferSize = srcCtx.pixelsBuffer.bufferSize;
@@ -3273,23 +3273,26 @@ static void CopyContextOutInfo(const DecodeContext &srcCtx, DecodeContext &dstCt
     dstCtx.outInfo.size.width = srcCtx.outInfo.size.width;
     dstCtx.outInfo.size.height = srcCtx.outInfo.size.height;
     dstCtx.hdrType = srcCtx.hdrType;
+    dstCtx.pixelFormat = srcCtx.pixelFormat;
+    dstCtx.info.pixelFormat = srcCtx.info.pixelFormat;
+    dstCtx.info.alphaType = srcCtx.info.alphaType;
 }
 
-static uint32_t DoAiHdrProcess(const DecodeContext &aisrCtx, DecodeContext &hdrCtx, CM_ColorSpaceType cmColorSpaceType)
+static uint32_t AiHdrProcess(const DecodeContext &aisrCtx, DecodeContext &hdrCtx, CM_ColorSpaceType cmColorSpaceType)
 {
     hdrCtx.pixelsBuffer.bufferSize = aisrCtx.pixelsBuffer.bufferSize;
     hdrCtx.info.size.width = aisrCtx.outInfo.size.width;
     hdrCtx.info.size.height = aisrCtx.outInfo.size.height;
 
     sptr<SurfaceBuffer> inputHdr = reinterpret_cast<SurfaceBuffer*> (hdrCtx.pixelsBuffer.context);
-    return AiHdrProcess(inputHdr, hdrCtx, cmColorSpaceType);
+    return DoAiHdrProcess(inputHdr, hdrCtx, cmColorSpaceType);
 }
 
 static uint32_t DoImageAiProcess(sptr<SurfaceBuffer> &input, DecodeContext &dstCtx,
                                    CM_ColorSpaceType cmColorSpaceType, bool needAisr, bool needHdr)
 {
     DecodeContext aiCtx;
-    CopyContextSrcInfo(dstCtx, aiCtx);
+    CopySrcInfoOfContext(dstCtx, aiCtx);
     uint32_t res = ERR_IMAGE_AI_UNSUPPORTED;
     if (needAisr) {
         res = AiSrProcess(input, aiCtx);
@@ -3301,24 +3304,24 @@ static uint32_t DoImageAiProcess(sptr<SurfaceBuffer> &input, DecodeContext &dstC
         sptr<SurfaceBuffer> inputHdr = input;
         DecodeContext hdrCtx;
         if (aiCtx.hdrType == Media::ImageHdrType::SDR) {
-            res = DoAiHdrProcess(aiCtx, hdrCtx, cmColorSpaceType);
+            res = AiHdrProcess(aiCtx, hdrCtx, cmColorSpaceType);
             if (res != SUCCESS) {
                 res = ERR_IMAGE_AI_ONLY_SR_SUCCESS;
-                IMAGE_LOGE("[ImageSource] AiHdrProcess fail %{public}u", res);
+                IMAGE_LOGE("[ImageSource] DoAiHdrProcess fail %{public}u", res);
                 FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
-                CopyContextOutInfo(aiCtx, dstCtx);
+                CopyOutInfoOfContext(aiCtx, dstCtx);
             } else {
                 FreeContextBuffer(aiCtx.freeFunc, aiCtx.allocatorType, aiCtx.pixelsBuffer);
-                CopyContextOutInfo(hdrCtx, dstCtx);
+                CopyOutInfoOfContext(hdrCtx, dstCtx);
             }
         } else {
-            CopyContextSrcInfo(dstCtx, hdrCtx);
-            res = AiHdrProcess(inputHdr, hdrCtx, cmColorSpaceType);
+            CopySrcInfoOfContext(dstCtx, hdrCtx);
+            res = DoAiHdrProcess(inputHdr, hdrCtx, cmColorSpaceType);
             if (res != SUCCESS) {
-                IMAGE_LOGE("[ImageSource] AiHdrProcess fail %{public}u", res);
+                IMAGE_LOGE("[ImageSource] DoAiHdrProcess fail %{public}u", res);
                 FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
             } else {
-                CopyContextOutInfo(hdrCtx, dstCtx);
+                CopyOutInfoOfContext(hdrCtx, dstCtx);
             }
         }
     }
@@ -3334,7 +3337,7 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, const DecodeOptions &opts, 
         return SUCCESS;
     }
     DecodeContext srcCtx;
-    CopyContextSrcInfo(context, srcCtx);
+    CopySrcInfoOfContext(context, srcCtx);
     sptr<SurfaceBuffer> input = nullptr;
     IMAGE_LOGD("[ImageSource] ImageAiProcess allocatorType %{public}u", context.allocatorType);
     if (context.allocatorType == AllocatorType::DMA_ALLOC) {
@@ -3348,17 +3351,18 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, const DecodeOptions &opts, 
         input = reinterpret_cast<SurfaceBuffer*>(srcCtx.pixelsBuffer.context);
     }
     DecodeContext dstCtx;
-    CopyContextSrcInfo(context, dstCtx);
+    CopySrcInfoOfContext(context, dstCtx);
 
-    dstCtx.info.size.width = opts.desiredSize.width;
-    dstCtx.info.size.height = opts.desiredSize.height;
-
+    if (IsSizeVailed(opts.desiredSize)) {
+        dstCtx.info.size.width = opts.desiredSize.width;
+        dstCtx.info.size.height = opts.desiredSize.height;
+    }
     CM_ColorSpaceType cmColorSpaceType = ConvertColorSpaceType(mainDecoder_->getGrColorSpace());
     auto res = DoImageAiProcess(input, dstCtx, cmColorSpaceType, needAisr, needHdr);
     if (res == SUCCESS || res == ERR_IMAGE_AI_ONLY_SR_SUCCESS) {
         FreeContextBuffer(srcCtx.freeFunc, srcCtx.allocatorType, srcCtx.pixelsBuffer);
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        CopyContextOutInfo(dstCtx, context);
+        CopyOutInfoOfContext(dstCtx, context);
     }
     return res;
 }
