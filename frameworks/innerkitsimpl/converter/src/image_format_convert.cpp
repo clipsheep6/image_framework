@@ -53,10 +53,6 @@ static const std::map<std::pair<PixelFormat, PixelFormat>, ConvertFunction> g_cv
     {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV12), RGBToNV12},
     {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV21), RGBAF16ToNV21},
     {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV12), RGBAF16ToNV12},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_8888), NV12ToRGBA},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::BGRA_8888), NV12ToBGRA},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_888), NV12ToRGB},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_F16), NV12ToRGBAF16},
 };
 
 static const std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> g_yuvCvtFuncMap = {
@@ -67,7 +63,11 @@ static const std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> g
     {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_565), NV12ToRGB565},
     {std::make_pair(PixelFormat::NV21, PixelFormat::NV12), NV21ToNV12},
     {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_F16), NV21ToRGBAF16},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::NV21), NV12ToNV21}
+    {std::make_pair(PixelFormat::NV12, PixelFormat::NV21), NV12ToNV21},
+    {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_F16), NV12ToRGBAF16},
+    {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_8888), NV12ToRGBA},
+    {std::make_pair(PixelFormat::NV12, PixelFormat::BGRA_8888), NV12ToBGRA},
+    {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_888), NV12ToRGB},
 };
 
 uint32_t ImageFormatConvert::ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo)

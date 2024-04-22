@@ -1047,5 +1047,303 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGBAF16_Test_002, TestSize.Level1)
 
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToRGBAF16_Test_002 end";
 }
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_004, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), srcFormat);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::RGBA_F16;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToRGBAF16: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToRGBAF16.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_005, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::RGBA_8888;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToRGBA: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToRGBA.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_006, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::BGRA_8888;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToBGRA: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToBGRA.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_007, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::RGB_888;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToRGB: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToRGB.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_008, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), srcFormat);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::RGBA_F16;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToRGBAF16: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToRGBAF16.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_009, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::RGBA_8888;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToRGBA: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToRGBA.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_0010, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::BGRA_8888;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToBGRA: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToBGRA.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_0011, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat destFormat = PixelFormat::RGB_888;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size;
+    size.width = srcPixelMap->GetWidth();
+    size.height = srcPixelMap->GetHeight();
+    GTEST_LOG_(INFO) << "NV12ToRGB: size(" << srcPixelMap->GetWidth() << ", " << srcPixelMap->GetHeight() << ")";
+    std::string outname = "NV12ToRGB.yuv";
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ConvertRGB/";
+    uint32_t buffersize = srcPixelMap->GetWidth() * srcPixelMap->GetHeight() * srcPixelMap->GetPixelBytes();
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
+}
+
 }   //namespace
 }
