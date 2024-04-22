@@ -147,6 +147,22 @@ typedef enum {
 } Image_ErrorCode;
 
 /**
+ * @brief Enumerates the resolution quality that may be used by the interface.
+ *
+ * @since 12
+ */
+typedef enum {
+    /** resolution quality super */
+    IMAGE_RESOLUTION_QUALITY_SUPER = 0,
+    /** resolution quality high */
+    IMAGE_RESOLUTION_QUALITY_HIGH = 1,
+    /** resolution quality medium */
+    IMAGE_RESOLUTION_QUALITY_MEDIUM = 2,
+    /** resolution quality low */
+    IMAGE_RESOLUTION_QUALITY_LOW = 3,
+ } Image_ResolutionQuality;
+ 
+/**
  * @brief Defines the bmp mime type.
  *
  * @since 12
