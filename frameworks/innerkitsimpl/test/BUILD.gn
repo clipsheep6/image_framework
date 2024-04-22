@@ -222,7 +222,11 @@ ohos_unittest("jpegdecoderextest") {
     "$image_subsystem/plugins/manager/include",
     "//third_party/googletest/googletest/include",
   ]
-  cflags = [ "-DIMAGE_COLORSPACE_FLAG" ]
+  cflags = [ 
+    "-DIMAGE_COLORSPACE_FLAG",
+    "-Dprivate=public",
+    "-Dprotected=public",
+  ]
   sources = [
     "unittest/jpeg_decoder_ex_test.cpp",
     "unittest/jpeg_decoder_test.cpp",

@@ -2869,8 +2869,8 @@ DecodeContext ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo in
     return context;
 }
 
-DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info, 
-        ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode)
+DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
+    ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
     hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
@@ -3074,7 +3074,7 @@ static uint32_t CopyContextIntoSurfaceBuffer(Size dstSize, const DecodeContext &
 #else
     sptr<SurfaceBuffer> sb = SurfaceBuffer::Create();
     IMAGE_LOGD("[ImageSource]CopyContextIntoSurfaceBuffer requestConfig, sizeInfo.width:%{public}u,height:%{public}u.",
-                context.info.size.width, context.info.size.height);
+        context.info.size.width, context.info.size.height);
 
     BufferRequestConfig requestConfig = {
         .width = context.info.size.width,
@@ -3097,7 +3097,8 @@ static uint32_t CopyContextIntoSurfaceBuffer(Size dstSize, const DecodeContext &
         IMAGE_LOGE("NativeBufferReference failed");
         return ERR_DMA_DATA_ABNORMAL;
     }
-    memcpy_s(static_cast<void*>(sb->GetVirAddr()), context.pixelsBuffer.bufferSize, context.pixelsBuffer.buffer, context.pixelsBuffer.bufferSize);
+    memcpy_s(static_cast<void*>(sb->GetVirAddr()), context.pixelsBuffer.bufferSize, context.pixelsBuffer.buffer,
+        context.pixelsBuffer.bufferSize);
     SetContext(dstCtx, sb, nativeBuffer);
     return SUCCESS;
 #endif
@@ -3127,7 +3128,7 @@ static uint32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> &input, sptr
 #endif
 
 static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx,
-                                     CM_ColorSpaceType cmColorSpaceType)
+                               CM_ColorSpaceType cmColorSpaceType)
 {
     VpeUtils::SetSbMetadataType(input, CM_METADATA_NONE);
     VpeUtils::SetSurfaceBufferInfo(input, cmColorSpaceType);
@@ -3159,7 +3160,8 @@ static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx
 }
 
 #ifdef IMAGE_AI_ENABLE
-static uint32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output, ResolutionQuality resolutionQuality)
+static uint32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output,
+                                           ResolutionQuality resolutionQuality)
 {
     auto detailEnh = DetailEnhancerImage::Create();
     if (detailEnh == nullptr) {
@@ -3211,8 +3213,8 @@ static uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &aisrCtx)
         aisrCtx.outInfo.size.width = output->GetSurfaceBufferWidth();
         aisrCtx.outInfo.size.height = output->GetSurfaceBufferHeight();
         aisrCtx.hdrType = Media::ImageHdrType::SDR;
-        IMAGE_LOGD("[ImageSource]AiSrProcess DetailEnhancerImage %{public}d %{public}d %{public}d", aisrCtx.outInfo.size.width,
-                aisrCtx.outInfo.size.height, aisrCtx.pixelsBuffer.bufferSize);
+        IMAGE_LOGD("[ImageSource]AiSrProcess DetailEnhancerImage %{public}d %{public}d %{public}d",
+            aisrCtx.outInfo.size.width, aisrCtx.outInfo.size.height, aisrCtx.pixelsBuffer.bufferSize);
     }
     return res;
 }
@@ -3223,11 +3225,11 @@ static bool CheckCapacityAi()
     return true;
 #else
     return false;
-#endif 
+#endif
 }
 
 static bool IsNecessaryAiProcess(const Size &imageSize, const DecodeOptions &opts, bool isHdrImage,
-                          bool &needAisr, bool &needHdr)
+                                 bool &needAisr, bool &needHdr)
 {
     auto bRet = CheckCapacityAi();
     if (!bRet) {
@@ -3289,7 +3291,7 @@ static uint32_t AiHdrProcess(const DecodeContext &aisrCtx, DecodeContext &hdrCtx
 }
 
 static uint32_t DoImageAiProcess(sptr<SurfaceBuffer> &input, DecodeContext &dstCtx,
-                                   CM_ColorSpaceType cmColorSpaceType, bool needAisr, bool needHdr)
+                                 CM_ColorSpaceType cmColorSpaceType, bool needAisr, bool needHdr)
 {
     DecodeContext aiCtx;
     CopySrcInfoOfContext(dstCtx, aiCtx);
