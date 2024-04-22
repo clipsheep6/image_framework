@@ -59,17 +59,8 @@
 #include "include/core/SkData.h"
 #endif
 #include "string_ex.h"
-#ifdef SUT_DECODE_ENABLE
-#include "astc_superDecompress.h"
-#endif
-
-#ifdef IMAGE_AI_ENABLE
-#include "detail_enhancer_image.h"
-#include "colorspace_converter.h"
-#endif
-
-#include "vpe_utils.h"
 #include "hdr_type.h"
+#include "vpe_utils.h"
 #include "image_mime_type.h"
 #include "v1_0/buffer_handle_meta_key_type.h"
 #include "v1_0/cm_color_space.h"
@@ -662,6 +653,64 @@ uint64_t ImageSource::GetNowTimeMicroSeconds()
 {
     auto now = std::chrono::system_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+}
+
+unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
+{
+    ImageEvent imageEvent;
+    ImageDataStatistics imageDataStatistics("[ImageSource] CreatePixelMapExtended.");
+    uint64_t decodeStartTime = GetNowTimeMicroSeconds();
+    opts_ = opts;
+    ImageInfo info;
+    errorCode = GetImageInfo(FIRST_FRAME, info);
+    SetDecodeInfoOptions(index, opts, info, imageEvent);
+    ImageTrace imageTrace("CreatePixelMapExtended, info.size:(%d, %d)", info.size.width, info.size.height);
+    if (errorCode != SUCCESS || !IsSizeVailed(info.size)) {
+        IMAGE_LOGE("[ImageSource]get image info failed, ret:%{public}u.", errorCode);
+        imageEvent.SetDecodeErrorMsg("get image info failed, ret:" + std::to_string(errorCode));
+        errorCode = ERR_IMAGE_DATA_ABNORMAL;
+        return nullptr;
+    }
+    ImagePlugin::PlImageInfo plInfo;
+    DecodeContext context = DecodeImageDataToContextExtended(index, info, plInfo, imageEvent, errorCode);
+    imageDataStatistics.AddTitle("imageSize: [%d, %d], desireSize: [%d, %d], imageFormat: %s, desirePixelFormat: %d,"
+        "memorySize: %d, memoryType: %d", info.size.width, info.size.height, opts.desiredSize.width,
+        opts.desiredSize.height, sourceInfo_.encodedFormat.c_str(), opts.desiredPixelFormat,
+        context.pixelsBuffer.bufferSize, context.allocatorType);
+    imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
+
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
+        imageEvent.SetDecodeErrorMsg("decode source fail, ret:" + std::to_string(errorCode));
+        return nullptr;
+    }
+
+    bool isHdr = context.hdrType > Media::ImageHdrType::SDR;
+    auto res = ImageAiProcess(info.size, opts, isHdr, context);
+    if (res != SUCCESS) {
+        IMAGE_LOGE("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
+    }
+    UpdatepPlImageInfo(context, isHdr, plInfo);
+
+    auto pixelMap = CreatePixelMapByInfos(plInfo, context, errorCode);
+    if (pixelMap == nullptr) {
+        return nullptr;
+    }
+    if (!context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
+    }
+    if ("image/gif" != sourceInfo_.encodedFormat) {
+        IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
+            "imageSize: (%{public}d, %{public}d), hdrType : %{public}d, cost %{public}lu us",
+            static_cast<unsigned long>(imageId_), opts.desiredSize.width, opts.desiredSize.height, info.size.width,
+            info.size.height, context.hdrType, static_cast<unsigned long>(GetNowTimeMicroSeconds() - decodeStartTime));
+    }
+
+    if (CreatExifMetadataByImageSource() == SUCCESS) {
+        auto metadataPtr = exifMetadata_->Clone();
+        pixelMap->SetExifMetadata(metadataPtr);
+    }
+    return pixelMap;
 }
 
 static void GetValidCropRect(const Rect &src, ImagePlugin::PlImageInfo &plInfo, Rect &dst)
@@ -2733,97 +2782,6 @@ static uint32_t AllocHdrSurfaceBuffer(DecodeContext& context, ImageHdrType hdrTy
 #endif
 }
 
-uint32_t ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
-    DecodeContext &context, uint32_t &errorCode)
-{
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
-
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize);
-    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
-        return ERR_IMAGE_DATA_UNSUPPORT;
-    }
-
-    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    context = InitDecodeContext(opts_, info, preference_, hasDesiredSizeOptions);
-    context.info.pixelFormat = plInfo.pixelFormat;
-    errorCode = mainDecoder_->Decode(index, context);
-    if (context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
-    }
-
-    ninePatchInfo_.ninePatch = context.ninePatchContext.ninePatch;
-    ninePatchInfo_.patchSize = context.ninePatchContext.patchSize;
-    guard.unlock();
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        return ERR_IMAGE_DATA_UNSUPPORT;
-    }
-    return SUCCESS;
-}
-
-unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const DecodeOptions &opts, uint32_t &errorCode)
-{
-    ImageEvent imageEvent;
-    ImageDataStatistics imageDataStatistics("[ImageSource] CreatePixelMapExtended.");
-    uint64_t decodeStartTime = GetNowTimeMicroSeconds();
-    opts_ = opts;
-    ImageInfo info;
-    errorCode = GetImageInfo(FIRST_FRAME, info);
-    SetDecodeInfoOptions(index, opts, info, imageEvent);
-    ImageTrace imageTrace("CreatePixelMapExtended, info.size:(%d, %d)", info.size.width, info.size.height);
-    if (errorCode != SUCCESS || !IsSizeVailed(info.size)) {
-        IMAGE_LOGE("[ImageSource]get image info failed, ret:%{public}u.", errorCode);
-        imageEvent.SetDecodeErrorMsg("get image info failed, ret:" + std::to_string(errorCode));
-        errorCode = ERR_IMAGE_DATA_ABNORMAL;
-        return nullptr;
-    }
-    ImagePlugin::PlImageInfo plInfo;
-    DecodeContext context = DecodeImageDataToContextExtended(index, info, plInfo, imageEvent, errorCode);
-    imageDataStatistics.AddTitle("imageSize: [%d, %d], desireSize: [%d, %d], imageFormat: %s, desirePixelFormat: %d,"
-        "memorySize: %d, memoryType: %d", info.size.width, info.size.height, opts.desiredSize.width,
-        opts.desiredSize.height, sourceInfo_.encodedFormat.c_str(), opts.desiredPixelFormat,
-        context.pixelsBuffer.bufferSize, context.allocatorType);
-    imageDataStatistics.SetRequestMemory(context.pixelsBuffer.bufferSize);
-
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]decode source fail, ret:%{public}u.", errorCode);
-        imageEvent.SetDecodeErrorMsg("decode source fail, ret:" + std::to_string(errorCode));
-        return nullptr;
-    }
-
-    bool isHdr = context.hdrType > Media::ImageHdrType::SDR;
-    auto res = ImageAiProcess(info.size, opts, isHdr, context);
-    if (res != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
-    }
-    UpdatepPlImageInfo(context, isHdr, plInfo);
-
-    auto pixelMap = CreatePixelMapByInfos(plInfo, context, errorCode);
-    if (pixelMap == nullptr) {
-        return nullptr;
-    }
-    if (!context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
-    }
-    if ("image/gif" != sourceInfo_.encodedFormat) {
-        IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
-            "imageSize: (%{public}d, %{public}d), hdrType : %{public}d, cost %{public}lu us",
-            static_cast<unsigned long>(imageId_), opts.desiredSize.width, opts.desiredSize.height, info.size.width,
-            info.size.height, context.hdrType, static_cast<unsigned long>(GetNowTimeMicroSeconds() - decodeStartTime));
-    }
-
-    if (CreatExifMetadataByImageSource() == SUCCESS) {
-        auto metadataPtr = exifMetadata_->Clone();
-        pixelMap->SetExifMetadata(metadataPtr);
-    }
-    return pixelMap;
-}
-
 DecodeContext ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo info, ImagePlugin::PlImageInfo& plInfo,
                                                     uint32_t& errorCode)
 {
@@ -2869,28 +2827,6 @@ DecodeContext ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo in
     return context;
 }
 
-DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
-    ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode)
-{
-    std::unique_lock<std::mutex> guard(decodingMutex_);
-    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
-    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
-        opts_.desiredSize);
-    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
-    if (errorCode != SUCCESS) {
-        imageEvent.SetDecodeErrorMsg("set decode options error.ret:" + std::to_string(errorCode));
-        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
-        return {};
-    }
-    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
-    auto context = DecodeImageDataToContext(index, info, plInfo, errorCode);
-    if (context.ifPartialOutput) {
-        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
-    }
-    UpdateDecodeInfoOptions(context, imageEvent);
-    guard.unlock();
-    return context;
-}
 uint32_t ImageSource::SetGainMapDecodeOption(std::unique_ptr<AbsImageDecoder>& decoder, PlImageInfo& plInfo,
                                              float scale)
 {
@@ -3104,29 +3040,6 @@ static uint32_t CopyContextIntoSurfaceBuffer(Size dstSize, const DecodeContext &
 #endif
 }
 
-#ifdef IMAGE_AI_ENABLE
-static uint32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> &input, sptr<SurfaceBuffer> &output)
-{
-    int32_t ret;
-    auto csc = ColorSpaceConverter::Create();
-    if (csc == nullptr) {
-        IMAGE_LOGE("Create Detail enhancer failed");
-        return ERR_IMAGE_COLOR_SPACE_CONVERTER_CREATE_FAIL;
-    }
-    ColorSpaceConverterParameter parameter;
-    ret = csc->SetParameter(parameter);
-    if (ret != VPE_ALGO_ERR_OK) {
-        IMAGE_LOGE("[ImageSource]ColorSpaceConverterImageProcess SetParameter failed!");
-        return ret;
-    }
-    ret = csc->Process(input, output);
-    if (ret != VPE_ALGO_ERR_OK) {
-        IMAGE_LOGE("ColorSpaceConverterImageProcess Processed failed %{public}d", ret);
-    }
-    return ret;
-}
-#endif
-
 static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx,
                                CM_ColorSpaceType cmColorSpaceType)
 {
@@ -3140,12 +3053,8 @@ static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx
     }
     sptr<SurfaceBuffer> output(reinterpret_cast<SurfaceBuffer*>(hdrCtx.pixelsBuffer.context));
 
-#ifdef IMAGE_AI_ENABLE
-    res = ColorSpaceConverterImageProcess(input, output);
-#else
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     res = utils->ColorSpaceConverterImageProcess(input, output);
-#endif
     if (res != VPE_ERROR_OK) {
         IMAGE_LOGE("[ImageSource]DoAiHdrProcess ColorSpaceConverterImageProcess failed! %{public}d", res);
         FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
@@ -3159,38 +3068,6 @@ static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx
     return res;
 }
 
-#ifdef IMAGE_AI_ENABLE
-static uint32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer> & input, sptr<SurfaceBuffer> & output,
-                                           ResolutionQuality resolutionQuality)
-{
-    auto detailEnh = DetailEnhancerImage::Create();
-    if (detailEnh == nullptr) {
-        IMAGE_LOGE("Create Detail enhancer failed");
-        return ERR_IMAGE_DETAIL_ENHANCER_CREATE_FAIL;
-    }
-    // deafult level DETAIL_ENH_LEVEL_SUPER
-    DetailEnhancerParameters param {
-        .uri = "",
-        .level = DETAIL_ENH_LEVEL_SUPER,
-    };
-
-    if (resolutionQuality != ResolutionQuality::SUPER) {
-        param.level = DETAIL_ENH_LEVEL_HIGH;
-    }
-    auto ret = detailEnh->SetParameter(param);
-    if (ret != VPE_ALGO_ERR_OK) {
-        IMAGE_LOGE("DetailEnhancerImage SetParameter failed!");
-        return ret;
-    }
-
-    ret = detailEnh->Process(input, output);
-    if (ret != VPE_ALGO_ERR_OK) {
-        IMAGE_LOGE("DetailEnhancerImage Processed failed %{public}d", ret);
-    }
-    return ret;
-}
-#endif
-
 static uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &aisrCtx)
 {
     uint32_t res = AllocSrSurfaceBuffer(aisrCtx, GRAPHIC_PIXEL_FMT_RGBA_8888);
@@ -3199,12 +3076,8 @@ static uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &aisrCtx)
         return res;
     }
     sptr<SurfaceBuffer> output(reinterpret_cast<SurfaceBuffer*>(aisrCtx.pixelsBuffer.context));
-#ifdef IMAGE_AI_ENABLE
-    res = DetailEnhancerImageProcess(input, output, aisrCtx.resolutionQuality);
-#else
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     res = utils->DetailEnhancerImageProcess(input, output, static_cast<int32_t>(aisrCtx.resolutionQuality));
-#endif
     if (res != VPE_ERROR_OK) {
         IMAGE_LOGE("[ImageSource]AiSrProcess DetailEnhancerImage Processed failed");
         FreeContextBuffer(aisrCtx.freeFunc, aisrCtx.allocatorType, aisrCtx.pixelsBuffer);
@@ -3388,6 +3261,29 @@ static void UpdatepPlImageInfo(DecodeContext context, bool isHdr, ImagePlugin::P
         plInfo.yuvDataInfo = context.yuvInfo;
         plInfo.size = context.yuvInfo.imageSize;
     }
+}
+
+DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
+    ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode)
+{
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    hasDesiredSizeOptions = IsSizeVailed(opts_.desiredSize);
+    TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, opts_.desiredSize, opts_.fitDensity,
+        opts_.desiredSize);
+    errorCode = SetDecodeOptions(mainDecoder_, index, opts_, plInfo);
+    if (errorCode != SUCCESS) {
+        imageEvent.SetDecodeErrorMsg("set decode options error.ret:" + std::to_string(errorCode));
+        IMAGE_LOGE("[ImageSource]set decode options error (index:%{public}u), ret:%{public}u.", index, errorCode);
+        return {};
+    }
+    NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_HEADER_DECODE, &guard);
+    auto context = DecodeImageDataToContext(index, info, plInfo, errorCode);
+    if (context.ifPartialOutput) {
+        NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_PARTIAL_DECODE, &guard);
+    }
+    UpdateDecodeInfoOptions(context, imageEvent);
+    guard.unlock();
+    return context;
 }
 } // namespace Media
 } // namespace OHOS

@@ -927,10 +927,6 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
     } else {
         IMAGE_LOGD("no SVGResize percentage");
     }
-
-    opts->resolutionQuality = ParseResolutionQuality(env, root);
-    opts->desiredDynamicRange = ParseDynamicRange(env, root);
-    
     napi_value nDesiredColorSpace = nullptr;
     if (napi_get_named_property(env, root, "desiredColorSpace", &nDesiredColorSpace) == napi_ok) {
         opts->desiredColorSpaceInfo = OHOS::ColorManager::GetColorSpaceByJSObject(env, nDesiredColorSpace);
@@ -940,6 +936,7 @@ static bool ParseDecodeOptions2(napi_env env, napi_value root, DecodeOptions* op
         IMAGE_LOGD("no desiredColorSpace");
     }
     opts->desiredDynamicRange = ParseDynamicRange(env, root);
+    opts->resolutionQuality = ParseResolutionQuality(env, root);
     return true;
 }
 
