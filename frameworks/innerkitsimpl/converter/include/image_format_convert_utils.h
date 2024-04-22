@@ -24,17 +24,9 @@ namespace Media {
 
 using ConvertFunction = bool(*)(const uint8_t*, const Size&, uint8_t**, size_t&, [[maybe_unused]]ColorSpace);
 
-bool NV12ToRGB565(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-                  size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
 bool RGBAF16ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                    size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
 bool YU12ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
-bool NV21ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
-bool NV21ToRGBAF16(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-                   size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
-bool NV12ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
 bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                   size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
@@ -88,6 +80,14 @@ bool NV21ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
 bool NV21ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
                   size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
+bool NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+                  size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
+bool NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
+bool NV21ToRGBAF16(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
+bool NV12ToNV21(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
 } // namespace Media
 } // namespace OHOS
 
