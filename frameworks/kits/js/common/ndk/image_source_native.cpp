@@ -79,10 +79,8 @@ static ResolutionQuality ParseImageResolutionQuality(int32_t val)
     if (val <= static_cast<int32_t>(ResolutionQuality::LOW)) {
         return ResolutionQuality(val);
     }
-
     return ResolutionQuality::LOW;
 }
-
 
 MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptions_Create(OH_DecodingOptions **options)
