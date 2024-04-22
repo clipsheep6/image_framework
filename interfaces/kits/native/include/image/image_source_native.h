@@ -257,7 +257,6 @@ Image_ErrorCode OH_DecodingOptions_SetDesiredRegion(OH_DecodingOptions *options,
  * @param options The OH_DecodingOptions pointer will be operated.
  * @param desiredDynamicRange the number of desired dynamic range {@link IMAGE_DYNAMIC_RANGE}.
  * @return Returns {@link Image_ErrorCode}
- * @see OH_DecodingOptions_GetResolutionQuality
  * @since 12
  */
 Image_ErrorCode OH_DecodingOptions_GetDesiredDynamicRange(OH_DecodingOptions *options,
@@ -269,7 +268,6 @@ Image_ErrorCode OH_DecodingOptions_GetDesiredDynamicRange(OH_DecodingOptions *op
  * @param options The OH_DecodingOptions pointer will be operated.
  * @param desiredDynamicRange the number of desired dynamic range {@link IMAGE_DYNAMIC_RANGE}.
  * @return Returns {@link Image_ErrorCode}
- * @see OH_DecodingOptions_SetResolutionQuality
  * @since 12
  */
 Image_ErrorCode OH_DecodingOptions_SetDesiredDynamicRange(OH_DecodingOptions *options,
@@ -281,7 +279,6 @@ Image_ErrorCode OH_DecodingOptions_SetDesiredDynamicRange(OH_DecodingOptions *op
  * @param options The DecodingOptions pointer will be operated.
  * @param resolutionQuality the pointer of image resolution quality.
  * @return Returns {@link Image_ErrorCode}
- * @see OH_DecodingOptions_GetResolutionQuality
  * @since 12
  */
 Image_ErrorCode OH_DecodingOptions_GetResolutionQuality(OH_DecodingOptions *options,
@@ -293,7 +290,6 @@ Image_ErrorCode OH_DecodingOptions_GetResolutionQuality(OH_DecodingOptions *opti
  * @param options The DecodingOptions pointer will be operated.
  * @param resolutionQuality the number of image resolutionQuality.
  * @return Returns {@link Image_ErrorCode}
- * @see OH_DecodingOptions_SetResolutionQuality
  * @since 12
  */
 Image_ErrorCode OH_DecodingOptions_SetResolutionQuality(OH_DecodingOptions *options,

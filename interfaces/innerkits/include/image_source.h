@@ -212,8 +212,8 @@ public:
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
-    NATIVEEXPORT bool IsHdrImage();
     void SetSource(const std::string &source);
+    NATIVEEXPORT bool IsHdrImage();
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -287,23 +287,21 @@ private:
     uint32_t ModifyImageProperty(std::shared_ptr<MetadataAccessor> metadataAccessor,
                                  const std::string &key, const std::string &value);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
-    bool CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needHdr);
     uint32_t CreatExifMetadataByImageSource(bool addFlag = false);
-    uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
-                                      ImagePlugin::DecodeContext &context, uint32_t &errorCode);
-    void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
-                                  int32_t wantDensity, Size &dstSize);
-    
     void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImageInfo &info, ImageEvent &imageEvent);
     void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImagePlugin::PlImageInfo &plInfo,
         ImageEvent &imageEvent);
     void UpdateDecodeInfoOptions(const ImagePlugin::DecodeContext &context, ImageEvent &imageEvent);
-
+    bool CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needHdr);
+    uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
+                                      ImagePlugin::DecodeContext &context, uint32_t &errorCode);
+    void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
+                                  int32_t wantDensity, Size &dstSize);
     uint32_t DoAiHdrProcessDl(const ImagePlugin::DecodeContext &srcCtx, ImagePlugin::DecodeContext &dstCtx,
                               bool needAisr, bool needHdr);
     uint32_t ImageAiProcess(Size imageSize, const DecodeOptions &opts, bool isHdr,
                             ImagePlugin::DecodeContext &context);
-    ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info, 
+    ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
         ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
 
     const std::string NINE_PATCH = "ninepatch";
@@ -333,8 +331,8 @@ private:
     MemoryUsagePreference preference_ = MemoryUsagePreference::DEFAULT;
     std::optional<bool> isAstc_;
     uint64_t imageId_; // generated from the last six bits of the current timestamp
-    std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     ImageHdrType sourceHdrType_; // source image hdr type;
+    std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     std::string source_; // Image source fd buffer etc
     bool isExifReadFailed = false;
 };

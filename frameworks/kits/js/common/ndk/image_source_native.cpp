@@ -52,8 +52,8 @@ struct OH_DecodingOptions {
     uint32_t rotate;
     struct Image_Size desiredSize;
     struct Image_Region desiredRegion;
-    int32_t resolutionQuality;
     int32_t desiredDynamicRange;
+    int32_t resolutionQuality;
 };
 
 struct OH_ImageSource_Info {
@@ -335,6 +335,7 @@ static void ParseDecodingOps(DecodeOptions &decOps, struct OH_DecodingOptions *o
     decOps.desiredRegion.width = ops->desiredRegion.width;
     decOps.desiredRegion.height = ops->desiredRegion.height;
     decOps.desiredDynamicRange = ParseImageDynamicRange(ops->desiredDynamicRange);
+    decOps.resolutionQuality = ParseImageResolutionQuality(ops->resolutionQuality);
     switch (static_cast<int32_t>(ops->pixelFormat)) {
         case FORMAT_0:
         case FORMAT_2:
@@ -350,7 +351,6 @@ static void ParseDecodingOps(DecodeOptions &decOps, struct OH_DecodingOptions *o
         default:
             decOps.desiredPixelFormat = PixelFormat::UNKNOWN;
     }
-    decOps.resolutionQuality = ParseImageResolutionQuality(ops->resolutionQuality);
 }
 
 static void ParseImageSourceInfo(struct OH_ImageSource_Info *source, ImageInfo &info)

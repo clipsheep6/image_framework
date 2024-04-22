@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define private public
 #include <algorithm>
 #include <fcntl.h>
 #include <fstream>
@@ -93,9 +92,9 @@ private:
 
 /**
  * @tc.name: AisrTestLargerSuper
- * @tc.desc: set want larger size. SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size. 
+ * @tc.desc: set want larger size. SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size.
  *   In case want size is different:
- *     (1)SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size. 
+ *     (1)SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size.
  *     (2)Low/middle:Decode module zoom the size, SR module change solution with default:HIGH.
  *   In case want size is same: NOT run AiSR.
  *   In case HDR, run AiHdr;
@@ -139,7 +138,7 @@ HWTEST_F(ImageSourceAiTest, AisrTestLargerSuper, TestSize.Level3)
 
 /**
  * @tc.name: AisrTestLargerHigh
- * @tc.desc: set want larger size. SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size. 
+ * @tc.desc: set want larger size. SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size.
  * @tc.type: FUNC
  */
 HWTEST_F(ImageSourceAiTest, AisrTestLargerHigh, TestSize.Level3)

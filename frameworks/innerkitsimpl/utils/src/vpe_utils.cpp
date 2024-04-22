@@ -170,7 +170,7 @@ int32_t VpeUtils::ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> &input, sp
         return VPE_ERROR_FAILED;
     }
 
-    HdrProcessImageT hdrProcessImage = (HdrProcessImageT)dlsym(vpeHandle, "ColorSpaceConverterImageProcess");
+    HdrProcessImageT hdrProcessImage = (HdrProcessImageT)dlsym(vpeHandle, "ColorSpaceConverterProcessImage");
     if (!hdrProcessImage) {
         return VPE_ERROR_FAILED;
     }
@@ -226,7 +226,7 @@ int32_t VpeUtils::DetailEnhancerImageProcess(sptr<SurfaceBuffer> &input, sptr<Su
         return VPE_ERROR_FAILED;
     }
 
-    SrProcessImageT srProcessImage = (SrProcessImageT)dlsym(vpeHandle, "DetailEnhancerImageProcess");
+    SrProcessImageT srProcessImage = (SrProcessImageT)dlsym(vpeHandle, "DetailEnhancerProcessImage");
     if (!srProcessImage) {
         return VPE_ERROR_FAILED;
     }
