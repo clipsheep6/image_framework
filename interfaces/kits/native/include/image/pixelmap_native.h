@@ -438,6 +438,18 @@ Image_ErrorCode OH_PixelmapNative_Crop(OH_PixelmapNative *pixelmap, Image_Region
  */
 Image_ErrorCode OH_PixelmapNative_Release(OH_PixelmapNative *pixelmap);
 
+/**
+ * @brief Converting images to alpha format
+ *
+ * @param srcpixelmap The source pixel map pointer will be operated.
+ * @param dstpixelmap The destination pixel map pointer will be operated.
+ * @param isPremul Whether it is pre-multiplied, true for prediction, false for non-pre-multiplied.
+ * @return Returns {@link Image_ErrorCode}
+ * @since 12
+ */
+Image_ErrorCode OH_PixelmapNative_ConvertAlphaFormat(OH_PixelmapNative* srcpixelmap,
+    OH_PixelmapNative* dstpixelmap, const bool isPremul);
+
 #ifdef __cplusplus
 };
 #endif

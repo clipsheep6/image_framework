@@ -45,6 +45,7 @@ static constexpr int32_t IMAGE_BASE_23 = 23;
 struct OH_Pixelmap_InitializationOptions {
     uint32_t width;
     uint32_t height;
+    PIXEL_FORMAT srcPixelFormat = PIXEL_FORMAT::PIXEL_FORMAT_BGRA_8888;
     PIXEL_FORMAT pixelFormat = PIXEL_FORMAT::PIXEL_FORMAT_UNKNOWN;
     uint32_t editable = false;
     PIXELMAP_ALPHA_TYPE alphaType = PIXELMAP_ALPHA_TYPE::PIXELMAP_ALPHA_TYPE_UNKNOWN;
@@ -422,6 +423,18 @@ Image_ErrorCode OH_PixelmapNative_Release(OH_PixelmapNative *pixelmap)
         return IMAGE_BAD_PARAMETER;
     }
     pixelmap->~OH_PixelmapNative();
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
+Image_ErrorCode OH_PixelmapNative_ConvertAlphaFormat(OH_PixelmapNative* srcpixelmap,
+    OH_PixelmapNative* dstpixelmap, const bool isPremul)
+{
+    if (srcpixelmap == nullptr || dstpixelmap == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    // OHOS::Media::PixelMap& pixelmap = *reinterpret_cast<OHOS::Media::PixelMap*>(dstpixelmap);
+    srcpixelmap->GetInnerPixelmap()->ConvertAlphaFormat(*(dstpixelmap->GetInnerPixelmap()), isPremul);
     return IMAGE_SUCCESS;
 }
 
