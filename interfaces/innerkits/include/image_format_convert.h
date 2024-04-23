@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H_
-#define INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H_
+#ifndef INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H
+#define INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H
 
 #include <memory>
 
@@ -36,8 +36,7 @@ struct ConvertDataInfo {
     ColorSpace colorSpace = ColorSpace::SRGB;
 };
 
-class ImageFormatConvert
-{
+class ImageFormatConvert {
     friend class ImageFormatConvertTest;
 public:
     static uint32_t ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo);
@@ -57,4 +56,4 @@ private:
 
 } //OHOS
 } //Media
-#endif // INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H_
+#endif // INTERFACES_INNERKITS_INCLUDE_IMAGE_FORMAT_CONVERT_H

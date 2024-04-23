@@ -362,8 +362,7 @@ void PixelYuv::flip(bool xAxis, bool yAxis)
             IMAGE_LOGE("flip yuv xAxis and yAxis failed");
             return;
         }
-    }
-    else {
+    } else {
         bool isXaxis = ((xAxis | yAxis) && xAxis) ? true : false;
         if (!PixelYuvUtils::YuvFlip(const_cast<uint8_t *>(src), srcInfo, dst, isXaxis)) {
             IMAGE_LOGE("flip yuv xAxis or yAxis failed");

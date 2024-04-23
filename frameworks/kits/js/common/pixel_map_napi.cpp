@@ -3272,8 +3272,7 @@ STATIC_EXEC_FUNC(GeneralError)
 
 static FormatType TypeFormat(PixelFormat &pixelForamt)
 {
-    switch (pixelForamt)
-    {
+    switch (pixelForamt) {
         case PixelFormat::ARGB_8888:
         case PixelFormat::RGB_565:
         case PixelFormat::RGBA_8888:
@@ -3339,7 +3338,7 @@ static uint32_t GetNativeConvertInfo(napi_env &env, napi_callback_info &info, Pi
         context->status = ERR_IMAGE_INVALID_PARAMETER, ERR_IMAGE_INVALID_PARAMETER);
 }
 
-static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType srcFormatType, std::string workName, 
+static napi_value Convert(napi_env &env, napi_callback_info &info, FormatType srcFormatType, std::string workName,
     PixelMapAsyncContext* context)
 {
     napi_value result = nullptr;
@@ -3383,7 +3382,7 @@ static napi_value RGBToYUV(napi_env env, napi_callback_info &info,  PixelMapAsyn
     return Convert(env, info, FormatType::RGB, "RGBToYUV", context);
 }
 
-static napi_value PixelFormatConvert(napi_env env, napi_callback_info &info, PixelMapAsyncContext* context) 
+static napi_value PixelFormatConvert(napi_env env, napi_callback_info &info, PixelMapAsyncContext* context)
 {
     napi_value result = nullptr;
     napi_create_promise(env, &(context->deferred), &result);

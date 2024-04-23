@@ -13,24 +13,23 @@
  * limitations under the License.
  */
 
-#include "image_format_convert.h"
-#include "image_format_convert_utils.h"
-#include "buffer_packer_stream.h"
-#include "image_source.h"
-#include "image_type.h"
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
-#include "media_errors.h"
-#include "image_utils.h"
+#include <gtest/hwext/gtest-multithread.h>
+#include <iostream>
+#include <unistd.h>
+
+#include "buffer_packer_stream.h"
 #include "hilog/log.h"
 #include "hilog/log_cpp.h"
+#include "image_format_convert.h"
+#include "image_format_convert_utils.h"
 #include "image_log.h"
-// #include "memory_manager.h"
-// #include "pixel_yuv.h"
-#include <gtest/hwext/gtest-multithread.h>
-#include <unistd.h>
-#include <fstream>
-#include <filesystem>
-#include <iostream>
+#include "image_source.h"
+#include "image_type.h"
+#include "image_utils.h"
+#include "media_errors.h"
 
 using namespace testing::mt;
 using namespace testing::ext;
@@ -189,7 +188,8 @@ HWTEST_F(ImageFormatConvertTest, GetConvertFuncByFormat_Test_003, TestSize.Level
     ConvertFunction cvtFunc = ImageFormatConvertTest::TestGetConvertFuncByFormat(srcFormat, destFormat);
     Size size = { NUM_8, NUM_5 };
     const uint8_t *srcBuffer = new uint8_t[size.width * size.height +
-        ((size.width + 1) / BYTES_PER_PIXEL_RGB565) * ((size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565]();
+        ((size.width + 1) / BYTES_PER_PIXEL_RGB565) *
+        ((size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565]();
     uint8_buffer_type destBuffer = nullptr;
     size_t destBufferSize = 0;
     ColorSpace colorspace = ColorSpace::UNKNOWN;
@@ -312,7 +312,8 @@ HWTEST_F(ImageFormatConvertTest, MakeDestPixelMap_Test_003, TestSize.Level1)
     destInfo.size = srcInfo.size;
 
     size_t destBufferSize = destInfo.size.width * destInfo.size.height +
-        ((destInfo.size.width + 1) / BYTES_PER_PIXEL_RGB565) * ((destInfo.size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565;
+        ((destInfo.size.width + 1) / BYTES_PER_PIXEL_RGB565) *
+        ((destInfo.size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565;
     uint8_buffer_type destBuffer = new uint8_t[destBufferSize]();
 
     bool ret = ImageFormatConvertTest::TestMakeDestPixelMap(srcPixelMap, destBuffer, destBufferSize, destInfo,
@@ -801,7 +802,7 @@ HWTEST_F(ImageFormatConvertTest, NV12ToNV21_Test_001, TestSize.Level1)
     EXPECT_EQ(ret, SUCCESS);
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
     ASSERT_NE(data, nullptr);
-    uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() + 
+    uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() +
         ((pixelMap->GetWidth() + 1) / EVEN_ODD_DIVISOR) * ((pixelMap->GetHeight() + 1) / EVEN_ODD_DIVISOR) * TWO_SLICES;
     ASSERT_EQ(pixelMap->GetPixelFormat(), destFormat);
     Size size;

@@ -181,9 +181,8 @@ bool ImageFormatConvert::CheckConvertDataInfo(const ConvertDataInfo &convertData
     return true;
 }
 
-
-uint32_t ImageFormatConvert::YUVConvertImageFormatOption(std::shared_ptr<PixelMap> &srcPiexlMap, const PixelFormat &srcFormat,
-                                                         PixelFormat destFormat)
+uint32_t ImageFormatConvert::YUVConvertImageFormatOption(std::shared_ptr<PixelMap> &srcPiexlMap,
+                                                         const PixelFormat &srcFormat, PixelFormat destFormat)
 {
     YUVConvertFunction yuvCvtFunc = YUVGetConvertFuncByFormat(srcFormat, destFormat);
     if (yuvCvtFunc == nullptr) {

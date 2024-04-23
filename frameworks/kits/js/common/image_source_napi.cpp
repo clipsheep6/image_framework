@@ -52,7 +52,7 @@ std::string ImageSourceNapi::filePath_ = "";
 int ImageSourceNapi::fileDescriptor_ = -1;
 void* ImageSourceNapi::fileBuffer_ = nullptr;
 size_t ImageSourceNapi::fileBufferSize_ = 0;
-std::shared_ptr<PixelMap> ImageSourceNapi::srcPixelMap_ =nullptr;
+std::shared_ptr<PixelMap> ImageSourceNapi::srcPixelMap_ = nullptr;
 
 napi_ref ImageSourceNapi::pixelMapFormatRef_ = nullptr;
 napi_ref ImageSourceNapi::propertyKeyRef_ = nullptr;

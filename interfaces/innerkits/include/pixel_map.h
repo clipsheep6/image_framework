@@ -304,7 +304,6 @@ protected:
 
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
 
-
     bool editable_ = false;
     AllocatorType allocatorType_ = AllocatorType::SHARE_MEM_ALLOC;
     void *context_ = nullptr;
