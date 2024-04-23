@@ -687,7 +687,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     bool isHdr = context.hdrType > Media::ImageHdrType::SDR;
     auto res = ImageAiProcess(info.size, opts, isHdr, context);
     if (res != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
+        IMAGE_LOGD("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
     }
     UpdatepPlImageInfo(context, isHdr, plInfo);
 
