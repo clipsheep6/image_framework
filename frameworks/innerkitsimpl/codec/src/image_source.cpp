@@ -684,7 +684,6 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
         imageEvent.SetDecodeErrorMsg("decode source fail, ret:" + std::to_string(errorCode));
         return nullptr;
     }
-
     bool isHdr = context.hdrType > Media::ImageHdrType::SDR;
     auto res = ImageAiProcess(info.size, opts, isHdr, context);
     if (res != SUCCESS) {
@@ -804,7 +803,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     }
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId_);
     if ((opts_.desiredSize.height != pixelMap->GetHeight() || opts_.desiredSize.width != pixelMap->GetWidth()) &&
-            context.hdrType == ImageHdrType::UNKNOWN) {
+        (context.hdrType < ImageHdrType::HDR_ISO_DUAL) && !context.isAisr) {
         float xScale = static_cast<float>(opts_.desiredSize.width) / pixelMap->GetWidth();
         float yScale = static_cast<float>(opts_.desiredSize.height) / pixelMap->GetHeight();
         if (!pixelMap->resize(xScale, yScale)) {
@@ -3107,7 +3106,7 @@ static bool IsNecessaryAiProcess(const Size &imageSize, const DecodeOptions &opt
     auto bRet = CheckCapacityAi();
     if (!bRet) {
         IMAGE_LOGE("[ImageSource] IsNecessaryAiProcess Unsupported sr and hdr");
-        return SUCCESS;
+        return false;
     }
     if ((IsSizeVailed(opts.desiredSize) && (imageSize.height != opts.desiredSize.height
             || imageSize.width != opts.desiredSize.width)) || opts.resolutionQuality == ResolutionQuality::SUPER) {
@@ -3151,6 +3150,7 @@ static void CopyOutInfoOfContext(const DecodeContext &srcCtx, DecodeContext &dst
     dstCtx.pixelFormat = srcCtx.pixelFormat;
     dstCtx.info.pixelFormat = srcCtx.info.pixelFormat;
     dstCtx.info.alphaType = srcCtx.info.alphaType;
+    dstCtx.isAisr = srcCtx.isAisr;
 }
 
 static uint32_t AiHdrProcess(const DecodeContext &aisrCtx, DecodeContext &hdrCtx, CM_ColorSpaceType cmColorSpaceType)
@@ -3173,6 +3173,9 @@ static uint32_t DoImageAiProcess(sptr<SurfaceBuffer> &input, DecodeContext &dstC
         res = AiSrProcess(input, aiCtx);
         if (res != SUCCESS) {
             IMAGE_LOGE("[ImageSource] AiSrProcess fail %{public}u", res);
+        } else {
+            CopyOutInfoOfContext(aiCtx, dstCtx);
+            dstCtx.isAisr = true;
         }
     }
     if (needHdr) {
@@ -3184,7 +3187,6 @@ static uint32_t DoImageAiProcess(sptr<SurfaceBuffer> &input, DecodeContext &dstC
                 res = ERR_IMAGE_AI_ONLY_SR_SUCCESS;
                 IMAGE_LOGE("[ImageSource] DoAiHdrProcess fail %{public}u", res);
                 FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
-                CopyOutInfoOfContext(aiCtx, dstCtx);
             } else {
                 FreeContextBuffer(aiCtx.freeFunc, aiCtx.allocatorType, aiCtx.pixelsBuffer);
                 CopyOutInfoOfContext(hdrCtx, dstCtx);
@@ -3209,7 +3211,7 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, const DecodeOptions &opts, 
     bool needHdr = false;
     auto bRet = IsNecessaryAiProcess(imageSize, opts, isHdr, needAisr, needHdr);
     if (!bRet) {
-        return SUCCESS;
+        return ERR_IMAGE_AI_UNNECESSARY;
     }
     DecodeContext srcCtx;
     CopySrcInfoOfContext(context, srcCtx);

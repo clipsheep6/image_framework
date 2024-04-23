@@ -237,6 +237,7 @@ struct DecodeOptions {
     uint16_t invokeType = 0;
     DecodeDynamicRange desiredDynamicRange = DecodeDynamicRange::AUTO;
     ResolutionQuality resolutionQuality = ResolutionQuality::LOW;
+    bool isAisr = false;
 };
 
 enum class ScaleMode : int32_t {
