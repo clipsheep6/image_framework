@@ -19,9 +19,7 @@
 #include "image_trace.h"
 #include "image_type_converter.h"
 #include "memory_manager.h"
-#include "hilog/log.h"
 #include "hitrace_meter.h"
-#include "log_tags.h"
 #include "media_errors.h"
 #include "pubdef.h"
 #include "pixel_yuv_utils.h"
@@ -61,14 +59,13 @@ static SkImageInfo ToSkImageInfo(ImageInfo &info, sk_sp<SkColorSpace> colorSpace
 {
     SkColorType colorType = ImageTypeConverter::ToSkColorType(info.pixelFormat);
     SkAlphaType alphaType = ImageTypeConverter::ToSkAlphaType(info.alphaType);
-    IMAGE_LOGD("ToSkImageInfo w %{public}d, h %{public}d", info.size.width, info.size.height);
-    IMAGE_LOGD(
+    IMAGE_LOGD("ToSkImageInfo w %{public}d, h %{public}d\n" \
         "ToSkImageInfo pf %{public}s, at %{public}s, skpf %{public}s, skat %{public}s",
+        info.size.width, info.size.height,
         ImageTypeConverter::ToName(info.pixelFormat).c_str(),
         ImageTypeConverter::ToName(info.alphaType).c_str(),
         ImageTypeConverter::ToName(colorType).c_str(),
-        ImageTypeConverter::ToName(alphaType).c_str()
-    );
+        ImageTypeConverter::ToName(alphaType).c_str());
     return SkImageInfo::Make(info.size.width, info.size.height, colorType, alphaType, colorSpace);
 }
 
@@ -185,7 +182,7 @@ static int32_t GetUVHeight(int32_t height)
     return (height + 1) / NUM_2;
 }
 
-// Yuv420SP, u、 v blend planer
+// Yuv420SP, u, v blend planer
 static int32_t GetUVStride(int32_t width)
 {
     return (width + 1) / NUM_2 * NUM_2;
@@ -222,16 +219,11 @@ void PixelYuv::rotate(float degrees)
         dstMemory->Release();
         return;
     }
-    if (memcpy_s(data_, count, dst, count) != 0) {
-        IMAGE_LOGE("rotate memcpy failed");
-        return;
-    }
     imageInfo_.size.width = dstInfo.width;
     imageInfo_.size.height = dstInfo.height;
     SetPixelsAddr(dstMemory->data.data, dstMemory->extend.data, dstMemory->data.size, dstMemory->GetType(), nullptr);
     SetImageInfo(imageInfo_, true);
     AssignYuvDataOnType(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
-    return;
 }
 
 uint32_t PixelYuv::crop(const Rect &rect)
@@ -426,16 +418,6 @@ void PixelYuv::ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &o
         return;
     }
     uint8_t *dst = reinterpret_cast<uint8_t *>(dstMemory->data.data);
-    if (imageInfo.pixelFormat == PixelFormat::YU12 || imageInfo.pixelFormat == PixelFormat::YV12) {
-        if (SUCCESS != libyuv::I420Scale(src, srcW, src + GetYSize(srcW, srcH), GetUStride(srcW),
-            src + GetVOffset(srcW, srcH), GetUStride(srcW), srcW, srcH, dst, dstW,
-            dst + GetYSize(dstW, dstH), GetUStride(dstW), dst + GetVOffset(dstW, dstH),
-            GetUStride(dstW), dstW, dstH, filterMode)) {
-            dstMemory->Release();
-            IMAGE_LOGE("Scale Yuv420P failed");
-            return;
-        }
-    }
     if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21) {
         uint32_t srcHalfW = GetUStride(srcW);
         uint32_t srcHalfH = GetUVHeight(srcH);
@@ -493,15 +475,6 @@ void PixelYuv::ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &o
 
 bool PixelYuv::FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format)
 {
-    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
-        if (SUCCESS != libyuv::I420Copy(src, width, src + GetYSize(width, height), GetUStride(width),
-            src + GetVOffset(width, height), GetUStride(width), dst, width,
-            dst + GetYSize(width, height), GetUStride(width),
-            dst + GetVOffset(width, height), GetUStride(width), width, -height)) {
-            IMAGE_LOGE("Flip Yuv420P Copy failed");
-            return false;
-        }
-    }
     if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
         libyuv::NV12ToI420(src, width, src + GetYSize(width, height), GetUVStride(width),
             dst, width, dst + GetYSize(width, height), GetUStride(width),
@@ -522,12 +495,6 @@ bool PixelYuv::FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_
 
 void PixelYuv::FlipYaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format)
 {
-    if (format == PixelFormat::YU12 || format == PixelFormat::YV12) {
-        libyuv::I420Mirror(src, width, src + GetYSize(width, height), GetUStride(width),
-            src + GetVOffset(width, height), GetUStride(width), dst, width,
-            dst + GetYSize(width, height), GetUStride(width),
-            dst + GetVOffset(width, height), GetUStride(width), width, height);
-        }
     if (format == PixelFormat::NV21 || format == PixelFormat::NV12) {
         libyuv::NV12ToI420(src, width, src + GetYSize(width, height), GetUVStride(width), dst, width,
             dst + GetYSize(width, height), GetUStride(width), dst + GetVOffset(width, height), GetUStride(width),
@@ -812,14 +779,14 @@ uint32_t PixelYuv::GetImageSize(int32_t width, int32_t height)
 void PixelYuv::AssignYuvDataOnType(PixelFormat format, int32_t width, int32_t height)
 {
     if (format == PixelFormat::NV12 || format == PixelFormat::NV21) {
-        yuvDataInfo_.y_width = width;
-        yuvDataInfo_.y_height = height;
-        yuvDataInfo_.y_stride = width;
-        yuvDataInfo_.uv_width = GetUStride(width);
-        yuvDataInfo_.uv_height = GetUVHeight(height);
-        yuvDataInfo_.uv_stride = GetUVStride(width);
+        yuvDataInfo_.yWidth = width;
+        yuvDataInfo_.yHeight = height;
+        yuvDataInfo_.yStride = width;
+        yuvDataInfo_.uvWidth = GetUStride(width);
+        yuvDataInfo_.uvHeight = GetUVHeight(height);
+        yuvDataInfo_.uvStride = GetUVStride(width);
         yuvDataInfo_.yOffset = 0;
-        yuvDataInfo_.uvOffset =  yuvDataInfo_.y_height * yuvDataInfo_.y_stride;
+        yuvDataInfo_.uvOffset =  yuvDataInfo_.yHeight * yuvDataInfo_.yStride;
     }
 }
 
@@ -903,8 +870,8 @@ uint32_t PixelYuv::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
 
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
-    int32_t width = yuvDataInfo.y_stride;
-    int32_t height = yuvDataInfo.y_height;
+    int32_t width = yuvDataInfo.yStride;
+    int32_t height = yuvDataInfo.yHeight;
 
     YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(format),
         imageInfo_.size.width, imageInfo_.size.height, yuvDataInfo};

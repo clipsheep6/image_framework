@@ -961,8 +961,8 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
         if (retVal != OHOS::GSERROR_OK || planes == nullptr) {
             IMAGE_LOGE("jpeg hardware decode, Get planesInfo failed, retVal:%{public}d", retVal);
         } else if (planes->planeCount < PLANE_COUNT_TWO) {
-            context.yuvInfo.y_stride = planes->planes[0].rowStride;
-            context.yuvInfo.uv_stride = planes->planes[1].rowStride;
+            context.yuvInfo.yStride = planes->planes[0].rowStride;
+            context.yuvInfo.uvStride = planes->planes[1].rowStride;
             context.yuvInfo.yOffset = planes->planes[0].offset;
             context.yuvInfo.uvOffset = planes->planes[1].offset;
         }

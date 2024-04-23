@@ -14,9 +14,11 @@
  */
 
 #include "image_utils_tools.h"
+
 #include <chrono>
 #include <dlfcn.h>
 #include <string>
+
 #include "image_log.h"
 #include "log_tags.h"
 
@@ -24,7 +26,7 @@ namespace OHOS {
 namespace Media {
 namespace {
 #if (defined(__aarch64__) || defined(__x86_64__))
-const std::string YUV_LIB_PATH = "/system/lib64/platformsdk/libyuv.z.so";
+const std::string YUV_LIB_PATH = "libyuv.z.so";
 #else
 const std::string YUV_LIB_PATH = "/system/lib/platformsdk/libyuv.z.so";
 #endif

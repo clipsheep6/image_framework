@@ -3331,7 +3331,7 @@ static uint32_t GetNativeConvertInfo(napi_env &env, napi_callback_info &info, Pi
     }
 
     if (isPixelFormat) {
-            return GetNativePixelMapInfo(env, context);
+        return GetNativePixelMapInfo(env, context);
     }
     IMG_NAPI_CHECK_BUILD_ERROR(false,
         BuildContextError(env, context->error, "wrong arguments!", ERR_IMAGE_INVALID_PARAMETER),
@@ -3390,9 +3390,11 @@ static napi_value PixelFormatConvert(napi_env env, napi_callback_info &info, Pix
 
     if (dstFormat != PixelFormat::UNKNOWN) {
         context->dstFormatType = TypeFormat(dstFormat);
-        if (context->dstFormatType == FormatType::YUV) {
+        if (context->dstFormatType == FormatType::YUV &&
+            (context->srcFormatType == FormatType::UNKNOWN || context->srcFormatType == FormatType::RGB)) {
             result = RGBToYUV(env, info, context);
-        } else if (context->dstFormatType == FormatType::RGB) {
+        } else if (context->dstFormatType == FormatType::RGB) &&
+            (context->srcFormatType == FormatType::UNKNOWN || context->srcFormatType == FormatType::YUV)) {
             result = YUVToRGB(env, info, context);
         }
     }

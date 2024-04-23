@@ -116,8 +116,6 @@ enum class PixelFormat : int32_t {
     ASTC_6x6 = 12,
     ASTC_8x8 = 13,
     RGBA_1010102 = 14,
-    YU12 = 15,  // Each pixel is sorted on 3/2 bytes.
-    YV12 = 16,
 };
 
 enum class DecodeDynamicRange : int32_t {
@@ -192,14 +190,14 @@ struct ImageInfo {
 };
 
 struct YUVDataInfo {
-    uint32_t y_width = 0;
-    uint32_t y_height = 0;
-    uint32_t uv_width = 0;
-    uint32_t uv_height = 0;
-    uint32_t y_stride = 0;
-    uint32_t u_stride = 0;
-    uint32_t v_stride = 0;
-    uint32_t uv_stride = 0;
+    uint32_t yWidth = 0;
+    uint32_t yHeight = 0;
+    uint32_t uvWidth = 0;
+    uint32_t uvHeight = 0;
+    uint32_t yStride = 0;
+    uint32_t uStride = 0;
+    uint32_t vStride = 0;
+    uint32_t uvStride = 0;
     uint32_t yOffset = 0;
     uint32_t uOffset = 0;
     uint32_t vOffset = 0;

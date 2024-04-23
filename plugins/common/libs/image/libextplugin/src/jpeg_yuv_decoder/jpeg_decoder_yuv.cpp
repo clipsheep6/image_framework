@@ -237,20 +237,20 @@ void JpegDecoderYuv::InitYuvDataOutInfoTo420(uint32_t width, uint32_t height, Pl
     }
     info.imageSize.width = width;
     info.imageSize.height = height;
-    info.y_width = Get420OutPlaneWidth(YCOM, width);
-    info.y_height = Get420OutPlaneHeight(YCOM, height);
-    info.uv_width = Get420OutPlaneWidth(UCOM, width);
-    info.uv_height = Get420OutPlaneHeight(UCOM, height);
-    info.y_stride = info.y_width;
-    info.u_stride = info.uv_width;
-    info.v_stride = info.uv_width;
+    info.yWidth = Get420OutPlaneWidth(YCOM, width);
+    info.yHeight = Get420OutPlaneHeight(YCOM, height);
+    info.uvWidth = Get420OutPlaneWidth(UCOM, width);
+    info.uvHeight = Get420OutPlaneHeight(UCOM, height);
+    info.yStride = info.yWidth;
+    info.uStride = info.uvWidth;
+    info.vStride = info.uvWidth;
     info.yOffset = 0;
     if (fmt == JpegYuvFmt::OutFmt_YU12) {
-        info.uOffset = info.y_height * info.y_stride;
-        info.vOffset = info.uOffset + info.uv_height * info.u_stride;
+        info.uOffset = info.yHeight * info.yStride;
+        info.vOffset = info.uOffset + info.uvHeight * info.uStride;
     } else {
-        info.vOffset = info.y_height * info.y_stride;
-        info.uOffset = info.vOffset + info.uv_height * info.v_stride;
+        info.vOffset = info.yHeight * info.yStride;
+        info.uOffset = info.vOffset + info.uvHeight * info.vStride;
     }
 }
 
@@ -261,14 +261,14 @@ void JpegDecoderYuv::InitYuvDataOutInfoTo420NV(uint32_t width, uint32_t height, 
     }
     info.imageSize.width = width;
     info.imageSize.height = height;
-    info.y_width = Get420OutPlaneWidth(YCOM, width);
-    info.y_height = Get420OutPlaneHeight(YCOM, height);
-    info.uv_width = Get420OutPlaneWidth(UCOM, width);
-    info.uv_height = Get420OutPlaneHeight(UCOM, height);
-    info.y_stride = info.y_width;
-    info.uv_stride = info.uv_width + info.uv_width;
+    info.yWidth = Get420OutPlaneWidth(YCOM, width);
+    info.yHeight = Get420OutPlaneHeight(YCOM, height);
+    info.uvWidth = Get420OutPlaneWidth(UCOM, width);
+    info.uvHeight = Get420OutPlaneHeight(UCOM, height);
+    info.yStride = info.yWidth;
+    info.uvStride = info.uvWidth + info.uvWidth;
     info.yOffset = 0;
-    info.uvOffset = info.y_height * info.y_stride;
+    info.uvOffset = info.yHeight * info.yStride;
 }
 
 void JpegDecoderYuv::InitYuvDataOutInfo(uint32_t width, uint32_t height, PlYuvDataInfo &info)

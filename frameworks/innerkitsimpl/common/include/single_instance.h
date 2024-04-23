@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DISTRIBUTED_HARDWARE_SINGLE_INSTANCE_H
-#define OHOS_DISTRIBUTED_HARDWARE_SINGLE_INSTANCE_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_SINGLE_INSTANCE_H
+#define FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_SINGLE_INSTANCE_H
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -48,4 +48,4 @@ className & className::GetInstance()                    \
 }
 } // namespace DistributedHardware
 } // namespace OHOS
-#endif // OHOS_DISTRIBUTED_HARDWARE_SINGLE_INSTANCE_H
+#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_SINGLE_INSTANCE_H

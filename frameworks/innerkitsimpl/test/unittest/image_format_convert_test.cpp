@@ -35,8 +35,8 @@ using namespace testing::mt;
 using namespace testing::ext;
 namespace OHOS {
 namespace Media {
-constexpr uint8_t NUM_5 = 5;
-constexpr uint8_t NUM_8 = 8;
+constexpr uint8_t TARGET_IMAGE_WIDTH = 8;
+constexpr uint8_t TARGET_IMAGE_HEIGHT = 5;
 constexpr int32_t TREE_ORIGINAL_WIDTH = 800;
 constexpr int32_t TREE_ORIGINAL_HEIGHT = 500;
 constexpr int32_t ODDTREE_ORIGINAL_WIDTH = 951;
@@ -47,11 +47,6 @@ constexpr uint32_t BYTES_PER_PIXEL_RGBA = 4;
 constexpr uint32_t BYTES_PER_PIXEL_BGRA = 4;
 constexpr uint32_t EVEN_ODD_DIVISOR = 2;
 constexpr uint32_t TWO_SLICES = 2;
-
-#define TREE_ORIGINAL_WIDTH 800
-#define TREE_ORIGINAL_HEIGHT 500
-#define ODDTREE_ORIGINAL_WIDTH 951
-#define ODDTREE_ORIGINAL_HEIGHT 595
 
 struct ImageSize {
     int32_t width = 0;
@@ -171,8 +166,8 @@ HWTEST_F(ImageFormatConvertTest, GetConvertFuncByFormat_Test_002, TestSize.Level
     PixelFormat srcFormat = PixelFormat::RGB_888;
     PixelFormat destFormat = PixelFormat::NV12;
     ConvertFunction cvtFunc = ImageFormatConvertTest::TestGetConvertFuncByFormat(srcFormat, destFormat);
-    Size size = { NUM_8, NUM_5 };
-    const uint8_t *srcBuffer = new uint8_t[NUM_8 * NUM_5 * BYTES_PER_PIXEL_RGB]();
+    Size size = { TARGET_IMAGE_WIDTH, TARGET_IMAGE_HEIGHT };
+    const uint8_t *srcBuffer = new uint8_t[size.width * size.height * BYTES_PER_PIXEL_RGB]();
     uint8_buffer_type destBuffer = nullptr;
     size_t destBufferSize = 0;
     ColorSpace colorspace = ColorSpace::UNKNOWN;
@@ -186,7 +181,7 @@ HWTEST_F(ImageFormatConvertTest, GetConvertFuncByFormat_Test_003, TestSize.Level
     PixelFormat srcFormat = PixelFormat::NV12;
     PixelFormat destFormat = PixelFormat::RGB_565;
     ConvertFunction cvtFunc = ImageFormatConvertTest::TestGetConvertFuncByFormat(srcFormat, destFormat);
-    Size size = { NUM_8, NUM_5 };
+    Size size = { TARGET_IMAGE_WIDTH, TARGET_IMAGE_HEIGHT };
     const uint8_t *srcBuffer = new uint8_t[size.width * size.height +
         ((size.width + 1) / BYTES_PER_PIXEL_RGB565) *
         ((size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565]();
@@ -216,7 +211,6 @@ HWTEST_F(ImageFormatConvertTest, MakeDestPixelMap_Test_001, TestSize.Level1)
     std::shared_ptr<PixelMap> srcPixelMap = nullptr;
     uint32_t errorCode = 0;
     DecodeOptions decodeOpts;
-
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
     rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH, opts, errorCode);
@@ -237,9 +231,9 @@ HWTEST_F(ImageFormatConvertTest, MakeDestPixelMap_Test_001, TestSize.Level1)
     destInfo.size = srcInfo.size;
     destInfo.size.width = 0;
     destInfo.size.height = 0;
-
     size_t destBufferSize = destInfo.size.width * destInfo.size.height +
-        ((destInfo.size.width + 1) / BYTES_PER_PIXEL_RGB565) * ((destInfo.size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565;
+        ((destInfo.size.width + 1) / BYTES_PER_PIXEL_RGB565) *
+        ((destInfo.size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565;
     uint8_buffer_type destBuffer = new uint8_t[destBufferSize]();
     bool ret = ImageFormatConvertTest::TestMakeDestPixelMap(srcPixelMap, destBuffer, destBufferSize, destInfo,
         srcPixelMap->GetAllocatorType());
@@ -679,12 +673,12 @@ HWTEST_F(ImageFormatConvertTest, NV21ToNV12_Test_001, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToNV12_Test_001 start";
     std::string jpgpath = IMAGE_INPUT_JPG_PATH1;
-
     ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT};
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
+
     uint32_t errorCode = 0;
     SourceOptions opts;
-    opts.formatHint = "image/yuv";
+    opts.formatHint = "image/jpeg";
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: srcjpg" << jpgpath;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(jpgpath, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
@@ -697,29 +691,28 @@ HWTEST_F(ImageFormatConvertTest, NV21ToNV12_Test_001, TestSize.Level1)
     std::shared_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
+
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::NV12;
-
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
     EXPECT_EQ(ret, SUCCESS);
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
     ASSERT_NE(data, nullptr);
-    uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() + ((pixelMap->GetWidth() + 1) / 2) *
-        ((pixelMap->GetHeight() + 1) / 2) * 2;
     ASSERT_EQ(pixelMap->GetPixelFormat(), destFormat);
 
+    uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() + ((pixelMap->GetWidth() + 1) / 2) *
+        ((pixelMap->GetHeight() + 1) / 2) * 2;
     Size size;
     size.width = pixelMap->GetWidth();
     size.height = pixelMap->GetHeight();
     ASSERT_EQ(imageSize.width, size.width);
     ASSERT_EQ(imageSize.height, size.height);
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "nv12.yuv";
+    std::string outname = "Tree_n21tonv12.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV21ToNV12/";
     WriteToFile(outpath, size, outname, data, buffersize);
-
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToNV12_Test_001 end";
 }
 
@@ -727,9 +720,9 @@ HWTEST_F(ImageFormatConvertTest, NV21ToNV12_Test_002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToNV12_Test_002 start";
     std::string jpgpath = IMAGE_INPUT_JPG_PATH2;
-
     ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT};
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
+
     uint32_t errorCode = 0;
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
@@ -745,11 +738,11 @@ HWTEST_F(ImageFormatConvertTest, NV21ToNV12_Test_002, TestSize.Level1)
     std::shared_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
+
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::NV12;
-
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
     EXPECT_EQ(ret, SUCCESS);
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
@@ -764,10 +757,9 @@ HWTEST_F(ImageFormatConvertTest, NV21ToNV12_Test_002, TestSize.Level1)
     ASSERT_EQ(imageSize.width, size.width);
     ASSERT_EQ(imageSize.height, size.height);
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "nv12-1.yuv";
+    std::string outname = "Odd_n21tonv12.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV21ToNV12/";
     WriteToFile(outpath, size, outname, data, buffersize);
-
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToNV12_Test_002 end";
 }
 
@@ -775,10 +767,10 @@ HWTEST_F(ImageFormatConvertTest, NV12ToNV21_Test_001, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV12ToNV21_Test_001 start";
     std::string jpgpath = IMAGE_INPUT_JPG_PATH1;
-
     ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT};
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
     uint32_t errorCode = 0;
+
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: srcjpg" << jpgpath;
@@ -793,11 +785,11 @@ HWTEST_F(ImageFormatConvertTest, NV12ToNV21_Test_001, TestSize.Level1)
     std::shared_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
+
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::NV21;
-
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
     EXPECT_EQ(ret, SUCCESS);
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
@@ -805,16 +797,16 @@ HWTEST_F(ImageFormatConvertTest, NV12ToNV21_Test_001, TestSize.Level1)
     uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() +
         ((pixelMap->GetWidth() + 1) / EVEN_ODD_DIVISOR) * ((pixelMap->GetHeight() + 1) / EVEN_ODD_DIVISOR) * TWO_SLICES;
     ASSERT_EQ(pixelMap->GetPixelFormat(), destFormat);
+
     Size size;
     size.width = pixelMap->GetWidth();
     size.height = pixelMap->GetHeight();
     ASSERT_EQ(imageSize.width, size.width);
     ASSERT_EQ(imageSize.height, size.height);
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "nv21.yuv";
+    std::string outname = "Tree_n12tonv21.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ToNV21/";
     WriteToFile(outpath, size, outname, data, buffersize);
-
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV12ToNV21_Test_001 end";
 }
 
@@ -822,10 +814,10 @@ HWTEST_F(ImageFormatConvertTest, NV12ToNV21_Test_002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV12ToNV21_Test_002 start";
     std::string jpgpath = IMAGE_INPUT_JPG_PATH2;
-
     ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT};
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
     uint32_t errorCode = 0;
+
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: srcjpg" << jpgpath;
@@ -840,11 +832,11 @@ HWTEST_F(ImageFormatConvertTest, NV12ToNV21_Test_002, TestSize.Level1)
     std::shared_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
+
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::NV21;
-
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
     EXPECT_EQ(ret, SUCCESS);
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
@@ -852,16 +844,16 @@ HWTEST_F(ImageFormatConvertTest, NV12ToNV21_Test_002, TestSize.Level1)
     uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() + 
         ((pixelMap->GetWidth() + 1) / EVEN_ODD_DIVISOR) * ((pixelMap->GetHeight() + 1) / EVEN_ODD_DIVISOR) * TWO_SLICES;
     ASSERT_EQ(pixelMap->GetPixelFormat(), destFormat);
+
     Size size;
     size.width = pixelMap->GetWidth();
     size.height = pixelMap->GetHeight();
     ASSERT_EQ(imageSize.width, size.width);
     ASSERT_EQ(imageSize.height, size.height);
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "nv21-1.yuv";
+    std::string outname = "Odd_n12tonv21.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ToNV21/";
     WriteToFile(outpath, size, outname, data, buffersize);
-
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV12ToNV21_Test_002 end";
 }
 
@@ -889,7 +881,7 @@ HWTEST_F(ImageFormatConvertTest, NV12ToRGB565_Test_001, TestSize.Level1)
     ASSERT_NE(pixelMap.get(), nullptr);
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::RGB_565;
 
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
@@ -904,7 +896,7 @@ HWTEST_F(ImageFormatConvertTest, NV12ToRGB565_Test_001, TestSize.Level1)
     ASSERT_EQ(imageSize.height, size.height);
     uint32_t buffersize = size.width * size.height * TWO_SLICES;
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "rgb565.rgb565";
+    std::string outname = "Tree_n12torgb565.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ToRGB565/";
     WriteToFile(outpath, size, outname, data, buffersize);
 
@@ -915,7 +907,6 @@ HWTEST_F(ImageFormatConvertTest, NV12ToRGB565_Test_002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV12ToRGB565_Test_002 start";
     std::string jpgpath = IMAGE_INPUT_JPG_PATH2;
-
     ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT};
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
     uint32_t errorCode = 0;
@@ -935,7 +926,7 @@ HWTEST_F(ImageFormatConvertTest, NV12ToRGB565_Test_002, TestSize.Level1)
     ASSERT_NE(pixelMap.get(), nullptr);
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::RGB_565;
 
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
@@ -950,10 +941,9 @@ HWTEST_F(ImageFormatConvertTest, NV12ToRGB565_Test_002, TestSize.Level1)
     ASSERT_EQ(imageSize.height, size.height);
     uint32_t buffersize = size.width * size.height * TWO_SLICES;
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "rgb565-1.rgb565";
+    std::string outname = "Odd_n12torgb565.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV12ToRGB565/";
     WriteToFile(outpath, size, outname, data, buffersize);
-
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV12ToRGB565_Test_002 end";
 }
 
@@ -961,7 +951,6 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGBAF16_Test_001, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToRGBAF16_Test_001 start";
     std::string jpgpath = IMAGE_INPUT_JPG_PATH1;
-
     ImageSize imageSize = {TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT};
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
     uint32_t errorCode = 0;
@@ -981,7 +970,7 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGBAF16_Test_001, TestSize.Level1)
     ASSERT_NE(pixelMap.get(), nullptr);
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::RGBA_F16;
 
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
@@ -996,10 +985,9 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGBAF16_Test_001, TestSize.Level1)
     ASSERT_EQ(imageSize.height, size.height);
     uint32_t buffersize = size.width * size.height * sizeof(uint64_t);
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "rgbaf16.rgbaf16";
+    std::string outname = "Tree_n21torgbaf16.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV21ToRGBAF16/";
     WriteToFile(outpath, size, outname, data, buffersize);
-
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToRGBAF16_Test_001 end";
 }
 
@@ -1007,7 +995,6 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGBAF16_Test_002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToRGBAF16_Test_002 start";
     std::string jpgpath = IMAGE_INPUT_JPG_PATH2;
-
     ImageSize imageSize = {ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT};
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: request size(" << imageSize.width << ", " << imageSize.height << ")";
     uint32_t errorCode = 0;
@@ -1027,7 +1014,7 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGBAF16_Test_002, TestSize.Level1)
     ASSERT_NE(pixelMap.get(), nullptr);
     YUVDataInfo yuvInfo;
     pixelMap.get()->GetImageYUVInfo(yuvInfo);
-    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.y_width << ", " << yuvInfo.y_height << ")";
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest: created size(" << yuvInfo.yWidth << ", " << yuvInfo.yHeight << ")";
     PixelFormat destFormat = PixelFormat::RGBA_F16;
 
     uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
@@ -1042,10 +1029,9 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGBAF16_Test_002, TestSize.Level1)
     ASSERT_EQ(imageSize.height, size.height);
     uint32_t buffersize = size.width * size.height * sizeof(uint64_t);
     std::cout << "width: " << size.width << " height: " << size.height << std::endl;
-    std::string outname = "rgbaf16-1.rgbaf16";
+    std::string outname = "Odd_n21torgbaf16.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV21ToRGBAF16/";
     WriteToFile(outpath, size, outname, data, buffersize);
-
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: NV21ToRGBAF16_Test_002 end";
 }
 HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_004, TestSize.Level1)
@@ -1345,6 +1331,5 @@ HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_0011, TestSize.Level1)
 
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: end";
 }
-
-}   //namespace
-}
+} // namespace Media
+} // namespace OHOS

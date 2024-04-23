@@ -2212,12 +2212,12 @@ PixelMap *PixelMap::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
         delete tmpPixelMap;
         return nullptr;
     }
-    pixelMemInfo.isAstc = pixelMap->IsAstc();
-    delete tmpPixelMap;
+    pixelMemInfo.isAstc = tmpPixelMap->IsAstc();
     if (imgInfo.pixelFormat == PixelFormat::NV21 || imgInfo.pixelFormat == PixelFormat::NV12) {
+        delete tmpPixelMap;
         pixelMap = new PixelYuv();
     } else {
-        pixelMap = new PixelMap();
+        pixelMap = tmpPixelMap;
     }
 
     if (!ReadMemInfoFromParcel(parcel, pixelMemInfo, error)) {

@@ -265,7 +265,7 @@ bool PixelConvertAdapter::EraseBitmap(const void *srcPixels, uint32_t srcRowByte
 
 static uint8_t GetYuv420Y(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, const uint8_t *in)
 {
-    return *(in + yuvInfo.yOffset + y * yuvInfo.y_stride + x);
+    return *(in + yuvInfo.yOffset + y * yuvInfo.yStride + x);
 }
 
 static uint8_t GetYuv420U(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, PixelFormat format,
@@ -273,9 +273,9 @@ static uint8_t GetYuv420U(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, Pi
 {
     switch (format) {
         case PixelFormat::NV21:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uv_stride + (x & ~1) + 1);
+            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1) + 1);
         case PixelFormat::NV12:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uv_stride + (x & ~1));
+            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1));
         default:
             break;
     }
@@ -287,9 +287,9 @@ static uint8_t GetYuv420V(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, Pi
 {
     switch (format) {
         case PixelFormat::NV21:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uv_stride + (x & ~1));
+            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1));
         case PixelFormat::NV12:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uv_stride + (x & ~1) + 1);
+            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1) + 1);
         default:
             break;
     }
@@ -299,11 +299,11 @@ static uint8_t GetYuv420V(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, Pi
 bool PixelConvertAdapter::YUV420ToRGB888(const uint8_t *in, uint8_t *out, const YUVDataInfo &yuvInfo,
     PixelFormat pixelFormat)
 {
-    if (!in || !out || yuvInfo.y_width <= 0 || yuvInfo.y_height == 0) {
+    if (!in || !out || yuvInfo.yWidth <= 0 || yuvInfo.yHeight == 0) {
         return false;
     }
-    for (int32_t i = 0; i < yuvInfo.y_height; i++) {
-        for (int32_t j = 0; j < yuvInfo.y_width; j++) {
+    for (int32_t i = 0; i < yuvInfo.yHeight; i++) {
+        for (int32_t j = 0; j < yuvInfo.yWidth; j++) {
             uint8_t Y = GetYuv420Y(j, i, yuvInfo, in);
             uint8_t U = GetYuv420U(j, i, yuvInfo, pixelFormat, in);
             uint8_t V = GetYuv420V(j, i, yuvInfo, pixelFormat, in);

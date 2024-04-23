@@ -754,20 +754,19 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
 
 static bool IsYuvFormat(PlPixelFormat format)
 {
-    return format == PlPixelFormat::NV21 || format == PlPixelFormat::NV12 ||
-        format == PlPixelFormat::YU12 || format == PlPixelFormat::YV12;
+    return format == PlPixelFormat::NV21 || format == PlPixelFormat::NV12;
 }
 
 static void CopyYuvInfo(YUVDataInfo &yuvInfo, ImagePlugin::PlImageInfo &plInfo)
 {
-    yuvInfo.y_width = plInfo.yuvDataInfo.y_width;
-    yuvInfo.y_height = plInfo.yuvDataInfo.y_height;
-    yuvInfo.uv_width = plInfo.yuvDataInfo.uv_width;
-    yuvInfo.uv_height = plInfo.yuvDataInfo.uv_height;
-    yuvInfo.y_stride = plInfo.yuvDataInfo.y_stride;
-    yuvInfo.u_stride = plInfo.yuvDataInfo.u_stride;
-    yuvInfo.v_stride = plInfo.yuvDataInfo.v_stride;
-    yuvInfo.uv_stride = plInfo.yuvDataInfo.uv_stride;
+    yuvInfo.yWidth = plInfo.yuvDataInfo.yWidth;
+    yuvInfo.yHeight = plInfo.yuvDataInfo.yHeight;
+    yuvInfo.uvWidth = plInfo.yuvDataInfo.uvWidth;
+    yuvInfo.uvHeight = plInfo.yuvDataInfo.uvHeight;
+    yuvInfo.yStride = plInfo.yuvDataInfo.yStride;
+    yuvInfo.uStride = plInfo.yuvDataInfo.uStride;
+    yuvInfo.vStride = plInfo.yuvDataInfo.vStride;
+    yuvInfo.uvStride = plInfo.yuvDataInfo.uvStride;
     yuvInfo.yOffset = plInfo.yuvDataInfo.yOffset;
     yuvInfo.uOffset = plInfo.yuvDataInfo.uOffset;
     yuvInfo.vOffset = plInfo.yuvDataInfo.vOffset;
@@ -779,8 +778,8 @@ static bool ResizePixelmap(std::unique_ptr<PixelMap>& pixelMap, uint64_t imageId
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId);
     if (opts.desiredSize.height != pixelMap->GetHeight() ||
         opts.desiredSize.width != pixelMap->GetWidth()) {
-        float xScale = static_cast<float>(opts.desiredSize.width)/pixelMap->GetWidth();
-        float yScale = static_cast<float>(opts.desiredSize.height)/pixelMap->GetHeight();
+        float xScale = static_cast<float>(opts.desiredSize.width) / pixelMap->GetWidth();
+        float yScale = static_cast<float>(opts.desiredSize.height) / pixelMap->GetHeight();
         if (!pixelMap->resize(xScale, yScale)) {
             return false;
         }
