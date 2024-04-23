@@ -45,6 +45,7 @@ static constexpr int32_t IMAGE_BASE_23 = 23;
 struct OH_Pixelmap_InitializationOptions {
     uint32_t width;
     uint32_t height;
+    PIXEL_FORMAT srcPixelFormat = PIXEL_FORMAT::PIXEL_FORMAT_BGRA_8888;
     PIXEL_FORMAT pixelFormat = PIXEL_FORMAT::PIXEL_FORMAT_UNKNOWN;
     uint32_t editable = false;
     PIXELMAP_ALPHA_TYPE alphaType = PIXELMAP_ALPHA_TYPE::PIXELMAP_ALPHA_TYPE_UNKNOWN;
@@ -190,6 +191,28 @@ Image_ErrorCode OH_PixelmapInitializationOptions_SetPixelFormat(OH_Pixelmap_Init
 }
 
 MIDK_EXPORT
+Image_ErrorCode OH_PixelmapInitializationOptions_GetSrcPixelFormat(OH_Pixelmap_InitializationOptions *ops,
+    int32_t *srcpixelFormat)
+{
+    if (ops == nullptr || srcpixelFormat == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    *srcpixelFormat = static_cast<int32_t>(ops->srcPixelFormat);
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
+Image_ErrorCode OH_PixelmapInitializationOptions_SetSrcPixelFormat(OH_Pixelmap_InitializationOptions *ops,
+    int32_t srcpixelFormat)
+{
+    if (ops == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    ops->srcPixelFormat = ParsePixelForamt(srcpixelFormat);
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
 Image_ErrorCode OH_PixelmapInitializationOptions_GetAlphaType(OH_Pixelmap_InitializationOptions *ops,
     int32_t *alphaType)
 {
@@ -301,6 +324,7 @@ Image_ErrorCode OH_PixelmapNative_CreatePixelmap(uint8_t *data, size_t dataLengt
     InitializationOptions info;
     info.editable = true;
     info.alphaType = static_cast<AlphaType>(options->alphaType);
+    info.srcPixelFormat = static_cast<PixelFormat>(options->srcPixelFormat);
     info.pixelFormat = static_cast<PixelFormat>(options->pixelFormat);
     info.size.height = options->height;
     info.size.width = options->width;
@@ -422,6 +446,17 @@ Image_ErrorCode OH_PixelmapNative_Release(OH_PixelmapNative *pixelmap)
         return IMAGE_BAD_PARAMETER;
     }
     pixelmap->~OH_PixelmapNative();
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
+Image_ErrorCode OH_PixelmapNative_ConvertAlphaFormat(OH_PixelmapNative* srcpixelmap,
+    OH_PixelmapNative* dstpixelmap, const bool isPremul)
+{
+    if (srcpixelmap == nullptr || dstpixelmap == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    srcpixelmap->GetInnerPixelmap()->ConvertAlphaFormat(*(dstpixelmap->GetInnerPixelmap()), isPremul);
     return IMAGE_SUCCESS;
 }
 
