@@ -3105,7 +3105,7 @@ static bool IsNecessaryAiProcess(const Size &imageSize, const DecodeOptions &opt
 {
     auto bRet = CheckCapacityAi();
     if (!bRet) {
-        IMAGE_LOGE("[ImageSource] IsNecessaryAiProcess Unsupported sr and hdr");
+        IMAGE_LOGD("[ImageSource] IsNecessaryAiProcess Unsupported sr and hdr");
         return false;
     }
     if ((IsSizeVailed(opts.desiredSize) && (imageSize.height != opts.desiredSize.height
@@ -3214,6 +3214,7 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, const DecodeOptions &opts, 
         return ERR_IMAGE_AI_UNNECESSARY;
     }
     DecodeContext srcCtx;
+    srcCtx.resolutionQuality = opts.resolutionQuality;
     CopySrcInfoOfContext(context, srcCtx);
     sptr<SurfaceBuffer> input = nullptr;
     IMAGE_LOGD("[ImageSource] ImageAiProcess allocatorType %{public}u", context.allocatorType);
