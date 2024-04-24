@@ -33,8 +33,8 @@ if (use_clang_ios) {
       "src/color_utils.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
-      "src/vpe_utils.cpp",
       "src/pixel_yuv_utils.cpp",
+      "src/vpe_utils.cpp",
     ]
 
     defines = image_decode_ios_defines
@@ -76,8 +76,8 @@ if (use_clang_ios) {
       "src/color_utils.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
-      "src/vpe_utils.cpp",
       "src/pixel_yuv_utils.cpp",
+      "src/vpe_utils.cpp",
     ]
 
     external_deps =
@@ -174,8 +174,8 @@ ohos_static_library("image_utils_static") {
     "src/image_system_properties.cpp",
     "src/image_type_converter.cpp",
     "src/image_utils.cpp",
-    "src/vpe_utils.cpp",
     "src/pixel_yuv_utils.cpp",
+    "src/vpe_utils.cpp",
   ]
 
   if (use_mingw_win) {

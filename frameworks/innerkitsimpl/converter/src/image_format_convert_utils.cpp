@@ -36,13 +36,6 @@ extern "C" {
 #endif
 
 namespace {
-    constexpr uint32_t NUM_0 = 0;
-    constexpr uint32_t NUM_1 = 1;
-    constexpr uint32_t NUM_2 = 2;
-    constexpr uint32_t NUM_3 = 3;
-    constexpr uint32_t NUM_4 = 4;
-    constexpr uint32_t NUM_8 = 8;
-
     constexpr uint32_t SRCSLICEY = 0;
     constexpr uint32_t EVEN_ODD_DIVISOR = 2;
     constexpr uint32_t TWO_SLICES = 2;
@@ -112,7 +105,7 @@ AVPixelFormat findPixelFormat(PixelFormat format)
     }
 }
 
-static bool NV12ToRGB565Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV12ToRGB565SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV12);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::RGB_565);
@@ -126,16 +119,17 @@ static bool NV12ToRGB565Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
     const uint8_t *srcSlice[] = {srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset};
     const int srcStride[] = {static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride)};
     uint8_t *dstSlice[] = {*destBuffer};
-    const int dstStride[] = {static_cast<int>(yDInfo.yWidth * NUM_2)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, yDInfo.yHeight, dstSlice, dstStride);
+    const int dstStride[] = {static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_RGB565)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
     sws_freeContext(swsContext);
-    if (pixelFormatConvert == 0) {
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
 }
 
-static bool NV21ToNV12Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV21ToNV12SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV21);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV12);
@@ -152,15 +146,16 @@ static bool NV21ToNV12Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     uint8_t *dstSlice[] = {*destBuffer, *destBuffer + yDInfo.yWidth * yDInfo.yHeight};
     const int dstStride[] = {static_cast<int>(yDInfo.yWidth), static_cast<int>(widthEvent)};
 
-    int height = sws_scale(swsContext, srcSlice, srcStride, 0, yDInfo.yHeight, dstSlice, dstStride);
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
     sws_freeContext(swsContext);
     if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
 }
 
-static bool NV12ToNV21Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV12ToNV21SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV12);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV21);
@@ -177,61 +172,138 @@ static bool NV12ToNV21Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     uint8_t *dstSlice[] = {*destBuffer, *destBuffer + yDInfo.yWidth * yDInfo.yHeight};
     const int dstStride[] = {static_cast<int>(yDInfo.yWidth), static_cast<int>(widthEvent)};
 
-    int height = sws_scale(swsContext, srcSlice, srcStride, 0, yDInfo.yHeight, dstSlice, dstStride);
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
     sws_freeContext(swsContext);
     if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
 }
 
-static void RGB565ToNV12Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+#ifdef DCAMERA_MMAP_RESERVE
+static bool RGB565ToNV12HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+{
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES]());
+    if (yu12Buffer == nullptr) {
+        IMAGE_LOGD("apply space for dest buffer failed!");
+        return false;
+    }
+
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+
+    int ret = converter.RGB565ToI420(srcBuffer, imageSize.width * TWO_SLICES, yu12Buffer, imageSize.width,
+        yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + 1)/ TWO_SLICES, yu12Buffer +
+        imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES) *
+        ((imageSize.height + 1) / TWO_SLICES), (imageSize.width + 1) / TWO_SLICES,
+        imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("RGB565ToI420 failed, ret = %{public}d!", ret);
+        return false;
+    }
+
+    ret = converter.I420ToNV12(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
+        (imageSize.width + 1) / TWO_SLICES, yu12Buffer + imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES),
+        (imageSize.width + 1) / TWO_SLICES, *destBuffer, imageSize.width, *destBuffer + imageSize.width *
+        imageSize.height, ((imageSize.width + 1) / TWO_SLICES) * TWO_SLICES, imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("I420ToNV12 failed, ret = %{public}d!", ret);
+        return false;
+    }
+    return true;
+}
+#endif
+
+static bool RGB565ToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGB_565);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV12);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
-        imageSize.height, dstFormat,SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+        imageSize.height,dstFormat,SWS_BILINEAR,nullptr,nullptr,nullptr);
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_2)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, 0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_RGB565)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return true;
 }
 
-static void RGB565ToNV21Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+#ifdef DCAMERA_MMAP_RESERVE
+static bool RGB565ToNV21HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+{
+        std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES]());
+    if (yu12Buffer == nullptr) {
+        IMAGE_LOGD("apply space for dest buffer failed!");
+        return false;
+    }
+
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+
+    int ret = converter.RGB565ToI420(srcBuffer, imageSize.width * TWO_SLICES, yu12Buffer, imageSize.width,
+        yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + 1) / TWO_SLICES, yu12Buffer +
+        imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES) *
+        ((imageSize.height + 1) / TWO_SLICES), (imageSize.width + 1) / TWO_SLICES,
+        imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("NV12ToI420 failed, ret = %{public}d!", ret);
+        return false;
+    }
+
+    ret = converter.I420ToNV21(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
+        (imageSize.width + 1) / TWO_SLICES, yu12Buffer + imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES),
+        (imageSize.width + 1) / TWO_SLICES, *destBuffer, imageSize.width, *destBuffer + imageSize.width *
+        imageSize.height, ((imageSize.width + 1) / TWO_SLICES) * TWO_SLICES, imageSize.width, imageSize.height);
+        }
+    }
+    if (ret != 0) {
+        IMAGE_LOGE("NV12ToI420 failed, ret = %{public}d!", ret);
+        return false;
+    }
+    return true;
+}
+#endif
+
+static bool RGB565ToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGB_565);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV21);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_2)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_RGB565)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return true;
 }
 
-static bool NV12ToRGBAF16Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV12ToRGBAF16SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV12);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::RGBA_F16);
@@ -246,41 +318,42 @@ static bool NV12ToRGBAF16Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDI
     const uint8_t *srcSlice[] = { srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset };
     const int srcStride[] = { static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride) };
     const int dstStride[] = { static_cast<int>(yDInfo.yWidth * STRIDES_PER_PLANE) };
-    int sliceHeight = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
+    int height = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
     sws_freeContext(ctx);
-
-    if (sliceHeight == 0) {
-        IMAGE_LOGE("sws_scale: the height of the output slice is 0!");
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
 }
 
-static void BGRAToNV21Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+static bool BGRAToNV21SoftDcode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::BGRA_8888);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV21);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_4)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_BGRA)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return false;
 }
 
 #ifdef DCAMERA_MMAP_RESERVE
-static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+static bool NV12ToRGBAHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
                                ColorSpace colorSpace)
 {
     uint32_t yPlaneSize = yDInfo.yWidth * yDInfo.yHeight;
@@ -327,7 +400,7 @@ static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 }
 #endif
 
-static bool NV12ToRGBAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV12ToRGBASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV12);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::RGBA_8888);
@@ -342,18 +415,18 @@ static bool NV12ToRGBAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     const uint8_t *srcSlice[] = { srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset };
     const int srcStride[] = { static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride) };
     const int dstStride[] = { static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_RGBA) };
-    int sliceHeight = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
+    int height = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
     sws_freeContext(ctx);
 
-    if (sliceHeight == 0) {
-        IMAGE_LOGE("sws_scale: the height of the output slice is 0!");
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
 }
 
 #ifdef DCAMERA_MMAP_RESERVE
-static bool NV12ToBGRANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+static bool NV12ToBGRANoHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
                                ColorSpace colorSpace)
 {
     uint32_t yPlaneSize = yDInfo.yWidth * yDInfo.yHeight;
@@ -400,7 +473,7 @@ static bool NV12ToBGRANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 }
 #endif
 
-static bool NV12ToBGRAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV12ToBGRASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV12);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::BGRA_8888);
@@ -415,87 +488,203 @@ static bool NV12ToBGRAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     const uint8_t *srcSlice[] = { srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset };
     const int srcStride[] = {static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride)};
     const int dstStride[] = { static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_BGRA) };
-    int heightOfDstSlice = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
+    int height = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
     sws_freeContext(ctx);
 
-    if (heightOfDstSlice == 0) {
-        IMAGE_LOGE("sws_scale: the height of the output slice is 0!");
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
 }
 
-static void RGBAToNV12Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+
+#ifdef DCAMERA_MMAP_RESERVE
+static bool RGBAToNV12HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+{
+    bRet
+    const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
+    std::unique_ptr<uint8[]> i420Buffer(new(std::nothrow) uint8_t[i420BufferSize]());
+    if (i420Buffer == nullptr) {
+        IMAGE_LOGD("apply space for dest buffer failed!");
+        return false;
+    }
+    uint8_t *i420Y = i420Buffer;
+    uint8_t *i420U = i420Buffer + imageSize.width * imageSize.height;
+    uint8_t *i420V = i420Buffer + imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
+    uint8_t *nv12Y = *destBuffer;
+    uint8_t *nv12UV = *destBuffer + imageSize.width * imageSize.height;
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+    int ret = converter.ARGBToI420(srcBuffer, BYTES_PER_PIXEL_RGBA * imageSize.width, i420Y, imageSize.width, i420U,
+        (imageSize.width + 1) / TWO_SLICES, i420V, (imageSize.width + 1) / TWO_SLICES,
+        imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("ARGBToI420 failed, ret = %{public}d!", ret);
+        return false;
+    }
+
+    ret = converter.I420ToNV12(i420Y, imageSize.width, i420V, (imageSize.width + 1) / TWO_SLICES, i420U,
+        (imageSize.width + 1) / TWO_SLICES, nv12Y, imageSize.width, nv12UV,
+        (imageSize.width + 1) / TWO_SLICES * TWO_SLICES, imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("I420ToNV12 failed, ret = %{public}d!", ret);
+        return false;
+    }
+    return true;
+}
+#endif
+
+static bool RGBAToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGBA_8888);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV12);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_4)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_RGBA)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return true;
 }
 
-static void RGBAToNV21Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+#ifdef DCAMERA_MMAP_RESERVE
+static bool RGBAToNV21HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+{
+    const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height + 
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
+    std::unique_ptr<uint8_t[]> i420Buffer(new(std::nothrow) uint8_t[i420BufferSize]());
+    if (i420Buffer == nullptr) {
+        IMAGE_LOGD("apply space for dest buffer failed!");
+        return false;
+    }
+    uint8_t *i420Y = i420Buffer;
+    uint8_t *i420U = i420Buffer + imageSize.width * imageSize.height;
+    uint8_t *i420V = i420Buffer + imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
+    uint8_t *nv21Y = *destBuffer;
+    uint8_t *nv21VU = *destBuffer + imageSize.width * imageSize.height;
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+
+    int ret = converter.ARGBToI420(srcBuffer, BYTES_PER_PIXEL_RGBA * imageSize.width, i420Y, imageSize.width, i420U,
+        (imageSize.width + 1) / TWO_SLICES, i420V, (imageSize.width + 1) / TWO_SLICES,
+        imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("ARGBToI420 failed, ret = %{public}d!", ret);
+        return false;
+    }
+
+    ret = converter.I420ToNV21(i420Y, imageSize.width, i420V, (imageSize.width + 1) / TWO_SLICES, i420U,
+        (imageSize.width + 1) / TWO_SLICES, nv21Y, imageSize.width, nv21VU,
+        (imageSize.width + 1) / TWO_SLICES * TWO_SLICES, imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("I420ToNV21 failed, ret = %{public}d!", ret);
+        return false;
+    }
+    return true;
+}
+#endif
+
+static bool RGBAToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGBA_8888);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV21);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_4)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_RGBA)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return true;
 }
 
-static void RGBToNV21Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+#ifdef DCAMERA_MMAP_RESERVE
+static bool RGBToNV21HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+{
+    const uint32_t yu12BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
+    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[yu12BufferSize]());
+    if (yu12Buffer == nullptr) {
+        IMAGE_LOGD("apply space for I420 buffer failed!");
+        return false;
+    }
+    uint8_t *I420Y = yu12Buffer;
+    uint8_t *I420U = yu12Buffer + imageSize.height * imageSize.width;
+    uint8_t *I420V = yu12Buffer + imageSize.height * imageSize.width +
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+    int ret = converter.RGB24ToI420(srcBuffer, imageSize.width * BYTES_PER_PIXEL_RGB, I420Y, imageSize.width, I420U,
+        (imageSize.width + 1) / TWO_SLICES, I420V, (imageSize.width + 1) / TWO_SLICES,
+        imageSize.width, imageSize.height);
+    if (!ret) {
+        IMAGE_LOGE("RGB24ToI420 failed, ret = %{public}d!", ret);
+        return false;
+    }
+
+    ret = converter.I420ToNV21(I420Y, imageSize.width,I420U, (imageSize.width + 1)/ TWO_SLICES,
+        I420V, (imageSize.width + 1) / TWO_SLICES, *destBuffer, imageSize.width,
+        *destBuffer + imageSize.width * imageSize.height + 1,
+        (imageSize.width + 1) / TWO_SLICES * TWO_SLICES, imageSize.width, imageSize.height);
+    if (!ret) {
+        IMAGE_LOGE("I420ToNV21 failed, ret = %{public}d!", ret);
+        return false;
+    }
+    return true;
+}
+#endif
+
+static bool RGBToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGB_888);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV21);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_3)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_RGB)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return true;
 }
 
 #ifdef DCAMERA_MMAP_RESERVE
-static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV21ToRGBAHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight * EVEN_ODD_DIVISOR;
@@ -533,7 +722,7 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
 }
 #endif
 
-static bool NV21ToRGBAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV21ToRGBASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV21);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::RGBA_8888);
@@ -547,10 +736,10 @@ static bool NV21ToRGBAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     const uint8_t *srcSlice[] = {srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset};
     const int srcStride[] = {static_cast<int>(yDInfo.yStride),static_cast<int>(yDInfo.uvStride)};
     uint8_t *dstSlice[] = {*destBuffer};
-    const int dstStride[] = {static_cast<int>(yDInfo.yWidth * NUM_4)};
-    int hight = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
+    const int dstStride[] = {static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_RGBA)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
     sws_freeContext(swsContext);
-    if (hight == 0) {
+    if (height == 0) {
         IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
@@ -558,7 +747,7 @@ static bool NV21ToRGBAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
 }
 
 #ifdef DCAMERA_MMAP_RESERVE
-static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV21ToRGB565HardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
     std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[(yDInfo.yWidth * yDInfo.yHeight +
@@ -586,7 +775,7 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
     }
 
     ret = converter_.I420ToRGB565Matrix( yu12Buffer, yDInfo.yWidth, dst_u, dst_stride_u, dst_v, dst_stride_v,
-        *destBuffer, yDInfo.yWidth * NUM_2, yuvConstants, yDInfo.yWidth, yDInfo.yWidth);
+        *destBuffer, yDInfo.yWidth * TWO_SLICES, yuvConstants, yDInfo.yWidth, yDInfo.yWidth);
     if (!ret) {
         IMAGE_LOGE("NV12ToI420 failed, ret = %{public}d!", ret);
         return false;
@@ -595,7 +784,7 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 }
 #endif
 
-static bool NV21ToRGB565Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV21ToRGB565SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV21);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::RGB_565);
@@ -610,11 +799,10 @@ static bool NV21ToRGB565Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
     const int srcStride[] = {static_cast<int>(yDInfo.yStride),static_cast<int>(yDInfo.uvStride)};
     uint8_t *dstSlice[] = {*destBuffer};
     const int dstStride[] = {static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_RGB565)};
-    int hight = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice,
-                                       dstStride);
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
 
     sws_freeContext(swsContext);
-    if (hight == 0) {
+    if (height == 0) {
         IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
@@ -622,7 +810,7 @@ static bool NV21ToRGB565Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 }
 
 #ifdef DCAMERA_MMAP_RESERVE
-static bool NV21ToI420ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV21ToBGRAHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     uint32_t yu12BufferSize =yDInfo.yWidth * yDInfo.yHeight + ((yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR *
         (yDInfo.yHeight + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR);
@@ -650,7 +838,7 @@ static bool NV21ToI420ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     }
 
     int ret = converter.I420ToBGRA(yu12Buffer, yDInfo.yWidth, dst_u, dst_stride_u, dst_v, dst_stride_v, *destBuffer,
-        yDInfo.yWidth * NUM_4, yDInfo.yWidth, yDInfo.yHeight);
+        yDInfo.yWidth * BYTES_PER_PIXEL_BGRA, yDInfo.yWidth, yDInfo.yHeight);
     if (!ret) {
         IMAGE_LOGE("I420ToBGRA failed, ret = %{public}d!", ret);
         return false;
@@ -659,7 +847,7 @@ static bool NV21ToI420ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
 }
 #endif
 
-static bool NV21ToBGRAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
+static bool NV21ToBGRASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV21);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::BGRA_8888);
@@ -674,60 +862,96 @@ static bool NV21ToBGRAManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     const int srcStride[] = {static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride)};
     uint8_t *dstSlice[] = {*destBuffer};
     const int dstStride[] = {static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_RGBA)};
-    int hight = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice,
-                                       dstStride);
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
     sws_freeContext(swsContext);
-    if (hight == 0) {
+    if (height == 0) {
         IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
 }
 
-static void RGBToNV12Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+#ifdef DCAMERA_MMAP_RESERVE
+static bool RGBToNV12HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+{
+    uint8_t *yu12Buffer (new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
+        (imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES * TWO_SLICES]());
+    if (*yu12Buffer == nullptr) {
+        IMAGE_LOGD("apply space for I420 buffer failed!");
+        return false;
+    }
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+    int ret = converter.RGB24ToI420(srcBuffer, imageSize.width * BYTES_PER_PIXEL_RGB, yu12Buffer, imageSize.width,
+                yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + 1) / TWO_SLICES,
+                yu12Buffer + imageSize.width * imageSize.height + (imageSize.width + 1) / TWO_SLICES *
+                (imageSize.height + 1) / TWO_SLICES, (imageSize.width + 1) / TWO_SLICES,
+                imageSize.width, imageSize.height);
+    if (!ret) {
+        IMAGE_LOGE("RGB24ToI420 failed, ret = %{public}d!", ret);
+        return false;
+    }
+
+    ret = converter.I420ToNV12(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
+                (imageSize.width + 1) / TWO_SLICES, yu12Buffer + imageSize.width * imageSize.height +
+                (imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES, (imageSize.width + 1) /
+                TWO_SLICES, *destBuffer, imageSize.width, *destBuffer + imageSize.width * imageSize.height + 1,
+                (imageSize.width + 1) / TWO_SLICES * TWO_SLICES, imageSize.width, imageSize.height);
+    if (!ret) {
+        IMAGE_LOGE("I420ToNV12 failed, ret = %{public}d!", ret);
+        return false;
+    }
+    return true;
+}
+#endif
+
+static bool RGBToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGB_888);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV12);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_3)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_RGB)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return true;
 }
 
-static void BGRAToNV12Manual(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
+static bool BGRAToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::BGRA_8888);
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV12);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_4)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, NUM_0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * BYTES_PER_PIXEL_BGRA)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
+        return false;
+    }
+    return true;
 }
 
 bool NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
@@ -759,7 +983,7 @@ bool NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t *
         return false;
     }
 #else
-    if (!NV12ToRGB565Manual(srcBuffer, yDInfo, destBuffer)) {
+    if (!NV12ToRGB565SoftDecode(srcBuffer, yDInfo, destBuffer)) {
         delete[] (*destBuffer);
         IMAGE_LOGD("NV12 manual conversion to RGB565 failed!");
         return false;
@@ -771,12 +995,12 @@ bool NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t *
 bool RGBAF16ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                    size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
     uint32_t frameSize = imageSize.width * imageSize.height;
-    destBufferSize = frameSize + (((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    if (destBufferSize <= NUM_0) {
+    destBufferSize = frameSize + (((imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -790,21 +1014,24 @@ bool RGBAF16ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **de
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV21);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
+    if (swsContext == nullptr) {
         IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
+        delete[] destBuffer;
+        return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_8)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, 0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * STRIDES_PER_PLANE)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGD("RGBAF16 conversion to NV21 failed!");
+        delete[] destBuffer;
+        return false;
+    }
     return true;
 }
 
@@ -823,9 +1050,9 @@ bool NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
     }
     bool result = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    result = NV21ToNV12Auto(srcBuffer, yDInfo, destBuffer, destBufferSize);
+    result = NV21ToNV12HardDecode(srcBuffer, yDInfo, destBuffer, destBufferSize);
 #else
-    result = NV21ToNV12Manual(srcBuffer, yDInfo, destBuffer);
+    result = NV21ToNV12SoftDecode(srcBuffer, yDInfo, destBuffer);
 #endif
     if (!result) {
         delete[] (*destBuffer);
@@ -835,7 +1062,7 @@ bool NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
 }
 
 #ifdef DCAMERA_MMAP_RESERVE
-static bool NV21ToNV12Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+static bool NV21ToNV12HardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     const size_t &destBufferSize)
 {
     int32_t width = yDInfo.yWidth;
@@ -870,7 +1097,7 @@ static bool NV21ToNV12Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
     return tempRet == 0 ? true : false;
 }
 
-static bool NV12ToNV21Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+static bool NV12ToNV21HardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     const size_t &destBufferSize)
 {
     uint8_t *tempBuffer = new(std::nothrow) uint8_t[destBufferSize];
@@ -937,6 +1164,7 @@ bool NV21ToRGBAF16(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t 
     int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
     sws_freeContext(swsContext);
     if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         delete[] (*destBuffer);
         return false;
     }
@@ -958,9 +1186,9 @@ bool NV12ToNV21(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
     }
     bool result = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    result = NV12ToNV21Auto(srcBuffer, yDInfo, destBuffer, destBufferSize);
+    result = NV12ToNV21HardDecode(srcBuffer, yDInfo, destBuffer, destBufferSize);
 #else
-    result = NV12ToNV21Manual(srcBuffer, yDInfo, destBuffer);
+    result = NV12ToNV21SoftDecode(srcBuffer, yDInfo, destBuffer);
 #endif
     if (!result) {
         delete[] (*destBuffer);
@@ -975,9 +1203,9 @@ bool BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         return false;
     }
     size_t destPlaneSizeY = imageSize.width * imageSize.height;
-    size_t srcPlaneSizeUV = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    destBufferSize = static_cast<size_t>(destPlaneSizeY + srcPlaneSizeUV * NUM_2);
-    if (destBufferSize <= NUM_0) {
+    size_t srcPlaneSizeUV = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
+    destBufferSize = static_cast<size_t>(destPlaneSizeY + srcPlaneSizeUV * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -989,16 +1217,23 @@ bool BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #ifdef DCAMERA_MMAP_RESERVE
     uint8_t *nv12Y = *destBuffer;
     uint8_t *nv12UV = *destBuffer + destPlaneSizeY;
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.ARGBToNV12(srcBuffer, imageSize.width * NUM_4, nv12Y, imageSize.width, nv12UV,
-                (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-        }
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+    int ret = converter.ARGBToNV12(srcBuffer, imageSize.width * BYTES_PER_PIXEL_BGRA, nv12Y, imageSize.width, nv12UV,
+                (imageSize.width + 1) / TWO_SLICES * TWO_SLICES, imageSize.width, imageSize.height);
+    if (ret != 0) {
+        IMAGE_LOGE("BGRAToNV12 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
+        return false;
     }
 #else
-    BGRAToNV12Manual(srcBuffer, imageSize, destBuffer);
+    bool bRet = BGRAToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
+    if (!bRet) {
+        IMAGE_LOGE("BGRAToNV12 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
+        return false;
+    }
 #endif
     return true;
 }
@@ -1011,8 +1246,8 @@ bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    if (destBufferSize <= NUM_0) {
+        ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1022,32 +1257,18 @@ bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         return false;
     }
 
+    bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]());
-    if (yu12Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+    bRet = RGB565ToNV12HardDecode(srcBuffer, imageSize, destBuffer);
+#else
+    bRet = RGB565ToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
+#endif
+    if (!bRet) {
+        IMAGE_LOGE("RGB565ToNV12 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
         return false;
     }
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.RGB565ToI420(srcBuffer, imageSize.width * NUM_2, yu12Buffer, imageSize.width,
-                yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + NUM_1)/ NUM_2, yu12Buffer +
-                imageSize.width * imageSize.height + ((imageSize.width + NUM_1) / NUM_2) *
-                ((imageSize.height + NUM_1) / NUM_2), (imageSize.width + NUM_1) / NUM_2,
-                imageSize.width, imageSize.height);
-            converter.I420ToNV12(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
-                (imageSize.width + NUM_1) / NUM_2, yu12Buffer + imageSize.width * imageSize.height +
-                ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
-                (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width, *destBuffer + imageSize.width *
-                imageSize.height, ((imageSize.width + NUM_1) / NUM_2) * NUM_2, imageSize.width, imageSize.height);
-        }
-    }
-#else
-    RGB565ToNV12Manual(srcBuffer, imageSize, destBuffer);
-#endif
     return true;
 }
 
@@ -1058,9 +1279,9 @@ bool RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
-    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + ((imageSize.width + NUM_1) / NUM_2) *
-        ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    if (destBufferSize <= NUM_0) {
+    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES) *
+        ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1069,32 +1290,18 @@ bool RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
+    bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2]());
-    if (yu12Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+    bRet = RGB565ToNV21HardDecode(srcBuffer, imageSize, destBuffer);
+#else
+    bRet = RGB565ToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
+#endif
+    if (!bRet) {
+        IMAGE_LOGE("RGB565ToNV21 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
         return false;
     }
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.RGB565ToI420(srcBuffer, imageSize.width * NUM_2, yu12Buffer, imageSize.width,
-                yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + NUM_1) / NUM_2, yu12Buffer +
-                imageSize.width * imageSize.height + ((imageSize.width + NUM_1) / NUM_2) *
-                ((imageSize.height + NUM_1) / NUM_2), (imageSize.width + NUM_1) / NUM_2,
-                imageSize.width, imageSize.height);
-            converter.I420ToNV21(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
-                (imageSize.width + NUM_1) / NUM_2, yu12Buffer + imageSize.width * imageSize.height +
-                ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
-                (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width, *destBuffer + imageSize.width *
-                imageSize.height, ((imageSize.width + NUM_1) / NUM_2) * NUM_2, imageSize.width, imageSize.height);
-        }
-    }
-#else
-    RGB565ToNV21Manual(srcBuffer, imageSize, destBuffer);
-#endif
     return true;
 }
 
@@ -1119,7 +1326,7 @@ bool NV12ToRGBAF16(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **des
         return false;
     }
 
-    if (!NV12ToRGBAF16Manual(data, yDInfo, destBuffer)) {
+    if (!NV12ToRGBAF16SoftDecode(data, yDInfo, destBuffer)) {
         IMAGE_LOGE("NV12ToRGBAF16 failed!");
         delete[] (*destBuffer);
         *destBuffer = nullptr;
@@ -1132,13 +1339,13 @@ bool NV12ToRGBAF16(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **des
 bool BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer, size_t &destBufferSize,
                 [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
     const int32_t destPlaneSizeY = imageSize.width * imageSize.height;
-    const int32_t destPlaneSizeVU = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * NUM_2);
-    if (destBufferSize <= NUM_0) {
+    const int32_t destPlaneSizeVU = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
+    destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1150,16 +1357,23 @@ bool BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
 #ifdef DCAMERA_MMAP_RESERVE
     uint8_t *nv21Y = *destBuffer;
     uint8_t *nv21VU = *destBuffer + destPlaneSizeY;
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.ARGBToNV21(srcBuffer, imageSize.width * NUM_4, nv21Y, imageSize.width, nv21VU,
-                (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-        }
+    const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
+    int ret = converter.ARGBToNV21(srcBuffer, imageSize.width * BYTES_PER_PIXEL_BGRA, nv21Y, imageSize.width, nv21VU,
+        (imageSize.width + 1) / TWO_SLICES * TWO_SLICES, imageSize.width, imageSize.height);
+    if ((!ret)) {
+        IMAGE_LOGE("BGRAToNV21 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
+        return false;
     }
 #else
-    BGRAToNV21Manual(srcBuffer, imageSize, destBuffer);
+    bool bRet = BGRAToNV21SoftDcode(srcBuffer, imageSize, destBuffer);
+    if ((!bRet)) {
+        IMAGE_LOGE("BGRAToNV21 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
+        return false;
+    }
 #endif
     return true;
 }
@@ -1188,7 +1402,7 @@ bool NV12ToRGBA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBu
 #ifdef DCAMERA_MMAP_RESERVE
     bRet = NV12ToRGBANoManual(data, yDInfo, destBuffer, colorSpace);
 #else
-    bRet = NV12ToRGBAManual(data, yDInfo, destBuffer);
+    bRet = NV12ToRGBASoftDecode(data, yDInfo, destBuffer);
 #endif
     if (!bRet) {
         IMAGE_LOGE("NV12ToRGBA failed!");
@@ -1222,12 +1436,14 @@ bool NV12ToBGRA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBu
 
     bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    bRet = NV12ToBGRANoManual(data, yDInfo, destBuffer, colorSpace);
+    bRet = NV12ToBGRANoHardDecode(data, yDInfo, destBuffer, colorSpace);
 #else
-    bRet = NV12ToBGRAManual(data, yDInfo, destBuffer);
+    bRet = NV12ToBGRASoftDecode(data, yDInfo, destBuffer);
 #endif
     if (!bRet) {
         IMAGE_LOGE("NV12ToBGRA failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
         return false;
     }
 
@@ -1237,12 +1453,12 @@ bool NV12ToBGRA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBu
 bool RGBAF16ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                    size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
     uint32_t frameSize = imageSize.width * imageSize.height;
-    destBufferSize = frameSize + (((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    if (destBufferSize <= NUM_0) {
+    destBufferSize = frameSize + (((imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1256,34 +1472,36 @@ bool RGBAF16ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **de
     AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV12);
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
-        sws_freeContext(swsContext);
+    if (swsContext == nullptr) {
+        IMAGE_LOGD("Error to create SwsContext.");
+        delete[] destBuffer;
         return false;
     }
 
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_8)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, 0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
+    int widthEvent = (imageSize.width % EVEN_ODD_DIVISOR == 0) ? (imageSize.width) : (imageSize.width + 1);
+    const uint8_t *srcSlice[] = {srcBuffer};
+    const int srcStride[] = {static_cast<int>(imageSize.width * STRIDES_PER_PLANE)};
+    uint8_t *dstSlice[] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
+    const int dstStride[] = {static_cast<int>(imageSize.width),static_cast<int>(widthEvent)};
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
+    sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("RGBAF16ToNV12 format conversion failed");
         delete[] destBuffer;
     }
-    sws_freeContext(swsContext);
     return true;
 }
 
 bool RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
     size_t destPlaneSizeY = imageSize.width * imageSize.height;
-    size_t destPlaneSizeUV = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    destBufferSize = destPlaneSizeY + destPlaneSizeUV * NUM_2;
-    if (destBufferSize <= NUM_0) {
+    size_t destPlaneSizeUV = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
+    destBufferSize = destPlaneSizeY + destPlaneSizeUV * TWO_SLICES;
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1292,48 +1510,31 @@ bool RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
+    bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    std::unique_ptr<uint8[]> i420Buffer(new(std::nothrow) uint8_t[i420BufferSize]());
-    if (i420Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+    bRet = RGBAToNV12HardDecode(srcBuffer, imageSize, destBuffer);
+#else
+    bRet = RGBAToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
+#endif
+    if (!bRet) {
+        IMAGE_LOGE("RGBAToNV12 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
         return false;
     }
-    uint8_t *i420Y = i420Buffer;
-    uint8_t *i420U = i420Buffer + imageSize.width * imageSize.height;
-    uint8_t *i420V = i420Buffer + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    uint8_t *nv12Y = *destBuffer;
-    uint8_t *nv12UV = *destBuffer + imageSize.width * imageSize.height;
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.ARGBToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
-            (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2,
-            imageSize.width, imageSize.height);
-                converter.I420ToNV12(i420Y, imageSize.width, i420V, (imageSize.width + NUM_1) / NUM_2, i420U,
-            (imageSize.width + NUM_1) / NUM_2, nv12Y, imageSize.width, nv12UV,
-            (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-        }
-    }
-#else
-    RGBAToNV12Manual(srcBuffer, imageSize, destBuffer);
-#endif
     return true;
 }
 
 bool RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                 size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
     size_t destPlaneSizeY = imageSize.width * imageSize.height;
-    size_t destPlaneSizeVU = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * NUM_2);
-    if (destBufferSize <= NUM_0) {
+    size_t destPlaneSizeVU = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
+    destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1343,48 +1544,31 @@ bool RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         return false;
     }
 
+    bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    std::unique_ptr<uint8_t[]> i420Buffer(new(std::nothrow) uint8_t[i420BufferSize]());
-    if (i420Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+    bRet = RGBAToNV21HardDecode(srcBuffer, imageSize, destBuffer);
+#else
+    bRet = RGBAToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
+#endif
+    if (!bRet) {
+        IMAGE_LOGE("RGBAToNV21 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
         return false;
     }
-    uint8_t *i420Y = i420Buffer;
-    uint8_t *i420U = i420Buffer + imageSize.width * imageSize.height;
-    uint8_t *i420V = i420Buffer + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    uint8_t *nv21Y = *destBuffer;
-    uint8_t *nv21VU = *destBuffer + imageSize.width * imageSize.height;
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.ARGBToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
-                (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2,
-                imageSize.width, imageSize.height);
-            converter.I420ToNV21(i420Y, imageSize.width, i420V, (imageSize.width + NUM_1) / NUM_2, i420U,
-                (imageSize.width + NUM_1) / NUM_2, nv21Y, imageSize.width, nv21VU,
-                (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-        }
-    }
-#else
-    RGBAToNV21Manual(srcBuffer, imageSize, destBuffer);
-#endif
     return true;
 }
 
 bool RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr ||imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr ||imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
     destBufferSize = static_cast<size_t>
-        (imageSize.width * imageSize.height + ((imageSize.width + NUM_1) / NUM_2 *
-        ((imageSize.height + NUM_1) / NUM_2) * NUM_2));
-    if (destBufferSize <= NUM_0) {
+        (imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES *
+        ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES));
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1393,34 +1577,18 @@ bool RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
+    bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    const uint32_t yu12BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[yu12BufferSize]());
-    if (yu12Buffer == nullptr) {
-        IMAGE_LOGD("apply space for I420 buffer failed!");
+    bRet = RGBToNV21HardDecode(srcBuffer, imageSize, destBuffer);
+#else
+    bRet = RGBToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
+#endif
+    if (!bRet) {
+        IMAGE_LOGE("RGBToNV21 failed!");
+        delete[] (*destBuffer);
+        *destBuffer = nullptr;
         return false;
     }
-    uint8_t *I420Y = yu12Buffer;
-    uint8_t *I420U = yu12Buffer + imageSize.height * imageSize.width;
-    uint8_t *I420V = yu12Buffer + imageSize.height * imageSize.width +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.RGB24ToI420(srcBuffer, imageSize.width * NUM_3, I420Y, imageSize.width, I420U,
-                (imageSize.width + NUM_1) / NUM_2, I420V, (imageSize.width + NUM_1) / NUM_2,
-                imageSize.width, imageSize.height);
-            converter.I420ToNV21(I420Y, imageSize.width,I420U, (imageSize.width + NUM_1 )/ NUM_2,
-                I420V, (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width,
-                *destBuffer + imageSize.width * imageSize.height + NUM_1,
-                (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-        }
-    }
-#else
-    RGBToNV21Manual(srcBuffer, imageSize, destBuffer);
-#endif
     return true;
 }
 
@@ -1457,11 +1625,11 @@ static bool NV12ToRGBManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     const uint8_t *srcSlice[] = { srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset };
     const int srcStride[] = { static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride) };
     const int dstStride[] = { static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_RGB) };
-    int sliceHeight = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
+    int height = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
     sws_freeContext(ctx);
 
-    if (sliceHeight == 0) {
-        IMAGE_LOGE("sws_scale: the height of the output slice is 0!");
+    if (height == 0) {
+        IMAGE_LOGE("Image pixel format conversion failed");
         return false;
     }
     return true;
@@ -1530,6 +1698,7 @@ bool NV21ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuf
     SwsContext *swsContext = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth,
                                              yDInfo.yHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
+        delete[] destBuffer;
         IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
@@ -1537,10 +1706,10 @@ bool NV21ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuf
     const uint8_t *srcSlice[] = { data + yDInfo.yOffset, data + yDInfo.uvOffset };
     const int srcStride[] = { static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride) };
     const int dstStride[] = {static_cast<int>(yDInfo.yWidth * BYTES_PER_PIXEL_RGB)};
-    int hight = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight,
+    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight,
         destBuffer, dstStride);
     sws_freeContext(swsContext);
-    if (hight == 0) {
+    if (height == 0) {
         IMAGE_LOGE("Image pixel format conversion failed");
         delete[] destBuffer;
         return false;
@@ -1565,9 +1734,9 @@ bool NV21ToRGBA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
     }
     bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    bRet = NV21ToRGBAMatrix(srcBuffer, yDInfo, destBuffer)
+    bRet = NV21ToRGBAHardDecode(srcBuffer, yDInfo, destBuffer)
 #else
-    bRet = NV21ToRGBAManual(srcBuffer, yDInfo, destBuffer);
+    bRet = NV21ToRGBASoftDecode(srcBuffer, yDInfo, destBuffer);
 #endif
     if (!bRet) {
         IMAGE_LOGE("NV21ToRGBA failed!");
@@ -1594,9 +1763,9 @@ bool NV21ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
 
     bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    bRet = NV21ToI420ToBGRA(srcBuffer, yDInfo, destBuffer);
+    bRet = NV21ToBGRAHardDecode(srcBuffer, yDInfo, destBuffer);
 #else
-    bRet = NV21ToBGRAManual(srcBuffer, yDInfo, destBuffer);
+    bRet = NV21ToBGRASoftDecode(srcBuffer, yDInfo, destBuffer);
 #endif
     if (!bRet) {
         IMAGE_LOGE("NV21ToBGRA failed!");
@@ -1623,9 +1792,9 @@ bool NV21ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t *
 
     bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    bRet = NV21ToRGB565Matrix(srcBuffer, yDInfo, destBuffer);
+    bRet = NV21ToRGB565HardDecode(srcBuffer, yDInfo, destBuffer);
 #else
-    bRet = NV21ToRGB565Manual(srcBuffer, yDInfo, destBuffer);
+    bRet = NV21ToRGB565SoftDecode(srcBuffer, yDInfo, destBuffer);
 #endif
     if (!bRet) {
         IMAGE_LOGE("NV21ToRGB565 failed!");
@@ -1638,12 +1807,12 @@ bool NV21ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t *
 bool RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
-    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + (imageSize.width + NUM_1) / NUM_2 *
-        (imageSize.height + NUM_1) / NUM_2 * NUM_2);
-    if (destBufferSize <= NUM_0) {
+    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + (imageSize.width + 1) / TWO_SLICES *
+        (imageSize.height + 1) / TWO_SLICES * TWO_SLICES);
+    if (destBufferSize == 0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1652,32 +1821,17 @@ bool RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
+    bool bRet = false;
 #ifdef DCAMERA_MMAP_RESERVE
-    uint8_t *yu12Buffer (new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2]());
-    if (*yu12Buffer == nullptr) {
-        IMAGE_LOGD("apply space for I420 buffer failed!");
-        return false;
-    }
-    auto &convertHandle = ConverterHandle.GetInstance();
-    if (&converterHandle) {
-        const ImageConverter &converter = convertHandle->GetHandle();
-        if (&converter) {
-            converter.RGB24ToI420(srcBuffer, imageSize.width * NUM_3, yu12Buffer, imageSize.width,
-                yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + NUM_1) / NUM_2,
-                yu12Buffer + imageSize.width * imageSize.height + (imageSize.width + NUM_1) / NUM_2 *
-                (imageSize.height + NUM_1) / NUM_2, (imageSize.width + NUM_1) / NUM_2,
-                imageSize.width, imageSize.height);
-            converter.I420ToNV12(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
-                (imageSize.width + NUM_1) / NUM_2, yu12Buffer + imageSize.width * imageSize.height +
-                (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2, (imageSize.width + NUM_1) /
-                NUM_2, *destBuffer, imageSize.width, *destBuffer + imageSize.width * imageSize.height + NUM_1,
-                (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
-        }
-    }
+    bRet = RGBToNV12HardDecode(srcBuffer, imageSize, destBuffer);
 #else
-    RGBToNV12Manual(srcBuffer, imageSize, destBuffer);
+    bRet = RGBToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
 #endif
+    if (!bRet) {
+        IMAGE_LOGE("RGBToNV12 failed!");
+        delete[] destBuffer;
+        return bRet;
+    }
     return true;
 }
 } // namespace Media
