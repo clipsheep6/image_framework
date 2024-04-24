@@ -152,10 +152,14 @@ static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::Pixe
     uint32_t width  = image.info.size.width;
     uint32_t height = image.info.size.height;
     uint8_t *srcData = static_cast<uint8_t*>(pixelMap->GetWritablePixels());
-    YUVDataInfo yuvInfo;
-    pixelMap->GetImageYUVInfo(yuvInfo);
+
     if (IsYuvImage(image.info.pixelFormat)) {
-        if (!PixelConvertAdapter::YUV420ToRGB888(srcData, image.dst, yuvInfo, image.info.pixelFormat)) {
+        YUVDataInfo yuvInfo;
+        pixelMap->GetImageYUVInfo(yuvInfo);
+        YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(image.info.pixelFormat), width, height, yuvInfo};
+        YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(PixelFormat::RGB_888), width, height};
+
+        if (!PixelConvertAdapter::YUV420ToRGB888(srcData, srcInfo, image.dst, dstInfo)) {
             IMAGE_LOGE("ExtEncoder::BuildSkBitmap Support YUV format RGB convert failed ");
             return ERR_IMAGE_ENCODE_FAILED;
         }
@@ -412,7 +416,7 @@ uint32_t ExtEncoder::EncodeImageByPixelMap(PixelMap* pixelMap, bool needExif, Sk
 {
     SkBitmap bitmap;
     TmpBufferHolder holder;
-    SkImageInfo skInfo = ToSkInfo(pixelMap);
+    SkImageInfo skInfo;
     ImageData imageData;
     pixelMap->GetImageInfo(imageData.info);
     uint32_t width  = imageData.info.size.width;

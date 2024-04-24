@@ -92,8 +92,7 @@ public:
     static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
     #else
     static bool BGRAToYuv420(const uint8_t *src, YuvImageInfo &srcInfo, uint8_t *dst, YuvImageInfo &dstInfo);
-
-    static bool Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, 
+    static bool Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out,
         YuvImageInfo &dstInfo);
     static bool Yuv420ToARGB(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, YuvImageInfo &dstInfo);
     static bool YuvTranslate(const uint8_t *srcPixels, YUVDataInfo &info, uint8_t *dstPixels, XYaxis &xyAxis,

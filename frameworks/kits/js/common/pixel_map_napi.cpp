@@ -3393,7 +3393,7 @@ static napi_value PixelFormatConvert(napi_env env, napi_callback_info &info, Pix
         if (context->dstFormatType == FormatType::YUV &&
             (context->srcFormatType == FormatType::UNKNOWN || context->srcFormatType == FormatType::RGB)) {
             result = RGBToYUV(env, info, context);
-        } else if (context->dstFormatType == FormatType::RGB) &&
+        } else if ((context->dstFormatType == FormatType::RGB) &&
             (context->srcFormatType == FormatType::UNKNOWN || context->srcFormatType == FormatType::YUV)) {
             result = YUVToRGB(env, info, context);
         }

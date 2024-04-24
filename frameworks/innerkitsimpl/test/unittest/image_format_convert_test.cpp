@@ -747,7 +747,7 @@ HWTEST_F(ImageFormatConvertTest, NV21ToNV12_Test_002, TestSize.Level1)
     EXPECT_EQ(ret, SUCCESS);
     uint8_t *data = const_cast<uint8_t *>(pixelMap->GetPixels());
     ASSERT_NE(data, nullptr);
-    uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() + 
+    uint32_t buffersize = pixelMap->GetWidth() * pixelMap->GetHeight() +
         ((pixelMap->GetWidth() + 1) / EVEN_ODD_DIVISOR) * ((pixelMap->GetHeight() + 1) / EVEN_ODD_DIVISOR) * TWO_SLICES;
     ASSERT_EQ(pixelMap->GetPixelFormat(), destFormat);
 

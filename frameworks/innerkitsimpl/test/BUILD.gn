@@ -34,6 +34,7 @@ ohos_unittest("pixelmaptest") {
     "//third_party/googletest/googletest/include",
     "//commonlibrary/c_utils/base/include",
     "//foundation/multimedia/image_framework/plugins/manager/include",
+    "//third_party/ffmpeg",
   ]
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/pixel_map_test/native_image_test.cpp",
@@ -1247,6 +1248,7 @@ ohos_unittest("pixelastctest") {
     "${image_subsystem}/interfaces/innerkits/include",
     "$graphic_subsystem/utils/color_manager/export",
     "${image_subsystem}/../../../foundation/multimedia/utils/include",
+    "${image_subsystem}/../../../third_party/ffmpeg",
     "${image_subsystem}/../../../third_party/googletest/googletest/include",
     "${image_subsystem}/../../../commonlibrary/c_utils/base/include",
     "${image_subsystem}/plugins/manager/include",

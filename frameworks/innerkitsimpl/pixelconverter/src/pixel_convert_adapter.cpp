@@ -46,13 +46,6 @@ static const uint8_t NUM_2 = 2;
 static const uint8_t NUM_3 = 3;
 static const uint8_t NUM_4 = 4;
 
-constexpr int32_t INT_128 = 128;
-constexpr int32_t INT_255 = 255;
-const float YUV_TO_RGB888_PARAM_1 = 1.402;
-const float YUV_TO_RGB888_PARAM_2 = 0.344136;
-const float YUV_TO_RGB888_PARAM_3 = 0.714136;
-const float YUV_TO_RGB888_PARAM_4 = 1.772;
-
 static const map<PixelFormat, SkColorType> PIXEL_FORMAT_MAP = {
     { PixelFormat::UNKNOWN, SkColorType::kUnknown_SkColorType},
     { PixelFormat::ARGB_8888, SkColorType::kRGBA_8888_SkColorType},
@@ -263,63 +256,11 @@ bool PixelConvertAdapter::EraseBitmap(const void *srcPixels, uint32_t srcRowByte
     return true;
 }
 
-static uint8_t GetYuv420Y(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, const uint8_t *in)
+bool PixelConvertAdapter::YUV420ToRGB888(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, YuvImageInfo &dstInfo)
 {
-    return *(in + yuvInfo.yOffset + y * yuvInfo.yStride + x);
-}
-
-static uint8_t GetYuv420U(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, PixelFormat format,
-    const uint8_t *in)
-{
-    switch (format) {
-        case PixelFormat::NV21:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1) + 1);
-        case PixelFormat::NV12:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1));
-        default:
-            break;
-    }
-    return SUCCESS;
-}
-
-static uint8_t GetYuv420V(uint32_t x, uint32_t y, const YUVDataInfo &yuvInfo, PixelFormat format,
-    const uint8_t *in)
-{
-    switch (format) {
-        case PixelFormat::NV21:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1));
-        case PixelFormat::NV12:
-            return *(in + yuvInfo.uvOffset + (y / NUM_2) * yuvInfo.uvStride + (x & ~1) + 1);
-        default:
-            break;
-    }
-    return SUCCESS;
-}
-
-bool PixelConvertAdapter::YUV420ToRGB888(const uint8_t *in, uint8_t *out, const YUVDataInfo &yuvInfo,
-    PixelFormat pixelFormat)
-{
-    if (!in || !out || yuvInfo.yWidth <= 0 || yuvInfo.yHeight == 0) {
+    if (PixelYuvUtils::YuvScale(const_cast<uint8_t *>(in), srcInfo, out, dstInfo, SWS_BICUBIC) != SUCCESS) {
+        IMAGE_LOGE("YUV420ToRGB888 failed");
         return false;
-    }
-    for (int32_t i = 0; i < yuvInfo.yHeight; i++) {
-        for (int32_t j = 0; j < yuvInfo.yWidth; j++) {
-            uint8_t Y = GetYuv420Y(j, i, yuvInfo, in);
-            uint8_t U = GetYuv420U(j, i, yuvInfo, pixelFormat, in);
-            uint8_t V = GetYuv420V(j, i, yuvInfo, pixelFormat, in);
-
-            int32_t colorR = Y + YUV_TO_RGB888_PARAM_1 * (V - INT_128);
-            int32_t colorG = Y - YUV_TO_RGB888_PARAM_2 * (U - INT_128) - YUV_TO_RGB888_PARAM_3 * (V - INT_128);
-            int32_t colorB = Y + YUV_TO_RGB888_PARAM_4 * (U - INT_128);
-
-            colorR = colorR > INT_255 ? INT_255 : (colorR < 0 ? 0 : colorR);
-            colorG = colorG > INT_255 ? INT_255 : (colorG < 0 ? 0 : colorG);
-            colorB = colorB > INT_255 ? INT_255 : (colorB < 0 ? 0 : colorB);
-
-            *out++ = colorB;
-            *out++ = colorG;
-            *out++ = colorR;
-        }
     }
     return true;
 }
