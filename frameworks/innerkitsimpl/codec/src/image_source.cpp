@@ -3051,7 +3051,9 @@ static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx
         IMAGE_LOGE("HDR SurfaceBuffer Alloc failed, %{public}d", res);
         return res;
     }
-    sptr<SurfaceBuffer> output(reinterpret_cast<SurfaceBuffer*>(hdrCtx.pixelsBuffer.context));
+    sptr<SurfaceBuffer> output = reinterpret_cast<SurfaceBuffer*>(hdrCtx.pixelsBuffer.context);
+    VpeUtils::SetSbMetadataType(output, CM_IMAGE_HDR_VIVID_SINGLE);
+    VpeUtils::SetSbColorSpaceDefault(output);
 
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     res = utils->ColorSpaceConverterImageProcess(input, output);
@@ -3075,7 +3077,7 @@ static uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &aisrCtx)
         IMAGE_LOGE("HDR SurfaceBuffer Alloc failed, %{public}d", res);
         return res;
     }
-    sptr<SurfaceBuffer> output(reinterpret_cast<SurfaceBuffer*>(aisrCtx.pixelsBuffer.context));
+    sptr<SurfaceBuffer> output = reinterpret_cast<SurfaceBuffer*>(aisrCtx.pixelsBuffer.context);
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     res = utils->DetailEnhancerImageProcess(input, output, static_cast<int32_t>(aisrCtx.resolutionQuality));
     if (res != VPE_ERROR_OK) {

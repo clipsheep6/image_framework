@@ -281,6 +281,19 @@ bool VpeUtils::SetSbColorSpaceType(sptr<SurfaceBuffer>& buffer, const CM_ColorSp
     return true;
 }
 
+bool VpeUtils::SetSbColorSpaceDefault(sptr<SurfaceBuffer>& buffer)
+{
+    constexpr CM_ColorSpaceInfo outputColorSpaceInfo = {
+        COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
+    };
+    auto ret = SetColorSpaceInfo(buffer, outputColorSpaceInfo);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("SetSbColorSpaceDefault GetMetadata failed, return value is %{public}d", ret);
+        return false;
+    }
+    return true;
+}
+
 bool VpeUtils::GetSbColorSpaceType(const sptr<SurfaceBuffer>& buffer, CM_ColorSpaceType& colorSpaceType)
 {
     CM_ColorSpaceInfo colorSpaceInfo;

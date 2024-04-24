@@ -56,6 +56,7 @@ public:
         HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType color, HdrMetadata& metadata);
     static void SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer,
         HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType color);
+    bool SetSbColorSpaceDefault(sptr<SurfaceBuffer>& buffer);
 
 private:
     int32_t ColorSpaceConverterCreate(void* handle, int32_t* instanceId);
