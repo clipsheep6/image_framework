@@ -3159,7 +3159,7 @@ static uint32_t AiHdrProcess(const DecodeContext &aisrCtx, DecodeContext &hdrCtx
     hdrCtx.info.size.width = aisrCtx.outInfo.size.width;
     hdrCtx.info.size.height = aisrCtx.outInfo.size.height;
 
-    sptr<SurfaceBuffer> inputHdr = reinterpret_cast<SurfaceBuffer*> (hdrCtx.pixelsBuffer.context);
+    sptr<SurfaceBuffer> inputHdr = reinterpret_cast<SurfaceBuffer*> (aisrCtx.pixelsBuffer.context);
     return DoAiHdrProcess(inputHdr, hdrCtx, cmColorSpaceType);
 }
 
@@ -3181,7 +3181,7 @@ static uint32_t DoImageAiProcess(sptr<SurfaceBuffer> &input, DecodeContext &dstC
     if (needHdr) {
         sptr<SurfaceBuffer> inputHdr = input;
         DecodeContext hdrCtx;
-        if (aiCtx.hdrType == Media::ImageHdrType::SDR) {
+        if (dstCtx.isAisr) {
             res = AiHdrProcess(aiCtx, hdrCtx, cmColorSpaceType);
             if (res != SUCCESS) {
                 res = ERR_IMAGE_AI_ONLY_SR_SUCCESS;
@@ -3213,8 +3213,8 @@ uint32_t ImageSource::ImageAiProcess(Size imageSize, const DecodeOptions &opts, 
     if (!bRet) {
         return ERR_IMAGE_AI_UNNECESSARY;
     }
+    context.resolutionQuality = opts.resolutionQuality;
     DecodeContext srcCtx;
-    srcCtx.resolutionQuality = opts.resolutionQuality;
     CopySrcInfoOfContext(context, srcCtx);
     sptr<SurfaceBuffer> input = nullptr;
     IMAGE_LOGD("[ImageSource] ImageAiProcess allocatorType %{public}u", context.allocatorType);
