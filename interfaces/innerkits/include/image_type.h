@@ -152,10 +152,9 @@ enum class FinalOutputStep : int32_t {
 };
 
 enum class ResolutionQuality : int32_t {
-    SUPER,
-    HIGH,
+    LOW = 1,
     MEDIUM,
-    LOW
+    HIGH
 };
 
 struct Position {

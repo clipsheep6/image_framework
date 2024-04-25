@@ -76,7 +76,7 @@ static DecodeDynamicRange ParseImageDynamicRange(int32_t val)
 
 static ResolutionQuality ParseImageResolutionQuality(int32_t val)
 {
-    if (val <= static_cast<int32_t>(ResolutionQuality::LOW)) {
+    if (val <= static_cast<int32_t>(ResolutionQuality::HIGH)) {
         return ResolutionQuality(val);
     }
     return ResolutionQuality::LOW;

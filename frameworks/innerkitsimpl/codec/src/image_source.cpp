@@ -3111,7 +3111,7 @@ static bool IsNecessaryAiProcess(const Size &imageSize, const DecodeOptions &opt
         return false;
     }
     if ((IsSizeVailed(opts.desiredSize) && (imageSize.height != opts.desiredSize.height
-            || imageSize.width != opts.desiredSize.width)) || opts.resolutionQuality == ResolutionQuality::SUPER) {
+            || imageSize.width != opts.desiredSize.width)) || opts.resolutionQuality == ResolutionQuality::HIGH) {
         IMAGE_LOGE("[ImageSource] IsNecessaryAiProcess imageSize ne opts_.desiredSize");
         needAisr = true;
     }

@@ -91,54 +91,8 @@ private:
 };
 
 /**
- * @tc.name: AisrTestLargerSuper
- * @tc.desc: set want larger size. SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size.
- *   In case want size is different:
- *     (1)SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size.
- *     (2)Low/middle:Decode module zoom the size, SR module change solution with default:HIGH.
- *   In case want size is same: NOT run AiSR.
- *   In case HDR, run AiHdr;
- *   In case NOT-HDR, NOT run AiHdr;
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceAiTest, AisrTestLargerSuper, TestSize.Level3)
-{
-    GTEST_LOG_(INFO) << "ImageSourceAiTest: AisrTestLargerSuper start";
-    uint32_t errorCode = 0;
-    SourceOptions opts;
-    std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(imageSource.get(), nullptr);
-
-    int32_t jpegWidth = 0;
-    int32_t jpegHeight = 0;
-
-    DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-
-    jpegWidth = pixelMap->GetWidth();
-    jpegHeight = pixelMap->GetHeight();
-    int32_t desiredWidth = jpegWidth + 400; // enable AISR by desired size
-    int32_t desiredHeight = jpegHeight + 400;
-
-    decodeOpts.desiredSize.width = desiredWidth;
-    decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.resolutionQuality = ResolutionQuality::SUPER; // decode module zoom to want size
-
-    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode); // aisr process change solution quality
-    GTEST_LOG_(INFO) << "ImageSourceAiTest: AisrTest after CreatePixelMap(desiredSize)";
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
-    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
-}
-
-/**
  * @tc.name: AisrTestLargerHigh
- * @tc.desc: set want larger size. SUPER/HIGH:Decode module NOT zoom the size, SR module zoom the size.
+ * @tc.desc: set want larger size. HIGH:Decode module NOT zoom the size, SR module zoom the size.
  * @tc.type: FUNC
  */
 HWTEST_F(ImageSourceAiTest, AisrTestLargerHigh, TestSize.Level3)
@@ -251,45 +205,6 @@ HWTEST_F(ImageSourceAiTest, AisrTestLargerLow, TestSize.Level3)
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     GTEST_LOG_(INFO) << "ImageSourceAiTest: AisrTest after CreatePixelMap(desiredSize)";
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
-    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
-}
-
-
-/**
- * @tc.name: AisrTestSmallerSuper
- * @tc.desc: test jpg, set want smaller size + SUPER
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceAiTest, AisrTestSmallerSuper, TestSize.Level3)
-{
-    uint32_t errorCode = 0;
-    SourceOptions opts;
-    std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(imageSource.get(), nullptr);
-
-    int32_t jpegWidth = 0;
-    int32_t jpegHeight = 0;
-
-    DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-
-    jpegWidth = pixelMap->GetWidth();
-    jpegHeight = pixelMap->GetHeight();
-    int32_t desiredWidth = 400; // enable AISR by desired size
-    int32_t desiredHeight = 400;
-
-    decodeOpts.desiredSize.width = desiredWidth;
-    decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.resolutionQuality = ResolutionQuality::SUPER;
-
-    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(pixelMap.get(), nullptr);
     ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
@@ -530,48 +445,8 @@ HWTEST_F(ImageSourceAiTest, HdrTest720p, TestSize.Level3)
 }
 
 /**
- * @tc.name: SrHdrTestLargerSuper
- * @tc.desc: Set larger want size + Super to run aisr;set HDR to run AIHDR. (AiSr/AiHdr both)
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceAiTest, SrHdrTestLargerSuper, TestSize.Level3)
-{
-    uint32_t errorCode = 0;
-    SourceOptions opts;
-    std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(imageSource.get(), nullptr);
-
-    int32_t jpegWidth = 0;
-    int32_t jpegHeight = 0;
-
-    DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-
-    jpegWidth = pixelMap->GetWidth();
-    jpegHeight = pixelMap->GetHeight();
-
-    int32_t desiredWidth = jpegWidth + 400;
-    int32_t desiredHeight = jpegHeight + 400;
-
-    decodeOpts.desiredSize.width = desiredWidth;
-    decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
-    decodeOpts.resolutionQuality = ResolutionQuality::SUPER;
-
-    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
-    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
-}
-
-/**
  * @tc.name: SrHdrTestLargerHigh
- * @tc.desc: Set larger want size + Super to run aisr;set HDR to run AIHDR. (AiSr/AiHdr both)
+ * @tc.desc: Set larger want size + HIGH to run aisr;set HDR to run AIHDR. (AiSr/AiHdr both)
  * @tc.type: FUNC
  */
 HWTEST_F(ImageSourceAiTest, SrHdrTestLargerHigh, TestSize.Level3)
@@ -688,47 +563,6 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestLargerLow, TestSize.Level3)
     ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
     ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
 }
-
-/**
- * @tc.name: SrHdrTestSmallerSuper
- * @tc.desc: Set smaller want size + SUPER to run aisr;set HDR to run AIHDR. (AiSr/AiHdr both)
- * @tc.type: FUNC
- */
-HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerSuper, TestSize.Level3)
-{
-    uint32_t errorCode = 0;
-    SourceOptions opts;
-    std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(imageSource.get(), nullptr);
-
-    int32_t jpegWidth = 0;
-    int32_t jpegHeight = 0;
-
-    DecodeOptions decodeOpts;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-
-    jpegWidth = pixelMap->GetWidth();
-    jpegHeight = pixelMap->GetHeight();
-
-    int32_t desiredWidth = jpegWidth - 400;
-    int32_t desiredHeight = jpegHeight - 400;
-
-    decodeOpts.desiredSize.width = desiredWidth;
-    decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
-    decodeOpts.resolutionQuality = ResolutionQuality::SUPER;
-
-    pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    ASSERT_EQ(errorCode, SUCCESS);
-    ASSERT_NE(pixelMap.get(), nullptr);
-    ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
-    ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
-}
-
 
 /**
  * @tc.name: SrHdrTestSmallerHigh
