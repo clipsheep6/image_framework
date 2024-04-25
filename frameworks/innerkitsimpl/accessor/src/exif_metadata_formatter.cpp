@@ -1114,8 +1114,8 @@ std::multimap<std::string, ValueFormatDelegate> ExifMetadatFormatter::valueForma
     {"SourceImageNumberOfCompositeImage", doubleIntWithComma},
     {"YCbCrSubSampling", doubleIntWithBlank},
     {"YCbCrSubSampling", doubleIntWithComma},
-    {"HwMnoteMoveingPhotoVersion", singleInt},
-    {"HwMnoteMicroVideoPresentationTimestampUS", singleInt},
+    {"MovingPhotoVersion", singleInt},
+    {"MicroVideoPresentationTimestampUS", singleInt},
 };
 
 // validate the value range. For example GPSLatitudeRef the value must be 'N' or 'S'.
