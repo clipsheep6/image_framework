@@ -23,10 +23,6 @@
 #include "memory_manager.h"
 #include "pixel_map.h"
 
-#ifdef LIBYUV_ENABLE
-#include "libyuv.h"
-#endif
-
 namespace OHOS {
 namespace Media {
 
@@ -97,19 +93,6 @@ private:
     int32_t ColorSpaceBGRAToYuv(uint8_t *bgraData, SkTransYuvInfo &dst, ImageInfo &imageInfo, PixelFormat &format,
         const OHOS::ColorManager::ColorSpace &grColorSpace);
     NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace) override;
-#endif
-
-#ifdef LIBYUV_ENABLE
-    static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
-    void ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option = AntiAliasingOption::NONE);
-    static bool NV21Rotate(const uint8_t *src, uint8_t *dstData, PixelSize &size,
-        uint8_t *dstPixels, libyuv::RotationMode &rotateNum);
-    static bool NV12Rotate(const uint8_t *src, uint8_t *dstData, PixelSize &size,
-        uint8_t *dstPixels, libyuv::RotationMode &rotateNum);
-    static bool I420Rotate(const uint8_t *src, PixelSize &size, uint8_t *dstPixels, libyuv::RotationMode &rotateNum);
-    static bool FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format);
-    static void FlipYaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format);
-#else
 #endif
 };
 } // namespace Media

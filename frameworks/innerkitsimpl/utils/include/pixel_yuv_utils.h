@@ -37,10 +37,6 @@ extern "C" {
 }
 #endif
 
-#ifdef LIBYUV_ENABLE
-#include "libyuv.h"
-#endif
-
 namespace OHOS {
 namespace Media {
 
@@ -81,16 +77,6 @@ public:
     static uint8_t GetYuv420V(uint32_t x, uint32_t y, YUVDataInfo &info, PixelFormat format,
         const uint8_t *in);
     static AVPixelFormat ConvertFormat(const PixelFormat &pixelFormat);
-    #ifdef LIBYUV_ENABLE
-    static bool BGRAToYuv420(const uint8_t *src, uint8_t *dst, int srcW, int srcH, PixelFormat pixelFormat);
-    static bool Yuv420ToBGRA(const uint8_t *sample, uint8_t *dst_argb,
-        int32_t width, int32_t height, PixelFormat pixelFormat);
-    static bool Yuv420ToARGB(const uint8_t *sample, uint8_t *dst_argb,
-        int32_t width, int32_t height, PixelFormat pixelFormat);
-    static bool YuvRotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int32_t degrees,
-        const PixelFormat &format);
-    static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
-    #else
     static bool BGRAToYuv420(const uint8_t *src, YuvImageInfo &srcInfo, uint8_t *dst, YuvImageInfo &dstInfo);
     static bool Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out,
         YuvImageInfo &dstInfo);
@@ -110,7 +96,6 @@ public:
     static bool YuvReversal(uint8_t *srcData, YuvImageInfo &srcInfo, uint8_t *dstData, YuvImageInfo &dstInfo);
     static int32_t YuvScale(uint8_t *srcPixels, YuvImageInfo &srcInfo,
         uint8_t *dstPixels, YuvImageInfo &dstInfo, int32_t module);
-    #endif
 };
 } // namespace Media
 } // namespace OHOS

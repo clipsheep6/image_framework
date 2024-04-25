@@ -14,6 +14,9 @@
  */
 
 #include "image_source.h"
+#ifdef LIBYUV_ENABLE
+#include "libyuv_pixel_map.h"
+#endif
 
 #include <algorithm>
 #include <charconv>
@@ -811,7 +814,11 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
 {
     unique_ptr<PixelMap> pixelMap;
     if (IsYuvFormat(plInfo.pixelFormat)) {
+#ifdef LIBYUV_ENABLE
+        pixelMap = make_unique<LibYuvPixelMap>();
+#else
         pixelMap = make_unique<PixelYuv>();
+#endif
     } else {
         pixelMap = make_unique<PixelMap>();
     }

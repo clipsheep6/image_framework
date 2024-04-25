@@ -168,6 +168,10 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
     ]
 
+    if (defined(LIBYUV_ENABLE)) {
+      sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
+    }
+
     if (use_mingw_win) {
       defines = image_decode_windows_defines
       sources -= [
@@ -325,6 +329,10 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
   ]
+
+  if (defined(LIBYUV_ENABLE)) {
+    sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
+  }
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
