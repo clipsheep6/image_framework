@@ -3137,6 +3137,10 @@ static void CopySrcInfoOfContext(const DecodeContext &srcCtx, DecodeContext &dst
     dstCtx.info.size.height = srcCtx.info.size.height;
     dstCtx.resolutionQuality = srcCtx.resolutionQuality;
     dstCtx.hdrType = srcCtx.hdrType;
+    dstCtx.pixelFormat = srcCtx.pixelFormat;
+    dstCtx.info.pixelFormat = srcCtx.info.pixelFormat;
+    dstCtx.info.alphaType = srcCtx.info.alphaType;
+    dstCtx.isAisr = srcCtx.isAisr;
 }
 
 static void CopyOutInfoOfContext(const DecodeContext &srcCtx, DecodeContext &dstCtx)
