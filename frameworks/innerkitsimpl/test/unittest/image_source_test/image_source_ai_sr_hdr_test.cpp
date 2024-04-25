@@ -130,7 +130,6 @@ HWTEST_F(ImageSourceAiTest, AisrTestLargerHigh, TestSize.Level3)
     ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
 }
 
-
 /**
  * @tc.name: AisrTestLargerMiddle
  * @tc.desc: set want larger size. Low/middle:Decode module zoom the size, SR module change to HIGH solution(default).
@@ -170,7 +169,6 @@ HWTEST_F(ImageSourceAiTest, AisrTestLargerMiddle, TestSize.Level3)
     ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
     ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
 }
-
 
 /**
  * @tc.name: AisrTestLargerLow
@@ -361,7 +359,6 @@ HWTEST_F(ImageSourceAiTest, AisrTestEqual, TestSize.Level3)
     ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
     ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
 }
-
 
 /**
  * @tc.name: HdrTestBase
@@ -643,7 +640,6 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerMiddle, TestSize.Level3)
     ASSERT_EQ(desiredWidth, pixelMap->GetWidth());
     ASSERT_EQ(desiredHeight, pixelMap->GetHeight());
 }
-
 
 /**
  * @tc.name: SrHdrTestSmallerLow
