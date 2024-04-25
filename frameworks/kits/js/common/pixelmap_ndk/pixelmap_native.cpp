@@ -341,6 +341,32 @@ Image_ErrorCode OH_PixelmapNative_CreatePixelmap(uint8_t *data, size_t dataLengt
 }
 
 MIDK_EXPORT
+Image_ErrorCode OH_PixelmapNative_CreateEmptyPixelmap(
+    OH_Pixelmap_InitializationOptions *options, OH_PixelmapNative **pixelmap)
+{
+    if (data == nullptr || options == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    InitializationOptions info;
+    info.editable = true;
+    info.alphaType = static_cast<AlphaType>(options->alphaType);
+    info.srcPixelFormat = static_cast<PixelFormat>(options->srcPixelFormat);
+    info.pixelFormat = static_cast<PixelFormat>(options->pixelFormat);
+    info.size.height = options->height;
+    info.size.width = options->width;
+
+    auto pixelmap2 = new OH_PixelmapNative(info);
+    if (pixelmap2 == nullptr || pixelmap2->GetInnerPixelmap() == nullptr) {
+        if (pixelmap2) {
+            delete pixelmap2;
+        }
+        return IMAGE_BAD_PARAMETER;
+    }
+    *pixelmap = pixelmap2;
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
 Image_ErrorCode OH_PixelmapNative_ReadPixels(OH_PixelmapNative *pixelmap, uint8_t *destination, size_t *bufferSize)
 {
     if (pixelmap == nullptr || destination == nullptr) {
