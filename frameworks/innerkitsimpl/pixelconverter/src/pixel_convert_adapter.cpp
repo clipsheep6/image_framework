@@ -14,7 +14,7 @@
  */
 
 #include "pixel_convert_adapter.h"
-
+#include "pixel_yuv_utils.h"
 #include <map>
 
 #include "image_log.h"

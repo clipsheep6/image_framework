@@ -17,9 +17,11 @@
 #define FRAMEWORKS_INNERKITSIMPL_PIXELCONVERTER_INCLUDE_PIXEL_CONVERT_ADAPTER_H
 
 #include "image_type.h"
-#include "pixel_yuv_utils.h"
 namespace OHOS {
 namespace Media {
+
+struct YuvImageInfo;
+
 class PixelConvertAdapter {
 public:
     static bool WritePixelsConvert(const void *srcPixels, uint32_t srcRowBytes, const ImageInfo &srcInfo,
