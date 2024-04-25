@@ -876,7 +876,7 @@ static ResolutionQuality ParseResolutionQuality(napi_env env, napi_value root)
         IMAGE_LOGD("no resolutionQuality");
         return ResolutionQuality::LOW;
     }
-    if (resolutionQuality <= static_cast<uint32_t>(ResolutionQuality::SUPER)) {
+    if (resolutionQuality <= static_cast<uint32_t>(ResolutionQuality::LOW)) {
         return ResolutionQuality(resolutionQuality);
     }
     return ResolutionQuality::LOW;
