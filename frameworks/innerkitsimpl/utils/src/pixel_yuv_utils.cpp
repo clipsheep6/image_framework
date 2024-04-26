@@ -115,20 +115,9 @@ static uint32_t GetImageSize(int32_t width, int32_t height)
     return width * height + ((width + 1) / NUM_2) * ((height + 1) / NUM_2) * NUM_2;
 }
 
-static void SwapUV(uint8_t *dstPixels, int32_t width, int32_t heigth)
-{
-    uint8_t *uvData = dstPixels + GetYSize(width, heigth);
-    for (int32_t i = 0; i < GetUVStride(width) * GetUVHeight(heigth); i += NUM_2) {
-        std::swap(uvData[i], uvData[i + 1]);
-    }
-}
-
 static void WriteDataNV12Convert(uint8_t *srcPixels, const Size &size, uint8_t *dstPixels,
     Position dstPos, const YUVDataInfo &yuvDataInfo)
 {
-    if (size.width == size.height) {
-        SwapUV(srcPixels, size.width, size.height);
-    }
     uint8_t *dstY = dstPixels + yuvDataInfo.yOffset;
     uint8_t *dstUV = dstPixels + yuvDataInfo.uvOffset;
     dstPos.y = GetUVStride(dstPos.y);

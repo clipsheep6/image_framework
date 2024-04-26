@@ -79,8 +79,6 @@ public:
     {
         yuvInfo = yuvDataInfo_;
     }
-    NATIVEEXPORT int32_t ScaleYuvToBGRA(ImageInfo &imageInfo, PixelFormat &format);
-    NATIVEEXPORT int32_t ScaleBGRAToYuv(ImageInfo &imageInfo, PixelFormat &format);
 private:
     bool CheckPixelsInput(const uint8_t *dst, const uint64_t &bufferSize, const uint32_t &offset, const Rect &region);
     void SetRowDataSizeForImageInfo(ImageInfo info);

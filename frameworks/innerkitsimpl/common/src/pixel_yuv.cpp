@@ -44,6 +44,9 @@ using namespace std;
 static const uint8_t NUM_2 = 2;
 static const uint8_t NUM_3 = 3;
 static const uint8_t NUM_4 = 4;
+constexpr uint8_t Y_SHIFT = 16;
+constexpr uint8_t U_SHIFT = 8;
+constexpr uint8_t V_SHIFT = 0;
 constexpr int32_t MAX_DIMENSION = INT32_MAX >> NUM_2;
 
 struct TransInfos {
@@ -469,7 +472,9 @@ uint32_t PixelYuv::ReadPixel(const Position &pos, uint32_t &dst)
         IMAGE_LOGE("read pixel by pos source data is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
     }
-    PixelYuvUtils::YuvReadPixel(data_, yuvDataInfo_, imageInfo_.pixelFormat, pos, dst);
+    ColorYuv420 colorYuv;
+    colorYuv = GetYuv420Color(abs(pos.x), abs(pos.y));
+    dst = (colorYuv.colorY << Y_SHIFT) | (colorYuv.colorU << U_SHIFT) | (colorYuv.colorV << V_SHIFT);
     return SUCCESS;
 }
 
