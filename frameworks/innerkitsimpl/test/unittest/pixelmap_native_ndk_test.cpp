@@ -240,6 +240,30 @@ HWTEST_F(PixelMapNdk2Test, OH_PixelmapNative_CreatePixelMap, TestSize.Level3)
 }
 
 /**
+ * @tc.name: OH_PixelmapNative_CreatePixelMap001
+ * @tc.desc: OH_PixelmapNative_CreatePixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapNdk2Test, OH_PixelmapNative_CreatePixelMap001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_PixelmapNative_CreatePixelMap001 start";
+    uint8_t *colors = nullptr;
+    size_t colorLength = 0;
+     OH_Pixelmap_InitializationOptions*ops = nullptr;
+    OH_PixelmapInitializationOptions_Create(&ops);
+    OH_PixelmapInitializationOptions_SetAlphaType(ops, ALPHA_FORMAT_PREMUL);
+    OH_PixelmapInitializationOptions_SetHeight(ops, 4);
+    OH_PixelmapInitializationOptions_SetWidth(ops, 4);
+    OH_PixelmapInitializationOptions_SetPixelFormat(ops, PIXEL_FORMAT_BGRA_8888);
+    OH_PixelmapNative *pixelMap = nullptr;
+    Image_ErrorCode ret = OH_PixelmapNative_CreatePixelmap(nullptr, &pixelMap);
+    ASSERT_EQ(ret, IMAGE_BAD_PARAMETER);
+    ret = OH_PixelmapNative_CreatePixelmap(ops, &pixelMap);
+    ASSERT_EQ(ret, IMAGE_SUCCESS);
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_PixelmapNative_CreatePixelMap001 end";
+}
+
+/**
  * @tc.name: OH_PixelmapNative_ReadPixels
  * @tc.desc: OH_PixelmapNative_ReadPixels
  * @tc.type: FUNC
