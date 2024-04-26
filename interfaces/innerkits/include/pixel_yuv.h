@@ -86,6 +86,8 @@ private:
     static uint32_t GetImageSize(int32_t width, int32_t height);
     static bool IsYuvFormat(PixelFormat format);
     void AssignYuvDataOnType(PixelFormat format, int32_t width, int32_t height);
+    uint32_t SetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace, SkTransYuvInfo &src,
+        PixelFormat &format, uint64_t rowStride);
     YUVDataInfo yuvDataInfo_;
 #ifdef IMAGE_COLORSPACE_FLAG
     bool CheckColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);

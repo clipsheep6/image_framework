@@ -17,14 +17,7 @@
 #define FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_SINGLE_INSTANCE_H
 
 namespace OHOS {
-namespace DistributedHardware {
-#define REMOVE_NO_USE_CONSTRUCTOR(className)            \
-private:                                                \
-    className(const className&) = delete;               \
-    className& operator= (const className&) = delete;   \
-    className(className&&) = delete;                    \
-    className& operator= (className&&) = delete;        \
-
+namespace Media {
 #define DECLARE_SINGLE_INSTANCE_BASE(className)         \
 public:                                                 \
     static className & GetInstance();                   \
@@ -46,6 +39,6 @@ className & className::GetInstance()                    \
     static className instance;                          \
     return instance;                                    \
 }
-} // namespace DistributedHardware
+} // namespace Media
 } // namespace OHOS
 #endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_SINGLE_INSTANCE_H

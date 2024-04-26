@@ -255,9 +255,9 @@ ohos_static_library("image_utils_static") {
     external_deps = [
       "c_utils:utils",
       "drivers_interface_display:display_commontype_idl_headers",
+      "ffmpeg:libohosffmpeg",
       "graphic_2d:color_manager",
       "graphic_surface:surface",
-      "ffmpeg:libohosffmpeg",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "hitrace:hitrace_meter",

@@ -1112,7 +1112,7 @@ HWTEST_F(JpgYuvTest, JpgYuvTest027, TestSize.Level3)
 }
 #endif
 
-HWTEST_F(JpgYuvTest, jpgYuvTest028, TestSize.Level3)
+HWTEST_F(JpgYuvTest, JpgYuvTest028, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest028 start";
     PixelFormat outfmt[] = {PixelFormat::NV12, PixelFormat::NV21};
@@ -1134,7 +1134,7 @@ HWTEST_F(JpgYuvTest, jpgYuvTest028, TestSize.Level3)
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest028 end";
 }
 
-HWTEST_F(JpgYuvTest, jpgYuvTest029, TestSize.Level3)
+HWTEST_F(JpgYuvTest, JpgYuvTest029, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest029 start";
     PixelFormat outfmt[] = {PixelFormat::NV12, PixelFormat::NV21};
@@ -1158,7 +1158,7 @@ HWTEST_F(JpgYuvTest, jpgYuvTest029, TestSize.Level3)
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest029 end";
 }
 
-HWTEST_F(JpgYuvTest, jpgYuvTest030, TestSize.Level3)
+HWTEST_F(JpgYuvTest, JpgYuvTest030, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "JpgYuvTest: jpgYuvTest030 start";
     PixelFormat outfmt[] = {PixelFormat::NV12, PixelFormat::NV21};
@@ -1182,7 +1182,7 @@ HWTEST_F(JpgYuvTest, jpgYuvTest030, TestSize.Level3)
     GTEST_LOG_(INFO) << "JpgYuvTest: jpgYuvTest030 end";
 }
 
-HWTEST_F(JpgYuvTest, jpgYuvTest031, TestSize.Level3)
+HWTEST_F(JpgYuvTest, JpgYuvTest031, TestSize.Level3)
 {
     GTEST_LOG_(INFO) << "JpgYuvTest: JpgYuvTest031 start";
     PixelFormat outfmt[] = {PixelFormat::NV12, PixelFormat::NV21};

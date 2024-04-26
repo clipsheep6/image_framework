@@ -1761,7 +1761,6 @@ group("unittest") {
     ":imagecolorspacetest",
     ":imageeventtest",
     ":imageformatconverttest",
-    ":imageformatconverttest",
     ":imagepixelmapparceltest",
     ":imagepixelmaptest",
     ":imagesourcetest",

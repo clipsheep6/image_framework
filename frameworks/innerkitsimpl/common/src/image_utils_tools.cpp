@@ -33,11 +33,11 @@ const std::string YUV_LIB_PATH = "/system/lib/platformsdk/libyuv.z.so";
 const std::string GET_IMAGE_CONVERTER_FUNC = "GetImageConverter";
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 using GetImageConverterFunc = OHOS::Media::ImageConverter (*)();
 #endif
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 IMPLEMENT_SINGLE_INSTANCE(ConverterHandle);
 void ConverterHandle::InitConverter()
 {

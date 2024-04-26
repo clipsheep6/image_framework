@@ -137,20 +137,20 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/webp_exif_metadata_accessor.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/common/src/image_utils_tools.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
-      "${image_subsystem}/frameworks/innerkitsimpl/common/src/image_utils_tools.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map_parcel.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
-      "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/matrix.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
@@ -302,17 +302,17 @@ ohos_static_library("image_static") {
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/webp_exif_metadata_accessor.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/common/src/image_utils_tools.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
-    "${image_subsystem}/frameworks/innerkitsimpl/common/src/image_utils_tools.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/incremental_pixel_map.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/common/src/pixel_map.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/basic_transformer.cpp",
-    "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
-    "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/matrix.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/pixel_convert.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/src/post_proc.cpp",
@@ -437,7 +437,7 @@ ohos_static_library("image_static") {
   if (defined(global_parts_info) &&
       defined(global_parts_info.open_source_libyuv)) {
     defines += [ "LIBYUV_ENABLE" ]
-    cflags += [ "-DCAMERA_MMAP_RESERVE" ]
+    cflags = [ "-LIBYUV_ENABLE" ]
     external_deps += [ "libyuv:yuv" ]
   }
 

@@ -472,8 +472,7 @@ uint32_t PixelYuv::ReadPixel(const Position &pos, uint32_t &dst)
         IMAGE_LOGE("read pixel by pos source data is null.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
     }
-    ColorYuv420 colorYuv;
-    colorYuv = GetYuv420Color(abs(pos.x), abs(pos.y));
+    ColorYuv420 colorYuv = GetYuv420Color(abs(pos.x), abs(pos.y));
     dst = (colorYuv.colorY << Y_SHIFT) | (colorYuv.colorU << U_SHIFT) | (colorYuv.colorV << V_SHIFT);
     return SUCCESS;
 }
@@ -611,6 +610,38 @@ bool PixelYuv::IsYuvFormat(PixelFormat format)
 }
 
 #ifdef IMAGE_COLORSPACE_FLAG
+uint32_t PixelYuv::SetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace, SkTransYuvInfo &src,
+    PixelFormat &format, uint64_t rowStride)
+{
+    int32_t width = yuvDataInfo_.yStride;
+    int32_t height = yuvDataInfo_.yHeight;
+    // Build sk target infomation
+    SkTransYuvInfo dst;
+    dst.info = ToSkImageInfo(imageInfo_, grColorSpace.ToSkColorSpace());
+    MemoryData memoryData = {nullptr, width * height * NUM_4, "ApplyColorSpace ImageData",
+        {dst.info.width(), dst.info.height()}};
+    auto dstMemory = MemoryManager::CreateMemory(allocatorType_, memoryData);
+    if (dstMemory == nullptr) {
+        IMAGE_LOGE("applyColorSpace CreateMemory failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+    // Transfor pixels by readPixels
+    if (!src.bitmap.readPixels(dst.info, dstMemory->data.data, rowStride, 0, 0)) {
+        dstMemory->Release();
+        IMAGE_LOGE("ReadPixels failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+
+    uint8_t *bgraData = reinterpret_cast<uint8_t *>(dstMemory->data.data);
+    if (ColorSpaceBGRAToYuv(bgraData, dst, imageInfo_, format, grColorSpace) != SUCCESS) {
+        dstMemory->Release();
+        IMAGE_LOGE("ColorSpaceBGRAToYuv failed");
+        return ERR_IMAGE_COLOR_CONVERT;
+    }
+    SetImageInfo(imageInfo_, true);
+    return SUCCESS;
+}
+
 static void ToImageInfo(ImageInfo &info, SkImageInfo &skInfo, bool sizeOnly = true)
 {
     info.size.width = skInfo.width();
@@ -698,31 +729,7 @@ uint32_t PixelYuv::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
         return ERR_IMAGE_COLOR_CONVERT;
     }
     src.bitmap.installPixels(src.info, RGBAdata.get(), rowStride);
-    // Build sk target infomation
-    SkTransYuvInfo dst;
-    dst.info = ToSkImageInfo(imageInfo_, grColorSpace.ToSkColorSpace());
-    MemoryData memoryData = {nullptr, width * height * NUM_4, "ApplyColorSpace ImageData",
-        {dst.info.width(), dst.info.height()}};
-    auto dstMemory = MemoryManager::CreateMemory(allocatorType_, memoryData);
-    if (dstMemory == nullptr) {
-        IMAGE_LOGE("applyColorSpace CreateMemory failed");
-        return ERR_IMAGE_COLOR_CONVERT;
-    }
-    // Transfor pixels by readPixels
-    if (!src.bitmap.readPixels(dst.info, dstMemory->data.data, rowStride, 0, 0)) {
-        dstMemory->Release();
-        IMAGE_LOGE("ReadPixels failed");
-        return ERR_IMAGE_COLOR_CONVERT;
-    }
-
-    uint8_t *bgraData = reinterpret_cast<uint8_t *>(dstMemory->data.data);
-    if (ColorSpaceBGRAToYuv(bgraData, dst, imageInfo_, format, grColorSpace) != SUCCESS) {
-        dstMemory->Release();
-        IMAGE_LOGE("ColorSpaceBGRAToYuv failed");
-        return ERR_IMAGE_COLOR_CONVERT;
-    }
-    SetImageInfo(imageInfo_, true);
-    return SUCCESS;
+    return SetColorSpace(grColorSpace, src, format, rowStride);
 }
 #endif
 } // namespace Media

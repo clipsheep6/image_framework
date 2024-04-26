@@ -18,13 +18,13 @@
 
 #include <atomic>
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 #include "image_converter.h"
 #endif
 
 namespace OHOS {
 namespace Media {
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 class ConverterHandle {
     DECLARE_SINGLE_INSTANCE(ConverterHandle);
 

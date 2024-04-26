@@ -181,7 +181,7 @@ static bool NV12ToNV21SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool RGB565ToNV12HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
@@ -241,7 +241,7 @@ static bool RGB565ToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSi
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool RGB565ToNV21HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
         std::unique_ptr<uint8_t[]> yu12Buffer(new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
@@ -352,7 +352,7 @@ static bool BGRAToNV21SoftDcode(const uint8_t *srcBuffer, const Size &imageSize,
     return false;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool NV12ToRGBAHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
@@ -425,7 +425,7 @@ static bool NV12ToRGBASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool NV12ToBGRANoHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
@@ -499,7 +499,7 @@ static bool NV12ToBGRASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
 }
 
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool RGBAToNV12HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     bRet
@@ -561,7 +561,7 @@ static bool RGBAToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool RGBAToNV21HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
@@ -623,7 +623,7 @@ static bool RGBAToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool RGBToNV21HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     const uint32_t yu12BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
@@ -683,7 +683,7 @@ static bool RGBToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize,
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool NV21ToRGBAHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
@@ -746,7 +746,7 @@ static bool NV21ToRGBASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool NV21ToRGB565HardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
@@ -808,7 +808,7 @@ static bool NV21ToRGB565SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool NV21ToBGRAHardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + ((yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR *
@@ -870,7 +870,7 @@ static bool NV21ToBGRASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool RGBToNV12HardDecode(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer)
 {
     uint8_t *yu12Buffer (new(std::nothrow) uint8_t[imageSize.width * imageSize.height +
@@ -967,7 +967,7 @@ bool NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t *
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     const uint8_t *srcY = srcBuffer + yDInfo.yOffset;
     const uint8_t *srcUV = srcBuffer + yDInfo.uvOffset;
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
@@ -1049,7 +1049,7 @@ bool NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
         return false;
     }
     bool result = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     result = NV21ToNV12HardDecode(srcBuffer, yDInfo, destBuffer, destBufferSize);
 #else
     result = NV21ToNV12SoftDecode(srcBuffer, yDInfo, destBuffer);
@@ -1061,7 +1061,7 @@ bool NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
     return result;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool NV21ToNV12HardDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     const size_t &destBufferSize)
 {
@@ -1185,7 +1185,7 @@ bool NV12ToNV21(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
         return false;
     }
     bool result = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     result = NV12ToNV21HardDecode(srcBuffer, yDInfo, destBuffer, destBufferSize);
 #else
     result = NV12ToNV21SoftDecode(srcBuffer, yDInfo, destBuffer);
@@ -1214,7 +1214,7 @@ bool BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         std::cerr << "apply space for dest buffer failed!" << std::endl;
         return false;
     }
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     uint8_t *nv12Y = *destBuffer;
     uint8_t *nv12UV = *destBuffer + destPlaneSizeY;
     const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
@@ -1258,7 +1258,7 @@ bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
     }
 
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = RGB565ToNV12HardDecode(srcBuffer, imageSize, destBuffer);
 #else
     bRet = RGB565ToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -1291,7 +1291,7 @@ bool RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **des
         return false;
     }
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = RGB565ToNV21HardDecode(srcBuffer, imageSize, destBuffer);
 #else
     bRet = RGB565ToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -1354,7 +1354,7 @@ bool BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         IMAGE_LOGD("apply space for dest buffer failed!");
         return false;
     }
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     uint8_t *nv21Y = *destBuffer;
     uint8_t *nv21VU = *destBuffer + destPlaneSizeY;
     const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
@@ -1399,7 +1399,7 @@ bool NV12ToRGBA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBu
     }
 
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = NV12ToRGBANoManual(data, yDInfo, destBuffer, colorSpace);
 #else
     bRet = NV12ToRGBASoftDecode(data, yDInfo, destBuffer);
@@ -1435,7 +1435,7 @@ bool NV12ToBGRA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBu
     }
 
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = NV12ToBGRANoHardDecode(data, yDInfo, destBuffer, colorSpace);
 #else
     bRet = NV12ToBGRASoftDecode(data, yDInfo, destBuffer);
@@ -1512,7 +1512,7 @@ bool RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
         return false;
     }
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = RGBAToNV12HardDecode(srcBuffer, imageSize, destBuffer);
 #else
     bRet = RGBAToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -1546,7 +1546,7 @@ bool RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destB
     }
 
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = RGBAToNV21HardDecode(srcBuffer, imageSize, destBuffer);
 #else
     bRet = RGBAToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -1579,7 +1579,7 @@ bool RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
         return false;
     }
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = RGBToNV21HardDecode(srcBuffer, imageSize, destBuffer);
 #else
     bRet = RGBToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -1593,7 +1593,7 @@ bool RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
     return true;
 }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
 static bool NV12ToRGBNoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
                               ColorSpace colorSpace)
 {
@@ -1657,7 +1657,7 @@ bool NV12ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuf
     }
 
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = NV12ToRGBNoManual(data, yDInfo, destBuffer, colorSpace);
 #else
     bRet = NV12ToRGBManual(data, yDInfo, destBuffer);
@@ -1687,7 +1687,7 @@ bool NV21ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuf
         return false;
     }
 
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     const struct YuvConstants* yuvConstants = mapColorSPaceToYuvConstants(colorSpace);
     const ImageConverter &converter = ConverterHandle.GetInstance()->GetHandle();
     converter.NV21ToRGB24Matrix(data + yDInfo.yOffset, yDInfo.yStride, data + yDInfo.uvOffset,
@@ -1734,7 +1734,7 @@ bool NV21ToRGBA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
         return false;
     }
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = NV21ToRGBAHardDecode(srcBuffer, yDInfo, destBuffer)
 #else
     bRet = NV21ToRGBASoftDecode(srcBuffer, yDInfo, destBuffer);
@@ -1763,7 +1763,7 @@ bool NV21ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **d
     }
 
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = NV21ToBGRAHardDecode(srcBuffer, yDInfo, destBuffer);
 #else
     bRet = NV21ToBGRASoftDecode(srcBuffer, yDInfo, destBuffer);
@@ -1792,7 +1792,7 @@ bool NV21ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t *
     }
 
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = NV21ToRGB565HardDecode(srcBuffer, yDInfo, destBuffer);
 #else
     bRet = NV21ToRGB565SoftDecode(srcBuffer, yDInfo, destBuffer);
@@ -1823,7 +1823,7 @@ bool RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBu
         return false;
     }
     bool bRet = false;
-#ifdef DCAMERA_MMAP_RESERVE
+#ifdef LIBYUV_ENABLE
     bRet = RGBToNV12HardDecode(srcBuffer, imageSize, destBuffer);
 #else
     bRet = RGBToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
