@@ -296,12 +296,12 @@ static void ParseDecodingOps(DecodeOptions &decOps, struct OH_DecodingOptions *o
         decOps.sampleSize = ops->sampleSize;
     }
     decOps.rotateNewDegrees = ops->rotate;
-    decOps.desiredSize.width = ops->desiredSize.width;
-    decOps.desiredSize.height = ops->desiredSize.height;
-    decOps.desiredRegion.left = ops->desiredRegion.x;
-    decOps.desiredRegion.top = ops->desiredRegion.y;
-    decOps.desiredRegion.width = ops->desiredRegion.width;
-    decOps.desiredRegion.height = ops->desiredRegion.height;
+    decOps.desiredSize.width = static_cast<int32_t>(ops->desiredSize.width);
+    decOps.desiredSize.height = static_cast<int32_t>(ops->desiredSize.height);
+    decOps.desiredRegion.left = static_cast<int32_t>(ops->desiredRegion.x);
+    decOps.desiredRegion.top = static_cast<int32_t>(ops->desiredRegion.y);
+    decOps.desiredRegion.width = static_cast<int32_t>(ops->desiredRegion.width);
+    decOps.desiredRegion.height = static_cast<int32_t>(ops->desiredRegion.height);
     decOps.desiredDynamicRange = ParseImageDynamicRange(ops->desiredDynamicRange);
     switch (static_cast<int32_t>(ops->pixelFormat)) {
         case FORMAT_0:
@@ -384,6 +384,25 @@ Image_ErrorCode OH_ImageSourceNative_CreateFromData(uint8_t *data, size_t dataSi
     }
     imageSource->fileBuffer_ = (void*)data;
     imageSource->fileBufferSize_ = dataSize;
+    *res = imageSource;
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
+Image_ErrorCode OH_ImageSourceNative_CreateFromRawFile(RawFileDescriptor *rawFile, OH_ImageSourceNative **res)
+{
+    if (rawFile == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    SourceOptions options;
+    auto imageSource = new OH_ImageSourceNative(*rawFile, options);
+    if (imageSource == nullptr || imageSource->GetInnerImageSource() == nullptr) {
+        if (imageSource) {
+            delete imageSource;
+        }
+        *res = nullptr;
+        return IMAGE_BAD_PARAMETER;
+    }
     *res = imageSource;
     return IMAGE_SUCCESS;
 }

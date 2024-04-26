@@ -20,14 +20,12 @@ ohos_shared_library("pixelmap_ndk") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
   include_dirs = [
     "${image_subsystem}/interfaces/innerkits/include/mdkKits",
     "include",
-    "//foundation/arkui/napi/interfaces/inner_api",
-    "//foundation/arkui/napi/interfaces/kits",
-    "//third_party/node/src",
   ]
 
   sources = [
@@ -39,6 +37,10 @@ ohos_shared_library("pixelmap_ndk") {
       [ "$SUBSYSTEM_DIR/interfaces/innerkits:image_external_config" ]
 
   deps = [ "$SUBSYSTEM_DIR/interfaces/kits/js/common:image" ]
+  external_deps = [
+    "graphic_2d:color_manager",
+    "napi:ace_napi",
+  ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
@@ -50,12 +52,12 @@ ohos_shared_library("pixelmap") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
   include_dirs = [
     "${image_subsystem}/frameworks/innerkitsimpl/egl_image/include",
     "$SUBSYSTEM_DIR/interfaces/kits/native/include/image",
-    "$SUBSYSTEM_DIR/frameworks/kits/js/common/ndk/include",
   ]
 
   sources = [

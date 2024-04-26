@@ -64,7 +64,7 @@ uint32_t JpegExifMetadataAccessor::Read()
 {
     DataBuf dataBuf;
     if (!ReadBlob(dataBuf)) {
-        IMAGE_LOGE("Failed to read data buffer from image stream.");
+        IMAGE_LOGD("Failed to read data buffer from image stream.");
         return ERR_IMAGE_SOURCE_DATA;
     }
 
@@ -113,7 +113,7 @@ bool JpegExifMetadataAccessor::ReadBlob(DataBuf &blob) const
             return false;
         }
     }
-    IMAGE_LOGE("Failed to find APP1 in image stream.");
+    IMAGE_LOGD("Failed to find APP1 in image stream.");
     return false;
 }
 
@@ -253,7 +253,7 @@ std::tuple<size_t, size_t> JpegExifMetadataAccessor::GetInsertPosAndMarkerAPP1()
 
     imageStream_->Seek(0, SeekPos::BEGIN);
 
-    byte marker = FindNextMarker();
+    byte marker = static_cast<byte>(FindNextMarker());
     while ((marker != JPEG_MARKER_SOS) && (marker != JPEG_MARKER_EOI)) {
         DataBuf buf = ReadNextSegment(marker);
         if (marker == JPEG_MARKER_APP0) {
@@ -362,7 +362,7 @@ bool JpegExifMetadataAccessor::UpdateExifMetadata(BufferMetadataStream &bufStrea
 
     imageStream_->Seek(0, SeekPos::BEGIN);
 
-    byte marker = FindNextMarker();
+    byte marker = static_cast<byte>(FindNextMarker());
     while (marker != JPEG_MARKER_SOS) {
         DataBuf buf = ReadNextSegment(marker);
         if (markerCount == insertPos) {

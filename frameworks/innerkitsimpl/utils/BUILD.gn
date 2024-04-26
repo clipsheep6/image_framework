@@ -29,6 +29,7 @@ if (use_clang_ios) {
     sources = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "src/color_utils.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
       "src/vpe_utils.cpp",
@@ -52,24 +53,20 @@ if (use_clang_ios) {
       sanitize = {
         cfi = true
         cfi_cross_dso = true
+        cfi_vcall_icall_only = true
         debug = false
       }
     }
     include_dirs = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
-      "//foundation/multimedia/utils/include",
       "//foundation/multimedia/image_framework/plugins/manager/include",
       "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-      "//commonlibrary/c_utils/base/include",
-      "//foundation/multimedia/media_utils_lite/interfaces/kits",
-      "//foundation/communication/ipc/utils/include",
-      "$skia_root/skia",
-      "${graphic_subsystem}/interfaces/inner_api/surface",
     ]
 
     sources = [
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
+      "src/color_utils.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
       "src/vpe_utils.cpp",
@@ -141,16 +138,21 @@ if (use_clang_ios) {
 }
 
 ohos_static_library("image_utils_static") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
   include_dirs = [
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
-    "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/plugins/manager/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-    "//commonlibrary/c_utils/base/include",
-    "$skia_root/skia",
   ]
 
   sources = [
+    "src/color_utils.cpp",
     "src/image_system_properties.cpp",
     "src/image_type_converter.cpp",
     "src/image_utils.cpp",
@@ -208,6 +210,9 @@ ohos_static_library("image_utils_static") {
 
     external_deps = [
       "c_utils:utils",
+      "drivers_interface_display:display_commontype_idl_headers",
+      "graphic_2d:color_manager",
+      "graphic_surface:surface",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "hitrace:hitrace_meter",

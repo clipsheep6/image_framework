@@ -30,8 +30,10 @@ case fourcc_to_code(box_type):                     \
     box = std::make_shared<box_class_type>();      \
     break
 
-const uint8_t UUID_TYPE_BYTE_NUM = 16;
-const uint8_t LARGE_BOX_SIZE_TAG = 1;
+namespace {
+    const uint8_t UUID_TYPE_BYTE_NUM = 16;
+    const uint8_t LARGE_BOX_SIZE_TAG = 1;
+}
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -213,6 +215,10 @@ heif_error HeifBox::MakeFromReader(HeifStreamReader &reader, std::shared_ptr<Hei
 
 heif_error HeifBox::Write(HeifStreamWriter &writer) const
 {
+    if (boxType_ == BOX_TYPE_MDAT || boxType_ == BOX_TYPE_IDAT) {
+        return heif_error_ok;
+    }
+
     size_t boxStart = ReserveHeader(writer);
 
     heif_error err = WriteChildren(writer);

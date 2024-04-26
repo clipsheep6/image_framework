@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <string>
 
-#include "SkCodec.h"
 #include "abs_image_decoder.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "display_type.h"
@@ -27,6 +26,7 @@
 #endif
 #include "ext_stream.h"
 #include "exif_info.h"
+#include "include/codec/SkCodec.h"
 #include "nocopyable.h"
 #include "plugin_class_base.h"
 #include "jpeg_yuv_decoder/jpeg_decoder_yuv.h"
@@ -66,7 +66,8 @@ public:
     Media::ImageHdrType CheckHdrType() override;
     uint32_t GetGainMapOffset() override;
     Media::HdrMetadata GetHdrMetadata(Media::ImageHdrType type) override;
-
+    bool DecodeHeifGainMap(DecodeContext &context, float scale) override;
+    bool GetHeifHdrColorSpace(ColorManager::ColorSpaceName &gainmap, ColorManager::ColorSpaceName &hdr) override;
 #ifdef IMAGE_COLORSPACE_FLAG
     OHOS::ColorManager::ColorSpace getGrColorSpace() override;
     bool IsSupportICCProfile() override;

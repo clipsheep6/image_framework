@@ -16,18 +16,13 @@ import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 
 SEPARATOR = "/"
 BASE_DIR = "$SEPARATOR/foundation"
-THIRD_DIR = "$SEPARATOR/third_party"
 
 config("native_public_config") {
   include_dirs = [
     "include",
-    "$BASE_DIR/arkui/napi/interfaces/inner_api",
-    "$BASE_DIR/arkui/napi/interfaces/kits",
     "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include",
     "$BASE_DIR/multimedia/image_framework/interfaces/kits/native/include/image",
     "$BASE_DIR/multimedia/image_framework/interfaces/innerkits/include",
-    "$THIRD_DIR/node/src",
-    "$resource_management_subsystem/interfaces/native/resource/include",
     "$BASE_DIR/multimedia/image_framework/frameworks/kits/js/common/pixelmap_ndk",
   ]
 }
@@ -36,12 +31,17 @@ ohos_shared_library("image_ndk") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
 
   sources = [ "image_mdk.cpp" ]
   public_configs = [ ":native_public_config" ]
   deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
+  external_deps = [
+    "graphic_surface:surface",
+    "napi:ace_napi",
+  ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
@@ -52,12 +52,19 @@ ohos_shared_library("image_receiver_ndk") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
 
   sources = [ "image_receiver_mdk.cpp" ]
   public_configs = [ ":native_public_config" ]
   deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
+  external_deps = [
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_2d:color_manager",
+    "graphic_surface:surface",
+    "napi:ace_napi",
+  ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
@@ -68,12 +75,18 @@ ohos_shared_library("image_source_ndk") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
 
   sources = [ "image_source_mdk.cpp" ]
   public_configs = [ ":native_public_config" ]
   deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
+
+  external_deps = [
+    "napi:ace_napi",
+    "resource_management:librawfile",
+  ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
@@ -84,12 +97,15 @@ ohos_shared_library("image_packer_ndk") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
 
   sources = [ "image_packer_mdk.cpp" ]
   public_configs = [ ":native_public_config" ]
   deps = [ "$image_subsystem/interfaces/kits/js/common:image" ]
+
+  external_deps = [ "napi:ace_napi" ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
@@ -101,6 +117,7 @@ ohos_shared_library("image_source") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
 
@@ -123,7 +140,10 @@ ohos_shared_library("image_source") {
     "$image_subsystem/interfaces/kits/js/common:image",
   ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "c_utils:utils",
+    "resource_management:librawfile",
+  ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"
@@ -135,6 +155,7 @@ ohos_shared_library("image_packer") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
+    cfi_vcall_icall_only = true
     debug = false
   }
 
@@ -158,7 +179,10 @@ ohos_shared_library("image_packer") {
     "$image_subsystem/interfaces/kits/js/common:image",
   ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "c_utils:utils",
+    "resource_management:librawfile",
+  ]
 
   innerapi_tags = [ "ndk" ]
   subsystem_name = "multimedia"

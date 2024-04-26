@@ -100,7 +100,8 @@ std::atomic<uint32_t> PixelMap::currentId = 0;
 
 PixelMap::~PixelMap()
 {
-    IMAGE_LOGD("PixelMap::~PixelMap_id:%{public}d", GetUniqueId());
+    IMAGE_LOGD("PixelMap::~PixelMap_id:%{public}d width:%{public}d height:%{public}d",
+        GetUniqueId(), imageInfo_.size.width, imageInfo_.size.height);
     FreePixelMap();
 }
 
@@ -1229,7 +1230,7 @@ bool PixelMap::IsHdr()
         return false;
     }
 #endif
-    return false;
+    return true;
 }
 
 uint8_t PixelMap::GetARGB32ColorA(uint32_t color)
@@ -1300,7 +1301,7 @@ uint32_t PixelMap::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
                 IMAGE_LOGE("read pixels by buffer memcpy the pixelmap data to dst fail, error:%{public}d", ret);
                 return ERR_IMAGE_READ_PIXELMAP_FAILED;
             }
-            tmpSize += readSize;
+            tmpSize += static_cast<uint64_t>(readSize);
         }
     } else {
         // Copy the actual pixel data without padding bytes
@@ -1564,7 +1565,7 @@ uint32_t PixelMap::WritePixels(const uint8_t *source, const uint64_t &bufferSize
                 IMAGE_LOGE("write pixels by buffer memcpy the pixelmap data to dst fail, error:%{public}d", ret);
                 return ERR_IMAGE_READ_PIXELMAP_FAILED;
             }
-            tmpSize += readSize;
+            tmpSize += static_cast<uint64_t>(readSize);
         }
     } else {
         for (int i = 0; i < imageInfo_.size.height; ++i) {
@@ -2011,11 +2012,16 @@ bool PixelMap::WriteAstcRealSizeToParcel(Parcel &parcel) const
     return true;
 }
 
+bool isYUV(const PixelFormat &format)
+{
+    return format == PixelFormat::NV12 || format == PixelFormat::NV21;
+}
+
 bool PixelMap::Marshalling(Parcel &parcel) const
 {
     int32_t PIXEL_MAP_INFO_MAX_LENGTH = 128;
     int32_t bufferSize = rowDataSize_ * imageInfo_.size.height;
-    if (isAstc_) {
+    if (isAstc_ || isYUV(imageInfo_.pixelFormat)) {
         bufferSize = pixelsSize_;
     }
     if (static_cast<size_t>(bufferSize) <= MIN_IMAGEDATA_SIZE &&
@@ -2120,7 +2126,7 @@ bool PixelMap::ReadPropertiesFromParcel(Parcel &parcel, ImageInfo &imgInfo,
         IMAGE_LOGE("ReadPropertiesFromParcel bytesPerPixel fail");
         return false;
     }
-    if ((!isAstc) && bufferSize != rowDataSize * imgInfo.size.height) {
+    if ((!isAstc) && (!isYUV(imgInfo.pixelFormat)) && bufferSize != rowDataSize * imgInfo.size.height) {
         IMAGE_LOGE("ReadPropertiesFromParcel bufferSize invalid");
         PixelMap::ConstructPixelMapError(error, ERR_IMAGE_PIXELMAP_CREATE_FAILED, "bufferSize invalid");
         return false;
@@ -2719,7 +2725,7 @@ uint32_t PixelMap::SetAlpha(const float percent)
         IMAGE_LOGE(
             "Set alpha input should (0 < input <= 1). Current input %{public}f",
             percent);
-        return COMMON_ERR_INVALID_PARAMETER;
+        return ERR_IMAGE_INVALID_PARAMETER;
     }
 
     bool isPixelPremul = alphaType == AlphaType::IMAGE_ALPHA_TYPE_PREMUL;
@@ -2736,7 +2742,7 @@ uint32_t PixelMap::SetAlpha(const float percent)
         (pixelFormat == PixelFormat::RGBA_F16 && pixelBytes_ != RGBA_F16_BYTES)) {
         IMAGE_LOGE("Pixel format %{public}s mismatch pixelByte %{public}d",
             GetNamedPixelFormat(pixelFormat).c_str(), pixelBytes_);
-        return COMMON_ERR_INVALID_PARAMETER;
+        return ERR_IMAGE_INVALID_PARAMETER;
     }
     for (uint32_t i = 0; i < pixelsSize;) {
         uint8_t* pixel = data_ + i;

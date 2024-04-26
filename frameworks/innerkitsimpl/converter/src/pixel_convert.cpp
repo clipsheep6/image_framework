@@ -1167,7 +1167,7 @@ static int32_t ConvertFromYUV(const void *srcPixels, const int32_t srcLength, co
         IMAGE_LOGE("[PixelMap]Convert: Get tmp pixels length failed!");
         return -1;
     }
-    uint8_t* tmpPixels = new uint8_t[tmpPixelsLen];
+    uint8_t* tmpPixels = new(std::nothrow) uint8_t[tmpPixelsLen];
     if (tmpPixels == nullptr) {
         IMAGE_LOGE("[PixelMap]Convert: alloc memory failed!");
         return -1;
@@ -1217,7 +1217,7 @@ static int32_t ConvertToYUV(const void *srcPixels, const int32_t srcLength, cons
         IMAGE_LOGE("[PixelMap]Convert: Get tmp pixels length failed!");
         return -1;
     }
-    uint8_t* tmpPixels = new uint8_t[tmpPixelsLen];
+    uint8_t* tmpPixels = new(std::nothrow) uint8_t[tmpPixelsLen];
     if (tmpPixels == nullptr) {
         IMAGE_LOGE("[PixelMap]Convert: alloc memory failed!");
         return -1;
@@ -1312,7 +1312,7 @@ std::unique_ptr<PixelConvert> PixelConvert::Create(const ImageInfo &srcInfo, con
     if ((srcInfo.pixelFormat == dstInfo.pixelFormat) && (extension.alphaConvertType == AlphaConvertType::NO_CONVERT)) {
         isNeedConvert = false;
     }
-    return unique_ptr<PixelConvert>(new (nothrow) PixelConvert(funcPtr, extension, isNeedConvert));
+    return make_unique<PixelConvert>(funcPtr, extension, isNeedConvert);
 }
 
 AlphaConvertType PixelConvert::GetAlphaConvertType(const AlphaType &srcType, const AlphaType &dstType)

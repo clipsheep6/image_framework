@@ -161,7 +161,7 @@ constexpr uint8_t BYTE_POS_0 = 0;
 constexpr uint8_t BYTE_POS_1 = 1;
 constexpr uint8_t BYTE_POS_2 = 2;
 constexpr uint8_t BYTE_POS_3 = 3;
-static const std::string g_textureSuperDecSo = "/system/lib64/libtextureSuperDecompress.z.so";
+static const std::string g_textureSuperDecSo = "/system/lib64/module/hms/graphic/libtextureSuperDecompress.z.so";
 
 using GetSuperCompressAstcSize = size_t (*)(const uint8_t *, size_t);
 using SuperDecompressTexture = bool (*)(const uint8_t *, size_t, uint8_t *, size_t &);
@@ -712,7 +712,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
     }
     if ("image/gif" != sourceInfo_.encodedFormat) {
-        IMAGE_LOGI("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
+        IMAGE_LOGD("CreatePixelMapExtended success, imageId:%{public}lu, desiredSize: (%{public}d, %{public}d),"
             "imageSize: (%{public}d, %{public}d), hdrType : %{public}d, cost %{public}lu us",
             static_cast<unsigned long>(imageId_), opts.desiredSize.width, opts.desiredSize.height, info.size.width,
             info.size.height, context.hdrType, static_cast<unsigned long>(GetNowTimeMicroSeconds() - decodeStartTime));
@@ -1199,7 +1199,7 @@ uint32_t ImageSource::ModifyImageProperty(const std::string &key, const std::str
 {
     uint32_t ret = CreatExifMetadataByImageSource(true);
     if (ret != SUCCESS) {
-        IMAGE_LOGE("Failed to create Exif metadata "
+        IMAGE_LOGD("Failed to create Exif metadata "
             "when attempting to modify property.");
         return ret;
     }
@@ -1278,10 +1278,34 @@ uint32_t ImageSource::CreatExifMetadataByImageSource(bool addFlag)
         return ERR_IMAGE_SOURCE_DATA;
     }
 
-    IMAGE_LOGD("sourceStreamPtr GetDataPtr");
-    uint8_t* ptr = sourceStreamPtr_->GetDataPtr();
-    uint32_t size = sourceStreamPtr_->GetStreamSize();
-    auto metadataAccessor = MetadataAccessorFactory::Create(ptr, size);
+    IMAGE_LOGD("sourceStreamPtr create metadataACCessor");
+    uint32_t bufferSize = sourceStreamPtr_->GetStreamSize();
+    auto bufferPtr = sourceStreamPtr_->GetDataPtr();
+    if (bufferPtr != nullptr) {
+        return SetExifMetadata(bufferPtr, bufferSize, addFlag);
+    }
+
+    uint32_t readSize = 0;
+    auto tmpBuffer = std::make_unique<uint8_t[]>(bufferSize);
+    if (tmpBuffer == nullptr) {
+        IMAGE_LOGE("Make unique buffer failed, tmpBuffer is nullptr.");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+
+    uint32_t savedPosition = sourceStreamPtr_->Tell();
+    sourceStreamPtr_->Seek(0);
+    bool retRead = sourceStreamPtr_->Read(bufferSize, tmpBuffer.get(), bufferSize, readSize);
+    sourceStreamPtr_->Seek(savedPosition);
+    if (!retRead) {
+        IMAGE_LOGE("sourceStream read failed.");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    return SetExifMetadata(tmpBuffer.get(), bufferSize, addFlag);
+}
+
+uint32_t ImageSource::SetExifMetadata(uint8_t *buffer, const uint32_t size, bool addFlag)
+{
+    auto metadataAccessor = MetadataAccessorFactory::Create(buffer, size);
     if (metadataAccessor == nullptr) {
         IMAGE_LOGD("metadataAccessor nullptr return ERR");
         return ERR_IMAGE_SOURCE_DATA;
@@ -1306,7 +1330,7 @@ uint32_t ImageSource::CreatExifMetadataByImageSource(bool addFlag)
 uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &key, std::string &value)
 {
     if (isExifReadFailed && exifMetadata_ == nullptr) {
-        IMAGE_LOGE("There is no exif in picture!");
+        IMAGE_LOGD("There is no exif in picture!");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     uint32_t ret = CreatExifMetadataByImageSource();
@@ -1315,7 +1339,7 @@ uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &
             value = DEFAULT_EXIF_VALUE;
             return SUCCESS;
         }
-        IMAGE_LOGE("Failed to create Exif metadata "
+        IMAGE_LOGD("Failed to create Exif metadata "
             "when attempting to get property.");
         isExifReadFailed = true;
         return ret;
@@ -1342,7 +1366,7 @@ uint32_t ImageSource::GetImagePropertyInt(uint32_t index, const std::string &key
     if (key == "Orientation") {
         if (ORIENTATION_INT_MAP.count(strValue) == 0) {
             IMAGE_LOGD("ORIENTATION_INT_MAP not find %{public}s", strValue.c_str());
-            return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+            return ERR_IMAGE_SOURCE_DATA;
         }
         strValue = std::to_string(ORIENTATION_INT_MAP.at(strValue));
     }
@@ -1646,7 +1670,7 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
         if (ret == ERR_IMAGE_MISMATCHED_FORMAT) {
             continue;
         } else if (ret == SUCCESS) {
-            IMAGE_LOGI("[ImageSource]GetEncodedFormat success format :%{public}s.", iter->first.c_str());
+            IMAGE_LOGD("[ImageSource]GetEncodedFormat success format :%{public}s.", iter->first.c_str());
             format = iter->first;
             return SUCCESS;
         } else {
@@ -2070,7 +2094,7 @@ uint32_t ImageSource::DoIncrementalDecoding(uint32_t index, const DecodeOptions 
     }
     if (ret == SUCCESS) {
         recordContext.IncrementalState = ImageDecodingState::IMAGE_DECODED;
-        IMAGE_LOGI("[ImageSource]do incremental decoding success.");
+        IMAGE_LOGD("[ImageSource]do incremental decoding success.");
     }
     return ret;
 }
@@ -2758,7 +2782,7 @@ static void SetHdrContext(DecodeContext& context, sptr<SurfaceBuffer>& sb, void*
     context.info.alphaType = ImagePlugin::PlAlphaType::IMAGE_ALPHA_TYPE_UNPREMUL;
 }
 
-static uint32_t AllocHdrSurfaceBuffer(DecodeContext& context, ImageHdrType hdrType)
+static uint32_t AllocHdrSurfaceBuffer(DecodeContext& context, ImageHdrType hdrType, CM_ColorSpaceType color)
 {
 #if defined(_WIN32) || defined(_APPLE) || defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
     IMAGE_LOGE("UnSupport dma mem alloc");
@@ -2790,7 +2814,7 @@ static uint32_t AllocHdrSurfaceBuffer(DecodeContext& context, ImageHdrType hdrTy
         type = CM_IMAGE_HDR_ISO_SINGLE;
     }
     VpeUtils::SetSbMetadataType(sb, type);
-    VpeUtils::SetSbColorSpaceType(sb, CM_BT2020_HLG_LIMIT);
+    VpeUtils::SetSbColorSpaceType(sb, color);
     return SUCCESS;
 #endif
 }
@@ -2866,6 +2890,24 @@ uint32_t ImageSource::SetGainMapDecodeOption(std::unique_ptr<AbsImageDecoder>& d
     return errorCode;
 }
 
+static CM_ColorSpaceType ConvertColorSpaceType(ColorManager::ColorSpaceName colorSpace, bool base)
+{
+    switch (colorSpace) {
+        case ColorManager::ColorSpaceName::SRGB :
+            return CM_SRGB_LIMIT;
+        case ColorManager::ColorSpaceName::DISPLAY_P3 :
+            return CM_P3_LIMIT;
+        case ColorManager::ColorSpaceName::BT2020 :
+        case ColorManager::ColorSpaceName::BT2020_HLG :
+            return CM_BT2020_HLG_LIMIT;
+        case ColorManager::ColorSpaceName::BT2020_PQ:
+            return CM_BT2020_PQ_LIMIT;
+        default:
+            return base ? CM_SRGB_LIMIT : CM_BT2020_HLG_LIMIT;
+    }
+    return base ? CM_SRGB_LIMIT : CM_BT2020_HLG_LIMIT;
+}
+
 bool ImageSource::DecodeJpegGainMap(ImageHdrType hdrType, float scale, DecodeContext& gainMapCtx, HdrMetadata& metadata)
 {
     uint32_t gainMapOffset = mainDecoder_->GetGainMapOffset();
@@ -2879,18 +2921,18 @@ bool ImageSource::DecodeJpegGainMap(ImageHdrType hdrType, float scale, DecodeCon
         return false;
     }
     uint32_t errorCode;
-    std::unique_ptr<AbsImageDecoder> gainMapDecoder = std::unique_ptr<AbsImageDecoder>(
+    jpegGainmapDecoder_ = std::unique_ptr<AbsImageDecoder>(
         DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *gainMapStream, errorCode));
-    if (gainMapDecoder == nullptr) {
+    if (jpegGainmapDecoder_ == nullptr) {
         return false;
     }
     PlImageInfo gainMapInfo;
-    errorCode = SetGainMapDecodeOption(gainMapDecoder, gainMapInfo, scale);
+    errorCode = SetGainMapDecodeOption(jpegGainmapDecoder_, gainMapInfo, scale);
     if (errorCode != SUCCESS) {
         return false;
     }
     gainMapCtx.allocatorType = AllocatorType::DMA_ALLOC;
-    errorCode = gainMapDecoder->Decode(FIRST_FRAME, gainMapCtx);
+    errorCode = jpegGainmapDecoder_->Decode(FIRST_FRAME, gainMapCtx);
     if (gainMapInfo.size.width != gainMapCtx.outInfo.size.width ||
         gainMapInfo.size.height != gainMapCtx.outInfo.size.height) {
         // hardware decode success, update gainMapInfo.size
@@ -2901,39 +2943,32 @@ bool ImageSource::DecodeJpegGainMap(ImageHdrType hdrType, float scale, DecodeCon
         FreeContextBuffer(gainMapCtx.freeFunc, gainMapCtx.allocatorType, gainMapCtx.pixelsBuffer);
         return false;
     }
-    metadata = gainMapDecoder->GetHdrMetadata(hdrType);
+    metadata = jpegGainmapDecoder_->GetHdrMetadata(hdrType);
     return true;
 }
 
 bool ImageSource::ApplyGainMap(ImageHdrType hdrType, DecodeContext& baseCtx, DecodeContext& hdrCtx, float scale)
 {
     string format = GetExtendedCodecMimeType(mainDecoder_.get());
-    if (format != IMAGE_JPEG_FORMAT) {
+    if (format != IMAGE_JPEG_FORMAT && format != IMAGE_HEIF_FORMAT) {
         return false;
     }
     DecodeContext gainMapCtx;
     HdrMetadata metadata;
-    if (!DecodeJpegGainMap(hdrType, scale, gainMapCtx, metadata)) {
+    if (format == IMAGE_HEIF_FORMAT) {
+        if (!mainDecoder_->DecodeHeifGainMap(gainMapCtx, scale)) {
+            IMAGE_LOGI("heif get gainmap failed");
+            return false;
+        }
+        metadata = mainDecoder_->GetHdrMetadata(hdrType);
+    } else if (!DecodeJpegGainMap(hdrType, scale, gainMapCtx, metadata)) {
+        IMAGE_LOGI("jpeg get gainmap failed");
         return false;
     }
+
     bool result = ComposeHdrImage(hdrType, baseCtx, gainMapCtx, hdrCtx, metadata);
     FreeContextBuffer(gainMapCtx.freeFunc, gainMapCtx.allocatorType, gainMapCtx.pixelsBuffer);
     return result;
-}
-
-static CM_ColorSpaceType ConvertColorSpaceType(OHOS::ColorManager::ColorSpace colorSpace)
-{
-    switch (colorSpace.GetColorSpaceName()) {
-        case ColorManager::ColorSpaceName::SRGB :
-            return CM_SRGB_LIMIT;
-        case ColorManager::ColorSpaceName::ADOBE_RGB :
-            return CM_SRGB_LIMIT;
-        case ColorManager::ColorSpaceName::DISPLAY_P3 :
-            return CM_P3_LIMIT;
-        default:
-            return CM_SRGB_LIMIT;
-    }
-    return CM_SRGB_LIMIT;
 }
 
 bool ImageSource::ComposeHdrImage(ImageHdrType hdrType, DecodeContext& baseCtx, DecodeContext& gainMapCtx,
@@ -2942,15 +2977,30 @@ bool ImageSource::ComposeHdrImage(ImageHdrType hdrType, DecodeContext& baseCtx, 
     if (baseCtx.allocatorType != AllocatorType::DMA_ALLOC || gainMapCtx.allocatorType != AllocatorType::DMA_ALLOC) {
         return false;
     }
-    CM_ColorSpaceType cmColorSpaceType = ConvertColorSpaceType(mainDecoder_->getGrColorSpace());
+    CM_ColorSpaceType cmColorSpaceType =
+        ConvertColorSpaceType(mainDecoder_->getGrColorSpace().GetColorSpaceName(), true);
     // base image
     sptr<SurfaceBuffer> baseSptr(reinterpret_cast<SurfaceBuffer*>(baseCtx.pixelsBuffer.context));
     VpeUtils::SetSurfaceBufferInfo(baseSptr, false, hdrType, cmColorSpaceType, metadata);
     // gainmap image
     sptr<SurfaceBuffer> gainmapSptr(reinterpret_cast<SurfaceBuffer*>(gainMapCtx.pixelsBuffer.context));
-    VpeUtils::SetSurfaceBufferInfo(gainmapSptr, true, hdrType, cmColorSpaceType, metadata);
+    CM_ColorSpaceType gainmapCmColor = cmColorSpaceType;
+    CM_ColorSpaceType hdrCmColor = CM_BT2020_HLG_LIMIT;
+    string format = GetExtendedCodecMimeType(mainDecoder_.get());
+    if ((format == IMAGE_JPEG_FORMAT) && (jpegGainmapDecoder_ != nullptr)) {
+        gainmapCmColor = ConvertColorSpaceType(jpegGainmapDecoder_->getGrColorSpace().GetColorSpaceName(), false);
+        hdrCmColor = gainmapCmColor;
+    } else if (format == IMAGE_HEIF_FORMAT) {
+        ColorManager::ColorSpaceName gainmapColorName;
+        ColorManager::ColorSpaceName hdrColorName;
+        if (mainDecoder_->GetHeifHdrColorSpace(gainmapColorName, hdrColorName)) {
+            gainmapCmColor = ConvertColorSpaceType(gainmapColorName, false);
+            hdrCmColor = ConvertColorSpaceType(hdrColorName, false);
+        }
+    }
+    VpeUtils::SetSurfaceBufferInfo(gainmapSptr, true, hdrType, gainmapCmColor, metadata);
     // hdr image
-    uint32_t errorCode = AllocHdrSurfaceBuffer(hdrCtx, hdrType);
+    uint32_t errorCode = AllocHdrSurfaceBuffer(hdrCtx, hdrType, hdrCmColor);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("HDR SurfaceBuffer Alloc failed, %{public}d", errorCode);
         return false;

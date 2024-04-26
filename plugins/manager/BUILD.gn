@@ -74,6 +74,7 @@ if (use_clang_ios) {
       sanitize = {
         cfi = true
         cfi_cross_dso = true
+        cfi_vcall_icall_only = true
         debug = false
       }
     }
@@ -109,9 +110,6 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/plugins/manager/src/thirdpartyadp/gstreamer",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
       "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-      "//foundation/multimedia/utils/include",
-      "//third_party/json/single_include/nlohmann",
-      "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "$image_subsystem/mock/native/include/log",
     ]
 
@@ -138,14 +136,13 @@ if (use_clang_ios) {
         "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       ]
     } else {
-      include_dirs += [ "//commonlibrary/c_utils/base/include" ]
-
       ldflags = [ "-Wl,-Bsymbolic" ]
 
       external_deps = [
         "c_utils:utils",
         "graphic_2d:color_manager",
         "hilog:libhilog",
+        "json:nlohmann_json_static",
       ]
     }
 
@@ -157,6 +154,12 @@ if (use_clang_ios) {
 }
 
 ohos_static_library("pluginmanager_static") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
   sources = [
     "//foundation/multimedia/image_framework/plugins/manager/src/common/attr_data.cpp",
     "//foundation/multimedia/image_framework/plugins/manager/src/common/platform_adp.cpp",
@@ -182,11 +185,8 @@ ohos_static_library("pluginmanager_static") {
     "//foundation/multimedia/image_framework/plugins/manager/src/framework",
     "//foundation/multimedia/image_framework/plugins/manager/src/pluginbase",
     "//foundation/multimedia/image_framework/plugins/manager/src/thirdpartyadp/gstreamer",
-    "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-    "//third_party/json/single_include/nlohmann",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   ]
 
   if (use_mingw_win) {
@@ -221,14 +221,13 @@ ohos_static_library("pluginmanager_static") {
       "//commonlibrary/c_utils/base:utils",
     ]
   } else {
-    include_dirs += [ "//commonlibrary/c_utils/base/include" ]
-
     ldflags = [ "-Wl,-Bsymbolic" ]
 
     external_deps = [
       "c_utils:utils",
       "graphic_2d:color_manager",
       "hilog:libhilog",
+      "json:nlohmann_json_static",
     ]
   }
   subsystem_name = "multimedia"
