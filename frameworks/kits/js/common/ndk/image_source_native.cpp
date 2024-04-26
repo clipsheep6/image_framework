@@ -197,7 +197,6 @@ Image_ErrorCode OH_DecodingOptions_SetDesiredRegion(OH_DecodingOptions *options,
     return IMAGE_SUCCESS;
 }
 
-MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptions_GetDesiredDynamicRange(OH_DecodingOptions *options,
     int32_t *desiredDynamicRange)
 {

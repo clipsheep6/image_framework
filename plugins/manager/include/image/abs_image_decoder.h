@@ -80,6 +80,8 @@ struct DecodeContext {
     std::string hardDecodeError;
     // Out: hdr type
     Media::ImageHdrType hdrType = Media::ImageHdrType::UNKNOWN;
+    Media::ResolutionQuality resolutionQuality = Media::ResolutionQuality::LOW;
+    bool isAisr = false;
 };
 
 struct ProgDecodeContext {
