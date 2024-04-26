@@ -1095,12 +1095,6 @@ HWTEST_F(ExifMetadataTest, SetValueBatch006, TestSize.Level3)
         metadata.GetValue(key, retvalue);
         ASSERT_EQ(retvalue, g_batchData006[i][2]);
     }
-
-    for (int i = 0; i < rows; ++i) {
-        printf("rm: %s\n", g_batchData006[i][0].c_str());
-        auto isRemoved = metadata.RemoveEntry(g_batchData006[i][0]);
-        ASSERT_TRUE(isRemoved);
-    }
 }
 
 std::string g_error[][2] = {
@@ -1404,14 +1398,26 @@ HWTEST_F(ExifMetadataTest, RemoveBatch001, TestSize.Level3)
 {
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_RM_ENTRY_PATH.c_str());
     ASSERT_NE(exifData, nullptr);
-
-
+    std::string DEFAULT_EXIF_VALUE = "default_exif_value";
     ExifMetadata metadata(exifData);
     int rows = sizeof(g_RemoveBatch001) / sizeof(g_RemoveBatch001[0]);
     for (int i = 0; i < rows; ++i) {
-        printf("rm: %s\n", g_RemoveBatch001[i].c_str());
+        std::string value;
+        int ret = metadata.GetValue(g_RemoveBatch001[i], value);
+        printf("remove entry '%s' before, get value: %s\n", g_RemoveBatch001[i].c_str(), value.c_str());
+        ASSERT_NE(value, DEFAULT_EXIF_VALUE);
+
+        printf("remove entry: %s\n", g_RemoveBatch001[i].c_str());
         auto isRemoved = metadata.RemoveEntry(g_RemoveBatch001[i]);
         ASSERT_TRUE(isRemoved);
+
+        ret = metadata.GetValue(g_RemoveBatch001[i], value);
+        printf("remove entry '%s' after, get value: %s\n", g_RemoveBatch001[i].c_str(), value.c_str());
+        if (i == 0) {
+            ASSERT_EQ(value, "");
+        } else {
+            ASSERT_EQ(value, DEFAULT_EXIF_VALUE);
+        }
     }
 }
 

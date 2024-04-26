@@ -31,7 +31,7 @@ public:
     virtual ~ExifMetadata();
     virtual int GetValue(const std::string &key, std::string &value) const override;
     virtual bool SetValue(const std::string &key, const std::string &value) override;
-    virtual bool RemoveEntry(const std::string &key ) override;
+    virtual bool RemoveEntry(const std::string &key) override;
     ExifData* GetExifData();
     bool CreateExifdata();
     std::shared_ptr<ExifMetadata> Clone();
@@ -54,6 +54,7 @@ private:
     bool SetHwMoteValue(const std::string &key, const std::string &value);
     bool RemoveHwEntry(const std::string &key);
     bool SetCommonValue(const std::string &key, const std::string &value);
+    bool IsSpecialHwKey(const std::string &key) const;
     ExifData *exifData_;
 };
 } // namespace Media
