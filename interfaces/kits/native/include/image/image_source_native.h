@@ -275,6 +275,28 @@ Image_ErrorCode OH_DecodingOptions_SetDesiredDynamicRange(OH_DecodingOptions *op
     int32_t desiredDynamicRange);
 
 /**
+ * @brief Get Resolution Quality for DecodingOptions struct.
+ *
+ * @param options The DecodingOptions pointer will be operated.
+ * @param resolutionQuality the pointer of image resolution quality.
+ * @return Returns {@link Image_ErrorCode}
+ * @since 12
+ */
+Image_ErrorCode OH_DecodingOptions_GetResolutionQuality(OH_DecodingOptions *options,
+    int32_t *resolutionQuality);
+
+/**
+ * @brief Set Resolution Quality for DecodingOptions struct.
+ *
+ * @param options The DecodingOptions pointer will be operated.
+ * @param resolutionQuality the number of image resolutionQuality.
+ * @return Returns {@link Image_ErrorCode}
+ * @since 12
+ */
+Image_ErrorCode OH_DecodingOptions_SetResolutionQuality(OH_DecodingOptions *options,
+    int32_t resolutionQuality);
+
+/**
  * @brief delete DecodingOptions pointer.
  *
  * @param  options The DecodingOptions pointer will be operated.
