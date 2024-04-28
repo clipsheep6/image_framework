@@ -55,7 +55,8 @@ void TiffParser::Encode(unsigned char **dataPtr, uint32_t &size, ExifData *exifD
     IMAGE_LOGD("Encode dataPtr size is: %{public}u", size);
 }
 
-void TiffParser::DecodeDngExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData, unsigned int &maxAddr)
+void TiffParser::DecodeDngExif(const unsigned char *dataPtr, const uint32_t &size,
+                               ExifData **exifData, unsigned int &maxAddr)
 {
     if (dataPtr == nullptr) {
         return;
@@ -66,7 +67,8 @@ void TiffParser::DecodeDngExif(const unsigned char *dataPtr, const uint32_t &siz
     exif_data_load_data_dng(*exifData, &maxAddr, dataPtr, size);
 }
 
-void TiffParser::EncodeDngExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData, unsigned int delta, unsigned int offset)
+void TiffParser::EncodeDngExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData,
+                               unsigned int delta, unsigned int offset)
 {
     if (exifData == nullptr) {
         return;

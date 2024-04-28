@@ -200,7 +200,6 @@ private:
      */
     virtual void Close() override;
 
-
     /* *
      * @brief Constructs a new FileMetadataStream object from a file path and a
      * file wrapper.

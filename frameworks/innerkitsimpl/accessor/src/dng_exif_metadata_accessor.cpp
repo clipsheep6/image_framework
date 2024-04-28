@@ -37,6 +37,7 @@ namespace {
 
 constexpr uint32_t IFD0_OFFSET_POSITION = 4;
 constexpr uint32_t IFD0_HEAD = 8;
+constexpr uint32_t IS_END_THRESHOLD = 10;
 
 DngExifMetadataAccessor::DngExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
     : AbstractExifMetadataAccessor(stream)
@@ -68,7 +69,7 @@ uint32_t DngExifMetadataAccessor::Read()
 
     ExifData *exifData;
     TiffParser::DecodeDngExif(reinterpret_cast<const unsigned char *>(byteStream + tiffHeaderPos),
-                       (size - tiffHeaderPos), &exifData, maxAddr);
+                              (size - tiffHeaderPos), &exifData, maxAddr);
     if (exifData == nullptr) {
         IMAGE_LOGE("Failed to decode TIFF buffer.");
         return ERR_EXIF_DECODE_FAILED;
@@ -103,14 +104,15 @@ uint32_t DngExifMetadataAccessor::Write()
     IMAGE_LOGD("ifd0Offset: %{public}x", ifd0Offset);
     uint16_t ifd0Components = exif_get_short(imageAddr + ifd0Offset, exif_data_get_byte_order(exifData));
     IMAGE_LOGD("ifd0Components: %{public}u", ifd0Components);
-    uint32_t ifd1Offset = exif_get_long(imageAddr + ifd0Offset + 2 + 12 * ifd0Components, exif_data_get_byte_order(exifData));
+    uint32_t ifd1Offset = exif_get_long(imageAddr + ifd0Offset + 2 + 12 * ifd0Components,
+                                        exif_data_get_byte_order(exifData));
     IMAGE_LOGD("ifd1Offset: %{public}x", ifd1Offset);
 
     imageStream_->Seek(0, SeekPos::END);
     uint32_t endOffset = imageStream_->Tell();
     IMAGE_LOGD("imageStream Tell: %{public}x", endOffset);
     IMAGE_LOGD("compare maxAddr: %{public}x endOffset: %{public}x", maxAddr, endOffset);
-    if (abs((int)(maxAddr - endOffset)) < 10 && ifd0Offset >= IFD0_HEAD) {
+    if (abs((int)(maxAddr - endOffset)) < IS_END_THRESHOLD && ifd0Offset >= IFD0_HEAD) {
         IMAGE_LOGD("exif blob is at the end.");
         auto delta = ifd0Offset - IFD0_HEAD;
         return WriteExif(ifd0Offset, ifd1Offset, delta, ifd0Offset);
@@ -127,7 +129,8 @@ uint32_t DngExifMetadataAccessor::WriteBlob(DataBuf &blob)
     return ERROR;
 }
 
-uint32_t DngExifMetadataAccessor::WriteExif(unsigned int ifd0Offset, unsigned int ifd1Offset, unsigned int delta, unsigned int writePos)
+uint32_t DngExifMetadataAccessor::WriteExif(unsigned int ifd0Offset, unsigned int ifd1Offset,
+                                            unsigned int delta, unsigned int writePos)
 {
     ExifData *exifData = exifMetadata_->GetExifData();
     if (!exifData) {
@@ -137,7 +140,7 @@ uint32_t DngExifMetadataAccessor::WriteExif(unsigned int ifd0Offset, unsigned in
     unsigned char* dataBlob = nullptr;
     uint32_t size = 0;
     TiffParser::EncodeDngExif(&dataBlob, size, exifData, delta, ifd1Offset);
-    if (dataBlob == nullptr ) {
+    if (dataBlob == nullptr) {
         IMAGE_LOGE("Failed to encode exifData.");
         return ERR_EXIF_DECODE_FAILED;
     }
