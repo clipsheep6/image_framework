@@ -66,6 +66,7 @@ private:
     static napi_value JsDequeueImage(napi_env env, napi_callback_info info);
     static napi_value JsQueueImage(napi_env env, napi_callback_info info);
     static napi_value JsOn(napi_env env, napi_callback_info info);
+    static napi_value JsOff(napi_env env, napi_callback_info info);
     static napi_value JsRelease(napi_env env, napi_callback_info info);
 
     static bool GetNativeFromEnv(napi_env env, napi_callback_info info, std::shared_ptr<ImageCreator> &native);

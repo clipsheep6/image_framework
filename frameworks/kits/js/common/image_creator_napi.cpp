@@ -123,6 +123,7 @@ napi_value ImageCreatorNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("dequeueImage", JsDequeueImage),
         DECLARE_NAPI_FUNCTION("queueImage", JsQueueImage),
         DECLARE_NAPI_FUNCTION("on", JsOn),
+        DECLARE_NAPI_FUNCTION("off", JsOff),
         DECLARE_NAPI_FUNCTION("release", JsRelease),
 
 #ifdef IMAGE_DEBUG_FLAG
@@ -883,6 +884,59 @@ napi_value ImageCreatorNapi::JsOn(napi_env env, napi_callback_info info)
     };
 
     return JSCommonProcess(args);
+}
+
+napi_value ImageCreatorNapi::JsOff(napi_env env, napi_callback_info info)
+{
+    IMAGE_FUNCTION_IN();
+    struct ImageCreatorInnerContext ic;
+    ic.argc = ARGS1;
+    ic.argv.resize(ic.argc);
+    napi_get_undefined(env, &ic.result);
+
+    IMG_JS_ARGS(env, info, ic.status, ic.argc, &(ic.argv[0]), ic.thisVar);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(ic.status), ic.result, IMAGE_ERR("fail to napi_get_cb_info"));
+
+    if (ic.argc == ARGS1 && ImageNapiUtils::getType(env, ic.argv[ARGS0]) == napi_string
+        && CheckOnParam0(env, ic.argv[ARGS0], "imageRelease")) {
+        IMAGE_LOGD("ic.argv[ARGS0] is imageRelease");
+    } else {
+        return ic.result;
+    }
+    ic.context = std::make_unique<ImageCreatorAsyncContext>();
+    if (ic.context == nullptr) {
+        return ic.result;
+    }
+    ic.status = napi_unwrap(env, ic.thisVar, reinterpret_cast<void**>(&(ic.context->constructor_)));
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(ic.status, ic.context->constructor_),
+        ic.result, IMAGE_ERR("fail to unwrap context"));
+
+    if (ic.context->constructor_ == nullptr) {
+        return ic.result;
+    }
+    if (g_creatorTest) {
+        g_listener.reset();
+        ic.context->status = SUCCESS;
+        napi_create_uint32(env, ic.context->status, &ic.result);
+        return ic.result;
+    }
+    auto native = ic.context->constructor_->imageCreator_;
+    if (native == nullptr) {
+        IMAGE_ERR("Native instance is nullptr");
+        ic.context->status = ERR_IMAGE_INIT_ABNORMAL;
+        return ic.result;
+    }
+
+    native->UnRegisterBufferReleaseListener();
+    if (native->surfaceBufferAvaliableListener_ == nullptr) {
+        ic.context->status = SUCCESS;
+        napi_create_uint32(env, ic.context->status, &ic.result);
+    }
+
+    IMAGE_FUNCTION_OUT();
+    return ic.result;
 }
 
 napi_value ImageCreatorNapi::JsRelease(napi_env env, napi_callback_info info)
