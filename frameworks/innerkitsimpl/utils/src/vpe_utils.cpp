@@ -46,6 +46,13 @@ using ComposeImageT =
     int32_t (*)(int32_t, OHNativeWindowBuffer*, OHNativeWindowBuffer*, OHNativeWindowBuffer*, bool);
 using DecomposeImageT =
     int32_t (*)(int32_t, OHNativeWindowBuffer*, OHNativeWindowBuffer*, OHNativeWindowBuffer*);
+
+using HdrProcessImageT =
+    int32_t (*)(int32_t, OHNativeWindowBuffer*, OHNativeWindowBuffer*);
+
+using SrProcessImageT =
+    int32_t (*)(int32_t, OHNativeWindowBuffer*, OHNativeWindowBuffer*, int32_t);
+
 using DestoryT = int32_t (*)(int32_t*);
 
 VpeUtils::VpeUtils()
@@ -148,6 +155,94 @@ int32_t VpeUtils::ColorSpaceConverterDecomposeImage(VpeSurfaceBuffers& sb)
     return res;
 }
 
+int32_t VpeUtils::ColorSpaceConverterImageProcess(sptr<SurfaceBuffer> &input, sptr<SurfaceBuffer> &output)
+{
+    std::lock_guard<std::mutex> lock(vpeMtx_);
+    void* vpeHandle = dlopen(VPE_SO_NAME, RTLD_LAZY);
+    if (vpeHandle == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+
+    int32_t res;
+    int32_t instanceId;
+    res = ColorSpaceConverterCreate(vpeHandle, &instanceId);
+    if (instanceId == VPE_ERROR_FAILED || res != VPE_ERROR_OK) {
+        return VPE_ERROR_FAILED;
+    }
+
+    HdrProcessImageT hdrProcessImage = (HdrProcessImageT)dlsym(vpeHandle, "ColorSpaceConverterProcessImage");
+    if (!hdrProcessImage) {
+        return VPE_ERROR_FAILED;
+    }
+    if (input == nullptr || output == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+    OHNativeWindowBuffer* sdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&input);
+    OHNativeWindowBuffer* hdr = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&output);
+    res = hdrProcessImage(instanceId, sdr, hdr);
+    OH_NativeWindow_DestroyNativeWindowBuffer(sdr);
+    OH_NativeWindow_DestroyNativeWindowBuffer(hdr);
+    ColorSpaceConverterDestory(vpeHandle, &instanceId);
+    dlclose(vpeHandle);
+    return res;
+}
+
+int32_t VpeUtils::DetailEnhancerCreate(void* handle, int32_t* instanceId)
+{
+    if (handle == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+    CreateT create = (CreateT)dlsym(handle, "DetailEnhancerCreate");
+    if (!create) {
+        return VPE_ERROR_FAILED;
+    }
+    return create(instanceId);
+}
+
+int32_t VpeUtils::DetailEnhancerDestory(void* handle, int32_t* instanceId)
+{
+    if (*instanceId == VPE_ERROR_FAILED || handle == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+    DestoryT destory = (DestoryT)dlsym(handle, "DetailEnhancerDestroy");
+    if (!destory) {
+        return VPE_ERROR_FAILED;
+    }
+    return destory(instanceId);
+}
+
+int32_t VpeUtils::DetailEnhancerImageProcess(sptr<SurfaceBuffer> &input, sptr<SurfaceBuffer> &output, int32_t level)
+{
+    std::lock_guard<std::mutex> lock(vpeMtx_);
+    void* vpeHandle = dlopen(VPE_SO_NAME, RTLD_LAZY);
+    if (vpeHandle == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+
+    int32_t res;
+    int32_t instanceId;
+    res = DetailEnhancerCreate(vpeHandle, &instanceId);
+    if (instanceId == VPE_ERROR_FAILED || res != VPE_ERROR_OK) {
+        return VPE_ERROR_FAILED;
+    }
+
+    SrProcessImageT srProcessImage = (SrProcessImageT)dlsym(vpeHandle, "DetailEnhancerProcessImage");
+    if (!srProcessImage) {
+        return VPE_ERROR_FAILED;
+    }
+    if (input == nullptr || output == nullptr) {
+        return VPE_ERROR_FAILED;
+    }
+    OHNativeWindowBuffer* inBuffer = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&input);
+    OHNativeWindowBuffer* outBuffer = OH_NativeWindow_CreateNativeWindowBufferFromSurfaceBuffer(&output);
+    res = srProcessImage(instanceId, inBuffer, outBuffer, level);
+    OH_NativeWindow_DestroyNativeWindowBuffer(inBuffer);
+    OH_NativeWindow_DestroyNativeWindowBuffer(outBuffer);
+    DetailEnhancerDestory(vpeHandle, &instanceId);
+    dlclose(vpeHandle);
+    return res;
+}
+
 // surfacebuffer metadata
 static GSError SetColorSpaceInfo(sptr<SurfaceBuffer>& buffer, const CM_ColorSpaceInfo& colorSpaceInfo)
 {
@@ -181,6 +276,19 @@ bool VpeUtils::SetSbColorSpaceType(sptr<SurfaceBuffer>& buffer, const CM_ColorSp
     auto ret = SetColorSpaceInfo(buffer, colorSpaceInfo);
     if (ret != GSERROR_OK) {
         IMAGE_LOGE("SetColorSpaceInfo GetMetadata failed, return value is %{public}d", ret);
+        return false;
+    }
+    return true;
+}
+
+bool VpeUtils::SetSbColorSpaceDefault(sptr<SurfaceBuffer>& buffer)
+{
+    constexpr CM_ColorSpaceInfo outputColorSpaceInfo = {
+        COLORPRIMARIES_BT2020, TRANSFUNC_HLG, MATRIX_BT2020, RANGE_LIMITED
+    };
+    auto ret = SetColorSpaceInfo(buffer, outputColorSpaceInfo);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("SetSbColorSpaceDefault GetMetadata failed, return value is %{public}d", ret);
         return false;
     }
     return true;
@@ -311,6 +419,11 @@ void VpeUtils::SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, bool isGainmap,
             &defaultGainmapMetadata, sizeof(HDRVividGainmapMetadata));
     }
     VpeUtils::SetSbDynamicMetadata(buffer, gainmapMetadataVec);
+}
+
+void VpeUtils::SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, CM_ColorSpaceType color)
+{
+    VpeUtils::SetSbColorSpaceType(buffer, color);
 }
 }
 }
