@@ -2041,8 +2041,8 @@ HWTEST_F(ImageSourceTest, End2EndTest008, TestSize.Level3)
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
-    int32_t webpWidth = 160;
-    int32_t webpHeight = 120;
+    int32_t webpWidth = 100;
+    int32_t webpHeight = 100;
 
     DecodeOptions decodeOpts;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
