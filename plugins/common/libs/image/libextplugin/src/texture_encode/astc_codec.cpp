@@ -46,8 +46,8 @@ constexpr uint8_t DEFAULT_DIM = 4;
 constexpr uint8_t HIGH_SPEED_PROFILE_MAP_QUALITY = 20; // quality level is 20 for thumbnail
 constexpr uint8_t RGBA_BYTES_PIXEL_LOG2 = 2;
 #ifdef ENABLE_ASTC_ENCODE_BASED_GPU
-constexpr int32_t WIDTH_CL_THRESHOLD = 256;
-constexpr int32_t HEIGHT_CL_THRESHOLD = 256;
+constexpr int32_t WIDTH_CL_THRESHOLD = 512;
+constexpr int32_t HEIGHT_CL_THRESHOLD = 512;
 #endif
 
 #ifdef SUT_ENCODE_ENABLE
