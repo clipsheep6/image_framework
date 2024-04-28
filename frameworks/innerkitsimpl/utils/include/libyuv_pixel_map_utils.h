@@ -42,17 +42,27 @@ extern "C" {
 namespace OHOS {
 namespace Media {
 
+struct YuvImageInfo{
+    AvPixelFormat format = AvpixelFormat::AV_PIX_FMT_NONE;
+    int32_t width;
+    int32_t height;
+    PixelFormat yuvFormat;
+    YUVDataInfo yuvDataInfo;
+};
+
 class LibYuvPixelMapUtils {
 public:
     static bool BGRAToYuv420(const uint8_t *src, uint8_t *dst, int srcW, int srcH, PixelFormat pixelFormat);
-    static bool Yuv420ToBGRA(const uint8_t *sample, uint8_t *dst_argb,
-        int32_t width, int32_t height, PixelFormat pixelFormat);
-    static bool Yuv420ToARGB(const uint8_t *sample, uint8_t *dst_argb,
-        int32_t width, int32_t height, PixelFormat pixelFormat);
-    static bool YuvRotate(const uint8_t *srcPixels, Size &size, uint8_t *dstPixels, int32_t degrees,
-        const PixelFormat &format);
-    static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
-
+    static bool Yuv420ToBGRA(const uint8_t *sample, uint8_t *dst_argb, Size &size,
+                             PixelFormat pixelFormat, YUVDataInfo &info);
+    static bool Yuv420ToARGB(const uint8_t *sample, uint8_t *dst_argb, Size &size,
+                             PixelFormat pixelFormat, YUVDataInfo &info);
+    static bool YuvRotate(uint8_t *srcpixels, Size &size, int32_t degrees,
+                          const PixelFormat &format, YUVDataInfo &info);
+    static void ConvertYuvMode(0penSourceLibyuv ::FilterMode &filterMode, const AntiAliasingoption &option);
+    static void ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option, YuvImageInfo &yuvInfo, uint8_t *src, uint8_t *dst);
+    static bool ReversalYuv(uint8_t *src, uint8_t *dst, Size &size, PixelFormat format, YUVDataInfo &info);
+    static bool FlipYuv(uint8_t *src, uint8_t *dst, ImageInfo &imageinfo, bool isXaxis, YUVDataInfo &info);
 };
 } // namespace Media
 } // namespace OHOS

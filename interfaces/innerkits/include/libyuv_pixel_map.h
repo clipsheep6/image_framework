@@ -40,7 +40,7 @@ public:
 #ifdef IMAGE_COLORSPACE_FLAG
     NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace) override;
 #endif
-
+    void PrintYuvDataInfo();
     static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
     void ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option = AntiAliasingOption::NONE);
     static bool NV21Rotate(const uint8_t *src, uint8_t *dstData, PixelSize &size,
