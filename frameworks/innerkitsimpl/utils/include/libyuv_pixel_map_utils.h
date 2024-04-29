@@ -22,34 +22,12 @@
 #include "image_type.h"
 #include "iosfwd"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "libavfilter/avfilter.h"
-#include "libavfilter/buffersrc.h"
-#include "libavfilter/buffersink.h"
-#include "libavutil/avstring.h"
-#include "libavutil/frame.h"
-#include "libavutil/imgutils.h"
-#include "libavutil/pixfmt.h"
-#include "libswscale/swscale.h"
-#ifdef __cplusplus
-}
-#endif
-
-#include "libyuv.h"
+#include "image_convert_tools.h"
+#include "image_converter.h"
+#include "pixel_yuv_utils.h"
 
 namespace OHOS {
 namespace Media {
-
-struct YuvImageInfo{
-    AvPixelFormat format = AvpixelFormat::AV_PIX_FMT_NONE;
-    int32_t width;
-    int32_t height;
-    PixelFormat yuvFormat;
-    YUVDataInfo yuvDataInfo;
-};
-
 class LibYuvPixelMapUtils {
 public:
     static bool BGRAToYuv420(const uint8_t *src, uint8_t *dst, int srcW, int srcH, PixelFormat pixelFormat);
@@ -57,10 +35,11 @@ public:
                              PixelFormat pixelFormat, YUVDataInfo &info);
     static bool Yuv420ToARGB(const uint8_t *sample, uint8_t *dst_argb, Size &size,
                              PixelFormat pixelFormat, YUVDataInfo &info);
-    static bool YuvRotate(uint8_t *srcpixels, Size &size, int32_t degrees,
+    static bool YuvRotate(uint8_t *srcPixels, Size &size, int32_t degrees,
                           const PixelFormat &format, YUVDataInfo &info);
-    static void ConvertYuvMode(0penSourceLibyuv ::FilterMode &filterMode, const AntiAliasingoption &option);
-    static void ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option, YuvImageInfo &yuvInfo, uint8_t *src, uint8_t *dst);
+    static void ConvertYuvMode(OpenSourceLibyuv ::FilterMode &filterMode, const AntiAliasingOption &option);
+    static void ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option,
+                            YuvImageInfo &yuvInfo, uint8_t *src, uint8_t *dst);
     static bool ReversalYuv(uint8_t *src, uint8_t *dst, Size &size, PixelFormat format, YUVDataInfo &info);
     static bool FlipYuv(uint8_t *src, uint8_t *dst, ImageInfo &imageinfo, bool isXaxis, YUVDataInfo &info);
 };

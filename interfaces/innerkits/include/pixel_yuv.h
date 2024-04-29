@@ -26,13 +26,6 @@
 namespace OHOS {
 namespace Media {
 
-struct PixelSize {
-    int32_t srcW = 0;
-    int32_t srcH = 0;
-    int32_t dstW = 0;
-    int32_t dstH = 0;
-};
-
 struct SkTransYuvInfo {
     SkRect r;
     SkImageInfo info;
@@ -71,16 +64,7 @@ public:
     ColorYuv420 GetYuv420Color(uint32_t x, uint32_t y);
     NATIVEEXPORT void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
                                     CustomFreePixelMap func) override;
-    NATIVEEXPORT virtual void SetImageYUVInfo(YUVDataInfo &yuvInfo) override
-    {
-        yuvDataInfo_ = yuvInfo;
-    }
-    NATIVEEXPORT virtual void GetImageYUVInfo(YUVDataInfo &yuvInfo) const override
-    {
-        yuvInfo = yuvDataInfo_;
-    }
-
-private:
+protected:
     bool CheckPixelsInput(const uint8_t *dst, const uint64_t &bufferSize, const uint32_t &offset, const Rect &region);
     void SetRowDataSizeForImageInfo(ImageInfo info);
     static uint32_t GetImageSize(int32_t width, int32_t height);
@@ -88,7 +72,6 @@ private:
     void AssignYuvDataOnType(PixelFormat format, int32_t width, int32_t height);
     uint32_t SetColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace, SkTransYuvInfo &src,
         PixelFormat &format, uint64_t rowStride);
-    YUVDataInfo yuvDataInfo_;
 #ifdef IMAGE_COLORSPACE_FLAG
     bool CheckColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
     int32_t ColorSpaceBGRAToYuv(uint8_t *bgraData, SkTransYuvInfo &dst, ImageInfo &imageInfo, PixelFormat &format,

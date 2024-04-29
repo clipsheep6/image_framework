@@ -40,26 +40,23 @@ extern "C" {
 namespace OHOS {
 namespace Media {
 
-struct UVPos {
-    size_t upos = 0;
-    size_t vpos = 0;
-};
-
 struct XYaxis {
     float xAxis = 0;
     float yAxis = 0;
 };
 
-struct Yuv420UV {
-    int32_t srcStrideU = 0;
-    int32_t srcStrideV = 0;
-    int32_t dstStrideUV = 0;
+struct PixelSize {
+    int32_t srcW = 0;
+    int32_t srcH = 0;
+    int32_t dstW = 0;
+    int32_t dstH = 0;
 };
 
 struct YuvImageInfo {
     AVPixelFormat format = AVPixelFormat::AV_PIX_FMT_NONE;
     int32_t width;
     int32_t height;
+    PixelFormat yuvFormat;
     YUVDataInfo yuvDataInfo;
 };
 
@@ -81,12 +78,10 @@ public:
     static bool Yuv420ToBGRA(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out,
         YuvImageInfo &dstInfo);
     static bool Yuv420ToARGB(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, YuvImageInfo &dstInfo);
-    static bool YuvTranslate(const uint8_t *srcPixels, YUVDataInfo &info, uint8_t *dstPixels, XYaxis &xyAxis,
-        const PixelFormat &format);
-    static bool Yuv420WritePixels(const YUVDataInfo &yuvDataInfo, uint8_t *srcPixels, const PixelFormat &format,
+    static bool YuvTranslate(const uint8_t *srcPixels, YUVDataInfo &yuvInfo, uint8_t *dstPixels, XYaxis &xyAxis,
+        ImageInfo &info);
+    static bool Yuv420WritePixels(const YUVDataInfo &yuvInfo, uint8_t *srcPixels, ImageInfo &info,
         const uint32_t &color);
-    static bool YuvReadPixel(const uint8_t *srcPixels, const YUVDataInfo &yuvDataInfo, const PixelFormat &format,
-        const Position &pos, uint32_t &dst);
     static bool YuvWritePixel(uint8_t *srcPixels, const YUVDataInfo &yuvDataInfo, const PixelFormat &format,
         const Position &pos, const uint32_t &color);
     static bool YuvCrop(uint8_t *srcData, YuvImageInfo &srcInfo, uint8_t *dstData, const Rect &rect);

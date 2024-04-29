@@ -17,14 +17,12 @@
 #define INTERFACES_INNERKITS_INCLUDE_LIBYUV_PIXEL_MAP_H
 
 #include "image_type.h"
-#include "memory_manager.h"
-#include "pixel_yuv.h"
 
 #include "include/core/SkBitmap.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkImage.h"
-
-#include "libyuv.h"
+#include "memory_manager.h"
+#include "pixel_yuv.h"
 
 namespace OHOS {
 namespace Media {
@@ -36,20 +34,14 @@ public:
     NATIVEEXPORT void rotate(float degrees) override;
     NATIVEEXPORT void scale(float xAxis, float yAxis) override;
     NATIVEEXPORT void scale(float xAxis, float yAxis, const AntiAliasingOption &option) override;
+    NATIVEEXPORT bool resize(float xAxis, float yAxis) override;
     NATIVEEXPORT void flip(bool xAxis, bool yAxis) override;
 #ifdef IMAGE_COLORSPACE_FLAG
+    bool CheckColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace);
+    int32_t ColorSpaceBGRAToYuv(uint8_t *bgraData, SkTransYuvInfo &dst, ImageInfo &imageInfo, PixelFormat &format,
+        const OHOS::ColorManager::ColorSpace &grColorSpace);
     NATIVEEXPORT uint32_t ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace) override;
 #endif
-    void PrintYuvDataInfo();
-    static void ConvertYuvMode(libyuv::FilterMode &filterMode, const AntiAliasingOption &option);
-    void ScaleYuv420(float xAxis, float yAxis, const AntiAliasingOption &option = AntiAliasingOption::NONE);
-    static bool NV21Rotate(const uint8_t *src, uint8_t *dstData, PixelSize &size,
-        uint8_t *dstPixels, libyuv::RotationMode &rotateNum);
-    static bool NV12Rotate(const uint8_t *src, uint8_t *dstData, PixelSize &size,
-        uint8_t *dstPixels, libyuv::RotationMode &rotateNum);
-    static bool I420Rotate(const uint8_t *src, PixelSize &size, uint8_t *dstPixels, libyuv::RotationMode &rotateNum);
-    static bool FlipXaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format);
-    static void FlipYaxis(const uint8_t *src, uint8_t *dst, int32_t width, int32_t height, PixelFormat format);
 };
 } // namespace Media
 } // namespace OHOS

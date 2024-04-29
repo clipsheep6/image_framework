@@ -168,10 +168,6 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
     ]
 
-    if (defined(LIBYUV_ENABLE)) {
-      sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
-    }
-
     if (use_mingw_win) {
       defines = image_decode_windows_defines
       sources -= [
@@ -212,7 +208,6 @@ if (use_clang_android) {
     } else {
       defines = [ "DUAL_ADAPTER" ]
       DUAL_ADAPTER = true
-
       deps = [
         "${image_subsystem}/plugins/common/libs/image/libextplugin:heifparser",
         "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/pixelconverter:pixelconvertadapter",
@@ -268,6 +263,7 @@ if (use_clang_android) {
         defined(global_parts_info.open_source_libyuv)) {
       defines += [ "LIBYUV_ENABLE" ]
       external_deps += [ "libyuv:yuv" ]
+      sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
     }
 
     #  relative_install_dir = "module/multimedia"
@@ -329,10 +325,6 @@ ohos_static_library("image_static") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
   ]
-
-  if (defined(LIBYUV_ENABLE)) {
-    sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
-  }
 
   if (use_mingw_win) {
     defines = image_decode_windows_defines
@@ -439,6 +431,7 @@ ohos_static_library("image_static") {
     defines += [ "LIBYUV_ENABLE" ]
     cflags = [ "-LIBYUV_ENABLE" ]
     external_deps += [ "libyuv:yuv" ]
+    sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
   }
 
   subsystem_name = "multimedia"

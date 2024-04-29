@@ -208,7 +208,7 @@ void PixelYuv::rotate(float degrees)
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
     YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(imageInfo_.pixelFormat),
-        imageInfo_.size.width, imageInfo_.size.height, yuvDataInfo};
+        imageInfo_.size.width, imageInfo_.size.height, imageInfo_.pixelFormat, yuvDataInfo};
     YuvImageInfo dstInfo;
     if (!PixelYuvUtils::YuvRotate(data_, srcInfo, dst, dstInfo, degrees)) {
         IMAGE_LOGE("rotate failed");
@@ -247,7 +247,7 @@ uint32_t PixelYuv::crop(const Rect &rect)
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
     YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(imageInfo_.pixelFormat),
-        imageInfo_.size.width, imageInfo_.size.height, yuvDataInfo};
+        imageInfo_.size.width, imageInfo_.size.height, imageInfo_.pixelFormat, yuvDataInfo};
     if (!PixelYuvUtils::YuvCrop(data_, srcInfo, (uint8_t *)dstMemory->data.data, rect)) {
         dstMemory->Release();
         return ERR_IMAGE_CROP;
@@ -301,8 +301,9 @@ void PixelYuv::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
     YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(imageInfo.pixelFormat),
-        imageInfo.size.width, imageInfo.size.height, yuvDataInfo};
-    YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(imageInfo.pixelFormat), dstW, dstH};
+        imageInfo.size.width, imageInfo.size.height, imageInfo_.pixelFormat, yuvDataInfo};
+    YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(imageInfo.pixelFormat), 
+        dstW, dstH, imageInfo_.pixelFormat, yuvDataInfo};
     if (PixelYuvUtils::YuvScale(data_, srcInfo, yuvData, dstInfo, PixelYuvUtils::YuvConvertOption(option)) != SUCCESS) {
         IMAGE_LOGE("ScaleYuv failed");
         return;
@@ -342,8 +343,8 @@ void PixelYuv::flip(bool xAxis, bool yAxis)
     uint8_t *dst = reinterpret_cast<uint8_t *>(dstMemory->data.data);
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
-    YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(format), srcW, srcH, yuvDataInfo};
-    YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(format), srcW, srcH};
+    YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(format), srcW, srcH, imageInfo_.pixelFormat, yuvDataInfo};
+    YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(format), srcW, srcH, imageInfo_.pixelFormat, yuvDataInfo};
     if (xAxis && yAxis) {
         if (!PixelYuvUtils::YuvReversal(const_cast<uint8_t *>(src), srcInfo, dst, dstInfo)) {
             IMAGE_LOGE("flip yuv xAxis and yAxis failed");
@@ -417,7 +418,7 @@ uint32_t PixelYuv::ReadPixels(const uint64_t &bufferSize, const uint32_t &offset
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
     YuvImageInfo imageInfo = {PixelYuvUtils::ConvertFormat(imageInfo_.pixelFormat),
-        imageInfo_.size.width, imageInfo_.size.height, yuvDataInfo};
+        imageInfo_.size.width, imageInfo_.size.height, imageInfo_.pixelFormat, yuvDataInfo};
     if (!PixelYuvUtils::ReadYuvConvert((void *)data_, srcPosition, imageInfo, dst + offset, dstImageInfo)) {
         IMAGE_LOGE("read pixels by rect call ReadPixelsConvert fail.");
         return ERR_IMAGE_READ_PIXELMAP_FAILED;
@@ -452,7 +453,7 @@ void PixelYuv::translate(float xAxis, float yAxis)
     PixelYuvUtils::SetTranslateDataDefault(dst, width, height);
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
-    if (!PixelYuvUtils::YuvTranslate(data_, yuvDataInfo, dst, xyAxis, imageInfo_.pixelFormat)) {
+    if (!PixelYuvUtils::YuvTranslate(data_, yuvDataInfo, dst, xyAxis, imageInfo_)) {
         dstMemory->Release();
         return;
     }
@@ -460,6 +461,7 @@ void PixelYuv::translate(float xAxis, float yAxis)
     imageInfo_.size.height = height;
 
     SetPixelsAddr(dst, nullptr, dstSize, dstMemory->GetType(), nullptr);
+    AssignYuvDataOnType(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
 }
 
 uint32_t PixelYuv::ReadPixel(const Position &pos, uint32_t &dst)
@@ -484,7 +486,7 @@ bool PixelYuv::WritePixels(const uint32_t &color)
         return false;
     }
 
-    return PixelYuvUtils::Yuv420WritePixels(yuvDataInfo_, data_, imageInfo_.pixelFormat, color);
+    return PixelYuvUtils::Yuv420WritePixels(yuvDataInfo_, data_, imageInfo_, color);
 }
 
 uint32_t PixelYuv::WritePixel(const Position &pos, const uint32_t &color)
@@ -497,8 +499,7 @@ uint32_t PixelYuv::WritePixel(const Position &pos, const uint32_t &color)
         IMAGE_LOGE("write pixel by pos but current pixelmap data is nullptr.");
         return ERR_IMAGE_WRITE_PIXELMAP_FAILED;
     }
-    PixelYuvUtils::YuvWritePixel(data_, yuvDataInfo_, imageInfo_.pixelFormat, pos, color);
-    return SUCCESS;
+    return PixelYuvUtils::YuvWritePixel(data_, yuvDataInfo_, imageInfo_.pixelFormat, pos, color);
 }
 
 ColorYuv420 PixelYuv::GetYuv420Color(uint32_t x, uint32_t y)
@@ -679,9 +680,9 @@ int32_t PixelYuv::ColorSpaceBGRAToYuv(uint8_t *bgraData, SkTransYuvInfo &dst, Im
         return ERR_IMAGE_COLOR_CONVERT;
     }
     YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(PixelFormat::BGRA_8888),
-        imageInfo_.size.width, imageInfo_.size.height};
+        imageInfo_.size.width, imageInfo_.size.height, imageInfo_.pixelFormat, yuvDataInfo_};
     YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(format),
-        imageInfo_.size.width, imageInfo_.size.height};
+        imageInfo_.size.width, imageInfo_.size.height, imageInfo_.pixelFormat, yuvDataInfo_};
     if (!PixelYuvUtils::BGRAToYuv420(bgraData, srcInfo, reinterpret_cast<uint8_t *>(yuvMemory->data.data), dstInfo)) {
         IMAGE_LOGE("applyColorSpace BGRAToYuv420 failed");
             return ERR_IMAGE_COLOR_CONVERT;
@@ -720,9 +721,9 @@ uint32_t PixelYuv::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColor
     int32_t height = yuvDataInfo.yHeight;
 
     YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(format),
-        imageInfo_.size.width, imageInfo_.size.height, yuvDataInfo};
+        imageInfo_.size.width, imageInfo_.size.height, imageInfo_.pixelFormat, yuvDataInfo};
     YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(PixelFormat::BGRA_8888),
-        imageInfo_.size.width, imageInfo_.size.height};
+        imageInfo_.size.width, imageInfo_.size.height, imageInfo_.pixelFormat, yuvDataInfo};
     std::unique_ptr<uint8_t[]> RGBAdata = std::make_unique<uint8_t[]>(width * height * NUM_4);
     if (!PixelYuvUtils::Yuv420ToBGRA(srcData, srcInfo, RGBAdata.get(), dstInfo)) {
         IMAGE_LOGE("applyColorSpace Yuv420ToBGRA failed");

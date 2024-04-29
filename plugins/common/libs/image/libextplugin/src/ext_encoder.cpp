@@ -159,7 +159,8 @@ static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::Pixe
     if (IsYuvImage(image.info.pixelFormat)) {
         YUVDataInfo yuvInfo;
         pixelMap->GetImageYUVInfo(yuvInfo);
-        YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(image.info.pixelFormat), width, height, yuvInfo};
+        YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(image.info.pixelFormat),
+            width, height, image.info.pixelFormat, yuvInfo};
         YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(PixelFormat::RGB_888), width, height};
         if (!PixelConvertAdapter::YUV420ToRGB888(srcData, srcInfo, image.dst, dstInfo)) {
             IMAGE_LOGE("ExtEncoder::BuildSkBitmap Support YUV format RGB convert failed ");
