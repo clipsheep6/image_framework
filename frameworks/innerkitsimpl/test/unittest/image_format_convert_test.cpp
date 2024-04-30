@@ -67,6 +67,7 @@ class ImageFormatConvertTest : public testing::Test {
 public:
     static bool TestIsSupport(PixelFormat format);
     static ConvertFunction TestGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat);
+    static YUVConvertFunction TestYUVGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat);
     static bool TestMakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
         const size_t destBufferSize, ImageInfo &info, AllocatorType allcatorType);
 
@@ -97,6 +98,11 @@ bool ImageFormatConvertTest::TestIsSupport(PixelFormat format)
 ConvertFunction ImageFormatConvertTest::TestGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat)
 {
     return ImageFormatConvert::GetConvertFuncByFormat(srcFormat, destFormat);
+}
+
+YUVConvertFunction ImageFormatConvertTest::TestYUVGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat)
+{
+    return ImageFormatConvert::YUVGetConvertFuncByFormat(srcFormat, destFormat);;
 }
 
 bool ImageFormatConvertTest::TestMakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
@@ -180,15 +186,26 @@ HWTEST_F(ImageFormatConvertTest, GetConvertFuncByFormat_Test_003, TestSize.Level
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: GetConvertFuncByFormat_Test_003 start";
     PixelFormat srcFormat = PixelFormat::NV12;
     PixelFormat destFormat = PixelFormat::RGB_565;
-    ConvertFunction cvtFunc = ImageFormatConvertTest::TestGetConvertFuncByFormat(srcFormat, destFormat);
-    Size size = { TARGET_IMAGE_WIDTH, TARGET_IMAGE_HEIGHT };
-    const uint8_t *srcBuffer = new uint8_t[size.width * size.height +
-        ((size.width + 1) / BYTES_PER_PIXEL_RGB565) *
-        ((size.height + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565]();
+    YUVConvertFunction cvtFunc = ImageFormatConvertTest::TestYUVGetConvertFuncByFormat(srcFormat, destFormat);
+    ASSERT_NE(cvtFunc, nullptr);
+    
+    YUVDataInfo yuvDataInfo = { TARGET_IMAGE_WIDTH,
+                                TARGET_IMAGE_HEIGHT,
+                                (TARGET_IMAGE_WIDTH + 1) / EVEN_ODD_DIVISOR,
+                                (TARGET_IMAGE_HEIGHT + 1) / EVEN_ODD_DIVISOR,
+                                TARGET_IMAGE_WIDTH,
+                                (TARGET_IMAGE_WIDTH + 1) / EVEN_ODD_DIVISOR,
+                                (TARGET_IMAGE_WIDTH + 1) / EVEN_ODD_DIVISOR,
+                                (TARGET_IMAGE_WIDTH + 1) / EVEN_ODD_DIVISOR * TWO_SLICES,
+                                0, 0, 0,
+                                TARGET_IMAGE_WIDTH * TARGET_IMAGE_HEIGHT };
+    const uint8_t *srcBuffer = new uint8_t[yuvDataInfo.yWidth * yuvDataInfo.yHeight +
+        ((yuvDataInfo.yWidth + 1) / BYTES_PER_PIXEL_RGB565) *
+        ((yuvDataInfo.yHeight + 1) / BYTES_PER_PIXEL_RGB565) * BYTES_PER_PIXEL_RGB565]();
     uint8_buffer_type destBuffer = nullptr;
     size_t destBufferSize = 0;
     ColorSpace colorspace = ColorSpace::UNKNOWN;
-    EXPECT_EQ(cvtFunc(srcBuffer, size, &destBuffer, destBufferSize, colorspace), true);
+    EXPECT_EQ(cvtFunc(srcBuffer, yuvDataInfo, &destBuffer, destBufferSize, colorspace), true);
     GTEST_LOG_(INFO) << "ImageFormatConvertTest: GetConvertFuncByFormat_Test_003 end";
 }
 
