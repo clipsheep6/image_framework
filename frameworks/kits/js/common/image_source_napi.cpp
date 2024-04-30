@@ -60,6 +60,7 @@ napi_ref ImageSourceNapi::alphaTypeRef_ = nullptr;
 napi_ref ImageSourceNapi::scaleModeRef_ = nullptr;
 napi_ref ImageSourceNapi::componentTypeRef_ = nullptr;
 napi_ref ImageSourceNapi::decodingDynamicRangeRef_ = nullptr;
+napi_ref ImageSourceNapi::decodingResolutionQualityRef_ = nullptr;
 
 struct RawFileDescriptorInfo {
     int32_t fd = INVALID_FD;
@@ -213,6 +214,11 @@ static std::vector<struct ImageEnum> sDecodingDynamicRangeMap = {
     {"AUTO", 1, ""},
     {"SDR", 2, ""},
     {"HDR", 3, ""},
+};
+static std::vector<struct ImageEnum> sDecodingResolutionQualityMap = {
+    {"LOW", 1, ""},
+    {"MEDIUM", 2, ""},
+    {"HIGH", 3, ""},
 };
 
 static std::string GetStringArgument(napi_env env, napi_value value)
@@ -648,6 +654,8 @@ napi_value ImageSourceNapi::Init(napi_env env, napi_value exports)
             CreateEnumTypeObject(env, napi_number, &componentTypeRef_, sComponentTypeMap)),
         DECLARE_NAPI_PROPERTY("DecodingDynamicRange",
             CreateEnumTypeObject(env, napi_number, &decodingDynamicRangeRef_, sDecodingDynamicRangeMap)),
+        DECLARE_NAPI_PROPERTY("ResolutionQuality",
+            CreateEnumTypeObject(env, napi_number, &decodingResolutionQualityRef_, sDecodingResolutionQualityMap)),
     };
 
     struct ImageConstructorInfo info = {
