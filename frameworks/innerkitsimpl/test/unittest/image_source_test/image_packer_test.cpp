@@ -48,6 +48,8 @@ static const std::string IMAGE_JPG_SRC = "/data/local/tmp/image/test_packing_exi
 static const std::string IMAGE_JPG_DEST = "/data/local/tmp/image/test_jpg2jpg_out.jpg";
 static const std::string IMAGE_PNG_SRC = "/data/local/tmp/image/test.png";
 static const std::string IMAGE_PNG2JPG_DEST = "/data/local/tmp/image/test_png2jepg_out.jpg";
+static const std::string IMAGE_HEIF_SRC = "/data/local/tmp/image/test_heif_src.heic";
+static const std::string IMAGE_HEIF2HEIF_DEST = "/data/local/tmp/image/test_heif2heif_out.heic";
 
 class ImagePackerTest : public testing::Test {
 public:
@@ -652,5 +654,222 @@ HWTEST_F(ImagePackerTest, StartPacking020, TestSize.Level3)
 
     GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking020 end";
 }
+
+/**
+ * @tc.name: StartPacking021
+ * @tc.desc: test StartPacking021 with uint8_t *outputData heif => heif
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking021, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking021 start";
+
+    uint32_t errorCode = -1;
+    SourceOptions opts;
+    opts.formatHint = "image/heif";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_HEIF_SRC, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    ImagePacker pack;
+    std::vector<uint8_t> outputData(MAX_IMAGE_SIZE);
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(outputData.data(), MAX_IMAGE_SIZE, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    std::ofstream fileDestJpg(IMAGE_HEIF2HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(fileDestJpg.is_open());
+    uint32_t retAddimgae = pack.AddImage(*imageSource);
+    ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    fileDestJpg.write(reinterpret_cast<char *>(outputData.data()), MAX_IMAGE_SIZE);
+    ASSERT_FALSE(fileDestJpg.bad());
+    fileDestJpg.close();
+
+    std::unique_ptr<ImageSource> imageSourceDest =
+        ImageSource::CreateImageSource(outputData.data(), MAX_IMAGE_SIZE, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    uint32_t index = 0;
+    std::string value = "0";
+    std::string key = "GPSTimeStamp";
+    uint32_t res = imageSource->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "10:15:34.34");
+    key = "Orientation";
+    res = imageSource->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "Right-top");
+
+    key = "CompositeImage";
+    int valueInt;
+    res = imageSource->GetImagePropertyInt(index, key, valueInt);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(valueInt, 2);
+
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking021 end";
+}
+
+/**
+ * @tc.name: StartPacking022
+ * @tc.desc: test StartPacking022 with const std::string &filePath heif => heif
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking022, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking022 start";
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/heif";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_HEIF_SRC, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(IMAGE_HEIF2HEIF_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+
+    uint32_t retAddimgae = pack.AddImage(*imageSource);
+    ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_HEIF2HEIF_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    uint32_t index = 0;
+    std::string value = "0";
+    std::string key = "GPSTimeStamp";
+    uint32_t res = imageSourceDest->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "10:15:34.34");
+    key = "Orientation";
+    res = imageSourceDest->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "Right-top");
+
+    key = "CompositeImage";
+    int valueInt;
+    res = imageSourceDest->GetImagePropertyInt(index, key, valueInt);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(valueInt, 2);
+
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking022 end";
+}
+
+/**
+ * @tc.name: StartPacking023
+ * @tc.desc: test StartPacking023 with std::ostream &outputStream heif => heif
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking023, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking023 start";
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/heif";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_HEIF_SRC, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/heif";
+    std::ofstream stream(IMAGE_HEIF2HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    uint32_t startpc = pack.StartPacking(stream, option);
+
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddimgae = pack.AddImage(*imageSource);
+    ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+
+    std::unique_ptr<std::ifstream> istreamDest = std::make_unique<std::ifstream>(IMAGE_HEIF2HEIF_DEST, std::ios::binary);
+    ASSERT_NE(istreamDest, nullptr);
+    std::unique_ptr<ImageSource> imageSourceDest =
+        ImageSource::CreateImageSource(std::move(istreamDest), opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    uint32_t index = 0;
+    std::string value = "0";
+    std::string key = "GPSTimeStamp";
+    uint32_t res = imageSourceDest->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "10:15:34.34");
+    key = "Orientation";
+    res = imageSourceDest->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "Right-top");
+
+    key = "CompositeImage";
+    int valueInt;
+    res = imageSourceDest->GetImagePropertyInt(index, key, valueInt);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(valueInt, 2);
+
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking023 end";
+}
+
+/**
+ * @tc.name: StartPacking024
+ * @tc.desc: test StartPacking024 with const int &fd heif => heif
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking024, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking024 start";
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/heif";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_HEIF_SRC, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSource, nullptr);
+
+    ImagePacker pack;
+    const int fd = open(IMAGE_HEIF2HEIF_DEST.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    ASSERT_NE(fd, -1);
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(fd, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddimgae = pack.AddImage(*imageSource);
+    ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+
+    const int fdDest = open(IMAGE_HEIF2HEIF_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(fdDest, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    uint32_t index = 0;
+    std::string value = "0";
+    std::string key = "GPSTimeStamp";
+    uint32_t res = imageSource->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "10:15:34.34");
+    key = "Orientation";
+    res = imageSource->GetImagePropertyString(index, key, value);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "Right-top");
+
+    key = "CompositeImage";
+    int valueInt;
+    res = imageSource->GetImagePropertyInt(index, key, valueInt);
+    ASSERT_EQ(res, OHOS::Media::SUCCESS);
+    ASSERT_EQ(valueInt, 2);
+
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking024 end";
+}
+
 } // namespace Multimedia
 } // namespace OHOS
