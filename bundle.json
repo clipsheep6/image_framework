@@ -44,6 +44,7 @@
           "drivers_peripheral_display",
           "hdf_core",
           "memmgr_override",
+          "libyuv",
           "libjpeg-turbo",
           "libexif",
           "libpng",

@@ -960,11 +960,11 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
         GSError retVal = sbuffer->GetPlanesInfo(reinterpret_cast<void**>(&planes));
         if (retVal != OHOS::GSERROR_OK || planes == nullptr) {
             IMAGE_LOGE("jpeg hardware decode, Get planesInfo failed, retVal:%{public}d", retVal);
-        } else if (planes->planeCount < PLANE_COUNT_TWO) {
+        } else if (planes->planeCount >= PLANE_COUNT_TWO) {
             context.yuvInfo.yStride = planes->planes[0].columnStride;
             context.yuvInfo.uvStride = planes->planes[1].columnStride;
             context.yuvInfo.yOffset = planes->planes[0].offset;
-            context.yuvInfo.uvOffset = planes->planes[1].offset;
+            context.yuvInfo.uvOffset = planes->planes[1].offset - 1;
         }
     }
 

@@ -27,6 +27,9 @@ namespace OHOS {
 namespace Media {
 using uint8_buffer_type = uint8_t *;
 using const_uint8_buffer_type = const uint8_t *;
+using ConvertFunction = bool(*)(const uint8_t*, const Size&, uint8_t**, size_t&, [[maybe_unused]]ColorSpace);
+using YUVConvertFunction = bool(*)(const uint8_t*, const YUVDataInfo&, uint8_t**, size_t&,
+    [[maybe_unused]]ColorSpace);
 
 struct ConvertDataInfo {
     uint8_buffer_type buffer = nullptr;

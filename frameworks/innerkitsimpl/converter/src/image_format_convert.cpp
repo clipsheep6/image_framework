@@ -14,6 +14,7 @@
  */
 
 #include "image_format_convert.h"
+#include "libyuv_image_format_convert_utils.h"
 
 #include <memory>
 #include <map>
@@ -43,32 +44,52 @@ namespace OHOS {
 namespace Media {
 
 static const std::map<std::pair<PixelFormat, PixelFormat>, ConvertFunction> g_cvtFuncMap = {
-    {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV21), RGB565ToNV21},
-    {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV12), RGB565ToNV12},
-    {std::make_pair(PixelFormat::RGBA_8888, PixelFormat::NV21), RGBAToNV21},
-    {std::make_pair(PixelFormat::RGBA_8888, PixelFormat::NV12), RGBAToNV12},
-    {std::make_pair(PixelFormat::BGRA_8888, PixelFormat::NV21), BGRAToNV21},
-    {std::make_pair(PixelFormat::BGRA_8888, PixelFormat::NV12), BGRAToNV12},
-    {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV21), RGBToNV21},
-    {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV12), RGBToNV12},
-    {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV21), RGBAF16ToNV21},
-    {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV12), RGBAF16ToNV12},
+    {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV21), ImageFormatConvertUtils::RGB565ToNV21},
+    {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV12), ImageFormatConvertUtils::RGB565ToNV12},
+    {std::make_pair(PixelFormat::RGBA_8888, PixelFormat::NV21), ImageFormatConvertUtils::RGBAToNV21},
+    {std::make_pair(PixelFormat::RGBA_8888, PixelFormat::NV12), ImageFormatConvertUtils::RGBAToNV12},
+    {std::make_pair(PixelFormat::BGRA_8888, PixelFormat::NV21), ImageFormatConvertUtils::BGRAToNV21},
+    {std::make_pair(PixelFormat::BGRA_8888, PixelFormat::NV12), ImageFormatConvertUtils::BGRAToNV12},
+    {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV21), ImageFormatConvertUtils::RGBToNV21},
+    {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV12), ImageFormatConvertUtils::RGBToNV12},
+    {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV21), ImageFormatConvertUtils::RGBAF16ToNV21},
+    {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV12), ImageFormatConvertUtils::RGBAF16ToNV12},
 };
 
-static const std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> g_yuvCvtFuncMap = {
-    {std::make_pair(PixelFormat::NV12, PixelFormat::NV21), NV12ToNV21},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_888), NV12ToRGB},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_565), NV12ToRGB565},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_F16), NV12ToRGBAF16},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_8888), NV12ToRGBA},
-    {std::make_pair(PixelFormat::NV12, PixelFormat::BGRA_8888), NV12ToBGRA},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::NV12), NV21ToNV12},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_888), NV21ToRGB},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_565), NV21ToRGB565},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_F16), NV21ToRGBAF16},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_8888), NV21ToRGBA},
-    {std::make_pair(PixelFormat::NV21, PixelFormat::BGRA_8888), NV21ToBGRA},
-};
+static const std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> g_yuvCvtFuncMap = []() {
+#ifndef LIBYUV_ENABLE
+    std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> yuvCvtFuncMap = {
+        {std::make_pair(PixelFormat::NV12, PixelFormat::NV21), ImageFormatConvertUtils::NV12ToNV21},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_888), ImageFormatConvertUtils::NV12ToRGB},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_565), ImageFormatConvertUtils::NV12ToRGB565},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_F16), ImageFormatConvertUtils::NV12ToRGBAF16},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_8888), ImageFormatConvertUtils::NV12ToRGBA},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::BGRA_8888), ImageFormatConvertUtils::NV12ToBGRA},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::NV12), ImageFormatConvertUtils::NV21ToNV12},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_888), ImageFormatConvertUtils::NV21ToRGB},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_565), ImageFormatConvertUtils::NV21ToRGB565},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_F16), ImageFormatConvertUtils::NV21ToRGBAF16},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_8888), ImageFormatConvertUtils::NV21ToRGBA},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::BGRA_8888), ImageFormatConvertUtils::NV21ToBGRA},
+    };
+#else
+    std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> yuvCvtFuncMap = {
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_888), LibyuvImageFormatConvertUtils::NV21ToRGB},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_8888), LibyuvImageFormatConvertUtils::NV21ToRGBA},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::BGRA_8888), LibyuvImageFormatConvertUtils::NV21ToBGRA},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGB_565), LibyuvImageFormatConvertUtils::NV21ToRGB565},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_565), LibyuvImageFormatConvertUtils::NV12ToRGB565},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::NV12), LibyuvImageFormatConvertUtils::NV21ToNV12},
+        {std::make_pair(PixelFormat::NV21, PixelFormat::RGBA_F16), LibyuvImageFormatConvertUtils::NV21ToRGBAF16},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::NV21), LibyuvImageFormatConvertUtils::NV12ToNV21},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_F16), LibyuvImageFormatConvertUtils::NV12ToRGBAF16},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGBA_8888), LibyuvImageFormatConvertUtils::NV12ToRGBA},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::BGRA_8888), LibyuvImageFormatConvertUtils::NV12ToBGRA},
+        {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_888), LibyuvImageFormatConvertUtils::NV12ToRGB},
+    };
+#endif
+    return yuvCvtFuncMap;
+}();
 
 uint32_t ImageFormatConvert::ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo)
 {

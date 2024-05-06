@@ -20,6 +20,7 @@
 
 #ifdef LIBYUV_ENABLE
 #include "image_converter.h"
+#include "single_instance.h"
 #endif
 
 namespace OHOS {

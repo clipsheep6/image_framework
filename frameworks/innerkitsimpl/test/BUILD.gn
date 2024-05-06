@@ -1710,27 +1710,30 @@ ohos_unittest("imageformatconverttest") {
     "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
     "${image_subsystem}/interfaces/innerkits/include",
     "${graphic_subsystem}/utils/color_manager/export",
+    "//foundation/multimedia/utils/include",
     "//third_party/googletest/googletest/include",
+    "//commonlibrary/c_utils/base/include",
     "${image_subsystem}/plugins/manager/include",
     "${image_subsystem}/frameworks/innerkitsimpl/common/include",
     "${image_subsystem}/interfaces/innerkits/include",
     "${resource_management_subsystem}/interfaces/native/resource/include",
   ]
   sources = [
-    "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
-    "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/image_format_convert_test.cpp",
   ]
   deps = [
     "${graphic_subsystem}/utils/color_manager:color_manager",
     "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
     "${image_subsystem}/interfaces/innerkits:image_native",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin:extplugin",
+    "${image_subsystem}/plugins/manager:pluginmanager",
     "//third_party/ffmpeg:libohosffmpeg",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
   external_deps = [
     "c_utils:utils",
+    "googletest:gtest",
     "hilog:libhilog",
     "ipc:ipc_core",
   ]

@@ -137,7 +137,6 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/webp_exif_metadata_accessor.cpp",
-      "${image_subsystem}/frameworks/innerkitsimpl/common/src/image_utils_tools.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/memory_manager.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/native_image.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
@@ -263,7 +262,10 @@ if (use_clang_android) {
         defined(global_parts_info.open_source_libyuv)) {
       defines += [ "LIBYUV_ENABLE" ]
       external_deps += [ "libyuv:yuv" ]
-      sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
+      sources += [
+        "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp",
+        "${image_subsystem}/frameworks/innerkitsimpl/converter/src/libyuv_image_format_convert_utils.cpp"
+      ]
     }
 
     #  relative_install_dir = "module/multimedia"
@@ -298,7 +300,6 @@ ohos_static_library("image_static") {
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/webp_exif_metadata_accessor.cpp",
-    "${image_subsystem}/frameworks/innerkitsimpl/common/src/image_utils_tools.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_astc.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
@@ -431,7 +432,10 @@ ohos_static_library("image_static") {
     defines += [ "LIBYUV_ENABLE" ]
     cflags = [ "-LIBYUV_ENABLE" ]
     external_deps += [ "libyuv:yuv" ]
-    sources += [ "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp" ]
+    sources += [
+        "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp",
+        "${image_subsystem}/frameworks/innerkitsimpl/converter/src/libyuv_image_format_convert_utils.cpp"
+    ]
   }
 
   subsystem_name = "multimedia"

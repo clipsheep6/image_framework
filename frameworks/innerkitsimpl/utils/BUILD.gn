@@ -84,6 +84,7 @@ if (use_clang_ios) {
       "src/image_type_converter.cpp",
       "src/pixel_yuv_utils.cpp",
       "src/vpe_utils.cpp",
+      "src/image_convert_tools.cpp",
     ]
 
     external_deps =
@@ -189,6 +190,7 @@ ohos_static_library("image_utils_static") {
     "src/image_utils.cpp",
     "src/pixel_yuv_utils.cpp",
     "src/vpe_utils.cpp",
+    "src/image_convert_tools.cpp",
   ]
 
   if (use_mingw_win) {
