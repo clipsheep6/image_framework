@@ -1283,8 +1283,9 @@ int32_t PixelConvert::PixelsConvert(const PIXELS_CONVERT_INFO &srcPixelsInfo, PI
             IMAGE_LOGE("[PixelMap]Convert: ffmpeg convert failed!");
             return ERR_PIXELCONVERT_ERROR;
         }
-        return av_image_get_buffer_size(dstFFmpegInfo.format, dstFFmpegInfo.width, dstFFmpegInfo.height,
+        dstPixelsInfo.length = av_image_get_buffer_size(dstFFmpegInfo.format, dstFFmpegInfo.width, dstFFmpegInfo.height,
             dstFFmpegInfo.alignSize);
+        return PIXELCONVERT_SUCCESS;
     }
     if (srcInfo.pixelFormat == PixelFormat::NV12 || srcInfo.pixelFormat == PixelFormat::NV21) {
         return ConvertFromYUV(srcPixelsInfo, dstPixelsInfo);
