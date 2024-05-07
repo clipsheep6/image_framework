@@ -62,6 +62,7 @@ static const std::string IMAGE_INPUT_JPG_PATH = "/data/local/tmp/jpeg_include_ic
 static const std::string IMAGE_INPUT_JPG_PATH1 = "/data/local/tmp/image/800-500.jpg";
 static const std::string IMAGE_INPUT_JPG_PATH2 = "/data/local/tmp/image/951-595.jpg";
 static const std::string IMAGE_OUTPUT_JPG_PATH = "/data/local/tmp/";
+static std::map<std::pair<PixelFormat, PixelFormat>, std::string>  convertOutName = {};
 
 class ImageFormatConvertTest : public testing::Test {
 public:
@@ -80,9 +81,23 @@ public:
     void TearDown();
     void WriteToFile(const std::string &outpath, Size &imageSize, const std::string &outname, const uint8_t *data,
         const uint32_t size);
+    void RgbConvertToYuv(PixelFormat &srcFormat, PixelFormat &destFormat, Size &srcSize);
 };
 
-void ImageFormatConvertTest::SetUpTestCase(void) {}
+void ImageFormatConvertTest::SetUpTestCase(void) {
+    convertOutName = {
+        {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV21), "rgb565tonv21.yuv"},
+        {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV12), "rgb565tonv12.yuv"},
+        {std::make_pair(PixelFormat::RGBA_8888, PixelFormat::NV21), "rgb8888tonv21.yuv"},
+        {std::make_pair(PixelFormat::RGBA_8888, PixelFormat::NV12), "rgb8888tonv12.yuv"},
+        {std::make_pair(PixelFormat::BGRA_8888, PixelFormat::NV21), "bgr8888tonv21.yuv"},
+        {std::make_pair(PixelFormat::BGRA_8888, PixelFormat::NV12), "bgr8888tonv12.yuv"},
+        {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV21), "rgb888tonv21.yuv"},
+        {std::make_pair(PixelFormat::RGB_888, PixelFormat::NV12), "rgb888tonv12.yuv"},
+        {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV21), "rgbaf16tonv21.yuv"},
+        {std::make_pair(PixelFormat::RGBA_F16, PixelFormat::NV12), "rgbaf16tonv12.yuv"},
+    };
+}
 
 void ImageFormatConvertTest::TearDownTestCase(void) {}
 
@@ -129,6 +144,42 @@ void ImageFormatConvertTest::WriteToFile(const std::string &outpath, Size &image
     } else {
         ASSERT_TRUE(false);
     }
+}
+
+void ImageFormatConvertTest::RgbConvertToYuv(PixelFormat &srcFormat, PixelFormat &destFormat, Size &srcSize)
+{
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    std::shared_ptr<ImageSource> rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    decodeOpts.desiredSize.width = srcSize.width;
+    decodeOpts.desiredSize.height = srcSize.height;
+    std::shared_ptr<PixelMap> srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    ASSERT_NE(data, nullptr);
+
+    ImageInfo destImageInfo;
+    srcPixelMap->GetImageInfo(destImageInfo);
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+        ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+
+    Size size = destImageInfo.size;
+    auto iter = convertOutName.find(std::make_pair(srcFormat, destFormat));
+    ASSERT_NE(iter, convertOutName.end());
+    std::string outname = size.width % EVEN_ODD_DIVISOR == 0 ? "Odd_" + iter->second : "Tree_" + iter->second;
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "RGBToYUV/";
+    WriteToFile(outpath, size, outname, data, buffersize);
 }
 
 HWTEST_F(ImageFormatConvertTest, IsSupport_Test_001, TestSize.Level3)
@@ -462,6 +513,316 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGB_002, TestSize.Level3)
     std::string outname = "Odd_n21torgb.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV21ToRGB/";
     WriteToFile(outpath, size, outname, data, buffersize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAF16ToNV21_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_F16;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAF16ToNV21_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_F16;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGB565ToNV12_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGB_565;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGB565ToNV12_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGB_565;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGB565ToNV21_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGB_565;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGB565ToNV21_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGB_565;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, BGRAToNV21_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::BGRA_8888;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, BGRAToNV21_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::BGRA_8888;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, BGRAToNV12_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::BGRA_8888;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, BGRAToNV12_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::BGRA_8888;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAF16ToNV12_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_F16;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAF16ToNV12_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_F16;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAToNV21_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_8888;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAToNV21_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_8888;
+    PixelFormat destFormat = PixelFormat::NV21;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAToNV12_001, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_8888;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { TREE_ORIGINAL_WIDTH, TREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBAToNV12_002, TestSize.Level3)
+{
+    PixelFormat srcFormat = PixelFormat::RGBA_8888;
+    PixelFormat destFormat = PixelFormat::NV12;
+    Size srcSize = { ODDTREE_ORIGINAL_WIDTH, ODDTREE_ORIGINAL_HEIGHT };
+    RgbConvertToYuv(srcFormat, destFormat, srcSize);
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBToNV21_001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV21_002: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat tmpFormat = PixelFormat::RGB_888;
+    uint32_t tmpRet = ImageFormatConvert::ConvertImageFormat(srcPixelMap, tmpFormat);
+    ASSERT_EQ(tmpRet, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), tmpFormat);
+
+    PixelFormat destFormat = PixelFormat::NV21;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    ASSERT_NE(data, nullptr);
+
+    ImageInfo destImageInfo;
+    srcPixelMap->GetImageInfo(destImageInfo);
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+        ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
+
+    Size size = destImageInfo.size;
+    auto iter = convertOutName.find(std::make_pair(tmpFormat, destFormat));
+    ASSERT_NE(iter, convertOutName.end());
+    std::string outname = size.width % EVEN_ODD_DIVISOR == 0 ? "Odd_" + iter->second : "Tree_" + iter->second;
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "RGBToYUV/";
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV21_002: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBToNV21_002, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV21_002: start";
+    PixelFormat srcFormat = PixelFormat::NV12;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat tmpFormat = PixelFormat::RGB_888;
+    uint32_t tmpRet = ImageFormatConvert::ConvertImageFormat(srcPixelMap, tmpFormat);
+    ASSERT_EQ(tmpRet, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), tmpFormat);
+
+    PixelFormat destFormat = PixelFormat::NV21;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    ASSERT_NE(data, nullptr);
+
+    ImageInfo destImageInfo;
+    srcPixelMap->GetImageInfo(destImageInfo);
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+        ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
+
+    Size size = destImageInfo.size;
+    auto iter = convertOutName.find(std::make_pair(tmpFormat, destFormat));
+    ASSERT_NE(iter, convertOutName.end());
+    std::string outname = size.width % EVEN_ODD_DIVISOR == 0 ? "Odd_" + iter->second : "Tree_" + iter->second;
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "RGBToYUV/";
+    WriteToFile(outpath, size, outname, data, buffersize);
+
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV21_002: end";
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBToNV12_001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV12_001: start";
+    PixelFormat srcFormat = PixelFormat::NV21;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat tmpFormat = PixelFormat::RGB_888;
+    uint32_t tmpRet = ImageFormatConvert::ConvertImageFormat(srcPixelMap, tmpFormat);
+    ASSERT_EQ(tmpRet, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), tmpFormat);
+
+    PixelFormat destFormat = PixelFormat::NV21;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    ASSERT_NE(data, nullptr);
+
+    ImageInfo destImageInfo;
+    srcPixelMap->GetImageInfo(destImageInfo);
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+        ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
+
+    Size size = destImageInfo.size;
+    auto iter = convertOutName.find(std::make_pair(tmpFormat, destFormat));
+    ASSERT_NE(iter, convertOutName.end());
+    std::string outname = size.width % EVEN_ODD_DIVISOR == 0 ? "Odd_" + iter->second : "Tree_" + iter->second;
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "RGBToYUV/";
+    WriteToFile(outpath, size, outname, data, buffersize);
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV12_001: start";
+}
+
+HWTEST_F(ImageFormatConvertTest, RGBToNV12_002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV12_001: start";
+    PixelFormat srcFormat = PixelFormat::NV21;
+    uint32_t errorCode = 0;
+
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH2, opts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(rImageSource.get(), nullptr);
+
+    DecodeOptions decodeOpts;
+    decodeOpts.desiredPixelFormat = srcFormat;
+    std::shared_ptr<PixelMap> srcPixelMap = nullptr;
+    srcPixelMap = rImageSource->CreatePixelMap(decodeOpts, errorCode);
+    ASSERT_EQ(errorCode, SUCCESS);
+    ASSERT_NE(srcPixelMap.get(), nullptr);
+
+    PixelFormat tmpFormat = PixelFormat::RGB_888;
+    uint32_t tmpRet = ImageFormatConvert::ConvertImageFormat(srcPixelMap, tmpFormat);
+    ASSERT_EQ(tmpRet, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), tmpFormat);
+
+    PixelFormat destFormat = PixelFormat::NV21;
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(srcPixelMap, destFormat);
+    ASSERT_EQ(ret, SUCCESS);
+    ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
+    uint8_t *data = const_cast<uint8_t *>(srcPixelMap->GetPixels());
+    ASSERT_NE(data, nullptr);
+
+    ImageInfo destImageInfo;
+    srcPixelMap->GetImageInfo(destImageInfo);
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+        ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
+
+    Size size = destImageInfo.size;
+    auto iter = convertOutName.find(std::make_pair(tmpFormat, destFormat));
+    ASSERT_NE(iter, convertOutName.end());
+    std::string outname = size.width % EVEN_ODD_DIVISOR == 0 ? "Odd_" + iter->second : "Tree_" + iter->second;
+    std::string outpath = IMAGE_OUTPUT_JPG_PATH + "RGBToYUV/";
+    WriteToFile(outpath, size, outname, data, buffersize);
+    GTEST_LOG_(INFO) << "ImageFormatConvertTest.RGBToNV12_001: start";
 }
 
 HWTEST_F(ImageFormatConvertTest, NV21ToRGBA_001, TestSize.Level3)
