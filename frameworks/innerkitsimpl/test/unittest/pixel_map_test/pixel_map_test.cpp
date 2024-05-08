@@ -2245,5 +2245,127 @@ HWTEST_F(PixelMapTest, ConvertAlphaFormatTest008, TestSize.Level3)
     ASSERT_NE(ret, SUCCESS);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: ConvertAlphaFormatTest008 end";
 }
+
+/**
+ * @tc.name: GetYUVByteCountTest001
+ * @tc.desc: GetYUVByteCount
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, GetYUVByteCountTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: GetYUVByteCountTest001 start";
+    PixelMap pixelmap;
+    ImageInfo imginfo;
+    imginfo.pixelFormat = PixelFormat::RGB_888;
+    int32_t ret = pixelmap.GetYUVByteCount(imginfo);
+    ASSERT_EQ(ret, -1);
+    imginfo.pixelFormat = PixelFormat::NV21;
+    imginfo.size.width = 0;
+    imginfo.size.height = 10;
+    ret = pixelmap.GetYUVByteCount(imginfo);
+    ASSERT_EQ(ret, -1);
+    imginfo.pixelFormat = PixelFormat::NV21;
+    imginfo.size.width = 10;
+    imginfo.size.height = 0;
+    ret = pixelmap.GetYUVByteCount(imginfo);
+    ASSERT_EQ(ret, -1);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: GetYUVByteCountTest001 end";
+}
+
+/**
+ * @tc.name: GetRGBxByteCountTest001
+ * @tc.desc: GetRGBxByteCount
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, GetRGBxByteCountTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: GetRGBxByteCountTest001 start";
+    PixelMap pixelmap;
+    ImageInfo imginfo;
+    imginfo.pixelFormat = PixelFormat::NV21;
+    int32_t ret = pixelmap.GetRGBxByteCount(imginfo);
+    ASSERT_EQ(ret, -1);
+    imginfo.pixelFormat = PixelFormat::NV12;
+    ret = pixelmap.GetRGBxByteCount(imginfo);
+    ASSERT_EQ(ret, -1);
+    imginfo.pixelFormat = PixelFormat::ASTC_6x6;
+    ret = pixelmap.GetRGBxByteCount(imginfo);
+    ASSERT_EQ(ret, -1);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: GetRGBxByteCountTest001 end";
+}
+
+/**
+ * @tc.name: CheckParamsTest001
+ * @tc.desc: CheckParams
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, CheckParamsTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: CheckParamsTest001 start";
+    PixelMap pixelmap;
+    uint32_t colors = 1;
+    uint32_t colorLength = 1;
+    int32_t offset = 0;
+    int32_t width = 10;
+    InitializationOptions opts;
+    opts.size.width = 100;
+    opts.size.height = 100;
+    bool ret = pixelmap.CheckParams(&colors, colorLength, offset, width, opts);
+    ASSERT_EQ(ret, false);
+    width = (INT32_MAX >> 2) + 1;
+    ASSERT_EQ(width > opts.size.width, true);
+    ret = pixelmap.CheckParams(&colors, colorLength, offset, width, opts);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: CheckParamsTest001 end";
+}
+
+/**
+ * @tc.name: GetAllocatedByteCountTest001
+ * @tc.desc: GetAllocatedByteCount
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, GetAllocatedByteCountTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: GetAllocatedByteCountTest001 start";
+    PixelMap pixelmap;
+    ImageInfo imginfo;
+    imginfo.pixelFormat = PixelFormat::NV21;
+    pixelmap.GetAllocatedByteCount(imginfo);
+    imginfo.pixelFormat = PixelFormat::NV12;
+    pixelmap.GetAllocatedByteCount(imginfo);
+    imginfo.pixelFormat = PixelFormat::ASTC_6x6;
+    pixelmap.GetAllocatedByteCount(imginfo);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: GetAllocatedByteCountTest001 end";
+}
+
+/**
+ * @tc.name: ScalePixelMapTest001
+ * @tc.desc: ScalePixelMap
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapTest, ScalePixelMapTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ScalePixelMapTest001 start";
+    PixelMap pixelmap;
+    Size targetSize;
+    targetSize.width = 100;
+    targetSize.height = 100;
+    Size dstSize;
+    dstSize.width = 200;
+    dstSize.height = 200;
+    ScaleMode scaleMode = ScaleMode::FIT_TARGET_SIZE;
+    PixelMap dstPixelMap;
+    bool ret = pixelmap.ScalePixelMap(targetSize, dstSize, scaleMode, dstPixelMap);
+    ASSERT_EQ(ret, false);
+    scaleMode = ScaleMode::CENTER_CROP;
+    targetSize.width = 100;
+    targetSize.height = 100;
+    dstSize.width = 200;
+    dstSize.height = 200;
+    ret = pixelmap.ScalePixelMap(targetSize, dstSize, scaleMode, dstPixelMap);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "ImagePixelMapTest: ScalePixelMapTest001 end";
+}
 }
 }
