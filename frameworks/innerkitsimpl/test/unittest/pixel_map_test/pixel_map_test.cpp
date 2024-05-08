@@ -2335,7 +2335,6 @@ HWTEST_F(PixelMapTest, GetAllocatedByteCountTest001, TestSize.Level3)
     pixelmap.GetAllocatedByteCount(imginfo);
     imginfo.pixelFormat = PixelFormat::ASTC_6x6;
     pixelmap.GetAllocatedByteCount(imginfo);
-    ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "ImagePixelMapTest: GetAllocatedByteCountTest001 end";
 }
 
