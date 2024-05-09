@@ -51,7 +51,6 @@ if (use_clang_ios) {
     if (defined(global_parts_info) &&
         defined(global_parts_info.open_source_libyuv)) {
       defines += [ "LIBYUV_ENABLE" ]
-      cflags = [ "-LIBYUV_ENABLE" ]
       sources += [ "src/libyuv_pixel_map_utils.cpp" ]
     }
 
@@ -80,11 +79,11 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_trace.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/src/image_utils.cpp",
       "src/color_utils.cpp",
+      "src/image_convert_tools.cpp",
       "src/image_system_properties.cpp",
       "src/image_type_converter.cpp",
       "src/pixel_yuv_utils.cpp",
       "src/vpe_utils.cpp",
-      "src/image_convert_tools.cpp",
     ]
 
     external_deps =
@@ -157,7 +156,6 @@ if (use_clang_ios) {
     if (defined(global_parts_info) &&
         defined(global_parts_info.open_source_libyuv)) {
       defines += [ "LIBYUV_ENABLE" ]
-      cflags = [ "-LIBYUV_ENABLE" ]
       sources += [ "src/libyuv_pixel_map_utils.cpp" ]
     }
 
@@ -185,12 +183,12 @@ ohos_static_library("image_utils_static") {
 
   sources = [
     "src/color_utils.cpp",
+    "src/image_convert_tools.cpp",
     "src/image_system_properties.cpp",
     "src/image_type_converter.cpp",
     "src/image_utils.cpp",
     "src/pixel_yuv_utils.cpp",
     "src/vpe_utils.cpp",
-    "src/image_convert_tools.cpp",
   ]
 
   if (use_mingw_win) {
@@ -274,8 +272,7 @@ ohos_static_library("image_utils_static") {
   }
   if (defined(global_parts_info) &&
       defined(global_parts_info.open_source_libyuv)) {
-    defines += [ "LIBYUV_ENABLE" ]
-    cflags = [ "-LIBYUV_ENABLE" ]
+    defines = [ "LIBYUV_ENABLE" ]
     sources += [ "src/libyuv_pixel_map_utils.cpp" ]
   }
   subsystem_name = "multimedia"

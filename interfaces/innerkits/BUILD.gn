@@ -430,7 +430,6 @@ ohos_static_library("image_static") {
   if (defined(global_parts_info) &&
       defined(global_parts_info.open_source_libyuv)) {
     defines += [ "LIBYUV_ENABLE" ]
-    cflags = [ "-LIBYUV_ENABLE" ]
     external_deps += [ "libyuv:yuv" ]
     sources += [
         "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp",

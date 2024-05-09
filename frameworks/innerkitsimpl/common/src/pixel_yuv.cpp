@@ -302,7 +302,7 @@ void PixelYuv::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
     GetImageYUVInfo(yuvDataInfo);
     YuvImageInfo srcInfo = {PixelYuvUtils::ConvertFormat(imageInfo.pixelFormat),
         imageInfo.size.width, imageInfo.size.height, imageInfo_.pixelFormat, yuvDataInfo};
-    YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(imageInfo.pixelFormat), 
+    YuvImageInfo dstInfo = {PixelYuvUtils::ConvertFormat(imageInfo.pixelFormat),
         dstW, dstH, imageInfo_.pixelFormat, yuvDataInfo};
     if (PixelYuvUtils::YuvScale(data_, srcInfo, yuvData, dstInfo, PixelYuvUtils::YuvConvertOption(option)) != SUCCESS) {
         IMAGE_LOGE("ScaleYuv failed");

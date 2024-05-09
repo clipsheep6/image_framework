@@ -34,7 +34,7 @@ const std::string GET_IMAGE_CONVERTER_FUNC = "GetImageConverter";
 }
 
 #ifdef LIBYUV_ENABLE
-using GetImageConverterFunc = OHOS::Media::ImageConverter (*)();
+using GetImageConverterFunc = OHOS::OpenSourceLibyuv::ImageConverter (*)();
 #endif
 
 #ifdef LIBYUV_ENABLE

@@ -134,7 +134,7 @@ bool LibYuvPixelMapUtils::Yuv420ToARGB(const uint8_t *sample, uint8_t *dst_argb,
 }
 
 static bool YuvRotateConvert(Size &size, int32_t degrees, int32_t &dstWidth, int32_t &dstHeight,
-    OpenSourceLibyuv:RotationMode &rotateNum)
+    OpenSourceLibyuv::RotationMode &rotateNum)
 {
     switch (degrees) {
         case degrees90:
@@ -286,7 +286,7 @@ static void ScaleUVPlane(const uint8_t *src, uint8_t*dst, OpenSourceLibyuv ::Fil
         converter.SplitUVPlane(src_uv, uvStride, uData, dstSplitStride, vData, dstSplitStride,
                                dstSplitWidth, dstSplitHeight);
     } else if (yuvInfo.yuvFormat == PixelFormat::NV21) {
-        converter.SplitUVPlane(src_uv, uvStride, vData, dstSplitStride, uData, dstSplitStride, 
+        converter.SplitUVPlane(src_uv, uvStride, vData, dstSplitStride, uData, dstSplitStride,
                                dstSplitWidth, dstSplitHeight);
     }
     // malloc memory to store temp u v

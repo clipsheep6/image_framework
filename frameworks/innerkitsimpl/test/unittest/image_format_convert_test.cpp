@@ -84,7 +84,8 @@ public:
     void RgbConvertToYuv(PixelFormat &srcFormat, PixelFormat &destFormat, Size &srcSize);
 };
 
-void ImageFormatConvertTest::SetUpTestCase(void) {
+void ImageFormatConvertTest::SetUpTestCase(void)
+{
     convertOutName = {
         {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV21), "rgb565tonv21.yuv"},
         {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV12), "rgb565tonv12.yuv"},
@@ -117,7 +118,7 @@ ConvertFunction ImageFormatConvertTest::TestGetConvertFuncByFormat(PixelFormat s
 
 YUVConvertFunction ImageFormatConvertTest::TestYUVGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat)
 {
-    return ImageFormatConvert::YUVGetConvertFuncByFormat(srcFormat, destFormat);;
+    return ImageFormatConvert::YUVGetConvertFuncByFormat(srcFormat, destFormat);
 }
 
 bool ImageFormatConvertTest::TestMakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
@@ -170,7 +171,7 @@ void ImageFormatConvertTest::RgbConvertToYuv(PixelFormat &srcFormat, PixelFormat
 
     ImageInfo destImageInfo;
     srcPixelMap->GetImageInfo(destImageInfo);
-    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height +
         ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
     ASSERT_EQ(srcPixelMap->GetPixelFormat(), destFormat);
 
@@ -676,7 +677,7 @@ HWTEST_F(ImageFormatConvertTest, RGBToNV21_001, TestSize.Level3)
 
     ImageInfo destImageInfo;
     srcPixelMap->GetImageInfo(destImageInfo);
-    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height +
         ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
 
     Size size = destImageInfo.size;

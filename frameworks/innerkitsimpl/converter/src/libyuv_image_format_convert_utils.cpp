@@ -87,7 +87,7 @@ const struct libyuv::YuvConstants *MapColorSpaceToYuvConstants(ColorSpace colorS
         case ColorSpace::ITU_709:
             return &libyuv::kYuvF709Constants;
         default:
-            return·nullptr;
+            return nullptr;
     }
 };
 
@@ -181,7 +181,7 @@ static bool NV12ToBGRANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
     uint32_t uStride = uvPlaneWidth;
     uint32_t vStride = uvPlaneWidth;
 
-    int32_t ret = converter, NV12ToI420(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
+    int32_t ret = converter.NV12ToI420(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
         yDInfo.uvStride, ySrc, yStride, uSrc, uStride, vSrc, vStride, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV12ToI420 failed, ret = %{public}d!", ret);
@@ -386,7 +386,7 @@ static bool NV12ToNV21Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
         delete[] tempBuffer;
         return false;
     }
-    result =
+    int32_t result =
         converter.I420ToNV12(tempY, width, tempU, (width + 1) / EVEN_ODD_DIVISOR, tempV, (width + 1) / EVEN_ODD_DIVISOR,
         *destBuffer, width, *destBuffer + width * height, ((width + 1) / EVEN_ODD_DIVISOR) * TWO_SLICES, width, height);
     delete[] tempBuffer;
@@ -456,7 +456,7 @@ bool LibyuvImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, cons
     }
     uint32_t frameSize = imageSize.width * imageSize.height;
     destBufferSize = frameSize + (((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    if (destBufferize <= NUM_0) {
+    if (destBufferSize <= NUM_0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -475,7 +475,7 @@ bool LibyuvImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, cons
         sws_freeContext(swsContext);
     }
     int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t*srcSlice[NUM_1] = {srcBuffer};
+    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
     const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_8)};
     uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width* imageSize.height};
     const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
@@ -641,7 +641,7 @@ bool LibyuvImageFormatConvertUtils::RGB565ToNV21(const uint8_t *srcBuffer, const
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NuM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
+        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
     if (destBufferSize <= NUM_0) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
@@ -1008,8 +1008,7 @@ bool LibyuvImageFormatConvertUtils::NV21ToRGB(const uint8_t *data, const YUVData
     std::cout << "converter:" << (void *)&converter << std::endl;
     std::cout << "NV21ToRGB24Matrix:" << (void *)converter.NV21ToRGB24Matrix << std::endl;
     converter.NV21ToRGB24Matrix(data + yDInfo.yOffset, yDInfo.yStride, data + yDInfo.uvOffset,
-        (yDInfo.uvStride + yDInfo.uvStride & 1), *destBuffer, yDInfo.yWidth * BYTES_PER_PIXEL_RGB, yuvConstants,
-        yDInfo.yWidth, yDInfo.yHeight);
+        yDInfo.uvStride, *destBuffer, yDInfo.yWidth * BYTES_PER_PIXEL_RGB, yuvConstants, yDInfo.yWidth, yDInfo.yHeight);
     return true;
 }
 
