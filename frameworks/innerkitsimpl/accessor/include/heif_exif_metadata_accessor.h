@@ -29,16 +29,26 @@ public:
     ~HeifExifMetadataAccessor();
 
     virtual uint32_t Read() override;
-    virtual bool ReadBlob(DataBuf &blob) const override;
+    virtual bool ReadBlob(DataBuf &blob) override;
     virtual uint32_t Write() override;
     virtual uint32_t WriteBlob(DataBuf &blob) override;
+    uint32_t GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges) override;
+    long GetTiffOffset()
+    {
+        return this->tiffOffset_;
+    }
+    void SetTiffOffset(long tiffOffset)
+    {
+        this->tiffOffset_ = tiffOffset;
+    }
 
 private:
     bool CheckTiffPos(byte* buff, size_t size, size_t &byteOrderPos);
-    bool GetExifItemData(std::shared_ptr<ImagePlugin::HeifParser> &parser, DataBuf &dataBuf);
+    bool GetExifItemData(std::shared_ptr<ImagePlugin::HeifParser> &parser, DataBuf &dataBuf, long &tiffOffset);
     bool GetExifItemIdByHeifParser(std::shared_ptr<ImagePlugin::HeifParser> &parser,
         ImagePlugin::heif_item_id &exifItemId);
     uint32_t WriteMetadata(DataBuf &dataBuf);
+    long tiffOffset_;
 };
 } // namespace Media
 } // namespace OHOS

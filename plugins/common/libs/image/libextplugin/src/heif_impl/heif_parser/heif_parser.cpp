@@ -200,7 +200,8 @@ heif_error HeifParser::GetAllProperties(heif_item_id itemId, std::vector<std::sh
     return ipcoBox_->GetProperties(itemId, ipmaBox_, properties);
 }
 
-heif_error HeifParser::GetItemData(heif_item_id itemId, std::vector<uint8_t> *out, heif_header_option option) const
+heif_error HeifParser::GetItemData(heif_item_id itemId, std::vector<uint8_t> *out,
+    long &tiffOffset, heif_header_option option) const
 {
     if (!HasItemId(itemId)) {
         return heif_error_item_not_found;
@@ -222,6 +223,11 @@ heif_error HeifParser::GetItemData(heif_item_id itemId, std::vector<uint8_t> *ou
     }
     if (!ilocItem) {
         return heif_error_item_data_not_found;
+    }
+
+    tiffOffset = ilocItem->baseOffset;
+    if (!ilocItem->extents.empty()) {
+        tiffOffset += ilocItem->extents[0].offset;
     }
 
     heif_error error;
@@ -319,7 +325,8 @@ void HeifParser::ExtractIT35Metadata(const heif_item_id& metadataItemId)
         return;
     }
     std::vector<uint8_t> extendInfo;
-    heif_error err = GetItemData(metadataItemId, &(extendInfo));
+    long offset = 0;
+    heif_error err = GetItemData(metadataItemId, &(extendInfo), offset);
     if (err != heif_error_ok || extendInfo.empty()) {
         return;
     }
@@ -332,7 +339,8 @@ void HeifParser::ExtractISOMetadata(const heif_item_id& itemId)
         return;
     }
     std::vector<uint8_t> extendInfo;
-    heif_error err = GetItemData(itemId, &extendInfo);
+    long offset = 0;
+    heif_error err = GetItemData(itemId, &extendInfo, offset);
     if (err != heif_error_ok || extendInfo.empty()) {
         return ;
     }
@@ -586,7 +594,8 @@ void HeifParser::ExtractMetadata(const std::vector<heif_item_id> &allItemIds)
         metadata->itemType = GetItemType(metadataItemId);
         metadata->contentType = GetItemContentType(metadataItemId);
         metadata->itemUriType = GetItemUriType(metadataItemId);
-        heif_error err = GetItemData(metadataItemId, &(metadata->mData));
+        long offset = 0;
+        heif_error err = GetItemData(metadataItemId, &(metadata->mData), offset);
         if (err != heif_error_ok) {
             metadata.reset();
             continue;

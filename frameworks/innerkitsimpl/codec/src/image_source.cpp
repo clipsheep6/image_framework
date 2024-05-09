@@ -2170,18 +2170,44 @@ MemoryUsagePreference ImageSource::GetMemoryUsagePreference()
 uint32_t ImageSource::GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges)
 {
     std::unique_lock<std::mutex> guard(decodingMutex_);
-    uint32_t ret;
-    auto iter = GetValidImageStatus(0, ret);
-    if (iter == imageStatusMap_.end()) {
-        IMAGE_LOGE("[ImageSource]get valid image status fail on get filter area, ret:%{public}u.", ret);
-        return ret;
+    if (privacyType != PERMISSION_GPS_TYPE) {
+        IMAGE_LOGD("GetFilterArea fail, privacyType:%{public}u if not support", privacyType);
+        return E_NO_EXIF_TAG;
     }
-    ret = mainDecoder_->GetFilterArea(privacyType, ranges);
-    if (ret != SUCCESS) {
-        IMAGE_LOGE("[ImageSource] GetFilterArea fail, ret:%{public}u", ret);
-        return ret;
+    if (sourceStreamPtr_ == nullptr) {
+        IMAGE_LOGD("sourceStreamPtr_ not exist return ERR");
+        return ERR_IMAGE_SOURCE_DATA;
     }
-    return SUCCESS;
+    uint32_t bufferSize = sourceStreamPtr_->GetStreamSize();
+    auto bufferPtr = sourceStreamPtr_->GetDataPtr();
+    if (bufferPtr != nullptr) {
+        auto metadataAccessor = MetadataAccessorFactory::Create(bufferPtr, bufferSize);
+        if (metadataAccessor == nullptr) {
+            IMAGE_LOGD("metadataAccessor nullptr return ERR");
+            return ERR_IMAGE_SOURCE_DATA;
+        }
+        return metadataAccessor->GetFilterArea(privacyType, ranges);
+    }
+    auto tmpBuffer = std::make_unique<uint8_t[]>(bufferSize);
+    if (tmpBuffer == nullptr) {
+        IMAGE_LOGE("Make unique buffer failed, tmpBuffer is nullptr.");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    uint32_t savedPosition = sourceStreamPtr_->Tell();
+    sourceStreamPtr_->Seek(0);
+    uint32_t readSize = 0;
+    bool retRead = sourceStreamPtr_->Read(bufferSize, tmpBuffer.get(), bufferSize, readSize);
+    sourceStreamPtr_->Seek(savedPosition);
+    if (!retRead) {
+        IMAGE_LOGE("sourceStream read failed.");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    auto metadataAccessor = MetadataAccessorFactory::Create(tmpBuffer.get(), bufferSize);
+    if (metadataAccessor == nullptr) {
+        IMAGE_LOGD("metadataAccessor nullptr return ERR");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    return metadataAccessor->GetFilterArea(privacyType, ranges);
 }
 
 void ImageSource::SetIncrementalSource(const bool isIncrementalSource)

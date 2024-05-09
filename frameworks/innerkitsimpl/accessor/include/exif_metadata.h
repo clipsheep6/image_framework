@@ -35,6 +35,7 @@ public:
     ExifData* GetExifData();
     bool CreateExifdata();
     std::shared_ptr<ExifMetadata> Clone();
+    void GetFilterArea(std::vector<std::pair<uint32_t, uint32_t>> &ranges);
 
 private:
     ExifEntry* CreateEntry(const std::string &key, const ExifTag &tag, const size_t len);

@@ -663,5 +663,22 @@ bool ExifMetadata::IsSpecialHwKey(const std::string &key) const
     return (iter != HW_SPECIAL_KEYS.end());
 }
 
+void ExifMetadata::GetFilterArea(std::vector<std::pair<uint32_t, uint32_t>> &ranges)
+{
+    if (exifData_ == nullptr) {
+        IMAGE_LOGD("Exif data is null");
+        return ;
+    }
+    ExifContent *content = exifData_->ifd[EXIF_IFD_GPS];
+    if (!content) {
+        IMAGE_LOGD("GPS content is null.");
+        return ;
+    }
+    for (int i = 0; i < content->count; i++) {
+        std::pair<uint32_t, uint32_t> range =
+                    std::make_pair(content->entries[i]->offset, content->entries[i]->size);
+                ranges.push_back(range);
+    }
+}
 } // namespace Media
 } // namespace OHOS
