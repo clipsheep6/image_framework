@@ -88,7 +88,7 @@ uint32_t DngExifMetadataAccessor::Write()
 {
     imageStream_->Seek(0, SeekPos::BEGIN);
     ssize_t size = imageStream_->GetSize();
-    IMAGE_LOGD("imageStream size: %{public}d", size);
+    IMAGE_LOGD("imageStream size: %{public}zd", size);
     byte *imageAddr = imageStream_->GetAddr();
     if ((size == 0) || (imageAddr == nullptr)) {
         IMAGE_LOGE("Input image stream is empty.");
@@ -112,7 +112,7 @@ uint32_t DngExifMetadataAccessor::Write()
     uint32_t endOffset = imageStream_->Tell();
     IMAGE_LOGD("imageStream Tell: %{public}x", endOffset);
     IMAGE_LOGD("compare maxAddr: %{public}x endOffset: %{public}x", maxAddr, endOffset);
-    if (abs((int)(maxAddr - endOffset)) < IS_END_THRESHOLD && ifd0Offset >= IFD0_HEAD) {
+    if (abs((int)(maxAddr - endOffset)) < (int)IS_END_THRESHOLD && ifd0Offset >= IFD0_HEAD) {
         IMAGE_LOGD("exif blob is at the end.");
         auto delta = ifd0Offset - IFD0_HEAD;
         return WriteExif(ifd0Offset, ifd1Offset, delta, ifd0Offset);
