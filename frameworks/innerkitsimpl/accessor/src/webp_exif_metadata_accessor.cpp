@@ -81,7 +81,7 @@ uint32_t WebpExifMetadataAccessor::Read()
     return SUCCESS;
 }
 
-bool WebpExifMetadataAccessor::ReadBlob(DataBuf &blob) const
+bool WebpExifMetadataAccessor::ReadBlob(DataBuf &blob)
 {
     if (!imageStream_->IsOpen()) {
         if (!imageStream_->Open(OpenMode::ReadWrite)) {
@@ -128,6 +128,7 @@ bool WebpExifMetadataAccessor::ReadBlob(DataBuf &blob) const
 
         blob.Resize(size);
         imageStream_->Read(blob.Data(), size);
+        this->SetTiffOffset(imageStream_->Tell() - blob.Size());
         return true;
     }
 
@@ -523,6 +524,24 @@ bool WebpExifMetadataAccessor::WirteChunkVp8x(BufferMetadataStream &bufStream, c
     }
     chunkData.Data()[0] |= WEBP_EXIF_FLAG_BIT;
     return bufStream.Write(chunkData.Data(), chunkData.Size()) == (ssize_t)chunkData.Size();
+}
+
+uint32_t WebpExifMetadataAccessor::GetFilterArea(const int &privacyType,
+    std::vector<std::pair<uint32_t, uint32_t>> &ranges)
+{
+    uint32_t ret = this->Read();
+    if (ret != SUCCESS) {
+        IMAGE_LOGD("Failed to read the exif info.");
+        return E_NO_EXIF_TAG;
+    }
+    exifMetadata_->GetFilterArea(ranges);
+    if (ranges.empty()) {
+        return E_NO_EXIF_TAG;
+    }
+    for (auto& range : ranges) {
+        range.first += this->GetTiffOffset();
+    }
+    return SUCCESS;
 }
 } // namespace Media
 } // namespace OHOS

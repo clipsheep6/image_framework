@@ -50,7 +50,8 @@ uint32_t HeifExifMetadataAccessor::Read()
     }
 
     DataBuf dataBuf;
-    if (!GetExifItemData(parser, dataBuf)) {
+    long tiffOffset;
+    if (!GetExifItemData(parser, dataBuf, tiffOffset)) {
         IMAGE_LOGE("The EXIF value is invalid.");
         return ERR_IMAGE_SOURCE_DATA;
     }
@@ -66,12 +67,12 @@ uint32_t HeifExifMetadataAccessor::Read()
         IMAGE_LOGE("Decode tiffBuf error.");
         return ERR_EXIF_DECODE_FAILED;
     }
-
+    this->SetTiffOffset(tiffOffset + byteOrderPos);
     exifMetadata_ = std::make_shared<ExifMetadata>(exifData);
     return SUCCESS;
 }
 
-bool HeifExifMetadataAccessor::ReadBlob(DataBuf &blob) const
+bool HeifExifMetadataAccessor::ReadBlob(DataBuf &blob)
 {
     return false;
 }
@@ -173,7 +174,7 @@ bool HeifExifMetadataAccessor::CheckTiffPos(byte *buff, size_t size, size_t &byt
     return true;
 }
 
-bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &parser, DataBuf &dataBuf)
+bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &parser, DataBuf &dataBuf, long &tiffOffset)
 {
     ImagePlugin::heif_item_id exifItemId = 0xffff;
     if (!GetExifItemIdByHeifParser(parser, exifItemId)) {
@@ -181,7 +182,7 @@ bool HeifExifMetadataAccessor::GetExifItemData(std::shared_ptr<HeifParser> &pars
     }
 
     std::vector<uint8_t> item;
-    if (parser->GetItemData(exifItemId, &item) != heif_error::heif_error_ok) {
+    if (parser->GetItemData(exifItemId, &item, tiffOffset) != heif_error::heif_error_ok) {
         return false;
     }
     dataBuf = DataBuf(item.data(), item.size());
@@ -204,6 +205,25 @@ bool HeifExifMetadataAccessor::GetExifItemIdByHeifParser(std::shared_ptr<ImagePl
         }
     }
     return false;
+}
+
+uint32_t HeifExifMetadataAccessor::GetFilterArea(const int &privacyType,
+    std::vector<std::pair<uint32_t, uint32_t>> &ranges)
+{
+    uint32_t ret = this->Read();
+    if (ret != SUCCESS) {
+        IMAGE_LOGD("Failed to read the exif info.");
+        return E_NO_EXIF_TAG;
+    }
+
+    exifMetadata_->GetFilterArea(ranges);
+    if (ranges.empty()) {
+        return E_NO_EXIF_TAG;
+    }
+    for (auto& range : ranges) {
+        range.first += this->GetTiffOffset();
+    }
+    return SUCCESS;
 }
 } // namespace Media
 } // namespace OHOS

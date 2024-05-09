@@ -303,13 +303,14 @@ HWTEST_F(HeifParserTest, GetItemDataTest001, TestSize.Level3)
     std::vector<uint8_t> *out = nullptr;
     heif_header_option option = heif_header_option::heif_header_data;
     heifParser.infeBoxes_.clear();
-    heif_error ret = heifParser.GetItemData(itemId, out, option);
+    long offset = 0;
+    heif_error ret = heifParser.GetItemData(itemId, out, offset, option);
     ASSERT_EQ(ret, heif_error_item_not_found);
     heifParser.ilocBox_ = std::make_shared<HeifIlocBox>();
     auto heifBox = std::make_shared<HeifInfeBox>();
     heifParser.infeBoxes_.insert(std::make_pair(0, heifBox));
     heifParser.infeBoxes_.insert(std::make_pair(1, heifBox));
-    ret = heifParser.GetItemData(itemId, out, option);
+    ret = heifParser.GetItemData(itemId, out, offset, option);
     ASSERT_EQ(ret, heif_error_item_data_not_found);
     GTEST_LOG_(INFO) << "HeifParserTest: GetItemDataTest001 end";
 }

@@ -49,7 +49,10 @@ constexpr auto PNG_SIGN_SIZE = 8;
 
 PngExifMetadataAccessor::PngExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
     : AbstractExifMetadataAccessor(stream)
-{}
+{
+    this->isCompressed_ = false;
+    this->tiffOffset_ = 0;
+}
 
 PngExifMetadataAccessor::~PngExifMetadataAccessor() {}
 
@@ -76,7 +79,7 @@ ssize_t PngExifMetadataAccessor::ReadChunk(DataBuf &buffer) const
 }
 
 bool PngExifMetadataAccessor::FindTiffFromText(const DataBuf &data, const std::string chunkType,
-    DataBuf &tiffData) const
+    DataBuf &tiffData)
 {
     PngImageChunkUtils::TextChunkType txtType;
     if (chunkType == PNG_CHUNK_TEXT) {
@@ -88,13 +91,17 @@ bool PngExifMetadataAccessor::FindTiffFromText(const DataBuf &data, const std::s
     } else {
         return false;
     }
-    if (PngImageChunkUtils::ParseTextChunk(data, txtType, tiffData) != 0) {
+    bool isCompressed;
+    if (PngImageChunkUtils::ParseTextChunk(data, txtType, tiffData, isCompressed) != 0) {
         return false;
+    }
+    if (isCompressed) {
+        this->SetIsCompressed(isCompressed);
     }
     return true;
 }
 
-bool PngExifMetadataAccessor::ProcessExifData(DataBuf &blob, std::string chunkType, uint32_t chunkLength) const
+bool PngExifMetadataAccessor::ProcessExifData(DataBuf &blob, std::string chunkType, uint32_t chunkLength)
 {
     DataBuf chunkData(chunkLength);
     if (chunkLength > 0) {
@@ -110,7 +117,7 @@ bool PngExifMetadataAccessor::ProcessExifData(DataBuf &blob, std::string chunkTy
     return true;
 }
 
-bool PngExifMetadataAccessor::ReadBlob(DataBuf &blob) const
+bool PngExifMetadataAccessor::ReadBlob(DataBuf &blob)
 {
     if (!imageStream_->IsOpen()) {
         IMAGE_LOGE("The output image stream is not open");
@@ -154,6 +161,7 @@ bool PngExifMetadataAccessor::ReadBlob(DataBuf &blob) const
             return false;
         }
     }
+    this->SetTiffOffset(imageStream_->Tell() - blob.Size());
     return true;
 }
 
@@ -375,6 +383,28 @@ uint32_t PngExifMetadataAccessor::WriteBlob(DataBuf &blob)
     size = blob.Size();
 
     return UpdateData(dataBlob, size);
+}
+
+uint32_t PngExifMetadataAccessor::GetFilterArea(const int &privacyType,
+    std::vector<std::pair<uint32_t, uint32_t>> &ranges)
+{
+    uint32_t ret = this->Read();
+    if (ret != SUCCESS) {
+        IMAGE_LOGD("Failed to read the exif info.");
+        return E_NO_EXIF_TAG;
+    }
+    if (this->GetIsCompressed()) {
+        IMAGE_LOGD("This png is compressed.");
+        return E_NO_EXIF_TAG;
+    }
+    exifMetadata_->GetFilterArea(ranges);
+    if (ranges.empty()) {
+        return E_NO_EXIF_TAG;
+    }
+    for (auto& range : ranges) {
+        range.first += this->GetTiffOffset();
+    }
+    return SUCCESS;
 }
 } // namespace Media
 } // namespace OHOS

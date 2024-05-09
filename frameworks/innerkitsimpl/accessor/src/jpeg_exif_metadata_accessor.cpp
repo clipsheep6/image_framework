@@ -80,7 +80,7 @@ uint32_t JpegExifMetadataAccessor::Read()
     return SUCCESS;
 }
 
-bool JpegExifMetadataAccessor::ReadBlob(DataBuf &blob) const
+bool JpegExifMetadataAccessor::ReadBlob(DataBuf &blob)
 {
     if (!imageStream_->IsOpen()) {
         IMAGE_LOGE("Output image stream is not open.");
@@ -103,6 +103,7 @@ bool JpegExifMetadataAccessor::ReadBlob(DataBuf &blob) const
                 return false;
             }
             if (blob.CmpBytes(0, EXIF_ID, EXIF_ID_SIZE) == 0) {
+                this->SetTiffOffset(imageStream_->Tell() - blob.Size() + EXIF_ID_SIZE);
                 return true;
             }
         }
@@ -409,6 +410,24 @@ uint32_t JpegExifMetadataAccessor::UpdateData(uint8_t *dataBlob, uint32_t size)
     imageStream_->Seek(0, SeekPos::BEGIN);
     imageStream_->CopyFrom(tmpBufStream);
 
+    return SUCCESS;
+}
+
+uint32_t JpegExifMetadataAccessor::GetFilterArea(const int &privacyType,
+    std::vector<std::pair<uint32_t, uint32_t>> &ranges)
+{
+    uint32_t ret = this->Read();
+    if (ret != SUCCESS) {
+        IMAGE_LOGD("Failed to read the exif info.");
+        return E_NO_EXIF_TAG;
+    }
+    exifMetadata_->GetFilterArea(ranges);
+    if (ranges.empty()) {
+        return E_NO_EXIF_TAG;
+    }
+    for (auto& range : ranges) {
+        range.first += this->GetTiffOffset();
+    }
     return SUCCESS;
 }
 } // namespace Media

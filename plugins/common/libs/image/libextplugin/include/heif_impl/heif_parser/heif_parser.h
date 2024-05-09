@@ -60,7 +60,7 @@ public:
 
     std::string GetItemType(heif_item_id itemId) const;
 
-    heif_error GetItemData(heif_item_id itemId, std::vector<uint8_t> *out,
+    heif_error GetItemData(heif_item_id itemId, std::vector<uint8_t> *out, long &offset,
                            heif_header_option option = heif_no_header) const;
 
     void GetTileImages(heif_item_id gridItemId, std::vector<std::shared_ptr<HeifImage>> &out);

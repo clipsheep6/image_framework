@@ -40,9 +40,18 @@ public:
     ~WebpExifMetadataAccessor();
 
     virtual uint32_t Read() override;
-    bool ReadBlob(DataBuf &blob) const override;
+    bool ReadBlob(DataBuf &blob) override;
     virtual uint32_t Write() override;
     uint32_t WriteBlob(DataBuf &blob) override;
+    uint32_t GetFilterArea(const int &privacyType, std::vector<std::pair<uint32_t, uint32_t>> &ranges) override;
+    long GetTiffOffset()
+    {
+        return this->tiffOffset_;
+    }
+    void SetTiffOffset(long tiffOffset)
+    {
+        this->tiffOffset_ = tiffOffset;
+    }
 
 private:
     bool CheckChunkVp8x(Vp8xAndExifInfo &exifFlag) const;
@@ -56,6 +65,7 @@ private:
     bool InsertExifMetadata(BufferMetadataStream &bufStream, uint8_t *dataBlob, uint32_t size);
     std::tuple<uint32_t, uint32_t> GetImageWidthAndHeight();
     std::tuple<uint32_t, uint32_t> GetWidthAndHeightFormChunk(const std::string &strChunkId, const DataBuf &chunkData);
+    long tiffOffset_;
 };
 } // namespace Media
 } // namespace OHOS
