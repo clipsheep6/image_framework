@@ -89,6 +89,8 @@ static void CommonCallbackRoutine(napi_env env, Context &context, const napi_val
 
     if (context->status == SUCCESS) {
         result[1] = valueParam;
+    } else {
+        napi_create_uint32(env, context->status, &result[0]);
     }
 
     if (context->deferred) {
@@ -306,11 +308,11 @@ napi_value ImageReceiverNapi::JSCreateImageReceiver(napi_env env, napi_callback_
 
     std::string errMsg;
     if (!parseImageReceiverArgs(env, info, inputArgs, errMsg)) {
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, errMsg);
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER, errMsg);
     }
 
     if (!checkFormat(inputArgs.args[PARAM2])) {
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, "Invalid type");
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER, "Invalid type");
     }
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
@@ -676,10 +678,10 @@ napi_value ImageReceiverNapi::JsGetReceivingSurfaceId(napi_env env, napi_callbac
         auto native = context->constructor_->imageReceiver_;
         if (native == nullptr) {
             IMAGE_ERR("Native instance is nullptr");
-            context->status = ERR_IMAGE_INIT_ABNORMAL;
+            context->status = IMAGE_UNKNOWN_ERROR;
         } else if (native->iraContext_ == nullptr) {
             IMAGE_ERR("Image receiver context is nullptr");
-            context->status = ERR_IMAGE_INIT_ABNORMAL;
+            context->status = IMAGE_UNKNOWN_ERROR;
         } else {
             napi_create_string_utf8(env, native->iraContext_->GetReceiverKey().c_str(),
                                     NAPI_AUTO_LENGTH, &result);
@@ -726,7 +728,7 @@ static void FailedCallbackRoutine(napi_env env, Context &context, uint32_t errCo
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
     if (context != nullptr) {
-        context->status = ERR_IMAGE_INIT_ABNORMAL;
+        context->status = IMAGE_UNKNOWN_ERROR;
     }
     CommonCallbackRoutine(env, context, result);
 }
@@ -747,13 +749,13 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
         auto native = context->constructor_->imageReceiver_;
         if (native == nullptr) {
             IMAGE_ERR("Native instance is nullptr");
-            FailedCallbackRoutine(env, context, ERR_IMAGE_INIT_ABNORMAL);
+            FailedCallbackRoutine(env, context, IMAGE_UNKNOWN_ERROR);
             return;
         }
         auto image = native->LastNativeImage();
         if (image == nullptr) {
             IMAGE_ERR("LastNativeImage is nullptr");
-            FailedCallbackRoutine(env, context, ERR_IMAGE_INIT_ABNORMAL);
+            FailedCallbackRoutine(env, context, IMAGE_UNKNOWN_ERROR);
             return;
         }
 #ifdef IMAGE_DEBUG_FLAG
@@ -767,7 +769,7 @@ napi_value ImageReceiverNapi::JsReadLatestImage(napi_env env, napi_callback_info
         napi_value result = ImageNapi::Create(env, image);
         if (result == nullptr) {
             IMAGE_ERR("ImageNapi Create is nullptr");
-            FailedCallbackRoutine(env, context, ERR_IMAGE_INIT_ABNORMAL);
+            FailedCallbackRoutine(env, context, IMAGE_UNKNOWN_ERROR);
             return;
         }
         context->status = SUCCESS;
@@ -863,13 +865,13 @@ static bool JsOnQueryArgs(ImageReceiverCommonArgs &args, ImageReceiverInnerConte
         auto argType1 = ImageNapiUtils::getType(args.env, ic.argv[PARAM1]);
         if (argType0 == napi_string && argType1 == napi_function) {
             if (!ImageNapiUtils::GetUtf8String(args.env, ic.argv[PARAM0], ic.onType)) {
-                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
                     "Could not get On type string");
                 return false;
             }
 
             if (!CheckOnParam0(args.env, ic.argv[PARAM0], "imageArrival")) {
-                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
                     "Unsupport PARAM0");
                 return false;
             }
@@ -877,13 +879,13 @@ static bool JsOnQueryArgs(ImageReceiverCommonArgs &args, ImageReceiverInnerConte
             napi_create_reference(args.env, ic.argv[PARAM1], ic.refCount, &(ic.context->callbackRef));
         } else {
             std::string errMsg = "Unsupport args type: ";
-            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+            ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
                 errMsg.append(std::to_string(argType0)).append(std::to_string(argType1)));
             return false;
         }
     } else {
         std::string errMsg = "Invalid argc: ";
-        ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+        ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
             errMsg.append(std::to_string(ic.argc)));
         return false;
     }
@@ -981,7 +983,7 @@ napi_value ImageReceiverNapi::JsOn(napi_env env, napi_callback_info info)
         auto native = ic.context->constructor_->imageReceiver_;
         if (native == nullptr) {
             IMAGE_ERR("Native instance is nullptr");
-            ic.context->status = ERR_IMAGE_INIT_ABNORMAL;
+            ic.context->status = IMAGE_UNKNOWN_ERROR;
             return false;
         }
         shared_ptr<ImageReceiverAvaliableListener> listener = make_shared<ImageReceiverAvaliableListener>();

@@ -148,8 +148,23 @@ const uint32_t ERR_EXIF_DECODE_FAILED = BASE_MEDIA_ERR_OFFSET + 178; // exif dec
 
 const int32_t ERR_MEDIA_UNKNOWN = BASE_MEDIA_ERR_OFFSET + 200;  // media unknown error
 const int32_t ERR_RESOURCE_UNAVAILABLE = 501; // Resource Unavailable
-const int32_t COMMON_ERR_INVALID_PARAMETER = 401; // Common error，Invalid parameter
+const int32_t COMMON_ERR_INVALID_PARAMETER = 401; // invalid parameter
+const int32_t IMAGE_BAD_PARAMETER = 401; // invalid parameter
 const int32_t ERR_MEDIA_NO_EXIF_DATA = 402; // no exif_data info
+const int32_t IMAGE_UNSUPPORTED_MIME_TYPE = 7600101; // unsupported mime type
+const int32_t IMAGE_UNKNOWN_MIME_TYPE = 7600102; // unknown mime type
+const int32_t IMAGE_TOO_LARGE = 7600103; // too large data or image
+const int32_t IMAGE_UNSUPPORTED_OPERATION = 7600201; // unsupported operations
+const int32_t IMAGE_UNSUPPORTED_METADATA = 7600202; // unsupported metadata
+const int32_t IMAGE_UNSUPPORTED_CONVERSION = 7600203; // unsupported conversion
+const int32_t IMAGE_INVALID_REGION = 7600204; // invalid region
+const int32_t IMAGE_ALLOC_FAILED = 7600301; // failed to allocate memory
+const int32_t IMAGE_COPY_FAILED = 7600302; // IMAGE_COPY_FAILED
+const int32_t IMAGE_UNKNOWN_ERROR = 7600901; // unknown error
+const int32_t IMAGE_BAD_SOURCE = 7700101; // decode data source exception
+const int32_t IMAGE_DECODE_FAILED = 7700301; // decode failed
+const int32_t IMAGE_ENCODE_FAILED = 7800301; // encode failed
+
 }  // namespace Media
 }  // namespace OHOS
 #endif  // INTERFACES_INNERKITS_INCLUDE_MEDIA_ERRORS_H

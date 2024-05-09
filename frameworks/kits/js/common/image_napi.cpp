@@ -619,7 +619,7 @@ static void JsGetComponentCallBack(napi_env env, napi_status status, ImageAsyncC
         IMAGE_ERR("Invalid input context");
         return;
     }
-    context->status = ERROR;
+    context->status = IMAGE_UNKNOWN_ERROR;
     NativeComponent* component = context->component;
     if (component == nullptr) {
         IMAGE_ERR("Invalid component");
@@ -712,12 +712,12 @@ napi_value ImageNapi::JsGetComponent(napi_env env, napi_callback_info info)
     napi_get_undefined(env, &result);
     auto context = UnwrapContext(env, info, &argc, argv);
     if (context == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER,
             "fail to unwrap constructor_ ");
     }
     context->isTestContext = context->napi->isTestImage_;
     if (!JsGetComponentArgs(env, argc, argv, context.get())) {
-        return ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER,
             "Unsupport arg type!");
     }
 
