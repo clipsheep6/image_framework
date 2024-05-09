@@ -103,10 +103,14 @@ ExifMetadata::~ExifMetadata()
 
 int ExifMetadata::GetValue(const std::string &key, std::string &value) const
 {
+    value.clear();
     IMAGE_LOGD("Retrieving value for key: %{public}s", key.c_str());
     if (exifData_ == nullptr) {
         IMAGE_LOGE("Exif data is null for key: %{public}s", key.c_str());
-        value = "";
+        return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    }
+    if (!ExifMetadatFormatter::IsKeySupported(key)) {
+        IMAGE_LOGE("Key is not supported.");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     if (key == "MakerNote") {
@@ -142,14 +146,12 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
         ExifEntry *entry = GetEntry(key);
         if (entry == nullptr) {
             IMAGE_LOGD("Exif data entry returned null for key: %{public}s, tag: %{public}d", key.c_str(), tag);
-            value = "";
             return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
         }
         IMAGE_LOGD("Using exif_entry_get_value for key: %{public}s, tag: %{public}d", key.c_str(), entry->tag);
         exif_entry_get_value(entry, tagValueChar, sizeof(tagValueChar));
         value = tagValueChar;
     }
-    IMAGE_LOGD("Retrieved value for key: %{public}s is: %{public}s", key.c_str(), value.c_str());
     return SUCCESS;
 }
 
