@@ -215,12 +215,12 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     auto &converter = ConverterHandle::GetInstance().GetHandle();
     uint8_t *src_vu = const_cast<uint8_t *>(srcBuffer) + yDInfo.uvOffset;
     uint8_t *src_y = const_cast<uint8_t *>(srcBuffer) + yDInfo.yOffset;
-    int src_stride_vu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
+    int srcStrideVu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
     uint8_t *dst_u = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
-    int dst_stride_u = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
+    int dstStrideU = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
     uint8_t *dst_v = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight +
         ((yDInfo.yWidth + NUM_1) / EVEN_ODD_DIVISOR * (yDInfo.yHeight + 1) / EVEN_ODD_DIVISOR);
-    int dst_stride_v = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
+    int dstStrideV = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
 
     std::cout << "[" << std::string(__FILE__).substr(std::string(__FILE__).find_last_of('/') + 1) << ":" << __LINE__ <<
         "]"
@@ -230,17 +230,17 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
               << " src_y:" << (void *)src_y << ","
               << " yDInfo.yStride:" << yDInfo.yStride << ","
               << " src_vu:" << (void *)src_vu << ","
-              << " src_stride_vu:" << src_stride_vu << ","
+              << " src_stride_vu:" << srcStrideVu << ","
               << " yu12Buffer:" << (void *)yu12Buffer << ","
               << " dst_u:" << (void *)dst_u << ","
               << " dst_v:" << (void *)dst_v << ","
               << " yDInfo.yWidth:" << yDInfo.yWidth << ","
               << " yDInfo.yHeight:" << yDInfo.yHeight << ","
-              << " dst_stride_u:" << dst_stride_u << ","
-              << " dst_stride_v:" << dst_stride_v << std::endl;
+              << " dst_stride_u:" << dstStrideU << ","
+              << " dst_stride_v:" << dstStrideV << std::endl;
 
-    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, src_stride_vu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dst_stride_u, dst_v, dst_stride_v, yDInfo.yWidth, yDInfo.yHeight);
+    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
+        dstStrideU, dst_v, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
     std::cout << "[" << std::string(__FILE__).substr(std::string(__FILE__).find_last_of('/') + 1) << ":" << __LINE__ <<
         "]"
               << "[" << LOG_TAG << ":" << __FUNCTION__ << "]"
@@ -250,7 +250,7 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
         delete[] yu12Buffer;
         return false;
     }
-    ret = converter.I420ToRGBAMatrix(yu12Buffer, yDInfo.yWidth, dst_u, dst_stride_u, dst_v, dst_stride_v, *destBuffer,
+    ret = converter.I420ToRGBAMatrix(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
         yDInfo.yWidth * NUM_4, yuvConstants, yDInfo.yWidth, yDInfo.yHeight);
     delete[] yu12Buffer;
     if (ret != 0) {
@@ -278,20 +278,20 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
     auto &converter = ConverterHandle::GetInstance().GetHandle();
     const uint8_t *src_y = srcBuffer + yDInfo.yOffset;
     const uint8_t *src_vu = srcBuffer + yDInfo.uvOffset;
-    int src_stride_vu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
+    int srcStrideVu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
     uint8_t *dst_u = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
-    int dst_stride_u = yDInfo.uvStride / EVEN_ODD_DIVISOR;
+    int dstStrideU = yDInfo.uvStride / EVEN_ODD_DIVISOR;
     uint8_t *dst_v = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight;
-    int dst_stride_v = yDInfo.uvStride / EVEN_ODD_DIVISOR;
+    int dstStrideV = yDInfo.uvStride / EVEN_ODD_DIVISOR;
 
-    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, src_stride_vu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dst_stride_u, dst_v, dst_stride_v, yDInfo.yWidth, yDInfo.yHeight);
+    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
+        dstStrideU, dst_v, dst_stride_v, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV21ToI420 failed, ret = %{public}d!", ret);
         delete[] yu12Buffer;
         return false;
     }
-    ret = converter.I420ToRGB565Matrix(yu12Buffer, yDInfo.yWidth, dst_u, dst_stride_u, dst_v, dst_stride_v, *destBuffer,
+    ret = converter.I420ToRGB565Matrix(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
         yDInfo.yWidth * NUM_2, yuvConstants, yDInfo.yWidth, yDInfo.yHeight);
     delete[] yu12Buffer;
     if (ret != 0) {
@@ -314,22 +314,22 @@ static bool NV21ToI420ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     auto &converter = ConverterHandle::GetInstance().GetHandle();
     uint8_t *src_y = const_cast<uint8_t *>(srcBuffer) + yDInfo.yOffset;
     uint8_t *src_vu = const_cast<uint8_t *>(srcBuffer) + yDInfo.uvOffset;
-    int src_stride_vu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
+    int srcStrideVu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
     uint8_t *dst_u = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
-    int dst_stride_u = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
+    int dstStrideU = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
     uint8_t *dst_v = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight +
         ((yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR * (yDInfo.yHeight + 1) / EVEN_ODD_DIVISOR);
-    int dst_stride_v = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
+    int dstStrideV = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
 
-    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, src_stride_vu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dst_stride_u, dst_v, dst_stride_v, yDInfo.yWidth, yDInfo.yHeight);
+    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
+        dstStrideU, dst_v, dst_stride_v, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV21ToI420 failed, ret= %{public}d!", ret);
         delete[] yu12Buffer;
         return false;
     }
 
-    ret = converter.I420ToBGRA(yu12Buffer, yDInfo.yWidth, dst_u, dst_stride_u, dst_v, dst_stride_v, *destBuffer,
+    ret = converter.I420ToBGRA(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
         yDInfo.yWidth * NUM_4, yDInfo.yWidth, yDInfo.yHeight);
     delete[] yu12Buffer;
     if (ret != 0) {
