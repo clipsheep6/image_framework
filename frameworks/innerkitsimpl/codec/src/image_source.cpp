@@ -975,6 +975,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         }
     }
 
+    #if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
+        context.allocatorType = opts_.allocatorType;
+    #endif
     errorCode = mainDecoder_->Decode(index, context);
     if (context.ifPartialOutput) {
         for (auto partialListener : decodeListeners_) {
