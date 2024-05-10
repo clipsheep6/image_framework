@@ -391,5 +391,20 @@ HWTEST_F(ImagSourceNdk2Test, OH_ImageSourceNative_Release, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSourceNative_Release end";
 }
 
+/**
+ * @tc.name: OH_ImageSourceInfo_GetMimeType
+ * @tc.desc: test OH_ImageSourceInfo_GetMimeType
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSourceInfo_GetMimeType, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSourceInfo_GetMimeType start";
+    OH_ImageSource_Info *info = nullptr;
+    Image_MimeType *mimeType = nullptr;
+    Image_ErrorCode ret = OH_ImageSourceInfo_GetMimeType(info, mimeType);
+    ASSERT_EQ(ret, IMAGE_BAD_PARAMETER);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSourceInfo_GetMimeType end";
+}
+
 }
 }
