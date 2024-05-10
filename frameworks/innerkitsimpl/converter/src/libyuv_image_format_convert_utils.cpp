@@ -393,30 +393,6 @@ static bool NV12ToNV21Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
     return result == 0 ? true : false;
 }
 
-static bool NV12ToRGBAF16Manual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
-{
-    AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV12);
-    AVPixelFormat dstFormat = findPixelFormat(PixelFormat::RGBA_F16);
-    struct SwsContext *ctx = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth, yDInfo.yHeight,
-        dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (ctx == nullptr) {
-        IMAGE_LOGE("sws_getContext: result is null!");
-        return false;
-    }
-
-    const uint8_t *srcSlice[] = { srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset };
-    const int srcStride[] = { static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride) };
-    const int dstStride[] = { static_cast<int>(yDInfo.yWidth * STRIDES_PER_PLANE) };
-    int sliceHeight = sws_scale(ctx, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, destBuffer, dstStride);
-    sws_freeContext(ctx);
-    if (sliceHeight == 0) {
-        IMAGE_LOGE("sws_scale: the height of the output slice is 0!");
-        return false;
-    }
-    return true;
-}
-
-
 bool LibyuvImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
@@ -448,46 +424,6 @@ bool LibyuvImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
-{
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
-        return false;
-    }
-    uint32_t frameSize = imageSize.width * imageSize.height;
-    destBufferSize = frameSize + (((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    if (destBufferSize <= NUM_0) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
-        return false;
-    }
-    *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
-    if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
-        return false;
-    }
-
-    AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGBA_F16);
-    AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV21);
-    SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
-        imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
-        IMAGE_LOGD("Error to create SwsContext.");
-        sws_freeContext(swsContext);
-    }
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_8)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width* imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, 0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
-    sws_freeContext(swsContext);
-    return true;
-}
-
-
 bool LibyuvImageFormatConvertUtils::NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
@@ -508,40 +444,6 @@ bool LibyuvImageFormatConvertUtils::NV21ToNV12(const uint8_t *srcBuffer, const Y
         IMAGE_LOGD("NV21 conversion to NV12 failed!");
     }
     return result;
-}
-
-bool LibyuvImageFormatConvertUtils::NV21ToRGBAF16(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
-    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
-{
-    if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
-        yDInfo.uvWidth == 0 || yDInfo.uvHeight == 0) {
-        return false;
-    }
-    destBufferSize = yDInfo.yWidth * yDInfo.yHeight * STRIDES_PER_PLANE;
-    *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
-    if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
-        return false;
-    }
-    AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV21);
-    AVPixelFormat dstFormat = findPixelFormat(PixelFormat::RGBA_F16);
-    SwsContext *swsContext = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth, yDInfo.yHeight,
-        dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
-        return false;
-    }
-    const uint8_t *srcSlice[] = {srcBuffer + yDInfo.yOffset, srcBuffer + yDInfo.uvOffset};
-    const int srcStride[] = {static_cast<int>(yDInfo.yStride), static_cast<int>(yDInfo.uvStride)};
-    uint8_t *dstSlice[] = {*destBuffer};
-    const int dstStride[] = {static_cast<int>(yDInfo.yWidth * STRIDES_PER_PLANE)};
-    int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, yDInfo.yHeight, dstSlice, dstStride);
-    sws_freeContext(swsContext);
-    if (height == 0) {
-        delete[](*destBuffer);
-        return false;
-    }
-    return true;
 }
 
 bool LibyuvImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
@@ -671,33 +573,6 @@ bool LibyuvImageFormatConvertUtils::RGB565ToNV21(const uint8_t *srcBuffer, const
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV12ToRGBAF16(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
-{
-    if (data == nullptr || destBuffer == nullptr) {
-        IMAGE_LOGE("Input buffer pointer data or destBuffer is null!");
-        return false;
-    }
-    uint32_t frameSize = yDInfo.yWidth * yDInfo.yHeight;
-    destBufferSize = frameSize * sizeof(uint64_t);
-    if (destBufferSize == 0) {
-        IMAGE_LOGE("Invalid destination buffer size is 0!");
-        return false;
-    }
-    *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
-    if (*destBuffer == nullptr) {
-        IMAGE_LOGE("Dynamically allocating memory for destination buffer failed!");
-        return false;
-    }
-    if (!NV12ToRGBAF16Manual(data, yDInfo, destBuffer)) {
-        IMAGE_LOGE("NV12ToRGBAF16 failed!");
-        delete[](*destBuffer);
-        *destBuffer = nullptr;
-        return false;
-    }
-    return true;
-}
-
 bool LibyuvImageFormatConvertUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
@@ -778,45 +653,6 @@ bool LibyuvImageFormatConvertUtils::NV12ToBGRA(const uint8_t *data, const YUVDat
         return false;
     }
 
-    return true;
-}
-
-bool LibyuvImageFormatConvertUtils::RGBAF16ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
-{
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
-        return false;
-    }
-    uint32_t frameSize = imageSize.width * imageSize.height;
-    destBufferSize = frameSize + (((imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2) * NUM_2);
-    if (destBufferSize <= 0) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
-        return false;
-    }
-    *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
-    if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
-        return false;
-    }
-
-    AVPixelFormat srcFormat = findPixelFormat(PixelFormat::RGBA_F16);
-    AVPixelFormat dstFormat = findPixelFormat(PixelFormat::NV12);
-    SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
-        imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (!swsContext) {
-        sws_freeContext(swsContext);
-        return false;
-    }
-    int widthEvent = (imageSize.width % NUM_2 == NUM_0) ? (imageSize.width) : (imageSize.width + NUM_1);
-    const uint8_t *srcSlice[NUM_1] = {srcBuffer};
-    const int srcStride[NUM_1] = {static_cast<int>(imageSize.width * NUM_8)};
-    uint8_t *dstSlice[NUM_2] = {*destBuffer, *destBuffer + imageSize.width * imageSize.height};
-    const int dstStride[NUM_2] = {static_cast<int>(imageSize.width), static_cast<int>(widthEvent)};
-    int pixelFormatConvert = sws_scale(swsContext, srcSlice, srcStride, 0, imageSize.height, dstSlice, dstStride);
-    if (pixelFormatConvert == NUM_0) {
-        delete[] destBuffer;
-    }
-    sws_freeContext(swsContext);
     return true;
 }
 
