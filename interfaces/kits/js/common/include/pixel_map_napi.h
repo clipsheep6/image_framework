@@ -21,17 +21,14 @@
 #include "image_source.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "pixel_map_napi.h"
 
 namespace OHOS {
 namespace Media {
-enum class ImageType {
-    TYPE_UNKNOWN = 0,
-    TYPE_PIXEL_MAP = 1
-};
-class PixelMapNapi {
+class SendablePixelMapNapi {
 public:
-    PixelMapNapi();
-    ~PixelMapNapi();
+    SendablePixelMapNapi();
+    ~SendablePixelMapNapi();
 
     static napi_value Init(napi_env env, napi_value exports);
 
@@ -133,64 +130,6 @@ private:
     bool isRelease = false;
     bool isPixelNapiEditable = true;
     uint32_t uniqueId_ = 0;
-};
-
-class PixelMapContainer {
-public:
-    static PixelMapContainer& GetInstance()
-    {
-        static PixelMapContainer source;
-        return source;
-    }
-
-    std::shared_ptr<PixelMap>& operator[](const uint32_t &key)
-    {
-        return map_[key];
-    }
-
-    bool IsEmpty()
-    {
-        return map_.empty();
-    }
-
-    bool Insert(const uint32_t &key, const std::shared_ptr<PixelMap> &value)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (!IsEmpty() && (map_.find(key) != map_.end())) map_.erase(key);
-        auto ret = map_.insert(std::pair<uint32_t, std::shared_ptr<PixelMap>>(key, value));
-        return ret.second;
-    }
-
-    bool Find(const uint32_t &key)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = map_.find(key);
-        return it != map_.end() ? true : false;
-    }
-
-    void Erase(const uint32_t &key)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (map_.find(key) != map_.end()) {
-            map_.erase(key);
-        }
-        return;
-    }
-
-    void Clear()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        map_.clear();
-        return;
-    }
-
-private:
-    PixelMapContainer() = default;
-    PixelMapContainer(const PixelMapContainer&) = delete;
-    PixelMapContainer(const PixelMapContainer&&) = delete;
-    PixelMapContainer &operator=(const PixelMapContainer&) = delete;
-    std::mutex mutex_;
-    std::map<uint32_t, std::shared_ptr<PixelMap>> map_;
 };
 } // namespace Media
 } // namespace OHOS
