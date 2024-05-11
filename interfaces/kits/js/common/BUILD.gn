@@ -186,7 +186,7 @@ if (use_clang_ios) {
       "napi:ace_napi",
     ]
 
-    output_name = "libsendableimage"
+    output_name = "libsendableImage"
     relative_install_dir = "module/multimedia"
     subsystem_name = "multimedia"
     part_name = "image_framework"
