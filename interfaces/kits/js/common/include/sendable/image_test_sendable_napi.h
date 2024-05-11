@@ -13,10 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_KITS_JS_COMMON_INCLUDE_NATIVE_MODULE_IMAGE_SENDABLE_H
-#define INTERFACES_KITS_JS_COMMON_INCLUDE_NATIVE_MODULE_IMAGE_SENDABLE_H
+#ifndef INTERFACES_KITS_JS_COMMON_INCLUDE_IMAGE_TEST_SENDABLE_NAPI_H
+#define INTERFACES_KITS_JS_COMMON_INCLUDE_IMAGE_TEST_SENDABLE_NAPI_H
 
-#include "napi/native_node_api.h"
-#include "image_test_sendable_napi.h"
+#include "napi/native_api.h"
 
-#endif // INTERFACES_KITS_JS_COMMON_INCLUDE_NATIVE_MODULE_IMAGE_SENDABLE_H
+namespace OHOS {
+namespace Media {
+    class ImageTestSendableNapi {
+        public:
+            static napi_value Init(napi_env env, napi_value exports);
+        private:
+            static napi_value CreateImageSource(napi_env env, napi_callback_info info);
+    }
+}
+}
+
+#endif // INTERFACES_KITS_JS_COMMON_INCLUDE_IMAGE_TEST_SENDABLE_NAPI_H

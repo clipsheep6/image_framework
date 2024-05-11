@@ -29,6 +29,8 @@ namespace Media {
  */
 static napi_value Export(napi_env env, napi_value exports)
 {
+    IMAGE_LOGE("ImageSendableNapi call");
+    ImageTestSendableNapi::Init(env, exports);
     return exports;
 }
 
