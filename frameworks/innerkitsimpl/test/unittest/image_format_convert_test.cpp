@@ -1006,7 +1006,7 @@ HWTEST_F(ImageFormatConvertTest, NV21ToRGB565_001, TestSize.Level3)
     Size size;
     size.width = srcPixelMap->GetWidth();
     size.height = srcPixelMap->GetHeight();
-    std::string outname = "Tree_n21torgb656.yuv";
+    std::string outname = "Tree_n21torgb565.yuv";
     std::string outpath = IMAGE_OUTPUT_JPG_PATH + "NV21ToRGB565/";
     WriteToFile(outpath, size, outname, data, buffersize);
 }

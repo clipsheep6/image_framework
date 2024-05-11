@@ -170,10 +170,10 @@ static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::Pixe
         SkAlphaType alphaType = ImageTypeConverter::ToSkAlphaType(AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN);
         skInfo = SkImageInfo::Make(width, height, SkColorType::kRGBA_8888_SkColorType, alphaType, nullptr);
         ExtPixels src = {
-            image.dst, width * height * NUM_3, width * height * NUM_3,
+            image.dst, width * height, width * height * NUM_3,
         };
         ExtPixels dst = {
-            holder.buf.get(), width * height * NUM_4, width * height * NUM_4,
+            holder.buf.get(), width * height, width * height * NUM_4,
         };
         res = ExtPixelConvert::RGBToRGBx(src, dst);
         if (res != SUCCESS) {

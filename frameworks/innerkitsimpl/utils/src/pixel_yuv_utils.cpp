@@ -867,9 +867,9 @@ static void Yuv420SPTranslate(const uint8_t *srcPixels, YUVDataInfo &yuvInfo,
         for (int32_t x = 0; x < GetUVStride(info.size.width); x += NUM_2) {
             int32_t newX = x + GetUVStride(xyAxis.xAxis);
             int32_t newY = y + GetUVHeight(xyAxis.yAxis);
-            if (newX >= 0 && newX < info.size.width && newY >= 0 && newY < GetUVHeight(info.size.height)) {
-                *(dstUV + newY * info.size.width + newX) = *(srcUV + y * yuvInfo.uvStride + x);
-                *(dstUV + newY * info.size.width + newX + 1) = *(srcUV + y * yuvInfo.uvStride + x + 1);
+            if (newX >= 0 && newX < GetUVStride(info.size.width) && newY >= 0 && newY < GetUVHeight(info.size.height)) {
+                *(dstUV + newY * GetUVStride(info.size.width) + newX) = *(srcUV + y * yuvInfo.uvStride + x);
+                *(dstUV + newY * GetUVStride(info.size.width) + newX + 1) = *(srcUV + y * yuvInfo.uvStride + x + 1);
             }
         }
     }

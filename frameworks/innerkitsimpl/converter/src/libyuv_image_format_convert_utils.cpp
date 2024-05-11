@@ -44,16 +44,13 @@ constexpr uint32_t NUM_1 = 1;
 constexpr uint32_t NUM_2 = 2;
 constexpr uint32_t NUM_3 = 3;
 constexpr uint32_t NUM_4 = 4;
-constexpr uint32_t NUM_8 = 8;
 
-constexpr uint32_t SRCSLICEY = 0;
 constexpr uint32_t EVEN_ODD_DIVISOR = 2;
 constexpr uint32_t TWO_SLICES = 2;
 constexpr uint32_t BYTES_PER_PIXEL_RGB565 = 2;
 constexpr uint32_t BYTES_PER_PIXEL_RGB = 3;
 constexpr uint32_t BYTES_PER_PIXEL_RGBA = 4;
 constexpr uint32_t BYTES_PER_PIXEL_BGRA = 4;
-constexpr uint32_t STRIDES_PER_PLANE = 8;
 }
 
 #undef LOG_TAG
@@ -102,15 +99,6 @@ static std::map<PixelFormat, AVPixelFormat> PixelFormatMap = {
     { PixelFormat::RGBA_F16, AV_PIX_FMT_RGBA64BE },
     { PixelFormat::RGB_888, AV_PIX_FMT_RGB24 },
 };
-
-static AVPixelFormat findPixelFormat(PixelFormat format)
-{
-    if (PixelFormatMap.find(format) != PixelFormatMap.end()) {
-        return PixelFormatMap[format];
-    } else {
-        return AV_PIX_FMT_NONE;
-    }
-}
 
 static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
@@ -285,7 +273,7 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
     int dstStrideV = yDInfo.uvStride / EVEN_ODD_DIVISOR;
 
     int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dstStrideU, dst_v, dst_stride_v, yDInfo.yWidth, yDInfo.yHeight);
+        dstStrideU, dst_v, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV21ToI420 failed, ret = %{public}d!", ret);
         delete[] yu12Buffer;
@@ -322,7 +310,7 @@ static bool NV21ToI420ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     int dstStrideV = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
 
     int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dstStrideU, dst_v, dst_stride_v, yDInfo.yWidth, yDInfo.yHeight);
+        dstStrideU, dst_v, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV21ToI420 failed, ret= %{public}d!", ret);
         delete[] yu12Buffer;
