@@ -124,6 +124,15 @@
           },
           {
             "header": {
+              "header_files": [
+                "native_module_image_sendable.h"
+              ],
+              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/js/common/include/sendable/"
+            },
+            "name": "//foundation/multimedia/image_framework/interfaces/kits/js/common:image_sendable_napi"
+          },
+          {
+            "header": {
               "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/image/",
               "header_files": [
                 "image_common.h",
