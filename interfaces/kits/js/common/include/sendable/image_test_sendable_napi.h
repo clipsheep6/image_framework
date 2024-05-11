@@ -25,7 +25,7 @@ namespace Media {
             static napi_value Init(napi_env env, napi_value exports);
         private:
             static napi_value CreateImageSource(napi_env env, napi_callback_info info);
-    }
+    };
 }
 }
 

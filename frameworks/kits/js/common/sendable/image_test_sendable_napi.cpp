@@ -41,7 +41,7 @@ namespace Media {
             DECLARE_NAPI_STATIC_FUNCTION("createImageSource", CreateImageSource)
         };
 
-        napi_status status = napi_define_properties(env, exports, sizeof(static_prop) / sizeof(static_prop[0], static_prop);
+        napi_status status = napi_define_properties(env, exports, sizeof(static_prop) / sizeof(static_prop[0]), static_prop);
         if(status != napi_ok) {
             IMAGE_ERR("ImageTestSendableNapi define property fail");
             return nullptr;
