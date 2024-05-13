@@ -202,7 +202,10 @@ if (use_clang_android) {
       ]
       external_deps = [ "graphic_surface:surface" ]
     } else {
-      defines = [ "DUAL_ADAPTER" ]
+      defines = [
+        "DUAL_ADAPTER",
+        "IMAGE_QOS_ENABLE",
+      ]
       DUAL_ADAPTER = true
 
       deps = [
@@ -225,6 +228,7 @@ if (use_clang_android) {
         "hitrace:hitrace_meter",
         "ipc:ipc_core",
         "napi:ace_napi",
+        "qos_manager:qos",
         "skia:libjpeg",
         "zlib:libz",
       ]
