@@ -19,9 +19,9 @@
 #include <cstring>
 #include <iostream>
 #include <map>
-#include "log_tags.h"
-#include "image_log.h"
 #include "hilog/log.h"
+#include "image_log.h"
+#include "log_tags.h"
 #include "securec.h"
 
 #ifdef __cplusplus
@@ -504,9 +504,9 @@ bool ImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YUVDa
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB565);
-    if(destBufferSize ==0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
@@ -638,9 +638,9 @@ bool ImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVData
         return false;
     }
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * EVEN_ODD_DIVISOR * yDInfo.uvHeight;
-    if(destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
 
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();

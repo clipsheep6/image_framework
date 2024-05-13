@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "libyuv_pixel_map_utils.h"
+#include "pixel_yuv_ext_utils.h"
 
 #include "image_log.h"
 #include "ios"
@@ -310,11 +310,9 @@ static void ScaleUVPlane(const uint8_t *src, uint8_t*dst, OpenSourceLibyuv ::Fil
     // Merge  the UV
     uint8_t *dst_uv = dst + GetYSize(dstYStride, dstYHeight);
     if (yuvInfo.yuvFormat == PixelFormat::NV12) {
-        converter.MergeUVPlane(tempUData, dstUWidth, tempVData, dstUWidth,
-                               dst_uv, dstYStride, dstUWidth, dstUHeight);
+        converter.MergeUVPlane(tempUData, dstUWidth, tempVData, dstUWidth, dst_uv, dstYStride, dstUWidth, dstUHeight);
     } else if (yuvInfo.yuvFormat == PixelFormat::NV21) {
-        converter.MergeUVPlane(tempVData, dstUWidth, tempUData, dstUWidth,
-                               dst_uv, dstYStride, dstUWidth, dstUHeight);
+        converter.MergeUVPlane(tempVData, dstUWidth, tempUData, dstUWidth, dst_uv, dstYStride, dstUWidth, dstUHeight);
     }
 
     uData = vData = nullptr;

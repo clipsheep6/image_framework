@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "libyuv_pixel_map.h"
-#include "libyuv_pixel_map_utils.h"
+#include "pixel_yuv_ext.h"
+#include "pixel_yuv_ext_utils.h"
 
 #include "image_utils.h"
 #include "image_trace.h"

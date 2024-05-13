@@ -38,6 +38,26 @@ typedef enum RotationMode {
     kRotate270 = 270,
 } RotationModeEnum;
 
+typedef enum ColorSpace {
+    UNKNOWN = 0,
+    DISPLAY_P3 = 1,
+    SRGB = 2,
+    LINEAR_SRGB = 3,
+    EXTENDED_SRGB = 4,
+    LINEAR_EXTENDED_SRGB = 5,
+    GENERIC_XYZ = 6,
+    GENERIC_LAB = 7,
+    ACES = 8,
+    ACES_CG = 9,
+    ADOBE_RGB_1998 = 10,
+    DCI_P3 = 11,
+    ITU_709 = 12,
+    ITU_2020 = 13,
+    ROMM_RGB = 14,
+    NTSC_1953 = 15,
+    SMPTE_C = 16,
+} ColorSpaceEnum;
+
 struct ImageConverter {
     int32_t (*I420ToRGBA)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
         const uint8_t *src_v, int src_stride_v, uint8_t *dst_rgba, int dst_stride_rgba, int width, int height);
@@ -88,24 +108,24 @@ struct ImageConverter {
     int32_t (*BGRAToNV21)(const uint8_t* src_argb, int src_stride_argb, uint8_t* dst_y, int dst_stride_y,
         uint8_t* dst_vu, int dst_stride_vu, int width, int height);
     int32_t (*ARGBToBGRA)(const uint8_t* src_argb, int src_stride_argb, uint8_t* dst_bgra, int dst_stride_bgra,
-        int width,int height);
-    int32_t (*I420ToRGBAMatrix)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
-        const uint8_t* src_v, int src_stride_v, uint8_t* dst_rgba, int dst_stride_rgba,
-        const struct YuvConstants* yuvconstants, int width, int height);
+        int width, int height);
     int32_t (*I420ToBGRA)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
         const uint8_t* src_v, int src_stride_v, uint8_t* dst_bgra, int dst_stride_bgra, int width, int height);
     int32_t (*RGB24ToI420)(const uint8_t* src_rgb24, int src_stride_rgb24, uint8_t* dst_y, int dst_stride_y,
         uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v, int width, int height);
     int32_t (*NV12ToRGB24Matrix)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_uv, int src_stride_uv,
-        uint8_t* dst_rgb24, int dst_stride_rgb24, const struct YuvConstants* yuvconstants, int width, int height);
+        uint8_t* dst_rgb24, int dst_stride_rgb24, enum ColorSpace colorSpace, int width, int height);
     int32_t (*NV21ToRGB24Matrix)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_vu, int src_stride_vu,
-        uint8_t* dst_rgb24, int dst_stride_rgb24, const struct YuvConstants* yuvconstants, int width, int height);
+        uint8_t* dst_rgb24, int dst_stride_rgb24, enum ColorSpace colorSpace, int width, int height);
     int32_t (*NV21ToI420)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_vu, int src_stride_vu,
         uint8_t* dst_y, int dst_stride_y, uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v,
         int width, int height);
     int32_t (*I420ToRGB565Matrix)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
         const uint8_t* src_v, int src_stride_v, uint8_t* dst_rgb565, int dst_stride_rgb565,
-        const struct YuvConstants* yuvconstants, int width, int height);
+        enum ColorSpace colorSpace, int width, int height);
+    int32_t (*I420ToABGR)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+        const uint8_t* src_v, int src_stride_v, uint8_t* dst_abgr, int dst_stride_abgr,
+        int width, int height);
 };
 struct ImageConverter GetImageConverter(void);
 

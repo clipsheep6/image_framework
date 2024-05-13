@@ -13,18 +13,16 @@
  * limitations under the License.
  */
 
-#include "libyuv_image_format_convert_utils.h"
-
-#include "libyuv/convert_argb.h"
-#include "image_convert_tools.h"
+#include "image_format_convert_utils_ext.h"
 
 #include <cmath>
 #include <cstring>
 #include <iostream>
 #include <map>
-#include "log_tags.h"
-#include "image_log.h"
 #include "hilog/log.h"
+#include "image_convert_tools.h"
+#include "image_log.h"
+#include "log_tags.h"
 #include "securec.h"
 
 namespace {
@@ -47,37 +45,6 @@ constexpr int32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
 #define LOG_TAG "ImageFormatConvert"
 namespace OHOS {
 namespace Media {
-using namespace libyuv;
-
-const struct libyuv::YuvConstants *MapColorSpaceToYuvConstants(ColorSpace colorSpace)
-{
-    switch (colorSpace) {
-        case ColorSpace::UNKNOWN:
-        case ColorSpace::SRGB:
-        case ColorSpace::LINEAR_SRGB:
-        case ColorSpace::EXTENDED_SRGB:
-        case ColorSpace::LINEAR_EXTENDED_SRGB:
-        case ColorSpace::GENERIC_XYZ:
-        case ColorSpace::GENERIC_LAB:
-        case ColorSpace::ACES:
-        case ColorSpace::ACES_CG:
-        case ColorSpace::ADOBE_RGB_1998:
-        case ColorSpace::DCI_P3:
-        case ColorSpace::ROMM_RGB:
-        case ColorSpace::NTSC_1953:
-        case ColorSpace::SMPTE_C:
-            return &libyuv::kYuvJPEGConstants;
-
-        case ColorSpace::DISPLAY_P3:
-        case ColorSpace::ITU_2020:
-            return &libyuv::kYuvJPEGConstants;
-        case ColorSpace::ITU_709:
-            return &libyuv::kYuvF709Constants;
-        default:
-            return nullptr;
-    }
-};
-
 static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
@@ -95,15 +62,12 @@ static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
         return false;
     }
 
-    const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
-        reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
     auto &converter = ConverterHandle::GetInstance().GetHandle();
     uint8_t *ySrc = i420Buffer;
     uint8_t *uSrc = i420Buffer + yPlaneSize;
     uint8_t *vSrc = i420Buffer + yPlaneSize + uPlaneSize;
     uint32_t uStride = uvPlaneWidth;
     uint32_t vStride = uvPlaneWidth;
-
 
     int32_t ret = converter.NV12ToI420(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
         yDInfo.uvStride, ySrc, yStride, uSrc, uStride, vSrc, vStride, yDInfo.yWidth, yDInfo.yHeight);
@@ -113,11 +77,11 @@ static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
         return false;
     }
     uint32_t rgbaStride = yDInfo.yWidth * BYTES_PER_PIXEL_RGBA;
-    ret = converter.I420ToRGBAMatrix(ySrc, yStride, uSrc, uStride, vSrc, vStride, *destBuffer, rgbaStride, yuvConstants,
+    ret = converter.I420ToABGR(ySrc, yStride, uSrc, uStride, vSrc, vStride, *destBuffer, rgbaStride,
         yDInfo.yWidth, yDInfo.yHeight);
     delete[] i420Buffer;
     if (ret != 0) {
-        IMAGE_LOGE("I420ToRGBAMatrix failed, ret = %{public}d!", ret);
+        IMAGE_LOGE("I420ToABGR failed, ret = %{public}d!", ret);
         return false;
     }
     return true;
@@ -126,44 +90,13 @@ static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 static bool NV12ToBGRANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
-    uint32_t yPlaneSize = yDInfo.yWidth * yDInfo.yHeight;
-    uint32_t uvPlaneWidth = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
-    uint32_t uvPlaneHeight = (yDInfo.yHeight + 1) / EVEN_ODD_DIVISOR;
-    uint32_t uPlaneSize = uvPlaneWidth * uvPlaneHeight;
-    uint32_t vPlaneSize = uPlaneSize;
-    uint32_t yStride = yDInfo.yWidth;
-    uint32_t i420BufferSize = yPlaneSize + uPlaneSize + vPlaneSize;
-    if(i420BufferSize <=0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
-    }
-    uint8_t *i420Buffer = new (std::nothrow) uint8_t[i420BufferSize];
-    if (i420Buffer == nullptr) {
-        IMAGE_LOGE("Dynamically allocating memory for i420 buffer failed!");
-        return false;
-    }
+    uint32_t bgraStride = yDInfo.yWidth * BYTES_PER_PIXEL_BGRA;
 
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    uint8_t *ySrc = i420Buffer;
-    uint8_t *uSrc = i420Buffer + yPlaneSize;
-    uint8_t *vSrc = i420Buffer + yPlaneSize + uPlaneSize;
-    uint32_t uStride = uvPlaneWidth;
-    uint32_t vStride = uvPlaneWidth;
-
-    int32_t ret = converter.NV12ToI420(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
-        yDInfo.uvStride, ySrc, yStride, uSrc, uStride, vSrc, vStride, yDInfo.yWidth, yDInfo.yHeight);
+    int32_t ret = converter.NV12ToARGB(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
+        yDInfo.uvStride, *destBuffer, bgraStride, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
-        IMAGE_LOGE("NV12ToI420 failed, ret = %{public}d!", ret);
-        delete[] i420Buffer;
-        return false;
-    }
-
-    uint32_t bgraStride = yDInfo.yWidth * BYTES_PER_PIXEL_BGRA;
-    ret = converter.I420ToBGRA(ySrc, yStride, uSrc, uStride, vSrc, vStride, *destBuffer, bgraStride, yDInfo.yWidth,
-        yDInfo.yHeight);
-    delete[] i420Buffer;
-    if (ret != 0) {
-        IMAGE_LOGE("I420ToBGRA failed, ret = %{public}d!", ret);
+        IMAGE_LOGE("NV12ToARGB failed, ret = %{public}d!", ret);
         return false;
     }
     return true;
@@ -172,12 +105,12 @@ static bool NV12ToBGRANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
-    const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
-        reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
+    // const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
+    //     reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight * EVEN_ODD_DIVISOR;
-    if(yu12BufferSize <=0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
     if (yu12Buffer == nullptr) {
@@ -219,15 +152,16 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
               << "[" << LOG_TAG << ":" << __FUNCTION__ << "]"
               << "NV21ToI420 ret:" << ret << std::endl;
     if (ret != 0) {
-        IMAGE_LOGE("NV12ToI420 failed,ret = %{public}d!", ret);
+        IMAGE_LOGE("NV21ToI420 failed,ret = %{public}d!", ret);
         delete[] yu12Buffer;
         return false;
     }
-    ret = converter.I420ToRGBAMatrix(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
-        yDInfo.yWidth * NUM_4, yuvConstants, yDInfo.yWidth, yDInfo.yHeight);
+
+    ret = converter.I420ToABGR(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
+        yDInfo.yWidth * NUM_4, yDInfo.yWidth, yDInfo.yHeight);
     delete[] yu12Buffer;
     if (ret != 0) {
-        IMAGE_LOGE("NV12ToI420 failed, ret = %{public}d!", ret);
+        IMAGE_LOGE("I420ToABGR failed, ret = %{public}d!", ret);
         return false;
     }
     std::cout << "[" << std::string(__FILE__).substr(std::string(__FILE__).find_last_of('/') + 1) << ":" << __LINE__ <<
@@ -240,12 +174,12 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
 static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
-    const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
-        reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
+    // const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
+    //     reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight * EVEN_ODD_DIVISOR;
-    if(yu12BufferSize <=0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
     if (yu12Buffer == nullptr) {
@@ -269,10 +203,11 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
         return false;
     }
     ret = converter.I420ToRGB565Matrix(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
-        yDInfo.yWidth * NUM_2, yuvConstants, yDInfo.yWidth, yDInfo.yHeight);
+        yDInfo.yWidth * NUM_2, static_cast<OHOS::OpenSourceLibyuv::ColorSpace>(colorSpace),
+        yDInfo.yWidth, yDInfo.yHeight);
     delete[] yu12Buffer;
     if (ret != 0) {
-        IMAGE_LOGE("NV12ToI420 failed, ret = %{public}d!", ret);
+        IMAGE_LOGE("I420ToRGB565Matrix failed, ret = %{public}d!", ret);
         return false;
     }
     return true;
@@ -280,42 +215,15 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 
 static bool NV21ToI420ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
-    uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight +
-        ((yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR * (yDInfo.yHeight + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR);
-
-    if(yu12BufferSize <=0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
-    }
-    uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
-    if (yu12Buffer == nullptr) {
-        IMAGE_LOGE("apply space for I420 buffer failed!");
-        return false;
-    }
-
     auto &converter = ConverterHandle::GetInstance().GetHandle();
     uint8_t *src_y = const_cast<uint8_t *>(srcBuffer) + yDInfo.yOffset;
     uint8_t *src_vu = const_cast<uint8_t *>(srcBuffer) + yDInfo.uvOffset;
     int srcStrideVu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
-    uint8_t *dst_u = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
-    int dstStrideU = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
-    uint8_t *dst_v = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight +
-        ((yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR * (yDInfo.yHeight + 1) / EVEN_ODD_DIVISOR);
-    int dstStrideV = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
 
-    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dstStrideU, dst_v, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
-    if (ret != 0) {
-        IMAGE_LOGE("NV21ToI420 failed, ret= %{public}d!", ret);
-        delete[] yu12Buffer;
-        return false;
-    }
-
-    ret = converter.I420ToBGRA(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
+    int ret = converter.NV21ToARGB(src_y, yDInfo.yStride, src_vu, srcStrideVu, *destBuffer,
         yDInfo.yWidth * NUM_4, yDInfo.yWidth, yDInfo.yHeight);
-    delete[] yu12Buffer;
     if (ret != 0) {
-        IMAGE_LOGE("I420ToBGRA failed, ret = %{public}d!", ret);
+        IMAGE_LOGE("NV21ToARGB failed, ret= %{public}d!", ret);
         return false;
     }
     return true;
@@ -327,9 +235,9 @@ static bool NV21ToNV12Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
     int32_t width = yDInfo.yWidth;
     int32_t height = yDInfo.yHeight;
 
-    if(destBufferSize <=0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (destBufferSize <=0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     uint8_t *tempBuffer = new (std::nothrow) uint8_t[destBufferSize];
     if (tempBuffer == nullptr) {
@@ -356,9 +264,9 @@ static bool NV21ToNV12Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
 static bool NV12ToNV21Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     const size_t &destBufferSize)
 {
-    if(destBufferSize <=0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     uint8_t *tempBuffer = new (std::nothrow) uint8_t[destBufferSize];
     if (tempBuffer == nullptr) {
@@ -393,9 +301,9 @@ bool LibyuvImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB565);
-    if(destBufferSize <=0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
@@ -428,9 +336,9 @@ bool LibyuvImageFormatConvertUtils::NV21ToNV12(const uint8_t *srcBuffer, const Y
     }
 
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * TWO_SLICES * yDInfo.uvHeight;
-    if(destBufferSize <=0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
@@ -453,9 +361,9 @@ bool LibyuvImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const Y
         return false;
     }
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.yWidth * EVEN_ODD_DIVISOR * yDInfo.uvHeight;
-    if(destBufferSize <=0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
@@ -515,9 +423,9 @@ bool LibyuvImageFormatConvertUtils::RGB565ToNV12(const uint8_t *srcBuffer, const
     }
     uint32_t yu12BufferSize = imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2;
-    if(yu12BufferSize <=0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-       IMAGE_LOGD("Invalid destination buffer size calculation!");
-       return false;
+    if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        return false;
     }
     uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
     if (yu12Buffer == nullptr) {
@@ -729,7 +637,7 @@ bool LibyuvImageFormatConvertUtils::RGBAToNV21(const uint8_t *srcBuffer, const S
 
     const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
-     if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+    if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -800,12 +708,11 @@ bool LibyuvImageFormatConvertUtils::RGBToNV21(const uint8_t *srcBuffer, const Si
 static bool NV12ToRGBNoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
-    const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
-        reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
     auto &converter = ConverterHandle::GetInstance().GetHandle();
     int32_t ret = converter.NV12ToRGB24Matrix(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
-        yDInfo.uvStride, *destBuffer, yDInfo.yStride * BYTES_PER_PIXEL_RGB, yuvConstants, yDInfo.yWidth,
-        yDInfo.yHeight);
+        yDInfo.uvStride, *destBuffer, yDInfo.yStride * BYTES_PER_PIXEL_RGB,
+        static_cast<OHOS::OpenSourceLibyuv::ColorSpace>(colorSpace),
+        yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV12ToRGB24Matrix failed, ret = %{public}d!", ret);
         return false;
@@ -861,13 +768,13 @@ bool LibyuvImageFormatConvertUtils::NV21ToRGB(const uint8_t *data, const YUVData
         IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
-    const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
-        reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
     auto &converter = ConverterHandle::GetInstance().GetHandle();
     std::cout << "converter:" << (void *)&converter << std::endl;
     std::cout << "NV21ToRGB24Matrix:" << (void *)converter.NV21ToRGB24Matrix << std::endl;
     converter.NV21ToRGB24Matrix(data + yDInfo.yOffset, yDInfo.yStride, data + yDInfo.uvOffset,
-        yDInfo.uvStride, *destBuffer, yDInfo.yWidth * BYTES_PER_PIXEL_RGB, yuvConstants, yDInfo.yWidth, yDInfo.yHeight);
+        yDInfo.uvStride, *destBuffer, yDInfo.yWidth * BYTES_PER_PIXEL_RGB,
+        static_cast<OHOS::OpenSourceLibyuv::ColorSpace>(colorSpace),
+        yDInfo.yWidth, yDInfo.yHeight);
     return true;
 }
 

@@ -578,7 +578,7 @@ static uint32_t ImageConvert_RgbToYuv(OH_PixelmapNative *srcPixelMap, OH_Pixelma
 }
 
 MIDK_EXPORT
-Image_ErrorCode OH_PixelMapNative_ConvertPixelFormat(OH_PixelmapNative *srcPixelMap, OH_PixelmapNative **destPixelMap, 
+Image_ErrorCode OH_PixelMapNative_ConvertPixelFormat(OH_PixelmapNative *srcPixelMap, OH_PixelmapNative **destPixelMap,
                                                      int32_t destPixelFormat)
 {
     if (srcPixelMap == nullptr) {

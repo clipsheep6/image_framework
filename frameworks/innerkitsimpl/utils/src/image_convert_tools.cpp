@@ -33,11 +33,11 @@ const std::string YUV_LIB_PATH = "/system/lib/chipset-pub-sdk/libyuv.z.so";
 const std::string GET_IMAGE_CONVERTER_FUNC = "GetImageConverter";
 }
 
-#ifdef LIBYUV_ENABLE
+#ifdef EXT_PIXEL
 using GetImageConverterFunc = OHOS::OpenSourceLibyuv::ImageConverter (*)();
 #endif
 
-#ifdef LIBYUV_ENABLE
+#ifdef EXT_PIXEL
 IMPLEMENT_SINGLE_INSTANCE(ConverterHandle);
 void ConverterHandle::InitConverter()
 {

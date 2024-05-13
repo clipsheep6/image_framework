@@ -50,8 +50,8 @@ if (use_clang_ios) {
     deps += [ "//third_party/ffmpeg:libohosffmpeg" ]
     if (defined(global_parts_info) &&
         defined(global_parts_info.open_source_libyuv)) {
-      defines += [ "LIBYUV_ENABLE" ]
-      sources += [ "src/libyuv_pixel_map_utils.cpp" ]
+      defines += [ "EXT_PIXEL" ]
+      sources += [ "src/pixel_yuv_ext_utils.cpp" ]
     }
 
     #relative_install_dir = "module/multimedia"
@@ -155,8 +155,8 @@ if (use_clang_ios) {
 
     if (defined(global_parts_info) &&
         defined(global_parts_info.open_source_libyuv)) {
-      defines += [ "LIBYUV_ENABLE" ]
-      sources += [ "src/libyuv_pixel_map_utils.cpp" ]
+      defines += [ "EXT_PIXEL" ]
+      sources += [ "src/pixel_yuv_ext_utils.cpp" ]
     }
 
     #relative_install_dir = "module/multimedia"
@@ -272,8 +272,8 @@ ohos_static_library("image_utils_static") {
   }
   if (defined(global_parts_info) &&
       defined(global_parts_info.open_source_libyuv)) {
-    defines = [ "LIBYUV_ENABLE" ]
-    sources += [ "src/libyuv_pixel_map_utils.cpp" ]
+    defines = [ "EXT_PIXEL" ]
+    sources += [ "src/pixel_yuv_ext_utils.cpp" ]
   }
   subsystem_name = "multimedia"
   part_name = "image_framework"

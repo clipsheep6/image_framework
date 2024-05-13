@@ -14,13 +14,13 @@
  */
 
 #include "image_format_convert.h"
-#include "libyuv_image_format_convert_utils.h"
 
-#include <memory>
 #include <map>
-#include "image_source.h"
-#include "image_log.h"
+#include <memory>
 #include "hilog/log.h"
+#include "image_format_convert_utils_ext.h"
+#include "image_log.h"
+#include "image_source.h"
 #include "log_tags.h"
 #include "media_errors.h"
 #include "pixel_yuv.h"
@@ -44,7 +44,7 @@ namespace OHOS {
 namespace Media {
 
 static const std::map<std::pair<PixelFormat, PixelFormat>, ConvertFunction> g_cvtFuncMap = []() {
-#ifndef LIBYUV_ENABLE
+#ifndef EXT_PIXEL
     static const std::map<std::pair<PixelFormat, PixelFormat>, ConvertFunction> cvtFuncMap = {
         {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV21), ImageFormatConvertUtils::RGB565ToNV21},
         {std::make_pair(PixelFormat::RGB_565, PixelFormat::NV12), ImageFormatConvertUtils::RGB565ToNV12},
@@ -75,7 +75,7 @@ static const std::map<std::pair<PixelFormat, PixelFormat>, ConvertFunction> g_cv
 }();
 
 static const std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> g_yuvCvtFuncMap = []() {
-#ifndef LIBYUV_ENABLE
+#ifndef EXT_PIXEL
     std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> yuvCvtFuncMap = {
         {std::make_pair(PixelFormat::NV12, PixelFormat::NV21), ImageFormatConvertUtils::NV12ToNV21},
         {std::make_pair(PixelFormat::NV12, PixelFormat::RGB_888), ImageFormatConvertUtils::NV12ToRGB},

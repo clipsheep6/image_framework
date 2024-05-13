@@ -260,11 +260,10 @@ if (use_clang_android) {
 
     if (defined(global_parts_info) &&
         defined(global_parts_info.open_source_libyuv)) {
-      defines += [ "LIBYUV_ENABLE" ]
-      external_deps += [ "libyuv:yuv" ]
+      defines += [ "EXT_PIXEL" ]
       sources += [
-        "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp",
-        "${image_subsystem}/frameworks/innerkitsimpl/converter/src/libyuv_image_format_convert_utils.cpp"
+        "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv_ext.cpp",
+        "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils_ext.cpp"
       ]
     }
 
@@ -429,11 +428,10 @@ ohos_static_library("image_static") {
 
   if (defined(global_parts_info) &&
       defined(global_parts_info.open_source_libyuv)) {
-    defines += [ "LIBYUV_ENABLE" ]
-    external_deps += [ "libyuv:yuv" ]
+    defines += [ "EXT_PIXEL" ]
     sources += [
-        "${image_subsystem}/frameworks/innerkitsimpl/common/src/libyuv_pixel_map.cpp",
-        "${image_subsystem}/frameworks/innerkitsimpl/converter/src/libyuv_image_format_convert_utils.cpp"
+        "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv_ext.cpp",
+        "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils_ext.cpp"
     ]
   }
 

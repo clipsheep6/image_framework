@@ -18,14 +18,14 @@
 
 #include <atomic>
 
-#ifdef LIBYUV_ENABLE
+#ifdef EXT_PIXEL
 #include "image_converter.h"
 #include "single_instance.h"
 #endif
 
 namespace OHOS {
 namespace Media {
-#ifdef LIBYUV_ENABLE
+#ifdef EXT_PIXEL
 class ConverterHandle {
     DECLARE_SINGLE_INSTANCE(ConverterHandle);
 
