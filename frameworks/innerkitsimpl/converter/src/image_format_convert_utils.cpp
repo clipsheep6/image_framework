@@ -44,6 +44,7 @@ namespace {
     constexpr uint32_t BYTES_PER_PIXEL_RGBA = 4;
     constexpr uint32_t BYTES_PER_PIXEL_BGRA = 4;
     constexpr uint32_t STRIDES_PER_PLANE = 8;
+    constexpr int32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
 }
 
 #undef LOG_TAG
@@ -54,7 +55,7 @@ static std::map<PixelFormat, AVPixelFormat> PixelFormatMap = {
     {PixelFormat::UNKNOWN, AV_PIX_FMT_NONE},
     {PixelFormat::NV12, AV_PIX_FMT_NV12},
     {PixelFormat::NV21, AV_PIX_FMT_NV21},
-    {PixelFormat::RGB_565, AV_PIX_FMT_RGB565BE},
+    {PixelFormat::RGB_565, AV_PIX_FMT_RGB565},
     {PixelFormat::RGBA_8888, AV_PIX_FMT_RGBA},
     {PixelFormat::BGRA_8888, AV_PIX_FMT_BGRA},
     {PixelFormat::ARGB_8888, AV_PIX_FMT_ARGB},
@@ -503,6 +504,10 @@ bool ImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YUVDa
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB565);
+    if(destBufferSize ==0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+       IMAGE_LOGD("Invalid destination buffer size calculation!");
+       return false;
+    }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
@@ -525,7 +530,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, const Size
     uint32_t frameSize = imageSize.width * imageSize.height;
     destBufferSize = frameSize +
         (((imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -568,6 +573,10 @@ bool ImageFormatConvertUtils::NV21ToNV12(const uint8_t *srcBuffer, const YUVData
         return false;
     }
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * TWO_SLICES * yDInfo.uvHeight;
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size is 0!");
+        return false;
+    }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize];
     if (*destBuffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
@@ -589,6 +598,10 @@ bool ImageFormatConvertUtils::NV21ToRGBAF16(const uint8_t *srcBuffer, const YUVD
         return false;
     }
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight * STRIDES_PER_PLANE;
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size is 0!");
+        return false;
+    }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
@@ -625,6 +638,11 @@ bool ImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVData
         return false;
     }
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * EVEN_ODD_DIVISOR * yDInfo.uvHeight;
+    if(destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+       IMAGE_LOGD("Invalid destination buffer size calculation!");
+       return false;
+    }
+
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
@@ -646,7 +664,7 @@ bool ImageFormatConvertUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size &i
     size_t destPlaneSizeY = imageSize.width * imageSize.height;
     size_t srcPlaneSizeUV = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + srcPlaneSizeUV * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -674,10 +692,11 @@ bool ImageFormatConvertUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Size 
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
+
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
@@ -702,7 +721,7 @@ bool ImageFormatConvertUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Size 
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES) *
         ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -731,11 +750,10 @@ bool ImageFormatConvertUtils::NV12ToRGBAF16(const uint8_t *data, const YUVDataIn
 
     uint32_t frameSize = yDInfo.yWidth * yDInfo.yHeight;
     destBufferSize = frameSize * sizeof(uint64_t);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size is 0!");
         return false;
     }
-
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGE("Dynamically allocating memory for destination buffer failed!");
@@ -761,7 +779,7 @@ bool ImageFormatConvertUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size &i
     const int32_t destPlaneSizeY = imageSize.width * imageSize.height;
     const int32_t destPlaneSizeVU = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -789,7 +807,7 @@ bool ImageFormatConvertUtils::NV12ToRGBA(const uint8_t *data, const YUVDataInfo 
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGBA);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size is 0!");
         return false;
     }
@@ -819,7 +837,7 @@ bool ImageFormatConvertUtils::NV12ToBGRA(const uint8_t *data, const YUVDataInfo 
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_BGRA);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size is 0!");
         return false;
     }
@@ -849,7 +867,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV12(const uint8_t *srcBuffer, const Size
     uint32_t frameSize = imageSize.width * imageSize.height;
     destBufferSize = frameSize +
         (((imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -892,7 +910,7 @@ bool ImageFormatConvertUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size &i
     size_t destPlaneSizeY = imageSize.width * imageSize.height;
     size_t destPlaneSizeUV = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = destPlaneSizeY + destPlaneSizeUV * TWO_SLICES;
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -920,7 +938,7 @@ bool ImageFormatConvertUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size &i
     size_t destPlaneSizeY = imageSize.width * imageSize.height;
     size_t destPlaneSizeVU = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -949,7 +967,7 @@ bool ImageFormatConvertUtils::RGBToNV21(const uint8_t *srcBuffer, const Size &im
     destBufferSize = static_cast<size_t>
         (imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES *
         ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES));
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
@@ -1002,7 +1020,7 @@ bool ImageFormatConvertUtils::NV12ToRGB(const uint8_t *data, const YUVDataInfo &
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size is 0!");
         return false;
     }
@@ -1033,6 +1051,10 @@ bool ImageFormatConvertUtils::NV21ToRGB(const uint8_t *data, const YUVDataInfo &
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB);
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size is 0!");
+        return false;
+    }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGE("apply space for dest buffer failed!");
@@ -1072,6 +1094,10 @@ bool ImageFormatConvertUtils::NV21ToRGBA(const uint8_t *srcBuffer, const YUVData
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGBA);
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size is 0!");
+        return false;
+    }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGE("Apply space for dest buffer failed!");
@@ -1095,6 +1121,10 @@ bool ImageFormatConvertUtils::NV21ToBGRA(const uint8_t *srcBuffer, const YUVData
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_BGRA);
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size is 0!");
+        return false;
+    }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGE("apply space for dest buffer failed!");
@@ -1119,6 +1149,10 @@ bool ImageFormatConvertUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YUVDa
     }
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB565);
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size is 0!");
+        return false;
+    }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
         IMAGE_LOGD("apply space for dest buffer failed!");
@@ -1142,7 +1176,7 @@ bool ImageFormatConvertUtils::RGBToNV12(const uint8_t *srcBuffer, const Size &im
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + (imageSize.width + 1) / TWO_SLICES *
         (imageSize.height + 1) / TWO_SLICES * TWO_SLICES);
-    if (destBufferSize == 0) {
+    if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
         return false;
     }
