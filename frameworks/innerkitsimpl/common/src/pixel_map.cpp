@@ -868,7 +868,10 @@ uint32_t PixelMap::SetRowDataSizeForImageInfo(ImageInfo info)
                 return ERR_IMAGE_DATA_ABNORMAL;
             }
             SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*>(context_);
-            SetRowStride(sbBuffer->GetStride());
+            if (sbBuffer->GetFormat() == GRAPHIC_PIXEL_FMT_BLOB) {
+            } else {
+                SetRowStride(sbBuffer->GetStride());
+            }
         } else {
             SetRowStride(pixelBytes_ * info.size.width);
         }
