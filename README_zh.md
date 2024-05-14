@@ -1,6 +1,6 @@
 
 
-# Image组件
+# Image组件.
 
 - [简介](#introduction)
 - [目录](#index)
