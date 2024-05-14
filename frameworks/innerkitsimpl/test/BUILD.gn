@@ -192,9 +192,9 @@ ohos_unittest("imagesourcetest") {
   }
 
   deps = [
+    "$image_subsystem/plugins/common/libs/image/libextplugin:heifparser",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
-    "$image_subsystem/plugins/common/libs/image/libextplugin:heifparser",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
     "//third_party/zlib:libz",
