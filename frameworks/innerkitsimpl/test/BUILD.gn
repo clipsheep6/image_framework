@@ -221,6 +221,40 @@ ohos_unittest("imagesourcetest") {
   resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
 }
 
+ohos_unittest("rawtest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/include",
+    "$image_subsystem/frameworks/innerkitsimpl/converter/include",
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest",
+    "$image_subsystem/frameworks/innerkitsimpl/utils/include",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/plugins/manager/include",
+    "${image_subsystem}/../../../foundation/multimedia/utils/include",
+    "//third_party/googletest/googletest/include",
+    "${image_subsystem}/../../../commonlibrary/c_utils/base/include",
+  ]
+  sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_raw_test.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_source_test/image_source_util.cpp",
+  ]
+  deps = [
+    "${image_subsystem}/../../../foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/../../../foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "//third_party/googletest:gmock_main",
+    "//third_party/googletest:gtest_main",
+    "//third_party/zlib:libz",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
+  resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
+}
+
 ohos_unittest("jpegdecoderextest") {
   module_out_path = module_output_path
 
@@ -1742,6 +1776,8 @@ group("unittest") {
     ":textureencodetest",
     ":transformtest",
     ":webpplugintest",
+
+    #":rawtest",
   ]
 
   if (enable_jpeg_hw_decode) {
