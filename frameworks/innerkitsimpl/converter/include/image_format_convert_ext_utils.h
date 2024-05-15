@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_FORMAT_CONVERT_UTILS_EXT_H
-#define FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_FORMAT_CONVERT_UTILS_EXT_H
+#ifndef FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_FORMAT_CONVERT_EXT_UTILS_H
+#define FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_FORMAT_CONVERT_EXT_UTILS_H
 
 #include <cinttypes>
 #include <image_type.h>
@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace Media {
 
-class LibyuvImageFormatConvertUtils {
+class ImageFormatConvertExtUtils {
 public:
     static bool RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                              size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
@@ -65,4 +65,4 @@ public:
 } // namespace Media
 } // namespace OHOS
 
-#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_FORMAT_CONVERT_UTILS_EXT_H
+#endif // FRAMEWORKS_INNERKITSIMPL_COMMON_INCLUDE_IMAGE_FORMAT_CONVERT_EXT_UTILS_H

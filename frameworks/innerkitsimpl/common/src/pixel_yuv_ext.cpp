@@ -38,7 +38,7 @@
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
-#define LOG_TAG "LibYuvPixelMap"
+#define LOG_TAG "PixelYuvExt"
 
 namespace OHOS {
 namespace Media {
@@ -79,7 +79,7 @@ static bool isSameColorSpace(const OHOS::ColorManager::ColorSpace &src,
     return SkColorSpace::Equals(skSrc.get(), skDst.get());
 }
 
-bool  LibYuvPixelMap::resize(float xAxis, float yAxis)
+bool  PixelYuvExt::resize(float xAxis, float yAxis)
 {
     scale(xAxis, yAxis);
     return true;
@@ -94,10 +94,10 @@ static bool IsSupportAntiAliasing(const ImageInfo &imageInfo, const AntiAliasing
            imageInfo.size.height <= ANTIALIASING_SIZE;
 }
 
-LibYuvPixelMap::~LibYuvPixelMap()
+PixelYuvExt::~PixelYuvExt()
 {
 }
-void LibYuvPixelMap::scale(float xAxis, float yAxis)
+void PixelYuvExt::scale(float xAxis, float yAxis)
 {
     ImageInfo imageInfo;
     GetImageInfo(imageInfo);
@@ -111,7 +111,7 @@ void LibYuvPixelMap::scale(float xAxis, float yAxis)
     scale(xAxis, yAxis, AntiAliasingOption::NONE);
 }
 
-void LibYuvPixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
+void PixelYuvExt::scale(float xAxis, float yAxis, const AntiAliasingOption &option)
 {
     ImageTrace imageTrace("PixelMap scale");
     ImageInfo imageInfo;
@@ -125,7 +125,7 @@ void LibYuvPixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &o
         IMAGE_LOGE("scale CreateMemory failed");
         return;
     }
-#if !defined(IOS_PLATFORM)&& !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM)&& !defined(ANDROID_PLATFORM)
     if (allocatorType_ == AllocatorType::DMA_ALLOC) {
         if (m->extend.data == nullptr) {
             IMAGE_LOGE("GendstTransInfo get surfacebuffer failed");
@@ -136,30 +136,31 @@ void LibYuvPixelMap::scale(float xAxis, float yAxis, const AntiAliasingOption &o
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
     YuvImageInfo yuvInfo = {PixelYuvUtils::ConvertFormat(imageInfo.pixelFormat),
-                            imageInfo_.size.width, imageInfo.size.height,
-                            imageInfo_.pixelFormat, yuvDataInfo};
-    LibYuvPixelMapUtils::ScaleYuv420(xAxis, yAxis, option, yuvInfo, data_, dst);
+                            imageInfo.size.width, imageInfo.size.height,
+                            imageInfo.pixelFormat, yuvDataInfo};
+    PixelYuvExtUtils::ScaleYuv420(xAxis, yAxis, option, yuvInfo, data_, dst);
     SetPixelsAddr(reinterpret_cast<void *>(dst), m->extend.data, m->data.size, m->GetType(), nullptr);
     imageInfo.size.width = dstW;
     imageInfo.size.height = dstH;
     SetImageInfo(imageInfo, true);
+    AssignYuvDataOnType(imageInfo.pixelFormat, imageInfo.size.width, imageInfo.size.height);
 }
 
-void LibYuvPixelMap::rotate(float degrees)
+void PixelYuvExt::rotate(float degrees)
 {
     if (degrees == 0) {
         return;
     }
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
-    if (!LibYuvPixelMapUtils::YuvRotate(data_, imageInfo_.size, degrees, imageInfo_.pixelFormat, yuvDataInfo)) {
+    if (!PixelYuvExtUtils::YuvRotate(data_, imageInfo_.size, degrees, imageInfo_.pixelFormat, yuvDataInfo)) {
         return;
 }
     AssignYuvDataOnType(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
     return;
 }
 
-void LibYuvPixelMap::flip(bool xAxis, bool yAxis)
+void PixelYuvExt::flip(bool xAxis, bool yAxis)
 {
     if (xAxis == false && yAxis == false) {
         return;
@@ -187,17 +188,14 @@ void LibYuvPixelMap::flip(bool xAxis, bool yAxis)
     YUVDataInfo yuvDataInfo;
     GetImageYUVInfo(yuvDataInfo);
     if (xAxis && yAxis) {
-        if (!LibYuvPixelMapUtils::ReversalYuv(data_, dst, imageInfo.size,
-                                              imageInfo.pixelFormat,
-                                              yuvDataInfo)) {
+        if (!PixelYuvExtUtils::ReversalYuv(data_, dst, imageInfo.size, imageInfo.pixelFormat, yuvDataInfo)) {
             IMAGE_LOGE("ReversalYuv failed");
             m->Release();
             return;
         }
     } else {
         bool isXaxis = ((xAxis | yAxis) && xAxis) ? true : false;
-        if (!LibYuvPixelMapUtils::FlipYuv(data_, dst, imageInfo, isXaxis,
-                                          yuvDataInfo)) {
+        if (!PixelYuvExtUtils::FlipYuv(data_, dst, imageInfo, isXaxis, yuvDataInfo)) {
             IMAGE_LOGE("FlipYuv failed");
             m->Release();
             return;
@@ -208,7 +206,7 @@ void LibYuvPixelMap::flip(bool xAxis, bool yAxis)
 }
 
 #ifdef IMAGE_COLORSPACE_FLAG
-bool LibYuvPixelMap::CheckColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
+bool PixelYuvExt::CheckColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
 {
     auto grName = grColorSpace.GetColorSpaceName();
     if (grColorSpace_ != nullptr &&
@@ -222,7 +220,7 @@ bool LibYuvPixelMap::CheckColorSpace(const OHOS::ColorManager::ColorSpace &grCol
     return false;
 }
 
-int32_t LibYuvPixelMap::ColorSpaceBGRAToYuv(
+int32_t PixelYuvExt::ColorSpaceBGRAToYuv(
     uint8_t *bgraData, SkTransYuvInfo &dst, ImageInfo &imageInfo,
     PixelFormat &format, const OHOS ::ColorManager::ColorSpace &grColorSpace)
 {
@@ -230,8 +228,7 @@ int32_t LibYuvPixelMap::ColorSpaceBGRAToYuv(
     int32_t dstHeight = dst.info.height();
     uint32_t pictureSize = GetImageSize(dstWidth, dstHeight);
     std::unique_ptr<uint8_t[]> yuvData = std::make_unique<uint8_t[]>(pictureSize);
-    if (!LibYuvPixelMapUtils::BGRAToYuv420(bgraData, yuvData.get(), dstWidth,
-                                           dstHeight, format)) {
+    if (!PixelYuvExtUtils::BGRAToYuv420(bgraData, yuvData.get(), dstWidth, dstHeight, format)) {
         IMAGE_LOGE("BGRAToYuv420 failed");
         return ERR_IMAGE_COLOR_CONVERT;
     }
@@ -245,7 +242,7 @@ int32_t LibYuvPixelMap::ColorSpaceBGRAToYuv(
     return SUCCESS;
 }
 
-uint32_t LibYuvPixelMap::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
+uint32_t PixelYuvExt::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &grColorSpace)
 {
     if (CheckColorSpace(grColorSpace)) {
         return SUCCESS;
@@ -260,7 +257,7 @@ uint32_t LibYuvPixelMap::ApplyColorSpace(const OHOS::ColorManager::ColorSpace &g
     uint8_t *srcData = data_;
     std::unique_ptr<uint8_t[]> RGBAdata =
         std::make_unique<uint8_t[]>(width * height * NUM_4);
-    if (!LibYuvPixelMapUtils::Yuv420ToBGRA(srcData, RGBAdata.get(), imageInfo_.size, format, yuvDataInfo)) {
+    if (!PixelYuvExtUtils::Yuv420ToBGRA(srcData, RGBAdata.get(), imageInfo_.size, format, yuvDataInfo)) {
         IMAGE_LOGE("Yuv420ToBGRA failed");
         return ERR_IMAGE_COLOR_CONVERT;
     }

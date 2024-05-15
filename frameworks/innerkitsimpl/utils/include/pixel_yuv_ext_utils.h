@@ -28,7 +28,7 @@
 
 namespace OHOS {
 namespace Media {
-class LibYuvPixelMapUtils {
+class PixelYuvExtUtils {
 public:
     static bool BGRAToYuv420(const uint8_t *src, uint8_t *dst, int srcW, int srcH, PixelFormat pixelFormat);
     static bool Yuv420ToBGRA(const uint8_t *sample, uint8_t *dst_argb, Size &size,

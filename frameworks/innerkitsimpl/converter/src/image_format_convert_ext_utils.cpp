@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "image_format_convert_utils_ext.h"
+#include "image_format_convert_ext_utils.h"
 
 #include <cmath>
 #include <cstring>
@@ -42,7 +42,7 @@ constexpr int32_t PIXEL_MAP_MAX_RAM_SIZE = 600 * 1024 * 1024;
 }
 
 #undef LOG_TAG
-#define LOG_TAG "ImageFormatConvert"
+#define LOG_TAG "ImageFormatConvertExt"
 namespace OHOS {
 namespace Media {
 static bool NV12ToRGBANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
@@ -105,8 +105,6 @@ static bool NV12ToBGRANoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
-    // const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
-    //     reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight * EVEN_ODD_DIVISOR;
     if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
@@ -119,63 +117,36 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     }
 
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    uint8_t *src_vu = const_cast<uint8_t *>(srcBuffer) + yDInfo.uvOffset;
-    uint8_t *src_y = const_cast<uint8_t *>(srcBuffer) + yDInfo.yOffset;
+    uint8_t *srcVU = const_cast<uint8_t *>(srcBuffer) + yDInfo.uvOffset;
+    uint8_t *srcY = const_cast<uint8_t *>(srcBuffer) + yDInfo.yOffset;
     int srcStrideVu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
-    uint8_t *dst_u = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
+    uint8_t *dstU = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
     int dstStrideU = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
-    uint8_t *dst_v = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight +
+    uint8_t *dstV = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight +
         ((yDInfo.yWidth + NUM_1) / EVEN_ODD_DIVISOR * (yDInfo.yHeight + 1) / EVEN_ODD_DIVISOR);
     int dstStrideV = (yDInfo.yWidth + 1) / EVEN_ODD_DIVISOR;
 
-    std::cout << "[" << std::string(__FILE__).substr(std::string(__FILE__).find_last_of('/') + 1) << ":" << __LINE__ <<
-        "]"
-              << "[" << LOG_TAG << ":" << __FUNCTION__ << "]"
-              << "converter:" << (void *)&converter << std::endl;
-    std::cout << "converter.NV21ToI420:" << (void *)converter.NV21ToI420 << ","
-              << " src_y:" << (void *)src_y << ","
-              << " yDInfo.yStride:" << yDInfo.yStride << ","
-              << " src_vu:" << (void *)src_vu << ","
-              << " src_stride_vu:" << srcStrideVu << ","
-              << " yu12Buffer:" << (void *)yu12Buffer << ","
-              << " dst_u:" << (void *)dst_u << ","
-              << " dst_v:" << (void *)dst_v << ","
-              << " yDInfo.yWidth:" << yDInfo.yWidth << ","
-              << " yDInfo.yHeight:" << yDInfo.yHeight << ","
-              << " dst_stride_u:" << dstStrideU << ","
-              << " dst_stride_v:" << dstStrideV << std::endl;
+    int ret = converter.NV21ToI420(srcY, yDInfo.yStride, srcVU, srcStrideVu, yu12Buffer, yDInfo.yWidth, dstU,
+        dstStrideU, dstV, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
 
-    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dstStrideU, dst_v, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
-    std::cout << "[" << std::string(__FILE__).substr(std::string(__FILE__).find_last_of('/') + 1) << ":" << __LINE__ <<
-        "]"
-              << "[" << LOG_TAG << ":" << __FUNCTION__ << "]"
-              << "NV21ToI420 ret:" << ret << std::endl;
     if (ret != 0) {
         IMAGE_LOGE("NV21ToI420 failed,ret = %{public}d!", ret);
         delete[] yu12Buffer;
         return false;
     }
-
-    ret = converter.I420ToABGR(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
+    ret = converter.I420ToABGR(yu12Buffer, yDInfo.yWidth, dstU, dstStrideU, dstV, dstStrideV, *destBuffer,
         yDInfo.yWidth * NUM_4, yDInfo.yWidth, yDInfo.yHeight);
     delete[] yu12Buffer;
     if (ret != 0) {
         IMAGE_LOGE("I420ToABGR failed, ret = %{public}d!", ret);
         return false;
     }
-    std::cout << "[" << std::string(__FILE__).substr(std::string(__FILE__).find_last_of('/') + 1) << ":" << __LINE__ <<
-        "]"
-              << "[" << LOG_TAG << ":" << __FUNCTION__ << "]"
-              << "end" << std::endl;
     return true;
 }
 
 static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     ColorSpace colorSpace)
 {
-    // const OHOS::OpenSourceLibyuv::YuvConstants *yuvConstants =
-    //     reinterpret_cast<const OHOS::OpenSourceLibyuv::YuvConstants *>(MapColorSpaceToYuvConstants(colorSpace));
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight * EVEN_ODD_DIVISOR;
     if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGD("Invalid destination buffer size calculation!");
@@ -187,22 +158,22 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
         return false;
     }
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    const uint8_t *src_y = srcBuffer + yDInfo.yOffset;
-    const uint8_t *src_vu = srcBuffer + yDInfo.uvOffset;
+    const uint8_t *srcY = srcBuffer + yDInfo.yOffset;
+    const uint8_t *srcVU = srcBuffer + yDInfo.uvOffset;
     int srcStrideVu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
-    uint8_t *dst_u = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
+    uint8_t *dstU = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight;
     int dstStrideU = yDInfo.uvStride / EVEN_ODD_DIVISOR;
-    uint8_t *dst_v = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight;
+    uint8_t *dstV = yu12Buffer + yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight;
     int dstStrideV = yDInfo.uvStride / EVEN_ODD_DIVISOR;
 
-    int ret = converter.NV21ToI420(src_y, yDInfo.yStride, src_vu, srcStrideVu, yu12Buffer, yDInfo.yWidth, dst_u,
-        dstStrideU, dst_v, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
+    int ret = converter.NV21ToI420(srcY, yDInfo.yStride, srcVU, srcStrideVu, yu12Buffer, yDInfo.yWidth, dstU,
+        dstStrideU, dstV, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV21ToI420 failed, ret = %{public}d!", ret);
         delete[] yu12Buffer;
         return false;
     }
-    ret = converter.I420ToRGB565Matrix(yu12Buffer, yDInfo.yWidth, dst_u, dstStrideU, dst_v, dstStrideV, *destBuffer,
+    ret = converter.I420ToRGB565Matrix(yu12Buffer, yDInfo.yWidth, dstU, dstStrideU, dstV, dstStrideV, *destBuffer,
         yDInfo.yWidth * NUM_2, static_cast<OHOS::OpenSourceLibyuv::ColorSpace>(colorSpace),
         yDInfo.yWidth, yDInfo.yHeight);
     delete[] yu12Buffer;
@@ -216,11 +187,11 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 static bool NV21ToI420ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    uint8_t *src_y = const_cast<uint8_t *>(srcBuffer) + yDInfo.yOffset;
-    uint8_t *src_vu = const_cast<uint8_t *>(srcBuffer) + yDInfo.uvOffset;
+    uint8_t *srcY = const_cast<uint8_t *>(srcBuffer) + yDInfo.yOffset;
+    uint8_t *srcVU = const_cast<uint8_t *>(srcBuffer) + yDInfo.uvOffset;
     int srcStrideVu = (yDInfo.uvStride + 1) / EVEN_ODD_DIVISOR * EVEN_ODD_DIVISOR;
 
-    int ret = converter.NV21ToARGB(src_y, yDInfo.yStride, src_vu, srcStrideVu, *destBuffer,
+    int ret = converter.NV21ToARGB(srcY, yDInfo.yStride, srcVU, srcStrideVu, *destBuffer,
         yDInfo.yWidth * NUM_4, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV21ToARGB failed, ret= %{public}d!", ret);
@@ -292,7 +263,7 @@ static bool NV12ToNV21Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
     return result == 0 ? true : false;
 }
 
-bool LibyuvImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+bool ImageFormatConvertExtUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
@@ -327,7 +298,7 @@ bool LibyuvImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+bool ImageFormatConvertExtUtils::NV21ToNV12(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
@@ -353,7 +324,7 @@ bool LibyuvImageFormatConvertUtils::NV21ToNV12(const uint8_t *srcBuffer, const Y
     return result;
 }
 
-bool LibyuvImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+bool ImageFormatConvertExtUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
@@ -377,7 +348,7 @@ bool LibyuvImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const Y
     return result;
 }
 
-bool LibyuvImageFormatConvertUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
@@ -403,7 +374,7 @@ bool LibyuvImageFormatConvertUtils::BGRAToNV12(const uint8_t *srcBuffer, const S
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
@@ -450,7 +421,7 @@ bool LibyuvImageFormatConvertUtils::RGB565ToNV12(const uint8_t *srcBuffer, const
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
@@ -488,7 +459,7 @@ bool LibyuvImageFormatConvertUtils::RGB565ToNV21(const uint8_t *srcBuffer, const
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -514,7 +485,7 @@ bool LibyuvImageFormatConvertUtils::BGRAToNV21(const uint8_t *srcBuffer, const S
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV12ToRGBA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::NV12ToRGBA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (data == nullptr || destBuffer == nullptr) {
@@ -544,7 +515,7 @@ bool LibyuvImageFormatConvertUtils::NV12ToRGBA(const uint8_t *data, const YUVDat
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV12ToBGRA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::NV12ToBGRA(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (data == nullptr || destBuffer == nullptr) {
@@ -571,7 +542,7 @@ bool LibyuvImageFormatConvertUtils::NV12ToBGRA(const uint8_t *data, const YUVDat
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -616,7 +587,7 @@ bool LibyuvImageFormatConvertUtils::RGBAToNV12(const uint8_t *srcBuffer, const S
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -662,7 +633,7 @@ bool LibyuvImageFormatConvertUtils::RGBAToNV21(const uint8_t *srcBuffer, const S
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -709,9 +680,8 @@ static bool NV12ToRGBNoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInf
     ColorSpace colorSpace)
 {
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    int32_t ret = converter.NV12ToRGB24Matrix(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
+    int32_t ret = converter.NV12ToRAW(srcBuffer + yDInfo.yOffset, yDInfo.yStride, srcBuffer + yDInfo.uvOffset,
         yDInfo.uvStride, *destBuffer, yDInfo.yStride * BYTES_PER_PIXEL_RGB,
-        static_cast<OHOS::OpenSourceLibyuv::ColorSpace>(colorSpace),
         yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
         IMAGE_LOGE("NV12ToRGB24Matrix failed, ret = %{public}d!", ret);
@@ -720,7 +690,7 @@ static bool NV12ToRGBNoManual(const uint8_t *srcBuffer, const YUVDataInfo &yDInf
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV12ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::NV12ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (data == nullptr || destBuffer == nullptr) {
@@ -750,7 +720,7 @@ bool LibyuvImageFormatConvertUtils::NV12ToRGB(const uint8_t *data, const YUVData
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV21ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::NV21ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
     size_t &destBufferSize, ColorSpace colorSpace)
 {
     if (data == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 || yDInfo.uvWidth == 0 ||
@@ -769,16 +739,13 @@ bool LibyuvImageFormatConvertUtils::NV21ToRGB(const uint8_t *data, const YUVData
         return false;
     }
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    std::cout << "converter:" << (void *)&converter << std::endl;
-    std::cout << "NV21ToRGB24Matrix:" << (void *)converter.NV21ToRGB24Matrix << std::endl;
-    converter.NV21ToRGB24Matrix(data + yDInfo.yOffset, yDInfo.yStride, data + yDInfo.uvOffset,
+    converter.NV21ToRAW(data + yDInfo.yOffset, yDInfo.yStride, data + yDInfo.uvOffset,
         yDInfo.uvStride, *destBuffer, yDInfo.yWidth * BYTES_PER_PIXEL_RGB,
-        static_cast<OHOS::OpenSourceLibyuv::ColorSpace>(colorSpace),
         yDInfo.yWidth, yDInfo.yHeight);
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV21ToRGBA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+bool ImageFormatConvertExtUtils::NV21ToRGBA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
@@ -806,7 +773,7 @@ bool LibyuvImageFormatConvertUtils::NV21ToRGBA(const uint8_t *srcBuffer, const Y
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV21ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+bool ImageFormatConvertExtUtils::NV21ToBGRA(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
@@ -834,7 +801,7 @@ bool LibyuvImageFormatConvertUtils::NV21ToBGRA(const uint8_t *srcBuffer, const Y
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+bool ImageFormatConvertExtUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
     uint8_t **destBuffer, size_t &destBufferSize, ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
@@ -861,7 +828,7 @@ bool LibyuvImageFormatConvertUtils::NV21ToRGB565(const uint8_t *srcBuffer, const
     return true;
 }
 
-bool LibyuvImageFormatConvertUtils::RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {

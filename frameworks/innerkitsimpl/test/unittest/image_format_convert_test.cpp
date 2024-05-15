@@ -815,7 +815,7 @@ HWTEST_F(ImageFormatConvertTest, RGBToNV12_002, TestSize.Level3)
 
     ImageInfo destImageInfo;
     srcPixelMap->GetImageInfo(destImageInfo);
-    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height + 
+    uint32_t buffersize = static_cast<size_t>(destImageInfo.size.width * destImageInfo.size.height +
         ((destImageInfo.size.width + 1) / TWO_SLICES) * ((destImageInfo.size.height + 1) / TWO_SLICES) * TWO_SLICES);
 
     Size size = destImageInfo.size;

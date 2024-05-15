@@ -510,8 +510,7 @@ Image_ErrorCode OH_PixelmapNative_CreateEmptyPixelmap(OH_Pixelmap_Initialization
  * @param destPixelMap Destination Image PixelMap.
  * @param destPixelFormat Destination Image PixelFormat.
  * @return Returns {@link Image_ErrorCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
- *
- * @Syscap SystemCapability.Multimedia.Image
+ * @since 12
  */
 Image_ErrorCode OH_PixelMapNative_ConvertPixelFormat(OH_PixelmapNative *srcPixelMap, OH_PixelmapNative **destPixelMap,
                                                      int32_t destPixelFormat);

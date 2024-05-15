@@ -558,7 +558,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, const Size
     int height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, imageSize.height, dstSlice, dstStride);
     sws_freeContext(swsContext);
     if (height == 0) {
-        IMAGE_LOGD("RGBAF16 conversion to NV21 failed!");
+        IMAGE_LOGE("RGBAF16ToNV21 format conversion failed");
         delete[] destBuffer;
         return false;
     }
@@ -897,6 +897,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV12(const uint8_t *srcBuffer, const Size
     if (height == 0) {
         IMAGE_LOGE("RGBAF16ToNV12 format conversion failed");
         delete[] destBuffer;
+        return false;
     }
     return true;
 }

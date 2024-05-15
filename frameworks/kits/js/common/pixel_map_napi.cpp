@@ -397,9 +397,9 @@ static napi_value DoInitAfter(napi_env env,
     return exports;
 }
 
-napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
+std::vector<napi_property_descriptor> PixelMapNapi::RegisterNapi()
 {
-    napi_property_descriptor props[] = {
+    std::vector<napi_property_descriptor> props = {
         DECLARE_NAPI_FUNCTION("readPixelsToBuffer", ReadPixelsToBuffer),
         DECLARE_NAPI_FUNCTION("readPixelsToBufferSync", ReadPixelsToBufferSync),
         DECLARE_NAPI_FUNCTION("readPixels", ReadPixels),
@@ -441,7 +441,12 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("toSdr", ToSdr),
         DECLARE_NAPI_FUNCTION("convertPixelFormat", ConvertPixelMapFormat),
     };
+    return props;
+}
 
+napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
+{
+    std::vector<napi_property_descriptor> props = PixelMapNapi::RegisterNapi();
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMap", CreatePixelMap),
         DECLARE_NAPI_STATIC_FUNCTION("createPremultipliedPixelMap", CreatePremultipliedPixelMap),
@@ -459,8 +464,8 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(
         napi_define_class(env, CLASS_NAME.c_str(), NAPI_AUTO_LENGTH,
-                          Constructor, nullptr, IMG_ARRAY_SIZE(props),
-                          props, &constructor)),
+                          Constructor, nullptr, props.size(),
+                          props.data(), &constructor)),
         nullptr, IMAGE_LOGE("define class fail")
     );
 

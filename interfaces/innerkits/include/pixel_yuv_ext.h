@@ -27,10 +27,10 @@
 namespace OHOS {
 namespace Media {
 
-class LibYuvPixelMap : public PixelYuv {
+class PixelYuvExt : public PixelYuv {
 public:
-    LibYuvPixelMap() {}
-    virtual ~LibYuvPixelMap();
+    PixelYuvExt() {}
+    virtual ~PixelYuvExt();
     NATIVEEXPORT void rotate(float degrees) override;
     NATIVEEXPORT void scale(float xAxis, float yAxis) override;
     NATIVEEXPORT void scale(float xAxis, float yAxis, const AntiAliasingOption &option) override;

@@ -827,7 +827,7 @@ static void CopyYuvInfo(YUVDataInfo &yuvInfo, ImagePlugin::PlImageInfo &plInfo)
     yuvInfo.uvOffset = plInfo.yuvDataInfo.uvOffset;
 }
 
-static bool ResizePixelmap(std::unique_ptr<PixelMap>& pixelMap, uint64_t imageId, DecodeOptions &opts)
+static bool ResizePixelMap(std::unique_ptr<PixelMap>& pixelMap, uint64_t imageId, DecodeOptions &opts)
 {
     ImageUtils::DumpPixelMapIfDumpEnabled(pixelMap, imageId);
     if (opts.desiredSize.height != pixelMap->GetHeight() ||
@@ -868,7 +868,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     unique_ptr<PixelMap> pixelMap;
     if (IsYuvFormat(plInfo.pixelFormat)) {
 #ifdef EXT_PIXEL
-        pixelMap = make_unique<LibYuvPixelMap>();
+        pixelMap = make_unique<PixelYuvExt>();
 #else
         pixelMap = make_unique<PixelYuv>();
 #endif
@@ -913,7 +913,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapByInfos(ImagePlugin::PlImageInfo
     } else if (opts_.rotateNewDegrees != INT_ZERO) {
         pixelMap->rotate(opts_.rotateNewDegrees);
     }
-    if (!(ResizePixelmap(pixelMap, imageId_, opts_))) {
+    if (!(ResizePixelMap(pixelMap, imageId_, opts_))) {
         IMAGE_LOGE("[ImageSource]Resize pixelmap fail.");
         return nullptr;
     }
@@ -3501,25 +3501,25 @@ static bool CopyYUVToSurfaceBuffer(const DecodeContext& context, sptr<SurfaceBuf
         return false;
     }
     PlYuvDataInfo yuvDataInfo = context.yuvInfo;
-    IMAGE_LOGD("[ImageSource] CopyYUVToSurfaceBuffer y_height = %{public}d, uv_height = %{public}d,"
-        "y_stride = %{public}d, uv_stride = %{public}d, dstSize = %{public}zu, dstStride = %{public}d",
-        yuvDataInfo.y_height, yuvDataInfo.uv_height, yuvDataInfo.y_stride, yuvDataInfo.uv_stride,
+    IMAGE_LOGD("[ImageSource] CopyYUVToSurfaceBuffer yHeight = %{public}d, uvHeight = %{public}d,"
+        "yStride = %{public}d, uvStride = %{public}d, dstSize = %{public}zu, dstStride = %{public}d",
+        yuvDataInfo.yHeight, yuvDataInfo.uvHeight, yuvDataInfo.yStride, yuvDataInfo.uvStride,
         dstSize, buffer->GetStride());
-    for (uint32_t i = 0; i < yuvDataInfo.y_height; ++i) {
-        if (memcpy_s(dstRow, dstSize, srcRow, yuvDataInfo.y_stride) != EOK) {
+    for (uint32_t i = 0; i < yuvDataInfo.yHeight; ++i) {
+        if (memcpy_s(dstRow, dstSize, srcRow, yuvDataInfo.yStride) != EOK) {
             return false;
         }
         dstRow += buffer->GetStride();
         dstSize -= buffer->GetStride();
-        srcRow += yuvDataInfo.y_stride;
+        srcRow += yuvDataInfo.yStride;
     }
-    for (uint32_t i = 0; i < yuvDataInfo.uv_height; ++i) {
-        if (memcpy_s(dstRow, dstSize, srcRow, yuvDataInfo.uv_stride) != EOK) {
+    for (uint32_t i = 0; i < yuvDataInfo.uvHeight; ++i) {
+        if (memcpy_s(dstRow, dstSize, srcRow, yuvDataInfo.uvStride) != EOK) {
             return false;
         }
         dstRow += buffer->GetStride();
         dstSize -= buffer->GetStride();
-        srcRow += yuvDataInfo.uv_stride;
+        srcRow += yuvDataInfo.uvStride;
     }
     return true;
 }
