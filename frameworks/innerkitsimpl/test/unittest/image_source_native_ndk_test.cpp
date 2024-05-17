@@ -315,6 +315,22 @@ HWTEST_F(ImagSourceNdk2Test, OH_ImageSourceNative_GetDelayTimeList, TestSize.Lev
 }
 
 /**
+ * @tc.name: OH_ImageSourceNative_GetDisposalTypeList
+ * @tc.desc: test OH_ImageSourceNative_GetDisposalTypeList
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagSourceNdk2Test, OH_ImageSourceNative_GetDisposalTypeList, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSourceNative_GetDisposalTypeList start";
+    OH_ImageSourceNative *imageSource = nullptr;
+    int32_t* disposalTypeList = nullptr;
+    size_t size = 0;
+    Image_ErrorCode ret = OH_ImageSourceNative_GetDisposalTypeList(imageSource, disposalTypeList, size);
+    ASSERT_EQ(ret, IMAGE_BAD_PARAMETER);
+    GTEST_LOG_(INFO) << "ImagSourceNdk2Test: OH_ImageSourceNative_GetDisposalTypeList end";
+}
+
+/**
  * @tc.name: OH_ImageSourceNative_GetImageInfo
  * @tc.desc: test OH_ImageSourceNative_GetImageInfo
  * @tc.type: FUNC

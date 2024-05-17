@@ -481,6 +481,28 @@ Image_ErrorCode OH_ImageSourceNative_GetDelayTimeList(OH_ImageSourceNative *sour
 }
 
 MIDK_EXPORT
+Image_ErrorCode OH_ImageSourceNative_GetDisposalTypeList(OH_ImageSourceNative *source,
+    int32_t *disposalTypeList, size_t size)
+{
+    if (source == nullptr || disposalTypeList == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    uint32_t errorCode = IMAGE_SUCCESS;
+    auto disposalTypes = source->GetInnerImageSource()->GetDisposalType(errorCode);
+    if (disposalTypes == nullptr || errorCode != IMAGE_SUCCESS) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    size_t actCount = (*disposalTypes).size();
+    if (size < actCount) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    for (size_t i = SIZE_ZERO; i < actCount; i++) {
+        disposalTypeList[i] = (*disposalTypes)[i];
+    }
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
 Image_ErrorCode OH_ImageSourceNative_GetImageInfo(OH_ImageSourceNative *source, int32_t index,
     struct OH_ImageSource_Info *info)
 {

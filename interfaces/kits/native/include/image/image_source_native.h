@@ -369,6 +369,18 @@ Image_ErrorCode OH_ImageSourceNative_GetDelayTimeList(OH_ImageSourceNative *sour
     int32_t *delayTimeList, size_t size);
 
 /**
+ * @brief Obtains the disposal type list from some <b>ImageSource</b> objects (such as GIF image sources).
+ *
+ * @param source Indicates a void pointer(from ImageSource pointer convert).
+ * @param disposalTypeList Indicates a pointer to the disposal type list obtained. It cannot be a null pointer.
+ * @param size Indicates a size of disposalTypeList. User can get size from {@link OH_ImageSourceNative_GetFrameCount}.
+ * @return Returns {@link Image_ErrorCode}
+ * @since 12
+ */
+Image_ErrorCode OH_ImageSourceNative_GetDisposalTypeList(OH_ImageSourceNative *source,
+    int32_t *disposalTypeList, size_t size);
+
+/**
  * @brief Obtains image source information from an <b>ImageSource</b> object by index.
  *
  * @param source Indicates a void pointer(from ImageSource pointer convert).
