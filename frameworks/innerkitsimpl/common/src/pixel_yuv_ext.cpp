@@ -155,7 +155,7 @@ void PixelYuvExt::rotate(float degrees)
     GetImageYUVInfo(yuvDataInfo);
     if (!PixelYuvExtUtils::YuvRotate(data_, imageInfo_.size, degrees, imageInfo_.pixelFormat, yuvDataInfo)) {
         return;
-}
+    }
     AssignYuvDataOnType(imageInfo_.pixelFormat, imageInfo_.size.width, imageInfo_.size.height);
     return;
 }

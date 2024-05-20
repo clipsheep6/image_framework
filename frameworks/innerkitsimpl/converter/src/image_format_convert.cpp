@@ -232,6 +232,18 @@ uint32_t ImageFormatConvert::YUVConvertImageFormatOption(std::shared_ptr<PixelMa
     const_uint8_buffer_type data = srcPiexlMap->GetPixels();
     YUVDataInfo yDInfo;
     srcPiexlMap->GetImageYUVInfo(yDInfo);
+    ImageInfo srcInfo;
+    srcPiexlMap->GetImageInfo(srcInfo);
+    IMAGE_LOGD("[lmq]yDInfo.yWidth = %{public}d, yDInfo.yHeight = %{public}d, yDInfo.uvWidth = %{public}d,\
+        yDInfo.uvHeight = %{public}d, format = %{public}d",
+        yDInfo.yWidth, yDInfo.yHeight, yDInfo.uvWidth, yDInfo.uvHeight, (int)srcFormat);
+    if (srcFormat == PixelFormat::NV21 && yDInfo.yWidth == 0) {
+        IMAGE_LOGE("info is invalid");
+        yDInfo.yWidth = srcInfo.size.width;
+        yDInfo.yHeight = srcInfo.size.height;
+        yDInfo.uvWidth = (srcInfo.size.width + 1) / NUM_2;
+        yDInfo.uvHeight = (srcInfo.size.height + 1) / NUM_2;
+    }
     uint8_buffer_type destBuffer = nullptr;
     size_t destBufferSize = 0;
     if (!yuvCvtFunc(data, yDInfo, &destBuffer, destBufferSize, srcPiexlMap->GetColorSpace())) {
@@ -239,8 +251,6 @@ uint32_t ImageFormatConvert::YUVConvertImageFormatOption(std::shared_ptr<PixelMa
         return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
     }
 
-    ImageInfo srcInfo;
-    srcPiexlMap->GetImageInfo(srcInfo);
     ImageInfo destInfo;
     destInfo.alphaType = srcInfo.alphaType;
     destInfo.baseDensity = srcInfo.baseDensity;

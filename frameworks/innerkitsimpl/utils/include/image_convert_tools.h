@@ -20,22 +20,26 @@
 
 #ifdef EXT_PIXEL
 #include "image_converter.h"
-#include "single_instance.h"
 #endif
 
 namespace OHOS {
 namespace Media {
 #ifdef EXT_PIXEL
 class ConverterHandle {
-    DECLARE_SINGLE_INSTANCE(ConverterHandle);
-
 public:
+    static ConverterHandle& GetInstance();
     void InitConverter();
     void DeInitConverter();
     const OHOS::OpenSourceLibyuv::ImageConverter &GetHandle();
-
     using DlHandle = void *;
+
 private:
+    ConverterHandle(const ConverterHandle&) = delete;
+    ConverterHandle& operator= (const ConverterHandle&) = delete;
+    ConverterHandle(ConverterHandle&&) = delete;
+    ConverterHandle& operator= (ConverterHandle&&) = delete;
+    ConverterHandle() = default;
+    virtual ~ConverterHandle() = default;
     std::atomic<bool> isInited_ = false;
     DlHandle dlHandler_ = nullptr;
     OHOS::OpenSourceLibyuv::ImageConverter converter_ = {0};

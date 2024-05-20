@@ -38,7 +38,12 @@ using GetImageConverterFunc = OHOS::OpenSourceLibyuv::ImageConverter (*)();
 #endif
 
 #ifdef EXT_PIXEL
-IMPLEMENT_SINGLE_INSTANCE(ConverterHandle);
+ConverterHandle& ConverterHandle::GetInstance()
+{
+    static ConverterHandle instance;
+    return instance;
+}
+
 void ConverterHandle::InitConverter()
 {
     dlHandler_ = dlopen(YUV_LIB_PATH.c_str(), RTLD_LAZY | RTLD_NODELETE);

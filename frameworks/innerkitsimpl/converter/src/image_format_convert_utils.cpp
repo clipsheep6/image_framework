@@ -59,7 +59,7 @@ static std::map<PixelFormat, AVPixelFormat> PixelFormatMap = {
     {PixelFormat::RGBA_8888, AV_PIX_FMT_RGBA},
     {PixelFormat::BGRA_8888, AV_PIX_FMT_BGRA},
     {PixelFormat::ARGB_8888, AV_PIX_FMT_ARGB},
-    {PixelFormat::RGBA_F16, AV_PIX_FMT_RGBA64BE},
+    {PixelFormat::RGBA_F16, AV_PIX_FMT_RGBA64},
     {PixelFormat::RGB_888, AV_PIX_FMT_RGB24},
 };
 
@@ -79,7 +79,7 @@ static bool NV12ToRGB565SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &
     SwsContext *swsContext = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth,
         yDInfo.yHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -103,7 +103,7 @@ static bool NV21ToNV12SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
     SwsContext *swsContext = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth,
         yDInfo.yHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -129,7 +129,7 @@ static bool NV12ToNV21SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
     SwsContext *swsContext = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth,
         yDInfo.yHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -155,7 +155,7 @@ static bool RGB565ToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSi
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -180,7 +180,7 @@ static bool RGB565ToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSi
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -229,7 +229,7 @@ static bool BGRAToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -304,7 +304,7 @@ static bool RGBAToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -329,7 +329,7 @@ static bool RGBAToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -354,7 +354,7 @@ static bool RGBToNV21SoftDecode(const uint8_t *srcBuffer, const Size &imageSize,
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -428,7 +428,7 @@ static bool NV21ToBGRASoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yD
     SwsContext *swsContext = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth,
         yDInfo.yHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -452,7 +452,7 @@ static bool RGBToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize,
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -477,7 +477,7 @@ static bool BGRAToNV12SoftDecode(const uint8_t *srcBuffer, const Size &imageSize
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
 
@@ -505,17 +505,17 @@ bool ImageFormatConvertUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YUVDa
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB565);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     if (!NV12ToRGB565SoftDecode(srcBuffer, yDInfo, destBuffer)) {
         delete[] (*destBuffer);
-        IMAGE_LOGD("NV12 manual conversion to RGB565 failed!");
+        IMAGE_LOGE("NV12 manual conversion to RGB565 failed!");
         return false;
     }
     return true;
@@ -531,12 +531,12 @@ bool ImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, const Size
     destBufferSize = frameSize +
         (((imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
 
@@ -545,7 +545,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, const Size
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         delete[] destBuffer;
         return false;
     }
@@ -579,13 +579,13 @@ bool ImageFormatConvertUtils::NV21ToNV12(const uint8_t *srcBuffer, const YUVData
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize];
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool result = NV21ToNV12SoftDecode(srcBuffer, yDInfo, destBuffer);
     if (!result) {
         delete[] (*destBuffer);
-        IMAGE_LOGD("NV21 conversion to NV12 failed!");
+        IMAGE_LOGE("NV21 conversion to NV12 failed!");
     }
     return result;
 }
@@ -604,7 +604,7 @@ bool ImageFormatConvertUtils::NV21ToRGBAF16(const uint8_t *srcBuffer, const YUVD
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV21);
@@ -612,7 +612,7 @@ bool ImageFormatConvertUtils::NV21ToRGBAF16(const uint8_t *srcBuffer, const YUVD
     SwsContext *swsContext = sws_getContext(yDInfo.yWidth, yDInfo.yHeight, srcFormat, yDInfo.yWidth,
         yDInfo.yHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
     
@@ -639,13 +639,13 @@ bool ImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVData
     }
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * EVEN_ODD_DIVISOR * yDInfo.uvHeight;
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
 
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool result = NV12ToNV21SoftDecode(srcBuffer, yDInfo, destBuffer);
@@ -665,7 +665,7 @@ bool ImageFormatConvertUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size &i
     size_t srcPlaneSizeUV = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + srcPlaneSizeUV * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
@@ -687,19 +687,19 @@ bool ImageFormatConvertUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Size 
                                            size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
 
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool bRet = RGB565ToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -716,18 +716,18 @@ bool ImageFormatConvertUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Size 
                                            size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES) *
         ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool bRet = RGB565ToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -780,12 +780,12 @@ bool ImageFormatConvertUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size &i
     const int32_t destPlaneSizeVU = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool bRet = BGRAToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -868,12 +868,12 @@ bool ImageFormatConvertUtils::RGBAF16ToNV12(const uint8_t *srcBuffer, const Size
     destBufferSize = frameSize +
         (((imageSize.width + 1) / TWO_SLICES * (imageSize.height + 1) / TWO_SLICES) * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
 
@@ -882,7 +882,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV12(const uint8_t *srcBuffer, const Size
     SwsContext *swsContext = sws_getContext(imageSize.width, imageSize.height, srcFormat, imageSize.width,
         imageSize.height, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
-        IMAGE_LOGD("Error to create SwsContext.");
+        IMAGE_LOGE("Error to create SwsContext.");
         delete[] destBuffer;
         return false;
     }
@@ -912,12 +912,12 @@ bool ImageFormatConvertUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size &i
     size_t destPlaneSizeUV = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = destPlaneSizeY + destPlaneSizeUV * TWO_SLICES;
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool bRet = RGBAToNV12SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -940,12 +940,12 @@ bool ImageFormatConvertUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size &i
     size_t destPlaneSizeVU = ((imageSize.width + 1) / TWO_SLICES) * ((imageSize.height + 1) / TWO_SLICES);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
 
@@ -969,12 +969,12 @@ bool ImageFormatConvertUtils::RGBToNV21(const uint8_t *srcBuffer, const Size &im
         (imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES *
         ((imageSize.height + 1) / TWO_SLICES) * TWO_SLICES));
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool bRet = RGBToNV21SoftDecode(srcBuffer, imageSize, destBuffer);
@@ -1156,7 +1156,7 @@ bool ImageFormatConvertUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YUVDa
     }
     *destBuffer = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
 
@@ -1178,12 +1178,12 @@ bool ImageFormatConvertUtils::RGBToNV12(const uint8_t *srcBuffer, const Size &im
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + (imageSize.width + 1) / TWO_SLICES *
         (imageSize.height + 1) / TWO_SLICES * TWO_SLICES);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     (*destBuffer) = new(std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool bRet = RGBToNV12SoftDecode(srcBuffer, imageSize, destBuffer);

@@ -296,7 +296,7 @@ public:
     static int32_t GetRGBxByteCount(const ImageInfo& info);
     static int32_t GetYUVByteCount(const ImageInfo& info);
     static int32_t GetAllocatedByteCount(const ImageInfo& info);
-    
+
 protected:
     static constexpr uint8_t TLV_VARINT_BITS = 7;
     static constexpr uint8_t TLV_VARINT_MASK = 0x7F;

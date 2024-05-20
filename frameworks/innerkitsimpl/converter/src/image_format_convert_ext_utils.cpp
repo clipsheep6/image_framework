@@ -107,7 +107,7 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
 {
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight * EVEN_ODD_DIVISOR;
     if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
@@ -128,7 +128,6 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
 
     int ret = converter.NV21ToI420(srcY, yDInfo.yStride, srcVU, srcStrideVu, yu12Buffer, yDInfo.yWidth, dstU,
         dstStrideU, dstV, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
-
     if (ret != 0) {
         IMAGE_LOGE("NV21ToI420 failed,ret = %{public}d!", ret);
         delete[] yu12Buffer;
@@ -149,7 +148,7 @@ static bool NV21ToRGB565Matrix(const uint8_t *srcBuffer, const YUVDataInfo &yDIn
 {
     uint32_t yu12BufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * yDInfo.uvHeight * EVEN_ODD_DIVISOR;
     if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
@@ -207,7 +206,7 @@ static bool NV21ToNV12Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
     int32_t height = yDInfo.yHeight;
 
     if (destBufferSize <=0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *tempBuffer = new (std::nothrow) uint8_t[destBufferSize];
@@ -236,7 +235,7 @@ static bool NV12ToNV21Auto(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, 
     const size_t &destBufferSize)
 {
     if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *tempBuffer = new (std::nothrow) uint8_t[destBufferSize];
@@ -273,12 +272,12 @@ bool ImageFormatConvertExtUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YU
 
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_RGB565);
     if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
 
@@ -292,7 +291,7 @@ bool ImageFormatConvertExtUtils::NV12ToRGB565(const uint8_t *srcBuffer, const YU
         yDInfo.yWidth, yDInfo.yHeight);
     if (result) {
         delete[](*destBuffer);
-        IMAGE_LOGD("NV12 auto conversion to RGB565 failed!");
+        IMAGE_LOGE("NV12 auto conversion to RGB565 failed!");
         return false;
     }
     return true;
@@ -308,18 +307,18 @@ bool ImageFormatConvertExtUtils::NV21ToNV12(const uint8_t *srcBuffer, const YUVD
 
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.uvWidth * TWO_SLICES * yDInfo.uvHeight;
     if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool result = NV21ToNV12Auto(srcBuffer, yDInfo, destBuffer, destBufferSize);
     if (!result) {
         delete[](*destBuffer);
-        IMAGE_LOGD("NV21 conversion to NV12 failed!");
+        IMAGE_LOGE("NV21 conversion to NV12 failed!");
     }
     return result;
 }
@@ -333,12 +332,12 @@ bool ImageFormatConvertExtUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVD
     }
     destBufferSize = yDInfo.yWidth * yDInfo.yHeight + yDInfo.yWidth * EVEN_ODD_DIVISOR * yDInfo.uvHeight;
     if (destBufferSize <= 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool result = NV12ToNV21Auto(srcBuffer, yDInfo, destBuffer, destBufferSize);
@@ -358,7 +357,7 @@ bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size
     size_t srcPlaneSizeUV = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + srcPlaneSizeUV * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
@@ -378,29 +377,29 @@ bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Si
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     uint32_t yu12BufferSize = imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2;
     if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
     if (yu12Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     auto &converter = ConverterHandle::GetInstance().GetHandle();
@@ -425,18 +424,18 @@ bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Si
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     uint32_t yu12BufferSize = imageSize.width * imageSize.height +
@@ -469,12 +468,12 @@ bool ImageFormatConvertExtUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size
     const int32_t destPlaneSizeVU = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * NUM_2);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     uint8_t *nv21Y = *destBuffer;
@@ -552,23 +551,23 @@ bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size
     size_t destPlaneSizeUV = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
     destBufferSize = destPlaneSizeY + destPlaneSizeUV * NUM_2;
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
     if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *i420Buffer = new (std::nothrow) uint8_t[i420BufferSize];
     if (i420Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     uint8_t *i420Y = i420Buffer;
@@ -578,9 +577,9 @@ bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size
     uint8_t *nv12Y = *destBuffer;
     uint8_t *nv12UV = *destBuffer + imageSize.width * imageSize.height;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ARGBToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
+    converter.ABGRToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
         (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
-    converter.I420ToNV12(i420Y, imageSize.width, i420V, (imageSize.width + NUM_1) / NUM_2, i420U,
+    converter.I420ToNV12(i420Y, imageSize.width, i420U, (imageSize.width + NUM_1) / NUM_2, i420V,
         (imageSize.width + NUM_1) / NUM_2, nv12Y, imageSize.width, nv12UV, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
         imageSize.width, imageSize.height);
     delete[] i420Buffer;
@@ -597,24 +596,24 @@ bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size
     size_t destPlaneSizeVU = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
 
     const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
     if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *i420Buffer = new (std::nothrow) uint8_t[i420BufferSize];
     if (i420Buffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     uint8_t *i420Y = i420Buffer;
@@ -624,9 +623,9 @@ bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size
     uint8_t *nv21Y = *destBuffer;
     uint8_t *nv21VU = *destBuffer + imageSize.width * imageSize.height;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ARGBToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
+    converter.ABGRToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
         (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
-    converter.I420ToNV21(i420Y, imageSize.width, i420V, (imageSize.width + NUM_1) / NUM_2, i420U,
+    converter.I420ToNV21(i420Y, imageSize.width, i420U, (imageSize.width + NUM_1) / NUM_2, i420V,
         (imageSize.width + NUM_1) / NUM_2, nv21Y, imageSize.width, nv21VU, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
         imageSize.width, imageSize.height);
     delete[] i420Buffer;
@@ -642,23 +641,23 @@ bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const Size 
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2 * ((imageSize.height + NUM_1) / NUM_2) * NUM_2));
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     const uint32_t yu12BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
     if (yu12BufferSize <= NUM_0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     uint8_t *yu12Buffer = new (std::nothrow) uint8_t[yu12BufferSize];
     if (yu12Buffer == nullptr) {
-        IMAGE_LOGD("apply space for I420 buffer failed!");
+        IMAGE_LOGE("apply space for I420 buffer failed!");
         return false;
     }
     uint8_t *I420Y = yu12Buffer;
@@ -806,6 +805,7 @@ bool ImageFormatConvertExtUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YU
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
         yDInfo.uvWidth == 0 || yDInfo.uvHeight == 0) {
+        IMAGE_LOGE("parameters invalid!");
         return false;
     }
 
@@ -816,7 +816,7 @@ bool ImageFormatConvertExtUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YU
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     bool bRet = NV21ToRGB565Matrix(srcBuffer, yDInfo, destBuffer, colorSpace);
@@ -837,19 +837,19 @@ bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const Size 
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
         (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
-        IMAGE_LOGD("Invalid destination buffer size calculation!");
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
     }
     (*destBuffer) = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        IMAGE_LOGD("apply space for dest buffer failed!");
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
 
     uint8_t *yu12Buffer(new (std::nothrow) uint8_t[imageSize.width * imageSize.height +
         (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2]());
     if (yu12Buffer == nullptr) {
-        IMAGE_LOGD("apply space for I420 buffer failed!");
+        IMAGE_LOGE("apply space for I420 buffer failed!");
         return false;
     }
     auto &converter = ConverterHandle::GetInstance().GetHandle();
