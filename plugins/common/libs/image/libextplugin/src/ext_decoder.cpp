@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <map>
+#include <sstream>
 
 #include "ext_pixel_convert.h"
 #include "image_log.h"
@@ -30,13 +31,15 @@
 #include "string_ex.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
+#include "hdr_helper.h"
 #endif
 #ifdef HEIF_HW_DECODE_ENABLE
 #include "heif_impl/HeifDecoder.h"
 #include "hardware/heif_hw_decoder.h"
 #endif
 #include "color_utils.h"
-#include "hdr_helper.h"
+#include "heif_parser.h"
+#include "heif_format_agent.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -70,6 +73,9 @@ namespace {
     constexpr static float ONE_EIGHTH = 0.125;
     constexpr static uint64_t ICC_HEADER_SIZE = 132;
     constexpr static size_t SMALL_FILE_SIZE = 1000 * 1000 * 10;
+    constexpr static int32_t LOOP_COUNT_INFINITE = 0;
+    constexpr static int32_t SK_REPETITION_COUNT_INFINITE = -1;
+    constexpr static int32_t SK_REPETITION_COUNT_ERROR_VALUE = -2;
 }
 
 namespace OHOS {
@@ -89,6 +95,7 @@ const static string TAG_ORIENTATION_STRING = "Orientation";
 const static string TAG_ORIENTATION_INT = "OrientationInt";
 const static string IMAGE_DELAY_TIME = "DelayTime";
 const static string IMAGE_DISPOSAL_TYPE = "DisposalType";
+const static string IMAGE_LOOP_COUNT = "GIFLoopCount";
 const static std::string HW_MNOTE_TAG_HEADER = "HwMnote";
 const static std::string HW_MNOTE_CAPTURE_MODE = "HwMnoteCaptureMode";
 const static std::string HW_MNOTE_PHYSICAL_APERTURE = "HwMnotePhysicalAperture";
@@ -721,6 +728,7 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
     }
     if (ret != SkCodec::kSuccess) {
         IMAGE_LOGE("Decode failed, get pixels failed, ret=%{public}d", ret);
+        SetHeifDecodeError(context);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
@@ -1039,6 +1047,7 @@ bool ExtDecoder::CheckCodec()
     if (codec_ == nullptr) {
         stream_->Seek(src_offset);
         IMAGE_LOGE("create codec from stream failed");
+        SetHeifParseError();
         return false;
     }
     return codec_ != nullptr;
@@ -1388,6 +1397,24 @@ static uint32_t GetDisposalType(SkCodec * codec, uint32_t index, int32_t &value)
     return SUCCESS;
 }
 
+static uint32_t GetLoopCount(SkCodec *codec, int32_t &value)
+{
+    if (codec->getEncodedFormat() != SkEncodedImageFormat::kGIF) {
+        IMAGE_LOGE("[GetLoopCount] Should not get loop count in %{public}d", codec->getEncodedFormat());
+        return ERR_MEDIA_INVALID_PARAM;
+    }
+    auto count = codec->getRepetitionCount();
+    if (count == LOOP_COUNT_INFINITE || count <= SK_REPETITION_COUNT_ERROR_VALUE) {
+        IMAGE_LOGE("[GetLoopCount] getRepetitionCount error");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+    if (count == SK_REPETITION_COUNT_INFINITE) {
+        count = LOOP_COUNT_INFINITE;
+    }
+    value = static_cast<int>(count);
+    return SUCCESS;
+}
+
 uint32_t ExtDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     IMAGE_LOGD("[GetImagePropertyInt] enter ExtDecoder plugin, key:%{public}s", key.c_str());
@@ -1400,6 +1427,9 @@ uint32_t ExtDecoder::GetImagePropertyInt(uint32_t index, const std::string &key,
     }
     if (IMAGE_DISPOSAL_TYPE.compare(key) == ZERO) {
         return GetDisposalType(codec_.get(), index, value);
+    }
+    if (IMAGE_LOOP_COUNT.compare(key) == ZERO) {
+        return GetLoopCount(codec_.get(), value);
     }
     // There can add some not need exif property
     if (res == Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
@@ -1439,6 +1469,11 @@ uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &k
         int disposalType = ZERO;
         res = GetDisposalType(codec_.get(), index, disposalType);
         value = std::to_string(disposalType);
+        return res;
+    } else if (IMAGE_LOOP_COUNT.compare(key) == ZERO) {
+        int loopCount = ZERO;
+        res = GetLoopCount(codec_.get(), loopCount);
+        value = std::to_string(loopCount);
         return res;
     }
     if (res == Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
@@ -1571,6 +1606,9 @@ uint32_t ExtDecoder::DoHeifToYuvDecode(OHOS::ImagePlugin::DecodeContext &context
     decoder->setDstBuffer(reinterpret_cast<uint8_t *>(context.pixelsBuffer.buffer),
                           dstBuffer->GetStride(), context.pixelsBuffer.context);
     bool decodeRet = decoder->decode(nullptr);
+    if (!decodeRet) {
+        decoder->getErrMsg(context.hardDecodeError);
+    }
     return decodeRet ? SUCCESS : ERR_IMAGE_DATA_UNSUPPORT;
 #else
     return ERR_IMAGE_DATA_UNSUPPORT;
@@ -1579,6 +1617,9 @@ uint32_t ExtDecoder::DoHeifToYuvDecode(OHOS::ImagePlugin::DecodeContext &context
 
 ImageHdrType ExtDecoder::CheckHdrType()
 {
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return Media::ImageHdrType::SDR;
+#else
     if (!CheckCodec()) {
         return Media::ImageHdrType::UNKNOWN;
     }
@@ -1590,10 +1631,14 @@ ImageHdrType ExtDecoder::CheckHdrType()
     }
     hdrType_ = HdrHelper::CheckHdrType(codec_.get(), gainMapOffset_);
     return hdrType_;
+#endif
 }
 
 uint32_t ExtDecoder::GetGainMapOffset()
 {
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return OFFSET_0;
+#else
     if (codec_ == nullptr || codec_->getEncodedFormat() != SkEncodedImageFormat::kJPEG) {
         return 0;
     }
@@ -1601,15 +1646,20 @@ uint32_t ExtDecoder::GetGainMapOffset()
         hdrType_ = HdrHelper::CheckHdrType(codec_.get(), gainMapOffset_);
     }
     return gainMapOffset_;
+#endif
 }
 
 HdrMetadata ExtDecoder::GetHdrMetadata(Media::ImageHdrType type)
 {
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return {};
+#else
     HdrMetadata metadata = {};
     if (type > Media::ImageHdrType::SDR && HdrHelper::GetMetadata(codec_.get(), type, metadata)) {
         return metadata;
     }
     return {};
+#endif
 }
 
 bool ExtDecoder::DecodeHeifGainMap(DecodeContext& context, float scale)
@@ -1685,6 +1735,65 @@ bool ExtDecoder::GetHeifHdrColorSpace(ColorManager::ColorSpaceName& gainmap, Col
     return true;
 #endif
     return false;
+}
+
+uint32_t ExtDecoder::GetHeifParseErr()
+{
+    return heifParseErr_;
+}
+
+void ExtDecoder::SetHeifDecodeError(OHOS::ImagePlugin::DecodeContext &context)
+{
+#ifdef HEIF_HW_DECODE_ENABLE
+    if (codec_ == nullptr || codec_->getEncodedFormat() != SkEncodedImageFormat::kHEIF) {
+        return;
+    }
+    auto decoder = reinterpret_cast<HeifDecoder*>(codec_->getHeifContext());
+    if (decoder == nullptr) {
+        return;
+    }
+    decoder->getErrMsg(context.hardDecodeError);
+#endif
+}
+
+void ExtDecoder::SetHeifParseError()
+{
+    if (stream_ == nullptr) {
+        return;
+    }
+    uint32_t originOffset = stream_->Tell();
+    stream_->Seek(0);
+
+    uint32_t readSize = 0;
+    HeifFormatAgent agent;
+    uint32_t headerSize = agent.GetHeaderSize();
+    uint8_t headerBuf[headerSize];
+    bool readRet = stream_->Peek(headerSize, headerBuf, headerSize, readSize);
+    if (!readRet || readSize != headerSize) {
+        stream_->Seek(originOffset);
+        return;
+    }
+
+    if (!agent.CheckFormat(headerBuf, headerSize)) {
+        stream_->Seek(originOffset);
+        return;
+    }
+
+    size_t fileLength = stream_->GetStreamSize();
+    uint8_t fileMem[fileLength];
+    readRet = stream_->Read(fileLength, fileMem, fileLength, readSize);
+    if (!readRet || readSize != fileLength) {
+        stream_->Seek(originOffset);
+        return;
+    }
+
+    std::shared_ptr<HeifParser> parser;
+    heif_error parseRet = HeifParser::MakeFromMemory(fileMem, fileLength, false, &parser);
+    if (parseRet != heif_error_ok) {
+        heifParseErr_ = static_cast<uint32_t>(parseRet);
+    }
+
+    stream_->Seek(originOffset);
 }
 } // namespace ImagePlugin
 } // namespace OHOS

@@ -187,6 +187,5 @@ void JpegEncoderYuv::SplitUVRow(const uint8_t* src_uv, uint8_t* dst_u, uint8_t* 
         dst_v[width - 1] = src_uv[1];
     }
 }
-
 }
 }

@@ -216,12 +216,16 @@ public:
         uint32_t &errorCode);
     NATIVEEXPORT std::unique_ptr<std::vector<int32_t>> GetDelayTime(uint32_t &errorCode);
     NATIVEEXPORT std::unique_ptr<std::vector<int32_t>> GetDisposalType(uint32_t &errorCode);
+    NATIVEEXPORT int32_t GetLoopCount(uint32_t &errorCode);
     NATIVEEXPORT uint32_t GetFrameCount(uint32_t &errorCode);
 #ifdef IMAGE_PURGEABLE_PIXELMAP
     NATIVEEXPORT size_t GetSourceSize() const;
 #endif
     void SetSource(const std::string &source);
     NATIVEEXPORT bool IsHdrImage();
+
+    NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
+    NATIVEEXPORT void SetExifMetadata(std::shared_ptr<ExifMetadata> &ptr);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -298,11 +302,12 @@ private:
                                     const std::set<std::string> &key);
     uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
     uint32_t CreatExifMetadataByImageSource(bool addFlag = false);
-    uint32_t SetExifMetadata(uint8_t *buffer, const uint32_t size, bool addFlag);
+    uint32_t CreateExifMetadata(uint8_t *buffer, const uint32_t size, bool addFlag);
     void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImageInfo &info, ImageEvent &imageEvent);
     void SetDecodeInfoOptions(uint32_t index, const DecodeOptions &opts, const ImagePlugin::PlImageInfo &plInfo,
         ImageEvent &imageEvent);
     void UpdateDecodeInfoOptions(const ImagePlugin::DecodeContext &context, ImageEvent &imageEvent);
+    void SetImageEventHeifParseErr(ImageEvent &event);
     bool CheckDecodeOptions(Size imageSize, bool &needAisr, bool &needHdr);
     uint32_t DecodeImageDataToContext(uint32_t index, ImageInfo &info, ImagePlugin::PlImageInfo &plInfo,
                                       ImagePlugin::DecodeContext &context, uint32_t &errorCode);
@@ -311,7 +316,7 @@ private:
     uint32_t DoAiHdrProcessDl(const ImagePlugin::DecodeContext &srcCtx, ImagePlugin::DecodeContext &dstCtx,
                               bool needAisr, bool needHdr);
     uint32_t ImageAiProcess(Size imageSize, const DecodeOptions &opts, bool isHdr,
-                            ImagePlugin::DecodeContext &context);
+                            ImagePlugin::DecodeContext &context, ImagePlugin::PlImageInfo &plInfo);
     ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
         ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
 
@@ -347,6 +352,7 @@ private:
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     std::string source_; // Image source fd buffer etc
     bool isExifReadFailed = false;
+    uint32_t heifParseErr_ = 0;
 };
 } // namespace Media
 } // namespace OHOS

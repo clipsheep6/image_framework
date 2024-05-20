@@ -188,6 +188,7 @@ static std::vector<struct ImageEnum> sPropertyKeyMap = {
     {"SCENE_TEXT_CONF", 0, "HwMnoteSceneTextConf"},
     {"FACE_COUNT", 0, "HwMnoteFaceCount"},
     {"FOCUS_MODE", 0, "HwMnoteFocusMode"},
+    {"GIF_LOOP_COUNT", 0, "GIFLoopCount"},
 };
 static std::vector<struct ImageEnum> sImageFormatMap = {
     {"YCBCR_422_SP", 1000, ""},
@@ -210,9 +211,9 @@ static std::vector<struct ImageEnum> sComponentTypeMap = {
     {"JPEG", 4, ""},
 };
 static std::vector<struct ImageEnum> sDecodingDynamicRangeMap = {
-    {"AUTO", 1, ""},
-    {"SDR", 2, ""},
-    {"HDR", 3, ""},
+    {"AUTO", 0, ""},
+    {"SDR", 1, ""},
+    {"HDR", 2, ""},
 };
 
 static std::string GetStringArgument(napi_env env, napi_value value)
