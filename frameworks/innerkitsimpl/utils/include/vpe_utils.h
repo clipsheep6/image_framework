@@ -19,8 +19,8 @@
 #include <mutex>
 
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-#include "v1_0/cm_color_space.h"
-#include "v1_0/hdr_static_metadata.h"
+#include "v2_0/cm_color_space.h"
+#include "v2_0/hdr_static_metadata.h"
 #include "surface_buffer.h"
 #endif
 
@@ -49,21 +49,21 @@ public:
     int32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer>& input, sptr<SurfaceBuffer>& output);
     int32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer>& input, sptr<SurfaceBuffer>& output, int32_t level);
     static bool SetSbColorSpaceType(sptr<SurfaceBuffer>& buffer,
-        const HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType& colorSpaceType);
+        const HDI::Display::Graphic::Common::V2_0::CM_ColorSpaceType& colorSpaceType);
     static bool GetSbColorSpaceType(const sptr<SurfaceBuffer>& buffer,
-        HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType& colorSpaceType);
+        HDI::Display::Graphic::Common::V2_0::CM_ColorSpaceType& colorSpaceType);
     static bool SetSbMetadataType(sptr<SurfaceBuffer>& buffer,
-        const HDI::Display::Graphic::Common::V1_0::CM_HDR_Metadata_Type& metadataType);
+        const HDI::Display::Graphic::Common::V2_0::CM_HDR_Metadata_Type& metadataType);
     static bool GetSbMetadataType(const sptr<SurfaceBuffer>& buffer,
-        HDI::Display::Graphic::Common::V1_0::CM_HDR_Metadata_Type& metadataType);
+        HDI::Display::Graphic::Common::V2_0::CM_HDR_Metadata_Type& metadataType);
     static bool SetSbDynamicMetadata(sptr<SurfaceBuffer>& buffer, const std::vector<uint8_t>& dynamicMetadata);
     static bool GetSbDynamicMetadata(const sptr<SurfaceBuffer>& buffer, std::vector<uint8_t>& dynamicMetadata);
     static bool SetSbStaticMetadata(sptr<SurfaceBuffer>& buffer, const std::vector<uint8_t>& staticMetadata);
     static bool GetSbStaticMetadata(const sptr<SurfaceBuffer>& buffer, std::vector<uint8_t>& staticMetadata);
     static void SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, bool isGainmap, ImageHdrType type,
-        HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType color, HdrMetadata& metadata);
+        HDI::Display::Graphic::Common::V2_0::CM_ColorSpaceType color, HdrMetadata& metadata);
     static void SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer,
-        HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType color);
+        HDI::Display::Graphic::Common::V2_0::CM_ColorSpaceType color);
     static bool SetSbColorSpaceDefault(sptr<SurfaceBuffer>& buffer);
 #endif
     static bool LoadLibVpe();

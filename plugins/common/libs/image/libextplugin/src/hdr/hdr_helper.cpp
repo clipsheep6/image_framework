@@ -30,7 +30,7 @@
 #include "heif_impl/HeifDecoder.h"
 #endif
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-#include "v1_0/hdr_static_metadata.h"
+#include "v2_0/hdr_static_metadata.h"
 #endif
 
 #undef LOG_DOMAIN
@@ -44,8 +44,9 @@ namespace ImagePlugin {
 using namespace std;
 using namespace Media;
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-using namespace HDI::Display::Graphic::Common::V1_0;
+using namespace HDI::Display::Graphic::Common::V2_0;
 #endif
+
 constexpr uint8_t JPEG_MARKER_PREFIX = 0xFF;
 constexpr uint8_t JPEG_MARKER_APP0 = 0xE0;
 
@@ -821,7 +822,7 @@ static vector<uint8_t> ParseHeifStaticMetadata(const vector<uint8_t>& displayInf
 #if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
     return {};
 #else
-    HDI::Display::Graphic::Common::V1_0::HdrStaticMetadata staticMetadata{};
+    HDI::Display::Graphic::Common::V2_0::HdrStaticMetadata staticMetadata{};
     DisplayColourVolume displayColourVolume{};
     ContentLightLevelInfo lightLevelInfo{};
     if (!lightInfo.empty()) {
@@ -849,7 +850,7 @@ static vector<uint8_t> ParseHeifStaticMetadata(const vector<uint8_t>& displayInf
     staticMetadata.smpte2086.minLuminance = lumScale * (float)displayColourVolume.luminanceMin;
     staticMetadata.cta861.maxContentLightLevel = (float)lightLevelInfo.maxContentLightLevel;
     staticMetadata.cta861.maxFrameAverageLightLevel = (float)lightLevelInfo.maxPicAverageLightLevel;
-    uint32_t vecSize = sizeof(HDI::Display::Graphic::Common::V1_0::HdrStaticMetadata);
+    uint32_t vecSize = sizeof(HDI::Display::Graphic::Common::V2_0::HdrStaticMetadata);
     std::vector<uint8_t> staticMetadataVec(vecSize);
     if (memcpy_s(staticMetadataVec.data(), vecSize, &staticMetadata, vecSize) != EOK) {
         return {};

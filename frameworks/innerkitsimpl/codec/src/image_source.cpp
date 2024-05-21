@@ -53,9 +53,9 @@
 #include "include/jpeg_decoder.h"
 #else
 #include "surface_buffer.h"
-#include "v1_0/buffer_handle_meta_key_type.h"
-#include "v1_0/cm_color_space.h"
-#include "v1_0/hdr_static_metadata.h"
+#include "v2_0/buffer_handle_meta_key_type.h"
+#include "v2_0/cm_color_space.h"
+#include "v2_0/hdr_static_metadata.h"
 #include "vpe_utils.h"
 #endif
 #include "include/utils/SkBase64.h"
@@ -81,7 +81,7 @@ using namespace std;
 using namespace ImagePlugin;
 using namespace MultimediaPlugin;
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-using namespace HDI::Display::Graphic::Common::V1_0;
+using namespace HDI::Display::Graphic::Common::V2_0;
 #endif
 
 static const map<PixelFormat, PlPixelFormat> PIXEL_FORMAT_MAP = {
@@ -3257,9 +3257,9 @@ static uint32_t AllocHdrSurfaceBuffer(DecodeContext& context, ImageHdrType hdrTy
     context.grColorSpaceName = ConvertColorSpaceName(color, false);
     CM_HDR_Metadata_Type type;
     if (hdrType == ImageHdrType::HDR_VIVID_DUAL || hdrType == ImageHdrType::HDR_CUVA) {
-        type = CM_IMAGE_HDR_VIVID_SINGLE;
+        type = CM_IMAGE_HDR_VIVID_HDR;
     } else if (hdrType == ImageHdrType::HDR_ISO_DUAL) {
-        type = CM_IMAGE_HDR_ISO_SINGLE;
+        type = CM_IMAGE_HDR_ISO_HDR;
     }
     VpeUtils::SetSbMetadataType(sb, type);
     VpeUtils::SetSbColorSpaceType(sb, color);
@@ -3508,7 +3508,7 @@ static uint32_t CopyContextIntoSurfaceBuffer(Size dstSize, const DecodeContext &
 static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx,
                                CM_ColorSpaceType cmColorSpaceType)
 {
-    VpeUtils::SetSbMetadataType(input, CM_METADATA_NONE);
+    VpeUtils::SetSbMetadataType(input, CM_IMAGE_HDR_VIVID_SDR);
     VpeUtils::SetSurfaceBufferInfo(input, cmColorSpaceType);
 
     uint32_t res = AllocSurfaceBuffer(hdrCtx, GRAPHIC_PIXEL_FMT_RGBA_1010102);
@@ -3518,7 +3518,7 @@ static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx
     }
 
     sptr<SurfaceBuffer> output = reinterpret_cast<SurfaceBuffer*>(hdrCtx.pixelsBuffer.context);
-    VpeUtils::SetSbMetadataType(output, CM_IMAGE_HDR_VIVID_SINGLE);
+    VpeUtils::SetSbMetadataType(output, CM_IMAGE_HDR_VIVID_HDR);
     VpeUtils::SetSbColorSpaceDefault(output);
 
     std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
