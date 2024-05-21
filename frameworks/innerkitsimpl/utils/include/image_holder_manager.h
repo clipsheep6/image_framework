@@ -44,7 +44,7 @@ public:
         holder_.insert(std::pair<std::string, std::shared_ptr<ContentType>>(id, content));
         return id;
     }
-    std::string save(std::shared_ptr<ContentType> content, int64_t uniqueId)
+    std::string save(std::shared_ptr<ContentType> content, uint64_t uniqueId)
     {
         std::string id = std::to_string(uniqueId);
         if (exist(id)) {
