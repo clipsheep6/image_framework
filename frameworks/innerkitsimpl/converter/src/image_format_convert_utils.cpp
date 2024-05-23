@@ -651,6 +651,7 @@ bool ImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVData
     bool result = NV12ToNV21SoftDecode(srcBuffer, yDInfo, destBuffer);
     if (!result) {
         delete[] (*destBuffer);
+        IMAGE_LOGE("NV12 conversion to NV21 failed!");
     }
     return result;
 }
@@ -687,7 +688,6 @@ bool ImageFormatConvertUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Size 
                                            size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
@@ -716,7 +716,6 @@ bool ImageFormatConvertUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Size 
                                            size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height + ((imageSize.width + 1) / TWO_SLICES) *
@@ -962,7 +961,7 @@ bool ImageFormatConvertUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size &i
 bool ImageFormatConvertUtils::RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
                                         size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr ||imageSize.width < 0 || imageSize.height < 0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
         return false;
     }
     destBufferSize = static_cast<size_t>

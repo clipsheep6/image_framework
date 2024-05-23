@@ -59,18 +59,24 @@ typedef enum ColorSpace {
 } ColorSpaceEnum;
 
 struct ImageConverter {
+    int32_t (*NV12ToI420)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
+        uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u, uint8_t *dst_v, int dst_stride_v, int width,
+        int height);
+    int32_t (*I420Scale)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+        const uint8_t* src_v, int src_stride_v, int src_width, int src_height, uint8_t* dst_y, int dst_stride_y,
+        uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v, int dst_width, int dst_height,
+        enum FilterMode filtering);
+    int32_t (*I420ToNV21)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
+        const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_vu, int dst_stride_vu,
+        int width, int height);
+    int32_t (*I420ToRGBA)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+        const uint8_t* src_v, int src_stride_v, uint8_t* dst_rgba, int dst_stride_rgba, int width, int height);
     int32_t (*ARGBToNV12)(const uint8_t *src_argb, int src_stride_argb, uint8_t *dst_y, int dst_stride_y,
         uint8_t *dst_uv, int dst_stride_uv, int width, int height);
     int32_t (*ARGBToNV21)(const uint8_t *src_argb, int src_stride_argb, uint8_t *dst_y, int dst_stride_y,
         uint8_t *dst_vu, int dst_stride_vu, int width, int height);
-    int32_t (*NV12ToI420)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_uv, int src_stride_uv,
-        uint8_t *dst_y, int dst_stride_y, uint8_t *dst_u, int dst_stride_u, uint8_t *dst_v, int dst_stride_v, int width,
-        int height);
-    int32_t (*I420ToNV21)(const uint8_t *src_y, int src_stride_y, const uint8_t *src_u, int src_stride_u,
-        const uint8_t *src_v, int src_stride_v, uint8_t *dst_y, int dst_stride_y, uint8_t *dst_vu, int dst_stride_vu,
-        int width, int height);
-    int32_t (*ScalePlane)(const uint8_t *src, int src_stride, int src_width, int src_height, uint8_t *dst,
-        int dst_stride, int dst_width, int dst_height, enum FilterMode filtering);
+    int32_t (*ScalePlane)(const uint8_t *src, int src_stride, int src_width, int src_height,
+        uint8_t *dst, int dst_stride, int dst_width, int dst_height, enum FilterMode filtering);
     void (*SplitUVPlane)(const uint8_t *src_uv, int src_stride_uv, uint8_t *dst_u, int dst_stride_u, uint8_t *dst_v,
         int dst_stride_v, int width, int height);
     void (*MergeUVPlane)(const uint8_t *src_u, int src_stride_u, const uint8_t *src_v, int src_stride_v,
@@ -99,8 +105,6 @@ struct ImageConverter {
         uint8_t* dst_y, int dst_stride_y, uint8_t* dst_uv, int dst_stride_uv, int width, int height);
     int32_t (*RGB565ToI420)(const uint8_t* src_rgb565, int src_stride_rgb565, uint8_t* dst_y, int dst_stride_y,
         uint8_t* dst_u, int dst_stride_u, uint8_t* dst_v, int dst_stride_v, int width, int height);
-    int32_t (*BGRAToNV21)(const uint8_t* src_argb, int src_stride_argb, uint8_t* dst_y, int dst_stride_y,
-        uint8_t* dst_vu, int dst_stride_vu, int width, int height);
     int32_t (*ARGBToBGRA)(const uint8_t* src_argb, int src_stride_argb, uint8_t* dst_bgra, int dst_stride_bgra,
         int width, int height);
     int32_t (*RGB24ToI420)(const uint8_t* src_rgb24, int src_stride_rgb24, uint8_t* dst_y, int dst_stride_y,

@@ -112,24 +112,24 @@ static const std::map<std::pair<PixelFormat, PixelFormat>, YUVConvertFunction> g
 uint32_t ImageFormatConvert::ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo)
 {
     if (!CheckConvertDataInfo(srcDataInfo)) {
-        IMAGE_LOGD("source convert data info is invalid");
+        IMAGE_LOGE("source convert data info is invalid");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
     if (!IsSupport(destDataInfo.pixelFormat)) {
-        IMAGE_LOGD("destination format is not support or invalid");
+        IMAGE_LOGE("destination format is not support or invalid");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
     ConvertFunction cvtFunc = GetConvertFuncByFormat(srcDataInfo.pixelFormat, destDataInfo.pixelFormat);
     if (cvtFunc == nullptr) {
-        IMAGE_LOGD("get convert function by format failed!");
+        IMAGE_LOGE("get convert function by format failed!");
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
     if (!cvtFunc(srcDataInfo.buffer, srcDataInfo.imageSize, &destDataInfo.buffer,
                  destDataInfo.bufferSize, srcDataInfo.colorSpace)) {
-        IMAGE_LOGD("format convert failed!");
+        IMAGE_LOGE("format convert failed!");
         return IMAGE_RESULT_FORMAT_CONVERT_FAILED;
     }
     destDataInfo.imageSize = srcDataInfo.imageSize;
@@ -198,22 +198,22 @@ bool ImageFormatConvert::IsValidSize(const Size &size)
 bool ImageFormatConvert::CheckConvertDataInfo(const ConvertDataInfo &convertDataInfo)
 {
     if (convertDataInfo.buffer == nullptr) {
-        IMAGE_LOGD("buffer is null");
+        IMAGE_LOGE("buffer is null");
         return false;
     }
 
     if (!IsSupport(convertDataInfo.pixelFormat)) {
-        IMAGE_LOGD("format is not support or invalid");
+        IMAGE_LOGE("format is not support or invalid");
         return false;
     }
 
     if (!IsValidSize(convertDataInfo.imageSize)) {
-        IMAGE_LOGD("image size is invalid");
+        IMAGE_LOGE("image size is invalid");
         return false;
     }
 
     if (GetBufferSizeByFormat(convertDataInfo.pixelFormat, convertDataInfo.imageSize) != convertDataInfo.bufferSize) {
-        IMAGE_LOGD("buffer size is wrong");
+        IMAGE_LOGE("buffer size is wrong");
         return false;
     }
 
@@ -234,9 +234,6 @@ uint32_t ImageFormatConvert::YUVConvertImageFormatOption(std::shared_ptr<PixelMa
     srcPiexlMap->GetImageYUVInfo(yDInfo);
     ImageInfo srcInfo;
     srcPiexlMap->GetImageInfo(srcInfo);
-    IMAGE_LOGD("[lmq]yDInfo.yWidth = %{public}d, yDInfo.yHeight = %{public}d, yDInfo.uvWidth = %{public}d,\
-        yDInfo.uvHeight = %{public}d, format = %{public}d",
-        yDInfo.yWidth, yDInfo.yHeight, yDInfo.uvWidth, yDInfo.uvHeight, (int)srcFormat);
     if (srcFormat == PixelFormat::NV21 && yDInfo.yWidth == 0) {
         IMAGE_LOGE("info is invalid");
         yDInfo.yWidth = srcInfo.size.width;
@@ -297,7 +294,7 @@ ConvertFunction ImageFormatConvert::GetConvertFuncByFormat(PixelFormat srcFormat
 {
     auto iter = g_cvtFuncMap.find(std::make_pair(srcFormat, destFormat));
     if (iter == g_cvtFuncMap.end()) {
-        IMAGE_LOGD("current format is not supported or format is wrong");
+        IMAGE_LOGE("current format is not supported or format is wrong");
         return nullptr;
     }
     return iter->second;
@@ -323,7 +320,7 @@ bool ImageFormatConvert::MakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMa
         pixelMap = std::make_unique<PixelMap>();
     }
     if (pixelMap->SetImageInfo(info) != SUCCESS) {
-        IMAGE_LOGD("set imageInfo failed");
+        IMAGE_LOGE("set imageInfo failed");
         return false;
     }
     pixelMap->SetPixelsAddr(destBuffer, nullptr, destBufferSize, allcatorType, nullptr);

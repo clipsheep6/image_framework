@@ -55,7 +55,6 @@ struct ImageSize {
     uint32_t dst = 0;
 };
 
-static const std::string IMAGE_INPUT_JPG_PATH = "/data/local/tmp/jpeg_include_icc_profile.jpg";
 static const std::string IMAGE_INPUT_JPG_PATH1 = "/data/local/tmp/image/800-500.jpg";
 static const std::string IMAGE_INPUT_JPG_PATH2 = "/data/local/tmp/image/951-595.jpg";
 static const std::string IMAGE_OUTPUT_JPG_PATH = "/data/local/tmp/";
@@ -763,7 +762,7 @@ HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_002, TestSize.Level1)
 
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
-    std::shared_ptr<ImageSource> rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH, opts, errorCode);
+    std::shared_ptr<ImageSource> rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(rImageSource.get(), nullptr);
 
@@ -786,7 +785,7 @@ HWTEST_F(ImageFormatConvertTest, ConvertImageFormat_Test_003, TestSize.Level1)
 
     SourceOptions opts;
     opts.formatHint = "image/jpeg";
-    std::shared_ptr<ImageSource> rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH, opts, errorCode);
+    std::shared_ptr<ImageSource> rImageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPG_PATH1, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(rImageSource.get(), nullptr);
 

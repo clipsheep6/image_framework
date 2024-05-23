@@ -129,7 +129,7 @@ static bool NV21ToRGBAMatrix(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo
     int ret = converter.NV21ToI420(srcY, yDInfo.yStride, srcVU, srcStrideVu, yu12Buffer, yDInfo.yWidth, dstU,
         dstStrideU, dstV, dstStrideV, yDInfo.yWidth, yDInfo.yHeight);
     if (ret != 0) {
-        IMAGE_LOGE("NV21ToI420 failed,ret = %{public}d!", ret);
+        IMAGE_LOGE("NV21ToI420 failed, ret = %{public}d!", ret);
         delete[] yu12Buffer;
         return false;
     }
@@ -343,6 +343,7 @@ bool ImageFormatConvertExtUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVD
     bool result = NV12ToNV21Auto(srcBuffer, yDInfo, destBuffer, destBufferSize);
     if (!result) {
         delete[](*destBuffer);
+        IMAGE_LOGE("NV12 conversion to NV21 failed!");
     }
     return result;
 }
@@ -362,7 +363,7 @@ bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size
     }
     *destBuffer = new (std::nothrow) uint8_t[destBufferSize]();
     if (*destBuffer == nullptr) {
-        std::cerr << "apply space for dest buffer failed!" << std::endl;
+        IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
     uint8_t *nv12Y = *destBuffer;
@@ -377,7 +378,7 @@ bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Si
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGE("apply space for dest buffer failed!");
+        IMAGE_LOGE("Input parameters not compliant!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
@@ -424,7 +425,7 @@ bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Si
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
-        IMAGE_LOGE("apply space for dest buffer failed!");
+        IMAGE_LOGE("Input parameters not compliant!");
         return false;
     }
     destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
@@ -749,7 +750,7 @@ bool ImageFormatConvertExtUtils::NV21ToRGBA(const uint8_t *srcBuffer, const YUVD
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
         yDInfo.uvWidth == 0 || yDInfo.uvHeight == 0) {
-        IMAGE_LOGE("parameters invalid");
+        IMAGE_LOGE("Input parameters not compliant!");
         return false;
     }
 
@@ -777,7 +778,7 @@ bool ImageFormatConvertExtUtils::NV21ToBGRA(const uint8_t *srcBuffer, const YUVD
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
         yDInfo.uvWidth == 0 || yDInfo.uvHeight == 0) {
-        IMAGE_LOGE("parameters invalid!");
+        IMAGE_LOGE("Input parameters not compliant!");
         return false;
     }
     destBufferSize = static_cast<size_t>(yDInfo.yWidth * yDInfo.yHeight * BYTES_PER_PIXEL_BGRA);
@@ -805,7 +806,7 @@ bool ImageFormatConvertExtUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YU
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
         yDInfo.uvWidth == 0 || yDInfo.uvHeight == 0) {
-        IMAGE_LOGE("parameters invalid!");
+        IMAGE_LOGE("Input parameters not compliant!");
         return false;
     }
 
