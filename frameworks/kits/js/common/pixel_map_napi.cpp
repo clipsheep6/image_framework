@@ -618,7 +618,6 @@ inline void *DetachPixelMapFunc(napi_env env, void *value, void *)
     auto pixelNapi = reinterpret_cast<PixelMapNapi*>(value);
     AgainstTransferGC *data = new AgainstTransferGC();
     data->pixelMap = pixelNapi->GetPixelNapiInner();
-    pixelNapi->ReleasePixelNapiInner();
     return reinterpret_cast<void*>(data);
 }
 
