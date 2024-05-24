@@ -1741,5 +1741,29 @@ HWTEST_F(ExifMetadataTest, RemoveBatch001, TestSize.Level3)
     }
 }
 
+HWTEST_F(ExifMetadataTest, GetValue0035, TestSize.Level3)
+{
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_RM_ENTRY_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+    ExifMetadata metadata(exifData);
+    metadata.exifData_ = nullptr;
+    const std::string key = "test";
+    std::string value = "test";
+    int ret = metadata.GetValue(key, value);
+    ASSERT_EQ(ret, ERR_IMAGE_DECODE_EXIF_UNSUPPORT);
+}
+
+HWTEST_F(ExifMetadataTest, CreateExifdata001, TestSize.Level3)
+{
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_RM_ENTRY_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+    ExifMetadata metadata(exifData);
+    metadata.exifData_ = exif_data_new();
+    
+    bool ret = metadata.CreateExifdata();
+    ASSERT_EQ(ret, true);
+    exif_data_unref(metadata.exifData_);
+    metadata.exifData_ = nullptr;
+}
 } // namespace Multimedia
 } // namespace OHOS
