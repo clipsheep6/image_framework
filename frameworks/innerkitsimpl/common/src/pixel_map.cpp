@@ -223,7 +223,7 @@ void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, Allocator
     pixelsSize_ = size;
     allocatorType_ = type;
     custFreePixelMap_ = func;
-   
+
     if (type == AllocatorType::DMA_ALLOC && rowDataSize_ != 0) {
         UpdateImageInfo();
     }
