@@ -1779,7 +1779,7 @@ HWTEST_F(WebpExifMetadataAccessorTest, GetRawTextFromChunk001, TestSize.Level3)
     
     const DataBuf chunkData;
     size_t keySize = 1;
-    TextChunkType chunkType = 4;
+    int chunkType = 4;
     DataBuf ret = png->GetRawTextFromChunk(chunkData, keySize,
         static_cast<Media::PngImageChunkUtils::TextChunkType>(chunkType));
     ASSERT_EQ(ret.Size(), 0);
