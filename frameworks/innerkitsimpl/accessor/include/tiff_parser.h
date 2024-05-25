@@ -45,6 +45,10 @@ public:
     // For jpeg exif, encode ExifData struct to exif buffer
     static void EncodeJpegExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData);
 
+    static void DecodeDngExif(const unsigned char *dataPtr, const uint32_t &size, ExifData **exifData,
+                              unsigned int &maxAddr);
+    static void EncodeDngExif(unsigned char **dataPtr, uint32_t &size, ExifData *exifData, unsigned int delta,
+                              unsigned int offset);
     // For tiff, find tiff header pos
     static size_t FindTiffPos(const DataBuf &dataBuf);
     static size_t FindTiffPos(const byte *dataBuf, size_t bufLength);

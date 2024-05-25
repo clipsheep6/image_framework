@@ -187,18 +187,18 @@ public:
      */
     ssize_t GetSize() override;
 
-private:
-    /* *
-     * @brief Closes the FileMetadataStream.
-     */
-    virtual void Close() override;
-
     /* *
      * @brief Releases a memory map.
      * @param mmap The pointer to the memory map that needs to be released.
      * @return true if the memory map is released successfully, false otherwise.
      */
-    bool ReleaseAddr();
+    virtual bool ReleaseAddr() override;
+
+private:
+    /* *
+     * @brief Closes the FileMetadataStream.
+     */
+    virtual void Close() override;
 
     /* *
      * @brief Constructs a new FileMetadataStream object from a file path and a

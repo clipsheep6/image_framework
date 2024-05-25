@@ -175,6 +175,8 @@ public:
      */
     byte *Release();
 
+    virtual bool ReleaseAddr() override;
+
 private:
     /*
      * These constants are used in conjunction with CalculateNewCapacity to quickly approximate potential image sizes.

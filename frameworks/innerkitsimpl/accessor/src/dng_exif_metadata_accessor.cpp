@@ -13,12 +13,15 @@
  * limitations under the License.
  */
 
-#include "dng_exif_metadata_accessor.h"
+#include <iostream>
+#include <libexif/exif-data.h>
 
+#include "dng_exif_metadata_accessor.h"
 #include "data_buf.h"
 #include "image_log.h"
 #include "media_errors.h"
 #include "tiff_parser.h"
+#include "file_metadata_stream.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -31,6 +34,10 @@ namespace Media {
 namespace {
     using uint_8 = byte;
 }
+
+constexpr uint32_t IFD0_OFFSET_POSITION = 4;
+constexpr uint32_t IFD0_HEAD = 8;
+constexpr uint32_t IS_END_THRESHOLD = 10;
 
 DngExifMetadataAccessor::DngExifMetadataAccessor(std::shared_ptr<MetadataStream> &stream)
     : AbstractExifMetadataAccessor(stream)
@@ -61,8 +68,8 @@ uint32_t DngExifMetadataAccessor::Read()
     }
 
     ExifData *exifData;
-    TiffParser::Decode(reinterpret_cast<const unsigned char *>(byteStream + tiffHeaderPos),
-                       (size - tiffHeaderPos), &exifData);
+    TiffParser::DecodeDngExif(reinterpret_cast<const unsigned char *>(byteStream + tiffHeaderPos),
+                              (size - tiffHeaderPos), &exifData, maxAddr);
     if (exifData == nullptr) {
         IMAGE_LOGE("Failed to decode TIFF buffer.");
         return ERR_EXIF_DECODE_FAILED;
@@ -79,12 +86,80 @@ bool DngExifMetadataAccessor::ReadBlob(DataBuf &blob) const
 
 uint32_t DngExifMetadataAccessor::Write()
 {
-    return ERROR;
+    imageStream_->Seek(0, SeekPos::BEGIN);
+    ssize_t size = imageStream_->GetSize();
+    IMAGE_LOGD("imageStream size: %{public}zd", size);
+    byte *imageAddr = imageStream_->GetAddr();
+    if ((size == 0) || (imageAddr == nullptr)) {
+        IMAGE_LOGE("Input image stream is empty.");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+
+    ExifData *exifData = exifMetadata_->GetExifData();
+    if (!exifData) {
+        IMAGE_LOGE("Failed to get exifData.");
+        return ERR_EXIF_DECODE_FAILED;
+    }
+    uint32_t ifd0Offset = exif_get_long(imageAddr + IFD0_OFFSET_POSITION, exif_data_get_byte_order(exifData));
+    IMAGE_LOGD("ifd0Offset: %{public}x", ifd0Offset);
+    uint16_t ifd0Components = exif_get_short(imageAddr + ifd0Offset, exif_data_get_byte_order(exifData));
+    IMAGE_LOGD("ifd0Components: %{public}u", ifd0Components);
+    uint32_t ifd1Offset = exif_get_long(imageAddr + ifd0Offset + 2 + 12 * ifd0Components,
+                                        exif_data_get_byte_order(exifData));
+    IMAGE_LOGD("ifd1Offset: %{public}x", ifd1Offset);
+
+    imageStream_->Seek(0, SeekPos::END);
+    uint32_t endOffset = imageStream_->Tell();
+    IMAGE_LOGD("imageStream Tell: %{public}x", endOffset);
+    IMAGE_LOGD("compare maxAddr: %{public}x endOffset: %{public}x", maxAddr, endOffset);
+    if (abs((int)(maxAddr - endOffset)) < (int)IS_END_THRESHOLD && ifd0Offset >= IFD0_HEAD) {
+        IMAGE_LOGD("exif blob is at the end.");
+        auto delta = ifd0Offset - IFD0_HEAD;
+        return WriteExif(ifd0Offset, ifd1Offset, delta, ifd0Offset);
+    }
+    IMAGE_LOGD("exif blob is not at the end.");
+    auto delta = endOffset - IFD0_HEAD;
+    return WriteExif(endOffset, ifd1Offset, delta, endOffset);
+
+    return SUCCESS;
 }
 
 uint32_t DngExifMetadataAccessor::WriteBlob(DataBuf &blob)
 {
     return ERROR;
+}
+
+uint32_t DngExifMetadataAccessor::WriteExif(unsigned int ifd0Offset, unsigned int ifd1Offset,
+                                            unsigned int delta, unsigned int writePos)
+{
+    ExifData *exifData = exifMetadata_->GetExifData();
+    if (!exifData) {
+        IMAGE_LOGE("Failed to get exifData.");
+        return ERR_EXIF_DECODE_FAILED;
+    }
+    unsigned char* dataBlob = nullptr;
+    uint32_t size = 0;
+    TiffParser::EncodeDngExif(&dataBlob, size, exifData, delta, ifd1Offset);
+    if (dataBlob == nullptr) {
+        IMAGE_LOGE("Failed to encode exifData.");
+        return ERR_EXIF_DECODE_FAILED;
+    }
+    IMAGE_LOGD("new exif blob size: %{public}u", size);
+
+    imageStream_->ReleaseAddr();
+
+    imageStream_->Seek(IFD0_OFFSET_POSITION, SeekPos::BEGIN);
+    IMAGE_LOGD("set ifd0Offset: %{public}x", ifd0Offset);
+    unsigned char buff[4] = {0};
+    exif_set_long(buff, exif_data_get_byte_order(exifData), ifd0Offset);
+    imageStream_->Write(static_cast<unsigned char*>(buff), sizeof(buff));
+
+    imageStream_->Seek(writePos, SeekPos::BEGIN);
+    auto iret = imageStream_->Write(dataBlob + IFD0_HEAD, size - IFD0_HEAD);
+    IMAGE_LOGD("image stream write ret: %{public}d", iret);
+
+    imageStream_->Flush();
+    return SUCCESS;
 }
 } // namespace Media
 } // namespace OHOS
