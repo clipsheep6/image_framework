@@ -2655,52 +2655,45 @@ static bool TextureSuperCompressDecode(const uint8_t *inData, size_t inBytes, ui
 static bool ReadFileAndResoveAstc(size_t fileSize, size_t astcSize, unique_ptr<PixelAstc> &pixelAstc,
     std::unique_ptr<SourceStream> &sourceStreamPtr)
 {
-#if !(defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM))
-    int fd = AshmemCreate("CreatePixelMapForASTC Data", astcSize);
-    if (fd < 0) {
-        IMAGE_LOGE("[ImageSource]CreatePixelMapForASTC AshmemCreate fd < 0.");
-        return false;
+#if !(defined(A_PLATFORM) || defined(IOS_PLATFORM))
+    sptr<SurfaceBuffer> surfaceBuf = SurfaceBuffer::Create();
+    BufferRequestConfig requestConfig = {
+        .width = astcSize,       // BLOB format must have height 1 and one layer,
+        .height = 1,             // with width equal to the buffer size in bytes.
+        .strideAlignment = 0x8,  // set 0x8 as default value to alloc SurfaceBufferImpl.
+        .format = GRAPHIC_PIXEL_FMT_BLOB,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+        .timeout = 0,
+    };
+    GSError ret = surfaceBuf->Alloc(requestConfig);
+    if (ret != GSERROR_OK) {
+        IMAGE_LOGE("[ImageSource] SurfaceBuffer Alloc failed, %{public}s", GSErrorStr(ret).c_str());
+        return ERR_DMA_NOT_EXIST;
     }
-    int result = AshmemSetProt(fd, PROT_READ | PROT_WRITE);
-    if (result < 0) {
-        IMAGE_LOGE("[ImageSource]CreatePixelMapForASTC AshmemSetPort error.");
-        ::close(fd);
-        return false;
+    void *nativeBuffer = surfaceBuf.GetRefPtr();
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(nativeBuffer);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("[ImageSource] NativeBufferReference failed!");
+        return ERR_DMA_DATA_ABNORMAL;
     }
-    void *ptr = ::mmap(nullptr, astcSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (ptr == MAP_FAILED || ptr == nullptr) {
-        IMAGE_LOGE("[ImageSource]CreatePixelMapForASTC data is nullptr.");
-        ::close(fd);
-        return false;
-    }
-    auto data = static_cast<uint8_t *>(ptr);
-    void *fdPtr = new int32_t();
-    *static_cast<int32_t *>(fdPtr) = fd;
-    pixelAstc->SetPixelsAddr(data, fdPtr, astcSize, Media::AllocatorType::SHARE_MEM_ALLOC, nullptr);
+
+    pixelAstc->SetPixelsAddr(surfaceBuf->GetVirAddr(), nativeBuffer, astcSize, Media::AllocatorType::DMA_ALLOC,
+        nullptr);
+
     bool successMemCpyOrDec = true;
-#ifdef SUT_DECODE_ENABLE
+    uint8_t *data = static_cast<uint8_t *>(surfaceBuf->GetVirAddr());
     if (fileSize < astcSize) {
         if (TextureSuperCompressDecode(sourceStreamPtr->GetDataPtr(), fileSize, data, astcSize) != true) {
             IMAGE_LOGE("[ImageSource] astc SuperDecompressTexture failed!");
             successMemCpyOrDec = false;
         }
     } else {
-#endif
         if (memcpy_s(data, fileSize, sourceStreamPtr->GetDataPtr(), fileSize) != 0) {
             IMAGE_LOGE("[ImageSource] astc memcpy_s failed!");
             successMemCpyOrDec = false;
         }
-#ifdef SUT_DECODE_ENABLE
     }
-#endif
-    if (!successMemCpyOrDec) {
-        int32_t *fdPtrInt = static_cast<int32_t *>(fdPtr);
-        delete[] fdPtrInt;
-        munmap(ptr, astcSize);
-        ::close(fd);
-        return false;
-    }
-#endif
+#endif 
     return true;
 }
 
