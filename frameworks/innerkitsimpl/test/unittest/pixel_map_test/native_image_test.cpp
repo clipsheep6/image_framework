@@ -25,6 +25,10 @@ namespace Media {
 const std::string DATA_SIZE_TAG = "dataSize";
 static constexpr int32_t NUMI_0 = 0;
 static constexpr uint32_t NUM_0 = 0;
+static const uint8_t NUM_3 = 3;
+static const uint8_t NUM_5 = 5;
+static const uint8_t NUM_6 = 6;
+static const uint8_t NUM_7 = 7;
 static constexpr int32_t RECEIVER_TEST_WIDTH = 8192;
 static constexpr int32_t RECEIVER_TEST_HEIGHT = 8;
 static constexpr int32_t RECEIVER_TEST_CAPACITY = 8;
@@ -633,7 +637,7 @@ HWTEST_F(NativeImageTest, ALPHA8ToARGB001, TestSize.Level3)
     const uint8_t in = 'a';
     uint32_t inCount = 1;
     uint32_t out = 'a';
-    uint32_t outCount = 2; 
+    uint32_t outCount = 2;
     bool ret = pixelmap.ALPHA8ToARGB(&in, inCount, &out, outCount);
     ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "NativeImageTest: ALPHA8ToARGB001 end";
