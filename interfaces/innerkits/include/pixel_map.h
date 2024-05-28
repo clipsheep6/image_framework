@@ -34,6 +34,7 @@ namespace OHOS {
 namespace Media {
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
+using FreeExtData = void (*)(void *extData);
 
 typedef struct {
     float scaleX;
@@ -122,6 +123,14 @@ public:
     NATIVEEXPORT virtual bool GetARGB32Color(int32_t x, int32_t y, uint32_t &color);
     NATIVEEXPORT virtual void SetPixelsAddr(void *addr, void *context, uint32_t size, AllocatorType type,
                                     CustomFreePixelMap func);
+    void* GetDngExternalData() const
+    {
+        if (dngExternalData_ != nullptr) {
+            return dngExternalData_;
+        }
+        return nullptr;
+    }
+    void SetDngExternalData(void *dngExternalData, FreeExtData extFunc);
     NATIVEEXPORT virtual int32_t GetPixelBytes();
     NATIVEEXPORT virtual int32_t GetRowBytes();
     NATIVEEXPORT virtual int32_t GetByteCount();
@@ -395,6 +404,8 @@ private:
 
     static int32_t ConvertPixelAlpha(const void *srcPixels, const int32_t srcLength, const ImageInfo &srcInfo,
         void *dstPixels, const ImageInfo &dstInfo);
+    void FreeDngExtData();
+    void FreePixelMapData();
     uint8_t *data_ = nullptr;
     // this info SHOULD be the final info for decoded pixelmap, not the original image info
     ImageInfo imageInfo_;
@@ -430,6 +441,8 @@ private:
     std::shared_ptr<uint8_t> purgeableMemPtr_ = nullptr;
 #endif
     YUVDataInfo yuvDataInfo_;
+    void *dngExternalData_ = nullptr;
+    FreeExtData releaseExtDataFunc_ = nullptr;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     std::shared_ptr<std::mutex> metadataMutex_ = std::make_shared<std::mutex>();
 };

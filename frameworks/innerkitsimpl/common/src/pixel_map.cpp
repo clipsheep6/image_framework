@@ -108,6 +108,23 @@ PixelMap::~PixelMap()
     FreePixelMap();
 }
 
+void PixelMap::FreeDngExtData()
+{
+    if (dngExternalData_ != nullptr && releaseExtDataFunc_ != nullptr) {
+        IMAGE_LOGD("PixelMap::FreePixelMap call releaseExtDataFunc_");
+        releaseExtDataFunc_(dngExternalData_);
+        dngExternalData_ = nullptr;
+        releaseExtDataFunc_ = nullptr;
+    }
+}
+
+void PixelMap::FreePixelMapData()
+{
+    if (freePixelMapProc_ != nullptr) {
+        freePixelMapProc_(data_, context_, pixelsSize_);
+    }
+}
+
 void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
 {
     // remove PixelMap from purgeable LRU if it is purgeable PixelMap
@@ -118,15 +135,12 @@ void PixelMap::FreePixelMap() __attribute__((no_sanitize("cfi")))
         purgeableMemPtr_ = nullptr;
     }
 #endif
-
+    FreeDngExtData();
     if (data_ == nullptr) {
         return;
     }
+    FreePixelMapData();
 
-    if (freePixelMapProc_ != nullptr) {
-        freePixelMapProc_(data_, context_, pixelsSize_);
-    }
-    
     switch (allocatorType_) {
         case AllocatorType::HEAP_ALLOC: {
             free(data_);
@@ -176,6 +190,14 @@ void PixelMap::ReleaseSharedMemory(void *addr, void *context, uint32_t size)
 #endif
 }
 
+void PixelMap::SetDngExternalData(void *dngExternalData, FreeExtData extFunc)
+{
+    IMAGE_LOGE("SetDngExternalData IN");
+    dngExternalData_ = dngExternalData;
+    releaseExtDataFunc_ = extFunc;
+    IMAGE_LOGE("SetDngExternalData data:%{public}d, func:%{public}d", (int)dngExternalData_, (int)releaseExtDataFunc_);
+}
+
 void PixelMap::SetFreePixelMapProc(CustomFreePixelMap func)
 {
     freePixelMapProc_ = func;
@@ -201,6 +223,7 @@ void PixelMap::SetPixelsAddr(void *addr, void *context, uint32_t size, Allocator
     pixelsSize_ = size;
     allocatorType_ = type;
     custFreePixelMap_ = func;
+
     if (type == AllocatorType::DMA_ALLOC && rowDataSize_ != 0) {
         UpdateImageInfo();
     }
