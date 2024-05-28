@@ -270,7 +270,7 @@ uint32_t ExtEncoder::EncodeImageByBitmap(SkBitmap& bitmap, bool needExif, SkWStr
 {
     ImageInfo imageInfo;
     pixelmap_->GetImageInfo(imageInfo);
-    if (!needExif || pixelmap_->GetExifMetadata() == nullptr ||
+    if (encodeFormat_ == SkEncodedImageFormat::kDNG || !needExif || pixelmap_->GetExifMetadata() == nullptr ||
         pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
             return DoEncode(&outStream, bitmap, encodeFormat_);
     }
