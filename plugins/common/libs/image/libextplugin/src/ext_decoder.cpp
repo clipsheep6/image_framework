@@ -925,6 +925,7 @@ void ExtDecoder::ReleaseOutputBuffer(DecodeContext &context, Media::AllocatorTyp
     context.allocatorType = allocatorType;
     context.freeFunc = nullptr;
     context.pixelsBuffer.bufferSize = 0;
+    ::close(*(static_cast<int*>(context.pixelsBuffer.context)));
     context.pixelsBuffer.context = nullptr;
 }
 
