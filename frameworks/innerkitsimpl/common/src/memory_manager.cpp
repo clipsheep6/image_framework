@@ -134,6 +134,7 @@ uint32_t SharedMemory::Release()
     data.data = nullptr;
     data.size = SIZE_ZERO;
     if (extend.data != nullptr) {
+        ::close(extend.data);
         free(extend.data);
         extend.data = nullptr;
         extend.size = SIZE_ZERO;
