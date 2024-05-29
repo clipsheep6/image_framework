@@ -1389,6 +1389,7 @@ std::string g_batchData008[][3] = {
     {"GPSLongitudeRef", "E", "E"},
     {"DateTimeOriginal", "2024:01:25 05:51:34", "2024:01:25 05:51:34"},
     {"ExposureTime", "1/34", "1/34 sec."},
+    {"ExposureTime", "3/5", "0.6 sec."},
     {"SceneType", "1", "Directly photographed"},
     {"ISOSpeedRatings", "1", "1"},
     {"FNumber", "1/1", "f/1.0"},
