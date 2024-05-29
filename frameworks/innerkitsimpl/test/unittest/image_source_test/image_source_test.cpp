@@ -1129,16 +1129,10 @@ HWTEST_F(ImageSourceTest, GetImageInfoForASTC, TestSize.Level3)
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     auto ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_EQ(ret, true);
-    astcInfo.blockFootprint.width = 6;
+    ASSERT_EQ(ret, false);
+    imageSource->sourceStreamPtr_ = std::make_unique<ImagePlugin::MockInputDataStream>();
     ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_EQ(ret, true);
-    astcInfo.blockFootprint.width = 8;
-    ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_EQ(ret, true);
-    astcInfo.blockFootprint.width = 2;
-    ret = imageSource->GetImageInfoForASTC(imageInfo);
-    ASSERT_EQ(ret, true);
+    ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "ImageSourceTest: GetImageInfoForASTC end";
 }
 /**

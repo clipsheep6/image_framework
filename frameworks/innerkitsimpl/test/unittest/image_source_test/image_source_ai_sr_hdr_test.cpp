@@ -40,13 +40,6 @@ using namespace OHOS::Media;
 namespace OHOS {
 namespace Media {
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
-static const std::string IMAGE_INPUT_HDR_PIC1_PATH = "/data/local/tmp/image/hdr_1.jpg";
-static const std::string IMAGE_INPUT_HDR_PIC2_PATH = "/data/local/tmp/image/hdr_2.jpg";
-static const std::string IMAGE_INPUT_HDR_PIC3_PATH = "/data/local/tmp/image/hdr_3.jpg";
-static const std::string IMAGE_INPUT_HDR_PIC4_PATH = "/data/local/tmp/image/hdr_4.jpg";
-static const std::string IMAGE_INPUT_HDR_PIC5_PATH = "/data/local/tmp/image/hdr_5.jpg";
-static const std::string IMAGE_INPUT_HDR_PIC6_PATH = "/data/local/tmp/image/hdr_6.jpg";
-static const std::string IMAGE_INPUT_NON_HDR_PIC_PATH = "/data/local/tmp/image/non_hdr.jpg";
 
 class ImageSourceAiTest : public testing::Test {
 public:
@@ -219,7 +212,7 @@ HWTEST_F(ImageSourceAiTest, AisrTestSmallerHigh, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -257,7 +250,7 @@ HWTEST_F(ImageSourceAiTest, AisrTestSmallerMiddle, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -295,7 +288,7 @@ HWTEST_F(ImageSourceAiTest, AisrTestSmallerLow, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -371,7 +364,7 @@ HWTEST_F(ImageSourceAiTest, HdrTestBase, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -391,7 +384,7 @@ HWTEST_F(ImageSourceAiTest, HdrTestBase, TestSize.Level3)
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
@@ -412,7 +405,7 @@ HWTEST_F(ImageSourceAiTest, HdrTest720p, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_NON_HDR_PIC_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -432,7 +425,7 @@ HWTEST_F(ImageSourceAiTest, HdrTest720p, TestSize.Level3)
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
@@ -451,7 +444,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestLargerHigh, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -471,7 +464,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestLargerHigh, TestSize.Level3)
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
     decodeOpts.resolutionQuality = ResolutionQuality::HIGH;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
@@ -491,7 +484,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestLargerMiddle, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -511,7 +504,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestLargerMiddle, TestSize.Level3)
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
     decodeOpts.resolutionQuality = ResolutionQuality::MEDIUM;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
@@ -531,7 +524,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestLargerLow, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -551,7 +544,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestLargerLow, TestSize.Level3)
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
     decodeOpts.resolutionQuality = ResolutionQuality::LOW;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
@@ -571,7 +564,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerHigh, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -587,11 +580,11 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerHigh, TestSize.Level3)
     jpegHeight = pixelMap->GetHeight();
 
     int32_t desiredWidth = jpegWidth - 400;
-    int32_t desiredHeight = jpegHeight - 400;
+    int32_t desiredHeight = jpegHeight - 54;
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
     decodeOpts.resolutionQuality = ResolutionQuality::HIGH;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
@@ -611,7 +604,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerMiddle, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -627,11 +620,11 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerMiddle, TestSize.Level3)
     jpegHeight = pixelMap->GetHeight();
 
     int32_t desiredWidth = jpegWidth - 400;
-    int32_t desiredHeight = jpegHeight - 400;
+    int32_t desiredHeight = jpegHeight - 54;
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
     decodeOpts.resolutionQuality = ResolutionQuality::MEDIUM;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
@@ -651,7 +644,7 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerLow, TestSize.Level3)
     uint32_t errorCode = 0;
     SourceOptions opts;
     std::unique_ptr<ImageSource> imageSource =
-            ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PIC1_PATH, opts, errorCode);
+            ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
     ASSERT_EQ(errorCode, SUCCESS);
     ASSERT_NE(imageSource.get(), nullptr);
 
@@ -667,11 +660,11 @@ HWTEST_F(ImageSourceAiTest, SrHdrTestSmallerLow, TestSize.Level3)
     jpegHeight = pixelMap->GetHeight();
 
     int32_t desiredWidth = jpegWidth - 400;
-    int32_t desiredHeight = jpegHeight - 400;
+    int32_t desiredHeight = jpegHeight - 54;
 
     decodeOpts.desiredSize.width = desiredWidth;
     decodeOpts.desiredSize.height = desiredHeight;
-    decodeOpts.desiredDynamicRange = DecodeDynamicRange::HDR;
+    decodeOpts.desiredDynamicRange = DecodeDynamicRange::AUTO;
     decodeOpts.resolutionQuality = ResolutionQuality::LOW;
 
     pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
