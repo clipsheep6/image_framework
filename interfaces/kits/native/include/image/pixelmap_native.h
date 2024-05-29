@@ -504,7 +504,7 @@ Image_ErrorCode OH_PixelmapNative_CreateEmptyPixelmap(OH_Pixelmap_Initialization
     OH_PixelmapNative **pixelmap);
 
 /**
- * @brief The interversion of the two formats
+ * @brief Convert the image format based on the input target pixel format.
  *
  * @param srcPixelMap Source Image PixelMap.
  * @param destPixelMap Destination Image PixelMap.

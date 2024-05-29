@@ -457,7 +457,6 @@ napi_value PixelMapNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMapFromSurface", CreatePixelMapFromSurface),
         DECLARE_NAPI_STATIC_FUNCTION("createPixelMapFromSurfaceSync", CreatePixelMapFromSurfaceSync),
         DECLARE_NAPI_STATIC_FUNCTION("convertPixelFormat", ConvertPixelMapFormat),
-#endif
     };
 
     napi_value constructor = nullptr;
