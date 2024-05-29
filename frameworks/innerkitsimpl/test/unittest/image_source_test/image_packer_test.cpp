@@ -805,7 +805,8 @@ HWTEST_F(ImagePackerTest, PackYuv2Jpeg004, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePackerTest: PackYuv2Jpeg004 end";
 }
 
-static void TestHuaweiMakernote(std::unique_ptr<ImageSource> &imagesource) {
+static void TestHuaweiMakernote(std::unique_ptr<ImageSource> &imagesource)
+{
     std::string value;
     ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteBurstNumber", value), OHOS::Media::SUCCESS);
     ASSERT_EQ(value, "2");

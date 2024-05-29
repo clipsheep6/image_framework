@@ -357,8 +357,8 @@ namespace OHOS {
         HWTEST_F(ImageSourceRawTest, RawImageDecode010, TestSize.Level3)
         {
             /**
-             * @tc.steps: step1. create image source by buffer source stream and default format hit, modify data buffer to wrong
-             * format.
+             * @tc.steps: step1. create image source by buffer source stream and default format hit,
+             * modify data buffer to wrong format.
              * @tc.expected: step1. create image source success.
              */
             size_t bufferSize = 0;
@@ -371,7 +371,8 @@ namespace OHOS {
             buffer[bufferSize] = 43;
             uint32_t errorCode = 0;
             SourceOptions opts;
-            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(buffer, bufferSize, opts, errorCode);
+            std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(buffer,
+                                                            bufferSize, opts, errorCode);
             ASSERT_EQ(errorCode, SUCCESS);
             ASSERT_NE(imageSource.get(), nullptr);
             /**
