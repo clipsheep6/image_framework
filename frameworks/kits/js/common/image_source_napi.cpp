@@ -342,6 +342,11 @@ static std::vector<struct ImageEnum> sDecodingResolutionQualityMap = {
     {"MEDIUM", 2, ""},
     {"HIGH", 3, ""},
 };
+static std::vector<struct ImageEnum> sDecodingResolutionQualityMap = {
+    {"LOW", 1, ""},
+    {"MEDIUM", 2, ""},
+    {"HIGH", 3, ""},
+};
 
 static std::string GetStringArgument(napi_env env, napi_value value)
 {
