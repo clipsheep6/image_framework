@@ -86,6 +86,7 @@ private:
     static void UnmarshallingComplete(napi_env env, napi_status status, void *data);
     static napi_value CreatePixelMapFromParcel(napi_env env, napi_callback_info info);
     static napi_value CreatePixelMapFromSurface(napi_env env, napi_callback_info info);
+    static napi_value CreatePixelMapFromSurfaceSync(napi_env env, napi_callback_info info);
     static void CreatePixelMapFromSurfaceComplete(napi_env env, napi_status status, void *data);
     static napi_value ThrowExceptionError(napi_env env,
         const std::string &tag, const std::uint32_t &code, const std::string &info);
@@ -131,6 +132,8 @@ private:
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value ApplyColorSpace(napi_env env, napi_callback_info info);
     static ImageType ParserImageType(napi_env env, napi_value argv);
+    static napi_value ConvertPixelMapFormat(napi_env env, napi_callback_info info);
+    static std::vector<napi_property_descriptor> RegisterNapi();
 
     void release();
     static thread_local napi_ref sConstructor_;

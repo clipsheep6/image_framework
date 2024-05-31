@@ -78,8 +78,8 @@ static bool FillFrameInfoForPixelConvert(AVFrame *frame, PixelFormatConvertParam
         }
         const OH_NativeBuffer_Plane &planeY = param.planesInfo->planes[0];
         const OH_NativeBuffer_Plane &planeUV = param.planesInfo->planes[param.format == AV_PIX_FMT_NV21 ? 2 : 1];
-        IMAGE_LOGI("planeY offset: %{public}ld, columnStride: %{public}d, rowStride: %{public}d,"
-                   " planeUV offset: %{public}ld, columnStride: %{public}d, rowStride: %{public}d",
+        IMAGE_LOGI("planeY offset: %{public}llu, columnStride: %{public}u, rowStride: %{public}u,"
+                   " planeUV offset: %{public}llu, columnStride: %{public}u, rowStride: %{public}u",
                    planeY.offset, planeY.columnStride, planeY.rowStride,
                    planeUV.offset, planeUV.columnStride, planeUV.rowStride);
         frame->data[0] = param.data + planeY.offset;
@@ -320,6 +320,15 @@ void HeifDecoderImpl::GetTileSize(const std::shared_ptr<HeifImage> &image, uint3
         tileHeight = image->GetOriginalHeight();
         return;
     }
+    if (imageType == "iden") {
+        std::shared_ptr<HeifImage> idenImage;
+        parser_->GetIdenImage(image->GetItemId(), idenImage);
+        if (idenImage != nullptr) {
+            tileWidth = idenImage->GetOriginalWidth();
+            tileHeight = idenImage->GetOriginalHeight();
+        }
+        return;
+    }
     if (imageType != "grid") {
         IMAGE_LOGE("GetTileSize unsupported image type: %{public}s", imageType.c_str());
         return;
@@ -409,6 +418,8 @@ bool HeifDecoderImpl::decode(HeifFrameInfo *frameInfo)
                imageInfo_.mWidth, imageInfo_.mHeight, imageType.c_str(), inPixelFormat_);
     if (imageType == "grid") {
         res = DecodeGrids(hwBuffer);
+    } else if (imageType == "iden") {
+        res = DecodeIdenImage(hwBuffer);
     } else if (imageType == "hvc1") {
         res = DecodeSingleImage(primaryImage_, hwBuffer);
     }
@@ -515,6 +526,16 @@ bool HeifDecoderImpl::DecodeGrids(sptr<SurfaceBuffer> &hwBuffer, bool isGainmap)
 #else
     return false;
 #endif
+}
+
+bool HeifDecoderImpl::DecodeIdenImage(sptr<SurfaceBuffer> &hwBuffer, bool isGainmap)
+{
+    if (!primaryImage_) {
+        return false;
+    }
+    std::shared_ptr<HeifImage> idenImage;
+    parser_->GetIdenImage(primaryImage_->GetItemId(), idenImage);
+    return DecodeSingleImage(idenImage, hwBuffer, isGainmap);
 }
 
 bool HeifDecoderImpl::DecodeSingleImage(std::shared_ptr<HeifImage> &image, sptr<SurfaceBuffer> &hwBuffer,
