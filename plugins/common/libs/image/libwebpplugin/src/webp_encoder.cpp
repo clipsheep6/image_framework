@@ -329,6 +329,10 @@ uint32_t WebpEncoder::DoEncodeForICC(Media::PixelMap &pixelMap)
     IMAGE_LOGD("DoEncodeForICC IN");
 
     auto encodedData = memoryStream_.detachAsData();
+    if (encodeData == nullptr) {
+        IMAGE_LOGE("DetachAsData failed.");
+        return ERROR;
+    }
     WebPData webpEncode = { encodedData->bytes(), encodedData->size() };
     WebPData webpIcc = { iccBytes_, iccSize_ };
 
