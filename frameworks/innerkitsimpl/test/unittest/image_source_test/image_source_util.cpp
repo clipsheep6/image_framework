@@ -39,7 +39,8 @@ constexpr uint32_t NUM_1 = 1;
 constexpr uint32_t NUM_100 = 100;
 constexpr int64_t BUFFER_SIZE = 2 * 1024 * 1024;
 
-int64_t PackImageByFormat(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap, std::string format)
+int64_t PackImageByFormat(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap,
+    std::string format)
 {
     ImagePacker imagePacker;
     PackOption option;
