@@ -241,7 +241,7 @@ STATIC_EXEC_FUNC(Packing)
         context->packedSize = packedSize;
         context->status = SUCCESS;
     } else {
-        context->status = ERROR;
+        context->status = IMAGE_ENCODE_FAILED;
         IMAGE_LOGE("Packing failed, packedSize outside size.");
     }
 }
@@ -251,7 +251,7 @@ STATIC_COMPLETE_FUNC(PackingError)
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
     auto context = static_cast<ImagePackerAsyncContext*>(data);
-    context->status = ERROR;
+    context->status = IMAGE_BAD_PARAMETER;
     CommonCallbackRoutine(env, context, result);
 }
 
@@ -263,7 +263,7 @@ STATIC_COMPLETE_FUNC(Packing)
 
     if (!ImageNapiUtils::CreateArrayBuffer(env, context->resultBuffer.get(),
                                            context->packedSize, &result)) {
-        context->status = ERROR;
+        context->status = IMAGE_UNKNOWN_ERROR;
         IMAGE_LOGE("napi_create_arraybuffer failed!");
         napi_get_undefined(env, &result);
     } else {
@@ -1043,13 +1043,13 @@ STATIC_EXEC_FUNC(PackToFile)
     auto context = static_cast<ImagePackerAsyncContext*>(data);
     if (context->fd <= INVALID_FD) {
         BuildMsgOnError(context, context->fd <= INVALID_FD,
-        "ImagePacker invalid fd", ERR_IMAGE_INVALID_PARAMETER);
+        "ImagePacker invalid fd", IMAGE_BAD_PARAMETER);
         return;
     }
 
     auto startRes = context->rImagePacker->StartPacking(context->fd, context->packOption);
     if (startRes != SUCCESS) {
-        context->status = ERROR;
+        context->status = IMAGE_ENCODE_FAILED;
         BuildMsgOnError(context, startRes == SUCCESS, "Start packing failed", startRes);
         return;
     }
@@ -1057,7 +1057,7 @@ STATIC_EXEC_FUNC(PackToFile)
         IMAGE_LOGD("ImagePacker set image source");
         if (context->rImageSource == nullptr) {
             BuildMsgOnError(context, context->rImageSource == nullptr,
-                "ImageSource is nullptr", ERR_IMAGE_INVALID_PARAMETER);
+                "ImageSource is nullptr", IMAGE_BAD_PARAMETER);
             return;
         }
         context->rImagePacker->AddImage(*(context->rImageSource));
@@ -1065,7 +1065,7 @@ STATIC_EXEC_FUNC(PackToFile)
         IMAGE_LOGD("ImagePacker set pixelmap");
         if (context->rPixelMap == nullptr) {
             BuildMsgOnError(context, context->rImageSource == nullptr,
-                "Pixelmap is nullptr", ERR_IMAGE_INVALID_PARAMETER);
+                "Pixelmap is nullptr", IMAGE_BAD_PARAMETER);
             return;
         }
         context->rImagePacker->AddImage(*(context->rPixelMap));
@@ -1076,7 +1076,7 @@ STATIC_EXEC_FUNC(PackToFile)
         context->packedSize = packedSize;
         context->status = SUCCESS;
     } else {
-        context->status = ERROR;
+        context->status = IMAGE_ENCODE_FAILED;
         BuildMsgOnError(context, packRes == SUCCESS, "PackedSize outside size", packRes);
         IMAGE_LOGE("Packing failed, packedSize outside size.");
     }

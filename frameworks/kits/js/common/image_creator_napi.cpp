@@ -80,6 +80,8 @@ static void CommonCallbackRoutine(napi_env env, Contextc &context, const napi_va
 
     if (context->status == SUCCESS) {
         result[1] = valueParam;
+    } else {
+        napi_create_uint32(env, context->status, &result[0]);
     }
 
     if (context->deferred) {
@@ -232,12 +234,12 @@ napi_value ImageCreatorNapi::JSCreateImageCreator(napi_env env, napi_callback_in
     status = napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     if (status != napi_ok || ((argc != ARGS3) && (argc != ARGS4))) {
         std::string errMsg = "Invailed arg counts ";
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER,
             errMsg.append(std::to_string(argc)));
     }
     std::string errMsg;
     if (!ImageNapiUtils::ParseImageCreatorReceiverArgs(env, argc, argv, args, errMsg)) {
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, errMsg);
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER, errMsg);
     }
     int32_t len = sizeof(args) / sizeof(args[PARAM0]);
     if (isTest(args, len)) {
@@ -571,7 +573,7 @@ napi_value ImageCreatorNapi::JsDequeueImage(napi_env env, napi_callback_info inf
 
         if (result == nullptr) {
             napi_get_undefined(env, &result);
-            context->status = ERR_IMAGE_INIT_ABNORMAL;
+            context->status = IMAGE_UNKNOWN_ERROR;
         } else {
             context->status = SUCCESS;
         }
@@ -750,13 +752,13 @@ static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext
         auto argType1 = ImageNapiUtils::getType(args.env, ic.argv[PARAM1]);
         if (argType0 == napi_string && argType1 == napi_function) {
             if (!ImageNapiUtils::GetUtf8String(args.env, ic.argv[PARAM0], ic.onType)) {
-                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
                     "Could not get On type string");
                 return false;
             }
 
             if (!CheckOnParam0(args.env, ic.argv[PARAM0], "imageRelease")) {
-                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
                     "Unsupport PARAM0");
                 return false;
             }
@@ -764,13 +766,13 @@ static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext
             napi_create_reference(args.env, ic.argv[PARAM1], ic.refCount, &(ic.context->callbackRef));
         } else {
             std::string errMsg = "Unsupport args type: ";
-            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+            ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
                 errMsg.append(std::to_string(argType0)).append(std::to_string(argType1)));
             return false;
         }
     } else {
         std::string errMsg = "Invailed argc: ";
-        ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+        ImageNapiUtils::ThrowExceptionError(args.env, IMAGE_BAD_PARAMETER,
             errMsg.append(std::to_string(ic.argc)));
         return false;
     }
@@ -868,7 +870,7 @@ napi_value ImageCreatorNapi::JsOn(napi_env env, napi_callback_info info)
         auto native = ic.context->constructor_->imageCreator_;
         if (native == nullptr) {
             IMAGE_ERR("Native instance is nullptr");
-            ic.context->status = ERR_IMAGE_INIT_ABNORMAL;
+            ic.context->status = IMAGE_UNKNOWN_ERROR;
             return false;
         }
         shared_ptr<ImageCreatorReleaseListener> listener = make_shared<ImageCreatorReleaseListener>();

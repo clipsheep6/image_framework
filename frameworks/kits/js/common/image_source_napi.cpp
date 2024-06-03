@@ -368,6 +368,35 @@ static std::string GetStringArgument(napi_env env, napi_value value)
     return strValue;
 }
 
+static uint32_t GetNewErrorCode(uint32_t errorcode)
+{
+    if (errorcode == ERR_IMAGE_DATA_ABNORMAL || errorcode == ERR_IMAGE_INVALID_PARAMETER ||
+        errorcode == ERR_MEDIA_NULL_POINTER) {
+        errorcode = IMAGE_BAD_PARAMETER;
+    } else if (errorcode == ERR_IMAGE_DATA_UNSUPPORT) {
+        errorcode = IMAGE_UNSUPPORTED_MIME_TYPE;
+    } else if (errorcode == ERR_IMAGE_MISMATCHED_FORMAT || errorcode == ERR_IMAGE_UNKNOWN_FORMAT ||
+        errorcode == ERR_IMAGE_DECODE_HEAD_ABNORMAL) {
+        errorcode = IMAGE_UNKNOWN_MIME_TYPE;
+    } else if (errorcode == ERR_IMAGE_TOO_LARGE) {
+        errorcode = IMAGE_TOO_LARGE;
+    } else if (errorcode == ERR_IMAGE_DECODE_EXIF_UNSUPPORT) {
+        errorcode = IMAGE_UNSUPPORTED_METADATA;
+    } else if (errorcode == ERR_IMAGE_CROP) {
+        errorcode = IMAGE_INVALID_REGION;
+    } else if (errorcode == ERR_IMAGE_MALLOC_ABNORMAL) {
+        errorcode = IMAGE_ALLOC_FAILED;
+    } else if (errorcode == ERR_IMAGE_SOURCE_DATA || errorcode == ERR_IMAGE_SOURCE_DATA_INCOMPLETE) {
+        errorcode = IMAGE_BAD_SOURCE;
+    } else if (errorcode == ERR_IMAGE_DECODE_FAILED || errorcode == ERR_IMAGE_PLUGIN_CREATE_FAILED ||
+        errorcode == ERR_IMAGE_DECODE_ABNORMAL || errorcode == ERR_IMAGE_GET_DATA_ABNORMAL) {
+        errorcode = IMAGE_DECODE_FAILED;
+    } else {
+        errorcode = IMAGE_UNKNOWN_ERROR;
+    }
+    return errorcode;
+}
+
 static void ImageSourceCallbackRoutine(napi_env env, ImageSourceAsyncContext* &context, const napi_value &valueParam)
 {
     napi_value result[NUM_2] = {0};
@@ -424,6 +453,7 @@ static void ImageSourceCallbackWithErrorObj(napi_env env,
         napi_get_undefined(env, &result[NUM_0]);
         result[NUM_1] = val;
     } else {
+        context->status = GetNewErrorCode(context->status);
         std::string errMsg = (context->errMsg.size() > 0) ? context->errMsg : "error status, no message";
         IMAGE_LOGD("Operation failed code:%{public}d, msg:%{public}s",
             context->status, errMsg.c_str());
@@ -647,16 +677,16 @@ napi_value CreateObtainErrorArray(napi_env env, std::multimap<std::int32_t, std:
         napi_value errMsgVal;
         napi_get_undefined(env, &errMsgVal);
         if (it->first == ERR_IMAGE_DECODE_ABNORMAL) {
-            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, IMAGE_DECODE_FAILED,
                 "The image source data is incorrect! exif key: " + it->second);
         } else if (it->first == ERR_IMAGE_UNKNOWN_FORMAT) {
-            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, IMAGE_UNKNOWN_MIME_TYPE,
                 "Unknown image format! exif key: " + it->second);
         } else if (it->first == ERR_IMAGE_DECODE_FAILED) {
-            ImageNapiUtils::CreateErrorObj(env, errMsgVal, it->first,
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, IMAGE_DECODE_FAILED,
                 "Failed to decode the image! exif key: " + it->second);
         } else {
-            ImageNapiUtils::CreateErrorObj(env, errMsgVal, ERROR,
+            ImageNapiUtils::CreateErrorObj(env, errMsgVal, IMAGE_UNKNOWN_ERROR,
                 "There is generic napi failure! exif key: " + it->second);
         }
         status = napi_set_element(env, result, index, errMsgVal);
@@ -1759,6 +1789,7 @@ static void GetImagePropertyComplete(napi_env env, napi_status status, ImageSour
         } else {
             std::string errMsg = context->status == ERR_IMAGE_DECODE_EXIF_UNSUPPORT ? "Unsupport EXIF info key!" :
                 "There is generic napi failure!";
+            context->status = GetNewErrorCode(context->status);
             ImageNapiUtils::CreateErrorObj(env, result[NUM_0], context->status, errMsg);
 
             if (!context->defaultValueStr.empty()) {
@@ -1875,11 +1906,12 @@ static void ModifyImagePropertiesExecute(napi_env env, void *data)
                 recordIterator->second, static_cast<uint8_t *>(context->sourceBuffer),
                 context->sourceBufferSize);
         } else {
-            context->errMsgArray.insert(std::make_pair(ERROR, recordIterator->first));
+            context->errMsgArray.insert(std::make_pair(IMAGE_UNKNOWN_ERROR, recordIterator->first));
             IMAGE_LOGE("There is no image source!");
             continue;
         }
         if (status != SUCCESS) {
+            status = GetNewErrorCode(status);
             context->errMsgArray.insert(std::make_pair(status, recordIterator->first));
         }
     }
@@ -1915,6 +1947,7 @@ static void ModifyImagePropertyExecute(napi_env env, void *data)
         context->status = ERROR;
         IMAGE_LOGE("There is no image source!");
     }
+    context->status = GetNewErrorCode(context->status);
 }
 
 static void GetImagePropertiesExecute(napi_env env, void *data)
@@ -1999,7 +2032,7 @@ napi_value ImageSourceNapi::ModifyImageProperty(napi_env env, napi_callback_info
     napi_status status;
     std::unique_ptr<ImageSourceAsyncContext> asyncContext = UnwrapContextForModify(env, info);
     if (asyncContext == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, "async context unwrap failed");
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER, "async context unwrap failed");
     }
 
     if (asyncContext->callbackRef == nullptr) {
@@ -2035,7 +2068,7 @@ napi_value ImageSourceNapi::GetImageProperty(napi_env env, napi_callback_info in
     napi_status status;
     std::unique_ptr<ImageSourceAsyncContext> asyncContext = UnwrapContext(env, info);
     if (asyncContext == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, "async context unwrap failed");
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER, "async context unwrap failed");
     }
 
     if (asyncContext->callbackRef == nullptr) {
@@ -2395,7 +2428,7 @@ napi_value ImageSourceNapi::CreatePixelMapList(napi_env env, napi_callback_info 
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_DATA_ABNORMAL,
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER,
             "async context unwrap failed");
     }
 
@@ -2481,7 +2514,7 @@ napi_value ImageSourceNapi::GetDelayTime(napi_env env, napi_callback_info info)
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_DATA_ABNORMAL,
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER,
             "async context unwrap failed");
     }
 
@@ -2565,7 +2598,7 @@ napi_value ImageSourceNapi::GetDisposalType(napi_env env, napi_callback_info inf
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_DATA_ABNORMAL,
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER,
             "async context unwrap failed");
     }
 
@@ -2642,7 +2675,7 @@ napi_value ImageSourceNapi::GetFrameCount(napi_env env, napi_callback_info info)
 
     auto asyncContext = UnwrapContextForList(env, info);
     if (asyncContext == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_DATA_ABNORMAL,
+        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_BAD_PARAMETER,
             "async context unwrap failed");
     }
 
