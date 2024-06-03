@@ -1096,7 +1096,7 @@ static AVPixelFormat PixelFormatToAVPixelFormat(const PixelFormat &pixelFormat)
 typedef struct FFMpegConvertInfo {
     AVPixelFormat format = AVPixelFormat::AV_PIX_FMT_NONE;
     int32_t width = 0;
-    int32_t height = 0;
+    int32_t height = 0; 
     int32_t alignSize = 1;
 } FFMPEG_CONVERT_INFO;
 
@@ -1122,6 +1122,9 @@ static bool FFMpegConvert(const void *srcPixels, const FFMPEG_CONVERT_INFO& srcI
     if (inputFrame != nullptr && outputFrame != nullptr) {
         struct SwsContext *ctx = sws_getContext(srcInfo.width, srcInfo.height, srcInfo.format,
             dstInfo.width, dstInfo.height, dstInfo.format, SWS_POINT, nullptr, nullptr, nullptr);
+        IMAGE_LOGE("srcInfo.width:%{public}", srcInfo.width);
+
+        
         if (ctx != nullptr) {
             av_image_fill_arrays(inputFrame->data, inputFrame->linesize, (uint8_t *)srcPixels,
                 srcInfo.format, srcInfo.width, srcInfo.height, srcInfo.alignSize);
