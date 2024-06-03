@@ -1780,7 +1780,6 @@ group("unittest") {
     ":transformtest",
     ":webpplugintest",
 
-    #":rawtest",
   ]
 
   if (enable_jpeg_hw_decode) {

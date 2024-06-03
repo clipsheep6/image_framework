@@ -192,10 +192,10 @@ void PixelMap::ReleaseSharedMemory(void *addr, void *context, uint32_t size)
 
 void PixelMap::SetDngExternalData(void *dngExternalData, FreeExtData extFunc)
 {
-    IMAGE_LOGE("SetDngExternalData IN");
+    IMAGE_LOGD("SetDngExternalData IN");
     dngExternalData_ = dngExternalData;
     releaseExtDataFunc_ = extFunc;
-    IMAGE_LOGE("SetDngExternalData data:%{public}d, func:%{public}d", (int)dngExternalData_, (int)releaseExtDataFunc_);
+    IMAGE_LOGD("SetDngExternalData data:%{public}d, func:%{public}d", (int)dngExternalData_, (int)releaseExtDataFunc_);
 }
 
 void PixelMap::SetFreePixelMapProc(CustomFreePixelMap func)
