@@ -46,6 +46,7 @@ namespace OHOS {
 namespace Media {
 const auto KEY_SIZE = 2;
 const auto TAG_VALUE_SIZE = 1024;
+const auto EXIF_HEAD_SIZE = 6;
 const static std::string DEFAULT_EXIF_VALUE = "default_exif_value";
 const std::set<std::string_view> HW_SPECIAL_KEYS = {
     "MovingPhotoId",
@@ -611,7 +612,8 @@ ExifMnoteData* ExifMetadata::GetHwMoteData(bool &isNewMaker)
         IMAGE_LOGE("GetHwMoteData create maker note failed.");
         return nullptr;
     }
-    if (memcpy_s(makernote->data, hwsize - 6, INIT_HW_DATA + 6, hwsize - 6) != 0) {
+    if (memcpy_s(makernote->data, hwsize - EXIF_HEAD_SIZE, INIT_HW_DATA + EXIF_HEAD_SIZE,
+        hwsize - EXIF_HEAD_SIZE) != 0) {
         IMAGE_LOGE("Failed to copy memory for ExifEntry. Requested size: %{public}zu", hwsize);
     }
     isNewMaker = true;
