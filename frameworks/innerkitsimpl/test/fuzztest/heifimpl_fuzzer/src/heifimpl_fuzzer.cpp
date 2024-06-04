@@ -74,6 +74,15 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     int frameIndex = 0;
     uint8_t dstBuffer = 0;
     void *context = nullptr;
+    std::string errMsg = "error";
+    std::vector<uint8_t> v1(1,1);
+    const std::shared_ptr<ImagePlugin::HeifImage> const_image = nullptr;
+    uint32_t uint32data = 0;
+    sptr<OHOS::SurfaceBuffer> hwBuffer = nullptr;
+    bool flag = false;
+    const uint32_t const_uint32data = 0;
+    std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
+
 
     heifdecoderimpl->getSequenceInfo(frameInfo, frameCount);
     heifdecoderimpl->setOutputColor(heifColor);
@@ -88,21 +97,21 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     heifdecoderimpl->getGainmapInfo(frameInfo);
     heifdecoderimpl->getTmapInfo(frameInfo);
     heifdecoderimpl->getHdrType();
-    heifdecoderimpl->getVividMetadata(std::vector<uint8_t>& uwaInfo, std::vector<uint8_t>& displayInfo,std::vector<uint8_t>& lightInfo);
-    heifdecoderimpl->getISOMetadata(std::vector<uint8_t>& isoMetadata);
-    heifdecoderimpl->getErrMsg(std::string& errMsg);
-    heifdecoderimpl->Reinit(HeifFrameInfo *frameInfo);
-    heifdecoderimpl->InitFrameInfo(HeifFrameInfo *frameInfo, const std::shared_ptr<HeifImage> &image);
-    heifdecoderimpl->GetTileSize(const std::shared_ptr<HeifImage> &image, uint32_t &tileWidth, uint32_t &tileHeight);
+    heifdecoderimpl->getVividMetadata(v1, v1, v1);
+    heifdecoderimpl->getISOMetadata(v1);
+    heifdecoderimpl->getErrMsg(errMsg);
+    heifdecoderimpl->Reinit(frameInfo);
+    heifdecoderimpl->InitFrameInfo(frameInfo, const_image);
+    heifdecoderimpl->GetTileSize(const_image, uint32data, uint32data);
     heifdecoderimpl->SetRowColNum();
-    heifdecoderimpl->ProcessChunkHead(uint8_t *data, size_t len);
-    heifdecoderimpl->DecodeGrids(sptr<SurfaceBuffer> &hwBuffer, bool isGainmap = false);
-    heifdecoderimpl->DecodeIdenImage(sptr<SurfaceBuffer> &hwBuffer, bool isGainmap = false);
-    heifdecoderimpl->DecodeSingleImage(std::shared_ptr<HeifImage> &image, sptr<SurfaceBuffer> &hwBuffer, bool isGainmap = false);
-    heifdecoderimpl->ConvertHwBufferPixelFormat(sptr<SurfaceBuffer> &hwBuffer, bool isGainmap = false);
+    heifdecoderimpl->ProcessChunkHead(&dstBuffer, frameCount);
+    heifdecoderimpl->DecodeGrids(hwBuffer, flag);
+    heifdecoderimpl->DecodeIdenImage(hwBuffer, flag);
+    heifdecoderimpl->DecodeSingleImage(image, hwBuffer, flag);
+    heifdecoderimpl->ConvertHwBufferPixelFormat(hwBuffer, flag);
     heifdecoderimpl->IsDirectYUVDecode();
-    heifdecoderimpl->SetColorSpaceInfo(HeifFrameInfo* info, const std::shared_ptr<HeifImage>& image);
-    heifdecoderimpl->SetHardwareDecodeErrMsg(const uint32_t width, const uint32_t height);
+    heifdecoderimpl->SetColorSpaceInfo(frameInfo, const_image);
+    heifdecoderimpl->SetHardwareDecodeErrMsg(const_uint32data, const_uint32data);
 }
 
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
