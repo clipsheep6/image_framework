@@ -15,6 +15,7 @@
 
 #include "heifimpl_fuzzer.h"
 #define private public
+#define protected public
 
 #include <cstdint>
 #include <string>
@@ -26,6 +27,9 @@
 #include "include/core/SKStream.h"
 #include "buffer_source_stream.h"
 #include "ext_decoder.h"
+#include "box/item_property_basic_box.h"
+#include "box/item_property_aux_box.h"
+#include "box/item_property_transform_box.h"
 
 namespace OHOS {
 namespace Media {
@@ -277,6 +281,59 @@ void HeifImageTest002(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
     heifimage->GetISOMetadata();
 }
 
+void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heifbuffstream, ImagePlugin::HeifStreamReader &heifstreamreader, 
+                       ImagePlugin::HeifStreamWriter &heifstreamwriter)
+{
+    size_t size = 0;
+    int64_t int64data = 0;
+    void *data = nullptr;
+    uint8_t uint8data = 0;
+    bool flag = false;
+    uint16_t uint16data = 0;
+    uint32_t uint32data = 0;
+    uint64_t uint64data = 0;
+    int sizenum = 0;
+    const std::string const_ptr = "abc";
+    const std::vector<uint8_t> v1(1,1);
+    enum ImagePlugin::heif_error errMsg = heif_error_ok;
+
+    int64data = heifbuffstream->Tell();
+    heifbuffstream->CheckSize(size, int64data);
+    heifbuffstream->Read(data, size);
+    heifbuffstream->Seek(int64data);
+
+    heifstreamreader.Read8();
+    heifstreamreader.Read16();
+    heifstreamreader.Read32();
+    heifstreamreader.Read64();
+    heifstreamreader.ReadData(&uint8data, size);
+    heifstreamreader.ReadString();
+    flag = heifstreamreader.CheckSize(size);
+    heifstreamreader.SkipEnd();
+    flag = heifstreamreader.IsAtEnd();
+    flag = heifstreamreader.HasError();
+    heifstreamreader.SetError(flag);
+    errMsg = heifstreamreader.GetError();
+    heifstreamreader.GetStream();
+    size = heifstreamreader.GetRemainSize();
+
+    heifstreamwriter.CheckSize(size);
+    heifstreamwriter.Write8(uint8data);
+    heifstreamwriter.Write16(uint16data);
+    heifstreamwriter.Write32(uint32data);
+    heifstreamwriter.Write64(uint64data);
+    heifstreamwriter.Write(sizenum, uint64data);
+    heifstreamwriter.Write(const_ptr);
+    heifstreamwriter.Write(v1);
+    heifstreamwriter.Skip(size);
+    heifstreamwriter.Insert(size);
+    heifstreamwriter.GetDataSize();
+    heifstreamwriter.GetPos();
+    heifstreamwriter.SetPos(size);
+    heifstreamwriter.SetPositionToEnd();
+    heifstreamwriter.GetData();
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
     //HeifDecodeImpl.cpp create/init/fuzztest
@@ -300,6 +357,12 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     std::shared_ptr<ImagePlugin::HeifImage> heifimage = heifparse.GetGainmapImage();
     HeifImageTest001(heifimage);
     HeifImageTest002(heifimage);
+
+    //heif_stream.cpp create/init/fuzztest
+    int64_t start = 0;
+    auto heifstreamreader = ImagePlugin::HeifStreamReader(heifbuffstream, start, size);
+    auto heifstreamwriter = ImagePlugin::HeifStreamWriter();
+    HeifStreamTest001(heifbuffstream, heifstreamreader, heifstreamwriter);
 
 }
 } //namespace media
