@@ -114,9 +114,101 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     heifdecoderimpl->SetHardwareDecodeErrMsg(const_uint32data, const_uint32data);
 }
 
+void HeifParserTest001(ImagePlugin::HeifParser &heifparse,const std::shared_ptr<ImagePlugin::HeifInputStream> &stream)
+{
+    std::shared_ptr<ImagePlugin::HeifParser> *out = nullptr;
+    const void *data = nullptr;
+    size_t size = 0;
+    bool flag = false;
+    ImagePlugin::HeifStreamWriter writer;
+    ImagePlugin::heif_item_id itemId = 0xffff;
+    std::vector<uint8_t> v1(1,1);
+    enum ImagePlugin::heif_header_option option = ImagePlugin::heif_no_header;
+    std::vector<std::shared_ptr<ImagePlugin::HeifImage>> v2(1,nullptr);
+    std::vector<ImagePlugin::heif_item_id> itemIdList(1,0xffff);
+    const uint8_t intdata8 = 0;
+    uint32_t uint32data = 0;
+    const std::shared_ptr<ImagePlugin::HeifImage> master_image;
+    int64_t int64data = 0;
+    ImagePlugin::HeifStreamReader reader(stream,int64data,size);
+    std::vector<std::shared_ptr<ImagePlugin::HeifBox>> v3(1,nullptr);
+    std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
+    const ImagePlugin::HeifIrefBox::Reference ref{.fromItemId = 0};
+
+    HeifParser.MakeFromStream(stream, out);
+    HeifParser.MakeFromMemory(data, size, flag, out);
+    HeifParser.Write(writer);
+    HeifParser.GetImage(itemId);
+    HeifParser.GetPrimaryImage();
+    HeifParser.GetGainmapImage();
+    HeifParser.GetTmapImage();
+    HeifParser.GetItemType(itemId);
+    HeifParser.GetItemData(itemId, &v1, option);
+    HeifParser.GetTileImages(itemId, v2);
+    HeifParser.GetIdenImage(itemId, v2);
+    HeifParser.GetAllItemId(itemIdList);
+    HeifParser.SetExifMetadata(master_image, &intdata8, uint32data);
+    HeifParser.UpdateExifMetadata(master_image, &intdata8, uint32data, itemId);
+    HeifParser.AssembleBoxes(reader);
+    HeifParser.GetPrimaryItemId();
+    HeifParser.HasItemId(itemId);
+    HeifParser.GetItemContentType(itemId);
+    HeifParser.GetItemUriType(itemId);
+    HeifParser.GetInfeBox(itemId);
+    HeifParser.GetAllProperties(itemId, v3);
+    HeifParser.ExtractImageProperties(image);
+    HeifParser.ExtractDerivedImageProperties();
+    HeifParser.ExtractThumbnailImage(image, ref);
+    HeifParser.ExtractAuxImage(image, ref);
+}
+
+void HeifParserTest002(ImagePlugin::HeifParser &heifparse,const std::shared_ptr<ImagePlugin::HeifInputStream> &stream)
+{
+    std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
+    const std::shared_ptr<ImagePlugin::HeifImage> master_image;
+    uint8_t intdata8 = 0;
+    uint32_t uint32data = 0;
+    bool flag = false;
+    ImagePlugin::heif_item_id itemId = 0xffff;
+    const char *itemType = nullptr;
+    const std::vector<uint8_t> v1(1,1);
+    const ImagePlugin::HvccConfig config = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    const std::shared_ptr<ImagePlugin::HeifBox> heifbox = nullptr;
+    const std::vector<ImagePlugin::heif_item_id> v2(1,0xffff);
+    const std::string type1 = "abc";
+    const std::shared_ptr<const ImagePlugin::HeifColorProfile> Colorptr = nullptr;
+    const ImagePlugin::heif_item_id id = 0xffff;
+    const uint8_t constdata = 0;
+
+    heifparse.ExtractNonMasterImages();
+    heifparse.ExtractMetadata(const std::vector<heif_item_id> &allItemIds);
+    heifparse.GetNextItemId();
+    heifparse.AddItem(itemType, flag);
+    heifparse.AddHvccProperty(itemId);
+    heifparse.AppendHvccNalData(itemId, v1);
+    heifparse.SetHvccConfig(itemId, config);
+    heifparse.AddIspeProperty(itemId, uint32data, uint32data);
+    heifparse.AddPixiProperty(itemId, intdata8, intdata8, intdata8);
+    heifparse.AddProperty(itemId, heifbox, flag);
+    heifparse.AppendIlocData(itemId, v1, intdata8);
+    heifparse.SetPrimaryItemId(itemId);
+    heifparse.AddReference(itemId, uint32data, v2);
+    heifparse.SetAuxcProperty(itemId, type1);
+    heifparse.SetColorProfile(itemId, Colorptr);
+    heifparse.CheckExtentData();
+    heifparse.SetPrimaryImage(master_image);
+    heifparse.GetExifHeaderOffset(&constdata, uint32data);
+    heifparse.SetMetadata(master_image, v1, itemType, itemType);
+    heifparse.GetConstructMethod(id);
+    heifparse.ExtractGainmap(v2);
+    heifparse.ExtractDisplayData(image, itemId);
+    heifparse.ExtractIT35Metadata(id);
+    heifparse.ExtractISOMetadata(id);
+    heifparse.ExtractGainmapImage(id);
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
-    Media::SourceOptions opts;
     //HeifDecodeImpl.cpp create/init/fuzztest
     auto heifdecoder = CreateHeifDecoderImpl();
     void *obj = dynamic_cast<void*>(heifdecoder);
@@ -126,7 +218,13 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     HeifFrameInfo heifInfo;
     heifdecoderimpl->init(new HeifStreamMock(skStream.release()), &heifInfo);
     HeifDecodeImplTest001(heifdecoderimpl, &heifInfo);
-    
+
+    //heif_parse.cpp create/init/fuzztest
+    bool needCopy;
+    auto heifbuffstream = std::make_shared<ImagePlugin::HeifBufferInPutStream>(data,size,needCopy);
+    auto heifparse = ImagePlugin::HeifParser(heifbuffstream);
+    HeifParserTest001(heifparse,heifbuffstream);
+    HeifParserTest001(heifparse,heifbuffstream);  
 
 }
 } //namespace media
