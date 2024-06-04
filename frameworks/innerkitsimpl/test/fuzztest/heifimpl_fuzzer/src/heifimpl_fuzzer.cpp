@@ -411,6 +411,51 @@ void HeifBoxTest001(std::shared_ptr<ImagePlugin::HeifBox> &heifbox, std::shared_
     heiffullbox->WriteHeader(writer, size);
 }
 
+void BasicBoxTest001(ImagePlugin::HeifFtypBox *heifftypbox, ImagePlugin::HeifMetaBox *heifmetabox, ImagePlugin::HeifHdlrBox *heifhdlrbox, 
+                     ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
+{
+    heifftypbox->Write(writer);
+    heifftypbox->ParseContent(reader);
+
+    heifmetabox->ParseContent(reader);
+
+    heifhdlrbox->GetHandlerType();
+    heifhdlrbox->Write(writer);
+    heifhdlrbox->ParseContent(reader);
+}
+
+void ItemDataBoxTest001(ImagePlugin::HeifIlocBox *heifilocbox, ImagePlugin::HeifIdatBox *heifidatbox, ImagePlugin::HeifStreamReader &reader, 
+                        ImagePlugin::HeifStreamWriter &writer)
+{
+    const ImagePlugin::HeifIlocBox::Item const_item;
+    const std::shared_ptr<ImagePlugin::HeifInputStream> const_stream = nullptr;
+    const std::shared_ptr<ImagePlugin::HeifIdatBox> const_idat = nullptr;
+    std::vector<uint8_t> dest(1,1);
+    ImagePlugin::heif_item_id itemId = 0xffff;
+    const std::vector<uint8_t> const_data(1,1);
+    uint8_t uint8data = 0;
+    ImagePlugin::HeifIlocBox::Item item;
+    int indexSize = 0;
+    uint64_t uint64data = 0;
+    
+    heifilocbox->GetItems();
+    heifilocbox->ReadData(const_item, const_stream, const_idat, &dest);
+    heifilocbox->AppendData(itemId, const_data, uint8data);
+    heifilocbox->UpdateData(itemId, const_data, uint8data);
+    heifilocbox->InferFullBoxVersion();
+    heifilocbox->Write(writer);
+    heifilocbox->WriteMdatBox(writer);
+    heifilocbox->ReadToExtentData(item, const_stream, const_idat);
+    heifilocbox->ParseContent(reader);
+    heifilocbox->ParseExtents(item, reader, indexSize, indexSize, indexSize);
+    heifilocbox->PackIlocHeader(writer);
+
+    heifidatbox->ReadData(const_stream, uint64data, uint64data, dest);
+    heifidatbox->AppendData(const_data);
+    heifidatbox->Write(writer);
+    heifidatbox->ParseContent(reader);
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
     //HeifDecodeImpl.cpp create/init/fuzztest
@@ -453,10 +498,26 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     auto heifptimbox = ImagePlugin::HeifPtimBox();
     itemInfoBoxTest001(heifIinfbox, heifinfebox, heifptimbox, heifstreamreader, heifstreamwriter);
 
-    //item_box.cpp create/init/fuzztest
+    //heif_box.cpp create/init/fuzztest
     std::shared_ptr<ImagePlugin::HeifFullBox> heiffullbox = heifinfebox;
     std::shared_ptr<ImagePlugin::HeifBox> heifbox = heiffullbox;
     HeifBoxTest001(heifbox, heiffullbox, heifstreamreader, heifstreamwriter);
+
+    //basic_box.cpp create/init/fuzztest
+    ImagePlugin::HeifBox *temp_heifbox = heifbox.get();
+    void *obj_heifbox = dynamic_cast<void *>(temp_heifbox);
+    auto heifftypbox = static_cast<ImagePlugin::HeifFtypBox *>(obj_heifbox);
+    ImagePlugin::HeifFullBox *temp_heiffullbox = heiffullbox.get();
+    void *obj_heiffullbox = dynamic_cast<void *>(temp_heiffullbox);
+    auto heifmetabox = static_cast<ImagePlugin::HeifMetaBox *>(obj_heiffullbox);
+    auto heifhdlrbox = static_cast<ImagePlugin::HeifHdlrBox *>(obj_heiffullbox);
+    BasicBoxTest001(heifftypbox, heifmetabox, heifhdlrbox, heifstreamreader, heifstreamwriter);
+
+    //item_data_box.cpp create/init/fuzztest
+    auto heifilocbox = static_cast<ImagePlugin::HeifIlocBox *>(obj_heiffullbox);
+    auto heifidatbox = static_cast<ImagePlugin::HeifIdatBox *>(obj_heifbox);
+    ItemDataBoxTest001(heifilocbox, heifidatbox, heifstreamreader, heifstreamwriter);
+
 
 }
 } //namespace media
