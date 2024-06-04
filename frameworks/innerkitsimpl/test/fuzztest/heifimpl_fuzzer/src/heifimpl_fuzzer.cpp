@@ -370,6 +370,47 @@ void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox, std::shared_ptr<I
     heifptimbox.ParseContent(reader);
 }
 
+void HeifBoxTest001(std::shared_ptr<ImagePlugin::HeifBox> &heifbox, std::shared_ptr<ImagePlugin::HeifFullBox> &heiffullbox, ImagePlugin::HeifStreamReader &reader, 
+                    ImagePlugin::HeifStreamWriter &writer)
+{
+    std::shared_ptr<ImagePlugin::HeifBox> *result = nullptr;
+    uint32_t type = 0;
+    const ImagePlugin::HeifBox box;
+    const std::shared_ptr<ImagePlugin::HeifBox> const_box = nullptr;
+    size_t size = 0;
+    uint8_t version = 0;
+
+    heifbox->MakeFromReader(reader, result);
+    heifbox->heif_error Write(writer);
+    heifbox->GetBoxSize();
+    heifbox->GetHeaderSize();
+    heifbox->GetBoxType();
+    heifbox->SetBoxType(type);
+    heifbox->GetBoxUuidType();
+    heifbox->ParseHeader(reader);
+    heifbox->SetHeaderInfo(box);
+    heifbox->InferHeaderSize();
+    heifbox->InferFullBoxVersion();
+    heifbox->InferAllFullBoxVersion();
+    heifbox->GetChildren();
+    heifbox->AddChild(const_box);
+    heifbox->ParseContent(reader);
+    heifbox->ReadChildren(reader);
+    heifbox->WriteChildren(writer);
+    heifbox->ReserveHeader(writer);
+    heifbox->WriteCalculatedHeader(writer, size);
+    heifbox->heif_error WriteHeader(writer, size);
+
+    heiffullbox->InferFullBoxVersion();
+    heiffullbox->ParseFullHeader(reader);
+    heiffullbox->GetVersion();
+    heiffullbox->SetVersion(version);
+    heiffullbox->GetFlags();
+    heiffullbox->SetFlags(type);
+    heiffullbox->ReserveHeader(writer);
+    heiffullbox->WriteHeader(writer, size);
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
     //HeifDecodeImpl.cpp create/init/fuzztest
@@ -411,6 +452,11 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     auto heifIinfbox = ImagePlugin::HeifIinfBox();
     auto heifptimbox = ImagePlugin::HeifPtimBox();
     itemInfoBoxTest001(heifIinfbox, heifinfebox, heifptimbox, heifstreamreader, heifstreamwriter);
+
+    //item_box.cpp create/init/fuzztest
+    std::shared_ptr<ImagePlugin::HeifFullBox> heiffullbox = heifinfebox;
+    std::shared_ptr<ImagePlugin::HeifBox> heifbox = heiffullbox;
+    HeifBoxTest001(heifbox, heiffullbox, heifstreamreader, heifstreamwriter);
 
 }
 } //namespace media
