@@ -251,7 +251,7 @@ void HeifImageTest001(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
 
 void HeifImageTest002(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
 {
-    magePlugin::heif_item_id itemId = 0xffff;
+    ImagePlugin::heif_item_id itemId = 0xffff;
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
     std::string aux_type = "abc";
     std::shared_ptr<ImagePlugin::HeifMetadata> metadata = nullptr;
@@ -334,6 +334,42 @@ void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heif
     heifstreamwriter.GetData();
 }
 
+void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox, std::shared_ptr<ImagePlugin::HeifInfeBox> &heifinfebox, ImagePlugin::HeifPtimBox &heifptimbox, 
+                        ImagePlugin::HeifStreamReader&reader, ImagePlugin::HeifStreamWriter &writer)
+{
+    ImagePlugin::heif_item_id itemId = 0xffff;
+    bool flag = false;
+    cosnt std::string const_type = "abc";
+    
+    heifIinfbox.InferFullBoxVersion();
+    heifIinfbox.Write(writer);
+    heifIinfbox.ParseContent(reader);
+
+
+    heifinfebox->IsHidden();
+    heifinfebox->SetHidden(flag);
+    heifinfebox->GetItemId();
+    heifinfebox->SetItemId(itemId);
+    heifinfebox->GetItemType();
+
+    heifinfebox->SetItemType(const_type);
+    heifinfebox->SetItemName(const_type);
+    heifinfebox->GetContentType();
+    heifinfebox->GetContentEncoding();
+    heifinfebox->SetContentType(const_type);
+    heifinfebox->SetContentEncoding(const_type);
+    heifinfebox->InferFullBoxVersion();
+    heifinfebox->Write(writer);
+    heifinfebox->GetItemUriType();
+    heifinfebox->ParseContent(reader);
+    
+    heifptimbox.GetItemId();
+    heifptimbox.SetItemId(itemId);
+    heifptimbox.InferFullBoxVersion();
+    heifptimbox.Write(writer);
+    heifptimbox.ParseContent(reader);
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
     //HeifDecodeImpl.cpp create/init/fuzztest
@@ -363,6 +399,18 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     auto heifstreamreader = ImagePlugin::HeifStreamReader(heifbuffstream, start, size);
     auto heifstreamwriter = ImagePlugin::HeifStreamWriter();
     HeifStreamTest001(heifbuffstream, heifstreamreader, heifstreamwriter);
+
+    //heif_utils.cpp create/init/fuzztest
+    uint32_t uint32data = 0;
+    ImagePlugin::code_to_fourcc(uint32data);
+
+    //item_info_box.cpp create/init/fuzztest
+    const char* itemType = "abc";
+    bool hidden = false;
+    std::shared_ptr<ImagePlugin::HeifInfeBox> heifinfebox = heifparse.AddItem(itemType, hidden);
+    auto heifIinfbox = ImagePlugin::HeifIinfBox();
+    auto heifptimbox = ImagePlugin::HeifPtimBox();
+    itemInfoBoxTest001(heifIinfbox, heifinfebox, heifptimbox, heifstreamreader, heifstreamwriter);
 
 }
 } //namespace media
