@@ -456,6 +456,23 @@ void ItemDataBoxTest001(ImagePlugin::HeifIlocBox *heifilocbox, ImagePlugin::Heif
     heifidatbox->ParseContent(reader);
 }
 
+void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
+{
+    ImagePlugin::heif_item_id itemId = 0xffff;
+    uint32_t uint32data = 0;
+    const std::vector<ImagePlugin::heif_item_id> v1(1,0xffff);
+    ImagePlugin::HeifIrefBox::Reference ref;
+    
+    heifirefbox->HasReferences(itemId);
+    heifirefbox->GetReferences(itemId, uint32data);
+    heifirefbox->GetReferencesFrom(itemId);
+    heifirefbox->AddReferences(itemId, uint32data, v1);
+    heifirefbox->ParseContent(reader);
+    heifirefbox->Write(writer);
+    heifirefbox->InferFullBoxVersion();
+    heifirefbox->ParseItemRef(reader, ref);
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
     //HeifDecodeImpl.cpp create/init/fuzztest
@@ -518,7 +535,9 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     auto heifidatbox = static_cast<ImagePlugin::HeifIdatBox *>(obj_heifbox);
     ItemDataBoxTest001(heifilocbox, heifidatbox, heifstreamreader, heifstreamwriter);
 
-
+    //item_ref_box.cpp create/init/fuzztest
+    auto heifirefbox = static_cast<ImagePlugin::HeifIrefBox *>(obj_heiffullbox);
+    ItemRefBoxTest001(heifirefbox, heifstreamreader, heifstreamwriter);
 }
 } //namespace media
 } // namespace OHOS
