@@ -382,6 +382,7 @@ ohos_static_library("image_static") {
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
+    external_deps = []
   } else if (use_clang_android) {
     defines = image_decode_android_defines
     sources -= [
@@ -398,6 +399,7 @@ ohos_static_library("image_static") {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
       "//foundation/multimedia/image_framework/plugins/manager:pluginmanager",
     ]
+    external_deps = []
   } else {
     defines = [
       "DUAL_ADAPTER",
@@ -430,7 +432,7 @@ ohos_static_library("image_static") {
     }
   }
   if (is_arkui_x) {
-    deps += [ "//third_party_root/zlib:libz" ]
+    deps += [ "//third_party/zlib:libz" ]
   } else {
     external_deps += [ "zlib:libz" ]
   }
