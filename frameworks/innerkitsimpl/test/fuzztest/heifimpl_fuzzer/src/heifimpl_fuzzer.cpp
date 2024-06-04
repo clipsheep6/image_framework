@@ -207,6 +207,76 @@ void HeifParserTest002(ImagePlugin::HeifParser &heifparse,const std::shared_ptr<
     heifparse.ExtractGainmapImage(id);
 }
 
+void HeifImageTest001(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
+{
+    bool flag = false;
+    uint32_t int32data = 0;
+    int degrees = 0;
+    enum ImagePlugin::HeifTransformMirrorDirection direction = ImagePlugin::HeifTransformMirrorDirection::VERTICAL;
+    ImagePlugin::HeifColorFormat defaultColorFormat_ = ImagePlugin::HeifColorFormat::UNDEDEFINED;
+    ImagePlugin::HeifPixelFormat defaultPixelFormat_ = ImagePlugin::HeifPixelFormat::UNDEDEFINED;
+    ImagePlugin::heif_item_id itemId = 0xffff;
+    const std::shared_ptr<ImagePlugin::HeifImage> const_img = nullptr;
+
+    heifimage->GetItemId();
+    heifimage->IsPrimaryImage();
+    heifimage->SetPrimaryImage(flag);
+    heifimage->GetOriginalWidth();
+    heifimage->GetOriginalHeight();
+    heifimage->SetOriginalSize(int32data, int32data);
+    heifimage->GetRotateDegrees();
+    heifimage->SetRotateDegrees(degrees);
+    heifimage->GetMirrorDirection();
+    heifimage->SetMirrorDirection(direction);
+    heifimage->IsResolutionReverse();
+    heifimage->GetWidth();
+    heifimage->GetHeight();
+    heifimage->GetLumaBitNum();
+    heifimage->SetLumaBitNum(degrees);
+    heifimage->GetChromaBitNum();
+    heifimage->SetChromaBitNum(degrees);
+    heifimage->GetDefaultColorFormat();
+    heifimage->SetDefaultColorFormat(defaultColorFormat_);
+    heifimage->GetDefaultPixelFormat();
+    heifimage->SetDefaultPixelFormat(defaultPixelFormat_);
+    heifimage->SetThumbnailImage(itemId);
+    heifimage->AddThumbnailImage(const_img);
+    heifimage->IsThumbnailImage();
+    heifimage->GetThumbnailImages();
+}
+
+void HeifImageTest002(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
+{
+    magePlugin::heif_item_id itemId = 0xffff;
+    std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
+    std::string aux_type = "abc";
+    std::shared_ptr<ImagePlugin::HeifMetadata> metadata = nullptr;
+    const std::shared_ptr<const ImagePlugin::HeifColorProfile> const_profile = nullptr;
+    std::vector<uint8_t> v1(1,1);
+
+    heifimage->IsAuxImage();
+    heifimage->GetAuxImageType();
+    heifimage->GetAuxImages();
+    heifimage->SetAuxImage(itemId, aux_type);
+    heifimage->AddAuxImage(image);
+    heifimage->GetAllMetadata();
+    heifimage->AddMetadata(metadata);
+    heifimage->GetNclxColorProfile();
+    heifimage->GetRawColorProfile();
+    heifimage->SetColorProfile(const_profile);
+    heifimage->SetGainmapMasterImage(itemId);
+    heifimage->AddGainmapImage(image);
+    heifimage->GetGainmapImage();
+    heifimage->SetTmapBoxId(itemId);
+    heifimage->SetStaticMetadata(v1, v1);
+    heifimage->SetUWAInfo(v1);
+    heifimage->SetISOMetadata(v1);
+    heifimage->GetDisplayInfo();
+    heifimage->GetLightInfo();
+    heifimage->GetUWAInfo();
+    heifimage->GetISOMetadata();
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
     //HeifDecodeImpl.cpp create/init/fuzztest
@@ -225,6 +295,11 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     auto heifparse = ImagePlugin::HeifParser(heifbuffstream);
     HeifParserTest001(heifparse,heifbuffstream);
     HeifParserTest001(heifparse,heifbuffstream);  
+
+    //heif_image.cpp create/init/fuzztest
+    std::shared_ptr<ImagePlugin::HeifImage> heifimage = heifparse.GetGainmapImage();
+    HeifImageTest001(heifimage);
+    HeifImageTest002(heifimage);
 
 }
 } //namespace media
