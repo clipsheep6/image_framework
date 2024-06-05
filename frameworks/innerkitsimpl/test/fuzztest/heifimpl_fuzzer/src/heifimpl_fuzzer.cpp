@@ -587,6 +587,23 @@ void ItemPropertyHvccBoxTest001(ImagePlugin::HeifHvccBox *heifhvccbox, ImagePlug
     heifhvccbox->ParseNalUnitArray(reader, v3);
 }
 
+void ItemPropertyTransformBoxTest001(ImagePlugin::HeifIrotBox *heifirotbox, ImagePlugin::HeifImirBox *heifimirbox, ImagePlugin::HeifStreamReader &reader, 
+                                     ImagePlugin::HeifStreamWriter &writer)
+{
+    int rot = 0;
+    ImagePlugin::HeifTransformMirrorDirection dir = ImagePlugin::HeifTransformMirrorDirection::VERTICAL;
+
+    heifirotbox->GetRotDegree();
+    heifirotbox->SetRotDegree(rot);
+    heifirotbox->ParseContent(reader);
+    heifirotbox->Write(writer);
+
+    heifimirbox->GetDirection();
+    heifimirbox->SetDirection();
+    heifimirbox->ParseContent(reader);
+    heifimirbox->Write(writer);
+}
+
 void HeifImplFuzzTest002(const uint8_t *data, size_t size)
 {
     bool flag;
@@ -635,6 +652,10 @@ void HeifImplFuzzTest002(const uint8_t *data, size_t size)
     auto heifhvccbox = static_cast<ImagePlugin::HeifHvccBox *>(obj_heifbox);
     ItemPropertyHvccBoxTest001(heifhvccbox, heifstreamreader, heifstreamwriter);
 
+    //item_property_transform_box.cpp create/init/fuzztest
+    auto heifirotbox = static_cast<ImagePlugin::HeifIrotBox *>(obj_heifbox);
+    auto heifimirbox = static_cast<ImagePlugin::HeifImirBox *>(obj_heifbox);
+    ItemPropertyTransformBoxTest001(heifirotbox, heifimirbox, heifstreamreader, heifstreamwriter);
 
 }
 
