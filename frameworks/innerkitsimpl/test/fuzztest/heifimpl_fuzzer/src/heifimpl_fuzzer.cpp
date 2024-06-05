@@ -554,6 +554,39 @@ void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRa
 
 }
 
+void ItemPropertyDisplayBoxTest001(ImagePlugin::HeifMdcvBox *heifmdcvbox, ImagePlugin::HeifClliBox *heifcllibox, ImagePlugin::HeifStreamReader &reader, 
+                                   ImagePlugin::HeifStreamWriter &writer)
+{
+    ImagePlugin::DisplayColourVolume colourVolume;
+    ImagePlugin::ContentLightLevelInfo lightLevel;
+
+    heifmdcvbox->GetColourVolume();
+    heifmdcvbox->SetColourVolume(colourVolume);
+    heifmdcvbox->ParseContent(reader);
+    heifmdcvbox->Write(writer);
+
+    heifcllibox->GetLightLevel();
+    heifcllibox->SetLightLevel(lightLevel);
+    heifcllibox->ParseContent(reader);
+    heifcllibox->Write(writer);
+}
+
+void ItemPropertyHvccBoxTest001(ImagePlugin::HeifHvccBox *heifhvccbox, ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
+{
+    std::vector<uint8_t> v1(1,1);
+    const ImagePlugin::HvccConfig config = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    const std::vector<uint8_t> v2(1,1);
+    std::vector<std::vector<uint8_t>> v3(1,v1);
+    
+    heifhvccbox->GetHeaders(v1);
+    heifhvccbox->SetConfig(config);
+    heifhvccbox->GetConfig();
+    heifhvccbox->AppendNalData(v2);
+    heifhvccbox->Write(writer);
+    heifhvccbox->ParseContent(reader);
+    heifhvccbox->ParseNalUnitArray(reader, v3);
+}
+
 void HeifImplFuzzTest002(const uint8_t *data, size_t size)
 {
     bool flag;
@@ -592,6 +625,16 @@ void HeifImplFuzzTest002(const uint8_t *data, size_t size)
     const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> heifnclxcolorprofile = heifimage->GetNclxColorProfile();
     auto heifcolrbox = static_cast<ImagePlugin::HeifColrBox *>(obj_heifbox);
     ItemPropertyColorBoxTest001(heifrawcolorprofile, heifnclxcolorprofile, heifcolrbox, heifstreamreader, heifstreamwriter);
+
+    //item_property_display_box.cpp create/init/fuzztest
+    auto heifmdcvbox = static_cast<ImagePlugin::HeifMdcvBox *>(obj_heifbox);
+    auto heifcllibox = static_cast<ImagePlugin::HeifClliBox *>(obj_heifbox);
+    ItemPropertyDisplayBoxTest001(heifmdcvbox, heifcllibox, heifstreamreader, heifstreamwriter);
+
+    //item_property_hvcc_box.cpp create/init/fuzztest
+    auto heifhvccbox = static_cast<ImagePlugin::HeifHvccBox *>(obj_heifbox);
+    ItemPropertyHvccBoxTest001(heifhvccbox, heifstreamreader, heifstreamwriter);
+
 
 }
 
