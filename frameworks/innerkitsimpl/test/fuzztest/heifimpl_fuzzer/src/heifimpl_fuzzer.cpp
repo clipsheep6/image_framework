@@ -293,7 +293,7 @@ void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heif
     uint32_t uint32data = 0;
     uint64_t uint64data = 0;
     int sizenum = 0;
-    const std::string const_ptr = "abc";
+    const std::string const_ptr = "abcd";
     const std::vector<uint8_t> v1(1,1);
     enum ImagePlugin::heif_error errMsg = heif_error_ok;
 
@@ -344,7 +344,6 @@ void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox, std::shared_ptr<I
     heifIinfbox.InferFullBoxVersion();
     heifIinfbox.Write(writer);
     heifIinfbox.ParseContent(reader);
-
 
     heifinfebox->IsHidden();
     heifinfebox->SetHidden(flag);
@@ -656,7 +655,6 @@ void HeifImplFuzzTest002(const uint8_t *data, size_t size)
     auto heifirotbox = static_cast<ImagePlugin::HeifIrotBox *>(obj_heifbox);
     auto heifimirbox = static_cast<ImagePlugin::HeifImirBox *>(obj_heifbox);
     ItemPropertyTransformBoxTest001(heifirotbox, heifimirbox, heifstreamreader, heifstreamwriter);
-
 }
 
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
