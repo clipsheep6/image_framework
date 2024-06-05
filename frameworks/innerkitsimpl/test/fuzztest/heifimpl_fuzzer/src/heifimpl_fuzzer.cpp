@@ -473,6 +473,81 @@ void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifS
     heifirefbox->ParseItemRef(reader, ref);
 }
 
+void ItemPropertyBoxTest001(ImagePlugin::HeifIprpBox *heifiprpbox, ImagePlugin::HeifIpcoBox *heifipcobox, ImagePlugin::HeifIpmaBox *heifipmabox, 
+                            ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
+{
+    ImagePlugin::heif_item_id itemId = 0xffff;
+    const std::shared_ptr<ImagePlugin::HeifIpmaBox> const_box_ptr = nullptr;
+    std::vector<std::shared_ptr<ImagePlugin::HeifBox>> v1(1,nullptr);
+    uint32_t uint32data = 0;
+    ImagePlugin::PropertyAssociation assoc;
+    const ImagePlugin::HeifIpmaBox const_box;
+
+    heifiprpbox->ParseContent(reader);
+    
+    heifipcobox->GetProperties(itemId, const_box_ptr, v1);
+    heifipcobox->GetProperty(itemId, const_box_ptr, uint32data);
+    heifipcobox->ParseContent(reader);
+
+    heifipmabox->GetProperties(itemId);
+    heifipmabox->AddProperty(itemId,assoc);
+    heifipmabox->InferFullBoxVersion();
+    heifipmabox->Write(writer);
+    heifipmabox->MergeImpaBoxes(const_box);
+    heifipmabox->ParseContent(reader);
+
+}
+
+void ItemPropertyBasicBoxTest001(ImagePlugin::HeifIspeBox *heifispebox, ImagePlugin::HeifPixiBox *heifpixibox, ImagePlugin::HeifStreamReader &reader, 
+                                 ImagePlugin::HeifStreamWriter &writer)
+{
+    uint32_t uint32data = 0;
+    int channel = 0;
+    uint8_t uint8data = 0;
+    
+    heifispebox->GetWidth();
+    heifispebox->GetHeight();
+    heifispebox->SetDimension(uint32data, uint32data);
+    heifispebox->Write(writer);
+    heifispebox->ParseContent(reader);
+
+    heifpixibox->GetChannelNum();
+    heifpixibox->GetBitNum(channel);
+    heifpixibox->AddBitNum(uint8data);
+    heifpixibox->Write(writer);
+    heifpixibox->ParseContent(reader);
+}
+
+void HeifImplFuzzTest002(const uint8_t *data, size_t size)
+{
+    bool flag;
+    const char *itemType = "abc";
+    int64_t start = 0;
+    auto heifbuffstream = std::make_shared<ImagePlugin::HeifBufferInPutStream>(data, size, flag);
+    auto heifparse = ImagePlugin::HeifParser(heifbuffstream);
+    std::shared_ptr<ImagePlugin::HeifInfeBox> heifinfebox = heifparse.AddItem(itemType, flag);
+    std::shared_ptr<ImagePlugin::HeifFullBox> heiffullbox = heifinfebox;
+    std::shared_ptr<ImagePlugin::HeifBox> heifbox = heiffullbox;
+    ImagePlugin::HeifBox *temp_heifbox = heifbox.get();
+    void *obj_heifbox = dynamic_cast<void *>(temp_heifbox);
+    ImagePlugin::HeifFullBox *temp_heiffullbox = heiffullbox.get();
+    void *obj_heiffullbox = dynamic_cast<void *>(temp_heiffullbox);
+    auto heifstreamreader = ImagePlugin::HeifStreamReader(heifbuffstream, start, size);
+    auto heifstreamwriter = ImagePlugin::HeifStreamWriter();
+
+    //item_property_box.cpp create/init/fuzztest
+    auto heifiprpbox = static_cast<ImagePlugin::HeifIprpBox *>(obj_heifbox);
+    auto heifipcobox = static_cast<ImagePlugin::HeifIpcoBox *>(obj_heifbox);
+    auto heifipmabox = static_cast<ImagePlugin::HeifIpmaBox *>(obj_heiffullbox);
+    ItemPropertyBoxTest001(heifiprpbox, heifipcobox, heifipmabox, heifstreamreader, heifstreamwriter);
+
+    //item_property_basic_box.cpp create/init/fuzztest
+    auto heifispebox = static_cast<ImagePlugin::HeifIspeBox *>(obj_heiffullbox);
+    auto heifpixibox = static_cast<ImagePlugin::HeifPixiBox *>(obj_heiffullbox);
+    ItemPropertyBasicBoxTest001(heifispebox, heifpixibox, heifstreamreader, heifstreamwriter);
+
+}
+
 void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 {
     //HeifDecodeImpl.cpp create/init/fuzztest
@@ -547,5 +622,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::Media::HeifImplFuzzTest001(data, size);
+    OHOS::Media::HeifImplFuzzTest002(data, size);
     return 0;
 }
