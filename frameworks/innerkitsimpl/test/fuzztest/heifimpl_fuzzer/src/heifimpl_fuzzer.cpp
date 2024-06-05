@@ -518,6 +518,42 @@ void ItemPropertyBasicBoxTest001(ImagePlugin::HeifIspeBox *heifispebox, ImagePlu
     heifpixibox->ParseContent(reader);
 }
 
+void ItemPropertyAuxBoxTest001(ImagePlugin::HeifAuxcBox *heifauxcbox, ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
+{
+    const std::string const_type = "abc";
+
+    heifauxcbox->GetAuxType();
+    heifauxcbox->SetAuxType(const_type);
+    heifauxcbox->GetAuxSubtypes();
+    heifauxcbox->ParseContent(reader);
+    heifauxcbox->Write(writer);
+}
+
+void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRawColorProfile> &heifrawcolorprofile, 
+                                 const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> &heifnclxcolorprofile, 
+                                 ImagePlugin::HeifColrBox *heifcolrbox, ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
+{
+    const std::shared_ptr<const HeifColorProfile> const_prof = nullptr;
+    
+    heifrawcolorprofile->GetProfileType();
+    heifrawcolorprofile->GetData();
+    heifrawcolorprofile->Write(writer);   
+    
+    heifnclxcolorprofile->GetProfileType();
+    heifnclxcolorprofile->Write(writer);
+    heifnclxcolorprofile->GetColorPrimaries();
+    heifnclxcolorprofile->GetTransferCharacteristics();
+    heifnclxcolorprofile->GetMatrixCoefficients();
+    heifnclxcolorprofile->GetFullRangeFlag();
+
+    HeifColrBox->GetColorProfileType();
+    HeifColrBox->GetColorProfile();
+    HeifColrBox->SetColorProfile(const_prof);
+    HeifColrBox->Write(writer);
+    HeifColrBox->ParseContent(reader);
+
+}
+
 void HeifImplFuzzTest002(const uint8_t *data, size_t size)
 {
     bool flag;
@@ -545,6 +581,17 @@ void HeifImplFuzzTest002(const uint8_t *data, size_t size)
     auto heifispebox = static_cast<ImagePlugin::HeifIspeBox *>(obj_heiffullbox);
     auto heifpixibox = static_cast<ImagePlugin::HeifPixiBox *>(obj_heiffullbox);
     ItemPropertyBasicBoxTest001(heifispebox, heifpixibox, heifstreamreader, heifstreamwriter);
+
+    //item_property_aux_box.cpp create/init/fuzztest
+    auto heifauxcbox = static_cast<ImagePlugin::HeifAuxcBox *>(obj_heiffullbox);
+    ItemPropertyAuxBoxTest001(heifauxcbox, heifstreamreader, heifstreamwriter);
+
+    //item_property_color_box.cpp create/init/fuzztest
+    std::shared_ptr<ImagePlugin::HeifImage> heifimage = heifparse.GetGainmapImage();
+    const std::shared_ptr<const ImagePlugin::HeifRawColorProfile> heifrawcolorprofile = heifimage->GetRawColorProfile();
+    const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> heifnclxcolorprofile = heifimage->GetNclxColorProfile();
+    auto heifcolrbox = static_cast<ImagePlugin::HeifColrBox *>(obj_heifbox);
+    ItemPropertyColorBoxTest001(heifrawcolorprofile, heifnclxcolorprofile, heifcolrbox, heifstreamreader, heifstreamwriter);
 
 }
 
