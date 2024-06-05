@@ -40,6 +40,13 @@ config("image_external_config") {
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
     "//foundation/multimedia/image_framework/interfaces/kits/native/include",
     "${image_subsystem}/frameworks/kits/js/common/ndk/include",
+    "//foundation/distributeddatamgr/data_share/interfaces/inner_api/common/include",
+    "//foundation/distributeddatamgr/data_share/interfaces/inner_api/consumer/include",
+    "//foundation/distributeddatamgr/data_share/interfaces/inner_api/provider/include",
+    "//foundation/distributeddatamgr/preferences/frameworks/native/mock/ability_base/zuri/include",
+    "//foundation/distributeddatamgr/preferences/frameworks/native/mock/ability_runtime/dataobs_manager/include",
+    "//foundation/multimedia/media_library/frameworks/utils/include",
+    "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
   ]
 
   include_dirs += [

@@ -17,12 +17,18 @@
 
 #include <cerrno>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #include "directory_ex.h"
 #include "file_packer_stream.h"
 #include "image_log.h"
 #include "image_utils.h"
 #include "media_errors.h"
+
+#include "ipc_skeleton.h"
+#include "if_system_ability_manager.h"
+#include "medialibrary_errno.h"
+#include "media_library_manager.h"
 
 #if !defined(_WIN32) && !defined(_APPLE) &&!defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
 #include <sys/mman.h>
@@ -40,6 +46,129 @@ namespace Media {
 using namespace std;
 using namespace ImagePlugin;
 
+constexpr int STORAGE_MANAGER_MANAGER_ID = 5003;
+static const string FILE_URL_PREFIX = "file://";
+static const string DOCS_URL_PREFIX = "file://docs/";
+static const string MEDIA_URL_PREFIX = "file://media/";
+static void* dlHandler_ = nullptr;
+
+__attribute__((constructor)) void MyConstructor()
+{
+    dlHandler_ = dlopen("libmedia_library_manager.z.so", RTLD_LAZY);
+}
+
+__attribute__((destructor)) void MyDestructor()
+{
+    if (dlHandler_ != nullptr) {
+        dlclose(dlHandler_);
+        dlHandler_ = nullptr;
+    }
+}
+
+static IMediaLibraryManager* CreateMediaLibMgr()
+{
+    typedef IMediaLibraryManager*(*CreateFunc)();
+
+    if (!dlHandler_) {
+        IMAGE_LOGE("[FileSourceStream]Load library MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    CreateFunc createFunc = (CreateFunc)dlsym(dlHandler_, "CreateMediaLibraryManager");
+    if (createFunc == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]Get MediaLibraryManager create function failed.");
+        return nullptr;
+    }
+
+    auto mediaLibMgr = createFunc();
+    if (mediaLibMgr == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]Get MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    auto saManager = iface_cast<ISystemAbilityManager>(IPCSkeleton::GetContextObject());
+    if (saManager == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]Get system ability mgr failed.");
+        return nullptr;
+    }
+
+    auto remoteObj = saManager->GetSystemAbility(STORAGE_MANAGER_MANAGER_ID);
+    if (remoteObj == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]GetSystemAbility Service failed.");
+        return nullptr;
+    }
+
+    mediaLibMgr->InitMediaLibraryManager(remoteObj);
+    return mediaLibMgr;
+}
+
+static bool CompairPathPrefix(const string &pathName, const string &prefixName)
+{
+    return (pathName.size() > prefixName.size() &&
+        (pathName.compare(0, prefixName.size(), prefixName) == 0));
+}
+
+static std::string FileUrlToRawPath(const std::string &path)
+{
+    if (path.size() > FILE_URL_PREFIX.size() &&
+        (path.compare(0, FILE_URL_PREFIX.size(), FILE_URL_PREFIX) == 0)) {
+        return path.substr(FILE_URL_PREFIX.size());
+    }
+    return path;
+}
+
+static unique_ptr<FileSourceStream> CreateSourceStreamByDocs(const string &pathName)
+{
+    auto mediaLibMgr = CreateMediaLibMgr();
+    if (mediaLibMgr == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]Create MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    auto realPath = mediaLibMgr->GetRealPath(pathName);
+    FILE *filePtr = fopen(realPath.c_str(), "rb");
+    if (filePtr == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]open file fail.");
+        return nullptr;
+    }
+
+    size_t size = 0;
+    if (!ImageUtils::GetFileSize(realPath, size)) {
+        IMAGE_LOGE("[FileSourceStream]get the file size fail. realPath=%{public}s", realPath.c_str());
+        fclose(filePtr);
+        return nullptr;
+    }
+
+    int64_t offset = ftell(filePtr);
+    if (offset < 0) {
+        IMAGE_LOGE("[FileSourceStream]get the position fail.");
+        fclose(filePtr);
+        return nullptr;
+    }
+
+    return make_unique<FileSourceStream>(filePtr, size, offset, offset);
+}
+
+static unique_ptr<FileSourceStream> CreateSourceStreamByMedia(const string &pathName)
+{
+    string uri = pathName;
+    auto mediaLibMgr = CreateMediaLibMgr();
+    if (mediaLibMgr == nullptr) {
+        IMAGE_LOGE("[FileSourceStream]Create MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    int srcFd = mediaLibMgr->OpenAsset(uri, "rw");
+    if (srcFd == E_ERR) {
+        IMAGE_LOGE("[FileSourceStream]Open asset %{public}s error: %{public}d", uri.c_str(), srcFd);
+        return nullptr;
+    }
+
+    auto result = FileSourceStream::CreateSourceStream(srcFd);
+    mediaLibMgr->CloseAsset(uri, srcFd);
+    return result;
+}
+
 FileSourceStream::FileSourceStream(std::FILE *file, size_t size, size_t offset, size_t original)
     : filePtr_(file), fileSize_(size), fileOffset_(offset), fileOriginalOffset_(original)
 {}
@@ -53,30 +182,50 @@ FileSourceStream::~FileSourceStream()
 
 unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &pathName)
 {
-    string realPath;
-    if (!PathToRealPath(pathName, realPath)) {
-        IMAGE_LOGE("[FileSourceStream]input the file path exception, pathName:%{public}s, errno:%{public}d.",
-            pathName.c_str(), errno);
-        return nullptr;
+    if (CompairPathPrefix(pathName, DOCS_URL_PREFIX)) { // docs
+        return CreateSourceStreamByDocs(pathName);
+    } else if (CompairPathPrefix(pathName, MEDIA_URL_PREFIX)) { // media
+        return CreateSourceStreamByMedia(pathName);
+    } else {
+        string realPath = pathName;
+        if (CompairPathPrefix(pathName, FILE_URL_PREFIX)) {
+            auto mediaLibMgr = CreateMediaLibMgr();
+            if (mediaLibMgr == nullptr) {
+                IMAGE_LOGE("[FileSourceStream]Create MediaLibraryManager failed.");
+                return nullptr;
+            }
+
+            realPath = mediaLibMgr->GetRealPath(pathName);
+        }
+
+        string rawPathName = FileUrlToRawPath(realPath);
+        if (!ImageUtils::PathToRealPath(rawPathName, realPath)) {
+            IMAGE_LOGE("[FileSourceStream]input the file path exception, rawPathName:%{public}s, errno:%{public}d.",
+                rawPathName.c_str(), errno);
+            return nullptr;
+        }
+
+        FILE *filePtr = fopen(realPath.c_str(), "rb");
+        if (filePtr == nullptr) {
+            IMAGE_LOGE("[FileSourceStream]open file fail.");
+            return nullptr;
+        }
+
+        size_t size = 0;
+        if (!ImageUtils::GetFileSize(realPath, size)) {
+            IMAGE_LOGE("[FileSourceStream]get the file size fail. rawPathName=%{public}s", rawPathName.c_str());
+            fclose(filePtr);
+            return nullptr;
+        }
+
+        int64_t offset = ftell(filePtr);
+        if (offset < 0) {
+            IMAGE_LOGE("[FileSourceStream]get the position fail.");
+            fclose(filePtr);
+            return nullptr;
+        }
+        return make_unique<FileSourceStream>(filePtr, size, offset, offset);
     }
-    FILE *filePtr = fopen(realPath.c_str(), "rb");
-    if (filePtr == nullptr) {
-        IMAGE_LOGE("[FileSourceStream]open file fail.");
-        return nullptr;
-    }
-    size_t size = 0;
-    if (!ImageUtils::GetFileSize(realPath, size)) {
-        IMAGE_LOGE("[FileSourceStream]get the file size fail. pathName=%{public}s", pathName.c_str());
-        fclose(filePtr);
-        return nullptr;
-    }
-    int64_t offset = ftell(filePtr);
-    if (offset < 0) {
-        IMAGE_LOGE("[FileSourceStream]get the position fail.");
-        fclose(filePtr);
-        return nullptr;
-    }
-    return make_unique<FileSourceStream>(filePtr, size, offset, offset);
 }
 
 unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const int fd)

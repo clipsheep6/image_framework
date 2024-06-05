@@ -47,7 +47,6 @@ thread_local napi_ref ImageSourceNapi::sConstructor_ = nullptr;
 thread_local std::shared_ptr<ImageSource> ImageSourceNapi::sImgSrc_ = nullptr;
 std::shared_ptr<IncrementalPixelMap> ImageSourceNapi::sIncPixelMap_ = nullptr;
 static const std::string CLASS_NAME = "ImageSource";
-static const std::string FILE_URL_PREFIX = "file://";
 std::string ImageSourceNapi::filePath_ = "";
 int ImageSourceNapi::fileDescriptor_ = -1;
 void* ImageSourceNapi::fileBuffer_ = nullptr;
@@ -1124,15 +1123,6 @@ static bool ParseDecodeOptions(napi_env env, napi_value root, DecodeOptions* opt
     return ParseDecodeOptions2(env, root, opts, error);
 }
 
-static std::string FileUrlToRawPath(const std::string &path)
-{
-    if (path.size() > FILE_URL_PREFIX.size() &&
-        (path.compare(0, FILE_URL_PREFIX.size(), FILE_URL_PREFIX) == 0)) {
-        return path.substr(FILE_URL_PREFIX.size());
-    }
-    return path;
-}
-
 static void parseSourceOptions(napi_env env, napi_value root, SourceOptions* opts)
 {
     if (!ImageNapiUtils::GetInt32ByName(env, root, "sourceDensity", &(opts->baseDensity))) {
@@ -1226,7 +1216,6 @@ static std::unique_ptr<ImageSource> CreateNativeImageSource(napi_env env, napi_v
             IMAGE_LOGE("fail to get pathName");
             return imageSource;
         }
-        context->pathName = FileUrlToRawPath(context->pathName);
         context->pathNameLength = context->pathName.size();
         IMAGE_LOGD("pathName is [%{public}s]", context->pathName.c_str());
         imageSource = ImageSource::CreateImageSource(context->pathName, opts, errorCode);
