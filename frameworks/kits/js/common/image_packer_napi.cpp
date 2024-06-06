@@ -426,6 +426,15 @@ static EncodeDynamicRange parseDynamicRange(napi_env env, napi_value root)
     return EncodeDynamicRange::SDR;
 }
 
+static bool parseNeedExif(napi_env env, napi_value root)
+{
+    bool tmpNeedExif = false;
+    if (!GET_BOOL_BY_NAME(root, "needExif", tmpNeedExif)) {
+        IMAGE_LOGD("No needExif in pack option");
+    }
+    return tmpNeedExif;
+}
+
 static int64_t parseBufferSize(napi_env env, napi_value root)
 {
     napi_value tempValue = nullptr;
@@ -574,6 +583,7 @@ static bool parsePackOptions(napi_env env, napi_value root, PackOption* opts)
     }
     opts->desiredDynamicRange = parseDynamicRange(env, root);
     IMAGE_LOGD("parsePackOptions format:[%{public}s]", opts->format.c_str());
+    opts->needExif = parseNeedExif(env, root);
     return parsePackOptionOfQuality(env, root, opts);
 }
 

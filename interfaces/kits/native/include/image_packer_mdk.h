@@ -76,6 +76,7 @@ struct ImagePacker_Opts_ {
     const char* format;
     /** Encoding quality. */
     int quality;
+    bool needExif;
 };
 
 /**
