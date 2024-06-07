@@ -482,8 +482,7 @@ bool HeifDecoderImpl::DecodeGrids(std::shared_ptr<HeifHardwareDecoder> &hwDecode
                                   GridInfo &gridInfo, sptr<SurfaceBuffer> &hwBuffer)
 {
     std::vector<std::shared_ptr<HeifImage>> tileImages;
-    if (image == nullptr)
-    {
+    if (image == nullptr){
         IMAGE_LOGE("image is nullptr");
         return false;
     }
@@ -645,8 +644,7 @@ bool HeifDecoderImpl::ApplyAlphaImage(std::shared_ptr<HeifImage> &masterImage, u
 bool HeifDecoderImpl::ConvertHwBufferPixelFormat(sptr<SurfaceBuffer> &hwBuffer, GridInfo &gridInfo,
                                                  uint8_t *dstMemory, size_t dstRowStride)
 {
-    if (hwBuffer == nullptr)
-    {
+    if (hwBuffer == nullptr){
         IMAGE_LOGE("hwBuffer is nullptr");
         return false;
     }
@@ -765,8 +763,7 @@ bool HeifDecoderImpl::getTmapInfo(HeifFrameInfo* frameInfo)
 
 HeifImageHdrType HeifDecoderImpl::getHdrType()
 {
-    if (primaryImage_ == nullptr)
-    {
+    if (primaryImage_ == nullptr){
         return HeifImageHdrType::UNKNOWN;
     }
     std::vector<uint8_t> uwaInfo = primaryImage_->GetUWAInfo();
@@ -782,8 +779,7 @@ HeifImageHdrType HeifDecoderImpl::getHdrType()
 void HeifDecoderImpl::getVividMetadata(std::vector<uint8_t>& uwaInfo, std::vector<uint8_t>& displayInfo,
     std::vector<uint8_t>& lightInfo)
 {
-    if (primaryImage_ == nullptr)
-    {
+    if (primaryImage_ == nullptr){
         return;
     }
     uwaInfo = primaryImage_->GetUWAInfo();
@@ -793,8 +789,7 @@ void HeifDecoderImpl::getVividMetadata(std::vector<uint8_t>& uwaInfo, std::vecto
 
 void HeifDecoderImpl::getISOMetadata(std::vector<uint8_t>& isoMetadata)
 {
-    if (primaryImage_ == nullptr)
-    {
+    if (primaryImage_ == nullptr){
         return;
     }
     isoMetadata = primaryImage_->GetISOMetadata();

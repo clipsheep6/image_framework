@@ -409,8 +409,7 @@ void HeifParser::ExtractGainmap(const std::vector<heif_item_id>& allItemIds)
 
 void HeifParser::ExtractImageProperties(std::shared_ptr<HeifImage> &image)
 {
-    if (image == nullptr)
-    {
+    if (image == nullptr){
         return;
     }
     heif_item_id itemId = image->GetItemId();
@@ -851,8 +850,7 @@ heif_error HeifParser::SetMetadata(const std::shared_ptr<HeifImage> &image, cons
                                    const char *item_type, const char *content_type)
 {
     auto metadataInfe = AddItem(item_type, true);
-    if (metadataInfe == nullptr)
-    {
+    if (metadataInfe == nullptr){
         return heif_error_no_iinf;
     }
     if (content_type != nullptr) {
@@ -870,8 +868,7 @@ heif_error HeifParser::SetMetadata(const std::shared_ptr<HeifImage> &image, cons
 
 uint8_t HeifParser::GetConstructMethod(const heif_item_id &id)
 {
-    if (ilocBox_ == nullptr)
-    {
+    if (ilocBox_ == nullptr){
         return 0;
     }
     auto items = ilocBox_->GetItems();
