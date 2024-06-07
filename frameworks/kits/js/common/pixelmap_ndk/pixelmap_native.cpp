@@ -18,6 +18,7 @@
 #include "common_utils.h"
 #include "image_type.h"
 #include "pixelmap_native_impl.h"
+#include "image_format_convert.h"
 
 using namespace OHOS::Media;
 #ifdef __cplusplus
@@ -115,11 +116,44 @@ static Image_ErrorCode ToNewErrorCode(int code)
     }
 };
 
+static bool IsMatchType(IMAGE_FORMAT type, PixelFormat format)
+{
+    if (type == IMAGE_FORMAT::IMAGE_FORMAT_YUV_TYPE) {
+        switch (format) {
+            case PixelFormat::NV12:
+            case PixelFormat::NV21:{
+                return true;
+            }
+            default:{
+                return false;
+            }
+        }
+    } else if (type == IMAGE_FORMAT::IMAGE_FORMAT_RGB_TYPE) {
+        switch (format) {
+            case PixelFormat::RGB_565:
+            case PixelFormat::RGBA_8888:
+            case PixelFormat::BGRA_8888:
+            case PixelFormat::RGB_888:
+            case PixelFormat::RGBA_F16:{
+                return true;
+            }
+            default:{
+                return false;
+            }
+        }
+    } else {
+        return false;
+    }
+}
+
 MIDK_EXPORT
 Image_ErrorCode OH_PixelmapInitializationOptions_Create(OH_Pixelmap_InitializationOptions **ops)
 {
-    *ops = new OH_Pixelmap_InitializationOptions();
     if (ops == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    *ops = new OH_Pixelmap_InitializationOptions();
+    if (*ops == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
     return IMAGE_SUCCESS;
@@ -248,6 +282,9 @@ Image_ErrorCode OH_PixelmapInitializationOptions_Release(OH_Pixelmap_Initializat
 MIDK_EXPORT
 Image_ErrorCode OH_PixelmapImageInfo_Create(OH_Pixelmap_ImageInfo **info)
 {
+    if (info == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
     *info = new OH_Pixelmap_ImageInfo();
     if (*info == nullptr) {
         return IMAGE_BAD_PARAMETER;
@@ -329,7 +366,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_PixelmapNative_CreatePixelmap(uint8_t *data, size_t dataLength,
     OH_Pixelmap_InitializationOptions *options, OH_PixelmapNative **pixelmap)
 {
-    if (data == nullptr || options == nullptr) {
+    if (data == nullptr || options == nullptr || pixelmap == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
     InitializationOptions info;
@@ -380,7 +417,7 @@ Image_ErrorCode OH_PixelmapNative_CreateEmptyPixelmap(
 MIDK_EXPORT
 Image_ErrorCode OH_PixelmapNative_ReadPixels(OH_PixelmapNative *pixelmap, uint8_t *destination, size_t *bufferSize)
 {
-    if (pixelmap == nullptr || destination == nullptr) {
+    if (pixelmap == nullptr || destination == nullptr || bufferSize == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
     return ToNewErrorCode(pixelmap->GetInnerPixelmap()->ReadPixels(*bufferSize, destination));
@@ -393,6 +430,18 @@ Image_ErrorCode OH_PixelmapNative_WritePixels(OH_PixelmapNative *pixelmap, uint8
         return IMAGE_BAD_PARAMETER;
     }
     return ToNewErrorCode(pixelmap->GetInnerPixelmap()->WritePixels(source, bufferSize));
+}
+
+MIDK_EXPORT
+Image_ErrorCode OH_PixelmapNative_ToSdr(OH_PixelmapNative *pixelmap)
+{
+    if (pixelmap == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    if (pixelmap->GetInnerPixelmap()->ToSdr() != IMAGE_SUCCESS) {
+        return IMAGE_UNSUPPORTED_OPERATION;
+    }
+    return IMAGE_SUCCESS;
 }
 
 MIDK_EXPORT
@@ -465,7 +514,7 @@ Image_ErrorCode OH_PixelmapNative_Flip(OH_PixelmapNative *pixelmap, bool shouldF
 MIDK_EXPORT
 Image_ErrorCode OH_PixelmapNative_Crop(OH_PixelmapNative *pixelmap, Image_Region *region)
 {
-    if (pixelmap == nullptr) {
+    if (pixelmap == nullptr || region == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
     Rect rect;
@@ -495,6 +544,72 @@ Image_ErrorCode OH_PixelmapNative_ConvertAlphaFormat(OH_PixelmapNative* srcpixel
         return IMAGE_BAD_PARAMETER;
     }
     srcpixelmap->GetInnerPixelmap()->ConvertAlphaFormat(*(dstpixelmap->GetInnerPixelmap()), isPremul);
+    return IMAGE_SUCCESS;
+}
+
+static uint32_t ImageConvert_YuvToRgb(OH_PixelmapNative *srcPixelMap, OH_PixelmapNative **destPixelMap,
+                                      int32_t destPixelFormat)
+{
+    if (srcPixelMap == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    PixelFormat srcPixelFormat = srcPixelMap->GetInnerPixelmap()->GetPixelFormat();
+    PixelFormat destFormat = static_cast<PixelFormat>(destPixelFormat);
+    if (!IsMatchType(IMAGE_FORMAT::IMAGE_FORMAT_YUV_TYPE, srcPixelFormat) ||
+        !IsMatchType(IMAGE_FORMAT::IMAGE_FORMAT_RGB_TYPE, destFormat)) {
+        return IMAGE_BAD_PARAMETER;
+    }
+
+    std::shared_ptr<OHOS::Media::PixelMap> innerPixelMap = srcPixelMap->GetInnerPixelmap();
+    std::shared_ptr<PixelMap> pixelMap = std::static_pointer_cast<PixelMap>(innerPixelMap);
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
+    *destPixelMap = new OH_PixelmapNative(pixelMap);
+
+    return ret;
+}
+
+static uint32_t ImageConvert_RgbToYuv(OH_PixelmapNative *srcPixelMap, OH_PixelmapNative **destPixelMap,
+                                      int32_t destPixelFormat)
+{
+    if (srcPixelMap == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+
+    PixelFormat srcPixelFormat = srcPixelMap->GetInnerPixelmap()->GetPixelFormat();
+    PixelFormat destFormat = static_cast<PixelFormat>(destPixelFormat);
+    if (!IsMatchType(IMAGE_FORMAT::IMAGE_FORMAT_RGB_TYPE, srcPixelFormat) ||
+        !IsMatchType(IMAGE_FORMAT::IMAGE_FORMAT_YUV_TYPE, destFormat)) {
+        return IMAGE_BAD_PARAMETER;
+    }
+
+    std::shared_ptr<OHOS::Media::PixelMap> innerPixelMap = srcPixelMap->GetInnerPixelmap();
+    std::shared_ptr<PixelMap> pixelMap = std::static_pointer_cast<PixelMap>(innerPixelMap);
+    uint32_t ret = ImageFormatConvert::ConvertImageFormat(pixelMap, destFormat);
+    *destPixelMap = new OH_PixelmapNative(pixelMap);
+    return ret;
+}
+
+MIDK_EXPORT
+Image_ErrorCode OH_PixelMapNative_ConvertPixelFormat(OH_PixelmapNative *srcPixelMap, OH_PixelmapNative **destPixelMap,
+                                                     int32_t destPixelFormat)
+{
+    if (srcPixelMap == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+
+    PixelFormat srcPixelFormat = srcPixelMap->GetInnerPixelmap()->GetPixelFormat();
+    const uint32_t SUCCESS = 0;
+    if (IsMatchType(IMAGE_FORMAT::IMAGE_FORMAT_YUV_TYPE, srcPixelFormat)) {
+        if (ImageConvert_YuvToRgb(srcPixelMap, destPixelMap, destPixelFormat) != SUCCESS) {
+            return IMAGE_BAD_PARAMETER;
+        }
+    } else if (IsMatchType(IMAGE_FORMAT::IMAGE_FORMAT_RGB_TYPE, srcPixelFormat)) {
+        if (ImageConvert_RgbToYuv(srcPixelMap, destPixelMap, destPixelFormat) != SUCCESS) {
+            return IMAGE_BAD_PARAMETER;
+        }
+    } else {
+        return IMAGE_BAD_PARAMETER;
+    }
     return IMAGE_SUCCESS;
 }
 

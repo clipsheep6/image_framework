@@ -21,6 +21,7 @@
 #include "image_source.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include <shared_mutex>
 
 namespace OHOS {
 namespace Media {
@@ -37,10 +38,16 @@ public:
 
     static napi_value CreatePixelMap(napi_env env, std::shared_ptr<PixelMap> pixelmap);
     static std::shared_ptr<PixelMap> GetPixelMap(napi_env env, napi_value pixelmap);
+    static std::shared_ptr<std::vector<std::shared_ptr<PixelMap>>> GetPixelMaps(napi_env env, napi_value pixelmaps);
     std::shared_ptr<PixelMap>* GetPixelMap();
     std::shared_ptr<PixelMap> GetPixelNapiInner()
     {
         return nativePixelMap_;
+    }
+    void ReleasePixelNapiInner()
+    {
+        setPixelNapiEditable(false);
+        nativePixelMap_ = nullptr;
     }
     void setPixelNapiEditable(bool isEditable)
     {
@@ -80,6 +87,7 @@ private:
     static void UnmarshallingComplete(napi_env env, napi_status status, void *data);
     static napi_value CreatePixelMapFromParcel(napi_env env, napi_callback_info info);
     static napi_value CreatePixelMapFromSurface(napi_env env, napi_callback_info info);
+    static napi_value CreatePixelMapFromSurfaceSync(napi_env env, napi_callback_info info);
     static void CreatePixelMapFromSurfaceComplete(napi_env env, napi_status status, void *data);
     static napi_value ThrowExceptionError(napi_env env,
         const std::string &tag, const std::uint32_t &code, const std::string &info);
@@ -118,12 +126,15 @@ private:
     static napi_value FlipSync(napi_env env, napi_callback_info info);
     static napi_value Crop(napi_env env, napi_callback_info info);
     static napi_value CropSync(napi_env env, napi_callback_info info);
+    static napi_value ToSdr(napi_env env, napi_callback_info info);
 
     static napi_value GetColorSpace(napi_env env, napi_callback_info info);
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value ApplyColorSpace(napi_env env, napi_callback_info info);
     static ImageType ParserImageType(napi_env env, napi_value argv);
+    static napi_value ConvertPixelMapFormat(napi_env env, napi_callback_info info);
+    static std::vector<napi_property_descriptor> RegisterNapi();
 
     void release();
     static thread_local napi_ref sConstructor_;
@@ -145,6 +156,7 @@ public:
 
     std::shared_ptr<PixelMap>& operator[](const uint32_t &key)
     {
+        std::shared_lock<std::shared_mutex> lock(mutex_);
         return map_[key];
     }
 
@@ -155,7 +167,7 @@ public:
 
     bool Insert(const uint32_t &key, const std::shared_ptr<PixelMap> &value)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::unique_lock<std::shared_mutex> lock(mutex_);
         if (!IsEmpty() && (map_.find(key) != map_.end())) map_.erase(key);
         auto ret = map_.insert(std::pair<uint32_t, std::shared_ptr<PixelMap>>(key, value));
         return ret.second;
@@ -163,14 +175,14 @@ public:
 
     bool Find(const uint32_t &key)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::shared_lock<std::shared_mutex> lock(mutex_);
         auto it = map_.find(key);
         return it != map_.end() ? true : false;
     }
 
     void Erase(const uint32_t &key)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::unique_lock<std::shared_mutex> lock(mutex_);
         if (map_.find(key) != map_.end()) {
             map_.erase(key);
         }
@@ -179,7 +191,7 @@ public:
 
     void Clear()
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::unique_lock<std::shared_mutex> lock(mutex_);
         map_.clear();
         return;
     }
@@ -189,7 +201,7 @@ private:
     PixelMapContainer(const PixelMapContainer&) = delete;
     PixelMapContainer(const PixelMapContainer&&) = delete;
     PixelMapContainer &operator=(const PixelMapContainer&) = delete;
-    std::mutex mutex_;
+    std::shared_mutex mutex_;
     std::map<uint32_t, std::shared_ptr<PixelMap>> map_;
 };
 } // namespace Media

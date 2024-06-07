@@ -68,6 +68,7 @@ public:
     Media::HdrMetadata GetHdrMetadata(Media::ImageHdrType type) override;
     bool DecodeHeifGainMap(DecodeContext &context, float scale) override;
     bool GetHeifHdrColorSpace(ColorManager::ColorSpaceName &gainmap, ColorManager::ColorSpaceName &hdr) override;
+    uint32_t GetHeifParseErr() override;
 #ifdef IMAGE_COLORSPACE_FLAG
     OHOS::ColorManager::ColorSpace getGrColorSpace() override;
     bool IsSupportICCProfile() override;
@@ -99,10 +100,12 @@ private:
     uint32_t SetContextPixelsBuffer(uint64_t byteCount, DecodeContext &context);
     uint32_t GetMakerImagePropertyString(const std::string &key, std::string &value);
     uint32_t CheckDecodeOptions(uint32_t index, const PixelDecodeOptions &opts);
-    void ReportImageType(SkEncodedImageFormat skEncodeFormat);
+    static void ReportImageType(SkEncodedImageFormat skEncodeFormat);
     bool CheckContext(const DecodeContext &context);
     uint32_t DmaMemAlloc(DecodeContext &context, uint64_t count, SkImageInfo &dstInfo);
     uint32_t HeifYUVMemAlloc(DecodeContext &context);
+    void SetHeifDecodeError(DecodeContext &context);
+    void SetHeifParseError();
 
     ImagePlugin::InputDataStream *stream_ = nullptr;
     uint32_t streamOff_ = 0;
@@ -115,6 +118,7 @@ private:
     EXIFInfo exifInfo_;
     uint8_t *gifCache_ = nullptr;
     int gifCacheIndex_ = 0;
+    uint32_t heifParseErr_ = 0;
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> dstColorSpace_ = nullptr;
 #endif

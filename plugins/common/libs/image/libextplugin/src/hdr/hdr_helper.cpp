@@ -26,8 +26,12 @@
 #include "media_errors.h"
 #include "src/codec/SkJpegCodec.h"
 #include "src/codec/SkJpegDecoderMgr.h"
+#ifdef HEIF_HW_DECODE_ENABLE
 #include "heif_impl/HeifDecoder.h"
+#endif
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "v1_0/hdr_static_metadata.h"
+#endif
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -39,7 +43,9 @@ namespace OHOS {
 namespace ImagePlugin {
 using namespace std;
 using namespace Media;
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 using namespace HDI::Display::Graphic::Common::V1_0;
+#endif
 constexpr uint8_t JPEG_MARKER_PREFIX = 0xFF;
 constexpr uint8_t JPEG_MARKER_APP0 = 0xE0;
 
@@ -88,11 +94,13 @@ constexpr uint8_t ISO_GAINMAP_TAG[ISO_GAINMAP_TAG_SIZE] = {
     '6', ':', '-', '1', '\0'
 };
 
+#ifdef HEIF_HW_DECODE_ENABLE
 static const map<HeifImageHdrType, ImageHdrType> HEIF_HDR_TYPE_MAP = {
     { HeifImageHdrType::UNKNOWN, ImageHdrType::UNKNOWN},
     { HeifImageHdrType::VIVID_DUAL, ImageHdrType::HDR_VIVID_DUAL},
     { HeifImageHdrType::ISO_DUAL, ImageHdrType::HDR_ISO_DUAL},
 };
+#endif
 
 typedef bool (*GetCuvaGainMapOffsetT)(jpeg_marker_struct* marker, uint32_t appSize, uint32_t& offset);
 typedef bool (*GetCuvaGainMapMetadataT)(jpeg_marker_struct* marker, std::vector<uint8_t>& metadata);
@@ -125,7 +133,7 @@ struct ExtendInfoExtention {
     TransformInfo combineMapping;
 };
 
-static bool GetVividJpegGainMapOffset(vector<jpeg_marker_struct*>& markerList, vector<uint32_t> preOffsets,
+static bool GetVividJpegGainMapOffset(const vector<jpeg_marker_struct*>& markerList, vector<uint32_t> preOffsets,
     uint32_t& offset)
 {
     if (markerList.size() == EMPTY_SIZE) {
@@ -181,7 +189,7 @@ static bool GetCuvaJpegGainMapOffset(vector<jpeg_marker_struct*>& markerList, ui
         dlclose(handle);
         return false;
     }
-    GetCuvaGainMapOffsetT check = (GetCuvaGainMapOffsetT)dlsym(handle, "GetCuvaGainMapOffset");
+    GetCuvaGainMapOffsetT check = reinterpret_cast<GetCuvaGainMapOffsetT>(dlsym(handle, "GetCuvaGainMapOffset"));
     if (!check) {
         dlclose(handle);
         return false;
@@ -301,6 +309,7 @@ static ImageHdrType CheckJpegGainMapHdrType(SkJpegCodec* jpegCodec, uint32_t& of
     return ImageHdrType::SDR;
 }
 
+#ifdef HEIF_HW_DECODE_ENABLE
 static ImageHdrType CheckHeifHdrType(HeifDecoder* decoder)
 {
     if (decoder == nullptr) {
@@ -316,6 +325,7 @@ static ImageHdrType CheckHeifHdrType(HeifDecoder* decoder)
     }
     return findItem->second;
 }
+#endif
 
 ImageHdrType HdrHelper::CheckHdrType(SkCodec* codec, uint32_t& offset)
 {
@@ -334,11 +344,13 @@ ImageHdrType HdrHelper::CheckHdrType(SkCodec* codec, uint32_t& offset)
             break;
         }
         case SkEncodedImageFormat::kHEIF: {
+#ifdef HEIF_HW_DECODE_ENABLE
             auto decoder = reinterpret_cast<HeifDecoder*>(codec->getHeifContext());
             if (decoder == nullptr) {
                 break;
             }
             type = CheckHeifHdrType(decoder);
+#endif
             break;
         }
         default:
@@ -355,7 +367,8 @@ static bool GetCuvaGainMapMetadata(jpeg_marker_struct* markerList, std::vector<u
     if (!handle) {
         return false;
     }
-    GetCuvaGainMapMetadataT getMetadata = (GetCuvaGainMapMetadataT)dlsym(handle, "GetCuvaGainMapMetadata");
+    GetCuvaGainMapMetadataT getMetadata = reinterpret_cast<GetCuvaGainMapMetadataT>(
+        dlsym(handle, "GetCuvaGainMapMetadata"));
     if (!getMetadata) {
         dlclose(handle);
         return false;
@@ -376,6 +389,9 @@ static bool GetCuvaGainMapMetadata(jpeg_marker_struct* markerList, std::vector<u
 
 static bool ParseVividJpegStaticMetadata(uint8_t* data, uint32_t& offset, uint32_t size, vector<uint8_t>& staticMetaVec)
 {
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return false;
+#else
     uint16_t staticMetadataSize = ImageUtils::BytesToUint16(data, offset);
     if (staticMetadataSize == EMPTY_SIZE) {
         staticMetaVec.resize(EMPTY_SIZE);
@@ -407,6 +423,7 @@ static bool ParseVividJpegStaticMetadata(uint8_t* data, uint32_t& offset, uint32
         offset += (staticMetadataSize - VIVID_STATIC_METADATA_SIZE_IN_IMAGE);
     }
     return true;
+#endif
 }
 
 static ExtendInfoMain ParseExtendInfoMain(uint8_t* data, uint32_t& offset, bool isThreeCom)
@@ -443,7 +460,7 @@ static ExtendInfoMain ParseExtendInfoMain(uint8_t* data, uint32_t& offset, bool 
     return infoMain;
 }
 
-static bool ParseColorInfo(uint8_t* data, uint32_t& offset, uint32_t length, ColorInfo& colorInfo)
+static bool ParseColorInfo(const uint8_t* data, uint32_t& offset, uint32_t length, ColorInfo& colorInfo)
 {
     uint8_t size = data[offset++];
     if (size == EMPTY_SIZE) {
@@ -503,6 +520,17 @@ static void ConvertExtendInfoMain(ExtendInfoMain info, HDRVividExtendMetadata& m
     metadata.metaISO.enhanceMappingAlternateOffset[INDEX_ZERO] = info.altHdrImageOffset[INDEX_ZERO];
     metadata.metaISO.enhanceMappingAlternateOffset[INDEX_ONE] = info.altHdrImageOffset[INDEX_ONE];
     metadata.metaISO.enhanceMappingAlternateOffset[INDEX_TWO] = info.altHdrImageOffset[INDEX_TWO];
+    const float eps = 1e-5;
+    if ((fabs(metadata.metaISO.enhanceClippedThreholdMaxGainmap[INDEX_ZERO] -
+            metadata.metaISO.enhanceClippedThreholdMaxGainmap[INDEX_ONE]) < eps) &&
+        (fabs(metadata.metaISO.enhanceClippedThreholdMaxGainmap[INDEX_ZERO] -
+            metadata.metaISO.enhanceClippedThreholdMaxGainmap[INDEX_TWO]) < eps) &&
+        (fabs(metadata.metaISO.enhanceClippedThreholdMinGainmap[INDEX_ZERO] -
+            metadata.metaISO.enhanceClippedThreholdMinGainmap[INDEX_ONE]) < eps) &&
+        (fabs(metadata.metaISO.enhanceClippedThreholdMinGainmap[INDEX_ZERO] -
+            metadata.metaISO.enhanceClippedThreholdMinGainmap[INDEX_TWO]) < eps)) {
+        metadata.metaISO.gainmapChannelNum = INDEX_ONE;
+    }
 }
 
 static void ConvertExtendInfoExtention(ExtendInfoExtention ext, HDRVividExtendMetadata& metadata)
@@ -720,8 +748,8 @@ static bool ParseISOMetadata(uint8_t* data, uint32_t length, HdrMetadata& metada
         return false;
     }
     uint8_t flag = data[dataOffset++];
-    metadata.extendMeta.metaISO.gainmapChannelNum = (flag & 0x01) * INDEX_TWO + INDEX_ONE;
-    metadata.extendMeta.metaISO.useBaseColorFlag = (flag >> INDEX_ONE) & 0x01;
+    metadata.extendMeta.metaISO.gainmapChannelNum = ((flag & 0x80) == 0x80) ? THREE_COMPONENTS : ONE_COMPONENT;
+    metadata.extendMeta.metaISO.useBaseColorFlag = ((flag & 0x40) == 0x40) ? 0x01 : 0x00;
 
     uint32_t baseHeadroomNumerator = ImageUtils::BytesToUint32(data, dataOffset);
     uint32_t baseHeadroomDenominator = ImageUtils::BytesToUint32(data, dataOffset);
@@ -788,8 +816,12 @@ static bool GetJpegGainMapMetadata(SkJpegCodec* codec, ImageHdrType type, HdrMet
     }
 }
 
+#ifdef HEIF_HW_DECODE_ENABLE
 static vector<uint8_t> ParseHeifStaticMetadata(const vector<uint8_t>& displayInfo, const vector<uint8_t>& lightInfo)
 {
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return {};
+#else
     HDI::Display::Graphic::Common::V1_0::HdrStaticMetadata staticMetadata{};
     DisplayColourVolume displayColourVolume{};
     ContentLightLevelInfo lightLevelInfo{};
@@ -824,6 +856,7 @@ static vector<uint8_t> ParseHeifStaticMetadata(const vector<uint8_t>& displayInf
         return {};
     }
     return staticMetadataVec;
+#endif
 }
 
 static bool GetHeifMetadata(HeifDecoder* heifDecoder, ImageHdrType type, HdrMetadata& metadata)
@@ -841,17 +874,15 @@ static bool GetHeifMetadata(HeifDecoder* heifDecoder, ImageHdrType type, HdrMeta
         }
         metadata.staticMetadata = ParseHeifStaticMetadata(displayInfo, lightInfo);
         bool res = ParseVividMetadata(uwaInfo.data(), uwaInfo.size(), metadata);
-        if (!res) {
-            IMAGE_LOGI("get heif vivid metadata failed");
-            return false;
-        }
         if (!metadata.extendMetaFlag) {
             vector<uint8_t> isoMetadata;
             heifDecoder->getISOMetadata(isoMetadata);
             if (isoMetadata.empty()) {
                 return res;
             }
-            ParseISOMetadata(isoMetadata.data(), isoMetadata.size(), metadata);
+            if (isoMetadata.size() > EMPTY_SIZE && isoMetadata[INDEX_ZERO] == EMPTY_SIZE) {
+                ParseISOMetadata(isoMetadata.data() + INDEX_ONE, isoMetadata.size() - INDEX_ONE, metadata);
+            }
         }
         return res;
     } else if (type == ImageHdrType::HDR_ISO_DUAL) {
@@ -860,10 +891,13 @@ static bool GetHeifMetadata(HeifDecoder* heifDecoder, ImageHdrType type, HdrMeta
         if (isoMetadata.empty()) {
             return false;
         }
-        return ParseISOMetadata(isoMetadata.data(), isoMetadata.size(), metadata);
+        if (isoMetadata.size() > EMPTY_SIZE && isoMetadata[INDEX_ZERO] == EMPTY_SIZE) {
+            return ParseISOMetadata(isoMetadata.data() + INDEX_ONE, isoMetadata.size() - INDEX_ONE, metadata);
+        }
     }
     return false;
 }
+#endif
 
 bool HdrHelper::GetMetadata(SkCodec* codec, ImageHdrType type, HdrMetadata& metadata)
 {
@@ -876,8 +910,12 @@ bool HdrHelper::GetMetadata(SkCodec* codec, ImageHdrType type, HdrMetadata& meta
             return GetJpegGainMapMetadata(jpegCodec, type, metadata);
         }
         case SkEncodedImageFormat::kHEIF: {
+#ifdef HEIF_HW_DECODE_ENABLE
             auto decoder = reinterpret_cast<HeifDecoder*>(codec->getHeifContext());
             return GetHeifMetadata(decoder, type, metadata);
+#else
+            return false;
+#endif
         }
         default:
             return false;
@@ -895,7 +933,7 @@ static void PackVividPreInfo(vector<uint8_t>& bytes, uint32_t& offset, bool base
     bytes[offset++] = 0x02; // extendFrameNumber
     bytes[offset++] = base ? INDEX_ONE : INDEX_TWO; // fileType
     bytes[offset++] = base ? INDEX_ZERO : INDEX_ONE; // metaType
-    bytes[offset++] = ((!base) & enhanceType) ? INDEX_ONE : INDEX_ZERO; // enhanceType
+    bytes[offset++] = ((!base) && enhanceType) ? INDEX_ONE : INDEX_ZERO; // enhanceType
     bytes[offset++] = INDEX_ZERO;
 }
 
@@ -1001,7 +1039,7 @@ static void PackTransformInfo(vector<uint8_t>& bytes, uint32_t& offset, uint8_t 
     offset += flag;
 }
 
-static void PackExtendInfoExtention(vector<uint8_t>& bytes, uint32_t& offset, HDRVividExtendMetadata& metadata)
+static void PackExtendInfoExtention(vector<uint8_t>& bytes, uint32_t& offset, const HDRVividExtendMetadata& metadata)
 {
     bytes[offset++] = COLOR_INFO_BYTES;
     bytes[offset++] = metadata.baseColorMeta.baseColorPrimary;
@@ -1024,7 +1062,7 @@ static void PackExtendInfoExtention(vector<uint8_t>& bytes, uint32_t& offset, HD
         metadata.gainmapColorMeta.combineMapping);
 }
 
-static uint16_t GetExtendMetadataSize(bool vividExtendFlag, HDRVividExtendMetadata& metadata)
+static uint16_t GetExtendMetadataSize(bool vividExtendFlag, const HDRVividExtendMetadata& metadata)
 {
     if (!vividExtendFlag) {
         return EMPTY_SIZE;
@@ -1057,6 +1095,9 @@ static void PackExtendMetadata(vector<uint8_t>& bytes, uint32_t& index, HDRVivid
 
 static bool PackVividStaticMetadata(vector<uint8_t>& bytes, uint32_t& index, vector<uint8_t>& staticVec)
 {
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return false;
+#else
     HdrStaticMetadata staticMeta;
     uint32_t vecSize = sizeof(HdrStaticMetadata);
     if (memcpy_s(&staticMeta, vecSize, staticVec.data(), vecSize) != EOK) {
@@ -1076,6 +1117,7 @@ static bool PackVividStaticMetadata(vector<uint8_t>& bytes, uint32_t& index, vec
     ImageUtils::Uint16ToBytes((uint16_t)staticMeta.cta861.maxContentLightLevel, bytes, index);
     ImageUtils::Uint16ToBytes((uint16_t)staticMeta.cta861.maxFrameAverageLightLevel, bytes, index);
     return true;
+#endif
 }
 
 static bool PackVividMetadata(vector<uint8_t>& bytes, uint32_t& index, HdrMetadata& metadata)
@@ -1106,7 +1148,10 @@ std::vector<uint8_t> HdrJpegPackerHelper::PackVividMetadataMarker(HdrMetadata& m
         UINT16_BYTE_COUNT + dynamicMetadataSize;
     uint32_t extendInfoSize = GetExtendMetadataSize(false, metadata.extendMeta);
     uint32_t markerLength = UINT32_BYTE_COUNT + ITUT35_TAG_SIZE + VIVID_METADATA_PRE_INFO_SIZE +
-        metadataSize + UINT16_BYTE_COUNT + extendInfoSize;
+        metadataSize;
+    if (extendInfoSize != EMPTY_SIZE) {
+        markerLength += (UINT16_BYTE_COUNT + extendInfoSize);
+    }
     vector<uint8_t> bytes(markerLength);
     uint32_t index = 0;
     bytes[index++] = JPEG_MARKER_PREFIX;
@@ -1191,7 +1236,14 @@ vector<uint8_t> HdrJpegPackerHelper::PackISOMetadataMarker(HdrMetadata& metadata
     }
     index += ISO_GAINMAP_TAG_SIZE;
     ImageUtils::Uint32ToBytes(extendMeta.metaISO.writeVersion, bytes, index);
-    bytes[index++] = (extendMeta.metaISO.useBaseColorFlag << INDEX_ONE) | (extendMeta.metaISO.gainmapChannelNum & 0x01);
+    bytes[index] = 0x00;
+    if (extendMeta.metaISO.useBaseColorFlag) {
+        bytes[index] |= 0x40;
+    }
+    if (extendMeta.metaISO.gainmapChannelNum) {
+        bytes[index] |= 0x80;
+    }
+    index++;
     uint32_t baseHeadroomNumerator = EMPTY_SIZE;
     if (extendMeta.metaISO.baseHeadroom > (float)EMPTY_SIZE) {
         baseHeadroomNumerator = (uint32_t)(extendMeta.metaISO.baseHeadroom * DENOMINATOR);

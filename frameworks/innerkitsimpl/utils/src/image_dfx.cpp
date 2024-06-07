@@ -19,7 +19,10 @@
 #include <fstream>
 #include <chrono>
 
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+#include "ffrt.h"
 #include "hisysevent.h"
+#endif
 #include "image_utils.h"
 #include "image_log.h"
 
@@ -59,7 +62,6 @@ void ImageEvent::SetDecodeErrorMsg(std::string msg)
 
 void ImageEvent::ReportDecodeFault()
 {
-    std::string packageName = ImageUtils::GetCurrentProcessName();
     std::string temp;
     switch (options_.invokeType) {
         case (JS_INTERFACE):
@@ -71,42 +73,46 @@ void ImageEvent::ReportDecodeFault()
         default:
             temp = "inner_interface";
     }
-    
-    HiSysEventWrite(IMAGE_FWK_UE,
-                    "DECODE_FAULT",
-                    OHOS::HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-                    "PNAMEID", packageName,
-                    "PVERSIONID", DEFAULT_VERSION_ID,
-                    "APPLICATION_NAME", packageName,
-                    "ROTATE", options_.rotate,
-                    "EDITABLE", options_.editable,
-                    "SAMPLE_SIZE", options_.sampleSize,
-                    "SOURCE_WIDTH", options_.sourceWidth,
-                    "SOURCE_HEIGHT", options_.sourceHeight,
-                    "DESIRE_SIZE_WIDTH", options_.desireSizeWidth,
-                    "DESIRE_SIZE_HEIGHT", options_.desireSizeHeight,
-                    "DESIRE_REGION_WIDTH", options_.desireRegionWidth,
-                    "DESIRE_REGION_HEIGHT", options_.desireRegionHeight,
-                    "DESIRE_REGION_X", options_.desireRegionX,
-                    "DESIRE_REGION_Y", options_.desireRegionY,
-                    "DESIRE_DESIRE_PIXEL_FORMAT", options_.desirePixelFormat,
-                    "INDEX", options_.index,
-                    "FIT_DENSITY", options_.fitDensity,
-                    "DESIRE_COLOR_SPACE", options_.desireColorSpace,
-                    "MIMETYPE", options_.mimeType,
-                    "MEMORY_SIZE", options_.memorySize,
-                    "MEMORY_TYPE", options_.memoryType,
-                    "IMAGE_SOURCE", options_.imageSource,
-                    "INVOKE_TYPE", temp,
-                    "INCREMENTAL_DECODE", options_.isIncrementalDecode,
-                    "HARD_DECODE", options_.isHardDecode,
-                    "HARD_DECODE_ERROR", options_.hardDecodeError,
-                    "ERROR_MSG", options_.errorMsg);
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    DecodeInfoOptions options = options_;
+    ffrt::submit([options, temp] {
+        std::string packageName = ImageUtils::GetCurrentProcessName();
+        HiSysEventWrite(IMAGE_FWK_UE,
+                        "DECODE_FAULT",
+                        OHOS::HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+                        "PNAMEID", packageName,
+                        "PVERSIONID", DEFAULT_VERSION_ID,
+                        "APPLICATION_NAME", packageName,
+                        "ROTATE", options.rotate,
+                        "EDITABLE", options.editable,
+                        "SAMPLE_SIZE", options.sampleSize,
+                        "SOURCE_WIDTH", options.sourceWidth,
+                        "SOURCE_HEIGHT", options.sourceHeight,
+                        "DESIRE_SIZE_WIDTH", options.desireSizeWidth,
+                        "DESIRE_SIZE_HEIGHT", options.desireSizeHeight,
+                        "DESIRE_REGION_WIDTH", options.desireRegionWidth,
+                        "DESIRE_REGION_HEIGHT", options.desireRegionHeight,
+                        "DESIRE_REGION_X", options.desireRegionX,
+                        "DESIRE_REGION_Y", options.desireRegionY,
+                        "DESIRE_DESIRE_PIXEL_FORMAT", options.desirePixelFormat,
+                        "INDEX", options.index,
+                        "FIT_DENSITY", options.fitDensity,
+                        "DESIRE_COLOR_SPACE", options.desireColorSpace,
+                        "MIMETYPE", options.mimeType,
+                        "MEMORY_SIZE", options.memorySize,
+                        "MEMORY_TYPE", options.memoryType,
+                        "IMAGE_SOURCE", options.imageSource,
+                        "INVOKE_TYPE", temp,
+                        "INCREMENTAL_DECODE", options.isIncrementalDecode,
+                        "HARD_DECODE", options.isHardDecode,
+                        "HARD_DECODE_ERROR", options.hardDecodeError,
+                        "ERROR_MSG", options.errorMsg);
+        }, {}, {});
+#endif
 }
 
 void ImageEvent::ReportDecodeInfo()
 {
-    std::string packageName = ImageUtils::GetCurrentProcessName();
     uint64_t costTime = ImageUtils::GetNowTimeMilliSeconds() - startTime_;
     std::string temp;
     switch (options_.invokeType) {
@@ -119,41 +125,47 @@ void ImageEvent::ReportDecodeInfo()
         default:
             temp = "inner_interface";
     }
-
-    HiSysEventWrite(IMAGE_FWK_UE,
-                    "DECODE_INFORMATION",
-                    OHOS::HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-                    "PNAMEID", packageName,
-                    "PVERSIONID", DEFAULT_VERSION_ID,
-                    "APPLICATION_NAME", packageName,
-                    "ROTATE", options_.rotate,
-                    "EDITABLE", options_.editable,
-                    "SAMPLE_SIZE", options_.sampleSize,
-                    "SOURCE_WIDTH", options_.sourceWidth,
-                    "SOURCE_HEIGHT", options_.sourceHeight,
-                    "DESIRE_SIZE_WIDTH", options_.desireSizeWidth,
-                    "DESIRE_SIZE_HEIGHT", options_.desireSizeHeight,
-                    "DESIRE_REGION_WIDTH", options_.desireRegionWidth,
-                    "DESIRE_REGION_HEIGHT", options_.desireRegionHeight,
-                    "DESIRE_REGION_X", options_.desireRegionX,
-                    "DESIRE_REGION_Y", options_.desireRegionY,
-                    "DESIRE_DESIRE_PIXEL_FORMAT", options_.desirePixelFormat,
-                    "INDEX", options_.index,
-                    "FIT_DENSITY", options_.fitDensity,
-                    "DESIRE_COLOR_SPACE", options_.desireColorSpace,
-                    "MIMETYPE", options_.mimeType,
-                    "MEMORY_SIZE", options_.memorySize,
-                    "MEMORY_TYPE", options_.memoryType,
-                    "IMAGE_SOURCE", options_.imageSource,
-                    "INVOKE_TYPE", temp,
-                    "INCREMENTAL_DECODE", options_.isIncrementalDecode,
-                    "HARD_DECODE", options_.isHardDecode,
-                    "HARD_DECODE_ERROR", options_.hardDecodeError,
-                    "COST_TIME", costTime);
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    DecodeInfoOptions options = options_;
+    ffrt::submit([options, temp, costTime] {
+        std::string packageName = ImageUtils::GetCurrentProcessName();
+        HiSysEventWrite(IMAGE_FWK_UE,
+                        "DECODE_INFORMATION",
+                        OHOS::HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+                        "PNAMEID", packageName,
+                        "PVERSIONID", DEFAULT_VERSION_ID,
+                        "APPLICATION_NAME", packageName,
+                        "ROTATE", options.rotate,
+                        "EDITABLE", options.editable,
+                        "SAMPLE_SIZE", options.sampleSize,
+                        "SOURCE_WIDTH", options.sourceWidth,
+                        "SOURCE_HEIGHT", options.sourceHeight,
+                        "DESIRE_SIZE_WIDTH", options.desireSizeWidth,
+                        "DESIRE_SIZE_HEIGHT", options.desireSizeHeight,
+                        "DESIRE_REGION_WIDTH", options.desireRegionWidth,
+                        "DESIRE_REGION_HEIGHT", options.desireRegionHeight,
+                        "DESIRE_REGION_X", options.desireRegionX,
+                        "DESIRE_REGION_Y", options.desireRegionY,
+                        "DESIRE_DESIRE_PIXEL_FORMAT", options.desirePixelFormat,
+                        "INDEX", options.index,
+                        "FIT_DENSITY", options.fitDensity,
+                        "DESIRE_COLOR_SPACE", options.desireColorSpace,
+                        "MIMETYPE", options.mimeType,
+                        "MEMORY_SIZE", options.memorySize,
+                        "MEMORY_TYPE", options.memoryType,
+                        "IMAGE_SOURCE", options.imageSource,
+                        "INVOKE_TYPE", temp,
+                        "INCREMENTAL_DECODE", options.isIncrementalDecode,
+                        "HARD_DECODE", options.isHardDecode,
+                        "HARD_DECODE_ERROR", options.hardDecodeError,
+                        "COST_TIME", costTime);
+        }, {}, {});
+#endif
 }
 
 void ReportCreateImageSourceFault(uint32_t width, uint32_t height, std::string type, std::string message)
 {
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     std::string packageName = ImageUtils::GetCurrentProcessName();
     HiSysEventWrite(IMAGE_FWK_UE,
                     "CREATE_IMAGESOURCE_FAULT",
@@ -164,10 +176,12 @@ void ReportCreateImageSourceFault(uint32_t width, uint32_t height, std::string t
                     "HEIGHT", height,
                     "TYPE", type,
                     "ERROR_MSG", message);
+#endif
 }
 
 void ReportEncodeFault(uint32_t width, uint32_t height, std::string mimeType, std::string message)
 {
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     std::string packageName = ImageUtils::GetCurrentProcessName();
     HiSysEventWrite(IMAGE_FWK_UE,
                     "ENCODE_FAULT",
@@ -178,6 +192,7 @@ void ReportEncodeFault(uint32_t width, uint32_t height, std::string mimeType, st
                     "HEIGHT", height,
                     "MIME_TYPE", mimeType,
                     "ERROR_MSG", message);
+#endif
 }
 } // namespace Media
 } // namespace OHOS

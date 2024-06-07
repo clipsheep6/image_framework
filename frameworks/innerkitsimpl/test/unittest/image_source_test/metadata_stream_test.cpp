@@ -1162,6 +1162,7 @@ HWTEST_F(MetadataStreamTest, FileMetadataStream_CONSTRUCTOR005, TestSize.Level3)
 {
     int fileDescriptor = open(filePathSource.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     FileMetadataStream *stream = new FileMetadataStream(fileDescriptor);
+    ASSERT_FALSE(stream->IsOpen());
     ASSERT_TRUE(stream->Open());
     delete stream;
     stream = new FileMetadataStream(fileDescriptor);
@@ -1388,7 +1389,7 @@ HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write007, TestSize.Level3)
 HWTEST_F(MetadataStreamTest, BufferMetadataStream_Write008, TestSize.Level3)
 {
     BufferMetadataStream stream;
-    byte *buf = new byte[14];
+    byte *buf = new byte[13];
     ASSERT_TRUE(stream.Open());
     stream.Write((uint8_t *)"Hello, world!", 13);
     stream.Seek(4, SeekPos::BEGIN);

@@ -433,6 +433,12 @@ uint64_t ImageUtils::GetNowTimeMilliSeconds()
     return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 }
 
+uint64_t ImageUtils::GetNowTimeMicroSeconds()
+{
+    auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+}
+
 std::string ImageUtils::GetCurrentProcessName()
 {
     std::string processName;
@@ -626,6 +632,29 @@ void ImageUtils::ArrayToBytes(const uint8_t* data, uint32_t length, vector<uint8
     for (uint32_t i = 0; i < length; i++) {
         bytes[offset++] = data[i] & 0xFF;
     }
+}
+
+void ImageUtils::FlushSurfaceBuffer(PixelMap* pixelMap)
+{
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    if (!pixelMap || pixelMap->GetAllocatorType() != AllocatorType::DMA_ALLOC) {
+        return;
+    }
+    SurfaceBuffer* surfaceBuffer = reinterpret_cast<SurfaceBuffer*>(pixelMap->GetFd());
+    if (surfaceBuffer && (surfaceBuffer->GetUsage() & BUFFER_USAGE_MEM_MMZ_CACHE)) {
+        GSError err = surfaceBuffer->Map();
+        if (err != GSERROR_OK) {
+            IMAGE_LOGE("ImageUtils Map failed, GSError=%{public}d", err);
+            return;
+        }
+        err = surfaceBuffer->FlushCache();
+        if (err != GSERROR_OK) {
+            IMAGE_LOGE("ImageUtils FlushCache failed, GSError=%{public}d", err);
+        }
+    }
+#else
+    return;
+#endif
 }
 } // namespace Media
 } // namespace OHOS
