@@ -125,6 +125,7 @@ if (use_clang_ios) {
         cfi_cross_dso = true
         cfi_vcall_icall_only = true
         debug = false
+        blocklist = "$image_subsystem/cfi_blocklist.txt"
       }
     }
     sources = [
