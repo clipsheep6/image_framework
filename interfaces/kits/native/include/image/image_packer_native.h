@@ -129,6 +129,17 @@ Image_ErrorCode OH_PackingOptions_SetQuality(OH_PackingOptions *options,
     uint32_t quality);
 
 /**
+ * @brief Set need exif for DecodingOptions struct.
+ *
+ * @param options The DecodingOptions pointer will be operated.
+ * @param quality the number of image quality.
+ * @return Returns {@link Image_ErrorCode}
+ * @since 12
+ */
+Image_ErrorCode OH_PackingOptions_NeedExif(OH_PackingOptions *options,
+    bool needExif);
+
+/**
  * @brief Get desiredDynamicRange for PackingOptions struct.
  *
  * @param options The PackingOptions pointer will be operated.

@@ -299,6 +299,7 @@ void ImagePacker::CopyOptionsToPlugin(const PackOption &opts, PlEncodeOptions &p
     plOpts.quality = opts.quality;
     plOpts.format = opts.format;
     plOpts.disposalTypes = opts.disposalTypes;
+    plOpts.needExif = opts.needExif;
     auto search = DYNAMIC_RANGE_MAP.find(opts.desiredDynamicRange);
     plOpts.desiredDynamicRange = (search != DYNAMIC_RANGE_MAP.end()) ? search->second : PlEncodeDynamicRange::SDR;
 }
