@@ -270,6 +270,12 @@ enum class AntiAliasingOption : int32_t {
     LANCZOS = 8, // SWS_LANCZOS
     SPLINE = 9, // SWS_SPLINE
 };
+
+enum class CompressionType : int32_t {
+    UNKNOWN = 0,
+    ASTC = 1,
+    SUT = 2,
+};
 } // namespace Media
 } // namespace OHOS
 
