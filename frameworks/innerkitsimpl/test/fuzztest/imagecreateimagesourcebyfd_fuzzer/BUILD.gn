@@ -47,6 +47,7 @@ ohos_fuzztest("ImageCreateImageSourceByFdFuzzTest") {
     "drivers_interface_display:libdisplay_composer_hdi_impl",
     "drivers_interface_display:libdisplay_composer_proxy_1.0",
     "graphic_2d:color_manager",
+    "hilog:libhilog",
     "libexif:libexif",
     "libjpeg-turbo:turbojpeg",
   ]
