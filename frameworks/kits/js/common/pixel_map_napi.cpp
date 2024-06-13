@@ -668,7 +668,7 @@ inline void *DetachPixelMapFunc(napi_env env, void *value, void *)
 }
 
 static napi_status NewPixelNapiInstance(napi_env &env, napi_value &constructor,
-    std::shared_ptr<PixelMap> &pixelMap, napi_value &result)
+    std::shared_ptr<PixelMap> &pixelMap, napi_value &result) __attribute__((no_sanitize("cfi")))
 {
     napi_status status;
     if (pixelMap == nullptr) {
