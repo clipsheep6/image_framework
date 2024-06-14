@@ -536,13 +536,14 @@ static std::shared_ptr<PixelMap> CreatePixelMapInner(SendableImageSourceNapi *th
     }
 
     std::shared_ptr<PixelMap> pixelMap;
-    auto incPixelMap = thisPtr->GetIncrementalPixelMap();
+    auto incPixelMap = (thisPtr == nullptr) ? nullptr : thisPtr->GetIncrementalPixelMap();
     if (incPixelMap != nullptr) {
         IMAGE_LOGD("Get Incremental PixelMap!!!");
         pixelMap = incPixelMap;
     } else {
         decodeOpts.invokeType = JS_INTERFACE;
-        pixelMap = imageSource->CreatePixelMapEx(index, decodeOpts, status);
+        pixelMap = (imageSource == nullptr) ? nullptr : imageSource->CreatePixelMapEx((index >= NUM_0) ? index : NUM_0,
+            decodeOpts, status);
     }
 
     if (status != SUCCESS || !IMG_NOT_NULL(pixelMap)) {
