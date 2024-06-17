@@ -232,12 +232,12 @@ napi_value ImageCreatorNapi::JSCreateImageCreator(napi_env env, napi_callback_in
     status = napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     if (status != napi_ok || ((argc != ARGS3) && (argc != ARGS4))) {
         std::string errMsg = "Invailed arg counts ";
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        return ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
             errMsg.append(std::to_string(argc)));
     }
     std::string errMsg;
     if (!ImageNapiUtils::ParseImageCreatorReceiverArgs(env, argc, argv, args, errMsg)) {
-        return ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER, errMsg);
+        return ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER, errMsg);
     }
     int32_t len = sizeof(args) / sizeof(args[PARAM0]);
     if (isTest(args, len)) {
@@ -601,13 +601,13 @@ static bool JsQueueArgs(napi_env env, size_t argc, napi_value* argv,
         if (argType0 == napi_object) {
             imageNapi_ = ImageNapi::GetNativeImage(env, argv[PARAM0]);
             if (imageNapi_ == nullptr && !IsTestImageArgs(env, argv[PARAM0])) {
-                ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+                ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
                     "Could not get queue type object");
                 return false;
             }
         } else {
             std::string errMsg = "Unsupport args0 type: ";
-            ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+            ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
                 errMsg.append(std::to_string(argType0)));
             return false;
         }
@@ -618,14 +618,14 @@ static bool JsQueueArgs(napi_env env, size_t argc, napi_value* argv,
             napi_create_reference(env, argv[PARAM1], refCount, callbackRef);
         } else {
             std::string errMsg = "Unsupport args1 type: ";
-            ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+            ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
                 errMsg.append(std::to_string(argType1)));
             return false;
         }
     }
     } else {
         std::string errMsg = "Invailed argc: ";
-        ImageNapiUtils::ThrowExceptionError(env, static_cast<int32_t>(napi_invalid_arg),
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
             errMsg.append(std::to_string(argc)));
         return false;
     }
@@ -750,13 +750,13 @@ static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext
         auto argType1 = ImageNapiUtils::getType(args.env, ic.argv[PARAM1]);
         if (argType0 == napi_string && argType1 == napi_function) {
             if (!ImageNapiUtils::GetUtf8String(args.env, ic.argv[PARAM0], ic.onType)) {
-                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                ImageNapiUtils::ThrowExceptionError(args.env, ERR_IMAGE_INVALID_PARAMETER,
                     "Could not get On type string");
                 return false;
             }
 
             if (!CheckOnParam0(args.env, ic.argv[PARAM0], "imageRelease")) {
-                ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                ImageNapiUtils::ThrowExceptionError(args.env, ERR_IMAGE_INVALID_PARAMETER,
                     "Unsupport PARAM0");
                 return false;
             }
@@ -764,13 +764,13 @@ static bool JsOnQueryArgs(ImageCreatorCommonArgs &args, ImageCreatorInnerContext
             napi_create_reference(args.env, ic.argv[PARAM1], ic.refCount, &(ic.context->callbackRef));
         } else {
             std::string errMsg = "Unsupport args type: ";
-            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+            ImageNapiUtils::ThrowExceptionError(args.env, ERR_IMAGE_INVALID_PARAMETER,
                 errMsg.append(std::to_string(argType0)).append(std::to_string(argType1)));
             return false;
         }
     } else {
         std::string errMsg = "Invailed argc: ";
-        ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+        ImageNapiUtils::ThrowExceptionError(args.env, ERR_IMAGE_INVALID_PARAMETER,
             errMsg.append(std::to_string(ic.argc)));
         return false;
     }
