@@ -253,7 +253,12 @@ std::tuple<size_t, size_t> JpegExifMetadataAccessor::GetInsertPosAndMarkerAPP1()
 
     imageStream_->Seek(0, SeekPos::BEGIN);
 
-    byte marker = static_cast<byte>(FindNextMarker());
+    int imarker = FindNextMarker();
+    if (imarker == EOF) {
+        return std::make_tuple(-1, -1);
+    }
+
+    byte marker = static_cast<byte>(imarker);
     while ((marker != JPEG_MARKER_SOS) && (marker != JPEG_MARKER_EOI)) {
         DataBuf buf = ReadNextSegment(marker);
         if (marker == JPEG_MARKER_APP0) {
@@ -263,7 +268,12 @@ std::tuple<size_t, size_t> JpegExifMetadataAccessor::GetInsertPosAndMarkerAPP1()
             skipExifSeqNum = markerCount;
         }
 
-        marker = static_cast<byte>(FindNextMarker());
+        imarker = FindNextMarker();
+        if (imarker == EOF) {
+            return std::make_tuple(-1, -1);
+        }
+
+        marker = static_cast<byte>(imarker);
         ++markerCount;
     }
 
@@ -354,6 +364,9 @@ bool JpegExifMetadataAccessor::UpdateExifMetadata(BufferMetadataStream &bufStrea
 {
     size_t markerCount = 0;
     auto [insertPos, skipExifSeqNum] = GetInsertPosAndMarkerAPP1();
+    if (insertPos == -1) {
+        return false;
+    }
 
     if (!WriteHeader(bufStream)) {
         IMAGE_LOGE("Failed to write header to output image stream");
@@ -362,7 +375,12 @@ bool JpegExifMetadataAccessor::UpdateExifMetadata(BufferMetadataStream &bufStrea
 
     imageStream_->Seek(0, SeekPos::BEGIN);
 
-    byte marker = static_cast<byte>(FindNextMarker());
+    int imarker = FindNextMarker();
+    if (imarker == EOF) {
+        return false;
+    }
+
+    byte marker = static_cast<byte>(imarker);
     while (marker != JPEG_MARKER_SOS) {
         DataBuf buf = ReadNextSegment(marker);
         if (markerCount == insertPos) {
@@ -378,8 +396,12 @@ bool JpegExifMetadataAccessor::UpdateExifMetadata(BufferMetadataStream &bufStrea
         } else {
             IMAGE_LOGD("Skipping existing exifApp segment number.");
         }
+        imarker = FindNextMarker();
+        if (imarker == EOF) {
+            return false;
+        }
 
-        marker = static_cast<byte>(FindNextMarker());
+        marker = static_cast<byte>(imarker);
         ++markerCount;
     }
 
