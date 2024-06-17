@@ -47,34 +47,34 @@ using namespace std;
 using namespace ImagePlugin;
 
 constexpr int STORAGE_MANAGER_MANAGER_ID = 5003;
-static const string FILE_URL_PREFIX = "file://";
 static const string DOCS_URL_PREFIX = "file://docs/";
 static const string MEDIA_URL_PREFIX = "file://media/";
-static void* dlHandler_ = nullptr;
 
-__attribute__((constructor)) void MyConstructor()
+void* FileSourceStream::dlHandler_ = nullptr;
+
+__attribute__((constructor)) void RegisterMediaLibraryManager()
 {
-    dlHandler_ = dlopen("libmedia_library_manager.z.so", RTLD_LAZY);
+    FileSourceStream::dlHandler_ = dlopen("libmedia_library_manager.z.so", RTLD_LAZY);
 }
 
-__attribute__((destructor)) void MyDestructor()
+__attribute__((destructor)) void UnRegisterMediaLibraryManager()
 {
-    if (dlHandler_ != nullptr) {
-        dlclose(dlHandler_);
-        dlHandler_ = nullptr;
+    if (FileSourceStream::dlHandler_ != nullptr) {
+        dlclose(FileSourceStream::dlHandler_);
+        FileSourceStream::dlHandler_ = nullptr;
     }
 }
 
-static IMediaLibraryManager* CreateMediaLibMgr()
+IMediaLibraryManager* FileSourceStream::CreateMediaLibMgr()
 {
     typedef IMediaLibraryManager*(*CreateFunc)();
 
-    if (!dlHandler_) {
+    if (!FileSourceStream::dlHandler_) {
         IMAGE_LOGE("[FileSourceStream]Load library MediaLibraryManager failed.");
         return nullptr;
     }
 
-    CreateFunc createFunc = (CreateFunc)dlsym(dlHandler_, "CreateMediaLibraryManager");
+    CreateFunc createFunc = (CreateFunc)dlsym(FileSourceStream::dlHandler_, "CreateMediaLibraryManager");
     if (createFunc == nullptr) {
         IMAGE_LOGE("[FileSourceStream]Get MediaLibraryManager create function failed.");
         return nullptr;
@@ -102,24 +102,9 @@ static IMediaLibraryManager* CreateMediaLibMgr()
     return mediaLibMgr;
 }
 
-static bool CompairPathPrefix(const string &pathName, const string &prefixName)
+unique_ptr<FileSourceStream> CreateSourceStreamByDocs(const string &pathName)
 {
-    return (pathName.size() > prefixName.size() &&
-        (pathName.compare(0, prefixName.size(), prefixName) == 0));
-}
-
-static std::string FileUrlToRawPath(const std::string &path)
-{
-    if (path.size() > FILE_URL_PREFIX.size() &&
-        (path.compare(0, FILE_URL_PREFIX.size(), FILE_URL_PREFIX) == 0)) {
-        return path.substr(FILE_URL_PREFIX.size());
-    }
-    return path;
-}
-
-static unique_ptr<FileSourceStream> CreateSourceStreamByDocs(const string &pathName)
-{
-    auto mediaLibMgr = CreateMediaLibMgr();
+    auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
     if (mediaLibMgr == nullptr) {
         IMAGE_LOGE("[FileSourceStream]Create MediaLibraryManager failed.");
         return nullptr;
@@ -149,10 +134,10 @@ static unique_ptr<FileSourceStream> CreateSourceStreamByDocs(const string &pathN
     return make_unique<FileSourceStream>(filePtr, size, offset, offset);
 }
 
-static unique_ptr<FileSourceStream> CreateSourceStreamByMedia(const string &pathName)
+unique_ptr<FileSourceStream> CreateSourceStreamByMedia(const string &pathName)
 {
     string uri = pathName;
-    auto mediaLibMgr = CreateMediaLibMgr();
+    auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
     if (mediaLibMgr == nullptr) {
         IMAGE_LOGE("[FileSourceStream]Create MediaLibraryManager failed.");
         return nullptr;
@@ -182,14 +167,14 @@ FileSourceStream::~FileSourceStream()
 
 unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &pathName)
 {
-    if (CompairPathPrefix(pathName, DOCS_URL_PREFIX)) { // docs
+    if (ImageUtils::CompairPathPrefix(pathName, DOCS_URL_PREFIX)) { // docs
         return CreateSourceStreamByDocs(pathName);
-    } else if (CompairPathPrefix(pathName, MEDIA_URL_PREFIX)) { // media
+    } else if (ImageUtils::CompairPathPrefix(pathName, MEDIA_URL_PREFIX)) { // media
         return CreateSourceStreamByMedia(pathName);
     } else {
         string realPath = pathName;
-        if (CompairPathPrefix(pathName, FILE_URL_PREFIX)) {
-            auto mediaLibMgr = CreateMediaLibMgr();
+        if (ImageUtils::CompairPathPrefix(pathName, FILE_URL_PREFIX)) {
+            auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
             if (mediaLibMgr == nullptr) {
                 IMAGE_LOGE("[FileSourceStream]Create MediaLibraryManager failed.");
                 return nullptr;
@@ -198,7 +183,7 @@ unique_ptr<FileSourceStream> FileSourceStream::CreateSourceStream(const string &
             realPath = mediaLibMgr->GetRealPath(pathName);
         }
 
-        string rawPathName = FileUrlToRawPath(realPath);
+        string rawPathName = ImageUtils::FileUrlToRawPath(realPath);
         if (!ImageUtils::PathToRealPath(rawPathName, realPath)) {
             IMAGE_LOGE("[FileSourceStream]input the file path exception, rawPathName:%{public}s, errno:%{public}d.",
                 rawPathName.c_str(), errno);

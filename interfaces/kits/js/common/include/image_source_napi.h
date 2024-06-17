@@ -43,7 +43,6 @@ public:
     static int fileDescriptor_;
     static void* fileBuffer_;
     static size_t fileBufferSize_;
-    static std::shared_ptr<PixelMap> srcPixelMap_;
     static int32_t CreateImageSourceNapi(napi_env env, napi_value* result);
     void SetIncrementalPixelMap(std::shared_ptr<IncrementalPixelMap> incrementalPixelMap);
     void SetNativeImageSource(std::shared_ptr<ImageSource> imageSource);
@@ -79,7 +78,7 @@ private:
     void release();
     static thread_local napi_ref sConstructor_;
     static thread_local std::shared_ptr<ImageSource> sImgSrc_;
-    static std::shared_ptr<IncrementalPixelMap> sIncPixelMap_;
+    static thread_local std::shared_ptr<IncrementalPixelMap> sIncPixelMap_;
     std::shared_ptr<IncrementalPixelMap> navIncPixelMap_ = nullptr;
     static napi_ref pixelMapFormatRef_;
     static napi_ref propertyKeyRef_;

@@ -24,13 +24,20 @@
 
 #include "file_metadata_stream.h"
 #include "image_log.h"
+#include "image_utils.h"
 #include "metadata_stream.h"
+#include "file_source_stream.h"
+#include "medialibrary_errno.h"
+#include "media_library_manager.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
 #define LOG_TAG "FileMetadataStream"
+
+static const std::string DOCS_URL_PREFIX = "file://docs/";
+static const std::string MEDIA_URL_PREFIX = "file://media/";
 
 namespace OHOS {
 namespace Media {
@@ -271,14 +278,80 @@ bool FileMetadataStream::OpenFromFD(const char *modeStr)
     return true;
 }
 
+FILE* OpenFromDocs(const std::string& pathName, const char *modeStr)
+{
+    auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
+    if (mediaLibMgr == nullptr) {
+        IMAGE_LOGE("[FileMetadataStream]Create MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    auto realPath = mediaLibMgr->GetRealPath(pathName);
+    return fopen(realPath.c_str(), modeStr);
+}
+
+FILE* OpenFromMedia(const string &pathName, const char *modeStr)
+{
+    auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
+    if (mediaLibMgr == nullptr) {
+        IMAGE_LOGE("[FileMetadataStream]Create MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    std::string uri = pathName;
+    int srcFd = mediaLibMgr->OpenAsset(uri, "rw");
+    if (srcFd == E_ERR) {
+        IMAGE_LOGE("[FileMetadataStream]Open asset %{public}s error: %{public}d", uri.c_str(), srcFd);
+        return nullptr;
+    }
+
+    int dupFd = dup(srcFd);
+    if (dupFd < 0) {
+        IMAGE_LOGE("[FileMetadataStream]Fail to dup fd.");
+        mediaLibMgr->CloseAsset(uri, srcFd);
+        return nullptr;
+    }
+
+    auto resultFd = fdopen(dupFd, modeStr);
+    mediaLibMgr->CloseAsset(uri, srcFd);
+    return resultFd;
+}
+
 bool FileMetadataStream::OpenFromPath(const char *modeStr)
 {
     IMAGE_LOGD("Open file: %{public}s, modeStr: %{public}s", filePath_.c_str(), modeStr);
-    fp_ = fopen(filePath_.c_str(), modeStr);
-    if (fp_ == nullptr) {
-        HandleFileError("Open file", filePath_, -1, -1, -1);
-        return false;
+
+    if (ImageUtils::CompairPathPrefix(filePath_, DOCS_URL_PREFIX)) { // docs
+        fp_ = OpenFromDocs(filePath_, modeStr);
+        if (fp_ == nullptr) {
+            HandleFileError("Open file", filePath_, -1, -1, -1);
+            return false;
+        }
+    } else if (ImageUtils::CompairPathPrefix(filePath_, MEDIA_URL_PREFIX)) { // media
+        fp_ = OpenFromMedia(filePath_, modeStr);
+        if (fp_ == nullptr) {
+            HandleFileError("Open file", filePath_, -1, -1, -1);
+            return false;
+        }
+    } else {
+        std::string realPath = filePath_;
+        if (ImageUtils::CompairPathPrefix(filePath_, FILE_URL_PREFIX)) {
+            auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
+            if (mediaLibMgr == nullptr) {
+                IMAGE_LOGE("[FileMetadataStream]Create MediaLibraryManager failed.");
+                return false;
+            }
+
+            realPath = mediaLibMgr->GetRealPath(filePath_);
+        }
+
+        fp_ = fopen(realPath.c_str(), modeStr);
+        if (fp_ == nullptr) {
+            HandleFileError("Open file", filePath_, -1, -1, -1);
+            return false;
+        }
     }
+
     IMAGE_LOGD("File opened: %{public}s", filePath_.c_str());
     return true;
 }
@@ -338,11 +411,16 @@ byte *FileMetadataStream::GetAddr(bool isWriteable)
     int fileDescriptor = fileno(fp_);
 
     // Create a memory map
-    mappedMemory_ =
-        ::mmap(nullptr, GetSize(), isWriteable ? (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fileDescriptor, 0);
-    if (mappedMemory_ == static_cast<void *>(MAP_FAILED)) {
-        HandleFileError("Create memory mapping", filePath_, fileDescriptor, -1, -1);
+    ssize_t fileSize = GetSize();
+    if (fileSize <= 0) {
         mappedMemory_ = nullptr;
+    } else {
+        mappedMemory_ = ::mmap(nullptr, static_cast<size_t>(fileSize), isWriteable ?
+            (PROT_READ | PROT_WRITE) : PROT_READ, MAP_SHARED, fileDescriptor, 0);
+        if (mappedMemory_ == static_cast<void *>(MAP_FAILED)) {
+            HandleFileError("Create memory mapping", filePath_, fileDescriptor, -1, -1);
+            mappedMemory_ = nullptr;
+        }
     }
     IMAGE_LOGD("mmap: Memory mapping created: %{public}s, size: %{public}zu", filePath_.c_str(), GetSize());
     return (byte *)mappedMemory_;
@@ -354,8 +432,13 @@ bool FileMetadataStream::ReleaseAddr()
         return true;
     }
 
+    ssize_t fileSize = GetSize();
+    if (fileSize <= 0) {
+        mappedMemory_ = nullptr;
+        return true;
+    }
     // Delete the memory map
-    if (munmap(mappedMemory_, GetSize()) == -1) {
+    if (munmap(mappedMemory_, static_cast<size_t>(fileSize)) == -1) {
         // Memory mapping failed
         HandleFileError("Remove memory mapping", filePath_, -1, -1, -1);
         return false;
@@ -419,8 +502,8 @@ bool FileMetadataStream::ReadFromSourceAndWriteToFile(MetadataStream &src, byte 
     while (!src.IsEof()) {
         ssize_t bytesRead = src.Read(tempBuffer, buffer_size);
         if (bytesRead > 0) {
-            size_t bytesWritten = Write(tempBuffer, bytesRead);
-            if (bytesWritten == static_cast<size_t>(-1)) {
+            ssize_t bytesWritten = Write(tempBuffer, bytesRead);
+            if (bytesWritten == -1) {
                 // Write failed
                 HandleFileError("Write file", filePath_, fileno(fp_), bytesWritten, bytesRead);
                 return false;

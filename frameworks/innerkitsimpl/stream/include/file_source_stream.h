@@ -24,6 +24,9 @@
 
 namespace OHOS {
 namespace Media {
+
+class IMediaLibraryManager;
+
 class FileSourceStream : public SourceStream {
 public:
     static std::unique_ptr<FileSourceStream> CreateSourceStream(const std::string &pathName);
@@ -46,6 +49,8 @@ public:
     ImagePlugin::OutputDataStream* ToOutputDataStream() override;
     int GetMMapFd();
 
+    static IMediaLibraryManager* CreateMediaLibMgr();
+
 private:
     DISALLOW_COPY_AND_MOVE(FileSourceStream);
     bool GetData(uint32_t desiredSize, uint8_t *outBuffer, uint32_t bufferSize, uint32_t &readSize);
@@ -59,6 +64,9 @@ private:
     uint8_t *fileData_ = nullptr;
     int mmapFd_ = -1;
     bool mmapFdPassedOn_ = false;
+
+public:
+    static void* dlHandler_;
 };
 } // namespace Media
 } // namespace OHOS

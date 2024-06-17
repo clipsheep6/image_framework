@@ -45,13 +45,12 @@ namespace OHOS {
 namespace Media {
 thread_local napi_ref ImageSourceNapi::sConstructor_ = nullptr;
 thread_local std::shared_ptr<ImageSource> ImageSourceNapi::sImgSrc_ = nullptr;
-std::shared_ptr<IncrementalPixelMap> ImageSourceNapi::sIncPixelMap_ = nullptr;
+thread_local std::shared_ptr<IncrementalPixelMap> ImageSourceNapi::sIncPixelMap_ = nullptr;
 static const std::string CLASS_NAME = "ImageSource";
 std::string ImageSourceNapi::filePath_ = "";
 int ImageSourceNapi::fileDescriptor_ = -1;
 void* ImageSourceNapi::fileBuffer_ = nullptr;
 size_t ImageSourceNapi::fileBufferSize_ = 0;
-std::shared_ptr<PixelMap> ImageSourceNapi::srcPixelMap_ = nullptr;
 
 napi_ref ImageSourceNapi::pixelMapFormatRef_ = nullptr;
 napi_ref ImageSourceNapi::propertyKeyRef_ = nullptr;
@@ -1217,7 +1216,6 @@ static std::unique_ptr<ImageSource> CreateNativeImageSource(napi_env env, napi_v
             return imageSource;
         }
         context->pathNameLength = context->pathName.size();
-        IMAGE_LOGD("pathName is [%{public}s]", context->pathName.c_str());
         imageSource = ImageSource::CreateImageSource(context->pathName, opts, errorCode);
     } else if (napi_number == inputType) { // Fd
         napi_get_value_int32(env, argValue, &context->fdIndex);
@@ -1479,13 +1477,13 @@ static std::shared_ptr<PixelMap> CreatePixelMapInner(ImageSourceNapi *thisPtr,
     }
 
     std::shared_ptr<PixelMap> pixelMap;
-    auto incPixelMap = thisPtr->GetIncrementalPixelMap();
+    auto incPixelMap = (thisPtr == nullptr) ? nullptr : thisPtr->GetIncrementalPixelMap();
     if (incPixelMap != nullptr) {
         IMAGE_LOGD("Get Incremental PixelMap!!!");
         pixelMap = incPixelMap;
     } else {
         decodeOpts.invokeType = JS_INTERFACE;
-        pixelMap = imageSource->CreatePixelMapEx((index >= NUM_0) ? index : NUM_0,
+        pixelMap = (imageSource == nullptr) ? nullptr : imageSource->CreatePixelMapEx((index >= NUM_0) ? index : NUM_0,
             decodeOpts, status);
     }
 
@@ -1517,7 +1515,6 @@ static void CreatePixelMapExecute(napi_env env, void *data)
 
     context->rPixelMap = CreatePixelMapInner(context->constructor_, context->rImageSource,
         context->index, context->decodeOpts, context->status);
-        ImageSourceNapi::srcPixelMap_ = context->rPixelMap;
 
     if (context->status != SUCCESS) {
         context->errMsg = "Create PixelMap error";

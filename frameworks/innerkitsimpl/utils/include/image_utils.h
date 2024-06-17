@@ -26,6 +26,7 @@ namespace OHOS { namespace MultimediaPlugin { class PluginServer; } }
 namespace OHOS {
 namespace Media {
 const std::string IMAGE_ENCODE_FORMAT = "encodeFormat";
+const std::string FILE_URL_PREFIX = "file://";
 constexpr uint32_t MALLOC_MAX_LENTH = 0x40000000;
 class PixelMap;
 
@@ -36,6 +37,8 @@ public:
     static bool GetInputStreamSize(std::istream &inputStream, size_t &size);
     static int32_t GetPixelBytes(const PixelFormat &pixelFormat);
     static bool PathToRealPath(const std::string &path, std::string &realPath);
+    static bool CompairPathPrefix(const std::string &pathName, const std::string &prefixName);
+    static std::string FileUrlToRawPath(const std::string &path);
     static bool FloatCompareZero(float src);
     static AlphaType GetValidAlphaTypeByFormat(const AlphaType &dstType, const PixelFormat &format);
     static bool IsValidImageInfo(const ImageInfo &info);
@@ -63,6 +66,7 @@ public:
     static void FloatToBytes(float data, std::vector<uint8_t>& bytes, uint32_t& offset, bool isBigEndian = true);
     static void Int32ToBytes(int32_t data, std::vector<uint8_t>& bytes, uint32_t& offset, bool isBigEndian = true);
     static void ArrayToBytes(const uint8_t* data, uint32_t length, std::vector<uint8_t>& bytes, uint32_t& offset);
+    static void FlushSurfaceBuffer(PixelMap* pixelMap);
 private:
     static uint32_t RegisterPluginServer();
     static uint32_t SaveDataToFile(const std::string& fileName, const char* data, const size_t& totalSize);
