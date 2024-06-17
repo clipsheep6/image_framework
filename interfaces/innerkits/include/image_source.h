@@ -185,6 +185,7 @@ public:
     {
         return GetImageInfo(0, imageInfo);
     }
+    NATIVEEXPORT bool IsASTCorSUT(const uint8_t *fileData, size_t fileSize);
     NATIVEEXPORT uint32_t GetImageInfo(uint32_t index, ImageInfo &imageInfo);
     NATIVEEXPORT const SourceInfo &GetSourceInfo(uint32_t &errorCode);
     NATIVEEXPORT void RegisterListener(PeerListener *listener);
@@ -353,6 +354,7 @@ private:
     std::string source_; // Image source fd buffer etc
     bool isExifReadFailed = false;
     uint32_t heifParseErr_ = 0;
+    bool isSut_ = false;
 };
 } // namespace Media
 } // namespace OHOS
