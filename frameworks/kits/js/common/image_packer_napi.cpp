@@ -194,16 +194,6 @@ static void CommonCallbackRoutine(napi_env env, ImagePackerAsyncContext* &connec
     connect = nullptr;
 }
 
-static void BuildMsgOnError(ImagePackerAsyncContext* ctx, bool assertion, const std::string msg)
-{
-    if (ctx == nullptr || assertion) {
-        return;
-    }
-    IMAGE_LOGE("%{public}s", msg.c_str());
-    ctx->error.hasErrorCode = false;
-    ctx->error.msg = msg;
-}
-
 static void BuildMsgOnError(ImagePackerAsyncContext* ctx, bool assertion,
     const std::string msg, int32_t errorCode)
 {
