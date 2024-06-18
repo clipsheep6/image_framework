@@ -1867,7 +1867,7 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
         }
         AbsImageFormatAgent *agent = iter->second;
         ret = CheckEncodedFormat(*agent);
-        if (ret == ERR_IMAGE_MISMATCHED_FORMAT) {
+        if (ret == ERR_IMAGE_UNSUPPORTED_MIME_TYPE) {
             continue;
         } else if (ret == SUCCESS) {
             IMAGE_LOGD("[ImageSource]GetEncodedFormat success format :%{public}s.", iter->first.c_str());
