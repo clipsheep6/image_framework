@@ -264,7 +264,8 @@ STATIC_EXEC_FUNC(Packing)
     context->resultBuffer = std::make_unique<uint8_t[]>(
         (context->resultBufferSize <= 0) ? getDefaultBufferSize(context) : context->resultBufferSize);
     if (context->resultBuffer == nullptr) {
-        BuildMsgOnError(context, context->resultBuffer == nullptr, "ImagePacker buffer alloc error");
+        BuildMsgOnError(context, context->resultBuffer != nullptr,
+        "ImagePacker buffer alloc error", ERR_IMAGE_INVALID_PARAMETER);
         return;
     }
     context->rImagePacker->StartPacking(context->resultBuffer.get(),
@@ -272,14 +273,16 @@ STATIC_EXEC_FUNC(Packing)
     if (context->packType == TYPE_IMAGE_SOURCE) {
         IMAGE_LOGI("ImagePacker set image source");
         if (context->rImageSource == nullptr) {
-            BuildMsgOnError(context, context->rImageSource == nullptr, "ImageSource is nullptr");
+            BuildMsgOnError(context, context->rImageSource != nullptr,
+            "ImageSource is nullptr", ERR_IMAGE_INVALID_PARAMETER);
             return;
         }
         context->rImagePacker->AddImage(*(context->rImageSource));
     } else {
         IMAGE_LOGI("ImagePacker set pixelmap");
         if (context->rPixelMap == nullptr) {
-            BuildMsgOnError(context, context->rImageSource == nullptr, "Pixelmap is nullptr");
+            BuildMsgOnError(context, context->rPixelMap != nullptr,
+            "Pixelmap is nullptr", ERR_IMAGE_INVALID_PARAMETER);
             return;
         }
         context->rImagePacker->AddImage(*(context->rPixelMap));
@@ -695,19 +698,23 @@ static void ParserPackingArguments(napi_env env,
 {
     int32_t refCount = 1;
     if (argc < PARAM1 || argc > PARAM3) {
-        BuildMsgOnError(context, (argc < PARAM1 || argc > PARAM3), "Arguments Count error");
+        BuildMsgOnError(context, !(argc < PARAM1 || argc > PARAM3),
+        "Arguments Count error", ERR_IMAGE_INVALID_PARAMETER);
     }
     context->packType = ParserPackingArgumentType(env, argv[PARAM0]);
     if (context->packType == TYPE_IMAGE_SOURCE) {
         context->rImageSource = GetImageSourceFromNapi(env, argv[PARAM0]);
-        BuildMsgOnError(context, context->rImageSource != nullptr, "ImageSource mismatch");
+        BuildMsgOnError(context, context->rImageSource != nullptr,
+        "Parsing ImageSource failed", ERR_IMAGE_SOURCE_IS_NULL);
     } else {
         context->rPixelMap = PixelMapNapi::GetPixelMap(env, argv[PARAM0]);
-        BuildMsgOnError(context, context->rPixelMap != nullptr, "PixelMap mismatch");
+        BuildMsgOnError(context, context->rPixelMap != nullptr,
+        "Parsing PixelMap failed", ERR_IMAGE_PIXELMAP_IS_NULL);
     }
     if (argc > PARAM1 && ImageNapiUtils::getType(env, argv[PARAM1]) == napi_object) {
         BuildMsgOnError(context,
-            parsePackOptions(env, argv[PARAM1], &(context->packOption)), "PackOptions mismatch");
+            parsePackOptions(env, argv[PARAM1], &(context->packOption)),
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
         context->resultBufferSize = parseBufferSize(env, argv[PARAM1], context);
     }
     if (argc > PARAM2 && ImageNapiUtils::getType(env, argv[PARAM2]) == napi_function) {
@@ -846,7 +853,7 @@ static void ParserPackToFileMultiFramesArguments(napi_env env,
     }
     context->rPixelMaps = PixelMapNapi::GetPixelMaps(env, argv[PARAM0]);
     BuildMsgOnError(context, context->rPixelMaps != nullptr,
-        "PixelMap mismatch", ERR_IMAGE_INVALID_PARAMETER);
+        "Parsing PixelMap failed", ERR_IMAGE_INVALID_PARAMETER);
     if (argc > PARAM1 && ImageNapiUtils::getType(env, argv[PARAM1]) == napi_number) {
         BuildMsgOnError(context, (napi_get_value_int32(env, argv[PARAM1], &(context->fd)) == napi_ok &&
             context->fd > INVALID_FD), "fd mismatch", ERR_IMAGE_INVALID_PARAMETER);
@@ -854,13 +861,13 @@ static void ParserPackToFileMultiFramesArguments(napi_env env,
     if (argc > PARAM2 && ImageNapiUtils::getType(env, argv[PARAM2]) == napi_object) {
         BuildMsgOnError(context,
             parsePackOptions(env, argv[PARAM2], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
         BuildMsgOnError(context,
             parsePackOptionOfLoop(env, argv[PARAM2], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
         BuildMsgOnError(context,
             parsePackOptionOfdisposalTypes(env, argv[PARAM2], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
     }
 }
 
@@ -895,7 +902,7 @@ STATIC_EXEC_FUNC(PackToFileMultiFrames)
         context->packedSize = packedSize;
         context->status = SUCCESS;
     } else {
-        context->status = ERROR;
+        context->status = ERR_IMAGE_ENCODE_FAILED;
         BuildMsgOnError(context, packRes == SUCCESS, "PackedSize outside size", packRes);
         IMAGE_LOGE("Packing failed, packedSize outside size.");
     }
@@ -958,18 +965,18 @@ static void ParserPackingMultiFramesArguments(napi_env env,
     }
     context->rPixelMaps = PixelMapNapi::GetPixelMaps(env, argv[PARAM0]);
     BuildMsgOnError(context, context->rPixelMaps != nullptr,
-        "PixelMap mismatch", ERR_IMAGE_INVALID_PARAMETER);
+        "Parsing PixelMap failed", ERR_IMAGE_INVALID_PARAMETER);
     if (argc > PARAM1 && ImageNapiUtils::getType(env, argv[PARAM1]) == napi_object) {
         BuildMsgOnError(context,
             parsePackOptions(env, argv[PARAM1], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
         BuildMsgOnError(context,
             parsePackOptionOfLoop(env, argv[PARAM1], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
         context->resultBufferSize = parseBufferSize(env, argv[PARAM1]);
         BuildMsgOnError(context,
             parsePackOptionOfdisposalTypes(env, argv[PARAM1], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
     }
 }
 
@@ -981,7 +988,8 @@ STATIC_EXEC_FUNC(PackingMultiFrames)
     context->resultBuffer = std::make_unique<uint8_t[]>(
         (context->resultBufferSize <= 0)?DEFAULT_BUFFER_SIZE:context->resultBufferSize);
     if (context->resultBuffer == nullptr) {
-        BuildMsgOnError(context, context->resultBuffer == nullptr, "ImagePacker buffer alloc error");
+        BuildMsgOnError(context, context->resultBuffer == nullptr,
+            "ImagePacker buffer alloc error", ERR_IMAGE_MALLOC_ABNORMAL);
         return;
     }
     context->rImagePacker->StartPacking(context->resultBuffer.get(),
@@ -1001,7 +1009,7 @@ STATIC_EXEC_FUNC(PackingMultiFrames)
         context->packedSize = packedSize;
         context->status = SUCCESS;
     } else {
-        context->status = ERROR;
+        context->status = ERR_IMAGE_ENCODE_FAILED;
         IMAGE_LOGE("Packing failed, packedSize outside size.");
     }
 }
@@ -1070,18 +1078,18 @@ static void ParserPackToFileArguments(napi_env env,
 {
     int32_t refCount = 1;
     if (argc < PARAM1 || argc > PARAM4) {
-        BuildMsgOnError(context, (argc < PARAM1 || argc > PARAM4),
+        BuildMsgOnError(context, !(argc < PARAM1 || argc > PARAM4),
             "Arguments Count error", ERR_IMAGE_INVALID_PARAMETER);
     }
     context->packType = ParserPackingArgumentType(env, argv[PARAM0]);
     if (context->packType == TYPE_IMAGE_SOURCE) {
         context->rImageSource = GetImageSourceFromNapi(env, argv[PARAM0]);
         BuildMsgOnError(context, context->rImageSource != nullptr,
-            "ImageSource mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing ImageSource failed", ERR_IMAGE_SOURCE_IS_NULL);
     } else {
         context->rPixelMap = PixelMapNapi::GetPixelMap(env, argv[PARAM0]);
         BuildMsgOnError(context, context->rPixelMap != nullptr,
-            "PixelMap mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing PixelMap failed", ERR_IMAGE_PIXELMAP_IS_NULL);
     }
     if (argc > PARAM1 && ImageNapiUtils::getType(env, argv[PARAM1]) == napi_number) {
         BuildMsgOnError(context, (napi_get_value_int32(env, argv[PARAM1], &(context->fd)) == napi_ok &&
@@ -1090,7 +1098,7 @@ static void ParserPackToFileArguments(napi_env env,
     if (argc > PARAM2 && ImageNapiUtils::getType(env, argv[PARAM2]) == napi_object) {
         BuildMsgOnError(context,
             parsePackOptions(env, argv[PARAM2], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
+            "Parsing parameters failed", ERR_IMAGE_INVALID_PARAMETER);
     }
     if (argc > PARAM3 && ImageNapiUtils::getType(env, argv[PARAM3]) == napi_function) {
         napi_create_reference(env, argv[PARAM3], refCount, &(context->callbackRef));
@@ -1116,16 +1124,16 @@ STATIC_EXEC_FUNC(PackToFile)
     if (context->packType == TYPE_IMAGE_SOURCE) {
         IMAGE_LOGD("ImagePacker set image source");
         if (context->rImageSource == nullptr) {
-            BuildMsgOnError(context, context->rImageSource == nullptr,
-                "ImageSource is nullptr", ERR_IMAGE_INVALID_PARAMETER);
+            BuildMsgOnError(context, context->rImageSource != nullptr,
+                "ImageSource is nullptr", ERR_IMAGE_SOURCE_IS_NULL);
             return;
         }
         context->rImagePacker->AddImage(*(context->rImageSource));
     } else {
         IMAGE_LOGD("ImagePacker set pixelmap");
         if (context->rPixelMap == nullptr) {
-            BuildMsgOnError(context, context->rImageSource == nullptr,
-                "Pixelmap is nullptr", ERR_IMAGE_INVALID_PARAMETER);
+            BuildMsgOnError(context, context->rPixelMap != nullptr,
+                "Pixelmap is nullptr", ERR_IMAGE_SOURCE_IS_NULL);
             return;
         }
         context->rImagePacker->AddImage(*(context->rPixelMap));
