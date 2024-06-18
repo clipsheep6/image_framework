@@ -53,11 +53,35 @@ struct PackOption {
      * Hint to how many images will be packed into the image file.
      */
     uint32_t numberHint = 1;
-    
+
     /**
      * desired image dynamic range.
     */
     EncodeDynamicRange desiredDynamicRange = EncodeDynamicRange::SDR;
+
+    /**
+     * Specify the number of times the loop should.
+     * 0 means infinite loop.
+     * Only for gif.
+     */
+    uint16_t loop = 0;
+
+    /**
+     * Specify the delay time for each frame of the dynamic image.
+     * Only for gif.
+     */
+    std::vector<uint16_t> delayTimes;
+
+    /**
+     * Specify the the decoder process each frame after displaying it.
+     * Only for gif.
+     */
+    std::vector<uint8_t> disposalTypes;
+
+    /**
+     * Hint to pack image with properties.
+    */
+    bool needsPackProperties = false;
 };
 
 class PackerStream;

@@ -22,11 +22,13 @@
 #include "ext_pixel_convert.h"
 #include "image_log.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+#include "ffrt.h"
 #include "hisysevent.h"
 #endif
 #include "image_system_properties.h"
 #include "image_utils.h"
 #include "media_errors.h"
+#include "native_buffer.h"
 #include "securec.h"
 #include "string_ex.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
@@ -118,6 +120,9 @@ const static std::string HW_MNOTE_TAG_FOCUS_MODE = "HwMnoteFocusMode";
 const static std::string DEFAULT_PACKAGE_NAME = "entry";
 const static std::string DEFAULT_VERSION_ID = "1";
 const static std::string UNKNOWN_IMAGE = "unknown";
+#ifdef JPEG_HW_DECODE_ENABLE
+const static uint32_t PLANE_COUNT_TWO = 2;
+#endif
 
 struct ColorTypeOutput {
     PlPixelFormat outFormat;
@@ -448,8 +453,8 @@ uint32_t ExtDecoder::GetImageSize(uint32_t index, PlSize &size)
         IMAGE_LOGE("GetImageSize failed, decode header failed.");
         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
     }
-    size.width = info_.width();
-    size.height = info_.height();
+    size.width = static_cast<uint32_t>(info_.width());
+    size.height = static_cast<uint32_t>(info_.height());
     return SUCCESS;
 }
 
@@ -495,7 +500,7 @@ uint32_t ExtDecoder::CheckDecodeOptions(uint32_t index, const PixelDecodeOptions
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
-    dstOptions_.fFrameIndex = index;
+    dstOptions_.fFrameIndex = static_cast<int>(index);
 #ifdef IMAGE_COLORSPACE_FLAG
     dstColorSpace_ = opts.plDesiredColorSpace;
 #endif
@@ -520,8 +525,8 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
         if (skEncodeFormat == SkEncodedImageFormat::kJPEG && IsYuv420Format(opts.desiredPixelFormat)) {
             info.pixelFormat = opts.desiredPixelFormat;
-            desiredSizeYuv_.width = std::abs((int)opts.desiredSize.width);
-            desiredSizeYuv_.height = std::abs((int)opts.desiredSize.height);
+            desiredSizeYuv_.width = opts.desiredSize.width;
+            desiredSizeYuv_.height = opts.desiredSize.height;
         }
         if (skEncodeFormat == SkEncodedImageFormat::kHEIF && IsYuv420Format(opts.desiredPixelFormat)) {
             info.pixelFormat = opts.desiredPixelFormat;
@@ -557,8 +562,8 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
         return resCode;
     }
 
-    info.size.width = dstInfo_.width();
-    info.size.height = dstInfo_.height();
+    info.size.width = static_cast<uint32_t>(dstInfo_.width());
+    info.size.height = static_cast<uint32_t>(dstInfo_.height());
     return SUCCESS;
 }
 
@@ -670,8 +675,8 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         return SUCCESS;
     }
 #endif
-    context.outInfo.size.width = dstInfo_.width();
-    context.outInfo.size.height = dstInfo_.height();
+    context.outInfo.size.width = static_cast<uint32_t>(dstInfo_.width());
+    context.outInfo.size.height = static_cast<uint32_t>(dstInfo_.height());
     if (IsHeifToYuvDecode(context)) {
         context.isHardDecode = true;
         return DoHeifToYuvDecode(context);
@@ -708,16 +713,18 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
             dstBuffer = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
         }
     }
-    dstOptions_.fFrameIndex = index;
+    dstOptions_.fFrameIndex = static_cast<int>(index);
     DebugInfo(info_, dstInfo_, dstOptions_);
     uint64_t rowStride = dstInfo_.minRowBytes64();
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     if (context.allocatorType == Media::AllocatorType::DMA_ALLOC) {
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context.pixelsBuffer.context);
-        rowStride = sbBuffer->GetStride();
+        rowStride = static_cast<uint64_t>(sbBuffer->GetStride());
     }
+    ffrt::submit([skEncodeFormat] {
+        ReportImageType(skEncodeFormat);
+    }, {}, {});
 #endif
-    ReportImageType(skEncodeFormat);
     IMAGE_LOGD("decode format %{public}d", skEncodeFormat);
     if (skEncodeFormat == SkEncodedImageFormat::kGIF || skEncodeFormat == SkEncodedImageFormat::kWEBP) {
         return GifDecode(index, context, rowStride);
@@ -801,8 +808,8 @@ uint32_t ExtDecoder::DecodeToYuv420(uint32_t index, DecodeContext &context)
     }
     JpegYuvFmt decodeOutFormat = GetJpegYuvOutFmt(context.info.pixelFormat);
     PlSize jpgSize;
-    jpgSize.width = info_.width();
-    jpgSize.height = info_.height();
+    jpgSize.width = static_cast<uint32_t>(info_.width());
+    jpgSize.height = static_cast<uint32_t>(info_.height());
     PlSize desiredSize = desiredSizeYuv_;
     bool bRet = JpegDecoderYuv::GetScaledSize(jpgSize.width, jpgSize.height, desiredSize.width, desiredSize.height);
     if (!bRet || desiredSize.width == 0 || desiredSize.height == 0) {
@@ -884,7 +891,7 @@ void ExtDecoder::ReportImageType(SkEncodedImageFormat skEncodeFormat)
 uint32_t ExtDecoder::AllocOutputBuffer(DecodeContext &context,
     OHOS::HDI::Codec::Image::V1_0::CodecImageBuffer& outputBuffer)
 {
-    uint64_t byteCount = static_cast<uint64_t>(hwDstInfo_.height()) * hwDstInfo_.width() * hwDstInfo_.bytesPerPixel();
+    uint64_t byteCount = static_cast<uint64_t>(hwDstInfo_.height() * hwDstInfo_.width() * hwDstInfo_.bytesPerPixel());
     uint32_t ret = DmaMemAlloc(context, byteCount, hwDstInfo_);
     if (ret != SUCCESS) {
         IMAGE_LOGE("Alloc OutputBuffer failed, ret=%{public}d", ret);
@@ -931,8 +938,8 @@ void ExtDecoder::ReleaseOutputBuffer(DecodeContext &context, Media::AllocatorTyp
 uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
 {
     JpegHardwareDecoder hwDecoder;
-    orgImgSize_.width = info_.width();
-    orgImgSize_.height = info_.height();
+    orgImgSize_.width = static_cast<uint32_t>(info_.width());
+    orgImgSize_.height = static_cast<uint32_t>(info_.height());
 
     if (!CheckContext(context)) {
         return ERROR;
@@ -953,8 +960,23 @@ uint32_t ExtDecoder::HardWareDecode(DecodeContext &context)
         ReleaseOutputBuffer(context, tmpAllocatorType);
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
-    context.outInfo.size.width = hwDstInfo_.width();
-    context.outInfo.size.height = hwDstInfo_.height();
+
+    SurfaceBuffer* sbuffer = static_cast<SurfaceBuffer*>(context.pixelsBuffer.context);
+    if (sbuffer) {
+        OH_NativeBuffer_Planes *planes = nullptr;
+        GSError retVal = sbuffer->GetPlanesInfo(reinterpret_cast<void**>(&planes));
+        if (retVal != OHOS::GSERROR_OK || planes == nullptr) {
+            IMAGE_LOGE("jpeg hardware decode, Get planesInfo failed, retVal:%{public}d", retVal);
+        } else if (planes->planeCount >= PLANE_COUNT_TWO) {
+            context.yuvInfo.yStride = planes->planes[0].columnStride;
+            context.yuvInfo.uvStride = planes->planes[1].columnStride;
+            context.yuvInfo.yOffset = planes->planes[0].offset;
+            context.yuvInfo.uvOffset = planes->planes[1].offset - 1;
+        }
+    }
+
+    context.outInfo.size.width = static_cast<uint32_t>(hwDstInfo_.width());
+    context.outInfo.size.height = static_cast<uint32_t>(hwDstInfo_.height());
     if (outputColorFmt_ == PIXEL_FMT_YCRCB_420_SP) {
         context.yuvInfo.imageSize = {hwDstInfo_.width(), hwDstInfo_.height()};
     }
@@ -984,11 +1006,12 @@ static uint32_t handleGifCache(uint8_t* src, uint8_t* dst, SkImageInfo& info, co
 uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uint64_t rowStride)
 {
     SkCodec::FrameInfo curInfo {};
-    codec_->getFrameInfo(index, &curInfo);
-    if (index == 0 || gifCache_ == nullptr) {
+    int signedIndex = static_cast<int>(index);
+    codec_->getFrameInfo(signedIndex, &curInfo);
+    if (signedIndex == 0 || gifCache_ == nullptr) {
         dstOptions_.fPriorFrame = SkCodec::kNoFrame;
     } else {
-        int preIndex = index - 1;
+        int preIndex = signedIndex - 1;
         SkCodec::FrameInfo preInfo {};
         codec_->getFrameInfo(preIndex, &preInfo);
         if (preInfo.fDisposalMethod == SkCodecAnimation::DisposalMethod::kRestorePrevious) {
@@ -1001,7 +1024,7 @@ uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uin
     if (curInfo.fDisposalMethod != SkCodecAnimation::DisposalMethod::kRestorePrevious) {
         if (gifCache_ == nullptr) {
             int dstHeight = dstInfo_.height();
-            uint64_t byteCount = rowStride * dstHeight;
+            uint64_t byteCount = rowStride * static_cast<uint64_t>(dstHeight);
             gifCache_ = static_cast<uint8_t *>(calloc(byteCount, 1));
         }
         dstBuffer = gifCache_;
@@ -1018,7 +1041,7 @@ uint32_t ExtDecoder::GifDecode(uint32_t index, DecodeContext &context, const uin
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (curInfo.fDisposalMethod != SkCodecAnimation::DisposalMethod::kRestorePrevious) {
-        gifCacheIndex_ = index;
+        gifCacheIndex_ = signedIndex;
         uint8_t* dst = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
         return handleGifCache(dstBuffer, dst, dstInfo_, rowStride);
     }
@@ -1276,17 +1299,17 @@ OHOS::ColorManager::ColorSpace ExtDecoder::getGrColorSpace()
             GetColorSpaceName(profile, name);
         }
         if (profile != nullptr && profile->has_CICP) {
-            ColorManager::ColorSpaceName name = Media::ColorUtils::CicpToColorSpace(profile->cicp.colour_primaries,
+            ColorManager::ColorSpaceName cName = Media::ColorUtils::CicpToColorSpace(profile->cicp.colour_primaries,
                 profile->cicp.transfer_characteristics, profile->cicp.matrix_coefficients,
                 profile->cicp.full_range_flag);
-            if (name != ColorManager::NONE) {
-                return ColorManager::ColorSpace(skColorSpace, name);
+            if (cName != ColorManager::NONE) {
+                return ColorManager::ColorSpace(skColorSpace, cName);
             }
         }
         if (codec_->getEncodedFormat() == SkEncodedImageFormat::kHEIF) {
-            ColorManager::ColorSpaceName name = GetHeifNclxColor(codec_.get());
-            if (name != ColorManager::NONE) {
-                return ColorManager::ColorSpace(skColorSpace, name);
+            ColorManager::ColorSpaceName cName = GetHeifNclxColor(codec_.get());
+            if (cName != ColorManager::NONE) {
+                return ColorManager::ColorSpace(skColorSpace, cName);
             }
         }
     }
@@ -1355,6 +1378,10 @@ bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32
     SkEncodedImageFormat format = codec_->getEncodedFormat();
     if (format != SkEncodedImageFormat::kJPEG) {
         res = Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        return true;
+    }
+    if (ENCODED_FORMAT_KEY.compare(key) == ZERO) {
+        res = Media::ERR_MEDIA_VALUE_INVALID;
         return true;
     }
     auto result = ParseExifData(stream_, exifInfo_);
@@ -1557,7 +1584,7 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
     if (!CheckIndexValied(SIZE_ZERO) && frameCount_ <= ZERO) {
         return ERR_IMAGE_DECODE_HEAD_ABNORMAL;
     }
-    num = frameCount_;
+    num = static_cast<uint32_t>(frameCount_);
     return SUCCESS;
 }
 
@@ -1658,6 +1685,7 @@ HdrMetadata ExtDecoder::GetHdrMetadata(Media::ImageHdrType type)
     if (type > Media::ImageHdrType::SDR && HdrHelper::GetMetadata(codec_.get(), type, metadata)) {
         return metadata;
     }
+    IMAGE_LOGD("get hdr metadata failed, type is %{public}d, flag is %{public}d", type, metadata.extendMetaFlag);
     return {};
 #endif
 }
@@ -1780,10 +1808,17 @@ void ExtDecoder::SetHeifParseError()
     }
 
     size_t fileLength = stream_->GetStreamSize();
-    uint8_t fileMem[fileLength];
+    if (fileLength <= 0) {
+        return;
+    }
+    uint8_t *fileMem = reinterpret_cast<uint8_t*>(malloc(fileLength));
+    if (fileMem == nullptr) {
+        return;
+    }
     readRet = stream_->Read(fileLength, fileMem, fileLength, readSize);
     if (!readRet || readSize != fileLength) {
         stream_->Seek(originOffset);
+        free(fileMem);
         return;
     }
 
@@ -1794,6 +1829,7 @@ void ExtDecoder::SetHeifParseError()
     }
 
     stream_->Seek(originOffset);
+    free(fileMem);
 }
 } // namespace ImagePlugin
 } // namespace OHOS

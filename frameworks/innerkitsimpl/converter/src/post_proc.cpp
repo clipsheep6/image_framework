@@ -197,22 +197,22 @@ bool PostProc::CopyPixels(PixelMap& pixelMap, uint8_t* dstPixels, const Size& ds
     int32_t left = max(0, srcWidth - targetWidth) / HALF;
     int32_t top = max(0, srcHeight - targetHeight) / HALF;
     int32_t pixelBytes = pixelMap.GetPixelBytes();
-    uint8_t *srcPixels = const_cast<uint8_t *>(pixelMap.GetPixels()) + (top * srcWidth + left) * pixelBytes;
     uint8_t *dstStartPixel = nullptr;
     uint8_t *srcStartPixel = nullptr;
-    uint32_t targetRowBytes = targetWidth * pixelBytes;
+    int32_t targetRowBytes = targetWidth * pixelBytes;
     if (targetRowStride <= 0) {
         targetRowStride = targetRowBytes;
     }
-    uint32_t srcRowBytes = srcWidth * pixelBytes;
+    int32_t srcRowBytes = srcWidth * pixelBytes;
     if (srcRowStride <= 0) {
         srcRowStride = srcRowBytes;
     }
-    uint32_t copyRowBytes = std::min(srcWidth, targetWidth) * pixelBytes;
+    uint8_t *srcPixels = const_cast<uint8_t *>(pixelMap.GetPixels()) + top * srcRowStride + left * pixelBytes;
+    uint32_t copyRowBytes = static_cast<uint32_t>(std::min(srcWidth, targetWidth) * pixelBytes);
     for (int32_t scanLine = 0; scanLine < std::min(srcHeight, targetHeight); scanLine++) {
         dstStartPixel = dstPixels + scanLine * targetRowStride;
         srcStartPixel = srcPixels + scanLine * srcRowStride;
-        errno_t errRet = memcpy_s(dstStartPixel, targetRowBytes, srcStartPixel, copyRowBytes);
+        errno_t errRet = memcpy_s(dstStartPixel, static_cast<size_t>(targetRowBytes), srcStartPixel, copyRowBytes);
         if (errRet != EOK) {
             IMAGE_LOGE("[PostProc]memcpy scanline %{public}d fail, errorCode = %{public}d", scanLine, errRet);
             return false;
@@ -763,7 +763,8 @@ bool PostProc::ScalePixelMapEx(const Size &desiredSize, PixelMap &pixelMap, cons
         IMAGE_LOGE("pixelMap format is invalid, format: %{public}d", imgInfo.pixelFormat);
         return false;
     }
-    uint32_t dstBufferSize = desiredSize.height * desiredSize.width * ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
+    uint32_t dstBufferSize = static_cast<uint32_t>(
+        desiredSize.height * desiredSize.width * ImageUtils::GetPixelBytes(imgInfo.pixelFormat));
     MemoryData memoryData = {nullptr, dstBufferSize, "ScalePixelMapEx ImageData", desiredSize};
     
     auto mem = MemoryManager::CreateMemory(pixelMap.GetAllocatorType() == AllocatorType::CUSTOM_ALLOC ?
@@ -780,11 +781,9 @@ bool PostProc::ScalePixelMapEx(const Size &desiredSize, PixelMap &pixelMap, cons
     int srcRowStride[FFMPEG_NUM] = {};
     int dstRowStride[FFMPEG_NUM] = {};
     srcRowStride[0] = pixelMap.GetRowStride();
-    if (mem->GetType() == AllocatorType::DMA_ALLOC) {
-        dstRowStride[0] = reinterpret_cast<SurfaceBuffer*>(mem->extend.data)->GetStride();
-    } else {
-        dstRowStride[0] = desiredSize.width * ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
-    }
+    dstRowStride[0] = (mem->GetType() == AllocatorType::DMA_ALLOC) ?
+        reinterpret_cast<SurfaceBuffer*>(mem->extend.data)->GetStride() :
+        desiredSize.width * ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
     SwsContext *swsContext = sws_getContext(srcWidth, srcHeight, pixelFormat, desiredSize.width, desiredSize.height,
         pixelFormat, GetInterpolation(option), nullptr, nullptr, nullptr);
     auto res = sws_scale(swsContext, srcPixels, srcRowStride, 0, srcHeight, dstPixels, dstRowStride);

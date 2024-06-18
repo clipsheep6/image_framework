@@ -14,7 +14,7 @@
  */
 
 #include "pixel_convert_adapter.h"
-
+#include "pixel_yuv_utils.h"
 #include <map>
 
 #include "image_log.h"
@@ -25,6 +25,7 @@
 #include "include/core/SkImageInfo.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkPixmap.h"
+#include "media_errors.h"
 #ifdef _WIN32
 #include <iomanip>
 #endif
@@ -54,6 +55,7 @@ static const map<PixelFormat, SkColorType> PIXEL_FORMAT_MAP = {
     { PixelFormat::RGBA_8888, SkColorType::kRGBA_8888_SkColorType},
     { PixelFormat::BGRA_8888, SkColorType::kBGRA_8888_SkColorType},
     { PixelFormat::RGB_888, SkColorType::kRGB_888x_SkColorType},
+    { PixelFormat::RGBA_1010102, SkColorType::kRGBA_1010102_SkColorType},
 };
 
 static SkColorType PixelFormatConvert(const PixelFormat &pixelFormat)
@@ -164,18 +166,20 @@ bool PixelConvertAdapter::WritePixelsConvert(const void *srcPixels, uint32_t src
     SkImageInfo srcImageInfo = SkImageInfo::Make(srcInfo.size.width, srcInfo.size.height, srcColorType, srcAlphaType);
     SkImageInfo dstImageInfo = SkImageInfo::Make(dstInfo.size.width, dstInfo.size.height, dstColorType, dstAlphaType);
 
-    int32_t dstRGBxSize = (dstInfo.pixelFormat == PixelFormat::RGB_888) ? GetRGBxSize(dstInfo) : NUM_1;
+    int32_t dstRGBxSize = (dstInfo.pixelFormat == PixelFormat::RGB_888) ?
+        GetRGBxSize(dstInfo) : static_cast<int32_t>(NUM_1);
     auto dstRGBxPixels = std::make_unique<uint8_t[]>(dstRGBxSize);
     auto keepDstPixels = dstPixels;
     dstPixels = (dstInfo.pixelFormat == PixelFormat::RGB_888) ? &dstRGBxPixels[0] : dstPixels;
-    dstRowBytes = (dstInfo.pixelFormat == PixelFormat::RGB_888) ? GetRGBxRowBytes(dstInfo) : dstRowBytes;
+    dstRowBytes = (dstInfo.pixelFormat == PixelFormat::RGB_888) ?
+        static_cast<uint32_t>(GetRGBxRowBytes(dstInfo)) : dstRowBytes;
 
     int32_t srcRGBxSize = (srcInfo.pixelFormat == PixelFormat::RGB_888) ? GetRGBxSize(srcInfo) : NUM_1;
     auto srcRGBxPixels = std::make_unique<uint8_t[]>(srcRGBxSize);
     if (srcInfo.pixelFormat == PixelFormat::RGB_888) {
         RGBToRGBx(static_cast<const uint8_t*>(srcPixels), &srcRGBxPixels[0], srcRowBytes * srcInfo.size.height);
         srcPixels = &srcRGBxPixels[0];
-        srcRowBytes = GetRGBxRowBytes(srcInfo);
+        srcRowBytes = static_cast<uint32_t>(GetRGBxRowBytes(srcInfo));
     }
     SkPixmap srcPixmap(srcImageInfo, srcPixels, srcRowBytes);
     if (srcInfo.pixelFormat == PixelFormat::ARGB_8888) {
@@ -254,5 +258,15 @@ bool PixelConvertAdapter::EraseBitmap(const void *srcPixels, uint32_t srcRowByte
     canvas.drawPaint(paint);
     return true;
 }
+
+bool PixelConvertAdapter::YUV420ToRGB888(const uint8_t *in, YuvImageInfo &srcInfo, uint8_t *out, YuvImageInfo &dstInfo)
+{
+    if (PixelYuvUtils::YuvScale(const_cast<uint8_t *>(in), srcInfo, out, dstInfo, SWS_BICUBIC) != SUCCESS) {
+        IMAGE_LOGE("YUV420ToRGB888 failed");
+        return false;
+    }
+    return true;
+}
+
 } // namespace Media
 } // namespace OHOS

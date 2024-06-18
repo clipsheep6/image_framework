@@ -64,7 +64,6 @@ void ImageSourceFuncTest001(std::unique_ptr<ImageSource>& imageSource)
     ImageInfo imageInfo;
     imageSource->ImageConverChange(cropRect, imageInfo, imageInfo);
     imageSource->CreatePixelMapForYUV(errCode);
-    imageSource->GetImageInfoForASTC(imageInfo);
     imageSource->CreatePixelMapList(opts, errCode);
     imageSource->GetDelayTime(errCode);
     imageSource->GetDisposalType(errCode);

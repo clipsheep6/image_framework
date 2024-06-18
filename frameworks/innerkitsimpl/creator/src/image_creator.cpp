@@ -31,6 +31,7 @@
 namespace OHOS {
 namespace Media {
 std::map<uint8_t*, ImageCreator*> ImageCreator::bufferCreatorMap_;
+std::mutex ImageCreator::creatorMutex_;
 ImageCreator::~ImageCreator()
 {
     if (iraContext_ != nullptr) {
@@ -49,6 +50,7 @@ GSError ImageCreator::OnBufferRelease(sptr<SurfaceBuffer> &buffer)
     if (buffer == nullptr) {
         return GSERROR_NO_ENTRY;
     }
+    std::lock_guard<std::mutex> guard(creatorMutex_);
     auto iter = bufferCreatorMap_.find(static_cast<uint8_t*>(buffer->GetVirAddr()));
     if (iter == bufferCreatorMap_.end()) {
         return GSERROR_NO_ENTRY;
@@ -121,7 +123,7 @@ int64_t CreatorPackImage(uint8_t *tempBuffer, uint32_t bufferSize, std::unique_p
     PackOption option;
     option.format = ImageReceiver::OPTION_FORMAT;
     option.quality = ImageReceiver::OPTION_QUALITY;
-    option.numberHint = ImageReceiver::OPTION_NUMBERHINT;
+    option.numberHint = static_cast<uint32_t>(ImageReceiver::OPTION_NUMBERHINT);
     std::set<std::string> formats;
 
     uint32_t ret = imagePacker.GetSupportedFormats(formats);
@@ -227,12 +229,12 @@ int32_t ImageCreator::SaveSenderBufferAsImage(OHOS::sptr<OHOS::SurfaceBuffer> bu
     if (buffer != nullptr) {
         uint32_t *addr = static_cast<uint32_t *>(buffer->GetVirAddr());
         uint8_t *addr2 = nullptr;
-        int32_t size = buffer->GetSize();
+        uint32_t size = buffer->GetSize();
         if (!AllocHeapBuffer(size, &addr2)) {
             IMAGE_LOGE("AllocHeapBuffer failed");
             return ERR_MEDIA_INVALID_VALUE;
         }
-        errorcode = SaveSTP(addr, addr2, static_cast<uint32_t>(size), initializationOpts);
+        errorcode = SaveSTP(addr, addr2, size, initializationOpts);
         (iraContext_->GetCreatorBufferConsumer())->ReleaseBuffer(buffer, -1);
         IMAGE_LOGI("start release");
     } else {
@@ -260,6 +262,7 @@ OHOS::sptr<OHOS::SurfaceBuffer> ImageCreator::DequeueImage()
         IMAGE_LOGD("error : request buffer is null");
     }
     if (buffer != nullptr && buffer->GetVirAddr() != nullptr) {
+        std::lock_guard<std::mutex> guard(creatorMutex_);
         bufferCreatorMap_.insert(
             std::map<uint8_t*, ImageCreator*>::value_type(static_cast<uint8_t*>(buffer->GetVirAddr()), this));
     }

@@ -112,6 +112,12 @@ typedef enum {
     PIXEL_FORMAT_NV12 = 9,
 } PIXEL_FORMAT;
 
+typedef enum {
+    IMAGE_FORMAT_UNKNOWN,
+    IMAGE_FORMAT_YUV_TYPE,
+    IMAGE_FORMAT_RGB_TYPE
+} IMAGE_FORMAT;
+
 /**
  * @brief Defines the options used for creating a pixel map.
  *
@@ -373,6 +379,17 @@ Image_ErrorCode OH_PixelmapNative_ReadPixels(OH_PixelmapNative *pixelmap, uint8_
 Image_ErrorCode OH_PixelmapNative_WritePixels(OH_PixelmapNative *pixelmap, uint8_t *source, size_t bufferSize);
 
 /**
+ * @brief Convert {@link OH_PixelmapNative} to standard dynamic range.
+ *
+ * @param pixelmap The Pixelmap pointer will be operated. Pointer connot be null.
+ * @return Returns {@link Image_ErrorCode} IMAGE_SUCCESS - The operation is successful.
+ * returns {@link Image_ErrorCode} IMAGE_BAD_PARAMETER - Parameter error.Possible causes:Parameter verification failed.
+ * returns {@link Image_ErrorCode} IMAGE_UNSUPPORTED_OPERATION - Unsupported operation.Pixelmap can't be converted.
+ * @since 12
+ */
+Image_ErrorCode OH_PixelmapNative_ToSdr(OH_PixelmapNative *pixelmap);
+
+/**
  * @brief Obtains pixel map information of this image.
  *
  * @param pixelmap The Pixelmap pointer will be operated.
@@ -485,6 +502,18 @@ Image_ErrorCode OH_PixelmapNative_ConvertAlphaFormat(OH_PixelmapNative* srcpixel
  */
 Image_ErrorCode OH_PixelmapNative_CreateEmptyPixelmap(OH_Pixelmap_InitializationOptions *options,
     OH_PixelmapNative **pixelmap);
+
+/**
+ * @brief Convert the image format based on the input target pixel format.
+ *
+ * @param srcPixelMap Source Image PixelMap.
+ * @param destPixelMap Destination Image PixelMap.
+ * @param destPixelFormat Destination Image PixelFormat.
+ * @return Returns {@link Image_ErrorCode} IMAGE_RESULT_SUCCESS - if the operation is successful.
+ * @since 12
+ */
+Image_ErrorCode OH_PixelMapNative_ConvertPixelFormat(OH_PixelmapNative *srcPixelMap, OH_PixelmapNative **destPixelMap,
+                                                     int32_t destPixelFormat);
 
 #ifdef __cplusplus
 };
