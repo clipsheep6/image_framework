@@ -64,8 +64,7 @@ void HeifParser::Write(HeifStreamWriter &writer)
         box->InferAllFullBoxVersion();
         box->Write(writer);
     }
-    if (ilocBox_ != nullptr)
-    {
+    if (ilocBox_ != nullptr) {
         ilocBox_->WriteMdatBox(writer);
     }
     
@@ -739,8 +738,7 @@ void HeifParser::AddReference(heif_item_id fromItemId, uint32_t type, const std:
 {
     if (!irefBox_) {
         irefBox_ = std::make_shared<HeifIrefBox>();
-        if ( metaBox_ != nullptr)
-        {
+        if (metaBox_ != nullptr) {
             metaBox_->AddChild(irefBox_);
         }
     }

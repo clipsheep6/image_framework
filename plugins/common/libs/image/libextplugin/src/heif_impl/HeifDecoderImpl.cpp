@@ -481,7 +481,7 @@ bool HeifDecoderImpl::DecodeGrids(std::shared_ptr<HeifHardwareDecoder> &hwDecode
                                   GridInfo &gridInfo, sptr<SurfaceBuffer> &hwBuffer)
 {
     std::vector<std::shared_ptr<HeifImage>> tileImages;
-    if (image == nullptr){
+    if (image == nullptr) {
         IMAGE_LOGE("image is nullptr");
         return false;
     }
@@ -762,7 +762,7 @@ bool HeifDecoderImpl::getTmapInfo(HeifFrameInfo* frameInfo)
 
 HeifImageHdrType HeifDecoderImpl::getHdrType()
 {
-    if (primaryImage_ == nullptr){
+    if (primaryImage_ == nullptr) {
         return HeifImageHdrType::UNKNOWN;
     }
     std::vector<uint8_t> uwaInfo = primaryImage_->GetUWAInfo();

@@ -93,7 +93,6 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     const uint32_t const_uint32data = 0;
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
 
-
     heifdecoderimpl->getSequenceInfo(frameInfo, frameCount);
     heifdecoderimpl->setOutputColor(heifColor);
     heifdecoderimpl->decode(frameInfo);
@@ -341,7 +340,8 @@ void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heif
     heifstreamwriter.GetData();
 }
 
-void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox, std::shared_ptr<ImagePlugin::HeifInfeBox> &heifinfebox,      
+void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox,      
+                        std::shared_ptr<ImagePlugin::HeifInfeBox> &heifinfebox,          
                         ImagePlugin::HeifPtimBox &heifptimbox, ImagePlugin::HeifStreamReader&reader,    
                         ImagePlugin::HeifStreamWriter &writer)
 {
@@ -484,7 +484,7 @@ void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifS
 }
 
 void ItemPropertyBoxTest001(ImagePlugin::HeifIprpBox *heifiprpbox, ImagePlugin::HeifIpcoBox *heifipcobox,       
-                            ImagePlugin::HeifIpmaBox *heifipmabox, ImagePlugin::HeifStreamReader &reader,    
+                            ImagePlugin::HeifIpmaBox *heifipmabox, ImagePlugin::HeifStreamReader &reader,         
                             ImagePlugin::HeifStreamWriter &writer)
 {
     ImagePlugin::heif_item_id itemId = 0xffff;
@@ -541,8 +541,8 @@ void ItemPropertyAuxBoxTest001(ImagePlugin::HeifAuxcBox *heifauxcbox, ImagePlugi
     heifauxcbox->Write(writer);
 }
 
-void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRawColorProfile> &heifrawcolorprofile,    
-                                 const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> &heifnclxcolorprofile,           
+void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRawColorProfile> &heifrawcolorprofile,     
+                                 const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> &heifnclxcolorprofile,    
                                  ImagePlugin::HeifColrBox *heifcolrbox, ImagePlugin::HeifStreamReader &reader,       
                                  ImagePlugin::HeifStreamWriter &writer)
 {
@@ -564,7 +564,6 @@ void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRa
     HeifColrBox->SetColorProfile(const_prof);
     HeifColrBox->Write(writer);
     HeifColrBox->ParseContent(reader);
-
 }
 
 void ItemPropertyDisplayBoxTest001(ImagePlugin::HeifMdcvBox *heifmdcvbox, ImagePlugin::HeifClliBox *heifcllibox,        
@@ -601,7 +600,8 @@ void ItemPropertyHvccBoxTest001(ImagePlugin::HeifHvccBox *heifhvccbox, ImagePlug
     heifhvccbox->ParseNalUnitArray(reader, v3);
 }
 
-void ItemPropertyTransformBoxTest001(ImagePlugin::HeifIrotBox *heifirotbox, ImagePlugin::HeifImirBox *heifimirbox,       
+void ItemPropertyTransformBoxTest001(ImagePlugin::HeifIrotBox *heifirotbox,     
+                                     ImagePlugin::HeifImirBox *heifimirbox,           
                                      ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
 {
     int rot = 0;
@@ -656,8 +656,8 @@ void HeifImplFuzzTest002(const uint8_t *data, size_t size)
     const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> heifnclxcolorprofile =     
         heifimage->GetNclxColorProfile();
     auto heifcolrbox = static_cast<ImagePlugin::HeifColrBox *>(obj_heifbox);
-    ItemPropertyColorBoxTest001(heifrawcolorprofile, heifnclxcolorprofile, heifcolrbox, heifstreamreader,      
-                                heifstreamwriter);
+    ItemPropertyColorBoxTest001(heifrawcolorprofile, heifnclxcolorprofile, heifcolrbox,     
+                                heifstreamreader, heifstreamwriter);
 
     //item_property_display_box.cpp create/init/fuzztest
     auto heifmdcvbox = static_cast<ImagePlugin::HeifMdcvBox *>(obj_heifbox);
