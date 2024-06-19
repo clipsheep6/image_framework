@@ -675,7 +675,7 @@ void HeifParser::AddIspeProperty(heif_item_id itemId, uint32_t width, uint32_t h
 heif_property_id HeifParser::AddProperty(heif_item_id itemId, const std::shared_ptr<HeifBox>& property, bool essential)
 {
     if (ipcoBox_ == nullptr) {
-        reurn INVALID_ID;
+        return INVALID_ID;
     }
     int index = ipcoBox_->AddChild(property);
     ipmaBox_->AddProperty(itemId, PropertyAssociation{essential, uint16_t(index + 1)});
@@ -762,7 +762,7 @@ void HeifParser::SetColorProfile(heif_item_id itemId, const std::shared_ptr<cons
 void HeifParser::CheckExtentData()
 {
     if (ilocBox_ == nullptr) {
-        reutrn;
+        return;
     }
     const std::vector<HeifIlocBox::Item>& items = ilocBox_->GetItems();
     for (const HeifIlocBox::Item& item: items) {
