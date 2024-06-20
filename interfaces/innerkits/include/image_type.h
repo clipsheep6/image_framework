@@ -270,6 +270,15 @@ enum class AntiAliasingOption : int32_t {
     LANCZOS = 8, // SWS_LANCZOS
     SPLINE = 9, // SWS_SPLINE
 };
+
+enum class AuxiliaryPictureType {
+    NONE = 0,
+    GAIN_MAP = 1,
+    DEPTH_MAP = 2,
+    UNREFOCUS_MAP = 3,
+    LINEAR_MAP = 4,
+    MARK_CUT_MAP = 5,
+};
 } // namespace Media
 } // namespace OHOS
 
