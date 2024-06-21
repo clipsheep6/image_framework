@@ -66,7 +66,7 @@ void HeifParser::Write(HeifStreamWriter &writer)
     }
     if (ilocBox_ != nullptr) {
         ilocBox_->WriteMdatBox(writer);
-    }   
+    }
 }
 
 heif_item_id HeifParser::GetPrimaryItemId() const
