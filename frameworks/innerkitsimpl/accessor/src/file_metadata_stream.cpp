@@ -24,13 +24,20 @@
 
 #include "file_metadata_stream.h"
 #include "image_log.h"
+#include "image_utils.h"
 #include "metadata_stream.h"
+#include "file_source_stream.h"
+#include "medialibrary_errno.h"
+#include "media_library_manager.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
 #define LOG_TAG "FileMetadataStream"
+
+static const std::string DOCS_URL_PREFIX = "file://docs/";
+static const std::string MEDIA_URL_PREFIX = "file://media/";
 
 namespace OHOS {
 namespace Media {
@@ -271,14 +278,80 @@ bool FileMetadataStream::OpenFromFD(const char *modeStr)
     return true;
 }
 
+FILE* OpenFromDocs(const std::string& pathName, const char *modeStr)
+{
+    auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
+    if (mediaLibMgr == nullptr) {
+        IMAGE_LOGE("[FileMetadataStream]Create MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    auto realPath = mediaLibMgr->GetRealPath(pathName);
+    return fopen(realPath.c_str(), modeStr);
+}
+
+FILE* OpenFromMedia(const string &pathName, const char *modeStr)
+{
+    auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
+    if (mediaLibMgr == nullptr) {
+        IMAGE_LOGE("[FileMetadataStream]Create MediaLibraryManager failed.");
+        return nullptr;
+    }
+
+    std::string uri = pathName;
+    int srcFd = mediaLibMgr->OpenAsset(uri, "rw");
+    if (srcFd == E_ERR) {
+        IMAGE_LOGE("[FileMetadataStream]Open asset %{public}s error: %{public}d", uri.c_str(), srcFd);
+        return nullptr;
+    }
+
+    int dupFd = dup(srcFd);
+    if (dupFd < 0) {
+        IMAGE_LOGE("[FileMetadataStream]Fail to dup fd.");
+        mediaLibMgr->CloseAsset(uri, srcFd);
+        return nullptr;
+    }
+
+    auto resultFd = fdopen(dupFd, modeStr);
+    mediaLibMgr->CloseAsset(uri, srcFd);
+    return resultFd;
+}
+
 bool FileMetadataStream::OpenFromPath(const char *modeStr)
 {
     IMAGE_LOGD("Open file: %{public}s, modeStr: %{public}s", filePath_.c_str(), modeStr);
-    fp_ = fopen(filePath_.c_str(), modeStr);
-    if (fp_ == nullptr) {
-        HandleFileError("Open file", filePath_, -1, -1, -1);
-        return false;
+
+    if (ImageUtils::CompairPathPrefix(filePath_, DOCS_URL_PREFIX)) { // docs
+        fp_ = OpenFromDocs(filePath_, modeStr);
+        if (fp_ == nullptr) {
+            HandleFileError("Open file", filePath_, -1, -1, -1);
+            return false;
+        }
+    } else if (ImageUtils::CompairPathPrefix(filePath_, MEDIA_URL_PREFIX)) { // media
+        fp_ = OpenFromMedia(filePath_, modeStr);
+        if (fp_ == nullptr) {
+            HandleFileError("Open file", filePath_, -1, -1, -1);
+            return false;
+        }
+    } else {
+        std::string realPath = filePath_;
+        if (ImageUtils::CompairPathPrefix(filePath_, FILE_URL_PREFIX)) {
+            auto mediaLibMgr = FileSourceStream::CreateMediaLibMgr();
+            if (mediaLibMgr == nullptr) {
+                IMAGE_LOGE("[FileMetadataStream]Create MediaLibraryManager failed.");
+                return false;
+            }
+
+            realPath = mediaLibMgr->GetRealPath(filePath_);
+        }
+
+        fp_ = fopen(realPath.c_str(), modeStr);
+        if (fp_ == nullptr) {
+            HandleFileError("Open file", filePath_, -1, -1, -1);
+            return false;
+        }
     }
+
     IMAGE_LOGD("File opened: %{public}s", filePath_.c_str());
     return true;
 }

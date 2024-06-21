@@ -40,9 +40,8 @@ OH_ImageSourceNative::OH_ImageSourceNative(std::shared_ptr<ImageSource> imageSou
 OH_ImageSourceNative::OH_ImageSourceNative(char *uri, size_t size, SourceOptions opts)
 {
     std::string strUri = std::string(uri, size);
-    std::string path = UrlToPath(strUri);
     uint32_t errorCode = IMAGE_BAD_PARAMETER;
-    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(path, opts, errorCode);
+    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(strUri, opts, errorCode);
     if (nativeImageSource == nullptr) {
         innerImageSource_ = nullptr;
         return;

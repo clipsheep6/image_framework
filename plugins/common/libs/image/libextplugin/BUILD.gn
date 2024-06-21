@@ -156,6 +156,8 @@ ohos_shared_library("extplugin") {
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/png_image_chunk_utils.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/webp_exif_metadata_accessor.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_packer_stream.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/stream/src/file_source_stream.cpp",
     "src/ext_decoder.cpp",
     "src/ext_encoder.cpp",
     "src/ext_pixel_convert.cpp",
