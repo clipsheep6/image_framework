@@ -20,9 +20,11 @@
 #include <memory>
 #include <string>
 #include "image/input_data_stream.h"
+#include "refbase.h"
 #include "source_stream.h"
 
 namespace OHOS {
+class IRemoteObject;
 namespace Media {
 class FileSourceStream : public SourceStream {
 public:
@@ -45,6 +47,8 @@ public:
     uint32_t GetStreamType() override;
     ImagePlugin::OutputDataStream* ToOutputDataStream() override;
     int GetMMapFd();
+    static sptr<IRemoteObject> GetToken();
+    static std::unique_ptr<FileSourceStream> CreateSourceStreamByMediaUri(const std::string &pathName);
 
 private:
     DISALLOW_COPY_AND_MOVE(FileSourceStream);

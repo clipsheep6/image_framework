@@ -298,7 +298,11 @@ ohos_shared_library("extplugin") {
   cflags_cc = [ "-O3" ]
   innerapi_tags = [ "platformsdk" ]
 
-  external_deps += [ "zlib:libz" ]
+  external_deps += [
+    "ability_base:zuri",
+    "app_file_service:fileuri_native",
+    "zlib:libz",
+  ]
 
   subsystem_name = "multimedia"
   part_name = "image_framework"

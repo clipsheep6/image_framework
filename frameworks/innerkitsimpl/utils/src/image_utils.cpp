@@ -229,6 +229,21 @@ bool ImageUtils::PathToRealPath(const string &path, string &realPath)
     return true;
 }
 
+bool ImageUtils::CompairPathPrefix(const string &pathName, const string &prefixName)
+{
+    return (pathName.size() > prefixName.size() &&
+        (pathName.compare(0, prefixName.size(), prefixName) == 0));
+}
+
+std::string ImageUtils::FileUrlToRawPath(const std::string &path)
+{
+    if (path.size() > FILE_URL_PREFIX.size() &&
+        (path.compare(0, FILE_URL_PREFIX.size(), FILE_URL_PREFIX) == 0)) {
+        return path.substr(FILE_URL_PREFIX.size());
+    }
+    return path;
+}
+
 bool ImageUtils::FloatCompareZero(float src)
 {
     return fabs(src - 0) < EPSILON;
