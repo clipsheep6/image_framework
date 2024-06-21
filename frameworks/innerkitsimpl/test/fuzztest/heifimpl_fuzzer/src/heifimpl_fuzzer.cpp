@@ -34,7 +34,7 @@
 namespace OHOS {
 namespace Media {
     struct HeifStreamMock : public HeifStream {
-    explicit HeifStreamMock(SKStream* stream) : fStream(stream) {}    
+    explicit HeifStreamMock(SKStream* stream) : fStream(stream) {}
     
     ~HeifStreamMock() override{}
     
@@ -75,6 +75,7 @@ namespace Media {
 
     private:
     std::unique_ptr<SKStream> fStream;
+
     }    
 
 void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFrameInfo *frameInfo)
@@ -142,7 +143,7 @@ void HeifParserTest001(ImagePlugin::HeifParser &heifparse, const std::shared_ptr
     ImagePlugin::HeifStreamReader reader(stream, int64data, size);
     std::vector<std::shared_ptr<ImagePlugin::HeifBox>> v3(1, nullptr);
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
-    const ImagePlugin::HeifIrefBox::Reference ref{.fromItemId = 0};
+    const ImagePlugin::HeifIrefBox::Reference ref = {.fromItemId = 0};
 
     HeifParser.MakeFromStream(stream, out);
     HeifParser.MakeFromMemory(data, size, flag, out);
@@ -286,8 +287,8 @@ void HeifImageTest002(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
     heifimage->GetISOMetadata();
 }
 
-void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heifbuffstream,      
-                       ImagePlugin::HeifStreamReader &heifstreamreader,      
+void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heifbuffstream,
+                       ImagePlugin::HeifStreamReader &heifstreamreader,
                        ImagePlugin::HeifStreamWriter &heifstreamwriter)
 {
     size_t size = 0;
@@ -340,9 +341,9 @@ void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heif
     heifstreamwriter.GetData();
 }
 
-void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox,      
-                        std::shared_ptr<ImagePlugin::HeifInfeBox> &heifinfebox,          
-                        ImagePlugin::HeifPtimBox &heifptimbox, ImagePlugin::HeifStreamReader&reader,        
+void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox,
+                        std::shared_ptr<ImagePlugin::HeifInfeBox> &heifinfebox,
+                        ImagePlugin::HeifPtimBox &heifptimbox, ImagePlugin::HeifStreamReader&reader,
                         ImagePlugin::HeifStreamWriter &writer)
 {
     ImagePlugin::heif_item_id itemId = 0xffff;
@@ -377,8 +378,8 @@ void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox,
     heifptimbox.ParseContent(reader);
 }
 
-void HeifBoxTest001(std::shared_ptr<ImagePlugin::HeifBox> &heifbox,      
-                    std::shared_ptr<ImagePlugin::HeifFullBox> &heiffullbox,      
+void HeifBoxTest001(std::shared_ptr<ImagePlugin::HeifBox> &heifbox,
+                    std::shared_ptr<ImagePlugin::HeifFullBox> &heiffullbox,
                     ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
 {
     std::shared_ptr<ImagePlugin::HeifBox> *result = nullptr;
@@ -419,8 +420,8 @@ void HeifBoxTest001(std::shared_ptr<ImagePlugin::HeifBox> &heifbox,
     heiffullbox->WriteHeader(writer, size);
 }
 
-void BasicBoxTest001(ImagePlugin::HeifFtypBox *heifftypbox, ImagePlugin::HeifMetaBox *heifmetabox,        
-                     ImagePlugin::HeifHdlrBox *heifhdlrbox, ImagePlugin::HeifStreamReader &reader,        
+void BasicBoxTest001(ImagePlugin::HeifFtypBox *heifftypbox, ImagePlugin::HeifMetaBox *heifmetabox,
+                     ImagePlugin::HeifHdlrBox *heifhdlrbox, ImagePlugin::HeifStreamReader &reader,
                      ImagePlugin::HeifStreamWriter &writer)
 {
     heifftypbox->Write(writer);
@@ -433,7 +434,7 @@ void BasicBoxTest001(ImagePlugin::HeifFtypBox *heifftypbox, ImagePlugin::HeifMet
     heifhdlrbox->ParseContent(reader);
 }
 
-void ItemDataBoxTest001(ImagePlugin::HeifIlocBox *heifilocbox, ImagePlugin::HeifIdatBox *heifidatbox,        
+void ItemDataBoxTest001(ImagePlugin::HeifIlocBox *heifilocbox, ImagePlugin::HeifIdatBox *heifidatbox,    
                         ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
 {
     const ImagePlugin::HeifIlocBox::Item const_item;
@@ -465,7 +466,7 @@ void ItemDataBoxTest001(ImagePlugin::HeifIlocBox *heifilocbox, ImagePlugin::Heif
     heifidatbox->ParseContent(reader);
 }
 
-void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifStreamReader &reader,       
+void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifStreamReader &reader,
                        ImagePlugin::HeifStreamWriter &writer)
 {
     ImagePlugin::heif_item_id itemId = 0xffff;
@@ -483,8 +484,8 @@ void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifS
     heifirefbox->ParseItemRef(reader, ref);
 }
 
-void ItemPropertyBoxTest001(ImagePlugin::HeifIprpBox *heifiprpbox, ImagePlugin::HeifIpcoBox *heifipcobox,       
-                            ImagePlugin::HeifIpmaBox *heifipmabox, ImagePlugin::HeifStreamReader &reader,       
+void ItemPropertyBoxTest001(ImagePlugin::HeifIprpBox *heifiprpbox, ImagePlugin::HeifIpcoBox *heifipcobox, 
+                            ImagePlugin::HeifIpmaBox *heifipmabox, ImagePlugin::HeifStreamReader &reader,
                             ImagePlugin::HeifStreamWriter &writer)
 {
     ImagePlugin::heif_item_id itemId = 0xffff;
@@ -509,7 +510,7 @@ void ItemPropertyBoxTest001(ImagePlugin::HeifIprpBox *heifiprpbox, ImagePlugin::
 
 }
 
-void ItemPropertyBasicBoxTest001(ImagePlugin::HeifIspeBox *heifispebox, ImagePlugin::HeifPixiBox *heifpixibox,     
+void ItemPropertyBasicBoxTest001(ImagePlugin::HeifIspeBox *heifispebox, ImagePlugin::HeifPixiBox *heifpixibox,
                                  ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
 {
     uint32_t uint32data = 0;
@@ -529,7 +530,7 @@ void ItemPropertyBasicBoxTest001(ImagePlugin::HeifIspeBox *heifispebox, ImagePlu
     heifpixibox->ParseContent(reader);
 }
 
-void ItemPropertyAuxBoxTest001(ImagePlugin::HeifAuxcBox *heifauxcbox, ImagePlugin::HeifStreamReader &reader,     
+void ItemPropertyAuxBoxTest001(ImagePlugin::HeifAuxcBox *heifauxcbox, ImagePlugin::HeifStreamReader &reader,
                                ImagePlugin::HeifStreamWriter &writer)
 {
     const std::string const_type = "abc";
@@ -541,16 +542,16 @@ void ItemPropertyAuxBoxTest001(ImagePlugin::HeifAuxcBox *heifauxcbox, ImagePlugi
     heifauxcbox->Write(writer);
 }
 
-void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRawColorProfile> &heifrawcolorprofile,     
-                                 const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> &heifnclxcolorprofile,     
-                                 ImagePlugin::HeifColrBox *heifcolrbox, ImagePlugin::HeifStreamReader &reader,     
+void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRawColorProfile> &heifrawcolorprofile, 
+                                 const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> &heifnclxcolorprofile, 
+                                 ImagePlugin::HeifColrBox *heifcolrbox, ImagePlugin::HeifStreamReader &reader,
                                  ImagePlugin::HeifStreamWriter &writer)
 {
     const std::shared_ptr<const HeifColorProfile> const_prof = nullptr;
     
     heifrawcolorprofile->GetProfileType();
     heifrawcolorprofile->GetData();
-    heifrawcolorprofile->Write(writer);     
+    heifrawcolorprofile->Write(writer);
     
     heifnclxcolorprofile->GetProfileType();
     heifnclxcolorprofile->Write(writer);
@@ -566,7 +567,7 @@ void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRa
     HeifColrBox->ParseContent(reader);
 }
 
-void ItemPropertyDisplayBoxTest001(ImagePlugin::HeifMdcvBox *heifmdcvbox, ImagePlugin::HeifClliBox *heifcllibox,        
+void ItemPropertyDisplayBoxTest001(ImagePlugin::HeifMdcvBox *heifmdcvbox, ImagePlugin::HeifClliBox *heifcllibox, 
                                    ImagePlugin::HeifStreamReader &reader,  ImagePlugin::HeifStreamWriter &writer)
 {
     ImagePlugin::DisplayColourVolume colourVolume;
@@ -583,7 +584,7 @@ void ItemPropertyDisplayBoxTest001(ImagePlugin::HeifMdcvBox *heifmdcvbox, ImageP
     heifcllibox->Write(writer);
 }
 
-void ItemPropertyHvccBoxTest001(ImagePlugin::HeifHvccBox *heifhvccbox, ImagePlugin::HeifStreamReader &reader,     
+void ItemPropertyHvccBoxTest001(ImagePlugin::HeifHvccBox *heifhvccbox, ImagePlugin::HeifStreamReader &reader, 
                                 ImagePlugin::HeifStreamWriter &writer)
 {
     std::vector<uint8_t> v1(1, 1);
@@ -600,8 +601,8 @@ void ItemPropertyHvccBoxTest001(ImagePlugin::HeifHvccBox *heifhvccbox, ImagePlug
     heifhvccbox->ParseNalUnitArray(reader, v3);
 }
 
-void ItemPropertyTransformBoxTest001(ImagePlugin::HeifIrotBox *heifirotbox,     
-                                     ImagePlugin::HeifImirBox *heifimirbox,     
+void ItemPropertyTransformBoxTest001(ImagePlugin::HeifIrotBox *heifirotbox, 
+                                     ImagePlugin::HeifImirBox *heifimirbox,
                                      ImagePlugin::HeifStreamReader &reader, ImagePlugin::HeifStreamWriter &writer)
 {
     int rot = 0;
@@ -653,7 +654,7 @@ void HeifImplFuzzTest002(const uint8_t *data, size_t size)
     //item_property_color_box.cpp create/init/fuzztest
     std::shared_ptr<ImagePlugin::HeifImage> heifimage = heifparse.GetGainmapImage();
     const std::shared_ptr<const ImagePlugin::HeifRawColorProfile> heifrawcolorprofile = heifimage->GetRawColorProfile();
-    const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> heifnclxcolorprofile =      
+    const std::shared_ptr<const ImagePlugin::HeifNclxColorProfile> heifnclxcolorprofile =
         heifimage->GetNclxColorProfile();
     auto heifcolrbox = static_cast<ImagePlugin::HeifColrBox *>(obj_heifbox);
     ItemPropertyColorBoxTest001(heifrawcolorprofile, heifnclxcolorprofile, heifcolrbox,
