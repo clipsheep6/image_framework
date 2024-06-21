@@ -172,6 +172,7 @@ constexpr uint8_t BYTE_POS_0 = 0;
 constexpr uint8_t BYTE_POS_1 = 1;
 constexpr uint8_t BYTE_POS_2 = 2;
 constexpr uint8_t BYTE_POS_3 = 3;
+constexpr uint8_t SUT_FILE_SIGNATURE = 0x53555401;
 static const std::string g_textureSuperDecSo = "/system/lib64/module/hms/graphic/libtextureSuperDecompress.z.so";
 
 using GetSuperCompressAstcSize = size_t (*)(const uint8_t *, size_t);
@@ -486,7 +487,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapEx(uint32_t index, const DecodeO
         ImagePlugin::DataStreamBuffer outData;
         uint32_t res = GetData(outData, ASTC_HEADER_SIZE);
         if (res == SUCCESS) {
-            isAstc_ = IsASTC(outData.inputStreamBuffer, outData.dataSize);
+            isAstc_ = IsASTCorSUT(outData.inputStreamBuffer, outData.dataSize);
         }
     }
     if (isAstc_.has_value() && isAstc_.value()) {
@@ -2608,14 +2609,11 @@ bool ImageSource::IsASTC(const uint8_t *fileData, size_t fileSize) __attribute__
         return true;
     }
 #ifdef SUT_DECODE_ENABLE
-    if (!g_sutDecSoManager.LoadSutDecSo() || g_sutDecSoManager.isSutFunc_ == nullptr) {
-        IMAGE_LOGE("[ImageSource] SUT dec so dlopen failed or isSutFunc_ is nullptr!");
-        return false;
+    if (magicVal == SUT_FILE_SIGNATURE) {
+        return true;
     }
-    return g_sutDecSoManager.isSutFunc_(fileData, fileSize);
-#else
-    return false;
 #endif
+    return false;
 }
 
 bool ImageSource::GetImageInfoForASTC(ImageInfo &imageInfo, const uint8_t *sourceFilePtr)
@@ -2648,6 +2646,28 @@ bool ImageSource::GetImageInfoForASTC(ImageInfo &imageInfo, const uint8_t *sourc
             imageInfo.pixelFormat = PixelFormat::UNKNOWN;
     }
     return true;
+}
+
+bool ImageSource::IsASTCorSUT(const uint8_t *fileData, size_t fileSize) __attribute__((no_sanitize("cfi")))
+{
+    if (fileData == nullptr || fileSize < ASTC_HEADER_SIZE) {
+        IMAGE_LOGE("[ImageSource]IsASTC fileData incorrect.");
+        return false;
+    }
+    uint32_t magicVal = static_cast<uint32_t>(fileData[NUM_0]) +
+        (static_cast<uint32_t>(fileData[NUM_1]) << NUM_8) +
+        (static_cast<uint32_t>(fileData[NUM_2]) << NUM_16) +
+        (static_cast<uint32_t>(fileData[NUM_3]) << NUM_24);
+    if (magicVal == ASTC_MAGIC_ID) {
+        return true;
+    }
+#ifdef SUT_DECODE_ENABLE
+    if (magicVal == SUT_FILE_SIGNATURE) {
+        isSut_ = true;
+        return true;
+    }
+#endif
+    return false;
 }
 
 #ifdef SUT_DECODE_ENABLE
