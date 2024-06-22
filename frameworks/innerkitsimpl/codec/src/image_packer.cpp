@@ -54,27 +54,9 @@ PluginServer &ImagePacker::pluginServer_ = ImageUtils::GetPluginServer();
 uint32_t ImagePacker::GetSupportedFormats(std::set<std::string> &formats)
 {
     formats.clear();
-    std::vector<ClassInfo> classInfos;
-    uint32_t ret =
-        pluginServer_.PluginServerGetClassInfo<AbsImageEncoder>(AbsImageEncoder::SERVICE_DEFAULT, classInfos);
-    if (ret != SUCCESS) {
-        IMAGE_LOGE("get class info from plugin server failed, ret:%{public}u.", ret);
-        return ret;
-    }
-    for (auto &info : classInfos) {
-        std::map<std::string, AttrData> &capbility = info.capabilities;
-        auto iter = capbility.find(IMAGE_ENCODE_FORMAT);
-        if (iter == capbility.end()) {
-            continue;
-        }
-        AttrData &attr = iter->second;
-        std::string format;
-        if (attr.GetValue(format) != SUCCESS) {
-            IMAGE_LOGE("attr data get format failed.");
-            continue;
-        }
-        formats.insert(format);
-    }
+    formats.insert("image/jpeg");
+    formats.insert("image/png");
+    formats.insert("image/webp");
     return SUCCESS;
 }
 
