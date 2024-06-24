@@ -34,7 +34,7 @@
 namespace OHOS {
 namespace Media {
     struct HeifStreamMock : public HeifStream {
-    explicit HeifStreamMock(SKStream* stream) : fStream(stream) {}
+    explicit HeifStreamMock(SkStream* stream) : fStream(stream) {}
     
     ~HeifStreamMock() override{}
     
@@ -48,7 +48,7 @@ namespace Media {
         return fStream->rewind();
     }
 
-    bool seek(size_t position)
+    bool seek(size_t position) override
     {
         return fStream->seek(position);
     }
@@ -74,10 +74,10 @@ namespace Media {
     }
 
     private:
-    std::unique_ptr<SKStream> fStream;
+    std::unique_ptr<SkStream> fStream;
     }
 
-void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFrameInfo *frameInfo)
+void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, ImagePlugin::HeifFrameInfo *frameInfo)
 {
     size_t frameCount = 0;
     enum SkHeifColorFormat heifColor = kHeifColorFormat_RGB565;
@@ -88,7 +88,7 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     std::vector<uint8_t> v1(1, 1);
     const std::shared_ptr<ImagePlugin::HeifImage> const_image = nullptr;
     uint32_t uint32data = 0;
-    sptr<OHOS::SurfaceBuffer> hwBuffer = nullptr;
+    sptr<SurfaceBuffer> hwBuffer = nullptr;
     bool flag = false;
     const uint32_t const_uint32data = 0;
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
@@ -137,38 +137,38 @@ void HeifParserTest001(ImagePlugin::HeifParser &heifparse, const std::shared_ptr
     std::vector<ImagePlugin::heif_item_id> itemIdList(1, 0xffff);
     const uint8_t intdata8 = 0;
     uint32_t uint32data = 0;
-    const std::shared_ptr<ImagePlugin::HeifImage> master_image;
+    const std::shared_ptr<ImagePlugin::HeifImage> master_image = nullptr;
     int64_t int64data = 0;
     ImagePlugin::HeifStreamReader reader(stream, int64data, size);
     std::vector<std::shared_ptr<ImagePlugin::HeifBox>> v3(1, nullptr);
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
-    const ImagePlugin::HeifIrefBox::Reference ref = {.fromItemId = 0};
+    const ImagePlugin::HeifIrefBox::Reference ref;
 
-    HeifParser.MakeFromStream(stream, out);
-    HeifParser.MakeFromMemory(data, size, flag, out);
-    HeifParser.Write(writer);
-    HeifParser.GetImage(itemId);
-    HeifParser.GetPrimaryImage();
-    HeifParser.GetGainmapImage();
-    HeifParser.GetTmapImage();
-    HeifParser.GetItemType(itemId);
-    HeifParser.GetItemData(itemId, &v1, option);
-    HeifParser.GetTileImages(itemId, v2);
-    HeifParser.GetIdenImage(itemId, v2);
-    HeifParser.GetAllItemId(itemIdList);
-    HeifParser.SetExifMetadata(master_image, &intdata8, uint32data);
-    HeifParser.UpdateExifMetadata(master_image, &intdata8, uint32data, itemId);
-    HeifParser.AssembleBoxes(reader);
-    HeifParser.GetPrimaryItemId();
-    HeifParser.HasItemId(itemId);
-    HeifParser.GetItemContentType(itemId);
-    HeifParser.GetItemUriType(itemId);
-    HeifParser.GetInfeBox(itemId);
-    HeifParser.GetAllProperties(itemId, v3);
-    HeifParser.ExtractImageProperties(image);
-    HeifParser.ExtractDerivedImageProperties();
-    HeifParser.ExtractThumbnailImage(image, ref);
-    HeifParser.ExtractAuxImage(image, ref);
+    heifparse.MakeFromStream(stream, out);
+    heifparse.MakeFromMemory(data, size, flag, out);
+    heifparse.Write(writer);
+    heifparse.GetImage(itemId);
+    heifparse.GetPrimaryImage();
+    heifparse.GetGainmapImage();
+    heifparse.GetTmapImage();
+    heifparse.GetItemType(itemId);
+    heifparse.GetItemData(itemId, &v1, option);
+    heifparse.GetTileImages(itemId, v2);
+    heifparse.GetIdenImage(itemId, v2);
+    heifparse.GetAllItemId(itemIdList);
+    heifparse.SetExifMetadata(master_image, &intdata8, uint32data);
+    heifparse.UpdateExifMetadata(master_image, &intdata8, uint32data, itemId);
+    heifparse.AssembleBoxes(reader);
+    heifparse.GetPrimaryItemId();
+    heifparse.HasItemId(itemId);
+    heifparse.GetItemContentType(itemId);
+    heifparse.GetItemUriType(itemId);
+    heifparse.GetInfeBox(itemId);
+    heifparse.GetAllProperties(itemId, v3);
+    heifparse.ExtractImageProperties(image);
+    heifparse.ExtractDerivedImageProperties();
+    heifparse.ExtractThumbnailImage(image, ref);
+    heifparse.ExtractAuxImage(image, ref);
 }
 
 void HeifParserTest002(ImagePlugin::HeifParser &heifparse, const std::shared_ptr<ImagePlugin::HeifInputStream> &stream)
