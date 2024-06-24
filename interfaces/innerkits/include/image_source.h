@@ -137,6 +137,7 @@ struct PixelMapAddrInfos {
 struct ASTCInfo {
     Size size;
     Size blockFootprint;
+    CompressionType compressionType = CompressionType::UNKNOWN;
 };
 
 class SourceStream;
@@ -272,7 +273,7 @@ private:
     static std::unique_ptr<SourceStream> DecodeBase64(const uint8_t *data, uint32_t size);
     static std::unique_ptr<SourceStream> DecodeBase64(const std::string &data);
     bool IsSpecialYUV();
-    bool GetImageInfoForASTC(ImageInfo& imageInfo, const uint8_t *sourceFilePtr);
+    bool GetImageInfoForASTC(ImageInfo& imageInfo, const uint8_t *sourceFilePtr, CompressionType &compressionType);
     bool ConvertYUV420ToRGBA(uint8_t *data, uint32_t size, bool isSupportOdd, bool isAddUV, uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapForYUV(uint32_t &errorCode);
     std::unique_ptr<PixelMap> CreatePixelMapForASTC(uint32_t &errorCode, bool fastAstc = false);
