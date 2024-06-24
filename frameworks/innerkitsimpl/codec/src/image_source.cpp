@@ -2666,14 +2666,32 @@ bool ImageSource::IsASTC(const uint8_t *fileData, size_t fileSize) __attribute__
 #endif
 }
 
-bool ImageSource::GetImageInfoForASTC(ImageInfo &imageInfo, const uint8_t *sourceFilePtr)
+bool GetStreamData(std::unique_ptr<SourceStream>& sourceStream, uint8_t* streamBuffer, uint32_t streamSize)
+{
+    if (streamBuffer == nullptr) {
+        IMAGE_LOGE("GetStreamData streamBuffer is nullptr");
+        return false;
+    }
+    uint32_t readSize = 0;
+    uint32_t savedPosition = sourceStream->Tell();
+    sourceStream->Seek(0);
+    bool result = sourceStream->Read(streamSize, streamBuffer, streamSize, readSize);
+    sourceStream->Seek(savedPosition);
+    if (!result || (readSize != streamSize)) {
+        IMAGE_LOGE("sourceStream read data failed");
+        return false;
+    }
+    return true;
+}
+
+bool ImageSource::GetImageInfoForASTC(ImageInfo &imageInfo, const uint8_t *sourceFilePtr, CompressionType &compressionType)
 {
     ASTCInfo astcInfo;
-    if (!sourceStreamPtr_) {
+    if (!sourceFilePtr) {
         IMAGE_LOGE("[ImageSource] get astc image info null.");
         return false;
     }
-    if (!GetASTCInfo(sourceFilePtr, sourceStreamPtr_->GetStreamSize(), astcInfo)) {
+    if (!GetASTCInfo(sourceFilePtr, ASTC_HEADER_SIZE, astcInfo)) {
         IMAGE_LOGE("[ImageSource] get astc image info failed.");
         return false;
     }
@@ -2695,6 +2713,7 @@ bool ImageSource::GetImageInfoForASTC(ImageInfo &imageInfo, const uint8_t *sourc
             IMAGE_LOGE("[ImageSource]GetImageInfoForASTC pixelFormat is unknown.");
             imageInfo.pixelFormat = PixelFormat::UNKNOWN;
     }
+    compressionType = astcInfo.compressionType;
     return true;
 }
 
@@ -2717,113 +2736,115 @@ static size_t GetAstcSizeBytes(const uint8_t *fileBuf, size_t fileSize)
     return g_sutDecSoManager.sutDecSoGetSizeFunc_(fileBuf, fileSize);
 }
 
-static bool TextureSuperCompressDecode(const uint8_t *inData, size_t inBytes, uint8_t *outData, size_t outBytes)
-{
-    size_t preOutBytes = outBytes;
-    if ((inData == nullptr) || (outData == nullptr) || (inBytes >= outBytes)) {
-        IMAGE_LOGE("astc TextureSuperCompressDecode input check failed!");
-        return false;
-    }
-    if (!g_sutDecSoManager.LoadSutDecSo() || g_sutDecSoManager.sutDecSoDecFunc_ == nullptr) {
-        IMAGE_LOGE("[ImageSource] SUT dec so dlopen failed or sutDecSoDecFunc_ is nullptr!");
-        return false;
-    }
-    if (!g_sutDecSoManager.sutDecSoDecFunc_(inData, inBytes, outData, outBytes)) {
-        IMAGE_LOGE("astc SuperDecompressTexture process failed!");
-        return false;
-    }
-    if (outBytes != preOutBytes) {
-        IMAGE_LOGE("astc SuperDecompressTexture Dec size is predicted failed!");
-        return false;
-    }
-    return true;
-}
 #endif
 
 static bool ReadFileAndResoveAstc(size_t fileSize, size_t astcSize, unique_ptr<PixelAstc> &pixelAstc,
     const uint8_t *sourceFilePtr)
+std::unique_ptr<AbsMemory> AllocASTCMem(size_t astcSize, unique_ptr<PixelAstc> &pixelAstc)
 {
-#if !(defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM))
     Size desiredSize = {astcSize, 1};
     MemoryData memoryData = {nullptr, astcSize, "CreatePixelMapForASTC Data", desiredSize, pixelAstc->GetPixelFormat()};
     ImageInfo pixelAstcInfo;
     pixelAstc->GetImageInfo(pixelAstcInfo);
     AllocatorType allocatorType = IsSupportAstcZeroCopy(pixelAstcInfo.size) ?
         AllocatorType::DMA_ALLOC : AllocatorType::SHARE_MEM_ALLOC;
-    std::unique_ptr<AbsMemory> dstMemory = MemoryManager::CreateMemory(allocatorType, memoryData);
-    if (dstMemory == nullptr) {
-        IMAGE_LOGE("ReadFileAndResoveAstc CreateMemory failed");
+
+    return MemoryManager::CreateMemory(allocatorType, memoryData);
+}
+
+bool CretaeByASTCData(std::unique_ptr<SourceStream> &sourceStream, size_t fileSize, unique_ptr<PixelAstc> &pixelAstc)
+{
+    std::unique_ptr<AbsMemory> dstMemory = AllocASTCMem(fileSize, pixelAstc);
+    if (!dstMemory) {
+        IMAGE_LOGE("[ImageSource] CretaeByASTCData CreateMemory failed");
+        return false;
+    }
+    if (!GetStreamData(sourceStream, static_cast<uint8_t *>(dstMemory->data.data), fileSize)) {
+        IMAGE_LOGE("[ImageSource] CretaeByASTCData GetStreamData failed");
+        dstMemory->Release();
         return false;
     }
     pixelAstc->SetPixelsAddr(dstMemory->data.data, dstMemory->extend.data, dstMemory->data.size, dstMemory->GetType(),
         nullptr);
-    bool successMemCpyOrDec = true;
-#ifdef SUT_DECODE_ENABLE
-    if (fileSize < astcSize) {
-        if (TextureSuperCompressDecode(sourceFilePtr, fileSize,
-            static_cast<uint8_t*>(dstMemory->data.data), astcSize) != true) {
-            IMAGE_LOGE("[ImageSource] astc SuperDecompressTexture failed!");
-            successMemCpyOrDec = false;
-        }
-    } else {
-#endif
-        if (memcpy_s(dstMemory->data.data, fileSize, sourceFilePtr, fileSize) != 0) {
-            IMAGE_LOGE("[ImageSource] astc memcpy_s failed!");
-            successMemCpyOrDec = false;
-        }
-#ifdef SUT_DECODE_ENABLE
-    }
-#endif
-    if (!successMemCpyOrDec) {
-        dstMemory->Release();
-        return false;
-    }
-#endif
     return true;
 }
 
-unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode, bool fastAstc)
-#if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
+bool DecodeSut(const uint8_t *sourceFilePtr, size_t fileSize, size_t astcSize, unique_ptr<PixelAstc> &pixelAstc)
 {
+    size_t preOutBytes = astcSize;
+    if ((sourceFilePtr == nullptr) || (fileSize >= astcSize)) {
+        IMAGE_LOGE("[ImageSource] TextureSuperCompressDecode input check failed!");
+        return false;
+    }
+    if (!successMemCpyOrDec) {
+    if (!g_sutDecSoManager.LoadSutDecSo() || g_sutDecSoManager.sutDecSoDecFunc_ == nullptr) {
+        IMAGE_LOGE("[ImageSource] SUT dec so dlopen failed or sutDecSoDecFunc_ is nullptr!");
+        return false;
+    }
+    std::unique_ptr<AbsMemory> dstMemory = AllocASTCMem(astcSize, pixelAstc);
+    if (!dstMemory) {
+        IMAGE_LOGE("[ImageSource] DecodeSut CreateMemory failed");
+        return false;
+    }
+    if (!g_sutDecSoManager.sutDecSoDecFunc_(sourceFilePtr, fileSize, static_cast<uint8_t*>(dstMemory->data.data), astcSize)) {
+        IMAGE_LOGE("[ImageSource] SuperDecompressTexture process failed!");
+        dstMemory->Release();
+        return false;
+    }
+    if (astcSize != preOutBytes) {
+        IMAGE_LOGE("[ImageSource] SuperDecompressTexture Dec size is predicted failed!");
+        dstMemory->Release();
+        return false;
+    }
+    pixelAstc->SetPixelsAddr(dstMemory->data.data, dstMemory->extend.data, dstMemory->data.size, dstMemory->GetType(),
+        nullptr);
+    return true;
+
+}
+
+unique_ptr<PixelMap> ImageSource::CreatePixelMapForASTC(uint32_t &errorCode, bool fastAstc)
+{
+#if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
     errorCode = ERROR;
     return nullptr;
-}
 #else
-{
     ImageTrace imageTrace("CreatePixelMapForASTC");
     unique_ptr<PixelAstc> pixelAstc = make_unique<PixelAstc>();
     ImageInfo info;
-    uint8_t *sourceFilePtr = sourceStreamPtr_->GetDataPtr();
-    if (!GetImageInfoForASTC(info, sourceFilePtr)) {
-        IMAGE_LOGE("[ImageSource] get astc image info failed.");
+
+    ImagePlugin::DataStreamBuffer outData;
+    CompressionType compressionType;
+    if (GetData(outData, ASTC_HEADER_SIZE) != SUCCESS) {
+        IMAGE_LOGE("[ImageSource] CreatePixelMapForASTC get data failed");
         return nullptr;
     }
-    errorCode = pixelAstc->SetImageInfo(info);
-    pixelAstc->SetAstcRealSize(info.size);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("[ImageSource]update pixelmap info error ret:%{public}u.", errorCode);
-        return nullptr;
+    if (!GetImageInfoForASTC(info, outData.inputStreamBuffer, compressionType)) {
+         IMAGE_LOGE("[ImageSource] get astc image info failed.");
+         return nullptr;
     }
     pixelAstc->SetEditable(false);
     size_t fileSize = sourceStreamPtr_->GetStreamSize();
-#ifdef SUT_DECODE_ENABLE
-    size_t astcSize = GetAstcSizeBytes(sourceFilePtr, fileSize);
-    if (astcSize == 0) {
-        IMAGE_LOGE("[ImageSource] astc GetAstcSizeBytes failed.");
-        return nullptr;
-    }
-#else
-    size_t astcSize = fileSize;
-#endif
-    if (!ReadFileAndResoveAstc(fileSize, astcSize, pixelAstc, sourceFilePtr)) {
-        IMAGE_LOGE("[ImageSource] astc ReadFileAndResoveAstc failed.");
+
+    if (compressionType == CompressionType::ASTC) {
+        if(!CretaeByASTCData(sourceStreamPtr_, fileSize, pixelAstc)) {
+            IMAGE_LOGE("[ImageSource] CretaeByASTCData failed");
+            return nullptr;
+        }
+    } else if (compressionType == CompressionType::SUT){
+        uint8_t *sourceFilePtr = sourceStreamPtr_->GetDataPtr();
+        size_t astcSize = GetAstcSizeBytes(sourceFilePtr, fileSize);
+        if(!DecodeSut(sourceFilePtr, fileSize, astcSize, pixelAstc)) {
+            IMAGE_LOGE("[ImageSource] DecodeSut failed");
+            return nullptr;
+        }
+    } else {
+        IMAGE_LOGE("[ImageSource] CreatePixelMapForASTC faield, compressionType:%{public}d.", compressionType);
         return nullptr;
     }
     pixelAstc->SetAstc(true);
-    ImageUtils::FlushSurfaceBuffer(pixelAstc.get());
     return pixelAstc;
-}
 #endif
+}
 
 bool ImageSource::GetASTCInfo(const uint8_t *fileData, size_t fileSize, ASTCInfo &astcInfo)
 {
@@ -2846,6 +2867,7 @@ bool ImageSource::GetASTCInfo(const uint8_t *fileData, size_t fileSize, ASTCInfo
         astcInfo.size.height = static_cast<int32_t>(astcHeight);
         astcInfo.blockFootprint.width = fileData[ASTC_HEADER_BLOCK_X];
         astcInfo.blockFootprint.height = fileData[ASTC_HEADER_BLOCK_Y];
+        astcInfo.compressionType = CompressionType::ASTC;
         return true;
     }
 #ifdef SUT_DECODE_ENABLE
@@ -2862,6 +2884,7 @@ bool ImageSource::GetASTCInfo(const uint8_t *fileData, size_t fileSize, ASTCInfo
         astcInfo.size.height = height;
         astcInfo.blockFootprint.width = blockXY;
         astcInfo.blockFootprint.height = blockXY;
+        astcInfo.compressionType = CompressionType::SUT;
         return true;
     }
 #endif
@@ -3221,24 +3244,6 @@ static ColorManager::ColorSpaceName ConvertColorSpaceName(CM_ColorSpaceType colo
     return base ? ColorManager::SRGB : ColorManager::BT2020_HLG;
 }
 #endif
-
-bool GetStreamData(std::unique_ptr<SourceStream>& sourceStream, uint8_t* streamBuffer, uint32_t streamSize)
-{
-    if (streamBuffer == nullptr) {
-        IMAGE_LOGE("GetStreamData streamBuffer is nullptr");
-        return false;
-    }
-    uint32_t readSize = 0;
-    uint32_t savedPosition = sourceStream->Tell();
-    sourceStream->Seek(0);
-    bool result = sourceStream->Read(streamSize, streamBuffer, streamSize, readSize);
-    sourceStream->Seek(savedPosition);
-    if (!result || (readSize != streamSize)) {
-        IMAGE_LOGE("sourceStream read data failed");
-        return false;
-    }
-    return true;
-}
 
 bool ImageSource::DecodeJpegGainMap(ImageHdrType hdrType, float scale, DecodeContext& gainMapCtx, HdrMetadata& metadata)
 {
