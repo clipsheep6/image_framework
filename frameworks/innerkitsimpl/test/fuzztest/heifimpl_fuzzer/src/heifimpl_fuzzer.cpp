@@ -75,9 +75,9 @@ namespace Media {
 
     private:
     std::unique_ptr<SkStream> fStream;
-    }
+    };
 
-void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, ImagePlugin::HeifFrameInfo *frameInfo)
+void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFrameInfo *frameInfo)
 {
     size_t frameCount = 0;
     enum SkHeifColorFormat heifColor = kHeifColorFormat_RGB565;
@@ -88,7 +88,7 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, ImageP
     std::vector<uint8_t> v1(1, 1);
     const std::shared_ptr<ImagePlugin::HeifImage> const_image = nullptr;
     uint32_t uint32data = 0;
-    sptr<SurfaceBuffer> hwBuffer = nullptr;
+    sptr<OHOS::SurfaceBuffer> hwBuffer = nullptr;
     bool flag = false;
     const uint32_t const_uint32data = 0;
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
