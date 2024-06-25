@@ -58,6 +58,10 @@ ImageNapi::ImageNapi()
 ImageNapi::~ImageNapi()
 {
     NativeRelease();
+    if (sConstructor_ != nullptr) {
+        napi_delete_reference(env, sConstructor_);
+        sConstructor_ = nullptr;
+    }
 }
 
 void ImageNapi::NativeRelease()
