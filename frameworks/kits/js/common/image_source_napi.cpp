@@ -2315,13 +2315,13 @@ static ImageSourceAsyncContext* CheckAsyncContext(ImageSourceAsyncContext* conte
     if (check) {
         if (context->errMsg.size() > 0) {
             IMAGE_LOGE("mismatch args");
-            context->status = ERR_IMAGE_UNKNOWN_ERROR;
+            context->status = ERR_IMAGE_INVALID_PARAMETER;
             return nullptr;
         }
 
         if (context->rImageSource == nullptr) {
             IMAGE_LOGE("empty context rImageSource");
-            context->status = ERR_IMAGE_UNKNOWN_ERROR;
+            context->status = ERR_IMAGE_SOURCE_IS_NULL;
             return nullptr;
         }
     }

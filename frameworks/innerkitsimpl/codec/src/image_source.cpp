@@ -1746,7 +1746,7 @@ uint32_t ImageSource::GetData(ImagePlugin::DataStreamBuffer &outData, size_t siz
     }
     if (outData.inputStreamBuffer == nullptr || outData.dataSize < size) {
         IMAGE_LOGE("[ImageSource]the outData is incomplete.");
-        return ERR_IMAGE_INVALID_SOURCE_DATA;
+        return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
     }
     return SUCCESS;
 }
@@ -1879,7 +1879,7 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
         }
     }
 
-    // default return raw image, ERR_IMAGE_MISMATCHED_FORMAT case
+    // default return raw image, ERR_IMAGE_UNSUPPORTED_MIME_TYPE case
     format = InnerFormat::RAW_FORMAT;
     IMAGE_LOGI("[ImageSource]image default to raw format.");
     return SUCCESS;
