@@ -141,7 +141,7 @@ uint32_t GifEncoder::AddImage(Media::PixelMap &pixelMap)
 
     if (pixelMap.GetPixels() == nullptr) {
         IMAGE_LOGE("AddImage failed, invalid pixelMap.");
-        return ERR_IMAGE_PIXELMAP_IS_NULL;
+        return ERR_IMAGE_ENCODE_FAILED;
     }
 
     pixelMaps_.push_back(&pixelMap);

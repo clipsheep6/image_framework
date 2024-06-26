@@ -127,7 +127,7 @@ uint32_t AstcCodec::SetAstcEncode(OutputDataStream* outputStream, PlEncodeOption
 {
     if (outputStream == nullptr || pixelMap == nullptr) {
         IMAGE_LOGE("input data is nullptr.");
-        return ERR_IMAGE_PIXELMAP_IS_NULL;
+        return ERR_IMAGE_INVALID_PARAMETER;
     }
     astcOutput_ = outputStream;
     astcOpts_ = option;
