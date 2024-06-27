@@ -291,6 +291,7 @@ const static int32_t ZERO = 0;
 
 PluginServer &ImageSource::pluginServer_ = ImageUtils::GetPluginServer();
 ImageSource::FormatAgentMap ImageSource::formatAgentMap_ = InitClass();
+static bool CheckCapacityAi();
 
 #ifdef HEIF_HW_DECODE_ENABLE
 static bool IsSecureMode(const std::string &name)
@@ -587,9 +588,7 @@ static inline int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, in
 void ImageSource::TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
     int32_t wantDensity, Size &dstSize)
 {
-    if (IsSizeVailed(wantSize) && ((opts_.resolutionQuality == ResolutionQuality::UNKNOWN) ||
-                                    (opts_.resolutionQuality == ResolutionQuality::LOW) ||
-                                    (opts_.resolutionQuality == ResolutionQuality::MEDIUM))) {
+    if (IsSizeVailed(wantSize) && ((opts_.resolutionQuality == ResolutionQuality::UNKNOWN) || !CheckCapacityAi())) {
         CopySize(wantSize, dstSize);
     } else {
         CopySize(srcSize, dstSize);
@@ -791,7 +790,7 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     auto res = ImageAiProcess(info.size, opts, isHdr, context, plInfo);
     if (res != SUCCESS) {
         IMAGE_LOGD("[ImageSource] ImageAiProcess fail, isHdr%{public}d, ret:%{public}u.", isHdr, res);
-        if (opts_.resolutionQuality == ResolutionQuality::HIGH && (IsSizeVailed(opts.desiredSize) &&
+        if (opts_.resolutionQuality != ResolutionQuality::UNKNOWN && (IsSizeVailed(opts.desiredSize) &&
             (opts_.desiredSize.width != opts.desiredSize.width ||
             opts_.desiredSize.height != opts.desiredSize.height))) {
             opts_.desiredSize.width = opts.desiredSize.width;
