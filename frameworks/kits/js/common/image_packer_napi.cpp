@@ -501,43 +501,11 @@ static int64_t parseBufferSize(napi_env env, napi_value root, ImagePackerAsyncCo
     return tmpNumber;
 }
 
-static bool parsePackOptionOfdelayTimes(napi_env env, napi_value root, PackOption* opts)
-{
-    napi_value tmpValue = nullptr;
-    if (!GET_NODE_BY_NAME(root, "delayTimes", tmpValue)) {
-        IMAGE_LOGE("No delayTimes in pack option");
-        return false;
-    }
-    bool isDelayTimesArray = false;
-    napi_is_array(env, tmpValue, &isDelayTimesArray);
-    uint32_t num;
-    if (isDelayTimesArray) {
-        uint32_t len = 0;
-        if (napi_get_array_length(env, tmpValue, &len) != napi_ok) {
-            IMAGE_LOGE("Parse pack napi_get_array_length failed");
-            return false;
-        }
-        for (size_t i = 0; i < len; i++) {
-            napi_value item;
-            napi_get_element(env, tmpValue, i, &item);
-            if (napi_get_value_uint32(env, item, &num) != napi_ok) {
-                IMAGE_LOGE("Parse delayTime in item failed %{public}zu", i);
-                return false;
-            }
-            opts->delayTimes.push_back(static_cast<uint16_t>(num & MASK_16));
-        }
-    }
-    return true;
-}
-
 static bool parsePackOptionOfdisposalTypes(napi_env env, napi_value root, PackOption* opts)
 {
     napi_value tmpValue = nullptr;
-    if (!GET_NODE_BY_NAME(root, "disposalTypes", tmpValue)) {
-        IMAGE_LOGE("No disposalTypes in pack option");
-        return false;
-    }
     bool isDisposalTypesArray = false;
+    napi_get_named_property(env, root, "disposalTypes", &tmpValue);
     napi_is_array(env, tmpValue, &isDisposalTypesArray);
     uint32_t num;
     if (isDisposalTypesArray) {
@@ -555,16 +523,45 @@ static bool parsePackOptionOfdisposalTypes(napi_env env, napi_value root, PackOp
             }
             opts->disposalTypes.push_back(static_cast<uint16_t>(num & MASK_3));
         }
+    } else {
+        IMAGE_LOGI("No disposalTypes in pack option, use default value");
     }
     return true;
+}
+
+static bool parsePackOptionOfdelayTimes(napi_env env, napi_value root, PackOption* opts)
+{
+    napi_value tmpValue = nullptr;
+    bool isDelayTimesArray = false;
+    napi_get_named_property(env, root, "delayTimes", &tmpValue);
+    napi_is_array(env, tmpValue, &isDelayTimesArray);
+    uint32_t num;
+    if (isDelayTimesArray) {
+        uint32_t len = 0;
+        if (napi_get_array_length(env, tmpValue, &len) != napi_ok) {
+            IMAGE_LOGE("Parse pack napi_get_array_length failed");
+            return false;
+        }
+        for (size_t i = 0; i < len; i++) {
+            napi_value item;
+            napi_get_element(env, tmpValue, i, &item);
+            if (napi_get_value_uint32(env, item, &num) != napi_ok) {
+                IMAGE_LOGE("Parse delayTime in item failed %{public}zu", i);
+                return false;
+            }
+            opts->delayTimes.push_back(static_cast<uint16_t>(num & MASK_16));
+        }
+    } else {
+        IMAGE_LOGI("No delayTimes in pack option, use default value");
+    }
+    return parsePackOptionOfdisposalTypes(env, root, opts);
 }
 
 static bool parsePackOptionOfLoop(napi_env env, napi_value root, PackOption* opts)
 {
     uint32_t tmpNumber = 0;
     if (!GET_UINT32_BY_NAME(root, "loop", tmpNumber)) {
-        IMAGE_LOGE("No loop in pack option");
-        return false;
+        IMAGE_LOGI("No loop in pack option, use default value");
     }
     opts->loop = static_cast<uint16_t>(tmpNumber & MASK_16);
     return parsePackOptionOfdelayTimes(env, root, opts);
@@ -858,9 +855,6 @@ static void ParserPackToFileMultiFramesArguments(napi_env env,
         BuildMsgOnError(context,
             parsePackOptionOfLoop(env, argv[PARAM2], &(context->packOption)),
             "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
-        BuildMsgOnError(context,
-            parsePackOptionOfdisposalTypes(env, argv[PARAM2], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
     }
 }
 
@@ -967,9 +961,6 @@ static void ParserPackingMultiFramesArguments(napi_env env,
             parsePackOptionOfLoop(env, argv[PARAM1], &(context->packOption)),
             "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
         context->resultBufferSize = parseBufferSize(env, argv[PARAM1]);
-        BuildMsgOnError(context,
-            parsePackOptionOfdisposalTypes(env, argv[PARAM1], &(context->packOption)),
-            "PackOptions mismatch", ERR_IMAGE_INVALID_PARAMETER);
     }
 }
 
