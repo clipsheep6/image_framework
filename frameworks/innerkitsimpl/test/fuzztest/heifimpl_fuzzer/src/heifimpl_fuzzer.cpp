@@ -26,6 +26,7 @@
 #include "image_source.h"
 #include "buffer_source_stream.h"
 #include "ext_decoder.h"
+#include "surface_buffer.h"
 #include "HeifDecoderImpl.h"
 #include "heif_image.h"
 #include "heif_parser.h"
@@ -155,7 +156,11 @@ void HeifParserTest001(ImagePlugin::HeifParser &heifparse, const std::shared_ptr
     ImagePlugin::HeifStreamReader reader(stream, int64data, size);
     std::vector<std::shared_ptr<ImagePlugin::HeifBox>> v3(1, nullptr);
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
-    const ImagePlugin::HeifIrefBox::Reference ref;
+    const ImagePlugin::HeifIrefBox::Reference ref
+    {
+        .fromItemId = 1,
+        .box.boxType_ = BOX_TYPE_CDSC,
+    };
 
     heifparse.MakeFromStream(stream, out);
     heifparse.MakeFromMemory(data, size, flag, out);
@@ -167,7 +172,7 @@ void HeifParserTest001(ImagePlugin::HeifParser &heifparse, const std::shared_ptr
     heifparse.GetItemType(itemId);
     heifparse.GetItemData(itemId, &v1, option);
     heifparse.GetTileImages(itemId, v2);
-    heifparse.GetIdenImage(itemId, v2);
+    heifparse.GetIdenImage(itemId, image);
     heifparse.GetAllItemId(itemIdList);
     heifparse.SetExifMetadata(master_image, &intdata8, uint32data);
     heifparse.UpdateExifMetadata(master_image, &intdata8, uint32data, itemId);
@@ -203,7 +208,7 @@ void HeifParserTest002(ImagePlugin::HeifParser &heifparse, const std::shared_ptr
     const uint8_t constdata = 0;
 
     heifparse.ExtractNonMasterImages();
-    heifparse.ExtractMetadata(const std::vector<heif_item_id> &allItemIds);
+    heifparse.ExtractMetadata(v2);
     heifparse.GetNextItemId();
     heifparse.AddItem(itemType, flag);
     heifparse.AddHvccProperty(itemId);
@@ -235,7 +240,7 @@ void HeifImageTest001(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
     uint32_t int32data = 0;
     int degrees = 0;
     enum ImagePlugin::HeifTransformMirrorDirection direction = ImagePlugin::HeifTransformMirrorDirection::VERTICAL;
-    ImagePlugin::HeifColorFormat defaultColorFormat_ = ImagePlugin::HeifColorFormat::UNDEFINED;
+    ImagePlugin::HeifColorFormat defaultColorFormat_ = ImagePlugin::HeifColorFormat::UNDEDEFINED;
     ImagePlugin::HeifPixelFormat defaultPixelFormat_ = ImagePlugin::HeifPixelFormat::UNDEFINED;
     ImagePlugin::heif_item_id itemId = 0xffff;
     const std::shared_ptr<ImagePlugin::HeifImage> const_img = nullptr;
@@ -484,7 +489,11 @@ void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifS
     ImagePlugin::heif_item_id itemId = 0xffff;
     uint32_t uint32data = 0;
     const std::vector<ImagePlugin::heif_item_id> v1(1, 0xffff);
-    ImagePlugin::HeifIrefBox::Reference ref;
+    ImagePlugin::HeifIrefBox::Reference ref
+    {
+        .fromItemId = 1,
+        .box.boxType_ = BOX_TYPE_CDSC,
+    };
     
     heifirefbox->HasReferences(itemId);
     heifirefbox->GetReferences(itemId, uint32data);
@@ -558,7 +567,7 @@ void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRa
                                  ImagePlugin::HeifColrBox *heifcolrbox, ImagePlugin::HeifStreamReader &reader,
                                  ImagePlugin::HeifStreamWriter &writer)
 {
-    const std::shared_ptr<const HeifColorProfile> const_prof = nullptr;
+    const std::shared_ptr<const ImagePlugin::HeifColorProfile> const_prof = nullptr;
     
     heifrawcolorprofile->GetProfileType();
     heifrawcolorprofile->GetData();
@@ -571,11 +580,11 @@ void ItemPropertyColorBoxTest001(const std::shared_ptr<const ImagePlugin::HeifRa
     heifnclxcolorprofile->GetMatrixCoefficients();
     heifnclxcolorprofile->GetFullRangeFlag();
 
-    HeifColrBox->GetColorProfileType();
-    HeifColrBox->GetColorProfile();
-    HeifColrBox->SetColorProfile(const_prof);
-    HeifColrBox->Write(writer);
-    HeifColrBox->ParseContent(reader);
+    heifcolrbox->GetColorProfileType();
+    heifcolrbox->GetColorProfile();
+    heifcolrbox->SetColorProfile(const_prof);
+    heifcolrbox->Write(writer);
+    heifcolrbox->ParseContent(reader);
 }
 
 void ItemPropertyDisplayBoxTest001(ImagePlugin::HeifMdcvBox *heifmdcvbox, ImagePlugin::HeifClliBox *heifcllibox,
@@ -599,11 +608,11 @@ void ItemPropertyHvccBoxTest001(ImagePlugin::HeifHvccBox *heifhvccbox, ImagePlug
                                 ImagePlugin::HeifStreamWriter &writer)
 {
     std::vector<uint8_t> v1(1, 1);
-    const ImagePlugin::HvccConfig config = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    const ImagePlugin::HvccConfig config = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     const std::vector<uint8_t> v2(1, 1);
     std::vector<std::vector<uint8_t>> v3(1, v1);
     
-    heifhvccbox->GetHeaders(v1);
+    heifhvccbox->GetHeaders(&v1);
     heifhvccbox->SetConfig(config);
     heifhvccbox->GetConfig();
     heifhvccbox->AppendNalData(v2);
@@ -625,7 +634,7 @@ void ItemPropertyTransformBoxTest001(ImagePlugin::HeifIrotBox *heifirotbox,
     heifirotbox->Write(writer);
 
     heifimirbox->GetDirection();
-    heifimirbox->SetDirection();
+    heifimirbox->SetDirection(dir);
     heifimirbox->ParseContent(reader);
     heifimirbox->Write(writer);
 }
