@@ -31,7 +31,6 @@
 #include "hardware/heif_hw_decoder.h"
 #include "heif_error.h"
 #include "image_type.h"
-#include "grid_info.h"
 #include "HeifDecoder.h"
 #include "HeifDecoderImpl.h"
 #include "heif_image.h"
