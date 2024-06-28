@@ -21,12 +21,17 @@
 #include <string>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sstream>
 
 #include "include/core/SkStream.h"
 #include "image_source.h"
 #include "buffer_source_stream.h"
 #include "ext_decoder.h"
 #include "surface_buffer.h"
+#include "hardware/heif_hw_decoder.h"
+#include "heif_error.h"
+#include "image_type.h"
+#include "HeifDecoder.h"
 #include "HeifDecoderImpl.h"
 #include "heif_image.h"
 #include "heif_parser.h"
@@ -156,11 +161,7 @@ void HeifParserTest001(ImagePlugin::HeifParser &heifparse, const std::shared_ptr
     ImagePlugin::HeifStreamReader reader(stream, int64data, size);
     std::vector<std::shared_ptr<ImagePlugin::HeifBox>> v3(1, nullptr);
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
-    const ImagePlugin::HeifIrefBox::Reference ref
-    {
-        .fromItemId = 1,
-        .box.boxType_ = BOX_TYPE_CDSC,
-    };
+    const struct ImagePlugin::HeifIrefBox::Reference ref {.fromItemId = 0xFFFFFFFF};
 
     heifparse.MakeFromStream(stream, out);
     heifparse.MakeFromMemory(data, size, flag, out);
@@ -489,11 +490,7 @@ void ItemRefBoxTest001(ImagePlugin::HeifIrefBox *heifirefbox, ImagePlugin::HeifS
     ImagePlugin::heif_item_id itemId = 0xffff;
     uint32_t uint32data = 0;
     const std::vector<ImagePlugin::heif_item_id> v1(1, 0xffff);
-    ImagePlugin::HeifIrefBox::Reference ref
-    {
-        .fromItemId = 1,
-        .box.boxType_ = BOX_TYPE_CDSC,
-    };
+    struct ImagePlugin::HeifIrefBox::Reference ref {.fromItemId = 0xFFFFFFFF};
     
     heifirefbox->HasReferences(itemId);
     heifirefbox->GetReferences(itemId, uint32data);
@@ -702,7 +699,7 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
     void *obj = dynamic_cast<void*>(heifdecoder);
     ImagePlugin::HeifDecoderImpl *heifdecoderimpl = static_cast<ImagePlugin::HeifDecoderImpl*>(obj);
     std::unique_ptr<ImagePlugin::InputDataStream> stream_ = BufferSourceStream::CreateSourceStream(data, size);
-    auto skStream = std::make_shared<ImagePlugin::ExtStream>(stream_.release());
+    auto skStream = std::make_unique<ImagePlugin::ExtStream>(stream_.release());
     HeifFrameInfo heifInfo;
     heifdecoderimpl->init(new HeifStreamMock(skStream.release()), &heifInfo);
     HeifDecodeImplTest001(heifdecoderimpl, &heifInfo);
