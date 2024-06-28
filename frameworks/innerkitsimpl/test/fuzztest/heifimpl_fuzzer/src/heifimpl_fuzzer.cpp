@@ -235,8 +235,8 @@ void HeifImageTest001(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
     uint32_t int32data = 0;
     int degrees = 0;
     enum ImagePlugin::HeifTransformMirrorDirection direction = ImagePlugin::HeifTransformMirrorDirection::VERTICAL;
-    ImagePlugin::HeifColorFormat defaultColorFormat_ = ImagePlugin::HeifColorFormat::UNDEDEFINED;
-    ImagePlugin::HeifPixelFormat defaultPixelFormat_ = ImagePlugin::HeifPixelFormat::UNDEDEFINED;
+    ImagePlugin::HeifColorFormat defaultColorFormat_ = ImagePlugin::HeifColorFormat::UNDEFINED;
+    ImagePlugin::HeifPixelFormat defaultPixelFormat_ = ImagePlugin::HeifPixelFormat::UNDEFINED;
     ImagePlugin::heif_item_id itemId = 0xffff;
     const std::shared_ptr<ImagePlugin::HeifImage> const_img = nullptr;
 
@@ -314,7 +314,7 @@ void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heif
     int sizenum = 0;
     const std::string const_ptr = "abcd";
     const std::vector<uint8_t> v1(1, 1);
-    enum ImagePlugin::heif_error errMsg = heif_error_ok;
+    enum ImagePlugin::heif_error errMsg = ImagePlugin::heif_error_ok;
 
     int64data = heifbuffstream->Tell();
     heifbuffstream->CheckSize(size, int64data);
@@ -360,7 +360,7 @@ void itemInfoBoxTest001(ImagePlugin::HeifIinfBox &heifIinfbox,
 {
     ImagePlugin::heif_item_id itemId = 0xffff;
     bool flag = false;
-    cosnt std::string const_type = "abc";
+    const std::string const_type = "abc";
     
     heifIinfbox.InferFullBoxVersion();
     heifIinfbox.Write(writer);
@@ -402,7 +402,7 @@ void HeifBoxTest001(std::shared_ptr<ImagePlugin::HeifBox> &heifbox,
     uint8_t version = 0;
 
     heifbox->MakeFromReader(reader, result);
-    heifbox->heif_error Write(writer);
+    heifbox->Write(writer);
     heifbox->GetBoxSize();
     heifbox->GetHeaderSize();
     heifbox->GetBoxType();
@@ -420,7 +420,7 @@ void HeifBoxTest001(std::shared_ptr<ImagePlugin::HeifBox> &heifbox,
     heifbox->WriteChildren(writer);
     heifbox->ReserveHeader(writer);
     heifbox->WriteCalculatedHeader(writer, size);
-    heifbox->heif_error WriteHeader(writer, size);
+    heifbox->WriteHeader(writer, size);
 
     heiffullbox->InferFullBoxVersion();
     heiffullbox->ParseFullHeader(reader);
