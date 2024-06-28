@@ -31,6 +31,7 @@
 #include "hardware/heif_hw_decoder.h"
 #include "heif_error.h"
 #include "image_type.h"
+#include "grid_info.h"
 #include "HeifDecoder.h"
 #include "HeifDecoderImpl.h"
 #include "heif_image.h"
@@ -111,8 +112,10 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     bool flag = false;
     const uint32_t const_uint32data = 0;
     std::shared_ptr<ImagePlugin::HeifImage> image = nullptr;
+    ImagePlugin::GridInfo gridInfo = {0, 0, false, 0, 0, 0, 0};
+    HeifHardwareDecoder hwDecoder_;
 
-    heifdecoderimpl->getSequenceInfo(frameInfo, frameCount);
+    heifdecoderimpl->getSequenceInfo(frameInfo, &frameCount);
     heifdecoderimpl->setOutputColor(heifColor);
     heifdecoderimpl->decode(frameInfo);
     heifdecoderimpl->decodeSequence(frameIndex, frameInfo);
@@ -130,13 +133,12 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     heifdecoderimpl->getErrMsg(errMsg);
     heifdecoderimpl->Reinit(frameInfo);
     heifdecoderimpl->InitFrameInfo(frameInfo, const_image);
-    heifdecoderimpl->GetTileSize(const_image, uint32data, uint32data);
-    heifdecoderimpl->SetRowColNum();
+    heifdecoderimpl->GetTileSize(const_image, gridInfo);
     heifdecoderimpl->ProcessChunkHead(&dstBuffer, frameCount);
-    heifdecoderimpl->DecodeGrids(hwBuffer, flag);
-    heifdecoderimpl->DecodeIdenImage(hwBuffer, flag);
-    heifdecoderimpl->DecodeSingleImage(image, hwBuffer, flag);
-    heifdecoderimpl->ConvertHwBufferPixelFormat(hwBuffer, flag);
+    heifdecoderimpl->DecodeGrids(&hwDecoder_, image, gridInfo, hwBuffer);
+    heifdecoderimpl->DecodeIdenImage(&hwDecoder_, image, hwBuffer, flag);
+    heifdecoderimpl->DecodeSingleImage(&hwDecoder_, image, gridInfo, hwBuffer);
+    heifdecoderimpl->ConvertHwBufferPixelFormat(hwBuffer, gridInfo, &dstBuffer, frameCount);
     heifdecoderimpl->IsDirectYUVDecode();
     heifdecoderimpl->SetColorSpaceInfo(frameInfo, const_image);
     heifdecoderimpl->SetHardwareDecodeErrMsg(const_uint32data, const_uint32data);
