@@ -21,10 +21,12 @@
 #include "image_log.h"
 #include "pixel_map_impl.h"
 #include "image_packer.h"
+#include "inttypes.h"
 
 namespace OHOS {
 namespace Media {
 class ImagePackerImpl : public OHOS::FFI::FFIData {
+    DECL_TYPE(ImagePackerImpl, OHOS::FFI::FFIData)
 public:
     ImagePackerImpl();
     std::tuple<int32_t, void*, int64_t> Packing(PixelMap& source, const PackOption& option, uint64_t bufferSize);
@@ -78,7 +80,7 @@ public:
             free(resultBuffer);
             return std::make_tuple(finalPackRet, nullptr, 0);
         }
-        IMAGE_LOGI("packedSize=%{public}lld.", static_cast<long long>(packedSize));
+        IMAGE_LOGD("packedSize=%{public}." PRId64, static_cast<long long>(packedSize));
 
         return std::make_tuple(SUCCESS_CODE, resultBuffer, packedSize);
     }
@@ -109,20 +111,11 @@ public:
             IMAGE_LOGE("Packing failed, FinalizePacking failed, ret=%{public}u.", finalPackRet);
             return finalPackRet;
         }
-        IMAGE_LOGI("packedSize=%{public}lld.", static_cast<long long>(packedSize));
+        IMAGE_LOGD("packedSize=%{public}."  PRId64, static_cast<long long>(packedSize));
         return SUCCESS;
     }
-    OHOS::FFI::RuntimeType *GetRuntimeType() override { return GetClassType(); }
 
 private:
-    friend class OHOS::FFI::RuntimeType;
-    friend class OHOS::FFI::TypeBase;
-    static OHOS::FFI::RuntimeType *GetClassType()
-    {
-        static OHOS::FFI::RuntimeType runtimeType =
-            OHOS::FFI::RuntimeType::Create<OHOS::FFI::FFIData>("ImagePackerImpl");
-        return &runtimeType;
-    }
     std::shared_ptr<ImagePacker> real_ = nullptr;
 };
 } // namespace Media
