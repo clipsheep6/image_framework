@@ -83,6 +83,7 @@ struct ImageSourceAsyncContext {
     std::string valueStr;
     std::vector<std::string> keyStrArray;
     std::vector<std::pair<std::string, std::string>> kVStrArray;
+    std::set<std::string> removeArray;
     std::string defaultValueStr;
     int32_t valueInt;
     int32_t deufltValueInt;
@@ -542,7 +543,12 @@ std::vector<std::pair<std::string, std::string>> GetRecordArgument(napi_env env,
             IMAGE_LOGE("Get recordValue name property failed %{public}d", status);
             continue;
         }
-        std::string valueStr = GetStringArgument(env, recordValue);
+        std::string valueStr;
+        if (ImageNapiUtils::getType(env, recordValue) == napi_null) {
+            valueStr = "ValueIsNull";
+        } else {
+            valueStr = GetStringArgument(env, recordValue);
+        }
         kVStrArray.push_back(std::make_pair(keyStr, valueStr));
     }
 
@@ -1849,6 +1855,32 @@ static uint32_t CheckExifDataValue(const std::string &key, const std::string &va
     return status;
 }
 
+static uint32_t RemoveImageProperties(ImageSourceAsyncContext *context)
+{
+    std::set<std::string> deleteArray = context->removeArray;
+    uint32_t status = SUCCESS;
+    if (!IsSameTextStr(context->pathName, "")) {
+        status = context->rImageSource->RemoveImageProperties(0, deleteArray, context->pathName);
+    } else if (context->fdIndex != -1) {
+        status = context->rImageSource->RemoveImageProperties(0, deleteArray, context->fdIndex);
+    } else if (context->sourceBuffer != nullptr) {
+        status = context->rImageSource->RemoveImageProperties(0, deleteArray,
+        static_cast<uint8_t *>(context->sourceBuffer), context->sourceBufferSize);
+    }
+    return status;
+}
+
+static uint32_t WriteImageProperties(ImageSourceAsyncContext *context, std::string key, std::string value)
+{
+    uint32_t status = SUCCESS;
+    if (!IsSameTextStr(context->pathName, "")) {
+        status = context->rImageSource->ModifyImageProperty(0, key, value, context->pathName);
+    } else if (context->fdIndex != -1) {
+        status = context->rImageSource->ModifyImageProperty(0, key, value, context->fdIndex);
+    }
+    return status;
+}
+
 static void ModifyImagePropertiesExecute(napi_env env, void *data)
 {
     auto context = static_cast<ImageSourceAsyncContext*>(data);
@@ -1867,12 +1899,15 @@ static void ModifyImagePropertiesExecute(napi_env env, void *data)
             context->errMsgArray.insert(std::make_pair(status, context->errMsg));
             continue;
         }
-        if (!IsSameTextStr(context->pathName, "")) {
+        if (recordIterator->second == "ValueIsNull") {
+            context->removeArray.insert(recordIterator->first);
+        }
+        if (recordIterator + 1 == context->kVStrArray.end()) {
+            status = WriteImageProperties(context, recordIterator->first,
+                recordIterator->second);
+        } else if (!IsSameTextStr(context->pathName, "") || context->fdIndex != -1) {
             status = context->rImageSource->ModifyImageProperty(0, recordIterator->first,
-                recordIterator->second, context->pathName);
-        } else if (context->fdIndex != -1) {
-            status = context->rImageSource->ModifyImageProperty(0, recordIterator->first,
-                recordIterator->second, context->fdIndex);
+                recordIterator->second);
         } else if (context->sourceBuffer != nullptr) {
             status = context->rImageSource->ModifyImageProperty(0, recordIterator->first,
                 recordIterator->second, static_cast<uint8_t *>(context->sourceBuffer),
@@ -1884,6 +1919,12 @@ static void ModifyImagePropertiesExecute(napi_env env, void *data)
         }
         if (status != SUCCESS) {
             context->errMsgArray.insert(std::make_pair(status, recordIterator->first));
+        }
+    }
+    if (context->removeArray.size() > 0) {
+        status = RemoveImageProperties(context);
+        if (status != SUCCESS) {
+            context->errMsgArray.insert(std::make_pair(status, *(context->removeArray.begin())));
         }
     }
     context->status = context->errMsgArray.size() > 0 ? ERROR : SUCCESS;
