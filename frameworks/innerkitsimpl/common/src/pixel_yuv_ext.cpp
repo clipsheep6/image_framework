@@ -119,7 +119,8 @@ void PixelYuvExt::scale(float xAxis, float yAxis, const AntiAliasingOption &opti
     int32_t dstW = imageInfo.size.width  * xAxis;
     int32_t dstH = imageInfo.size.height * yAxis;
     Size desiredSize = {dstW, dstH};
-    MemoryData memoryData = {nullptr, GetImageSize(dstW, dstH), "Trans ImageData", desiredSize};
+    MemoryData memoryData = {nullptr, GetImageSize(dstW, dstH, imageInfo.pixelFormat), "Trans ImageData",
+        desiredSize};
     auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
     if (m == nullptr) {
         IMAGE_LOGE("scale CreateMemory failed");
@@ -167,10 +168,16 @@ void PixelYuvExt::flip(bool xAxis, bool yAxis)
     }
     ImageInfo imageInfo;
     GetImageInfo(imageInfo);
+    if (imageInfo.pixelFormat == PixelFormat::YCBCR_P010 ||
+        imageInfo.pixelFormat == PixelFormat::YCRCB_P010) {
+        IMAGE_LOGD("P010 use PixelYuv flip");
+        PixelYuv::flip(xAxis, yAxis);
+        return;
+    }
     uint8_t *dst = nullptr;
     int32_t width = imageInfo.size.width;
     int32_t height = imageInfo.size.height;
-    uint32_t pictureSize = GetImageSize(width, height);
+    uint32_t pictureSize = GetImageSize(width, height, imageInfo.pixelFormat);
     MemoryData memoryData = {nullptr, pictureSize, "flip ImageData", {width, height}};
     auto m = MemoryManager::CreateMemory(allocatorType_, memoryData);
     if (m == nullptr) {
@@ -226,7 +233,7 @@ int32_t PixelYuvExt::ColorSpaceBGRAToYuv(
 {
     int32_t dstWidth = dst.info.width();
     int32_t dstHeight = dst.info.height();
-    uint32_t pictureSize = GetImageSize(dstWidth, dstHeight);
+    uint32_t pictureSize = GetImageSize(dstWidth, dstHeight, format);
     std::unique_ptr<uint8_t[]> yuvData = std::make_unique<uint8_t[]>(pictureSize);
     if (!PixelYuvExtUtils::BGRAToYuv420(bgraData, yuvData.get(), dstWidth, dstHeight, format)) {
         IMAGE_LOGE("BGRAToYuv420 failed");
