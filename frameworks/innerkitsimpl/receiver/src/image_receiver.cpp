@@ -203,7 +203,7 @@ std::shared_ptr<ImageReceiver> ImageReceiver::CreateImageReceiver(int32_t width,
     }
     iva->receiverConsumerSurface_->SetDefaultWidthAndHeight(width, height);
     iva->receiverConsumerSurface_->SetQueueSize(capicity);
-    iva->receiverConsumerSurface_->SetDefaultUsage(BUFFER_USAGE_CPU_READ);
+    iva->receiverConsumerSurface_->SetDefaultUsage(BUFFER_USAGE_CPU_READ | BUFFER_USAGE_MEM_MMZ_CACHE);
 
     auto p = iva->receiverConsumerSurface_->GetProducer();
     iva->receiverProducerSurface_ = Surface::CreateSurfaceAsProducer(p);
