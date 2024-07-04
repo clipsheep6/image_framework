@@ -407,6 +407,8 @@ HWTEST_F(PixelMapNdk2Test, OH_PixelmapInitializationOptions_SetGetSrcPixelFormat
     OH_PixelmapInitializationOptions_SetSrcPixelFormat(ops, 1);
     OH_PixelmapInitializationOptions_GetSrcPixelFormat(ops, &srcpixelFormat);
     ASSERT_EQ(srcpixelFormat, 1);
+    free(ops);
+    ops = nullptr;
     GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_PixelmapNative_InitializationSetOptionsGetSrcPixelFormat end";
 }
 
@@ -422,6 +424,17 @@ HWTEST_F(PixelMapNdk2Test, OH_PixelmapNative_CreateEmptyPixelmap, TestSize.Level
     OH_PixelmapNative **pixelmap = nullptr;
     Image_ErrorCode ret = OH_PixelmapNative_CreateEmptyPixelmap(options, pixelmap);
     ASSERT_EQ(ret, IMAGE_BAD_PARAMETER);
+    free(options);
+    options = nullptr;
+
+    if (pixelmap != nullptr) {
+        for (size_t i = 0; pixelmap[i] != nullptr; i++) {
+            delete pixelmap[i];
+            pixelmap[i] = nullptr;
+        }
+        delete[] pixelmap;
+        pixelmap = nullptr;
+    }
     GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_PixelmapNative_CreateEmptyPixelmap end";
 }
 
@@ -438,6 +451,10 @@ HWTEST_F(PixelMapNdk2Test, OH_PixelmapNative_ConvertAlphaFormat, TestSize.Level3
     const bool isPremul = false;
     Image_ErrorCode ret = OH_PixelmapNative_ConvertAlphaFormat(srcpixelmap, dstpixelmap, isPremul);
     ASSERT_EQ(ret, IMAGE_BAD_PARAMETER);
+    delete srcpixelmap;
+    delete dstpixelmap;
+    srcpixelmap = nullptr;
+    dstpixelmap = nullptr;
     GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_PixelmapNative_ConvertAlphaFormat end";
 }
 
