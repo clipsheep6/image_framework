@@ -106,7 +106,6 @@ void HeifDecodeImplTest001(ImagePlugin::HeifDecoderImpl *heifdecoderimpl, HeifFr
     std::string errMsg = "error";
     std::vector<uint8_t> v1(1, 1);
     const std::shared_ptr<ImagePlugin::HeifImage> const_image = nullptr;
-    uint32_t uint32data = 0;
     sptr<OHOS::SurfaceBuffer> hwBuffer = nullptr;
     bool flag = false;
     const uint32_t const_uint32data = 0;
@@ -306,7 +305,7 @@ void HeifImageTest002(std::shared_ptr<ImagePlugin::HeifImage> &heifimage)
     heifimage->GetISOMetadata();
 }
 
-void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInPutStream> &heifbuffstream,
+void HeifStreamTest001(std::shared_ptr<ImagePlugin::HeifBufferInputStream> &heifbuffstream,
                        ImagePlugin::HeifStreamReader &heifstreamreader,
                        ImagePlugin::HeifStreamWriter &heifstreamwriter)
 {
@@ -642,7 +641,7 @@ void HeifImplFuzzTest002(const uint8_t *data, size_t size)
     bool flag;
     const char *itemType = "abc";
     int64_t start = 0;
-    auto heifbuffstream = std::make_shared<ImagePlugin::HeifBufferInPutStream>(data, size, flag);
+    auto heifbuffstream = std::make_shared<ImagePlugin::HeifBufferInputStream>(data, size, flag);
     auto heifparse = ImagePlugin::HeifParser(heifbuffstream);
     std::shared_ptr<ImagePlugin::HeifInfeBox> heifinfebox = heifparse.AddItem(itemType, flag);
     std::shared_ptr<ImagePlugin::HeifFullBox> heiffullbox = heifinfebox;
@@ -707,7 +706,7 @@ void HeifImplFuzzTest001(const uint8_t* data, size_t size)
 
     //heif_parse.cpp create/init/fuzztest
     bool needCopy;
-    auto heifbuffstream = std::make_shared<ImagePlugin::HeifBufferInPutStream>(data, size, needCopy);
+    auto heifbuffstream = std::make_shared<ImagePlugin::HeifBufferInputStream>(data, size, needCopy);
     auto heifparse = ImagePlugin::HeifParser(heifbuffstream);
     HeifParserTest001(heifparse, heifbuffstream);
     HeifParserTest001(heifparse, heifbuffstream);
