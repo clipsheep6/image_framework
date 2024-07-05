@@ -1,0 +1,81 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
+
+ohos_fuzztest("HeifImplFuzzTest") {
+  module_out_path = "multimedia_image/image_framework"
+  fuzz_config_file = "$image_subsystem/frameworks/innerkitsimpl/test/fuzztest/heifimpl_fuzzer"
+
+  include_dirs = [
+    "./include",
+    "$image_subsystem/interfaces/innerkits/include",
+    "$image_subsystem/plugins/common/libs/image/libextplugin/include",
+    "$image_subsystem/plugins/common/libs/image/libextplugin/include/texture_encode",
+    "$image_subsystem/plugins/common/libs/image/libextplugin/include/jpeg_yuv_decoder",
+    "$image_subsystem/plugins/common/libs/image/libextplugin/include/heif_impl",
+    "$image_subsystem/plugins/common/libs/image/libextplugin/include/heif_impl/heif_parser",
+    "$image_subsystem/plugins/common/libs/image/libextplugin/include/heif_impl/heif_parser/box",
+    "${skia_root}/skia/include/core",
+  ]
+
+  sources = [ "src/heifimpl_fuzzer.cpp" ]
+
+  deps = [ 
+    "$image_subsystem/interfaces/innerkits:image_native" ,
+    "${image_subsystem}/plugins/common/libs/image/formatagentplugin:imageformatagent",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin:textureEncoderCL",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin:extplugin",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin:heifparser",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin:heifimpl",
+    ]
+  defines = [
+    "JPEG_HW_DECODE_ENABLE",
+    "HEIF_HW_DECODE_ENABLE",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "graphic_2d:color_manager",
+    "graphic_surface:surface",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "libexif:libexif",
+    "opencl-headers:libcl",
+    "astc-encoder:astc_encoder_shared",
+    "drivers_interface_display:display_commontype_idl_headers",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "hisysevent:libhisysevent",
+    "libjpeg-turbo:turbojpeg",
+    "skia:libjpeg",
+    "zlib:libz",
+    "drivers_interface_codec:image_idl_headers",
+    "drivers_interface_codec:libimage_proxy_1.0",
+    "drivers_interface_display:display_buffer_idl_headers",
+    "drivers_interface_display:display_composer_idl_headers",
+    "drivers_interface_display:libdisplay_buffer_hdi_impl",
+    "drivers_interface_display:libdisplay_composer_hdi_impl",
+    "hdf_core:libhdf_utils",
+    "hdf_core:libhdi",
+    "ipc:ipc_single",
+    "drivers_interface_codec:codec_idl_headers",
+    "drivers_peripheral_codec:libcodec_hdi_omx_client",
+    "openmax:libopenmax_static",
+    "drivers_interface_codec:libcodec_proxy_3.0",
+    "ffmpeg:libohosffmpeg",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "qos_manager:qos",
+  ]
+}
