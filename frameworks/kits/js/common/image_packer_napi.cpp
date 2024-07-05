@@ -1134,7 +1134,7 @@ STATIC_EXEC_FUNC(PackToFile)
         context->packedSize = packedSize;
         context->status = SUCCESS;
     } else {
-        context->status = ERROR;
+        context->status = ERR_IMAGE_ENCODE_FAILED;
         BuildMsgOnError(context, packRes == SUCCESS, "PackedSize outside size", packRes);
         IMAGE_LOGE("Packing failed, packedSize outside size.");
     }
