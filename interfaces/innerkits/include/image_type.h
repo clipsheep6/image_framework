@@ -17,6 +17,7 @@
 #define INTERFACES_INNERKITS_INCLUDE_IMAGE_TYPE_H_
 
 #include <cinttypes>
+#include <set>
 #include <string>
 #include "color_space.h"
 
@@ -288,7 +289,7 @@ enum class MetadataType {
 
 struct DecodingOptionsForPicture {
     std::set<AuxiliaryPictureType> desireAuxiliaryPictures;
-}
+};
 
 } // namespace Media
 } // namespace OHOS

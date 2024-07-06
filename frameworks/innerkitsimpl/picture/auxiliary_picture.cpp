@@ -43,7 +43,7 @@ AuxiliaryPictureType AuxiliaryPicture::GetType()
     return type_;
 }
 
-AuxiliaryPictureType AuxiliaryPicture::SetType(OHOS::Media::AuxiliaryPicture type)
+void AuxiliaryPicture::SetType(AuxiliaryPictureType type)
 {
     type_ = type;
 }
@@ -82,7 +82,7 @@ uint32_t AuxiliaryPicture::WritePixels(const uint8_t *source, const uint64_t &bu
     return content_->WritePixels(source, bufferSize);
 }
 
-std::shared_ptr<ImageMetadata> AuxiliaryPicture::GetMetadata(OH::Media::MetadataType type)
+std::shared_ptr<ImageMetadata> AuxiliaryPicture::GetMetadata(MetadataType type)
 {
     auto iter = metadatas_.find(type);
     if (iter == metadatas_.end()) {
