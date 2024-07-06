@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_METADATA_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_METADATA_H
+#ifndef INTERFACES_INNERKITS_INCLUDE_EXIF_METADATA_H
+#define INTERFACES_INNERKITS_INCLUDE_EXIF_METADATA_H
 
 #include <libexif/exif-entry.h>
 #include <libexif/exif-tag.h>
@@ -25,7 +25,7 @@
 
 namespace OHOS {
 namespace Media {
-class ExifMetadata : public Metadata {
+class ExifMetadata : public ImageMetadata {
 public:
     ExifMetadata();
     ExifMetadata(ExifData *exifData);
@@ -63,4 +63,4 @@ private:
 } // namespace Media
 } // namespace OHOS
 
-#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_EXIF_METADATA_H
+#endif // INTERFACES_INNERKITS_INCLUDE_EXIF_METADATA_H

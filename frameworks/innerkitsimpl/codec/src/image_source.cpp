@@ -1273,6 +1273,11 @@ void ImageSource::DetachIncrementalDecoding(PixelMap &pixelMap)
     incDecodingMap_.erase(iter);
 }
 
+std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts)
+{
+    return 0;
+}
+
 uint32_t ImageSource::UpdateData(const uint8_t *data, uint32_t size, bool isCompleted)
 {
     ImageDataStatistics imageDataStatistics("[ImageSource]UpdateData");

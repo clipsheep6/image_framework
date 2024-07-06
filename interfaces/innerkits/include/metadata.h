@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
+#ifndef INTERFACES_INNERKITS_INCLUDE_METADATA_H
+#define INTERFACES_INNERKITS_INCLUDE_METADATA_H
 
 #include <string>
 
@@ -22,7 +22,7 @@
 
 namespace OHOS {
 namespace Media {
-class Metadata {
+class ImageMetadata {
 public:
     virtual int GetValue(const std::string &key, std::string &value) const = 0;
     virtual bool SetValue(const std::string &key, const std::string &value) = 0;
@@ -31,4 +31,4 @@ public:
 } // namespace Media
 } // namespace OHOS
 
-#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
+#endif // INTERFACES_INNERKITS_INCLUDE_METADATA_H

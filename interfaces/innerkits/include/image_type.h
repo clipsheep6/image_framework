@@ -280,6 +280,16 @@ enum class AuxiliaryPictureType {
     LINEAR_MAP = 4,
     MARK_CUT_MAP = 5,
 };
+
+enum class MetadataType {
+    EXIF = 1,
+    MARK_CUT = 2,
+};
+
+struct DecodingOptionsForPicture {
+    std::set<AuxiliaryPictureType> desireAuxiliaryPictures;
+}
+
 } // namespace Media
 } // namespace OHOS
 
