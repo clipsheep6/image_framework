@@ -14,8 +14,6 @@
  */
 
 #include "heifimpl_fuzzer.h"
-#define private public
-#define protected public
 
 #include <cstdint>
 #include <string>
@@ -49,6 +47,9 @@
 #include "box/item_property_display_box.h"
 #include "box/item_property_hvcc_box.h"
 #include "box/item_ref_box.h"
+
+#define private public
+#define protected public
 
 namespace OHOS {
 namespace Media {
