@@ -18,8 +18,6 @@
 
 #include <string>
 
-#include <libexif/exif-data.h>
-
 namespace OHOS {
 namespace Media {
 class ImageMetadata {
