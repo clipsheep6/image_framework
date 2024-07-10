@@ -36,6 +36,8 @@
     *ExifMetadata*;
     *ImageFormatConvert*;
     *PixelYuv*;
+    *Picture*;
+    *AuxiliaryPicture*;
   local:
     *;
 };
