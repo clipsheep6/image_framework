@@ -13,18 +13,27 @@
  * limitations under the License.
  */
 
+#include "refbase.h"
 #include "auxiliary_picture_napi.h"
 #include "media_errors.h"
 #include "image_log.h"
 #include "image_napi_utils.h"
 #include "image_napi.h"
 #include "pixel_map_napi.h"
+#include "surface_buffer.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
 #undef LOG_TAG
 #define LOG_TAG "AuxiliaryPictureNapi"
+
+namespace {
+    constexpr uint32_t NUM_0 = 0;
+    constexpr uint32_t NUM_1 = 1;
+    constexpr uint32_t NUM_2 = 2;
+    constexpr uint32_t NUM_3 = 3;
+}
 
 namespace OHOS {
 namespace Media {
@@ -42,9 +51,25 @@ struct AuxiliaryPictureNapiAsyncContext {
     napi_ref error = nullptr;
     uint32_t status;
     AuxiliaryPictureNapi *nConstructor;
+    std::shared_ptr<Picture> rPicture;
+    std::shared_ptr<AuxiliaryPicture> auxPicture;
+    sptr<SurfaceBuffer>* surfaceBufferPtr;
+    size_t surfaceBufferSize;
+    Size size;
+    AuxiliaryPictureType type;
 };
 
 using AuxiliaryPictureNapiAsyncContextPtr = std::unique_ptr<AuxiliaryPictureNapiAsyncContext>;
+
+struct NapiValues {
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_value* argv = nullptr;
+    size_t argc;
+    int32_t refCount = 1;
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> context;
+};
 
 AuxiliaryPictureNapi::AuxiliaryPictureNapi():env_(nullptr)
 {
@@ -60,7 +85,9 @@ AuxiliaryPictureNapi::~AuxiliaryPictureNapi()
 napi_value AuxiliaryPictureNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {};
-    napi_property_descriptor static_prop[] = {};
+    napi_property_descriptor static_prop[] = {
+        DECLARE_NAPI_STATIC_FUNCTION("createAuxiliaryPicture", CreateAuxiliaryPicture),
+    };
 
     napi_value constructor = nullptr;
 
@@ -137,6 +164,84 @@ void AuxiliaryPictureNapi::Destructor(napi_env env, void *nativeObject, void *fi
         delete reinterpret_cast<AuxiliaryPictureNapi*>(nativeObject);
         nativeObject = nullptr;
     }
+}
+
+STATIC_EXEC_FUNC(CreateAuxiliaryPicture)
+{
+    IMAGE_LOGD("CreateAuxiliaryPictureExec IN");
+    auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+    auto picture = AuxiliaryPicture::Create(*(context->surfaceBufferPtr), context->type, context->size);
+    context->auxPicture = std::move(picture);
+    if (IMG_NOT_NULL(context->auxPicture)) {
+        context->status = SUCCESS;
+    } else {
+        context->status = ERROR;
+    }
+}
+
+static bool ParseSize(napi_env env, napi_value root, int32_t& width, int32_t& height)
+{
+    if (!GET_INT32_BY_NAME(root, "width", width) || !GET_INT32_BY_NAME(root, "height", height)) {
+        return false;
+    }
+    return true;
+}
+
+static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
+{
+    if (val <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+        return AuxiliaryPictureType(val);
+    }
+    return AuxiliaryPictureType::NONE;
+}
+
+napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callback_info info)
+{
+    if (AuxiliaryPictureNapi::GetConstructor() == nullptr) {
+        napi_value exports = nullptr;
+        napi_create_object(env, &exports);
+        AuxiliaryPictureNapi::Init(env, exports);
+    }
+
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    napi_value constructor = nullptr;
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = NUM_3;
+    napi_value argValue[NUM_3] = {0};
+    uint32_t auxiType = 0;
+    IMAGE_LOGD("CreateAuxiliaryPicture IN");
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
+    
+    IMG_NAPI_CHECK_RET_D(argCount == NUM_3,ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        "Invalid args count"),IMAGE_LOGE("Invalid args count %{public}zu", argCount));
+
+    status = napi_get_arraybuffer_info(env, argValue[NUM_0], reinterpret_cast<void**>(&asyncContext->surfaceBufferPtr),
+        &(asyncContext->surfaceBufferSize));
+    
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to get auxiliary picture buffer"));
+ 
+    if (!ParseSize(env, argValue[NUM_1], asyncContext->size.width, asyncContext->size.height)) {
+        IMAGE_LOGE("fail to get auxiliary picture size");
+        return result;
+    }
+    status = napi_get_value_uint32(env, argValue[NUM_2], &auxiType);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to get auxiliary picture Type"));
+    asyncContext->type = ParseAuxiliaryPictureType(auxiType);
+    CreateAuxiliaryPictureExec(env, static_cast<void*>((asyncContext).get()));
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (IMG_IS_OK(status)) {
+        sAuxiliaryPic_ = std::move(asyncContext->auxPicture);
+        status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+    }
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to create picture sync"));
+
+    return result;
 }
 
 void AuxiliaryPictureNapi::release()
