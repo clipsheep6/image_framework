@@ -13,15 +13,13 @@
  * limitations under the License.
  */
 
-#include "refbase.h"
+#include <memory.h>
 #include "auxiliary_picture_napi.h"
 #include "media_errors.h"
 #include "image_log.h"
-#include "image_napi_utils.h"
 #include "image_napi.h"
-#include "image_utils.h"
+#include "image_napi_utils.h"
 #include "pixel_map_napi.h"
-#include "surface_buffer.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -54,8 +52,8 @@ struct AuxiliaryPictureNapiAsyncContext {
     AuxiliaryPictureNapi *nConstructor;
     std::shared_ptr<Picture> rPicture;
     std::shared_ptr<AuxiliaryPicture> auxPicture;
-    sptr<SurfaceBuffer>* surfaceBufferPtr;
-    size_t surfaceBufferSize;
+    void *arrayBuffer;
+    size_t arrayBufferSize;
     Size size;
     AuxiliaryPictureType type;
 };
@@ -170,7 +168,12 @@ void AuxiliaryPictureNapi::Destructor(napi_env env, void *nativeObject, void *fi
 STATIC_EXEC_FUNC(CreateAuxiliaryPicture)
 {
     auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
-    auto picture = AuxiliaryPicture::Create(context->surfaceBuffer, context->type, context->size);
+    InitializationOptions opts;
+    opts.size = context->size;
+    auto colors = static_cast<uint32_t*>(context->arrayBuffer);
+    auto tmpPixelmap = PixelMap::Create(colors, context->arrayBufferSize, opts);
+    std::shared_ptr<PixelMap> pixelmap = std::move(tmpPixelmap);
+    auto picture = AuxiliaryPicture::Create(pixelmap, context->type, context->size);
     context->auxPicture = std::move(picture);
     if (IMG_NOT_NULL(context->auxPicture)) {
         context->status = SUCCESS;
@@ -214,25 +217,18 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     uint32_t auxiType = 0;
     IMAGE_LOGD("CreateAuxiliaryPicture IN");
     std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = 
-                                                                std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+        std::make_unique<AuxiliaryPictureNapiAsyncContext>();
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to napi_get_cb_info"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Call napi_get_cb_info failed"));
     
     IMG_NAPI_CHECK_RET_D(argCount == NUM_3,ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
         "Invalid args count"),IMAGE_LOGE("Invalid args count %{public}zu", argCount));
 
-    asyncContext->surfaceBuffer = SurfaceBuffer::Create();
-    asyncContext->nativeBuffer = asyncContext->surfaceBuffer.GetRefPtr();
-    status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(asyncContext->nativeBuffer),
-            &(asyncContext->surfaceBufferSize));
+    status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(asyncContext->arrayBuffer),
+            &(asyncContext->arrayBufferSize));
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to get auxiliary picture buffer"));
-    int32_t err = ImageUtils::SurfaceBuffer_Reference(asyncContext->nativeBuffer);
-    if (err != OHOS::GSERROR_OK) {
-        IMAGE_LOGE("NativeBufferReference failed");
-        return result;
-    }
     if (!ParseSize(env, argValue[NUM_1], asyncContext->size.width, asyncContext->size.height)) {
-        IMAGE_LOGE("fail to get auxiliary picture size");
+        IMAGE_LOGE("Fail to get auxiliary picture size");
         return result;
     }
     status = napi_get_value_uint32(env, argValue[NUM_2], &auxiType);
