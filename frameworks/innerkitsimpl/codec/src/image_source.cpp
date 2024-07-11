@@ -1471,7 +1471,6 @@ uint32_t ImageSource::CreateExifMetadata(uint8_t *buffer, const uint32_t size, b
 uint32_t ImageSource::GetImagePropertyCommon(uint32_t index, const std::string &key, std::string &value)
 {
     if (isExifReadFailed && exifMetadata_ == nullptr) {
-        IMAGE_LOGD("There is no exif in picture!");
         return ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
     uint32_t ret = CreatExifMetadataByImageSource();
