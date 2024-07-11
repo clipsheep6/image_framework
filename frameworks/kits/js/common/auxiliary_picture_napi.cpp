@@ -19,6 +19,7 @@
 #include "image_log.h"
 #include "image_napi_utils.h"
 #include "image_napi.h"
+#include "image_utils.h"
 #include "pixel_map_napi.h"
 #include "surface_buffer.h"
 
@@ -168,9 +169,8 @@ void AuxiliaryPictureNapi::Destructor(napi_env env, void *nativeObject, void *fi
 
 STATIC_EXEC_FUNC(CreateAuxiliaryPicture)
 {
-    IMAGE_LOGD("CreateAuxiliaryPictureExec IN");
     auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
-    auto picture = AuxiliaryPicture::Create(*(context->surfaceBufferPtr), context->type, context->size);
+    auto picture = AuxiliaryPicture::Create(context->surfaceBuffer, context->type, context->size);
     context->auxPicture = std::move(picture);
     if (IMG_NOT_NULL(context->auxPicture)) {
         context->status = SUCCESS;
@@ -189,7 +189,7 @@ static bool ParseSize(napi_env env, napi_value root, int32_t& width, int32_t& he
 
 static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
 {
-    if (val <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+    if (val >= 0 && val <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
         return AuxiliaryPictureType(val);
     }
     return AuxiliaryPictureType::NONE;
@@ -213,24 +213,30 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     napi_value argValue[NUM_3] = {0};
     uint32_t auxiType = 0;
     IMAGE_LOGD("CreateAuxiliaryPicture IN");
-    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = 
+                                                                std::make_unique<AuxiliaryPictureNapiAsyncContext>();
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to napi_get_cb_info"));
     
     IMG_NAPI_CHECK_RET_D(argCount == NUM_3,ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
         "Invalid args count"),IMAGE_LOGE("Invalid args count %{public}zu", argCount));
 
-    status = napi_get_arraybuffer_info(env, argValue[NUM_0], reinterpret_cast<void**>(&asyncContext->surfaceBufferPtr),
-        &(asyncContext->surfaceBufferSize));
-    
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to get auxiliary picture buffer"));
- 
+    asyncContext->surfaceBuffer = SurfaceBuffer::Create();
+    asyncContext->nativeBuffer = asyncContext->surfaceBuffer.GetRefPtr();
+    status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(asyncContext->nativeBuffer),
+            &(asyncContext->surfaceBufferSize));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to get auxiliary picture buffer"));
+    int32_t err = ImageUtils::SurfaceBuffer_Reference(asyncContext->nativeBuffer);
+    if (err != OHOS::GSERROR_OK) {
+        IMAGE_LOGE("NativeBufferReference failed");
+        return result;
+    }
     if (!ParseSize(env, argValue[NUM_1], asyncContext->size.width, asyncContext->size.height)) {
         IMAGE_LOGE("fail to get auxiliary picture size");
         return result;
     }
     status = napi_get_value_uint32(env, argValue[NUM_2], &auxiType);
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to get auxiliary picture Type"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get auxiliary picture Type"));
     asyncContext->type = ParseAuxiliaryPictureType(auxiType);
     CreateAuxiliaryPictureExec(env, static_cast<void*>((asyncContext).get()));
     status = napi_get_reference_value(env, sConstructor_, &constructor);
@@ -238,9 +244,7 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
         sAuxiliaryPic_ = std::move(asyncContext->auxPicture);
         status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
     }
-
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to create picture sync"));
-
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to create picture sync"));
     return result;
 }
 
