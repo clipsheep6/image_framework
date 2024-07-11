@@ -207,7 +207,7 @@ std::shared_ptr<PixelMap> Picture::GetMainPixel()
 
 void Picture::SetMainPixel(std::shared_ptr <PixelMap> PixelMap)
 {
-    mainPixelMap_ = PixelMap;;
+    mainPixelMap_ = PixelMap;
 }
 
 std::unique_ptr<PixelMap> Picture::GetHdrComposedPixelMap()
