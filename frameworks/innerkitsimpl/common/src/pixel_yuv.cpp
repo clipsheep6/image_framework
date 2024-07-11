@@ -157,12 +157,6 @@ uint32_t PixelYuv::getPixelBytesNumber()
     return ERR_IMAGE_DATA_UNSUPPORT;
 }
 
-int32_t PixelYuv::GetByteCount()
-{
-    IMAGE_LOGE("GetByteCount is not support on PixelYuv");
-    return ERR_IMAGE_DATA_UNSUPPORT;
-}
-
 static int32_t GetYSize(int32_t width, int32_t height)
 {
     return width * height;

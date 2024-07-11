@@ -1191,7 +1191,11 @@ int32_t PixelMap::GetByteCount()
 {
     IMAGE_LOGD("GetByteCount");
     if (imageInfo_.pixelFormat == PixelFormat::NV12 || imageInfo_.pixelFormat == PixelFormat::NV21) {
-        return GetYUVByteCount(imageInfo_);
+        auto ret = GetYUVByteCount(imageInfo_);
+        if (ret < 0) {
+            return 0;
+        }
+        return ret;
     } else {
         return rowDataSize_ * imageInfo_.size.height;
     }

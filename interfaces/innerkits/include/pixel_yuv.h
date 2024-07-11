@@ -46,7 +46,6 @@ public:
     NATIVEEXPORT uint8_t GetARGB32ColorB(uint32_t color) override;
     NATIVEEXPORT uint32_t SetAlpha(const float percent) override;
     NATIVEEXPORT uint32_t getPixelBytesNumber();
-    NATIVEEXPORT int32_t GetByteCount() override;
     NATIVEEXPORT void rotate(float degrees) override;
     NATIVEEXPORT uint32_t crop(const Rect &rect) override;
     NATIVEEXPORT void scale(float xAxis, float yAxis) override;
