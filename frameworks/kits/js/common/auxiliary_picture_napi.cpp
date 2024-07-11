@@ -215,7 +215,6 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     size_t argCount = NUM_3;
     napi_value argValue[NUM_3] = {0};
     uint32_t auxiType = 0;
-    IMAGE_LOGD("CreateAuxiliaryPicture IN");
     std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = 
         std::make_unique<AuxiliaryPictureNapiAsyncContext>();
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
