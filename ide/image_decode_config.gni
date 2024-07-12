@@ -101,6 +101,7 @@ if (use_clang_android) {
 declare_args() {
   enable_jpeg_hw_decode = true
   enable_heif_hw_decode = false
+  enable_heif_hw_encode = true
   enable_libexif = true
 
   if (defined(global_parts_info) &&
