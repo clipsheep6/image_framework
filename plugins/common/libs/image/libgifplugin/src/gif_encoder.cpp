@@ -149,6 +149,12 @@ uint32_t GifEncoder::AddImage(Media::PixelMap &pixelMap)
     return SUCCESS;
 }
 
+uint32_t GifEncoder::AddPicture(Media::Picture &picture)
+{
+    ImageTrace imageTrace("GifEncoder::AddPicture");
+    return SUCCESS;
+}
+
 uint32_t GifEncoder::FinalizeEncode()
 {
     ImageTrace imageTrace("GifEncoder::FinalizeEncode");
