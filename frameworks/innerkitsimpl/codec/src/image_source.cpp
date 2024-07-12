@@ -3085,6 +3085,7 @@ DecodeContext ImageSource::DecodeImageDataToContext(uint32_t index, ImageInfo in
     hdrContext.info.size = plInfo.size;
     hdrContext.allocatorType = AllocatorType::DMA_ALLOC;
     float scale = GetScaleSize(info, opts_);
+    mainPixelMap = CreatePixelMapForPicture(context, mainDecoder_);
     if (decodedHdrType > ImageHdrType::SDR && ApplyGainMap(decodedHdrType, context, hdrContext, scale)) {
         FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         plInfo = hdrContext.info;
@@ -3191,6 +3192,36 @@ bool GetStreamData(std::unique_ptr<SourceStream>& sourceStream, uint8_t* streamB
     return true;
 }
 
+std::shared_ptr<PixelMap> ImageSource::CreatePixelMapForPicture(DecodeContext& context,
+    std::unique_ptr<ImagePlugin::AbsImageDecoder>& decoder)
+{
+    std::unique_ptr<PixelMap> pixelMap;
+    auto& outInfo = context.outInfo;
+    if (IsYuvFormat(outInfo.pixelFormat)) {
+#ifdef EXT_PIXEL
+        pixelMap = make_unique<PixelYuvExt>();
+#else
+        pixelMap = make_unique<PixelYuv>();
+#endif
+    } else {
+        pixelMap = make_unique<PixelMap>();
+    }
+    PixelMapAddrInfos addrInfos;
+    ContextToAddrInfos(context, addrInfos);
+    // add graphic colorspace object to pixelMap.
+    SetPixelMapColorSpace(context, pixelMap, decoder);
+    pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
+    UpdatePixelMapInfo(opts_, outInfo, *(pixelMap.get()), opts_.fitDensity, true);
+    std::shared_ptr<PixelMap> spPixelMap = std::move(pixelMap);
+    return spPixelMap;
+}
+
+void ImageSource::GetGainMapPixelMap(DecodeContext& mainCtx, DecodeContext& gainMapCtx)
+{
+    mainPixelMap = CreatePixelMapForPicture(mainCtx, mainDecoder_);
+    gainMapPixelMap = CreatePixelMapForPicture(gainMapCtx, jpegGainmapDecoder_);
+}
+
 bool ImageSource::DecodeJpegGainMap(ImageHdrType hdrType, float scale, DecodeContext& gainMapCtx, HdrMetadata& metadata)
 {
     ImageTrace imageTrace("ImageSource::DecodeJpegGainMap hdrType:%d, scale:%d", hdrType, scale);
@@ -3263,6 +3294,7 @@ bool ImageSource::ApplyGainMap(ImageHdrType hdrType, DecodeContext& baseCtx, Dec
         IMAGE_LOGI("[ImageSource] jpeg get gainmap failed");
         return false;
     }
+    GetGainMapPixelMap(baseCtx, hdrCtx);
     IMAGE_LOGD("get hdr metadata, extend flag is %{public}d, static size is %{public}zu,"
         "dynamic metadata size is %{public}zu",
         metadata.extendMetaFlag, metadata.staticMetadata.size(), metadata.dynamicMetadata.size());
