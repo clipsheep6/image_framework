@@ -412,6 +412,7 @@ EXIFInfo::EXIFInfo()
       exifData_(nullptr),
       isExifDataParsed_(false)
 {
+    std::unique_lock<std::shared_mutex> lock(exifTagsMutex_);
     for (auto i = TAG_MAP.begin(); i != TAG_MAP.end(); i++) {
         exifTags_[i->first] = DEFAULT_EXIF_VALUE;
     }
@@ -423,7 +424,10 @@ EXIFInfo::~EXIFInfo()
         exif_data_unref(exifData_);
         exifData_ = nullptr;
     }
-    exifTags_.clear();
+    {
+        std::unique_lock<std::shared_mutex> lock(exifTagsMutex_);
+        exifTags_.clear();
+    }
 }
 
 static void inline DumpTagsMap(std::map<ExifTag, std::string> &tags)
@@ -485,7 +489,10 @@ int EXIFInfo::ParseExifData(const unsigned char *buf, unsigned len)
     }
     makerInfoTagValueMap = exifMakerNote.makerTagValueMap;
     isExifDataParsed_ = true;
-    DumpTagsMap(exifTags_);
+    {
+        std::shared_lock<std::shared_mutex> lock(exifTagsMutex_);
+        DumpTagsMap(exifTags_);
+    }
     return PARSE_EXIF_SUCCESS;
 }
 
@@ -501,7 +508,10 @@ bool EXIFInfo::IsExifDataParsed()
 
 void EXIFInfo::SetExifTagValues(const ExifTag &tag, const std::string &value)
 {
-    exifTags_[tag] = value;
+    {
+        std::unique_lock<std::shared_mutex> lock(exifTagsMutex_);
+        exifTags_[tag] = value;
+    }
     if (tag == EXIF_TAG_BITS_PER_SAMPLE) {
         bitsPerSample_ = value;
     } else if (tag == EXIF_TAG_ORIENTATION) {
@@ -2063,13 +2073,16 @@ uint32_t EXIFInfo::GetExifData(const std::string name, std::string &value)
         IMAGE_LOGD("GetExifData %{public}s not in the TAGs map.", name.c_str());
         return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
     }
-    DumpTagsMap(exifTags_);
-    if (exifTags_.count(tag) == 0) {
-        IMAGE_LOGD("GetExifData has no tag %{public}s[%{public}d], tags Size: %{public}zu.",
-            name.c_str(), tag, exifTags_.size());
-        return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+    {
+        std::shared_lock<std::shared_mutex> lock(exifTagsMutex_);
+        DumpTagsMap(exifTags_);
+        if (exifTags_.count(tag) == 0) {
+            IMAGE_LOGD("GetExifData has no tag %{public}s[%{public}d], tags Size: %{public}zu.",
+                name.c_str(), tag, exifTags_.size());
+            return Media::ERR_IMAGE_DECODE_EXIF_UNSUPPORT;
+        }
+        value = exifTags_.at(tag);
     }
-    value = exifTags_.at(tag);
     if (IsSameTextStr(value, DEFAULT_EXIF_VALUE)) {
         IMAGE_LOGD("GetExifData %{public}s[%{public}d] value is DEFAULT_EXIF_VALUE.",
             name.c_str(), tag);
