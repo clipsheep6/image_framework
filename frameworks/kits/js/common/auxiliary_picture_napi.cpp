@@ -25,7 +25,9 @@
 
 #undef LOG_TAG
 #define LOG_TAG "AuxiliaryPictureNapi"
-
+namespace {
+    constexpr uint32_t NUM_0 = 0;
+}
 namespace OHOS {
 namespace Media {
 static const std::string CLASS_NAME = "AuxiliaryPicture";
@@ -46,6 +48,14 @@ struct AuxiliaryPictureNapiAsyncContext {
 
 using AuxiliaryPictureNapiAsyncContextPtr = std::unique_ptr<AuxiliaryPictureNapiAsyncContext>;
 
+struct NapiValues {
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_value* argv = nullptr;
+    size_t argc;
+};
+
 AuxiliaryPictureNapi::AuxiliaryPictureNapi():env_(nullptr)
 {
     static std::atomic<uint32_t> currentId = 0;
@@ -59,7 +69,10 @@ AuxiliaryPictureNapi::~AuxiliaryPictureNapi()
 
 napi_value AuxiliaryPictureNapi::Init(napi_env env, napi_value exports)
 {
-    napi_property_descriptor props[] = {};
+    napi_property_descriptor props[] = {
+        DECLARE_NAPI_FUNCTION("getType", GetType),
+        DECLARE_NAPI_FUNCTION("release", Release),
+    };
     napi_property_descriptor static_prop[] = {};
 
     napi_value constructor = nullptr;
@@ -137,6 +150,51 @@ void AuxiliaryPictureNapi::Destructor(napi_env env, void *nativeObject, void *fi
         delete reinterpret_cast<AuxiliaryPictureNapi*>(nativeObject);
         nativeObject = nullptr;
     }
+}
+
+napi_value AuxiliaryPictureNapi::GetType(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    napi_get_undefined(env, &nVal.result);
+    nVal.argc = NUM_0;
+    IMAGE_LOGD("Call GetType");
+    IMG_JS_ARGS(env, info, nVal.status, nVal.argc, nullptr, nVal.thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nVal.result, IMAGE_LOGE("Fail to call napi_get_cb_info"));
+
+    AuxiliaryPictureNapi* auxPictureNapi = nullptr;
+    nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&auxPictureNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, auxPictureNapi), nVal.result, IMAGE_LOGE("Fail to unwrap context"));
+    if (auxPictureNapi->nativeAuxiliaryPicture_ != nullptr) {
+        auto auxType = auxPictureNapi->nativeAuxiliaryPicture_->GetType();
+        if (static_cast<int32_t>(auxType) >= NUM_0 && auxType <= AuxiliaryPictureType::MARK_CUT_MAP) {
+            napi_value type = nullptr;
+            napi_create_object(env, &nVal.result);
+            napi_create_int32(env, static_cast<int32_t>(auxType), &type);
+            napi_set_named_property(env, nVal.result, "auxiliaryPictureType", type);
+        }
+    } else {
+        IMAGE_LOGE("Native picture is nullptr!");
+    }
+    return nVal.result;
+}
+
+napi_value AuxiliaryPictureNapi::Release(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    nVal.result = nullptr;
+    napi_get_undefined(env, &nVal.result);
+    nVal.argc = NUM_0;
+    IMAGE_LOGD("Call Release");
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = 
+        std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    IMG_JS_ARGS(env, info, nVal.status, nVal.argc, nullptr, nVal.thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nVal.result, IMAGE_LOGE("Fail to arg info"));
+    nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, asyncContext->nConstructor), nVal.result, 
+        IMAGE_LOGE("Fail to unwrap context"));
+    asyncContext.release();
+    return nVal.result;
 }
 
 void AuxiliaryPictureNapi::release()
