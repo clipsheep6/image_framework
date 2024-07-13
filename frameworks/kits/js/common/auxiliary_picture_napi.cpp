@@ -192,7 +192,8 @@ static bool ParseSize(napi_env env, napi_value root, int32_t& width, int32_t& he
 
 static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
 {
-    if (val >= 0 && val <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+    if (val >= static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+        && val <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
         return AuxiliaryPictureType(val);
     }
     return AuxiliaryPictureType::NONE;
@@ -226,6 +227,11 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(asyncContext->arrayBuffer),
             &(asyncContext->arrayBufferSize));
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to get auxiliary picture buffer"));
+    if (asyncContext->arrayBuffer == nullptr || asyncContext->arrayBufferSize < NUM_0) {
+        IMAGE_LOGE("Auxiliary picture buffer invalid or Auxiliary picture buffer size invalid");
+        return result;
+    }
+    
     if (!ParseSize(env, argValue[NUM_1], asyncContext->size.width, asyncContext->size.height)) {
         IMAGE_LOGE("Fail to get auxiliary picture size");
         return result;
@@ -233,6 +239,11 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     status = napi_get_value_uint32(env, argValue[NUM_2], &auxiType);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get auxiliary picture Type"));
     asyncContext->type = ParseAuxiliaryPictureType(auxiType);
+    if (val < static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+        || val > static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+        IMAGE_LOGE("AuxiliaryFigureType is invalid");
+        return result;
+    }
     CreateAuxiliaryPictureExec(env, static_cast<void*>((asyncContext).get()));
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
