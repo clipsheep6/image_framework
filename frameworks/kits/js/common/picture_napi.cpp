@@ -31,6 +31,7 @@
 
 namespace {
     constexpr uint32_t NUM_0 = 0;
+    constexpr uint32_t NUM_1 = 1;
 }
 
 namespace OHOS {
@@ -65,6 +66,24 @@ struct NapiValues {
     std::unique_ptr<PictureAsyncContext> context;
 };
 
+static bool prepareNapiEnv(napi_env env, napi_callback_info info, struct NapiValues* nVal)
+{
+    napi_get_undefined(env, &(nVal->result));
+    nVal->status = napi_get_cb_info(env, info, &(nVal->argc), nVal->argv, &(nVal->thisVar), nullptr);
+    if (nVal->status != napi_ok) {
+        IMAGE_LOGE("Fail to napi_get_cb_info");
+        return false;
+    }
+    nVal->context = std::make_unique<PictureAsyncContext>();
+    nVal->status = napi_unwrap(env, nVal->thisVar, reinterpret_cast<void**>(&(nVal->context->nConstructor)));
+    if (nVal->status != napi_ok) {
+        IMAGE_LOGE("Fail to unwrap context");
+        return false;
+    }
+    nVal->context->status = SUCCESS;
+    return true;
+}
+
 PictureNapi::PictureNapi():env_(nullptr)
 {
     static std::atomic<uint32_t> currentId = 0;
@@ -78,7 +97,11 @@ PictureNapi::~PictureNapi()
 
 napi_value PictureNapi::Init(napi_env env, napi_value exports)
 {
-    napi_property_descriptor props[] = {};
+    napi_property_descriptor props[] = {
+        DECLARE_NAPI_FUNCTION("getMainPixelmap", GetMainPixelmap),
+        DECLARE_NAPI_FUNCTION("release", Release),
+        DECLARE_NAPI_FUNCTION("marshalling", Marshalling),
+    };
     napi_property_descriptor static_prop[] = {};
 
     napi_value constructor = nullptr;
@@ -128,7 +151,6 @@ napi_value PictureNapi::Constructor(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value thisVar = nullptr;
     napi_get_undefined(env, &thisVar);
-    IMAGE_LOGD("Constructor IN");
     status = napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
     IMG_NAPI_CHECK_RET(IMG_IS_READY(status, thisVar), undefineVar);
     std::unique_ptr<PictureNapi> pPictureNapi = std::make_unique<PictureNapi>();
@@ -158,37 +180,78 @@ void PictureNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
     }
 }
 
-napi_value PictureNapi::CreatePicture(napi_env env, std::shared_ptr<Picture> picture){
-    if (sConstructor_ == nullptr) {
-        napi_value exports = nullptr;
-        napi_create_object(env, &exports);
-        PictureNapi::Init(env, exports);
+napi_value PictureNapi::GetMainPixelmap(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    napi_get_undefined(env, &nVal.result);
+    nVal.argc = NUM_0;
+    IMG_JS_ARGS(env, info, nVal.status, nVal.argc, nullptr, nVal.thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nVal.result, IMAGE_LOGE("Fail to arg info"));
+
+    PictureNapi* pictureNapi = nullptr;
+    nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&pictureNapi));
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, pictureNapi), nVal.result, IMAGE_LOGE("Fail to unwrap context"));
+    
+    if (pictureNapi->nativePicture_ != nullptr) {
+        auto pixelmap = pictureNapi->nativePicture_->GetMainPixel();
+        nVal.result = PixelMapNapi::CreatePixelMap(env, pixelmap);
+    } else {
+        IMAGE_LOGE("Native picture is nullptr!");
     }
+    return nVal.result;
+}
 
-    napi_value constructor = nullptr;
-    napi_value result = nullptr;
-    napi_status status;
+napi_value PictureNapi::Release(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    nVal.result = nullptr;
+    napi_get_undefined(env, &nVal.result);
+    nVal.argc = NUM_0;
+    std::unique_ptr<PictureAsyncContext> asyncContext = std::make_unique<PictureAsyncContext>();
+    IMG_JS_ARGS(env, info, nVal.status, nVal.argc, nullptr, nVal.thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nVal.result, IMAGE_LOGE("Fail to call napi_get_cb_info"));
+    nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
 
-    IMAGE_LOGD("CreatePicture IN");
-    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, asyncContext->nConstructor), 
+            nVal.result, IMAGE_LOGE("Fail to unwrap context"));
+    asyncContext.release();
+    return nVal.result;
+}
 
-    if (IMG_IS_OK(status)) {
-        if (picture != nullptr) {
-            sPicture_ = std::move(picture);
-            status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
-        } else {
-            status = napi_invalid_arg;
-            IMAGE_LOGE("New PictureNapi Instance picture is nullptr");
-            napi_get_undefined(env, &result);
-        }
+napi_value PictureNapi::Marshalling(napi_env env, napi_callback_info info)
+{
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    NapiValues nVal;
+    nVal.argc = NUM_1;
+    napi_value argValue[NUM_1] = {0};
+    nVal.argv = argValue;
+    if (!prepareNapiEnv(env, info, &nVal)) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "Fail to unwrap context");
     }
-
-    if (!IMG_IS_OK(status)) {
-        IMAGE_LOGE("CreatePicture | New instance could not be obtained");
-        napi_get_undefined(env, &result);
+    nVal.context->rPicture = nVal.context->nConstructor->nativePicture_;
+    if (nVal.argc != NUM_0 && nVal.argc != NUM_1) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "Invalid args count");
     }
-
-    return result;
+    NAPI_MessageSequence *napiSequence = nullptr;
+    napi_get_cb_info(env, info, &nVal.argc, nVal.argv, nullptr, nullptr);
+    napi_unwrap(env, nVal.argv[0], reinterpret_cast<void**>(&napiSequence));
+        auto messageParcel = napiSequence->GetMessageParcel();
+    if (messageParcel == nullptr) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IPC, "Marshalling picture to parcel failed.");
+    }
+    bool st = nVal.context->rPicture->Marshalling(*messageParcel);
+    if (!st) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IPC, "Marshalling picture to parcel failed.");
+    }
+    return nVal.result;
+#else
+    return napi_value(nullptr);
+#endif
 }
 
 void PictureNapi::release()
