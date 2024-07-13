@@ -28,18 +28,22 @@ namespace OHOS {
 namespace Media {
 class Picture: public Parcelable {
 public:
-    static std::unique_ptr<Picture> Create(std::shared_ptr<PixelMap> &PixelMap);
-    static std::unique_ptr<Picture> Create(sptr<SurfaceBuffer> &surfaceBuffer);
-    static std::shared_ptr<PixelMap> SurfaceBuffer2PixelMap(sptr<SurfaceBuffer> &surfaceBuffer);
-    std::shared_ptr<PixelMap> GetMainPixel();
-    void SetMainPixel(std::shared_ptr<PixelMap> PixelMap);
-    std::unique_ptr<PixelMap> GetHdrComposedPixelMap();
-    std::shared_ptr<AuxiliaryPicture> GetAuxiliaryPicture(AuxiliaryPictureType type);
-    void SetAuxiliaryPicture(AuxiliaryPictureType type, std::shared_ptr<AuxiliaryPicture> &picture);
-    bool HasAuxiliaryPicture(AuxiliaryPictureType type);
-    virtual bool Marshalling(Parcel &data) const override;
-    static Picture *Unmarshalling(Parcel &data);
-    static Picture *Unmarshalling(Parcel &data, PIXEL_MAP_ERR &error);
+    Picture() = default;
+    virtual ~Picture();
+
+    NATIVEEXPORT static std::unique_ptr<Picture> Create(std::shared_ptr<PixelMap> &PixelMap);
+    NATIVEEXPORT static std::unique_ptr<Picture> Create(sptr<SurfaceBuffer> &surfaceBuffer);
+    NATIVEEXPORT static std::shared_ptr<PixelMap> SurfaceBuffer2PixelMap(sptr<SurfaceBuffer> &surfaceBuffer);
+    NATIVEEXPORT std::shared_ptr<PixelMap> GetMainPixel();
+    NATIVEEXPORT void SetMainPixel(std::shared_ptr<PixelMap> PixelMap);
+    NATIVEEXPORT std::unique_ptr<PixelMap> GetHdrComposedPixelMap();
+    NATIVEEXPORT std::shared_ptr<AuxiliaryPicture> GetAuxiliaryPicture(AuxiliaryPictureType type);
+    NATIVEEXPORT void SetAuxiliaryPicture(AuxiliaryPictureType type, std::shared_ptr<AuxiliaryPicture> &picture);
+    NATIVEEXPORT bool HasAuxiliaryPicture(AuxiliaryPictureType type);
+    NATIVEEXPORT virtual bool Marshalling(Parcel &data) const override;
+    NATIVEEXPORT static Picture *Unmarshalling(Parcel &data);
+    NATIVEEXPORT static Picture *Unmarshalling(Parcel &data, PIXEL_MAP_ERR &error);
+
 private:
     std::shared_ptr<PixelMap> mainPixelMap_;
     std::map<AuxiliaryPictureType, std::shared_ptr<AuxiliaryPicture>> auxiliaryPictures_;

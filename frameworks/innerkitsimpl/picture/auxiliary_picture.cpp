@@ -20,6 +20,8 @@
 
 namespace OHOS {
 namespace Media {
+AuxiliaryPicture::~AuxiliaryPicture() {}
+
 std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(std::shared_ptr<PixelMap> &content, AuxiliaryPictureType type, Size size)
 {
     if (content == nullptr) {
@@ -58,7 +60,7 @@ Size AuxiliaryPicture::GetSize()
 
 std::shared_ptr<PixelMap> AuxiliaryPicture::GetContentPixel()
 {
-    return nullptr;
+    return content_;
 }
 
 void AuxiliaryPicture::SetContentPixel(std::shared_ptr<PixelMap> content)
