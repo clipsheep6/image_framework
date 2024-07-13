@@ -29,6 +29,7 @@ public:
     ~PictureNapi();
 
     static napi_value Init(napi_env env, napi_value exports);
+    static napi_value CreatePicture(napi_env env, std::shared_ptr<Picture> picture);
 
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);

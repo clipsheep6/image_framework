@@ -29,6 +29,10 @@
 #undef LOG_TAG
 #define LOG_TAG "PictureNapi"
 
+namespace {
+    constexpr uint32_t NUM_0 = 0;
+}
+
 namespace OHOS {
 namespace Media {
 static const std::string CLASS_NAME = "Picture";
@@ -152,6 +156,39 @@ void PictureNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
         delete reinterpret_cast<PictureNapi*>(nativeObject);
         nativeObject = nullptr;
     }
+}
+
+napi_value PictureNapi::CreatePicture(napi_env env, std::shared_ptr<Picture> picture){
+    if (sConstructor_ == nullptr) {
+        napi_value exports = nullptr;
+        napi_create_object(env, &exports);
+        PictureNapi::Init(env, exports);
+    }
+
+    napi_value constructor = nullptr;
+    napi_value result = nullptr;
+    napi_status status;
+
+    IMAGE_LOGD("CreatePicture IN");
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+
+    if (IMG_IS_OK(status)) {
+        if (picture != nullptr) {
+            sPicture_ = std::move(picture);
+            status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+        } else {
+            status = napi_invalid_arg;
+            IMAGE_LOGE("New PictureNapi Instance picture is nullptr");
+            napi_get_undefined(env, &result);
+        }
+    }
+
+    if (!IMG_IS_OK(status)) {
+        IMAGE_LOGE("CreatePicture | New instance could not be obtained");
+        napi_get_undefined(env, &result);
+    }
+
+    return result;
 }
 
 void PictureNapi::release()

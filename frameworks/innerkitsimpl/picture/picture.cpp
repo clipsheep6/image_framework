@@ -138,6 +138,8 @@ static void SetYuvDataInfo(std::shared_ptr<PixelMap> pixelMap, sptr<OHOS::Surfac
     pixelMap->SetImageYUVInfo(info);
 }
 
+Picture::~Picture() {}
+
 std::unique_ptr<Picture> Picture::Create(std::shared_ptr<PixelMap> &pixelMap)
 {
     if (pixelMap == nullptr) {
