@@ -256,6 +256,26 @@ napi_value PictureNapi::GetAuxiliaryPicture(napi_env env, napi_callback_info inf
     return result;
 }
 
+std::shared_ptr<Picture> PictureNapi::GetPicture(napi_env env, napi_value picture)
+{
+    std::unique_ptr<PictureNapi> pictureNapi = nullptr;
+    napi_status status = napi_unwrap(env, picture, reinterpret_cast<void**>(&pictureNapi));
+    if (!IMG_IS_OK(status)) {
+        IMAGE_LOGE("GetPicture napi unwrap failed");
+        return nullptr;
+    }
+    if (pictureNapi == nullptr) {
+        IMAGE_LOGE("GetPixelMap pixmapNapi is nullptr");
+        return nullptr;
+    }
+    auto pictureNapiPtr = pictureNapi.release();
+    if (pictureNapiPtr == nullptr) {
+        IMAGE_LOGE("GetPicture pictureNapi is nullptr");
+        return nullptr;
+    }
+    return pictureNapiPtr->nativePicture_;
+}
+
 napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info info)
 {
     napi_value result = nullptr;
