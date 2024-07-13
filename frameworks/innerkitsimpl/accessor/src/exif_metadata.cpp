@@ -729,5 +729,58 @@ bool ExifMetadata::IsSpecialHwKey(const std::string &key) const
     return (iter != HW_SPECIAL_KEYS.end());
 }
 
+bool ExifMetadata::Marshalling(Parcel &parcel) const
+{
+    if (exifData_ == nullptr) {
+        return false;
+    }
+
+    unsigned char *data = nullptr;
+    unsigned int size = 0;
+    exif_data_save_data(exifData_, &data, &size);
+
+    if (!parcel.WriteUint32(static_cast<int32_t>(size))) {
+        return false;
+    }
+
+    if (size != 0 && !parcel.WriteUnpadBuffer(data, size)) {
+        return false;
+    }
+
+    return true;
+}
+
+ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel)
+{
+    PICTURE_ERR error;
+    ExifMetadata* dstExifMetadata = ExifMetadata::Unmarshalling(parcel, error);
+    if (dstExifMetadata == nullptr || error.errorCode != SUCCESS) {
+        IMAGE_LOGE("unmarshalling failed errorCode:%{public}d, errorInfo:%{public}s",
+            error.errorCode, error.errorInfo.c_str());
+    }
+    return dstExifMetadata;
+}
+
+ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
+{
+    uint32_t size = 0;
+    if (!parcel.ReadUint32(size)) {
+        return nullptr;
+    }
+    if(size != 0){
+        const uint8_t *data = parcel.ReadUnpadBuffer(static_cast<size_t>(size));
+        if (!data) {
+            return nullptr;
+        }
+        ExifData *ptrData = exif_data_new_from_data(data, static_cast<unsigned int>(size));
+        ExifMetadata *exifMetadata = new(std::nothrow) ExifMetadata(ptrData);
+        return exifMetadata;
+    }else{
+        return nullptr;
+    }
+    
+}
+
+
 } // namespace Media
 } // namespace OHOS

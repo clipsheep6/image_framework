@@ -18,6 +18,7 @@
 
 #include "pixel_map.h"
 #include "auxiliary_picture.h"
+#include "image_type.h"
 #include <map>
 
 namespace OHOS {
@@ -29,7 +30,7 @@ namespace Media {
 class Picture: public Parcelable {
 public:
     Picture() = default;
-    virtual ~Picture();
+    virtual ~Picture() {}
 
     NATIVEEXPORT static std::unique_ptr<Picture> Create(std::shared_ptr<PixelMap> &PixelMap);
     NATIVEEXPORT static std::unique_ptr<Picture> Create(sptr<SurfaceBuffer> &surfaceBuffer);
@@ -42,7 +43,7 @@ public:
     NATIVEEXPORT bool HasAuxiliaryPicture(AuxiliaryPictureType type);
     NATIVEEXPORT virtual bool Marshalling(Parcel &data) const override;
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data);
-    NATIVEEXPORT static Picture *Unmarshalling(Parcel &data, PIXEL_MAP_ERR &error);
+    NATIVEEXPORT static Picture *Unmarshalling(Parcel &data, PICTURE_ERR &error);
 
 private:
     std::shared_ptr<PixelMap> mainPixelMap_;

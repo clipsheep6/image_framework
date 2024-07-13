@@ -22,6 +22,7 @@
 
 #include "image_type.h"
 #include "metadata.h"
+#include "parcel.h"
 
 namespace OHOS {
 namespace Media {
@@ -36,6 +37,9 @@ public:
     ExifData* GetExifData();
     bool CreateExifdata();
     NATIVEEXPORT std::shared_ptr<ExifMetadata> Clone();
+    bool Marshalling(Parcel &parcel) const override;
+    static ExifMetadata *Unmarshalling(Parcel &parcel);
+    static ExifMetadata *Unmarshalling(Parcel &parcel, PICTURE_ERR &error);
 
 private:
     ExifEntry* CreateEntry(const std::string &key, const ExifTag &tag, const size_t len);

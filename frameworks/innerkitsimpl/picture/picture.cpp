@@ -18,6 +18,7 @@
 #include "pixel_yuv_ext.h"
 #include "image_utils.h"
 #include "image_log.h"
+#include "media_errors.h"                                                // Operation success
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
 #endif
@@ -238,17 +239,72 @@ bool Picture::HasAuxiliaryPicture(AuxiliaryPictureType type)
 
 bool Picture::Marshalling(Parcel &data) const
 {
-    return false;
+    if (!mainPixelMap_) {
+        IMAGE_LOGE("Main PixelMap is null.");
+        return false;
+    }
+    if (!mainPixelMap_->Marshalling(data)) {
+        IMAGE_LOGE("Failed to marshal main PixelMap.");
+        return false;
+    }
+
+    size_t numAuxiliaryPictures = auxiliaryPictures_.size();
+    if (!data.WriteUint64(numAuxiliaryPictures)) {
+        IMAGE_LOGE("Failed to write number of auxiliary pictures.");
+        return false;
+    }
+    
+    for (const auto & auxiliaryPicture : auxiliaryPictures_) {
+        AuxiliaryPictureType type =  auxiliaryPicture.first;
+        
+        if (!data.WriteInt32(static_cast<int32_t>(type))) {
+            IMAGE_LOGE("Failed to write auxiliary picture type.");
+            return false;
+        }
+        
+        if (!auxiliaryPicture.second || !auxiliaryPicture.second->Marshalling(data)) {
+            IMAGE_LOGE("Failed to marshal auxiliary picture of type %d.", static_cast<int>(type));
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 Picture *Picture::Unmarshalling(Parcel &data)
 {
-    return nullptr;
+    PICTURE_ERR error;
+    Picture* dstPicture = Picture::Unmarshalling(data, error);
+    if (dstPicture == nullptr || error.errorCode != SUCCESS) {
+        IMAGE_LOGE("unmarshalling failed errorCode:%{public}d, errorInfo:%{public}s",
+            error.errorCode, error.errorInfo.c_str());
+    }
+    return dstPicture;
 }
 
-Picture *Picture::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
+Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
 {
-    return nullptr;
+    std::unique_ptr<Picture> picture = std::make_unique<Picture>();
+    std::shared_ptr<PixelMap> pixelmapPtr(PixelMap::Unmarshalling(parcel));
+    
+    if (!pixelmapPtr) {
+        IMAGE_LOGE("Failed to unmarshal main PixelMap.");
+        return nullptr;
+    }
+    picture->SetMainPixel(pixelmapPtr);
+    int64_t numAuxiliaryPictures = parcel.ReadUint64();
+    
+    for (size_t i = 0; i < numAuxiliaryPictures; ++i) {
+        int32_t type = parcel.ReadInt32();
+        std::shared_ptr<AuxiliaryPicture> auxPtr(AuxiliaryPicture::Unmarshalling(parcel));
+        if (!auxPtr) {
+            IMAGE_LOGE("Failed to unmarshal auxiliary picture of type %d.", type);
+            return nullptr;
+        }
+        picture->SetAuxiliaryPicture(static_cast<AuxiliaryPictureType>(type),auxPtr);
+    }
+    
+    return picture.release();
 }
 
 }

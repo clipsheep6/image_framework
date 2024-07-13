@@ -291,6 +291,11 @@ struct DecodingOptionsForPicture {
     std::set<AuxiliaryPictureType> desireAuxiliaryPictures;
 };
 
+typedef struct PictureError {
+    uint32_t errorCode = 0;
+    std::string errorInfo = "";
+} PICTURE_ERR;
+
 } // namespace Media
 } // namespace OHOS
 
