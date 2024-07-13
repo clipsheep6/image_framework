@@ -41,6 +41,8 @@ private:
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value GetAuxiliaryPicture(napi_env env, napi_callback_info info);
     static napi_value SetAuxiliaryPicture(napi_env env, napi_callback_info info);
+    static int32_t CreatePictureNapi(napi_env env, napi_value* result);
+    void SetNativePicture(std::shared_ptr<Picture> picture);
 
     void release();
     static thread_local napi_ref sConstructor_;
