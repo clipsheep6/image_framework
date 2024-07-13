@@ -22,6 +22,7 @@
 #include "image_packer_napi.h"
 #include "picture_napi.h"
 #include "auxiliary_picture_napi.h"
+#include "metadata_napi.h"
 
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "image_receiver_napi.h"

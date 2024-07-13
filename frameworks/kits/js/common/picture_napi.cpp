@@ -72,6 +72,47 @@ struct NapiValues {
     int32_t refCount = 1;
     std::unique_ptr<PictureAsyncContext> context;
 };
+
+static void CommonCallbackRoutine(napi_env env, PictureAsyncContext* &asyncContext, const napi_value &valueParam)
+{
+    napi_value result[NUM_2] = {0};
+
+    napi_get_undefined(env, &result[NUM_0]);
+    napi_get_undefined(env, &result[NUM_1]);
+
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(env, &scope);
+    if (scope == nullptr) {
+        return;
+    }
+
+    if (asyncContext == nullptr) {
+        return;
+    }
+    if (asyncContext->status == SUCCESS) {
+        result[NUM_1] = valueParam;
+    } else if (asyncContext->error != nullptr) {
+        napi_get_reference_value(env, asyncContext->error, &result[NUM_0]);
+        napi_delete_reference(env, asyncContext->error);
+    } else {
+        napi_create_uint32(env, asyncContext->status, &result[NUM_0]);
+    }
+
+    if (asyncContext->deferred) {
+        if (asyncContext->status == SUCCESS) {
+            napi_resolve_deferred(env, asyncContext->deferred, result[NUM_1]);
+        } else {
+            napi_reject_deferred(env, asyncContext->deferred, result[NUM_0]);
+        }
+    }
+
+    napi_delete_async_work(env, asyncContext->work);
+    napi_close_handle_scope(env, scope);
+
+    delete asyncContext;
+    asyncContext = nullptr;
+}
+
 static ImageType ParserImageType(napi_env env, napi_value argv)
 {
     napi_value constructor = nullptr;
@@ -128,6 +169,7 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
         DECLARE_NAPI_FUNCTION("getMainPixelmap", GetMainPixelmap),
+        DECLARE_NAPI_FUNCTION("getHDRComposedPixelmap", GetHDRComposedPixelMap),
         DECLARE_NAPI_FUNCTION("getAuxiliaryPicture", GetAuxiliaryPicture),
         DECLARE_NAPI_FUNCTION("setAuxiliaryPicture", SetAuxiliaryPicture),
         DECLARE_NAPI_FUNCTION("release", Release),
@@ -584,6 +626,59 @@ napi_value PictureNapi::Marshalling(napi_env env, napi_callback_info info)
 #else
     return napi_value(nullptr);
 #endif
+}
+
+static void CreateHDRComposedPixelmapComplete(napi_env env, napi_status status, void *data)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    auto context = static_cast<PictureAsyncContext*>(data);
+
+    if (context->rPixelMap != nullptr) {
+        result = PixelMapNapi::CreatePixelMap(env, context->rPixelMap);
+        context->status = SUCCESS;
+    } else {
+        context->status = ERROR;
+    }
+    CommonCallbackRoutine(env, context, result);
+}
+
+napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info info) 
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = 0;
+
+    IMAGE_LOGD("GetHdrComposedPixelMap IN");
+    IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to napi_get_cb_info"));
+
+    std::unique_ptr<PictureAsyncContext> asyncContext = std::make_unique<PictureAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor), result, IMAGE_LOGE("Fail to napi_unwrap context"));
+    asyncContext->rPicture = asyncContext->nConstructor->nativePicture_;
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPicture),
+        nullptr, IMAGE_LOGE("Empty native pixelmap"));
+    if (asyncContext->rPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAIN_MAP) == nullptr) {
+        return ImageNapiUtils::ThrowExceptionError(env, ERR_MEDIA_UNKNOWN, "There is no GAIN_MAP");
+    }
+    napi_create_promise(env, &(asyncContext->deferred), &result);
+
+    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "GetHdrComposedPixelMap",
+        [](napi_env env, void *data) {
+            auto context = static_cast<PictureAsyncContext*>(data);
+            auto tmpixel = context->rPicture->GetHdrComposedPixelMap();
+            context->rPixelMap = std::move(tmpixel);
+            context->status = SUCCESS;          
+        }, CreateHDRComposedPixelmapComplete, asyncContext, asyncContext->work);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
+        nullptr, IMAGE_LOGE("Fail to create async work"));
+
+    return result;
 }
 
 void PictureNapi::release()

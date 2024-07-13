@@ -20,6 +20,7 @@
 #include "image_napi.h"
 #include "image_napi_utils.h"
 #include "pixel_map_napi.h"
+#include "metadata_napi.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -56,6 +57,10 @@ struct AuxiliaryPictureNapiAsyncContext {
     size_t arrayBufferSize;
     Size size;
     AuxiliaryPictureType type;
+    MetadataNapi *metadataNapi;
+    std::shared_ptr<AuxiliaryPicture> rAuxiliaryPicture;
+    std::shared_ptr<ImageMetadata> imageMetadata;
+    MetadataType metadataType = MetadataType::EXIF;
 };
 
 using AuxiliaryPictureNapiAsyncContextPtr = std::unique_ptr<AuxiliaryPictureNapiAsyncContext>;
@@ -83,7 +88,10 @@ AuxiliaryPictureNapi::~AuxiliaryPictureNapi()
 
 napi_value AuxiliaryPictureNapi::Init(napi_env env, napi_value exports)
 {
-    napi_property_descriptor props[] = {};
+    napi_property_descriptor props[] = {
+        DECLARE_NAPI_FUNCTION("getMetadata", GetMetadata),
+        DECLARE_NAPI_FUNCTION("setMetadata", SetMetadata),
+    };
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createAuxiliaryPicture", CreateAuxiliaryPicture),
     };
@@ -278,6 +286,164 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
         status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
     }
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to create picture sync"));
+    return result;
+}
+
+static void CommonCallbackRoutine(napi_env env, AuxiliaryPictureNapiAsyncContext* &connect, const napi_value &valueParam)
+{
+    napi_value result[NUM_2] = {0};
+
+    napi_get_undefined(env, &result[NUM_0]);
+    napi_get_undefined(env, &result[NUM_1]);
+
+    if (connect->status == SUCCESS) {
+        result[NUM_1] = valueParam;
+    } else {
+         ImageNapiUtils::CreateErrorObj(env, result[0], connect->status,
+            "There is generic napi failure!");
+        napi_get_undefined(env, &result[1]);
+    }
+
+    if (connect->deferred) {
+        if (connect->status == SUCCESS) {
+            napi_resolve_deferred(env, connect->deferred, result[NUM_1]);
+        } else {
+            napi_reject_deferred(env, connect->deferred, result[NUM_0]);
+        }
+    }
+
+    napi_delete_async_work(env, connect->work);
+
+    delete connect;
+    connect = nullptr;
+}
+
+static void GetMetadataComplete(napi_env env, napi_status status, void *data)
+{
+    IMAGE_LOGD("[AuxiliaryPicture]GetMetadata IN");
+    auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+    napi_value result = MetadataNapi::CreateMetadata(env, context->imageMetadata);
+
+    if (!IMG_IS_OK(status)) {
+        context->status = ERROR;
+        IMAGE_LOGE("Get Metadata failed!");
+        napi_get_undefined(env, &result);
+    } else {
+        context->status = SUCCESS;
+    }
+    IMAGE_LOGD("[AuxiliaryPicture]GetMetadata OUT");
+    CommonCallbackRoutine(env, context, result);
+}
+
+napi_value AuxiliaryPictureNapi::GetMetadata(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = NUM_1;
+    napi_value argValue[NUM_1] = {0};
+    uint32_t metadataType = 0;
+
+    IMAGE_LOGD("GetMetadata IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get argment from info"));
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext =
+        std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
+        nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    asyncContext->rAuxiliaryPicture = asyncContext->nConstructor->nativeAuxiliaryPicture_;
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rAuxiliaryPicture),
+        nullptr, IMAGE_LOGE("Empty native auxiliary picture"));
+    status = napi_get_value_uint32(env, argValue[NUM_0], &metadataType);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get metadata type"));
+    if (metadataType >= static_cast<int32_t>(MetadataType::EXIF)
+        && metadataType <= static_cast<int32_t>(MetadataType::MARK_CUT)) {
+        asyncContext->metadataType = MetadataType(metadataType);
+    } else {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "Invalid args metadata type");
+    }
+
+    napi_create_promise(env, &(asyncContext->deferred), &result);
+    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "GetMetadata",
+        [](napi_env env, void* data) {
+            auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+            context->imageMetadata = context->rAuxiliaryPicture->GetMetadata(context->metadataType);
+            context->status = SUCCESS;
+        }, GetMetadataComplete, asyncContext, asyncContext->work);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
+        nullptr, IMAGE_LOGE("Fail to create async work"));
+    return result;
+}
+
+static void SetMetadataComplete(napi_env env, napi_status status, void *data)
+{
+    IMAGE_LOGD("[AuxiliaryPicture]GetMetadata IN");
+    auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    if (!IMG_IS_OK(status)) {
+        context->status = ERROR;
+        IMAGE_LOGE("Set Metadata failed!");
+    } else {
+        context->status = SUCCESS;
+    }
+    IMAGE_LOGD("[AuxiliaryPicture]GetMetadata OUT");
+    CommonCallbackRoutine(env, context, result);
+}
+
+napi_value AuxiliaryPictureNapi::SetMetadata(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = NUM_2;
+    napi_value argValue[NUM_2] = {0};
+    uint32_t metadataType = 0;
+
+    IMAGE_LOGD("SetMetadata IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get argments from info"));
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext =
+        std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
+        nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    asyncContext->rAuxiliaryPicture = asyncContext->nConstructor->nativeAuxiliaryPicture_;
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rAuxiliaryPicture),
+        nullptr, IMAGE_LOGE("Empty native auxiliary picture"));
+
+    status = napi_get_value_uint32(env, argValue[NUM_0], &metadataType);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get metadata type"));
+    if (metadataType >= static_cast<int32_t>(MetadataType::EXIF)
+        && metadataType <= static_cast<int32_t>(MetadataType::MARK_CUT)) {
+        asyncContext->metadataType = MetadataType(metadataType);
+    } else {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "Invalid args metadata type");
+    }
+
+    status = napi_unwrap(env, argValue[NUM_1], reinterpret_cast<void**>(&asyncContext->metadataNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->metadataNapi),
+        nullptr, IMAGE_LOGE("Fail to unwrap MetadataNapi"));
+    asyncContext->imageMetadata = asyncContext->metadataNapi->GetNativeMetadata();
+    if (asyncContext->imageMetadata == nullptr) {
+        IMAGE_LOGE("Empty native metadata");
+    }
+
+    napi_create_promise(env, &(asyncContext->deferred), &result);
+    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "SetMetadata",
+        [](napi_env env, void* data) {
+            auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+            context->rAuxiliaryPicture->SetMetadata(context->metadataType, context->imageMetadata);
+            context->status = SUCCESS;
+        }, SetMetadataComplete, asyncContext, asyncContext->work);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
+        nullptr, IMAGE_LOGE("Fail to create async work"));
     return result;
 }
 

@@ -134,6 +134,17 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     return SUCCESS;
 }
 
+std::vector<std::pair<std::string ,std::string>> ExifMetadata::GetAllProperties()
+{
+    std::vector<std::pair<std::string ,std::string>> result;
+    return result;
+}
+
+std::shared_ptr<ImageMetadata> ExifMetadata::CloneMetadata()
+{
+    return Clone();
+}
+
 int ExifMetadata::HandleMakerNote(std::string &value) const
 {
     value.clear();
