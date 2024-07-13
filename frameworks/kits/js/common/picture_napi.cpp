@@ -37,10 +37,16 @@ namespace {
 
 namespace OHOS {
 namespace Media {
+static const std::string CREATE_PICTURE_FROM_PARCEL = "createPictureFromParcel";
+static const std::map<std::string, std::set<uint32_t>> ETS_API_ERROR_CODE = {
+    {CREATE_PICTURE_FROM_PARCEL, {62980096, 62980105, 62980115, 62980097,
+        62980177, 62980178, 62980179, 62980180, 62980246}}
+};
 static const std::string CLASS_NAME = "Picture";
 thread_local napi_ref PictureNapi::sConstructor_ = nullptr;
 thread_local std::shared_ptr<Picture> PictureNapi::sPicture_ = nullptr;
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+NAPI_MessageSequence* messageSequence = nullptr;
 #endif
 
 struct PictureAsyncContext {
@@ -66,6 +72,28 @@ struct NapiValues {
     int32_t refCount = 1;
     std::unique_ptr<PictureAsyncContext> context;
 };
+static ImageType ParserImageType(napi_env env, napi_value argv)
+{
+    napi_value constructor = nullptr;
+    napi_value global = nullptr;
+    bool isInstance = false;
+    napi_status ret = napi_invalid_arg;
+
+    napi_get_global(env, &global);
+
+    ret = napi_get_named_property(env, global, "PixelMap", &constructor);
+    if (ret != napi_ok) {
+        IMAGE_LOGI("Get PixelMapNapi property failed!");
+    }
+
+    ret = napi_instanceof(env, argv, constructor, &isInstance);
+    if (ret == napi_ok && isInstance) {
+        return ImageType::TYPE_PIXEL_MAP;
+    }
+
+    IMAGE_LOGI("InValued type!");
+    return ImageType::TYPE_UNKNOWN;
+}
 
 static bool prepareNapiEnv(napi_env env, napi_callback_info info, struct NapiValues* nVal)
 {
@@ -105,7 +133,10 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("marshalling", Marshalling),
     };
-    napi_property_descriptor static_prop[] = {};
+    napi_property_descriptor static_prop[] = {
+        DECLARE_NAPI_STATIC_FUNCTION("createPicture", CreatePicture),
+        DECLARE_NAPI_STATIC_FUNCTION("createPictureFromParcel", CreatePictureFromParcel),
+    };
 
     napi_value constructor = nullptr;
 
@@ -317,6 +348,132 @@ napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info inf
     return result;
 }
 
+STATIC_EXEC_FUNC(CreatePicture)
+{
+    IMAGE_INFO("CreatePictureEX IN");
+    auto context = static_cast<PictureAsyncContext*>(data);
+    auto picture = Picture::Create(context->rPixelMap);
+    context->rPicture = std::move(picture);
+    IMAGE_INFO("CreatePictureEX OUT");
+    if (IMG_NOT_NULL(context->rPicture)) {
+        context->status = SUCCESS;
+    } else {
+        context->status = ERROR;
+    }
+}
+
+static void BuildContextError(napi_env env, napi_ref &error, const std::string errMsg, const int32_t errCode)
+{
+    IMAGE_LOGE("%{public}s", errMsg.c_str());
+    napi_value tmpError;
+    ImageNapiUtils::CreateErrorObj(env, tmpError, errCode, errMsg);
+    napi_create_reference(env, tmpError, NUM_1, &(error));
+}
+
+napi_value PictureNapi::CreatePicture(napi_env env, napi_callback_info info)
+{
+    IMAGE_INFO("CreatePicture IN");
+    if (sConstructor_ == nullptr) {
+        napi_value exports = nullptr;
+        napi_create_object(env, &exports);
+        PictureNapi::Init(env, exports);
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_value constructor = nullptr;
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value argValue[NUM_1] = {0};
+    size_t argCount = NUM_1;
+    IMAGE_LOGD("CreatePicture IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
+    IMG_NAPI_CHECK_RET_D(argCount == NUM_1, ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        "Invalid args count"), IMAGE_LOGE("Invalid args count %{public}zu", argCount));
+    std::unique_ptr<PictureAsyncContext> asyncContext = std::make_unique<PictureAsyncContext>();
+    if (ParserImageType(env, argValue[NUM_0]) == ImageType::TYPE_PIXEL_MAP) {
+        asyncContext->rPixelMap = PixelMapNapi::GetPixelMap(env, argValue[NUM_0]);
+        if (asyncContext->rPixelMap == nullptr) {
+            BuildContextError(env, asyncContext->error, "input image type mismatch", ERR_IMAGE_GET_DATA_ABNORMAL);
+        }
+    } else {
+        BuildContextError(env, asyncContext->error, "input image type mismatch",
+            ERR_IMAGE_GET_DATA_ABNORMAL);
+    }
+    CreatePictureExec(env, static_cast<void*>((asyncContext).get()));
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (IMG_IS_OK(status)) {
+        sPicture_ = std::move(asyncContext->rPicture);
+        status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+    }
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to create picture sync"));
+    IMAGE_INFO("CreatePicture OUT");
+    return result;
+}
+
+napi_value PictureNapi::ThrowExceptionError(napi_env env,
+    const std::string &tag, const std::uint32_t &code, const std::string &info)
+{
+    auto errNode = ETS_API_ERROR_CODE.find(tag);
+    if (errNode != ETS_API_ERROR_CODE.end() &&
+        errNode->second.find(code) != errNode->second.end()) {
+        return ImageNapiUtils::ThrowExceptionError(env, code, info);
+    }
+    return ImageNapiUtils::ThrowExceptionError(env, ERROR, "Operation failed");
+}
+
+napi_value PictureNapi::CreatePictureFromParcel(napi_env env, napi_callback_info info)
+{
+    IMAGE_INFO("CreatePictureFromParcel IN");
+    if (sConstructor_ == nullptr) {
+        napi_value exports = nullptr;
+        napi_create_object(env, &exports);
+        PictureNapi::Init(env, exports);
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value argValue[NUM_1] = {0};
+    size_t argCount = NUM_1;
+    IMAGE_LOGD("CreatePictureFromParcel IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    if (!IMG_IS_OK(status) || argCount != NUM_1) {
+        return PictureNapi::ThrowExceptionError(env,
+            CREATE_PICTURE_FROM_PARCEL, ERR_IMAGE_INVALID_PARAMETER, "Fail to napi_get_cb_info");
+    }
+    napi_unwrap(env, argValue[NUM_0], (void **)&messageSequence);
+    auto messageParcel = messageSequence->GetMessageParcel();
+    if (messageParcel == nullptr) {
+        return PictureNapi::ThrowExceptionError(env,
+            CREATE_PICTURE_FROM_PARCEL, ERR_IPC, "get parcel failed");
+    }
+    PICTURE_ERR error;
+    auto picture = Picture::Unmarshalling(*messageParcel, error);
+    if (!IMG_NOT_NULL(picture)) {
+        return PictureNapi::ThrowExceptionError(env,
+            CREATE_PICTURE_FROM_PARCEL, error.errorCode, error.errorInfo);
+    }
+    std::shared_ptr<OHOS::Media::Picture> picturePtr(picture);
+    sPicture_ = std::move(picturePtr);
+    napi_value constructor = nullptr;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (IMG_IS_OK(status)) {
+        if (sPicture_ == nullptr) {
+            status = napi_invalid_arg;
+            IMAGE_LOGE("NewPictureNapiInstance picture is nullptr");
+        }else{
+            status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+        }
+    }
+    if (!IMG_IS_OK(status)) {
+        IMAGE_LOGE("New instance could not be obtained");
+        return PictureNapi::ThrowExceptionError(env,
+            CREATE_PICTURE_FROM_PARCEL, ERR_IMAGE_NAPI_ERROR, "New instance could not be obtained");
+    }
+    IMAGE_INFO("CreatePictureFromParcel OUT");
+    return result;
+}
 napi_value PictureNapi::GetMainPixelmap(napi_env env, napi_callback_info info)
 {
     NapiValues nVal;
