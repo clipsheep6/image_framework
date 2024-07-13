@@ -37,6 +37,9 @@ public:
     {
         return sConstructor_;
     }
+
+    static napi_value CreateAuxiliaryPicture(napi_env env, std::shared_ptr<AuxiliaryPicture> auxiliaryPic);
+
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
     static void Destructor(napi_env env, void *nativeObject, void *finalize);

@@ -143,7 +143,7 @@ napi_value AuxiliaryPictureNapi::Constructor(napi_env env, napi_callback_info in
         pAuxiliaryPictureNapi->env_ = env;
         pAuxiliaryPictureNapi->nativeAuxiliaryPicture_ = sAuxiliaryPic_;
         if (pAuxiliaryPictureNapi->nativeAuxiliaryPicture_ == nullptr) {
-            IMAGE_LOGE("Failed to set nativeImageSource with null. Maybe a reentrancy error");
+            IMAGE_LOGE("Failed to set nativeAuxiliaryPicture_ with null. Maybe a reentrancy error");
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void *>(pAuxiliaryPictureNapi.get()),
                             AuxiliaryPictureNapi::Destructor, nullptr, nullptr);
@@ -163,6 +163,33 @@ void AuxiliaryPictureNapi::Destructor(napi_env env, void *nativeObject, void *fi
         delete reinterpret_cast<AuxiliaryPictureNapi*>(nativeObject);
         nativeObject = nullptr;
     }
+}
+
+napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, std::shared_ptr<AuxiliaryPicture> auxiliaryPic)
+{
+    if (AuxiliaryPictureNapi::GetConstructor() == nullptr) {
+        napi_value exports = nullptr;
+        napi_create_object(env, &exports);
+        AuxiliaryPictureNapi::Init(env, exports);
+    }
+
+    napi_value constructor = nullptr;
+    napi_value result = nullptr;
+    napi_status status;
+
+    IMAGE_LOGD("CreateAuxiliaryPicture IN");
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+
+    if (IMG_IS_OK(status)) {
+        sAuxiliaryPic_ = auxiliaryPic;
+        status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+    }
+    if (!IMG_IS_OK(status)) {
+        IMAGE_LOGE("CreateAuxiliaryPicture | New instance could not be obtained");
+        napi_get_undefined(env, &result);
+    }
+
+    return result;
 }
 
 STATIC_EXEC_FUNC(CreateAuxiliaryPicture)
@@ -238,12 +265,12 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     }
     status = napi_get_value_uint32(env, argValue[NUM_2], &auxiType);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get auxiliary picture Type"));
-    asyncContext->type = ParseAuxiliaryPictureType(auxiType);
-    if (val < static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
-        || val > static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+    if (auxiType < static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+        || auxiType > static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
         IMAGE_LOGE("AuxiliaryFigureType is invalid");
         return result;
     }
+    asyncContext->type = ParseAuxiliaryPictureType(auxiType);
     CreateAuxiliaryPictureExec(env, static_cast<void*>((asyncContext).get()));
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
