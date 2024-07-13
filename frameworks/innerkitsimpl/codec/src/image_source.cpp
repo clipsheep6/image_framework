@@ -1273,7 +1273,7 @@ void ImageSource::DetachIncrementalDecoding(PixelMap &pixelMap)
     incDecodingMap_.erase(iter);
 }
 
-std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts)
+std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
 {
     return 0;
 }
