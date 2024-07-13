@@ -166,7 +166,8 @@ napi_value AuxiliaryPictureNapi::GetType(napi_env env, napi_callback_info info)
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, auxPictureNapi), nVal.result, IMAGE_LOGE("Fail to unwrap context"));
     if (auxPictureNapi->nativeAuxiliaryPicture_ != nullptr) {
         auto auxType = auxPictureNapi->nativeAuxiliaryPicture_->GetType();
-        if (static_cast<int32_t>(auxType) >= NUM_0 && auxType <= AuxiliaryPictureType::MARK_CUT_MAP) {
+        if (auxType >= static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+            && auxType <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
             napi_value type = nullptr;
             napi_create_object(env, &nVal.result);
             napi_create_int32(env, static_cast<int32_t>(auxType), &type);
