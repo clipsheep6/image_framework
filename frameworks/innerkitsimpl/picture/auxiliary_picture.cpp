@@ -17,6 +17,8 @@
 #include "auxiliary_picture.h"
 #include "media_errors.h"
 #include "surface_buffer.h"
+#include "image_log.h"
+#include "exif_metadata.h"
 
 namespace OHOS {
 namespace Media {
@@ -105,17 +107,73 @@ bool AuxiliaryPicture::HasMetadata(MetadataType type)
 
 bool AuxiliaryPicture::Marshalling(Parcel &data) const
 {
-    return false;
+    if (content_ == nullptr) {
+        IMAGE_LOGE("Auxiliary picture is null.");
+        return false;
+    }
+
+    if (!content_->Marshalling(data)) {
+        IMAGE_LOGE("Failed to marshal auxiliary picture.");
+        return false;
+    }
+
+    if (!data.WriteUint64(static_cast<uint64_t>(metadatas_.size()))) {
+        return false;
+    }
+
+    for (const auto &metadata : metadatas_) {
+        if (!(data.WriteInt32(static_cast<int32_t>(metadata.first)) && metadata.second->Marshalling(data))) {
+            IMAGE_LOGE("Failed to marshal metadatas.");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &data)
 {
-    return nullptr;
+    PICTURE_ERR error;
+    AuxiliaryPicture* dstAuxiliaryPicture = AuxiliaryPicture::Unmarshalling(data, error);
+    if (dstAuxiliaryPicture == nullptr || error.errorCode != SUCCESS) {
+        IMAGE_LOGE("unmarshalling failed errorCode:%{public}d, errorInfo:%{public}s",
+            error.errorCode, error.errorInfo.c_str());
+    }
+    return dstAuxiliaryPicture;
 }
 
-AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error)
+AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
 {
-    return nullptr;
+    std::unique_ptr<AuxiliaryPicture> auxPtr = std::make_unique<AuxiliaryPicture>();
+
+    std::shared_ptr<PixelMap> contentPtr(PixelMap::Unmarshalling(parcel));
+    if (!contentPtr) {
+        return nullptr;
+    }
+    auxPtr->SetContentPixel(contentPtr);
+
+    std::map<MetadataType, std::shared_ptr<ImageMetadata>> metadatas;
+    
+    uint64_t size = parcel.ReadUint64();
+    
+    for (int32_t i = 0; i < size; ++i) {
+        MetadataType type = static_cast<MetadataType>(parcel.ReadInt32());
+        std::shared_ptr<ImageMetadata> imagedataPtr(nullptr);
+
+        if (type == MetadataType::EXIF) {
+            imagedataPtr.reset(ExifMetadata::Unmarshalling(parcel));
+            if (!imagedataPtr) {
+                return nullptr;
+            }
+        } else {
+            IMAGE_LOGE("Unsupported metadata type.");
+            return nullptr;
+        }
+
+        auxPtr->SetMetadata(type, imagedataPtr);
+    }
+
+    return auxPtr.release();
 }
 
 std::shared_ptr<PixelMap> GainmapAuxiliaryPicture::GetContentPixel()

@@ -18,6 +18,7 @@
 
 #include "metadata.h"
 #include "pixel_map.h"
+#include "image_type.h"
 
 namespace OHOS {
     class SurfaceBuffer;
@@ -25,10 +26,11 @@ namespace OHOS {
 
 namespace OHOS {
 namespace Media {
+class ImageMetadata;
 class AuxiliaryPicture: public Parcelable {
 public:
     AuxiliaryPicture() = default;
-    virtual ~AuxiliaryPicture();
+    virtual ~AuxiliaryPicture() {}
 
     NATIVEEXPORT static std::unique_ptr<AuxiliaryPicture> Create(std::shared_ptr<PixelMap> &content, AuxiliaryPictureType type, Size size = {0, 0});
     NATIVEEXPORT static std::unique_ptr<AuxiliaryPicture> Create(sptr<SurfaceBuffer> &surfaceBuffer, AuxiliaryPictureType type, Size size = {0, 0});
@@ -44,7 +46,7 @@ public:
     NATIVEEXPORT bool HasMetadata(MetadataType type);
     NATIVEEXPORT virtual bool Marshalling(Parcel &data) const override;
     NATIVEEXPORT static AuxiliaryPicture *Unmarshalling(Parcel &data);
-    NATIVEEXPORT static AuxiliaryPicture *Unmarshalling(Parcel &parcel, PIXEL_MAP_ERR &error);
+    NATIVEEXPORT static AuxiliaryPicture *Unmarshalling(Parcel &parcel, PICTURE_ERR &error);
 
 protected:
     std::shared_ptr<PixelMap> content_;
