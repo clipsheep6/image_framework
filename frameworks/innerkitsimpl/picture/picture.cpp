@@ -65,8 +65,6 @@ namespace {
 #endif
 }
 
-Picture::~Picture() {}
-
 static bool IsYuvFormat(PixelFormat format)
 {
     return format == PixelFormat::NV21 || format == PixelFormat::NV12;

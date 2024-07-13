@@ -32,6 +32,7 @@
 namespace {
     constexpr uint32_t NUM_0 = 0;
     constexpr uint32_t NUM_1 = 1;
+    constexpr uint32_t NUM_2 = 2;
 }
 
 namespace OHOS {
@@ -99,6 +100,8 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
         DECLARE_NAPI_FUNCTION("getMainPixelmap", GetMainPixelmap),
+        DECLARE_NAPI_FUNCTION("getAuxiliaryPicture", GetAuxiliaryPicture),
+        DECLARE_NAPI_FUNCTION("setAuxiliaryPicture", SetAuxiliaryPicture),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("marshalling", Marshalling),
     };
@@ -151,6 +154,7 @@ napi_value PictureNapi::Constructor(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value thisVar = nullptr;
     napi_get_undefined(env, &thisVar);
+    IMAGE_LOGD("Constructor IN");
     status = napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
     IMG_NAPI_CHECK_RET(IMG_IS_READY(status, thisVar), undefineVar);
     std::unique_ptr<PictureNapi> pPictureNapi = std::make_unique<PictureNapi>();
@@ -158,7 +162,7 @@ napi_value PictureNapi::Constructor(napi_env env, napi_callback_info info)
         pPictureNapi->env_ = env;
         pPictureNapi->nativePicture_ = sPicture_;
         if (pPictureNapi->nativePicture_ == nullptr) {
-            IMAGE_LOGE("Failed to set nativeImageSource with null. Maybe a reentrancy error");
+            IMAGE_LOGE("Failed to set nativePicture_ with null. Maybe a reentrancy error");
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void *>(pPictureNapi.get()),
                             PictureNapi::Destructor, nullptr, nullptr);
@@ -178,6 +182,119 @@ void PictureNapi::Destructor(napi_env env, void *nativeObject, void *finalize)
         delete reinterpret_cast<PictureNapi*>(nativeObject);
         nativeObject = nullptr;
     }
+}
+
+napi_value PictureNapi::CreatePicture(napi_env env, std::shared_ptr<Picture> picture)
+{
+    if (sConstructor_ == nullptr) {
+        napi_value exports = nullptr;
+        napi_create_object(env, &exports);
+        PictureNapi::Init(env, exports);
+    }
+    napi_value constructor = nullptr;
+    napi_value result = nullptr;
+    napi_status status;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (IMG_IS_OK(status)) {
+        if (picture != nullptr) {
+            sPicture_ = std::move(picture);
+            status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
+        } else {
+            status = napi_invalid_arg;
+            IMAGE_LOGE("New PictureNapi Instance picture is nullptr");
+            napi_get_undefined(env, &result);
+        }
+    }
+    if (!IMG_IS_OK(status)) {
+        IMAGE_LOGE("CreatePicture | New instance could not be obtained");
+        napi_get_undefined(env, &result);
+    }
+    return result;
+}
+
+static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
+{
+    if (val >= static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+        && val<= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+        return AuxiliaryPictureType(val);
+    }
+
+    return AuxiliaryPictureType::NONE;
+}
+
+napi_value PictureNapi::GetAuxiliaryPicture(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value argValue[NUM_1] = {0};
+    size_t argCount = NUM_1;
+    uint32_t auxiType = 0;;
+
+    IMAGE_LOGD("GetAuxiliaryPicture IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to arg info"));
+    PictureNapi* pictureNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pictureNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pictureNapi), result, IMAGE_LOGE("fail to unwrap PictureNapi"));
+    status = napi_get_value_uint32(env, argValue[NUM_0], &auxiType);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to get auxiliary picture Type"));
+
+    AuxiliaryPictureType type = ParseAuxiliaryPictureType(auxiType);
+
+    if (pictureNapi->nativePicture_ != nullptr) {
+        auto auxiliaryPic = pictureNapi->nativePicture_->GetAuxiliaryPicture(type);
+        if (auxiliaryPic != nullptr) {
+            result = AuxiliaryPictureNapi::CreateAuxiliaryPicture(env, std::move(auxiliaryPic));
+        } else {
+            IMAGE_LOGE("native auxiliary picture is nullptr!");
+        }
+    } else {
+        IMAGE_LOGE("native picture is nullptr!");
+    }
+    return result;
+}
+
+napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    napi_value argValue[NUM_2] = {0};
+    size_t argCount = NUM_2;
+    uint32_t auxiType = 0;;
+
+
+    IMAGE_LOGD("SetAuxiliaryPictureSync IN");
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    PictureNapi* pictureNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pictureNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pictureNapi), result, IMAGE_LOGE("fail to unwrap PictureNapi"));
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to arg info"));
+    status = napi_get_value_uint32(env, argValue[NUM_0], &auxiType);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to get auxiliary picture Type"));
+    AuxiliaryPictureType type = ParseAuxiliaryPictureType(auxiType);
+
+    AuxiliaryPictureNapi* auxiliaryPictureNapi = nullptr;
+    status = napi_unwrap(env, argValue[NUM_1], reinterpret_cast<void**>(&auxiliaryPictureNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pictureNapi), result,
+                                    IMAGE_LOGE("fail to unwrap AuxiliaryPictureNapi"));
+
+    if (pictureNapi->nativePicture_ != nullptr) {
+        auto auxiliaryPicturePtr = auxiliaryPictureNapi->GetNativeAuxiliaryPic();
+        if (auxiliaryPicturePtr != nullptr) {
+            pictureNapi->nativePicture_->SetAuxiliaryPicture(type, auxiliaryPicturePtr);
+        } else {
+            IMAGE_LOGE("native auxiliary picture is nullptr!");
+        }
+    } else {
+        IMAGE_LOGE("native picture is nullptr!");
+    }
+
+    return result;
 }
 
 napi_value PictureNapi::GetMainPixelmap(napi_env env, napi_callback_info info)
