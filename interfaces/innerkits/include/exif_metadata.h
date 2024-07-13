@@ -34,6 +34,8 @@ public:
     virtual int GetValue(const std::string &key, std::string &value) const override;
     virtual bool SetValue(const std::string &key, const std::string &value) override;
     virtual bool RemoveEntry(const std::string &key) override;
+    virtual std::vector<std::pair<std::string ,std::string>> GetAllProperties() override;
+    virtual std::shared_ptr<ImageMetadata> CloneMetadata() override;
     ExifData* GetExifData();
     bool CreateExifdata();
     NATIVEEXPORT std::shared_ptr<ExifMetadata> Clone();

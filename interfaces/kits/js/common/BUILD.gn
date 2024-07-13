@@ -101,6 +101,7 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixel_map_napi.cpp",
       "//foundation/multimedia/image_framework/frameworks/kits/js/common/picture_napi.cpp",
       "//foundation/multimedia/image_framework/frameworks/kits/js/common/auxiliary_picture_napi.cpp",
+      "//foundation/multimedia/image_framework/frameworks/kits/js/common/metadata_napi.cpp",
     ]
 
     cflags = [ "-DIMAGE_DEBUG_FLAG" ]
@@ -224,6 +225,7 @@ if (use_clang_ios) {
       "//foundation/multimedia/image_framework/frameworks/kits/js/common/pixel_map_napi.cpp",
       "//foundation/multimedia/image_framework/frameworks/kits/js/common/picture_napi.cpp",
       "//foundation/multimedia/image_framework/frameworks/kits/js/common/auxiliary_picture_napi.cpp",
+      "//foundation/multimedia/image_framework/frameworks/kits/js/common/metadata_napi.cpp",
     ]
 
     cflags = [
@@ -302,6 +304,7 @@ if (use_clang_ios) {
         "$image_subsystem/frameworks/kits/js/common/pixel_map_napi.cpp",
         "$image_subsystem/frameworks/kits/js/common/picture_napi.cpp",
         "$image_subsystem/frameworks/kits/js/common/auxiliary_picture_napi.cpp",
+        "$image_subsystem/frameworks/kits/js/common/metadata_napi.cpp",
         "$image_subsystem/kits/js/common/image_napi_utils.cpp",
       ]
 
