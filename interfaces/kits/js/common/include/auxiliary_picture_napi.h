@@ -33,12 +33,15 @@ public:
         return nativeAuxiliaryPicture_;
     }
 
+    static napi_ref GetConstructor()
+    {
+        return sConstructor_;
+    }
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
     static void Destructor(napi_env env, void *nativeObject, void *finalize);
-    // methods
-    static napi_value GetType(napi_env env, napi_callback_info info);
-    static napi_value Release(napi_env env, napi_callback_info info);
+    static napi_value CreateAuxiliaryPicture(napi_env env, napi_callback_info info);
+
     void release();
     static thread_local napi_ref sConstructor_;
     static thread_local std::shared_ptr<AuxiliaryPicture> sAuxiliaryPic_;
