@@ -222,6 +222,44 @@ static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
     return AuxiliaryPictureType::NONE;
 }
 
+static void PreparePicNapiEnv(napi_env env)
+{
+    napi_value globalValue;
+    napi_get_global(env, &globalValue);
+    napi_value func;
+    napi_get_named_property(env, globalValue, "requireNapi", &func);
+
+    napi_value picture;
+    napi_create_string_utf8(env, "multimedia.image", NAPI_AUTO_LENGTH, &picture);
+    napi_value funcArgv[NUM_1] = { picture };
+    napi_value returnValue;
+    napi_call_function(env, globalValue, func, NUM_1, funcArgv, &returnValue);
+}
+
+int32_t PictureNapi::CreatePictureNapi(napi_env env, napi_value* result)
+{
+    napi_value constructor = nullptr;
+    napi_status status = napi_ok;
+    PreparePicNapiEnv(env);
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok && constructor != nullptr) {
+        status = napi_new_instance(env, constructor, NUM_0, nullptr, result);
+    }
+
+    if (status != napi_ok || result == nullptr) {
+        IMAGE_LOGE("CreatePictureNapi new instance failed");
+        napi_get_undefined(env, result);
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
+    return SUCCESS;
+}
+
+void PictureNapi::SetNativePicture(std::shared_ptr<Picture> picture)
+{
+    nativePicture_ = picture;
+}
+
 napi_value PictureNapi::GetAuxiliaryPicture(napi_env env, napi_callback_info info)
 {
     napi_value result = nullptr;
