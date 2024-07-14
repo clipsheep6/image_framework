@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <shared_mutex>
 
 #include <libexif/exif-data.h>
 
@@ -167,6 +168,7 @@ private:
     ExifData* exifData_;
     bool isExifDataParsed_;
     std::map<ExifTag, std::string> exifTags_;
+    std::shared_mutex exifTagsMutex_;
 };
 
 class ByteOrderedBuffer {
