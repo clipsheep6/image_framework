@@ -22,13 +22,13 @@
 
 namespace OHOS {
 namespace Media {
-class ImageMetadata: public Parcelable {
+class ImageMetadata : public Parcelable {
 public:
     virtual int GetValue(const std::string &key, std::string &value) const = 0;
     virtual bool SetValue(const std::string &key, const std::string &value) = 0;
     virtual bool RemoveEntry(const std::string &key) = 0;
     virtual bool Marshalling(Parcel &parcel) const = 0;
-    virtual std::vector<std::pair<std::string ,std::string>> GetAllProperties() = 0;
+    virtual std::vector<std::pair<std::string, std::string>> GetAllProperties() = 0;
     virtual std::shared_ptr<ImageMetadata> CloneMetadata() = 0;
 };
 } // namespace Media

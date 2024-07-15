@@ -134,9 +134,9 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     return SUCCESS;
 }
 
-std::vector<std::pair<std::string ,std::string>> ExifMetadata::GetAllProperties()
+std::vector<std::pair<std::string, std::string>> ExifMetadata::GetAllProperties()
 {
-    std::vector<std::pair<std::string ,std::string>> result;
+    std::vector<std::pair<std::string, std::string>> result;
     return result;
 }
 
@@ -778,7 +778,7 @@ ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
     if (!parcel.ReadUint32(size)) {
         return nullptr;
     }
-    if(size != 0){
+    if (size != 0) {
         const uint8_t *data = parcel.ReadUnpadBuffer(static_cast<size_t>(size));
         if (!data) {
             return nullptr;
@@ -786,12 +786,9 @@ ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
         ExifData *ptrData = exif_data_new_from_data(data, static_cast<unsigned int>(size));
         ExifMetadata *exifMetadata = new(std::nothrow) ExifMetadata(ptrData);
         return exifMetadata;
-    }else{
+    } else {
         return nullptr;
     }
-    
 }
-
-
 } // namespace Media
 } // namespace OHOS

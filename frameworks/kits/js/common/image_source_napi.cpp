@@ -2827,7 +2827,7 @@ napi_value ImageSourceNapi::CreatePicture(napi_env env, napi_callback_info info)
                 asyncContext->decodingOptsForPicture.desireAuxiliaryPictures.insert(AuxiliaryPictureType(type));
         }
     } else if (argCount == NUM_1) {
-        if(!ParseDecodingOptionsForPicture(env, argValue[NUM_0], &(asyncContext->decodingOptsForPicture))) {
+        if (!ParseDecodingOptionsForPicture(env, argValue[NUM_0], &(asyncContext->decodingOptsForPicture))) {
             IMAGE_LOGE("DecodingOptionsForPicture mismatch");
         }
     } else {
