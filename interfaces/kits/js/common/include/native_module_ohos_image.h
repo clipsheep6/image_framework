@@ -20,6 +20,8 @@
 #include "image_source_napi.h"
 #include "pixel_map_napi.h"
 #include "image_packer_napi.h"
+#include "picture_napi.h"
+#include "auxiliary_picture_napi.h"
 
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "image_receiver_napi.h"

@@ -73,6 +73,7 @@ const uint8_t BYTE_FULL = 0xFF;
 const int32_t SIZE = 100;
 const int32_t TYPE_IMAGE_SOURCE = 1;
 const int32_t TYPE_PIXEL_MAP = 2;
+const int32_t TYPE_PICTURE = 3;
 const int64_t DEFAULT_BUFFER_SIZE = 25 * 1024 * 1024; // 25M is the maximum default packedSize
 const int MASK_3 = 0x3;
 const int MASK_16 = 0xffff;
@@ -94,6 +95,7 @@ struct ImagePackerAsyncContext {
     PackOption packOption;
     std::shared_ptr<ImagePacker> rImagePacker;
     std::shared_ptr<PixelMap> rPixelMap;
+    std::shared_ptr<Picture> rPicture;
     std::shared_ptr<std::vector<std::shared_ptr<PixelMap>>> rPixelMaps;
     std::unique_ptr<uint8_t[]> resultBuffer;
     int32_t packType = TYPE_IMAGE_SOURCE;
@@ -276,6 +278,13 @@ STATIC_EXEC_FUNC(Packing)
             return;
         }
         context->rImagePacker->AddImage(*(context->rImageSource));
+    } else if (context->packType == TYPE_PICTURE) {
+        IMAGE_LOGI("ImagePacker set picture source");
+        if (context->rPicture == nullptr) {
+            BuildMsgOnError(context, context->rPicture == nullptr, "Picture is nullptr");
+            return;
+        }
+        context->rImagePacker->AddPicture(*(context->rPicture));
     } else {
         IMAGE_LOGI("ImagePacker set pixelmap");
         if (context->rPixelMap == nullptr) {

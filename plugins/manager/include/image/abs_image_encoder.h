@@ -20,6 +20,7 @@
 #include "image_plugin_type.h"
 #include "output_data_stream.h"
 #include "plugin_service.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -42,6 +43,7 @@ public:
     virtual ~AbsImageEncoder() = default;
     virtual uint32_t StartEncode(OutputDataStream &outputStream, PlEncodeOptions &option) = 0;
     virtual uint32_t AddImage(Media::PixelMap &pixelMap) = 0;
+    virtual uint32_t AddPicture(Media::Picture &picture) = 0;
     virtual uint32_t FinalizeEncode() = 0;
 
     // define multiple subservices for this interface

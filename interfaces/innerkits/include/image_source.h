@@ -29,6 +29,7 @@
 #include "incremental_pixel_map.h"
 #include "peer_listener.h"
 #include "pixel_map.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace MultimediaPlugin {
@@ -178,6 +179,7 @@ public:
     NATIVEEXPORT std::unique_ptr<IncrementalPixelMap> CreateIncrementalPixelMap(uint32_t index,
                                                                                 const DecodeOptions &opts,
                                                                                 uint32_t &errorCode);
+    NATIVEEXPORT std::unique_ptr<Picture> CreatePicture(const DecodingOptionsForPicture &opts);
     // for incremental source.
     NATIVEEXPORT uint32_t UpdateData(const uint8_t *data, uint32_t size, bool isCompleted);
     // for obtaining basic image information without decoding image data.
@@ -226,7 +228,8 @@ public:
 
     NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
     NATIVEEXPORT void SetExifMetadata(std::shared_ptr<ExifMetadata> &ptr);
-
+    std::shared_ptr<PixelMap> mainPixelMap;
+    std::shared_ptr<PixelMap> gainMapPixelMap;
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
     using FormatAgentMap = std::map<std::string, ImagePlugin::AbsImageFormatAgent *>;
@@ -319,6 +322,9 @@ private:
                             ImagePlugin::DecodeContext &context, ImagePlugin::PlImageInfo &plInfo);
     ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
         ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
+    std::shared_ptr<PixelMap> CreatePixelMapForPicture(ImagePlugin::DecodeContext& context,
+        std::unique_ptr<ImagePlugin::AbsImageDecoder>& decoder);
+    void GetGainMapPixelMap(ImagePlugin::DecodeContext& mainCtx, ImagePlugin::DecodeContext& gainMapCtx);
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
