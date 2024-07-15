@@ -24,8 +24,8 @@
 #endif
 #include "surface_buffer.h"
 
-namespace OHOS{
-namespace Media{
+namespace OHOS {
+namespace Media {
 namespace {
     static const std::map<int32_t, PixelFormat> PIXEL_FORMAT_MAP = {
         { GRAPHIC_PIXEL_FMT_RGBA_8888, PixelFormat::RGBA_8888 },
@@ -66,6 +66,10 @@ namespace {
 #endif
 }
 
+static const uint8_t NUM_0 = 0;
+static const uint8_t NUM_1 = 1;
+static const uint8_t NUM_2 = 2;
+
 static bool IsYuvFormat(PixelFormat format)
 {
     return format == PixelFormat::NV21 || format == PixelFormat::NV12;
@@ -105,7 +109,7 @@ static ColorManager::ColorSpaceName SbGamut2ColorSpaceName(OHOS::GraphicColorGam
 }
 #endif
 
-static ImageInfo MakeImageInfo(int width,int height, PixelFormat pf, AlphaType at, ColorSpace cs)
+static ImageInfo MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs)
 {
     ImageInfo info;
     info.size.width = width;
@@ -118,7 +122,7 @@ static ImageInfo MakeImageInfo(int width,int height, PixelFormat pf, AlphaType a
 
 static void SetYuvDataInfo(std::shared_ptr<PixelMap> pixelMap, sptr<OHOS::SurfaceBuffer> &sBuffer)
 {
-    if(pixelMap == nullptr || sBuffer == nullptr){
+    if (pixelMap == nullptr || sBuffer == nullptr) {
         return;
     }
     int32_t width = sBuffer->GetWidth();
@@ -127,14 +131,14 @@ static void SetYuvDataInfo(std::shared_ptr<PixelMap> pixelMap, sptr<OHOS::Surfac
     GSError retVal = sBuffer->GetPlanesInfo(reinterpret_cast<void**>(&planes));
     YUVDataInfo info;
     info.imageSize = { width, height };
-    if(retVal != OHOS::GSERROR_OK || planes == nullptr || planes->planeCount <= 1){
-        IMAGE_LOGE("Get planesInfo failed, retVal:%{public}d",retVal);
+    if (retVal != OHOS::GSERROR_OK || planes == nullptr || planes->planeCount <= NUM_1) {
+        IMAGE_LOGE("Get planesInfo failed, retVal:%{public}d", retVal);
         return;
-    }else if(planes->planeCount >= 2){
-        info.yStride = planes->planes[0].columnStride;
-        info.uvStride = planes->planes[1].columnStride;
-        info.yOffset = planes->planes[0].offset;
-        info.uvOffset = planes->planes[1].offset - 1;
+    } else if (planes->planeCount >= NUM_2) {
+        info.yStride = planes->planes[NUM_0].columnStride;
+        info.uvStride = planes->planes[NUM_1].columnStride;
+        info.yOffset = planes->planes[NUM_0].offset;
+        info.uvOffset = planes->planes[NUM_1].offset - NUM_1;
     }
     pixelMap->SetImageYUVInfo(info);
 }
@@ -186,10 +190,10 @@ std::shared_ptr<PixelMap> Picture::SurfaceBuffer2PixelMap(sptr<OHOS::SurfaceBuff
     }
 
     ImageInfo imageInfo = MakeImageInfo(surfaceBuffer->GetWidth(),
-                                        surfaceBuffer->GetHeight(),pixelFormat, alphaType, colorSpace);
+                                        surfaceBuffer->GetHeight(), pixelFormat, alphaType, colorSpace);
     pixelMap->SetImageInfo(imageInfo, true);
-    pixelMap->SetPixelsAddr(surfaceBuffer->GetVirAddr(), 
-                            nativeBuffer, pixelMap->GetRowBytes() * pixelMap->GetHeight(), 
+    pixelMap->SetPixelsAddr(surfaceBuffer->GetVirAddr(),
+                            nativeBuffer, pixelMap->GetRowBytes() * pixelMap->GetHeight(),
                             AllocatorType::DMA_ALLOC, nullptr);
 #ifdef IMAGE_COLORSPACE_FLAG
     ColorManager::ColorSpaceName colorSpaceName = SbGamut2ColorSpaceName(surfaceBuffer->GetSurfaceBufferColorGamut());
@@ -252,7 +256,7 @@ bool Picture::Marshalling(Parcel &data) const
         return false;
     }
     
-    for (const auto & auxiliaryPicture : auxiliaryPictures_) {
+    for (const auto &auxiliaryPicture : auxiliaryPictures_) {
         AuxiliaryPictureType type =  auxiliaryPicture.first;
         
         if (!data.WriteInt32(static_cast<int32_t>(type))) {
@@ -292,18 +296,18 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
     picture->SetMainPixel(pixelmapPtr);
     int64_t numAuxiliaryPictures = parcel.ReadUint64();
     
-    for (size_t i = 0; i < numAuxiliaryPictures; ++i) {
+    for (size_t i = NUM_0; i < numAuxiliaryPictures; ++i) {
         int32_t type = parcel.ReadInt32();
         std::shared_ptr<AuxiliaryPicture> auxPtr(AuxiliaryPicture::Unmarshalling(parcel));
         if (!auxPtr) {
             IMAGE_LOGE("Failed to unmarshal auxiliary picture of type %d.", type);
             return nullptr;
         }
-        picture->SetAuxiliaryPicture(static_cast<AuxiliaryPictureType>(type),auxPtr);
+        picture->SetAuxiliaryPicture(static_cast<AuxiliaryPictureType>(type), auxPtr);
     }
     
     return picture.release();
 }
 
-}
-}
+} // namespace Media
+} // namespace OHOS

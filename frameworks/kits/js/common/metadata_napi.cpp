@@ -20,8 +20,6 @@
 #include "image_napi_utils.h"
 #include "napi_message_sequence.h"
 
-
-
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
 
@@ -34,9 +32,8 @@ namespace {
     constexpr uint32_t NUM_2 = 2;
 }
 
-
-namespace OHOS{
-namespace Media{
+namespace OHOS {
+namespace Media {
     static const std::string CLASS_NAME = "ImageMetadata";
     thread_local napi_ref MetadataNapi::sConstructor_ = nullptr;
     thread_local std::shared_ptr<ImageMetadata> MetadataNapi::sMetadata_ = nullptr;
@@ -164,7 +161,7 @@ napi_value MetadataNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getProperties", GetProperties),
         DECLARE_NAPI_FUNCTION("setProperties", SetProperties),
         DECLARE_NAPI_FUNCTION("getAllProperties", GetAllProperties),
-        DECLARE_NAPI_FUNCTION("clone", Clone),         
+        DECLARE_NAPI_FUNCTION("clone", Clone),
     };
     napi_property_descriptor static_prop[] = {};
 
@@ -217,11 +214,8 @@ napi_value MetadataNapi::CreateMetadata(napi_env env, std::shared_ptr<ImageMetad
 
     napi_value constructor = nullptr;
     napi_value result = nullptr;
-    napi_status status;
-
     IMAGE_LOGD("CreateMetadata IN");
-    status = napi_get_reference_value(env, sConstructor_, &constructor);
-
+    napi_status status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
         sMetadata_ = metadata;
         status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
@@ -252,7 +246,7 @@ napi_value MetadataNapi::Constructor(napi_env env, napi_callback_info info)
             IMAGE_LOGE("Failed to set nativeMetadata_ with null. Maybe a reentrancy error");
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void *>(pMetadataNapi.get()),
-                            MetadataNapi::Destructor, nullptr, nullptr);
+                           MetadataNapi::Destructor, nullptr, nullptr);
         if (status != napi_ok) {
             IMAGE_LOGE("Failure wrapping js to native napi");
             return undefineVar;
@@ -421,7 +415,7 @@ static void SetPropertiesComplete(napi_env env, napi_status status, MetadataNapi
     napi_get_undefined(env, &result[NUM_0]);
     napi_get_undefined(env, &result[NUM_1]);
 
-    result[NUM_0] = CreateErrorArray(env, context->errMsgArray); 
+    result[NUM_0] = CreateErrorArray(env, context->errMsgArray);
     if (context->status == SUCCESS) {
         napi_resolve_deferred(env, context->deferred, result[NUM_1]);
     } else {
@@ -462,7 +456,9 @@ static std::unique_ptr<MetadataNapiAsyncContext> UnwrapContext(napi_env env, nap
     }
     if (ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_object) {
         context->keyStrArray = GetStrArrayArgument(env, argValue[NUM_0]);
-        if (context->keyStrArray.size() == 0) return nullptr;
+        if (context->keyStrArray.size() == 0) {
+            return nullptr;
+        }
     } else {
         IMAGE_LOGE("Arg 0 type mismatch");
         return nullptr;
@@ -492,7 +488,9 @@ static std::unique_ptr<MetadataNapiAsyncContext> UnwrapContextForModify(napi_env
     }
     if (ImageNapiUtils::getType(env, argValue[NUM_0]) == napi_object) {
         context->KVSArray = GetArrayArgument(env, argValue[NUM_0]);
-        if (context->KVSArray.size() == 0) return nullptr;
+        if (context->KVSArray.size() == 0) {
+            return nullptr;
+        }
     } else {
         IMAGE_LOGE("Arg 0 type mismatch");
         return nullptr;
@@ -617,7 +615,8 @@ napi_value MetadataNapi::GetAllProperties(napi_env env, napi_callback_info info)
 
     std::unique_ptr<MetadataNapiAsyncContext> asyncContext = std::make_unique<MetadataNapiAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor), nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor), nullptr,
+                         IMAGE_LOGE("Fail to unwrap context"));
 
     asyncContext->rMetadata = asyncContext->nConstructor->nativeMetadata_;
 
@@ -637,7 +636,7 @@ napi_value MetadataNapi::GetAllProperties(napi_env env, napi_callback_info info)
             }
             context->KVSArray = context->rMetadata->GetAllProperties();
             context->status = SUCCESS;
-        },reinterpret_cast<napi_async_complete_callback>(GetPropertiesComplete),
+        }, reinterpret_cast<napi_async_complete_callback>(GetPropertiesComplete),
         asyncContext,
         asyncContext->work);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
@@ -657,7 +656,8 @@ napi_value MetadataNapi::Clone(napi_env env, napi_callback_info info)
 
     std::unique_ptr<MetadataNapiAsyncContext> asyncContext = std::make_unique<MetadataNapiAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor), nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor), nullptr,
+                         IMAGE_LOGE("Fail to unwrap context"));
 
     asyncContext->rMetadata = asyncContext->nConstructor->nativeMetadata_;
 
@@ -669,7 +669,7 @@ napi_value MetadataNapi::Clone(napi_env env, napi_callback_info info)
 
     napi_create_promise(env, &(asyncContext->deferred), &result);
 
-    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "GetHdrComposedPixelMap",
+    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "Clone",
         [](napi_env env, void *data) {
             auto context = static_cast<MetadataNapiAsyncContext*>(data);
             auto tmpixel = context->rMetadata->CloneMetadata();
@@ -690,7 +690,5 @@ void MetadataNapi::release()
         isRelease = true;
     }
 }
-
-
-}   // namespace Media
-}   // namespace OHOS
+} // namespace Media
+} // namespace OHOS

@@ -156,7 +156,7 @@ napi_value AuxiliaryPictureNapi::Constructor(napi_env env, napi_callback_info in
             IMAGE_LOGE("Failed to set nativeAuxiliaryPicture_ with null. Maybe a reentrancy error");
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void *>(pAuxiliaryPictureNapi.get()),
-                            AuxiliaryPictureNapi::Destructor, nullptr, nullptr);
+                           AuxiliaryPictureNapi::Destructor, nullptr, nullptr);
         if (status != napi_ok) {
             IMAGE_LOGE("Failure wrapping js to native napi");
             return undefineVar;
@@ -186,10 +186,8 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, std::share
     napi_value constructor = nullptr;
     napi_value result = nullptr;
     napi_status status;
-
     IMAGE_LOGD("CreateAuxiliaryPicture IN");
     status = napi_get_reference_value(env, sConstructor_, &constructor);
-
     if (IMG_IS_OK(status)) {
         sAuxiliaryPic_ = auxiliaryPic;
         status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
@@ -253,16 +251,16 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     size_t argCount = NUM_3;
     napi_value argValue[NUM_3] = {0};
     uint32_t auxiType = 0;
-    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = 
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext =
         std::make_unique<AuxiliaryPictureNapiAsyncContext>();
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Call napi_get_cb_info failed"));
     
-    IMG_NAPI_CHECK_RET_D(argCount == NUM_3,ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
-        "Invalid args count"),IMAGE_LOGE("Invalid args count %{public}zu", argCount));
+    IMG_NAPI_CHECK_RET_D(argCount == NUM_3, ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        "Invalid args count"), IMAGE_LOGE("Invalid args count %{public}zu", argCount));
 
     status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(asyncContext->arrayBuffer),
-            &(asyncContext->arrayBufferSize));
+                                       &(asyncContext->arrayBufferSize));
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to get auxiliary picture buffer"));
     if (asyncContext->arrayBuffer == nullptr || asyncContext->arrayBufferSize < NUM_0) {
         IMAGE_LOGE("Auxiliary picture buffer invalid or Auxiliary picture buffer size invalid");
@@ -337,7 +335,8 @@ napi_value AuxiliaryPictureNapi::Release(napi_env env, napi_callback_info info)
     return nVal.result;
 }
 
-static void CommonCallbackRoutine(napi_env env, AuxiliaryPictureNapiAsyncContext* &connect, const napi_value &valueParam)
+static void CommonCallbackRoutine(napi_env env, AuxiliaryPictureNapiAsyncContext* &connect,
+                                  const napi_value &valueParam)
 {
     napi_value result[NUM_2] = {0};
 
@@ -347,8 +346,8 @@ static void CommonCallbackRoutine(napi_env env, AuxiliaryPictureNapiAsyncContext
     if (connect->status == SUCCESS) {
         result[NUM_1] = valueParam;
     } else {
-         ImageNapiUtils::CreateErrorObj(env, result[0], connect->status,
-            "There is generic napi failure!");
+        ImageNapiUtils::CreateErrorObj(env, result[0], connect->status,
+                                       "There is generic napi failure!");
         napi_get_undefined(env, &result[1]);
     }
 

@@ -285,7 +285,7 @@ STATIC_EXEC_FUNC(Packing)
             return;
         }
         context->rImagePacker->AddImage(*(context->rPixelMap));
-    } else if (context->packType == TYPE_PICTURE){
+    } else if (context->packType == TYPE_PICTURE) {
         IMAGE_LOGI("ImagePacker set picture");
         if (context->rPicture == nullptr) {
             BuildMsgOnError(context, context->rPicture == nullptr, "Picture is nullptr");

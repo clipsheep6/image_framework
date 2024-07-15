@@ -22,7 +22,8 @@
 
 namespace OHOS {
 namespace Media {
-std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(std::shared_ptr<PixelMap> &content, AuxiliaryPictureType type, Size size)
+std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(std::shared_ptr<PixelMap> &content,
+                                                           AuxiliaryPictureType type, Size size)
 {
     if (content == nullptr) {
         return nullptr;
@@ -33,7 +34,7 @@ std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(std::shared_ptr<Pixel
     return dstAuxPicture;
 }
 
-std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(sptr<SurfaceBuffer> &surfaceBuffer, 
+std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(sptr<SurfaceBuffer> &surfaceBuffer,
                                                            AuxiliaryPictureType type, Size size)
 {
     std::shared_ptr<PixelMap> pixelMap = Picture::SurfaceBuffer2PixelMap(surfaceBuffer);
@@ -52,7 +53,7 @@ void AuxiliaryPicture::SetType(AuxiliaryPictureType type)
 
 Size AuxiliaryPicture::GetSize()
 {
-    if(!content_){
+    if (!content_) {
         return {0, 0};
     }
     return {content_->GetWidth(), content_->GetHeight()};
@@ -70,7 +71,7 @@ void AuxiliaryPicture::SetContentPixel(std::shared_ptr<PixelMap> content)
 
 uint32_t AuxiliaryPicture::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
 {
-    if(content_ == nullptr) {
+    if (content_ == nullptr) {
         return ERR_MEDIA_NULL_POINTER;
     }
     return content_->ReadPixels(bufferSize, dst);
@@ -78,7 +79,7 @@ uint32_t AuxiliaryPicture::ReadPixels(const uint64_t &bufferSize, uint8_t *dst)
 
 uint32_t AuxiliaryPicture::WritePixels(const uint8_t *source, const uint64_t &bufferSize)
 {
-    if(content_ == nullptr) {
+    if (content_ == nullptr) {
         return ERR_MEDIA_NULL_POINTER;
     }
     return content_->WritePixels(source, bufferSize);
@@ -179,5 +180,5 @@ std::shared_ptr<PixelMap> GainmapAuxiliaryPicture::GetContentPixel()
     return content_;
 }
 
-}
-}
+} // namespace Media
+} // namespace OHOS

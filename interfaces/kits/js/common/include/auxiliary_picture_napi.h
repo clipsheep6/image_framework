@@ -21,7 +21,7 @@
 #include "napi/native_node_api.h"
 #include "pixel_map.h"
 
-namespace OHOS{
+namespace OHOS {
 namespace Media {
 class AuxiliaryPictureNapi {
 public:

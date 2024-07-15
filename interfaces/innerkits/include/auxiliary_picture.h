@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H_
-#define INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H_
+#ifndef INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H
+#define INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H
 
 #include "metadata.h"
 #include "pixel_map.h"
@@ -27,13 +27,15 @@ namespace OHOS {
 namespace OHOS {
 namespace Media {
 class ImageMetadata;
-class AuxiliaryPicture: public Parcelable {
+class AuxiliaryPicture : public Parcelable {
 public:
     AuxiliaryPicture() = default;
     virtual ~AuxiliaryPicture() {}
 
-    NATIVEEXPORT static std::unique_ptr<AuxiliaryPicture> Create(std::shared_ptr<PixelMap> &content, AuxiliaryPictureType type, Size size = {0, 0});
-    NATIVEEXPORT static std::unique_ptr<AuxiliaryPicture> Create(sptr<SurfaceBuffer> &surfaceBuffer, AuxiliaryPictureType type, Size size = {0, 0});
+    NATIVEEXPORT static std::unique_ptr<AuxiliaryPicture> Create(std::shared_ptr<PixelMap> &content,
+                                                                 AuxiliaryPictureType type, Size size = {0, 0});
+    NATIVEEXPORT static std::unique_ptr<AuxiliaryPicture> Create(sptr<SurfaceBuffer> &surfaceBuffer,
+                                                                 AuxiliaryPictureType type, Size size = {0, 0});
     NATIVEEXPORT AuxiliaryPictureType GetType();
     NATIVEEXPORT void SetType(AuxiliaryPictureType type);
     NATIVEEXPORT virtual Size GetSize();
@@ -54,10 +56,10 @@ protected:
     std::map<MetadataType, std::shared_ptr<ImageMetadata>> metadatas_;
 };
 
-class GainmapAuxiliaryPicture: public AuxiliaryPicture {
+class GainmapAuxiliaryPicture : public AuxiliaryPicture {
     virtual std::shared_ptr<PixelMap> GetContentPixel() override;
 };
 }
 }
 
-#endif //INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H_
+#endif //INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H

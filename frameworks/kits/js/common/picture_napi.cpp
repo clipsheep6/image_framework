@@ -238,7 +238,7 @@ napi_value PictureNapi::Constructor(napi_env env, napi_callback_info info)
             IMAGE_LOGE("Failed to set nativePicture_ with null. Maybe a reentrancy error");
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void *>(pPictureNapi.get()),
-                            PictureNapi::Destructor, nullptr, nullptr);
+                           PictureNapi::Destructor, nullptr, nullptr);
         if (status != napi_ok) {
             IMAGE_LOGE("Failure wrapping js to native napi");
             return undefineVar;
@@ -266,8 +266,7 @@ napi_value PictureNapi::CreatePicture(napi_env env, std::shared_ptr<Picture> pic
     }
     napi_value constructor = nullptr;
     napi_value result = nullptr;
-    napi_status status;
-    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    napi_status status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
         if (picture != nullptr) {
             sPicture_ = std::move(picture);
@@ -341,7 +340,7 @@ napi_value PictureNapi::GetAuxiliaryPicture(napi_env env, napi_callback_info inf
     napi_value thisVar = nullptr;
     napi_value argValue[NUM_1] = {0};
     size_t argCount = NUM_1;
-    uint32_t auxiType = 0;;
+    uint32_t auxiType = 0;
 
     IMAGE_LOGD("GetAuxiliaryPicture IN");
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
@@ -395,8 +394,7 @@ napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info inf
     napi_value thisVar = nullptr;
     napi_value argValue[NUM_2] = {0};
     size_t argCount = NUM_2;
-    uint32_t auxiType = 0;;
-
+    uint32_t auxiType = 0;
 
     IMAGE_LOGD("SetAuxiliaryPictureSync IN");
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
@@ -412,7 +410,7 @@ napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info inf
     AuxiliaryPictureNapi* auxiliaryPictureNapi = nullptr;
     status = napi_unwrap(env, argValue[NUM_1], reinterpret_cast<void**>(&auxiliaryPictureNapi));
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pictureNapi), result,
-                                    IMAGE_LOGE("fail to unwrap AuxiliaryPictureNapi"));
+                         IMAGE_LOGE("fail to unwrap AuxiliaryPictureNapi"));
 
     if (pictureNapi->nativePicture_ != nullptr) {
         auto auxiliaryPicturePtr = auxiliaryPictureNapi->GetNativeAuxiliaryPic();
@@ -504,7 +502,6 @@ napi_value PictureNapi::ThrowExceptionError(napi_env env,
 
 napi_value PictureNapi::CreatePictureFromParcel(napi_env env, napi_callback_info info)
 {
-    IMAGE_INFO("CreatePictureFromParcel IN");
     if (sConstructor_ == nullptr) {
         napi_value exports = nullptr;
         napi_create_object(env, &exports);
@@ -516,7 +513,7 @@ napi_value PictureNapi::CreatePictureFromParcel(napi_env env, napi_callback_info
     napi_value thisVar = nullptr;
     napi_value argValue[NUM_1] = {0};
     size_t argCount = NUM_1;
-    IMAGE_LOGD("CreatePictureFromParcel IN");
+    IMAGE_LOGD("Call CreatePictureFromParcel");
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
     if (!IMG_IS_OK(status) || argCount != NUM_1) {
         return PictureNapi::ThrowExceptionError(env,
@@ -542,7 +539,7 @@ napi_value PictureNapi::CreatePictureFromParcel(napi_env env, napi_callback_info
         if (sPicture_ == nullptr) {
             status = napi_invalid_arg;
             IMAGE_LOGE("NewPictureNapiInstance picture is nullptr");
-        }else{
+        } else {
             status = napi_new_instance(env, constructor, NUM_0, nullptr, &result);
         }
     }
@@ -551,7 +548,6 @@ napi_value PictureNapi::CreatePictureFromParcel(napi_env env, napi_callback_info
         return PictureNapi::ThrowExceptionError(env,
             CREATE_PICTURE_FROM_PARCEL, ERR_IMAGE_NAPI_ERROR, "New instance could not be obtained");
     }
-    IMAGE_INFO("CreatePictureFromParcel OUT");
     return result;
 }
 napi_value PictureNapi::GetMainPixelmap(napi_env env, napi_callback_info info)
@@ -587,8 +583,8 @@ napi_value PictureNapi::Release(napi_env env, napi_callback_info info)
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nVal.result, IMAGE_LOGE("Fail to call napi_get_cb_info"));
     nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
 
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, asyncContext->nConstructor), 
-            nVal.result, IMAGE_LOGE("Fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, asyncContext->nConstructor),
+                         nVal.result, IMAGE_LOGE("Fail to unwrap context"));
     asyncContext.release();
     return nVal.result;
 }
@@ -643,7 +639,7 @@ static void CreateHDRComposedPixelmapComplete(napi_env env, napi_status status, 
     CommonCallbackRoutine(env, context, result);
 }
 
-napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info info) 
+napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info info)
 {
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
@@ -659,7 +655,8 @@ napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info 
 
     std::unique_ptr<PictureAsyncContext> asyncContext = std::make_unique<PictureAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor), result, IMAGE_LOGE("Fail to napi_unwrap context"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor), result,
+                         IMAGE_LOGE("Fail to napi_unwrap context"));
     asyncContext->rPicture = asyncContext->nConstructor->nativePicture_;
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPicture),
         nullptr, IMAGE_LOGE("Empty native pixelmap"));
@@ -673,7 +670,7 @@ napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info 
             auto context = static_cast<PictureAsyncContext*>(data);
             auto tmpixel = context->rPicture->GetHdrComposedPixelMap();
             context->rPixelMap = std::move(tmpixel);
-            context->status = SUCCESS;          
+            context->status = SUCCESS;
         }, CreateHDRComposedPixelmapComplete, asyncContext, asyncContext->work);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, IMAGE_LOGE("Fail to create async work"));

@@ -52,8 +52,8 @@ private:
     std::shared_ptr<ImageMetadata> nativeMetadata_;
     napi_env env_ = nullptr;
     bool isRelease = false;
-    uint32_t uniqueId_ = 0;    
+    uint32_t uniqueId_ = 0;
 };
-}// namespace Media
-}// namespace OHOS
-#endif// INTERFACES_KITS_JS_COMMON_INCLUDE_METADATA_NAPI_H
+} // namespace Media
+} // namespace OHOS
+#endif // INTERFACES_KITS_JS_COMMON_INCLUDE_METADATA_NAPI_H

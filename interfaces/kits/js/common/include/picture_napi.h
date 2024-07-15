@@ -21,7 +21,7 @@
 #include "napi/native_node_api.h"
 #include "pixel_map.h"
 
-namespace OHOS{
+namespace OHOS {
 namespace Media {
 class PictureNapi {
 public:
@@ -29,7 +29,7 @@ public:
     ~PictureNapi();
 
     static napi_value Init(napi_env env, napi_value exports);
-	static std::shared_ptr<Picture> GetPicture(napi_env env, napi_value picture);
+    static std::shared_ptr<Picture> GetPicture(napi_env env, napi_value picture);
     static napi_value CreatePicture(napi_env env, std::shared_ptr<Picture> picture);
 
 private:

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_INCLUDE_PICTURE_H_
-#define INTERFACES_INNERKITS_INCLUDE_PICTURE_H_
+#ifndef INTERFACES_INNERKITS_INCLUDE_PICTURE_H
+#define INTERFACES_INNERKITS_INCLUDE_PICTURE_H
 
 #include "pixel_map.h"
 #include "auxiliary_picture.h"
@@ -27,7 +27,7 @@ namespace OHOS {
 
 namespace OHOS {
 namespace Media {
-class Picture: public Parcelable {
+class Picture : public Parcelable {
 public:
     Picture() = default;
     virtual ~Picture() {}
