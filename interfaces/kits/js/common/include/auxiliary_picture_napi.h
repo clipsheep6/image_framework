@@ -46,6 +46,8 @@ private:
     static napi_value CreateAuxiliaryPicture(napi_env env, napi_callback_info info);
     static napi_value GetMetadata(napi_env env, napi_callback_info info);
     static napi_value SetMetadata(napi_env env, napi_callback_info info);
+    static napi_value GetType(napi_env env, napi_callback_info info);
+    static napi_value Release(napi_env env, napi_callback_info info);
 
     void release();
     static thread_local napi_ref sConstructor_;
