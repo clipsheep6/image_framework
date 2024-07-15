@@ -689,7 +689,7 @@ static void ParserPackingArguments(napi_env env,
     int32_t refCount = 1;
     if (argc < PARAM1 || argc > PARAM3) {
         BuildMsgOnError(context, !(argc < PARAM1 || argc > PARAM3),
-        "Arguments Count error", ERR_IMAGE_INVALID_PARAMETER);
+            "Arguments Count error", ERR_IMAGE_INVALID_PARAMETER);
     }
     context->packType = ParserPackingArgumentType(env, argv[PARAM0]);
     if (context->packType == TYPE_IMAGE_SOURCE) {

@@ -1071,7 +1071,7 @@ napi_value PixelMapNapi::CreatePixelMapSync(napi_env env, napi_callback_info inf
     }
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), ImageNapiUtils::ThrowExceptionError(env,
         ERR_IMAGE_PIXELMAP_CREATE_FAILED, "Failed to create pixelmap"),
-            IMAGE_LOGE("fail to create pixel map sync"));
+                         IMAGE_LOGE("fail to create pixel map sync"));
     return result;
 }
 
