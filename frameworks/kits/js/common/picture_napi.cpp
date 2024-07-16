@@ -170,6 +170,7 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor props[] = {
         DECLARE_NAPI_FUNCTION("getMainPixelmap", GetMainPixelmap),
         DECLARE_NAPI_FUNCTION("getHDRComposedPixelmap", GetHDRComposedPixelMap),
+        DECLARE_NAPI_FUNCTION("getGainmapPixelmap", GetGainmapPixelmap),
         DECLARE_NAPI_FUNCTION("getAuxiliaryPicture", GetAuxiliaryPicture),
         DECLARE_NAPI_FUNCTION("setAuxiliaryPicture", SetAuxiliaryPicture),
         DECLARE_NAPI_FUNCTION("release", Release),
@@ -646,7 +647,7 @@ napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info 
 
     napi_status status;
     napi_value thisVar = nullptr;
-    size_t argCount = 0;
+    size_t argCount = NUM_0;
 
     IMAGE_LOGD("GetHdrComposedPixelMap IN");
     IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
@@ -676,6 +677,28 @@ napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info 
         nullptr, IMAGE_LOGE("Fail to create async work"));
 
     return result;
+}
+
+napi_value PictureNapi::GetGainmapPixelmap(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    napi_get_undefined(env, &nVal.result);
+    IMAGE_LOGD("GetGainmapPixelmap");
+    nVal.argc = NUM_0;
+    IMG_JS_ARGS(env, info, nVal.status, nVal.argc, nullptr, nVal.thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nVal.result, IMAGE_LOGE("Parameter acquisition failed"));
+
+    PictureNapi* pictureNapi = nullptr;
+    nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&pictureNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, pictureNapi), nVal.result, IMAGE_LOGE("Failed to retrieve native pointer"));
+
+    if (pictureNapi->nativePicture_ != nullptr) {
+        auto gainpixelmap = pictureNapi->nativePicture_->GetGainmapPixelMap();
+        nVal.result = PixelMapNapi::CreatePixelMap(env, gainpixelmap);
+    } else {
+        return ImageNapiUtils::ThrowExceptionError(env, ERR_MEDIA_UNKNOWN, "Picture is a null pointer");
+    }
+    return nVal.result;
 }
 
 void PictureNapi::release()
