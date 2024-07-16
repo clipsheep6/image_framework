@@ -236,6 +236,17 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
     return AddImage(*pixelMap_.get());
 }
 
+uint32_t ImagePacker::AddPicture(Picture &picture)
+{
+    ImageTrace imageTrace("ImagePacker::AddPicture by picture");
+#ifdef HEIF_HW_ENCODE_ENABLE
+    return DoEncodingFunc([this, &picture](ImagePlugin::AbsImageEncoder* encoder) {
+        return encoder->AddPicture(picture);
+    });
+#endif
+    return 0;
+}
+
 uint32_t ImagePacker::FinalizePacking()
 {
     ImageTrace imageTrace("ImagePacker::FinalizePacking");
