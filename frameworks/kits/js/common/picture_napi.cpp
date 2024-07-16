@@ -286,7 +286,7 @@ napi_value PictureNapi::CreatePicture(napi_env env, std::shared_ptr<Picture> pic
 
 static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
 {
-    if (val >= static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+    if (val >= static_cast<int32_t>(AuxiliaryPictureType::GAINMAP)
         && val<= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
         return AuxiliaryPictureType(val);
     }
@@ -660,8 +660,8 @@ napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info 
     asyncContext->rPicture = asyncContext->nConstructor->nativePicture_;
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rPicture),
         nullptr, IMAGE_LOGE("Empty native pixelmap"));
-    if (asyncContext->rPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAIN_MAP) == nullptr) {
-        return ImageNapiUtils::ThrowExceptionError(env, ERR_MEDIA_UNKNOWN, "There is no GAIN_MAP");
+    if (asyncContext->rPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP) == nullptr) {
+        return ImageNapiUtils::ThrowExceptionError(env, ERR_MEDIA_UNKNOWN, "There is no GAINMAP");
     }
     napi_create_promise(env, &(asyncContext->deferred), &result);
 

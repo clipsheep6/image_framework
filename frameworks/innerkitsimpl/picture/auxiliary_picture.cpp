@@ -30,7 +30,8 @@ std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(std::shared_ptr<Pixel
     }
     std::unique_ptr<AuxiliaryPicture> dstAuxPicture = std::make_unique<AuxiliaryPicture>();
     dstAuxPicture->content_ = content;
-    dstAuxPicture->type_ = type;
+    dstAuxPicture->SetType(type);
+    dstAuxPicture->SetSize(size);
     return dstAuxPicture;
 }
 
@@ -43,25 +44,31 @@ std::unique_ptr<AuxiliaryPicture> AuxiliaryPicture::Create(sptr<SurfaceBuffer> &
 
 AuxiliaryPictureType AuxiliaryPicture::GetType()
 {
-    return type_;
+    return auxiliaryPictureInfo_.auxiliaryPictureType;
 }
 
 void AuxiliaryPicture::SetType(AuxiliaryPictureType type)
 {
-    type_ = type;
+    auxiliaryPictureInfo_.auxiliaryPictureType = type;
 }
 
 Size AuxiliaryPicture::GetSize()
 {
-    if (!content_) {
-        return {0, 0};
-    }
-    return {content_->GetWidth(), content_->GetHeight()};
+    return auxiliaryPictureInfo_.size;
+}
+
+void AuxiliaryPicture::SetSize(Size size)
+{
+    auxiliaryPictureInfo_.size = size;
 }
 
 std::shared_ptr<PixelMap> AuxiliaryPicture::GetContentPixel()
 {
-    return content_;
+    if (auxiliaryPictureInfo_.auxiliaryPictureType == AuxiliaryPictureType::GAINMAP) {
+        return content_;
+    } else {
+        return nullptr;
+    }
 }
 
 void AuxiliaryPicture::SetContentPixel(std::shared_ptr<PixelMap> content)
@@ -175,9 +182,14 @@ AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &parcel, PICTURE_ERR &e
     return auxPtr.release();
 }
 
-std::shared_ptr<PixelMap> GainmapAuxiliaryPicture::GetContentPixel()
+AuxiliaryPictureInfo AuxiliaryPicture::GetAuxiliaryPictureInfo()
 {
-    return content_;
+    return auxiliaryPictureInfo_;
+}
+
+void AuxiliaryPicture::SetAuxiliaryPictureInfo(const AuxiliaryPictureInfo &auxiliaryPictureInfo)
+{
+    auxiliaryPictureInfo_ = auxiliaryPictureInfo;
 }
 
 } // namespace Media

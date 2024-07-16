@@ -220,6 +220,16 @@ std::unique_ptr<PixelMap> Picture::GetHdrComposedPixelMap()
     return nullptr;
 }
 
+std::shared_ptr<PixelMap> Picture::GetGainmapPixelMap()
+{
+    if (!HasAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)) {
+        IMAGE_LOGE("Unsupport gain map.");
+        return nullptr;
+    } else {
+        return GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)->GetContentPixel();
+    }
+}
+
 std::shared_ptr<AuxiliaryPicture> Picture::GetAuxiliaryPicture(AuxiliaryPictureType type)
 {
     auto iter = auxiliaryPictures_.find(type);

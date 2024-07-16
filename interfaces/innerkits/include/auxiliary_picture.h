@@ -39,10 +39,13 @@ public:
     NATIVEEXPORT AuxiliaryPictureType GetType();
     NATIVEEXPORT void SetType(AuxiliaryPictureType type);
     NATIVEEXPORT virtual Size GetSize();
-    NATIVEEXPORT virtual std::shared_ptr<PixelMap> GetContentPixel();
+    NATIVEEXPORT void SetSize(Size size);
+    NATIVEEXPORT std::shared_ptr<PixelMap> GetContentPixel();
     NATIVEEXPORT void SetContentPixel(std::shared_ptr<PixelMap> content);
     NATIVEEXPORT uint32_t ReadPixels(const uint64_t &bufferSize, uint8_t *dst);
     NATIVEEXPORT uint32_t WritePixels(const uint8_t *source, const uint64_t &bufferSize);
+    NATIVEEXPORT AuxiliaryPictureInfo GetAuxiliaryPictureInfo();
+    NATIVEEXPORT void SetAuxiliaryPictureInfo(const AuxiliaryPictureInfo &auxiliaryPictureInfo);
     NATIVEEXPORT std::shared_ptr<ImageMetadata> GetMetadata(MetadataType type);
     NATIVEEXPORT void SetMetadata(MetadataType type, std::shared_ptr<ImageMetadata> metadata);
     NATIVEEXPORT bool HasMetadata(MetadataType type);
@@ -52,12 +55,8 @@ public:
 
 protected:
     std::shared_ptr<PixelMap> content_;
-    AuxiliaryPictureType type_ = AuxiliaryPictureType::NONE;
+    AuxiliaryPictureInfo auxiliaryPictureInfo_;
     std::map<MetadataType, std::shared_ptr<ImageMetadata>> metadatas_;
-};
-
-class GainmapAuxiliaryPicture : public AuxiliaryPicture {
-    virtual std::shared_ptr<PixelMap> GetContentPixel() override;
 };
 }
 }
