@@ -227,7 +227,7 @@ static bool ParseSize(napi_env env, napi_value root, int32_t& width, int32_t& he
 
 static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
 {
-    if (val >= static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+    if (val >= static_cast<int32_t>(AuxiliaryPictureType::GAINMAP)
         && val <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
         return AuxiliaryPictureType(val);
     }
@@ -273,7 +273,7 @@ napi_value AuxiliaryPictureNapi::CreateAuxiliaryPicture(napi_env env, napi_callb
     }
     status = napi_get_value_uint32(env, argValue[NUM_2], &auxiType);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Fail to get auxiliary picture Type"));
-    if (auxiType < static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP)
+    if (auxiType < static_cast<int32_t>(AuxiliaryPictureType::GAINMAP)
         || auxiType > static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
         IMAGE_LOGE("AuxiliaryFigureType is invalid");
         return result;

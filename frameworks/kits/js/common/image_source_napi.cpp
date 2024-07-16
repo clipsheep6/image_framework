@@ -2822,7 +2822,7 @@ napi_value ImageSourceNapi::CreatePicture(napi_env env, napi_callback_info info)
         nullptr, IMAGE_LOGE("empty native rImageSource"));
 
     if (argCount == NUM_0) {
-        for (int32_t type = static_cast<int32_t>(AuxiliaryPictureType::GAIN_MAP);
+        for (int32_t type = static_cast<int32_t>(AuxiliaryPictureType::GAINMAP);
             type <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP); type++) {
                 asyncContext->decodingOptsForPicture.desireAuxiliaryPictures.insert(AuxiliaryPictureType(type));
         }

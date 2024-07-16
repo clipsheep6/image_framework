@@ -275,11 +275,19 @@ enum class AntiAliasingOption : int32_t {
 
 enum class AuxiliaryPictureType {
     NONE = 0,
-    GAIN_MAP = 1,
+    GAINMAP = 1,
     DEPTH_MAP = 2,
     UNREFOCUS_MAP = 3,
     LINEAR_MAP = 4,
     MARK_CUT_MAP = 5,
+};
+
+struct AuxiliaryPictureInfo {
+    AuxiliaryPictureType auxiliaryPictureType = AuxiliaryPictureType::NONE;
+    Size size;
+    int32_t rowStride = 0;
+    PixelFormat pixelFormat = PixelFormat::UNKNOWN;
+    ColorSpace colorSpace = ColorSpace::SRGB;
 };
 
 enum class MetadataType {
