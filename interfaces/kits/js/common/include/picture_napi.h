@@ -38,6 +38,7 @@ private:
     // methods
     static napi_value GetMainPixelmap(napi_env env, napi_callback_info info);
     static napi_value GetHDRComposedPixelMap(napi_env env, napi_callback_info info);
+    static napi_value GetGainmapPixelmap(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value GetAuxiliaryPicture(napi_env env, napi_callback_info info);
