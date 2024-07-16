@@ -20,7 +20,9 @@
 #include "image_napi.h"
 #include "image_napi_utils.h"
 #include "pixel_map_napi.h"
+#include "pixel_map.h"
 #include "metadata_napi.h"
+#include "color_space_object_convertor.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -51,6 +53,7 @@ struct AuxiliaryPictureNapiAsyncContext {
     napi_ref error = nullptr;
     uint32_t status;
     AuxiliaryPictureNapi *nConstructor;
+    std::shared_ptr<PixelMap> rPixelmap;
     std::shared_ptr<Picture> rPicture;
     std::shared_ptr<AuxiliaryPicture> auxPicture;
     void *arrayBuffer;
@@ -61,6 +64,9 @@ struct AuxiliaryPictureNapiAsyncContext {
     std::shared_ptr<AuxiliaryPicture> rAuxiliaryPicture;
     std::shared_ptr<ImageMetadata> imageMetadata;
     MetadataType metadataType = MetadataType::EXIF;
+    AuxiliaryPictureNapi *auxiliaryPictureNapi;
+    AuxiliaryPictureInfo auxiliaryPictureInfo;
+    std::shared_ptr<OHOS::ColorManager::ColorSpace> AuxColorSpace = nullptr;
 };
 
 using AuxiliaryPictureNapiAsyncContextPtr = std::unique_ptr<AuxiliaryPictureNapiAsyncContext>;
@@ -92,6 +98,8 @@ napi_value AuxiliaryPictureNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getType", GetType),
         DECLARE_NAPI_FUNCTION("getMetadata", GetMetadata),
         DECLARE_NAPI_FUNCTION("setMetadata", SetMetadata),
+        DECLARE_NAPI_FUNCTION("getAuxiliaryPictureInfo", GetAuxiliaryPictureInfo),
+        DECLARE_NAPI_FUNCTION("setAuxiliaryPictureInfo", SetAuxiliaryPictureInfo),
         DECLARE_NAPI_FUNCTION("release", Release),
     };
     napi_property_descriptor static_prop[] = {
@@ -491,6 +499,176 @@ napi_value AuxiliaryPictureNapi::SetMetadata(napi_env env, napi_callback_info in
         }, SetMetadataComplete, asyncContext, asyncContext->work);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, IMAGE_LOGE("Fail to create async work"));
+    return result;
+}
+
+static napi_value GetAuxiliaryPictureInfoNapiValue(napi_env env, void* data, std::shared_ptr<AuxiliaryPicture> picture)
+{
+    napi_value result = nullptr;
+    auto auxiliaryPictureInfo = static_cast<AuxiliaryPictureInfo*>(data);
+    napi_create_object(env, &result);
+    napi_value auxiliaryPictureTypeValue = nullptr;
+    napi_create_int32(env, static_cast<int32_t>(auxiliaryPictureInfo->auxiliaryPictureType), 
+        &auxiliaryPictureTypeValue);
+    napi_set_named_property(env, result, "auxiliaryPictureType", auxiliaryPictureTypeValue);
+
+    napi_value size = nullptr;
+    napi_create_object(env, &size);
+
+    napi_value sizeWidth = nullptr;
+    napi_create_int32(env, auxiliaryPictureInfo->size.width, &sizeWidth);
+    napi_set_named_property(env, size, "width", sizeWidth);
+
+    napi_value sizeHeight = nullptr;
+    napi_create_int32(env, auxiliaryPictureInfo->size.height, &sizeHeight);
+    napi_set_named_property(env, size, "height", sizeHeight);
+
+    napi_set_named_property(env, result, "size", size);
+
+    napi_value rowStrideValue = nullptr;
+    napi_create_int32(env, auxiliaryPictureInfo->rowStride, &rowStrideValue);
+    napi_set_named_property(env, result, "rowStride", rowStrideValue);
+
+    napi_value pixelFormatValue = nullptr;
+    napi_create_int32(env, static_cast<int32_t>(auxiliaryPictureInfo->pixelFormat), &pixelFormatValue);
+    napi_set_named_property(env, result, "pixelFormat", pixelFormatValue);
+    std::shared_ptr<PixelMap> rPixelmap = nullptr;
+
+    if (picture->GetContentPixel() == nullptr) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_DATA_ABNORMAL, "Invalid pixelmap");
+    }
+    auto grCS = picture->GetContentPixel()->InnerGetGrColorSpacePtr();
+    if (grCS == nullptr) {
+        return ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_DATA_UNSUPPORT, "No colorspace in pixelmap");
+    }
+    auto resultValue = ColorManager::CreateJsColorSpaceObject(env, grCS);
+    napi_value colorSpaceValue = reinterpret_cast<napi_value>(resultValue);
+    napi_create_int32(env, static_cast<int32_t>(auxiliaryPictureInfo->colorSpace), &colorSpaceValue);
+    napi_set_named_property(env, result, "colorSpace", colorSpaceValue);
+    return result;
+}
+
+napi_value AuxiliaryPictureNapi::GetAuxiliaryPictureInfo(napi_env env, napi_callback_info info)
+{
+    NapiValues nVal;
+    napi_get_undefined(env, &nVal.result);
+    nVal.argc = NUM_0;
+    IMAGE_LOGD("Call GetAuxiliaryPictureInfo");
+    IMG_JS_ARGS(env, info, nVal.status, nVal.argc, nullptr, nVal.thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nullptr, IMAGE_LOGE("Call napi_get_cb_info failed"));
+    std::unique_ptr<AuxiliaryPictureNapi> auxiliaryPictureNapi = nullptr;
+    nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&auxiliaryPictureNapi));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, auxiliaryPictureNapi),
+        nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, auxiliaryPictureNapi->nativeAuxiliaryPicture_),
+        nullptr, IMAGE_LOGE("Empty native auxiliarypicture"));
+    if (auxiliaryPictureNapi->nativeAuxiliaryPicture_ != nullptr) {
+        AuxiliaryPictureInfo auxiliaryPictureInfo;
+        auxiliaryPictureInfo = auxiliaryPictureNapi->nativeAuxiliaryPicture_->GetAuxiliaryPictureInfo();
+        nVal.result = GetAuxiliaryPictureInfoNapiValue(env, &auxiliaryPictureInfo, 
+            auxiliaryPictureNapi->nativeAuxiliaryPicture_);
+    } else {
+        IMAGE_LOGE("Native auxiliarypicture is nullptr!");
+    }
+    auxiliaryPictureNapi.release();
+    return nVal.result;
+}
+
+static PixelFormat ParsePixelFormat(int32_t val)
+{
+    if (val >= static_cast<int32_t>(PixelFormat::ARGB_8888) && val <= static_cast<int32_t>(PixelFormat::CMYK)) {
+        return PixelFormat(val);
+    }
+    return PixelFormat::UNKNOWN;
+}
+
+static void ParseColorSpace(napi_env env, napi_value val, AuxiliaryPictureNapiAsyncContext* context)
+{
+#ifdef IMAGE_COLORSPACE_FLAG
+    context->AuxColorSpace = ColorManager::GetColorSpaceByJSObject(env, val);
+    if (context->AuxColorSpace == nullptr) {
+        ImageNapiUtils::ThrowExceptionError(
+            env, ERR_IMAGE_INVALID_PARAMETER, "ColorSpace mismatch");
+    }
+    context->rPixelmap->InnerSetColorSpace(*(context->AuxColorSpace));
+#else
+    ImageNapiUtils::ThrowExceptionError(
+        env, ERR_INVALID_OPERATION, "Unsupported operation");
+#endif
+}
+
+static bool ParseAuxiliaryPictureInfo(napi_env env, napi_value result, napi_value root, 
+    AuxiliaryPictureNapiAsyncContext* auxiliaryPictureNapiAsyncContext)
+{
+    uint32_t tmpNumber = 0;
+    napi_value tmpValue = nullptr;
+    auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(auxiliaryPictureNapiAsyncContext);
+
+    if (!GET_UINT32_BY_NAME(root, "auxiliaryPictureType", tmpNumber)) {
+        IMAGE_LOGI("No auxiliaryPictureType in auxiliaryPictureInfo");
+        return false;
+    }
+    context->auxiliaryPictureInfo.auxiliaryPictureType = ParseAuxiliaryPictureType(tmpNumber);
+
+    if (!GET_NODE_BY_NAME(root, "size", tmpValue)) {
+        return false;
+    }
+    if (!ParseSize(env, tmpValue, context->auxiliaryPictureInfo.size.width, 
+        context->auxiliaryPictureInfo.size.height)) {
+        return false;
+    }
+
+    tmpNumber = 0;
+    if (!GET_UINT32_BY_NAME(root, "rowStride", tmpNumber)) {
+        IMAGE_LOGI("No rowStride in auxiliaryPictureInfo");
+    }
+    context->auxiliaryPictureInfo.rowStride = tmpNumber;
+
+    tmpNumber = 0;
+    if (!GET_UINT32_BY_NAME(root, "pixelFormat", tmpNumber)) {
+        IMAGE_LOGI("No pixelFormat in auxiliaryPictureInfo");
+    }
+    context->auxiliaryPictureInfo.pixelFormat = ParsePixelFormat(tmpNumber);
+
+    context->rPixelmap = context->auxPicture->GetContentPixel();
+    napi_value auxColorSpace = nullptr;
+    if (!GET_NODE_BY_NAME(root, "colorSpace", auxColorSpace)) {
+        IMAGE_LOGI("No colorSpace in auxiliaryPictureInfo");
+    }
+    ParseColorSpace(env, auxColorSpace, context);
+    return true;
+}
+ 
+napi_value AuxiliaryPictureNapi::SetAuxiliaryPictureInfo(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = NUM_2;
+    napi_value argValue[NUM_2] = {0};
+
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("Call napi_get_cb_info failed"));
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext =
+        std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
+        nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    asyncContext->auxPicture = asyncContext->nConstructor->nativeAuxiliaryPicture_;
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->auxPicture),
+        nullptr, IMAGE_LOGE("Empty native auxiliary picture"));
+    IMG_NAPI_CHECK_RET_D(ParseAuxiliaryPictureInfo(env, result, argValue[NUM_0], asyncContext.get()),
+        nullptr, IMAGE_LOGE("AuxiliaryPictureInfo mismatch"));
+    
+    if (status == napi_ok) {
+        asyncContext->auxPicture->SetAuxiliaryPictureInfo(asyncContext->auxiliaryPictureInfo);
+    } else {
+        IMAGE_LOGE("Failed to call napi_unwrap for auxilianypictureinfo");
+    }
     return result;
 }
 
