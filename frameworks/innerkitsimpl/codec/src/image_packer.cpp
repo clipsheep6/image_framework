@@ -25,6 +25,7 @@
 #include "media_errors.h"
 #include "ostream_packer_stream.h"
 #include "plugin_server.h"
+#include "string_ex.h"
 #if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_encoder.h"
 #endif
@@ -67,7 +68,13 @@ uint32_t ImagePacker::GetSupportedFormats(std::set<std::string> &formats)
             IMAGE_LOGE("attr data get format failed.");
             continue;
         }
-        formats.insert(format);
+        std::vector<std::string> splitedVector;
+        SplitStr(format, ",", splitedVector);
+        for (std::string item : splitedVector) {
+            if (EXTENDED_ENCODER.compare(item) != 0) {
+                formats.insert(item);
+            }
+        }
     }
     return SUCCESS;
 }
