@@ -1214,7 +1214,7 @@ static uint32_t GetFormatName(SkEncodedImageFormat format, std::string &name)
         return SUCCESS;
     }
     IMAGE_LOGE("GetFormatName: get encoded format name failed %{public}d.", format);
-    return ERR_IMAGE_DATA_UNSUPPORT;
+    return ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
 }
 
 bool ExtDecoder::ConvertInfoToAlphaType(SkAlphaType &alphaType, AlphaType &outputType)
@@ -1476,7 +1476,7 @@ static bool ParseExifData(InputDataStream *input, EXIFInfo &info)
 bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32_t &res)
 {
     if (IsSameTextStr(key, ACTUAL_IMAGE_ENCODED_FORMAT)) {
-        res = Media::ERR_MEDIA_VALUE_INVALID;
+        res = Media::ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
         return false;
     }
     if (!CheckIndexValied(index)) {
@@ -1504,7 +1504,7 @@ static uint32_t GetDelayTime(SkCodec * codec, uint32_t index, int32_t &value)
     if (codec->getEncodedFormat() != SkEncodedImageFormat::kGIF &&
         codec->getEncodedFormat() != SkEncodedImageFormat::kWEBP) {
         IMAGE_LOGE("[GetDelayTime] Should not get delay time in %{public}d", codec->getEncodedFormat());
-        return ERR_MEDIA_INVALID_PARAM;
+        return ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
     }
     auto frameInfos = codec->getFrameInfo();
     if (index > frameInfos.size() - 1) {
@@ -1520,7 +1520,7 @@ static uint32_t GetDisposalType(SkCodec * codec, uint32_t index, int32_t &value)
 {
     if (codec->getEncodedFormat() != SkEncodedImageFormat::kGIF) {
         IMAGE_LOGE("[GetDisposalType] Should not get disposal type in %{public}d", codec->getEncodedFormat());
-        return ERR_MEDIA_INVALID_PARAM;
+        return ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
     }
     auto frameInfos = codec->getFrameInfo();
     if (index > frameInfos.size() - 1) {
@@ -1536,7 +1536,7 @@ static uint32_t GetLoopCount(SkCodec *codec, int32_t &value)
 {
     if (codec->getEncodedFormat() != SkEncodedImageFormat::kGIF) {
         IMAGE_LOGE("[GetLoopCount] Should not get loop count in %{public}d", codec->getEncodedFormat());
-        return ERR_MEDIA_INVALID_PARAM;
+        return ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
     }
     auto count = codec->getRepetitionCount();
     if (count == LOOP_COUNT_INFINITE || count <= SK_REPETITION_COUNT_ERROR_VALUE) {

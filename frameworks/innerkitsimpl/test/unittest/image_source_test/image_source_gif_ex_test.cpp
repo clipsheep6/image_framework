@@ -568,7 +568,7 @@ HWTEST_F(ImageSourceGifExTest, GetLoopCount005, TestSize.Level3)
 
     imageSource->GetLoopCount(errorCode);
 
-    ASSERT_EQ(errorCode, ERR_MEDIA_INVALID_PARAM);
+    ASSERT_EQ(errorCode, ERR_IMAGE_UNSUPPORTED_MIME_TYPE);
 
     GTEST_LOG_(INFO) << "ImageSourceGifExTest: GetLoopCount005 end";
 }

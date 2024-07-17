@@ -249,7 +249,7 @@ uint32_t ExtEncoder::FinalizeEncode()
     if (iter == FORMAT_NAME.end()) {
         IMAGE_LOGE("ExtEncoder::FinalizeEncode unsupported format %{public}s", opts_.format.c_str());
         ReportEncodeFault(0, 0, opts_.format, "Unsupported format:" + opts_.format);
-        return ERR_IMAGE_INVALID_PARAMETER;
+        return ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
     }
 
     ImageInfo imageInfo;

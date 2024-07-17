@@ -812,7 +812,7 @@ STATIC_EXEC_FUNC(CreatePixelMap)
     if (IMG_NOT_NULL(context->rPixelMap)) {
         context->status = SUCCESS;
     } else {
-        context->status = ERROR;
+        context->status = ERR_IMAGE_PIXELMAP_IS_NULL;
     }
 }
 
@@ -831,7 +831,7 @@ void PixelMapNapi::CreatePixelMapComplete(napi_env env, napi_status status, void
     }
 
     if (!IMG_IS_OK(status)) {
-        context->status = ERROR;
+        context->status = ERR_IMAGE_PIXELMAP_CREATE_FAILED;
         IMAGE_LOGE("New instance could not be obtained");
         napi_get_undefined(env, &result);
     }
@@ -882,7 +882,7 @@ napi_value PixelMapNapi::CreatePremultipliedPixelMap(napi_env env, napi_callback
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount >= NUM_2,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "Invalid args count"),
         IMAGE_LOGE("Invalid args count %{public}zu", argCount));
     std::unique_ptr<PixelMapAsyncContext> asyncContext = std::make_unique<PixelMapAsyncContext>();
@@ -896,7 +896,7 @@ napi_value PixelMapNapi::CreatePremultipliedPixelMap(napi_env env, napi_callback
         }
     } else {
         BuildContextError(env, asyncContext->error, "input image type mismatch",
-            ERR_IMAGE_GET_DATA_ABNORMAL);
+            ERR_IMAGE_INVALID_PARAMETER);
     }
 
     IMG_NAPI_CHECK_RET_D(asyncContext->error == nullptr, nullptr, IMAGE_LOGE("input image type mismatch"));
@@ -934,7 +934,7 @@ napi_value PixelMapNapi::CreateUnpremultipliedPixelMap(napi_env env, napi_callba
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount >= NUM_2,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "Invalid args count"),
         IMAGE_LOGE("Invalid args count %{public}zu", argCount));
     std::unique_ptr<PixelMapAsyncContext> asyncContext = std::make_unique<PixelMapAsyncContext>();
@@ -1002,24 +1002,22 @@ napi_value PixelMapNapi::CreatePixelMap(napi_env env, napi_callback_info info)
     status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(asyncContext->colorsBuffer),
         &(asyncContext->colorsBufferSize));
 
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("colors mismatch"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
+        "Invalid ArrayBuffer"), IMAGE_LOGE("colors mismatch"));
 
     IMG_NAPI_CHECK_RET_D(parseInitializationOptions(env, argValue[1], &(asyncContext->opts)),
-        nullptr, IMAGE_LOGE("InitializationOptions mismatch"));
-
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
+        "Invalid InitializationOptions"), IMAGE_LOGE("InitializationOptions mismatch"));
     if (argCount == NUM_3 && ImageNapiUtils::getType(env, argValue[argCount - 1]) == napi_function) {
         napi_create_reference(env, argValue[argCount - 1], refCount, &asyncContext->callbackRef);
     }
-
     if (asyncContext->callbackRef == nullptr) {
         napi_create_promise(env, &(asyncContext->deferred), &result);
     } else {
         napi_get_undefined(env, &result);
     }
-
     IMG_CREATE_CREATE_ASYNC_WORK(env, status, "CreatePixelMap",
         CreatePixelMapExec, CreatePixelMapComplete, asyncContext, asyncContext->work);
-
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
         nullptr, IMAGE_LOGE("fail to create async work"));
     return result;
@@ -1049,27 +1047,31 @@ napi_value PixelMapNapi::CreatePixelMapSync(napi_env env, napi_callback_info inf
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
 
     IMG_NAPI_CHECK_RET_D(argCount == NUM_2 || argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "Invalid args count"),
         IMAGE_LOGE("Invalid args count %{public}zu", argCount));
     std::unique_ptr<PixelMapAsyncContext> asyncContext = std::make_unique<PixelMapAsyncContext>();
-
     if (argCount == NUM_2) {
         status = napi_get_arraybuffer_info(env, argValue[NUM_0], &(asyncContext->colorsBuffer),
         &(asyncContext->colorsBufferSize));
-        IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("colors mismatch"));
+        IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
+        "Invalid ArrayBuffer"), IMAGE_LOGE("colors mismatch"));
         IMG_NAPI_CHECK_RET_D(parseInitializationOptions(env, argValue[1], &(asyncContext->opts)),
-            nullptr, IMAGE_LOGE("InitializationOptions mismatch"));
+            ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
+                "Invalid InitializationOptions"), IMAGE_LOGE("InitializationOptions mismatch"));
     } else if (argCount == NUM_1) {
         IMG_NAPI_CHECK_RET_D(parseInitializationOptions(env, argValue[NUM_0], &(asyncContext->opts)),
-            nullptr, IMAGE_LOGE("InitializationOptions mismatch"));
+            ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
+                "Invalid InitializationOptions"), IMAGE_LOGE("InitializationOptions mismatch"));
     }
     CreatePixelMapExec(env, static_cast<void*>((asyncContext).get()));
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (IMG_IS_OK(status)) {
             status = NewPixelNapiInstance(env, constructor, asyncContext->rPixelMap, result);
     }
-    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to create pixel map sync"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), ImageNapiUtils::ThrowExceptionError(env,
+        ERR_IMAGE_PIXELMAP_CREATE_FAILED, "Failed to create pixelmap"),
+                         IMAGE_LOGE("fail to create pixel map sync"));
     return result;
 }
 
@@ -1241,7 +1243,7 @@ napi_value PixelMapNapi::CreatePixelMapFromSurfaceSync(napi_env env, napi_callba
     bool ret = parseRegion(env, argValue[NUM_1], &(asyncContext->area.region));
     IMAGE_LOGD("CreatePixelMapFromSurface get data: %{public}d", ret);
     IMG_NAPI_CHECK_RET_D(ret,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "Invalid args count"),
         IMAGE_LOGE("CreatePixelMapFromSurfaceSync invalid args count"));
 
@@ -1578,7 +1580,7 @@ napi_value PixelMapNapi::ReadPixelsToBufferSync(napi_env env, napi_callback_info
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "ReadPixelsToBuffeSync failed"),
         IMAGE_LOGE("ReadPixelsToBuffeSync failed, invalid parameter"));
 
@@ -1680,7 +1682,7 @@ napi_value PixelMapNapi::ReadPixelsSync(napi_env env, napi_callback_info info)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "Invalid args count"),
         IMAGE_LOGE("Invalid args count %{public}zu", argCount));
     IMG_NAPI_CHECK_RET_D(parsePositionArea(env, argValue[NUM_0], &area),
@@ -1775,7 +1777,7 @@ napi_value PixelMapNapi::WritePixelsSync(napi_env env, napi_callback_info info)
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to arg info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "Invalid args count"),
         IMAGE_LOGE("Invalid args count %{public}zu", argCount));
     IMG_NAPI_CHECK_RET_D(parsePositionArea(env, argValue[NUM_0], &area),
@@ -1875,7 +1877,7 @@ napi_value PixelMapNapi::WriteBufferToPixelsSync(napi_env env, napi_callback_inf
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "WriteBufferToPixelsSync failed"),
         IMAGE_LOGE("WriteBufferToPixelsSync failed, invalid parameter"));
 
@@ -2193,7 +2195,7 @@ static void CreateAlphaPixelmapComplete(napi_env env, napi_status status, void *
         result = PixelMapNapi::CreatePixelMap(env, context->alphaMap);
         context->status = SUCCESS;
     } else {
-        context->status = ERROR;
+        context->status = ERR_IMAGE_PIXELMAP_CREATE_FAILED;
     }
     CommonCallbackRoutine(env, context, result);
 }
@@ -2257,7 +2259,7 @@ napi_value PixelMapNapi::CreateAlphaPixelmapSync(napi_env env, napi_callback_inf
     IMG_JS_ARGS(env, info, napiStatus, argCount, nullptr, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_0,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "CreateAlphaPixelmapSync failed"),
         IMAGE_LOGE("CreateAlphaPixelmapSync failed, invalid parameter"));
 
@@ -2520,7 +2522,7 @@ napi_value PixelMapNapi::SetAlphaSync(napi_env env, napi_callback_info info)
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "SetAlphaSync failed"),
         IMAGE_LOGE("SetAlphaSync failed, invalid parameter"));
     napiStatus= napi_get_value_double(env, argValue[NUM_0], &alpha);
@@ -2638,7 +2640,7 @@ napi_value PixelMapNapi::ScaleSync(napi_env env, napi_callback_info info)
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to arg info"));
 
     IMG_NAPI_CHECK_RET_D(argCount == NUM_2,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "Invalid args count"),
         IMAGE_LOGE("Invalid args count %{public}zu", argCount));
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napi_get_value_double(env, argValue[NUM_0], &xArg)),
@@ -2751,7 +2753,7 @@ napi_value PixelMapNapi::TranslateSync(napi_env env, napi_callback_info info)
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_2,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "TranslateSync failed"),
         IMAGE_LOGE("TranslateSync failed, invalid parameter"));
 
@@ -2862,7 +2864,7 @@ napi_value PixelMapNapi::RotateSync(napi_env env, napi_callback_info info)
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "RotateSync failed"),
         IMAGE_LOGE("RotateSync failed, invalid parameter"));
     napiStatus = napi_get_value_double(env, argValue[NUM_0], &angle);
@@ -2973,17 +2975,17 @@ napi_value PixelMapNapi::FlipSync(napi_env env, napi_callback_info info)
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_2,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "FlipSync failed"),
         IMAGE_LOGE("FlipSync failed, invalid parameter"));
 
     if (napi_ok != napi_get_value_bool(env, argValue[NUM_0], &xBarg)) {
         IMAGE_LOGE("Arg 0 type mismatch");
-        status = COMMON_ERR_INVALID_PARAMETER;
+        status = ERR_IMAGE_INVALID_PARAMETER;
     }
     if (napi_ok != napi_get_value_bool(env, argValue[NUM_1], &yBarg)) {
         IMAGE_LOGE("Arg 1 type mismatch");
-        status = COMMON_ERR_INVALID_PARAMETER;
+        status = ERR_IMAGE_INVALID_PARAMETER;
     }
 
     IMG_NAPI_CHECK_RET_D(status == SUCCESS, result, IMAGE_LOGE("FlipSync failed, invalid parameter"));
@@ -3088,7 +3090,7 @@ napi_value PixelMapNapi::CropSync(napi_env env, napi_callback_info info)
     IMG_JS_ARGS(env, info, napiStatus, argCount, argValue, thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napiStatus), result, IMAGE_LOGE("fail to napi_get_cb_info"));
     IMG_NAPI_CHECK_RET_D(argCount == NUM_1,
-        ImageNapiUtils::ThrowExceptionError(env, COMMON_ERR_INVALID_PARAMETER,
+        ImageNapiUtils::ThrowExceptionError(env, ERR_IMAGE_INVALID_PARAMETER,
         "CropSync failed"),
         IMAGE_LOGE("CropSync failed, invalid parameter"));
     if (!parseRegion(env, argValue[NUM_0], &region)) {

@@ -777,7 +777,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
 #endif
     SetDecodeInfoOptions(index, opts, info, imageEvent);
     ImageTrace imageTrace("CreatePixelMapExtended, info.size:(%d, %d)", info.size.width, info.size.height);
-    if (errorCode != SUCCESS || !IsSizeVailed(info.size)) {
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("[ImageSource]get image info failed, ret:%{public}u.", errorCode);
+        imageEvent.SetDecodeErrorMsg("get image info failed, ret:" + std::to_string(errorCode));
+        return nullptr;
+    }
+    if (!IsSizeVailed(info.size)) {
         IMAGE_LOGE("[ImageSource]get image info failed, ret:%{public}u.", errorCode);
         imageEvent.SetDecodeErrorMsg("get image info failed, ret:" + std::to_string(errorCode));
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
@@ -1811,7 +1816,7 @@ uint32_t ImageSource::CheckEncodedFormat(AbsImageFormatAgent &agent)
     }
     if (!agent.CheckFormat(outData.inputStreamBuffer, size)) {
         IMAGE_LOGE("[ImageSource]check mismatched format :%{public}s.", agent.GetFormatType().c_str());
-        return ERR_IMAGE_MISMATCHED_FORMAT;
+        return ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
     }
     return SUCCESS;
 }
@@ -1820,11 +1825,11 @@ uint32_t ImageSource::GetData(ImagePlugin::DataStreamBuffer &outData, size_t siz
 {
     if (sourceStreamPtr_ == nullptr) {
         IMAGE_LOGE("[ImageSource]check image format, source stream is null.");
-        return ERR_IMAGE_INVALID_PARAMETER;
+        return ERR_IMAGE_INVALID_SOURCE_DATA;
     }
     if (!sourceStreamPtr_->Peek(size, outData)) {
         IMAGE_LOGE("[ImageSource]stream peek the data fail, desiredSize:%{public}zu", size);
-        return ERR_IMAGE_SOURCE_DATA;
+        return ERR_IMAGE_INVALID_SOURCE_DATA;
     }
     if (outData.inputStreamBuffer == nullptr || outData.dataSize < size) {
         IMAGE_LOGE("[ImageSource]the outData is incomplete.");
@@ -1835,7 +1840,7 @@ uint32_t ImageSource::GetData(ImagePlugin::DataStreamBuffer &outData, size_t siz
 
 uint32_t ImageSource::CheckFormatHint(const string &formatHint, FormatAgentMap::iterator &formatIter)
 {
-    uint32_t ret = ERROR;
+    uint32_t ret = ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
     formatIter = formatAgentMap_.find(formatHint);
     if (formatIter == formatAgentMap_.end()) {
         IMAGE_LOGE("[ImageSource]check input format fail.");
@@ -1949,7 +1954,7 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
         }
         AbsImageFormatAgent *agent = iter->second;
         ret = CheckEncodedFormat(*agent);
-        if (ret == ERR_IMAGE_MISMATCHED_FORMAT) {
+        if (ret == ERR_IMAGE_UNSUPPORTED_MIME_TYPE) {
             continue;
         } else if (ret == SUCCESS) {
             IMAGE_LOGD("[ImageSource]GetEncodedFormat success format :%{public}s.", iter->first.c_str());
@@ -1961,7 +1966,7 @@ uint32_t ImageSource::GetEncodedFormat(const string &formatHint, string &format)
         }
     }
 
-    // default return raw image, ERR_IMAGE_MISMATCHED_FORMAT case
+    // default return raw image, ERR_IMAGE_UNSUPPORTED_MIME_TYPE case
     format = InnerFormat::RAW_FORMAT;
     IMAGE_LOGI("[ImageSource]image default to raw format.");
     return SUCCESS;
@@ -1992,7 +1997,7 @@ uint32_t ImageSource::OnSourceRecognized(bool isAcquiredImageNum)
             if (ret == ERR_IMAGE_SOURCE_DATA_INCOMPLETE) {
                 sourceInfo_.state = SourceInfoState::SOURCE_INCOMPLETE;
                 IMAGE_LOGE("[ImageSource]image source data incomplete.");
-                return ERR_IMAGE_SOURCE_DATA_INCOMPLETE;
+                return ERR_IMAGE_DECODE_FAILED;
             }
             sourceInfo_.state = SourceInfoState::FILE_INFO_ERROR;
             decodeState_ = SourceDecodingState::FILE_INFO_ERROR;
@@ -2046,16 +2051,16 @@ uint32_t GetSourceDecodingState(SourceDecodingState decodeState_)
     uint32_t ret = SUCCESS;
     switch (decodeState_) {
         case SourceDecodingState::SOURCE_ERROR: {
-            ret = ERR_IMAGE_SOURCE_DATA;
+            ret = ERR_IMAGE_INVALID_SOURCE_DATA;
             IMAGE_LOGD("[ImageSource]source error.");
             break;
         }
         case SourceDecodingState::UNKNOWN_FORMAT: {
-            ret = ERR_IMAGE_UNKNOWN_FORMAT;
+            ret = ERR_IMAGE_UNKNOWN_MIME_TYPE;
             break;
         }
         case SourceDecodingState::UNSUPPORTED_FORMAT: {
-            ret = ERR_IMAGE_PLUGIN_CREATE_FAILED;
+            ret = ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
             break;
         }
         case SourceDecodingState::FILE_INFO_ERROR: {
@@ -2124,7 +2129,7 @@ uint32_t ImageSource::DecodeImageInfo(uint32_t index, ImageStatusMap::iterator &
             return SUCCESS;
         } else {
             IMAGE_LOGE("[ImageSource] decode astc image info failed.");
-            return ERR_IMAGE_DECODE_FAILED;
+            return ERR_IMAGE_INVALID_SOURCE_DATA;
         }
     }
     if (mainDecoder_ == nullptr) {

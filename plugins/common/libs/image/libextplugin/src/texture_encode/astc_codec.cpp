@@ -124,7 +124,7 @@ uint32_t AstcCodec::SetAstcEncode(OutputDataStream* outputStream, PlEncodeOption
 {
     if (outputStream == nullptr || pixelMap == nullptr) {
         IMAGE_LOGE("input data is nullptr.");
-        return ERROR;
+        return ERR_IMAGE_INVALID_PARAMETER;
     }
     astcOutput_ = outputStream;
     astcOpts_ = option;
@@ -484,7 +484,7 @@ uint32_t AstcCodec::AstcSoftwareEncode(TextureEncodeOptions &param, bool enableQ
     uint32_t stride = static_cast<uint32_t>(astcPixelMap_->GetRowStride()) >> RGBA_BYTES_PIXEL_LOG2;
     if (!InitAstcEncPara(param, imageInfo.size.width, imageInfo.size.height, static_cast<int32_t>(stride), astcOpts_)) {
         IMAGE_LOGE("InitAstcEncPara failed");
-        return ERROR;
+        return ERR_IMAGE_INVALID_PARAMETER;
     }
     if (!AstcSoftwareEncodeCore(param, pixmapIn, outBuffer)) {
         IMAGE_LOGE("AstcSoftwareEncodeCore failed");
@@ -529,25 +529,25 @@ uint32_t AstcCodec::ASTCEncode()
     int32_t stride = astcPixelMap_->GetRowStride() >> RGBA_BYTES_PIXEL_LOG2;
     if (!InitAstcEncPara(param, imageInfo.size.width, imageInfo.size.height, stride, astcOpts_)) {
         IMAGE_LOGE("InitAstcEncPara failed");
-        return ERROR;
+        return ERR_IMAGE_INVALID_PARAMETER;
     }
     IMAGE_LOGD("astcenc start: %{public}dx%{public}d, enableQualityCheck %{public}d, astcProfile %{public}d",
         imageInfo.size.width, imageInfo.size.height, param.enableQualityCheck, param.privateProfile_);
     uint8_t *astcBuffer = static_cast<uint8_t *>(malloc(param.astcBytes));
     if (astcBuffer == nullptr) {
         IMAGE_LOGE("astc astcBuffer malloc failed!");
-        return ERROR;
+        return ERR_IMAGE_MALLOC_ABNORMAL;
     }
     if (!AstcEncProcess(param, pixmapIn, astcBuffer)) {
         IMAGE_LOGE("astc AstcEncProcess failed!");
         free(astcBuffer);
-        return ERROR;
+        return ERR_IMAGE_DECODE_ABNORMAL;
     }
 #ifdef SUT_ENCODE_ENABLE
     if (!TryTextureSuperCompress(param, astcBuffer)) {
         IMAGE_LOGE("astc TryTextureSuperCompress failed!");
         free(astcBuffer);
-        return ERROR;
+        return ERR_IMAGE_DECODE_ABNORMAL;
     }
 #endif
     astcOutput_->Write(astcBuffer, param.astcBytes);

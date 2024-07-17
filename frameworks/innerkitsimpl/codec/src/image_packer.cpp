@@ -76,11 +76,11 @@ uint32_t ImagePacker::StartPackingImpl(const PackOption &option)
 {
     if (packerStream_ == nullptr || packerStream_.get() == nullptr) {
         IMAGE_LOGE("make buffer packer stream failed.");
-        return ERR_IMAGE_DATA_ABNORMAL;
+        return ERR_IMAGE_MALLOC_ABNORMAL;
     }
     if (!GetEncoderPlugin(option)) {
         IMAGE_LOGE("StartPackingImpl get encoder plugin failed.");
-        return ERR_IMAGE_MISMATCHED_FORMAT;
+        return ERR_IMAGE_UNSUPPORTED_MIME_TYPE;
     }
     encodeToSdr_ = ((option.desiredDynamicRange == EncodeDynamicRange::SDR) ||
         (option.format != IMAGE_JPEG_FORMAT && option.format != IMAGE_HEIF_FORMAT));
@@ -107,7 +107,7 @@ uint32_t ImagePacker::StartPacking(uint8_t *outputData, uint32_t maxSize, const 
     BufferPackerStream *stream = new (std::nothrow) BufferPackerStream(outputData, maxSize);
     if (stream == nullptr) {
         IMAGE_LOGE("make buffer packer stream failed.");
-        return ERR_IMAGE_DATA_ABNORMAL;
+        return ERR_IMAGE_MALLOC_ABNORMAL;
     }
     FreeOldPackerStream();
     packerStream_ = std::unique_ptr<BufferPackerStream>(stream);
@@ -125,7 +125,7 @@ uint32_t ImagePacker::StartPacking(const std::string &filePath, const PackOption
     FilePackerStream *stream = new (std::nothrow) FilePackerStream(filePath);
     if (stream == nullptr) {
         IMAGE_LOGE("make file packer stream failed.");
-        return ERR_IMAGE_DATA_ABNORMAL;
+        return ERR_IMAGE_MALLOC_ABNORMAL;
     }
     FreeOldPackerStream();
     packerStream_ = std::unique_ptr<FilePackerStream>(stream);
@@ -142,7 +142,7 @@ uint32_t ImagePacker::StartPacking(const int &fd, const PackOption &option)
     FilePackerStream *stream = new (std::nothrow) FilePackerStream(fd);
     if (stream == nullptr) {
         IMAGE_LOGE("make file packer stream failed.");
-        return ERR_IMAGE_DATA_ABNORMAL;
+        return ERR_IMAGE_MALLOC_ABNORMAL;
     }
     FreeOldPackerStream();
     packerStream_ = std::unique_ptr<FilePackerStream>(stream);
@@ -160,7 +160,7 @@ uint32_t ImagePacker::StartPacking(std::ostream &outputStream, const PackOption 
     OstreamPackerStream *stream = new (std::nothrow) OstreamPackerStream(outputStream);
     if (stream == nullptr) {
         IMAGE_LOGE("make ostream packer stream failed.");
-        return ERR_IMAGE_DATA_ABNORMAL;
+        return ERR_IMAGE_MALLOC_ABNORMAL;
     }
     FreeOldPackerStream();
     packerStream_ = std::unique_ptr<OstreamPackerStream>(stream);
