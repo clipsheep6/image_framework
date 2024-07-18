@@ -51,8 +51,13 @@ struct DecodeContext;
 } // namespace ImagePlugin
 } // namespace OHOS
 
+namespace OHOS::HDI::Display::Graphic::Common::V1_0 {
+enum CM_ColorSpaceType : int32_t;
+}
+
 namespace OHOS {
 namespace Media {
+using namespace HDI::Display::Graphic::Common::V1_0;
 class ImageEvent;
 struct SourceOptions {
     std::string formatHint;
@@ -168,6 +173,11 @@ public:
 
     NATIVEEXPORT static bool IsSupportGenAstc();
 
+    NATIVEEXPORT static CM_ColorSpaceType ConvertColorSpaceType(ColorManager::ColorSpaceName colorSpace, bool base);
+    
+    NATIVEEXPORT static void SetVividMetaColor(HdrMetadata& metadata, CM_ColorSpaceType base,
+                                                CM_ColorSpaceType gainmap, CM_ColorSpaceType hdr);
+    
     NATIVEEXPORT std::unique_ptr<PixelMap> CreatePixelMap(const DecodeOptions &opts, uint32_t &errorCode)
     {
         return CreatePixelMapEx(0, opts, errorCode);

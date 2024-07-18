@@ -32,6 +32,8 @@
 
 namespace OHOS {
 namespace Media {
+struct HdrMetadata;
+enum class ImageHdrType : int32_t;
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
 
@@ -285,6 +287,16 @@ public:
         exifMetadata_ = ptr;
     }
 
+    NATIVEEXPORT std::shared_ptr<HdrMetadata> GetHdrMetadata()
+    {
+        return hdrMetadata_;
+    }
+
+    NATIVEEXPORT ImageHdrType GetHdrType()
+    {
+        return hdrType_;
+    }
+
     NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
     NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
     NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
@@ -411,6 +423,8 @@ protected:
     bool useSourceAsResponse_ = false;
     bool isTransformered_ = false;
     std::shared_ptr<std::mutex> transformMutex_ = std::make_shared<std::mutex>();
+    std::shared_ptr<HdrMetadata> hdrMetadata_;
+    ImageHdrType hdrType_;
 
     // only used by rosen backend
     uint32_t uniqueId_ = 0;
