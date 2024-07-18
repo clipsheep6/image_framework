@@ -348,7 +348,7 @@ bool ImageFormatConvertExtUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVD
     return result;
 }
 
-bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
@@ -374,7 +374,7 @@ bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
@@ -421,7 +421,7 @@ bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Si
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
@@ -459,7 +459,7 @@ bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Si
     return true;
 }
 
-bool ImageFormatConvertExtUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::BGRAToNV21(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -542,7 +542,7 @@ bool ImageFormatConvertExtUtils::NV12ToBGRA(const uint8_t *data, const YUVDataIn
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -578,7 +578,7 @@ bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size
     uint8_t *nv12Y = *destBuffer;
     uint8_t *nv12UV = *destBuffer + imageSize.width * imageSize.height;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ABGRToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
+    converter.ABGRToI420(srcBuffer, imageSize.stride, i420Y, imageSize.width, i420U,
         (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
     converter.I420ToNV12(i420Y, imageSize.width, i420U, (imageSize.width + NUM_1) / NUM_2, i420V,
         (imageSize.width + NUM_1) / NUM_2, nv12Y, imageSize.width, nv12UV, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
@@ -587,7 +587,7 @@ bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -624,7 +624,7 @@ bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size
     uint8_t *nv21Y = *destBuffer;
     uint8_t *nv21VU = *destBuffer + imageSize.width * imageSize.height;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ABGRToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
+    converter.ABGRToI420(srcBuffer, imageSize.stride, i420Y, imageSize.width, i420U,
         (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
     converter.I420ToNV21(i420Y, imageSize.width, i420U, (imageSize.width + NUM_1) / NUM_2, i420V,
         (imageSize.width + NUM_1) / NUM_2, nv21Y, imageSize.width, nv21VU, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
@@ -633,7 +633,7 @@ bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
@@ -829,7 +829,7 @@ bool ImageFormatConvertExtUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YU
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
+bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const RGBADataInfo &imageSize, uint8_t **destBuffer,
     size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
     if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
