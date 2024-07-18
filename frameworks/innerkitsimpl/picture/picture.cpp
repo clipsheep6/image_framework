@@ -304,7 +304,7 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
         return nullptr;
     }
     picture->SetMainPixel(pixelmapPtr);
-    int64_t numAuxiliaryPictures = parcel.ReadUint64();
+    uint64_t numAuxiliaryPictures = parcel.ReadUint64();
     
     for (size_t i = NUM_0; i < numAuxiliaryPictures; ++i) {
         int32_t type = parcel.ReadInt32();
