@@ -208,6 +208,11 @@ ohos_unittest("imagesourcetest") {
   }
 
   external_deps = [
+    "ability_base:zuri",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libtoken_setproc",
+    "app_file_service:fileuri_native",
     "c_utils:utils",
     "drivers_peripheral_display:hdi_gralloc_client",
     "graphic_surface:surface",

@@ -14,6 +14,7 @@
  */
 
 #include <cerrno>
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <memory>
 #include <string>
@@ -23,7 +24,13 @@
 #include <unistd.h>
 
 #include "file_metadata_stream.h"
+#include "file_uri.h"
+#include "if_system_ability_manager.h"
 #include "image_log.h"
+#include "image_utils.h"
+#include "ipc_skeleton.h"
+#include "medialibrary_errno.h"
+#include "media_library_manager.h"
 #include "metadata_stream.h"
 
 #undef LOG_DOMAIN
@@ -34,6 +41,25 @@
 
 namespace OHOS {
 namespace Media {
+constexpr int STORAGE_MANAGER_MANAGER_ID = 5003;
+static const string MEDIA_URL_PREFIX = "file://media/";
+static void* g_mediaLibMgrHandler = nullptr;
+static IMediaLibraryManager* g_mediaLibMgr = nullptr;
+typedef IMediaLibraryManager*(*CreateMediaLibMgrFunc)();
+
+__attribute__((constructor)) void FileMetadataStreamRegister()
+{
+    g_mediaLibMgrHandler = dlopen("libmedia_library_manager.z.so", RTLD_LAZY);
+}
+
+__attribute__((destructor)) void FileMetadataStreamUnRegister()
+{
+    if (g_mediaLibMgrHandler != nullptr) {
+        dlclose(g_mediaLibMgrHandler);
+        g_mediaLibMgrHandler = nullptr;
+    }
+}
+
 ssize_t FileWrapper::FWrite(const void *src, size_t size, ssize_t nmemb, FILE *file)
 {
     return ::fwrite(src, size, nmemb, file);
@@ -273,13 +299,36 @@ bool FileMetadataStream::OpenFromFD(const char *modeStr)
 
 bool FileMetadataStream::OpenFromPath(const char *modeStr)
 {
-    IMAGE_LOGD("Open file: %{public}s, modeStr: %{public}s", filePath_.c_str(), modeStr);
-    fp_ = fopen(filePath_.c_str(), modeStr);
-    if (fp_ == nullptr) {
-        HandleFileError("Open file", filePath_, -1, -1, -1);
-        return false;
+    IMAGE_LOGD("OpenFromPath IN with uri: %{public}s, modeStr: %{public}s", filePath_.c_str(), modeStr);
+
+    if (ImageUtils::CompairPathPrefix(filePath_, MEDIA_URL_PREFIX)) {
+        fp_ = CreateSourceStreamByMediaUri(filePath_);
+        if (fp_ == nullptr) {
+            return false;
+        }
+    } else {
+        OHOS::AppFileService::ModuleFileUri::FileUri fileUri(filePath_);
+        string realPath = fileUri.GetRealPath();
+        IMAGE_LOGD("The realPath is %{public}s", realPath.c_str());
+
+        string rawPathName = ImageUtils::FileUrlToRawPath(realPath);
+        IMAGE_LOGD("The rawPathName is %{public}s", rawPathName.c_str());
+
+        if (!ImageUtils::PathToRealPath(rawPathName, realPath)) {
+            IMAGE_LOGE("input the file path exception, rawPathName:%{public}s, errno:%{public}d.",
+                rawPathName.c_str(), errno);
+            return false;
+        }
+        IMAGE_LOGD("The realPath after PathToRealPath is %{public}s", realPath.c_str());
+
+        fp_ = fopen(realPath.c_str(), "rb");
+        if (fp_ == nullptr) {
+            IMAGE_LOGE("open file failed. file path: %{public}s", realPath.c_str());
+            return false;
+        }
     }
-    IMAGE_LOGD("File opened: %{public}s", filePath_.c_str());
+
+    IMAGE_LOGD("OpenFromPath OUT");
     return true;
 }
 
@@ -506,6 +555,68 @@ ssize_t FileMetadataStream::GetSize()
     }
 
     return fileSize;
+}
+
+sptr<IRemoteObject> FileMetadataStream::GetToken()
+{
+    auto saManager = iface_cast<ISystemAbilityManager>(IPCSkeleton::GetContextObject());
+    if (saManager == nullptr) {
+        IMAGE_LOGE("Get system ability manager failed.");
+        return nullptr;
+    }
+    auto remoteObj = saManager->GetSystemAbility(STORAGE_MANAGER_MANAGER_ID);
+    if (remoteObj == nullptr) {
+        IMAGE_LOGE("Get system ability failed.");
+        return nullptr;
+    }
+    return remoteObj;
+}
+
+FILE* FileMetadataStream::CreateSourceStreamByMediaUri(const string &pathName)
+{
+    if (!g_mediaLibMgrHandler) {
+        IMAGE_LOGE("MediaLibraryManager's library handler is null.");
+        return nullptr;
+    }
+
+    if (!g_mediaLibMgr) {
+        CreateMediaLibMgrFunc createFunc = (CreateMediaLibMgrFunc)dlsym(
+            g_mediaLibMgrHandler, "CreateMediaLibraryManager");
+        if (createFunc == nullptr) {
+            IMAGE_LOGE("Load MediaLibraryManager's create function failed.");
+            return nullptr;
+        }
+
+        g_mediaLibMgr = createFunc();
+        if (g_mediaLibMgr == nullptr) {
+            IMAGE_LOGE("MediaLibraryManager's create function returned null.");
+            return nullptr;
+        }
+
+        g_mediaLibMgr->InitMediaLibraryManager(GetToken());
+    }
+
+    std::string uri = pathName;
+    int srcFd = g_mediaLibMgr->OpenAsset(uri, "rw");
+    if (srcFd == E_ERR) {
+        IMAGE_LOGE("Open asset %{public}s error: %{public}d", uri.c_str(), srcFd);
+        return nullptr;
+    }
+
+    int dupFd = dup(srcFd);
+    if (dupFd < 0) {
+        IMAGE_LOGE("Fail to dup fd.");
+        g_mediaLibMgr->CloseAsset(uri, srcFd);
+        return nullptr;
+    }
+
+    FILE *filePtr = fdopen(dupFd, "rb");
+    if (filePtr == nullptr) {
+        IMAGE_LOGE("open file fail.");
+    }
+
+    g_mediaLibMgr->CloseAsset(uri, srcFd);
+    return filePtr;
 }
 } // namespace Media
 } // namespace OHOS

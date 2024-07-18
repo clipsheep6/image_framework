@@ -86,16 +86,6 @@ static void ParseImageSourceInfo(struct OhosImageSourceInfo* source, ImageInfo &
     source->size.height = info.size.height;
 }
 
-static std::string UrlToPath(const std::string &path)
-{
-    const std::string filePrefix = "file://";
-    if (path.size() > filePrefix.size() &&
-        (path.compare(0, filePrefix.size(), filePrefix) == 0)) {
-        return path.substr(filePrefix.size());
-    }
-    return path;
-}
-
 static ImageSourceNapi* UnwrapNativeObject(napi_env env, napi_value value)
 {
     napi_valuetype valueType;
@@ -130,10 +120,9 @@ static int32_t ImageSourceNativeCreate(struct OhosImageSource* source,
         IMAGE_LOGD("ImageSourceNativeCreate by path");
         std::string url(source->uri, source->uriSize);
         IMAGE_LOGD("ImageSourceNativeCreate by path %{public}s", url.c_str());
-        auto path = UrlToPath(url);
-        nativeImageSource = ImageSource::CreateImageSource(path, opts, errorCode);
+        nativeImageSource = ImageSource::CreateImageSource(url, opts, errorCode);
         resource.type = ImageResourceType::IMAGE_RESOURCE_PATH;
-        resource.path = path;
+        resource.path = url;
     } else if (source->fd != INVALID_FD) {
         IMAGE_LOGD("ImageSourceNativeCreate by fd");
         nativeImageSource = ImageSource::CreateImageSource(source->fd, opts, errorCode);
@@ -214,16 +203,15 @@ static int32_t ImageSourceNapiCreateFromUri(struct ImageSourceArgs* args)
         ParseImageSourceOps(opts, args->sourceOps);
     }
     IMAGE_LOGD("ImageSourceNapiCreateFromUri by path %{public}s", args->uri.c_str());
-    auto path = UrlToPath(args->uri);
     uint32_t errorCode = ERR_MEDIA_INVALID_VALUE;
-    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(path, opts, errorCode);
+    std::unique_ptr<ImageSource> nativeImageSource = ImageSource::CreateImageSource(args->uri, opts, errorCode);
     if (nativeImageSource == nullptr) {
         IMAGE_LOGD("ImageSourceNapiCreateFromUri create failed:%{public}d", errorCode);
         return IMAGE_RESULT_BAD_PARAMETER;
     }
     ImageResource resource;
     resource.type = ImageResourceType::IMAGE_RESOURCE_PATH;
-    resource.path = path;
+    resource.path = args->uri;
     std::shared_ptr<ImageSource> imageSource = std::move(nativeImageSource);
     if (imageSource == nullptr) {
         IMAGE_LOGE("ImageSourceNapiCreateFromUri native create failed");

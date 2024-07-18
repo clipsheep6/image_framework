@@ -40,20 +40,116 @@
 #include "mock_data_stream.h"
 #include "mock_abs_image_decoder.h"
 #include "exif_metadata.h"
+#include "nativetoken_kit.h"
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
+using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 namespace Media {
-static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg";
-static const std::string IMAGE_INPUT_EXIF_JPEG_PATH = "/data/local/tmp/image/test_exif.jpg";
-static const std::string IMAGE_OUTPUT_JPEG_PATH = "/data/local/tmp/image/test_out.jpg";
-static const std::string IMAGE_INPUT_ICO_PATH = "/data/local/tmp/image/test.ico";
+#define IMAGE_FOLDER "/data/local/tmp/image/"
+#define IMAGE_PHOTO_FOLDER "/storage/media/100/local/files/Photo/"
+#define IMAGE_DOCS_FOLDER "/storage/media/100/local/files/Docs/Download/"
+#define IMAGE_JPG_SRC_NAME IMAGE_FOLDER "test_exif.jpg"
+static const std::string IMAGE_INPUT_JPEG_PATH = IMAGE_FOLDER "test.jpg";
+static const std::string IMAGE_INPUT_EXIF_JPEG_PATH = IMAGE_FOLDER "test_exif.jpg";
+static const std::string IMAGE_OUTPUT_JPEG_PATH = IMAGE_FOLDER "test_out.jpg";
+static const std::string IMAGE_INPUT_ICO_PATH = IMAGE_FOLDER "test.ico";
+static const std::string IMAGE_DOCS_URI = "/storage/media/100/local/files/Docs/Download/test_exif.jpg";
+static std::string strMediaUri_;
 
 class ImageSourceTest : public testing::Test {
 public:
     ImageSourceTest() {}
     ~ImageSourceTest() {}
+    static void SetHapPermission(const std::vector<std::string>& permissionNames)
+    {
+        HapInfoParams info = {
+            .userID = 100,
+            .bundleName = "com.ohos.test.imagesourcetest",
+            .instIndex = 0,
+            .appIDDesc = "com.ohos.test.imagesourcetest",
+            .isSystemApp = true
+        };
+
+        HapPolicyParams policy = {
+            .apl = APL_SYSTEM_BASIC,
+            .domain = "test.domain.imagesourcetest",
+            .permList = {}
+        };
+
+        for (auto itor : permissionNames) {
+            policy.permStateList.push_back(
+                {
+                    .permissionName = itor,
+                    .isGeneral = true,
+                    .resDeviceID = { "local" },
+                    .grantStatus = { PermissionState::PERMISSION_GRANTED },
+                    .grantFlags = { 1 }
+                });
+        }
+
+        AccessTokenIDEx tokenIdEx = { 0 };
+        tokenIdEx = AccessTokenKit::AllocHapToken(info, policy);
+        int ret = SetSelfTokenID(tokenIdEx.tokenIDEx);
+        ASSERT_EQ(ret, 0);
+    }
+    static void SetAccessTokenPermission(const std::vector<std::string>& permission)
+    {
+        auto perms = std::make_unique<const char *[]>(permission.size());
+        for (size_t i = 0; i < permission.size(); i++) {
+            perms[i] = permission[i].c_str();
+        }
+
+        NativeTokenInfoParams infoInstance = {
+            .dcapsNum = 0,
+            .permsNum = permission.size(),
+            .aclsNum = 0,
+            .dcaps = nullptr,
+            .perms = perms.get(),
+            .acls = nullptr,
+            .processName = "imagesourcetest",
+            .aplStr = "system_basic",
+        };
+        auto tokenId = GetAccessTokenId(&infoInstance);
+        ASSERT_NE(tokenId, 0);
+        int ret = SetSelfTokenID(tokenId);
+        ASSERT_EQ(ret, 0);
+        ret = AccessTokenKit::ReloadNativeTokenInfo();
+        ASSERT_TRUE(ret >= 0);
+    }
+    static void SetUpTestCase()
+    {
+        std::vector<std::string> perms;
+        perms.push_back("ohos.permission.FILE_ACCESS_MANAGER");
+        perms.push_back("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY");
+        perms.push_back("ohos.permission.READ_IMAGEVIDEO");
+        perms.push_back("ohos.permission.WRITE_IMAGEVIDEO");
+        perms.push_back("ohos.permission.MEDIA_LOCATION");
+        perms.push_back("ohos.permission.GET_BUNDLE_INFO_PRIVILEGED");
+        SetHapPermission(perms);
+        SetAccessTokenPermission(perms);
+    }
+    static void TearDownTestCase()
+    {
+        AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100,
+            "com.ohos.test.imagesourcetest", 0);
+        AccessTokenKit::DeleteToken(tokenId);
+        system("mediatool delete all");
+    }
+    static void TestModify(std::unique_ptr<ImageSource>& imageSource)
+    {
+        std::string key = "ImageWidth";
+        std::string value = "20";
+        auto errorCode = imageSource->ModifyImageProperty(key, value);
+        ASSERT_EQ(errorCode, SUCCESS);
+        errorCode = imageSource->GetImagePropertyString(0, key, value);
+        ASSERT_EQ(errorCode, SUCCESS);
+        ASSERT_EQ(value, "20");
+    }
 };
 
 class MockAbsImageFormatAgent : public ImagePlugin::AbsImageFormatAgent {
@@ -91,6 +187,53 @@ public:
 private:
     int returnVoid_;
 };
+
+/**
+ * @tc.name: TestFileUri001
+ * @tc.desc: test file uri
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, TestFileUri001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: TestFileUri001 start";
+    system("mediatool delete all");
+    system("cp -f " IMAGE_FOLDER "test_exif.jpg " IMAGE_PHOTO_FOLDER);
+    char buffer[102400];
+    FILE* fp = popen("mediatool send " IMAGE_PHOTO_FOLDER, "r");
+    fgets(buffer, sizeof(buffer), fp);
+    pclose(fp);
+    std::string strMediaUri = buffer;
+    uint32_t errorCode = SUCCESS;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto imageSource = ImageSource::CreateImageSource(strMediaUri, opts, errorCode);
+    EXPECT_NE(imageSource, nullptr);
+    EXPECT_EQ(errorCode, SUCCESS);
+    TestModify(imageSource);
+    system("mediatool delete all");
+    system("rm -rf " IMAGE_PHOTO_FOLDER "test_exif.jpg");
+    GTEST_LOG_(INFO) << "ImageSourceTest: TestFileUri001 end";
+}
+
+/**
+ * @tc.name: TestFileUri002
+ * @tc.desc: test file uri
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, TestFileUri002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImageSourceTest: TestFileUri002 start";
+    system("cp -f " IMAGE_FOLDER "test_exif.jpg " IMAGE_DOCS_FOLDER);
+    uint32_t errorCode = SUCCESS;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    auto imageSource = ImageSource::CreateImageSource(IMAGE_DOCS_URI, opts, errorCode);
+    EXPECT_NE(imageSource, nullptr);
+    EXPECT_EQ(errorCode, SUCCESS);
+    TestModify(imageSource);
+    system("rm -rf " IMAGE_DOCS_FOLDER "test_exif.jpg");
+    GTEST_LOG_(INFO) << "ImageSourceTest: TestFileUri002 end";
+}
 
 /**
  * @tc.name: GetSupportedFormats001

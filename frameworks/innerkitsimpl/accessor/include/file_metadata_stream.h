@@ -24,8 +24,10 @@
 #include <vector>
 
 #include "metadata_stream.h"
+#include "refbase.h"
 
 namespace OHOS {
+class IRemoteObject;
 namespace Media {
 #if defined(FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_TESTS_PRIVATE)
 #define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_FILE_METADATA_STREAM_PRIVATE_UNLESS_TESTED public
@@ -186,6 +188,10 @@ public:
      * @note If this function is called frequently, it is recommended to cache the size to improve performance.
      */
     ssize_t GetSize() override;
+
+    static sptr<IRemoteObject> GetToken();
+
+    static FILE* CreateSourceStreamByMediaUri(const std::string &pathName);
 
 private:
     /* *

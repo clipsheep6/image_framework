@@ -26,6 +26,7 @@ namespace OHOS { namespace MultimediaPlugin { class PluginServer; } }
 namespace OHOS {
 namespace Media {
 const std::string IMAGE_ENCODE_FORMAT = "encodeFormat";
+const std::string FILE_URL_PREFIX = "file://";
 constexpr uint32_t MALLOC_MAX_LENTH = 0x40000000;
 class PixelMap;
 
@@ -36,6 +37,8 @@ public:
     static bool GetInputStreamSize(std::istream &inputStream, size_t &size);
     static int32_t GetPixelBytes(const PixelFormat &pixelFormat);
     static bool PathToRealPath(const std::string &path, std::string &realPath);
+    static bool CompairPathPrefix(const std::string &pathName, const std::string &prefixName);
+    static std::string FileUrlToRawPath(const std::string &path);
     static bool FloatCompareZero(float src);
     static AlphaType GetValidAlphaTypeByFormat(const AlphaType &dstType, const PixelFormat &format);
     static bool IsValidImageInfo(const ImageInfo &info);

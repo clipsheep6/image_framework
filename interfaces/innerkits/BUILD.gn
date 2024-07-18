@@ -40,6 +40,14 @@ config("image_external_config") {
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
     "//foundation/multimedia/image_framework/interfaces/kits/native/include",
     "${image_subsystem}/frameworks/kits/js/common/ndk/include",
+    "${image_subsystem}/../../ability/ability_runtime/interfaces/inner_api/dataobs_manager/include",
+    "${image_subsystem}/../../ability/ability_base/interfaces/kits/native/uri/include",
+    "${image_subsystem}/../../distributeddatamgr/data_share/interfaces/inner_api/common/include",
+    "${image_subsystem}/../../distributeddatamgr/data_share/interfaces/inner_api/consumer/include",
+    "${image_subsystem}/../../distributeddatamgr/data_share/interfaces/inner_api/provider/include",
+    "${image_subsystem}/../media_library/frameworks/utils/include",
+    "${image_subsystem}/../media_library/frameworks/innerkitsimpl/media_library_helper/include",
+    "${image_subsystem}/../media_library/interfaces/inner_api/media_library_helper/include",
   ]
 
   include_dirs += [
@@ -256,7 +264,11 @@ if (use_clang_android) {
       defines += [ "IMAGE_PURGEABLE_PIXELMAP" ]
       external_deps += [ "memmgr_override:libpurgeablemem_plugin" ]
     }
-    external_deps += [ "zlib:libz" ]
+    external_deps += [
+      "ability_base:zuri",
+      "app_file_service:fileuri_native",
+      "zlib:libz",
+    ]
 
     if (defined(global_parts_info) &&
         defined(global_parts_info.graphic_graphic_2d_ext)) {
@@ -433,7 +445,11 @@ ohos_static_library("image_static") {
       external_deps += [ "libexif:libexif" ]
     }
   }
-  external_deps += [ "zlib:libz" ]
+  external_deps += [
+    "ability_base:zuri",
+    "app_file_service:fileuri_native",
+    "zlib:libz",
+  ]
 
   if (defined(global_parts_info) &&
       defined(global_parts_info.open_source_libyuv)) {
