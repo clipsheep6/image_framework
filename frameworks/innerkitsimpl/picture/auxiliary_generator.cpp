@@ -142,7 +142,7 @@ bool AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder* extDecoder, Auxilia
                 ImageHdrType hdrType = extDecoder->CheckHdrType();
                 HdrMetadata hdrMetadata = extDecoder->GetHdrMetadata(hdrType);
                 std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
-                pixelMap->SetHdrMetadata(hdrMetadata);
+                // pixelMap->SetHdrMetadata(hdrMetadata);
                 break;
             }
             case AuxMetadataType::FRAGMENT: {
@@ -317,7 +317,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
 #ifdef HEIF_HW_DECODE_ENABLE
     if (extDecoder == nullptr || type == AuxiliaryPictureType::NONE) {
         IMAGE_LOGE("Invalid parameter");
-        errorCode = 211;    // TODO: 待修改，等待最后通统一商定errorcode
+        errorCode = 211;    // TODO
         return nullptr;
     }
 
@@ -325,7 +325,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     DecodeContext context;
     if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
         IMAGE_LOGE("Decode heif auxiliary map failure");
-        errorCode = 211;    // TODO: 待修改，等待最后通统一商定errorcode
+        errorCode = 211;    // TODO
         return nullptr;
     }
 
@@ -349,16 +349,13 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     OHOS::ColorManager::ColorSpace grColorSpace = extDecoder->getGrColorSpace();
     pixelMap->InnerSetColorSpace(grColorSpace);
 
-    AuxiliaryPictureInfo auxiliaryPictureInfo;
-    auto* sbBuffer = reinterpret_cast<SurfaceBuffer*>(context.pixelsBuffer.context);
-    auxiliaryPictureInfo.rowStride = sbBuffer->GetStride();
-    auxiliaryPictureInfo.auxiliaryPictureType = type;
-    auxiliaryPictureInfo.size = { context.outInfo.size.width, context.outInfo.size.height };
-    auxiliaryPictureInfo.pixelFormat = context.outInfo.pixelFormat;
-    auxiliaryPictureInfo.colorSpace = context.outInfo.colorSpace;
-
+    // Create auxiliary picture object, and set auxiliary picture info.
     unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelMap, type);
-    auxPicture->SetAuxiliaryPictureInfo(auxiliaryPictureInfo);
+    auto* sbBuffer = reinterpret_cast<SurfaceBuffer*>(context.pixelsBuffer.context);
+    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(
+        type, {context.outInfo.size.width, context.outInfo.size.height}, sbBuffer->GetStride(),
+        context.outInfo.pixelFormat, context.outInfo.colorSpace);
+    auxPicture->SetAuxiliaryPictureInfo(auxInfo);
 
     if (!DecodeHeifMetaData(extDecoder, auxPicture.get(), type, errorCode)) {
         IMAGE_LOGE("Decode heif metadata failure");
@@ -366,7 +363,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     }
     return auxPicture;
 #endif
-    errorCode = 211;    // TODO: 待修改，等待最后通统一商定errorcode
+    errorCode = 211;    // TODO:
     return nullptr;
 }
 
@@ -468,7 +465,7 @@ bool AuxiliaryGenerator::DecodeJpegMetaData(std::unique_ptr<ImagePlugin::InputDa
     // Decode EXIF Meta Data
     // TODO: 需要确认哪些类型的辅助图需要exif metadata
     std::shared_ptr<ImageMetadata> exifMetadata = CreateExifMetadata(auxStream->GetDataPtr(),
-                                                                     auxStream->GetStreamSize,
+                                                                     auxStream->GetStreamSize(),
                                                                      errorCode);
     if (exifMetadata == nullptr) {
         IMAGE_LOGE("Jpeg Decode EXIF Meta Data failed! Auxiliary picture type: %{public}d", type);

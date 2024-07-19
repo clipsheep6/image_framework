@@ -42,8 +42,8 @@ private:
         AuxiliaryPictureType type, Size size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
     static bool DecodeHeifMetaData(AbsImageDecoder* extDecoder, AuxiliaryPicture* auxPicture,
                                    AuxiliaryPictureType type, uint32_t &errorCode);
-    static bool DecodeJpegMetaData(unique_ptr<InputDataStream> &auxStream, AuxiliaryPicture *auxPicture,
-                                   AuxiliaryPictureType type, uint32_t &errorCode);
+    static bool DecodeJpegMetaData(unique_ptr<InputDataStream> &auxStream, shared_ptr<AuxiliaryPicture> &auxPicture,
+                                   uint32_t &errorCode);
     static shared_ptr<ImageMetadata> CreateExifMetadata(uint8_t *buffer, const uint32_t size, uint32_t &errorCode);
     static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer);
     static AbsImageDecoder* DoCreateDecoder(string codecFormat, PluginServer &pluginServer, InputDataStream &sourceData,
