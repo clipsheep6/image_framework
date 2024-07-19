@@ -73,6 +73,8 @@ private:
     static napi_value JSCommonProcess(ImageCreatorCommonArgs &args);
     static void JsQueueImageCallBack(napi_env env, napi_status status,
                                      ImageCreatorAsyncContext* context);
+    static napi_value JsOffOneArg(napi_env env, napi_callback_info info);
+    static napi_value JsOffTwoArgs(napi_env env, napi_callback_info info);
 #ifdef IMAGE_DEBUG_FLAG
     static napi_value JsTest(napi_env env, napi_callback_info info);
 #endif

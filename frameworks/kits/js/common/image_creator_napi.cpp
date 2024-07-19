@@ -345,7 +345,6 @@ napi_value ImageCreatorNapi::JSCommonProcess(ImageCreatorCommonArgs &args)
                                                  (reinterpret_cast<napi_async_complete_callback>(args.callBack)),
                                                  static_cast<void *>((ic.context).get()), &(ic.context->work));
             napi_queue_async_work((args.env), (ic.context->work));
-            IMAGE_ERR("async success");
             ic.context.release();
         }
     } else {
@@ -886,57 +885,97 @@ napi_value ImageCreatorNapi::JsOn(napi_env env, napi_callback_info info)
     return JSCommonProcess(args);
 }
 
+napi_value ImageCreatorNapi::JsOffOneArg(napi_env env, napi_callback_info info)
+{
+    ImageCreatorCommonArgs args = {
+        .env = env, .info = info, .async = CreatorCallType::ASYNC,
+        .name = "JsOff", .argc = ARGS1, .asyncLater = true,
+    };
+
+    args.queryArgs = [](ImageCreatorCommonArgs &args, ImageCreatorInnerContext &ic) -> bool {
+        if (ic.argc != ARGS1) {
+            std::string errMsg = "Invalid argc: ";
+            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                errMsg.append(std::to_string(ic.argc)));
+            return false;
+        }
+        auto argType = ImageNapiUtils::getType(args.env, ic.argv[PARAM0]);
+        if (argType != napi_string) {
+            std::string errMsg = "Unsupport args type: ";
+            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                errMsg.append(std::to_string(argType)));
+            return false;
+        }
+        if (!ImageNapiUtils::GetUtf8String(args.env, ic.argv[PARAM0], ic.onType)) {
+            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                "Could not get On type string");
+            return false;
+        }
+        if (!CheckOnParam0(args.env, ic.argv[PARAM0], "imageRelease")) {
+            ImageNapiUtils::ThrowExceptionError(args.env, static_cast<int32_t>(napi_invalid_arg),
+                "Unsupport PARAM0");
+            return false;
+        }
+        napi_get_undefined(args.env, &ic.result);
+        return true;
+    };
+
+    args.nonAsyncBack = [](ImageCreatorCommonArgs &args, ImageCreatorInnerContext &ic) -> bool {
+        IMAGE_LINE_IN();
+        napi_get_undefined(args.env, &ic.result);
+        ic.context->constructor_->imageCreator_->UnRegisterBufferReleaseListener();
+        ic.context->status = SUCCESS;
+        napi_create_uint32(args.env, ic.context->status, &ic.result);
+        IMAGE_LINE_OUT();
+        return true;
+    };
+
+    return JSCommonProcess(args);
+}
+
+napi_value ImageCreatorNapi::JsOffTwoArgs(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    ImageCreatorCommonArgs args = {
+        .env = env, .info = info, .async = CreatorCallType::ASYNC,
+        .name = "JsOff", .argc = ARGS2, .queryArgs = JsOnQueryArgs,
+    };
+
+    args.callBack = [](napi_env env, napi_status status, Contextc context) {
+        IMAGE_LINE_IN();
+        napi_value result = nullptr;
+        napi_get_undefined(env, &result);
+        context->constructor_->imageCreator_->UnRegisterBufferReleaseListener();
+        context->status = SUCCESS;
+        CommonCallbackRoutine(env, context, result);
+        IMAGE_LINE_OUT();
+    };
+
+    JSCommonProcess(args);
+    napi_create_uint32(args.env, SUCCESS, &result);
+    return result;
+}
+
 napi_value ImageCreatorNapi::JsOff(napi_env env, napi_callback_info info)
 {
     IMAGE_FUNCTION_IN();
     struct ImageCreatorInnerContext ic;
-    ic.argc = ARGS1;
+    ic.argc = ARGS2;
     ic.argv.resize(ic.argc);
     napi_get_undefined(env, &ic.result);
-
     IMG_JS_ARGS(env, info, ic.status, ic.argc, &(ic.argv[0]), ic.thisVar);
-
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(ic.status), ic.result, IMAGE_ERR("fail to napi_get_cb_info"));
 
-    if (ic.argc == ARGS1 && ImageNapiUtils::getType(env, ic.argv[ARGS0]) == napi_string
-        && CheckOnParam0(env, ic.argv[ARGS0], "imageRelease")) {
-        IMAGE_LOGD("ic.argv[ARGS0] is imageRelease");
+    if (ic.argc == ARGS1) {
+        return JsOffOneArg(env, info);
+    } else if (ic.argc == ARGS2) {
+        return JsOffTwoArgs(env, info);
     } else {
+        IMAGE_ERR("invalid argument count");
         return ic.result;
     }
-    ic.context = std::make_unique<ImageCreatorAsyncContext>();
-    if (ic.context == nullptr) {
-        return ic.result;
-    }
-    ic.status = napi_unwrap(env, ic.thisVar, reinterpret_cast<void**>(&(ic.context->constructor_)));
-
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(ic.status, ic.context->constructor_),
-        ic.result, IMAGE_ERR("fail to unwrap context"));
-
-    if (ic.context->constructor_ == nullptr) {
-        return ic.result;
-    }
-    if (g_creatorTest) {
-        g_listener.reset();
-        ic.context->status = SUCCESS;
-        napi_create_uint32(env, ic.context->status, &ic.result);
-        return ic.result;
-    }
-    auto native = ic.context->constructor_->imageCreator_;
-    if (native == nullptr) {
-        IMAGE_ERR("Native instance is nullptr");
-        ic.context->status = ERR_IMAGE_INIT_ABNORMAL;
-        return ic.result;
-    }
-
-    native->UnRegisterBufferReleaseListener();
-    if (native->surfaceBufferAvaliableListener_ == nullptr) {
-        ic.context->status = SUCCESS;
-        napi_create_uint32(env, ic.context->status, &ic.result);
-    }
-
-    IMAGE_FUNCTION_OUT();
-    return ic.result;
 }
 
 napi_value ImageCreatorNapi::JsRelease(napi_env env, napi_callback_info info)
