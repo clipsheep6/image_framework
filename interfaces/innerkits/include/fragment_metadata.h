@@ -22,28 +22,27 @@
 
 namespace OHOS {
 namespace Media {
+const static std::set<std::string> FRAGMENT_METADATA_KEYS = {
+    "X_IN_ORIGINAL",
+    "Y_IN_ORIGINAL",
+    "WIDTH",
+    "HEIGHT",
+};
 class FragmentMetadata : public ImageMetadata {
 public:
-    FragmentMetadata();
     virtual ~FragmentMetadata() {}
     
     virtual int GetValue(const std::string &key, std::string &value) const override;
     virtual bool SetValue(const std::string &key, const std::string &value) override;
     virtual bool RemoveEntry(const std::string &key) override;
-    virtual std::vector<std::pair<std::string, std::string>> GetAllProperties() override;
+    virtual const ImageMetadata::PropertyMapPtr GetAllProperties() override;
     virtual std::shared_ptr<ImageMetadata> CloneMetadata() override;
     bool Marshalling(Parcel &parcel) const override;
     static FragmentMetadata *Unmarshalling(Parcel &parcel);
     static FragmentMetadata *Unmarshalling(Parcel &parcel, PICTURE_ERR &error);
 
 protected:
-    bool IsValidKey(const std::string &key) const;
-    std::map<std::string, std::string> properties_ = {
-    { "X_IN_ORIGINAL", "" },
-    { "Y_IN_ORIGINAL", "" },
-    { "WIDTH", "" },
-    { "HEIGHT", "" },
-};
+    ImageMetadata::PropertyMapPtr properties_;
 };
 } // namespace Media
 } // namespace OHOS

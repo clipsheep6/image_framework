@@ -1,4 +1,4 @@
-f/*
+/*
  * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,24 @@ f/*
 
 namespace OHOS {
 namespace Media {
-
-FragmentMetadata::FragmentMetadata() {}
+static bool IsValidKey(const std::string &key)
+{
+    return FRAGMENT_METADATA_KEYS.find(key) != FRAGMENT_METADATA_KEYS.end();
+}
 
 int FragmentMetadata::GetValue(const std::string &key, std::string &value) const
 {
     if (!IsValidKey(key)) {
-        return ERR_MEDIA_INVALID_VALUE;
+        IMAGE_LOGE("Key is not supported.");
+        return ERR_IMAGE_INVALID_PARAMETER;
     }
-    auto it = properties_.find(key);
-    if (it != properties_.end()) {
+    auto it = properties_->find(key);
+    if (it != properties_->end()) {
         value = it->second;
         return SUCCESS;
     }
-    return ERR_MEDIA_INVALID_VALUE;
+    IMAGE_LOGE("key is not found in properties: %{public}s", key.c_str());
+    return ERR_IMAGE_INVALID_PARAMETER;
 }
 
 bool FragmentMetadata::SetValue(const std::string &key, const std::string &value)
@@ -48,28 +52,30 @@ bool FragmentMetadata::SetValue(const std::string &key, const std::string &value
         IMAGE_LOGE("Key is not supported.");
         return false;
     }
-    properties_[key] = value;
+    properties_->insert(std::make_pair(key, value));
     return true;
 }
 
 bool FragmentMetadata::RemoveEntry(const std::string &key)
 {
     if (!IsValidKey(key)) {
-        IMAGE_LOGE("RemoveEntry failed, can not find entry for key: %{public}s", key.c_str());
+        IMAGE_LOGE("Key is not supported.");
         return false;
     }
-    properties_[key] = "";
-    IMAGE_LOGD("RemoveEntry for key: %{public}s", key.c_str());
-    return true;
+    auto it = properties_->find(key);
+    if (it != properties_->end()) {
+        properties_->erase(it);
+        IMAGE_LOGD("RemoveEntry for key: %{public}s", key.c_str());
+        return true;
+    } else {
+        IMAGE_LOGE("RemoveEntry failed, key is not found in properties: %{public}s", key.c_str());
+        return false;
+    }
 }
 
-std::vector<std::pair<std::string, std::string>> FragmentMetadata::GetAllProperties()
+const ImageMetadata::PropertyMapPtr FragmentMetadata::GetAllProperties()
 {
-    std::vector<std::pair<std::string, std::string>> result;
-    for (const auto &pair : properties_) {
-        result.push_back(pair);
-    }
-    return result;
+    return properties_;
 }
 
 std::shared_ptr<ImageMetadata> FragmentMetadata::CloneMetadata()
@@ -81,10 +87,10 @@ std::shared_ptr<ImageMetadata> FragmentMetadata::CloneMetadata()
 
 bool FragmentMetadata::Marshalling(Parcel &parcel) const
 {
-    if (!parcel.WriteInt32(properties_.size())) {
+    if (!parcel.WriteUint64(properties_->size())) {
         return false;
     }
-    for (const auto &pair : properties_) {
+    for (const auto &pair : *properties_) {
         if (!parcel.WriteString(pair.first)) {
             return false;
         }
@@ -108,12 +114,12 @@ FragmentMetadata *FragmentMetadata::Unmarshalling(Parcel &parcel)
 
 FragmentMetadata *FragmentMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
 {
-    auto metadata = new (std::nothrow) FragmentMetadata();
-    int32_t size;
-    if (!parcel.ReadInt32(size)) {
+    std::unique_ptr<FragmentMetadata> fragmentMetadataPtr = std::make_unique<FragmentMetadata>();
+    uint64_t size;
+    if (!parcel.ReadUint64(size)) {
         return nullptr;
     }
-    for (int32_t i = 0; i < size; ++i) {
+    for (uint64_t i = 0; i < size; ++i) {
         std::string key;
         std::string value;
         if (!parcel.ReadString(key)) {
@@ -122,17 +128,13 @@ FragmentMetadata *FragmentMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &e
         if (!parcel.ReadString(value)) {
             return nullptr;
         }
-        if (!metadata->IsValidKey(key)) {
+        if (!IsValidKey(key)) {
             return nullptr;
         }
-        FragmentMetadata *fragmentMetadata = new (std::nothrow) FragmentMetadata();
-        fragmentMetadata->properties_[key] = value;
+        fragmentMetadataPtr->properties_->insert(std::make_pair(key, value));
     }
-    return fragmentMetadata;
+    return fragmentMetadataPtr.release();
 }
 
-bool FragmentMetadata::IsValidKey(const std::string &key) const {
-    return properties_.find(key) != properties_.end();
-}
 } // namespace Media
 } // namespace OHOS

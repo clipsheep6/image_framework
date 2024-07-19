@@ -134,13 +134,19 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     return SUCCESS;
 }
 
-std::vector<std::pair<std::string, std::string>> ExifMetadata::GetAllProperties()
+const ImageMetadata::PropertyMapPtr ExifMetadata::GetAllProperties()
 {
-    std::vector<std::pair<std::string, std::string>> result;
+    ImageMetadata::PropertyMapPtr result;
     std::string value;
-    for (const auto key: ExifMetadatFormatter::GetAllKeys()) {
-        GetValue(key, value);
-        result.push_back(std::make_pair(key, value));
+    for (const auto key : ExifMetadatFormatter::GetRWKeys()) {
+        if (GetValue(key, value) == SUCCESS) {
+            result->insert(std::make_pair(key, value));
+        }
+    }
+    for (const auto key : ExifMetadatFormatter::GetROKeys()) {
+        if (GetValue(key, value) == SUCCESS) {
+            result->insert(std::make_pair(key, value));
+        }
     }
     IMAGE_LOGD("Get record arguments success.");
     return result;
@@ -790,7 +796,7 @@ ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
             return nullptr;
         }
         ExifData *ptrData = exif_data_new_from_data(data, static_cast<unsigned int>(size));
-        ExifMetadata *exifMetadata = new (std::nothrow) ExifMetadata(ptrData);
+        ExifMetadata *exifMetadata = new(std::nothrow) ExifMetadata(ptrData);
         return exifMetadata;
     } else {
         return nullptr;

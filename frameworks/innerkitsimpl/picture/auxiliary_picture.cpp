@@ -16,9 +16,9 @@
 #include "picture.h"
 #include "auxiliary_picture.h"
 #include "media_errors.h"
-#include "surface_buffer.h"
 #include "image_log.h"
 #include "exif_metadata.h"
+#include "fragment_metadata.h"
 
 namespace OHOS {
 namespace Media {
@@ -123,10 +123,35 @@ bool AuxiliaryPicture::Marshalling(Parcel &data) const
         return false;
     }
 
-    if (!data.WriteUint64(static_cast<uint64_t>(metadatas_.size()))) {
+    if (!data.WriteInt32(static_cast<int32_t>(auxiliaryPictureInfo_.auxiliaryPictureType))) {
+        IMAGE_LOGE("Failed to write type of auxiliary pictures.");
         return false;
     }
 
+    if (!data.WriteInt32(static_cast<int32_t>(auxiliaryPictureInfo_.colorSpace))) {
+        IMAGE_LOGE("Failed to write color space of auxiliary pictures.");
+        return false;
+    }
+
+    if (!data.WriteInt32(static_cast<int32_t>(auxiliaryPictureInfo_.pixelFormat))) {
+        IMAGE_LOGE("Failed to write pixel format of auxiliary pictures.");
+        return false;
+    }
+
+    if (!data.WriteInt32(auxiliaryPictureInfo_.rowStride)) {
+        IMAGE_LOGE("Failed to write row stride of auxiliary pictures.");
+        return false;
+    }
+
+    if (!data.WriteInt32(auxiliaryPictureInfo_.size.height || !data.WriteInt32(auxiliaryPictureInfo_.size.width))) {
+        IMAGE_LOGE("Failed to write size of auxiliary pictures.");
+        return false;
+    }
+
+    if (!data.WriteUint64(static_cast<uint64_t>(metadatas_.size()))) {
+        return false;
+    }
+    
     for (const auto &metadata : metadatas_) {
         if (!(data.WriteInt32(static_cast<int32_t>(metadata.first)) && metadata.second->Marshalling(data))) {
             IMAGE_LOGE("Failed to marshal metadatas.");
@@ -157,12 +182,20 @@ AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &parcel, PICTURE_ERR &e
         return nullptr;
     }
     auxPtr->SetContentPixel(contentPtr);
+    AuxiliaryPictureInfo auxiliaryPictureInfo;
+    auxiliaryPictureInfo.auxiliaryPictureType = static_cast<AuxiliaryPictureType>(parcel.ReadInt32());
+    auxiliaryPictureInfo.colorSpace = static_cast<ColorSpace>(parcel.ReadInt32());
+    auxiliaryPictureInfo.pixelFormat = static_cast<PixelFormat>(parcel.ReadInt32());
+    auxiliaryPictureInfo.rowStride = parcel.ReadInt32();
+    auxiliaryPictureInfo.size.height = parcel.ReadInt32();
+    auxiliaryPictureInfo.size.width = parcel.ReadInt32();
+    auxPtr->SetAuxiliaryPictureInfo(auxiliaryPictureInfo);
 
     std::map<MetadataType, std::shared_ptr<ImageMetadata>> metadatas;
     
     uint64_t size = parcel.ReadUint64();
     
-    for (int32_t i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         MetadataType type = static_cast<MetadataType>(parcel.ReadInt32());
         std::shared_ptr<ImageMetadata> imagedataPtr(nullptr);
 
@@ -171,11 +204,15 @@ AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &parcel, PICTURE_ERR &e
             if (!imagedataPtr) {
                 return nullptr;
             }
+        } else if (type == MetadataType::MARK_CUT) {
+            imagedataPtr.reset(FragmentMetadata::Unmarshalling(parcel));
+            if (!imagedataPtr) {
+                return nullptr;
+            }
         } else {
             IMAGE_LOGE("Unsupported metadata type.");
             return nullptr;
         }
-
         auxPtr->SetMetadata(type, imagedataPtr);
     }
 

@@ -23,6 +23,7 @@
 #include "pixel_map.h"
 #include "metadata_napi.h"
 #include "color_space_object_convertor.h"
+#include "image_utils.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_IMAGE
@@ -95,6 +96,8 @@ AuxiliaryPictureNapi::~AuxiliaryPictureNapi()
 napi_value AuxiliaryPictureNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
+        DECLARE_NAPI_FUNCTION("readPixelsToBuffer", ReadPixelsToBuffer),
+        DECLARE_NAPI_FUNCTION("writePixelsFromBuffer", WritePixelsFromBuffer),
         DECLARE_NAPI_FUNCTION("getType", GetType),
         DECLARE_NAPI_FUNCTION("getMetadata", GetMetadata),
         DECLARE_NAPI_FUNCTION("setMetadata", SetMetadata),
@@ -213,6 +216,7 @@ STATIC_EXEC_FUNC(CreateAuxiliaryPicture)
     auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
     InitializationOptions opts;
     opts.size = context->size;
+    opts.editable = true;
     auto colors = static_cast<uint32_t*>(context->arrayBuffer);
     auto tmpPixelmap = PixelMap::Create(colors, context->arrayBufferSize, opts);
     std::shared_ptr<PixelMap> pixelmap = std::move(tmpPixelmap);
@@ -669,6 +673,112 @@ napi_value AuxiliaryPictureNapi::SetAuxiliaryPictureInfo(napi_env env, napi_call
     } else {
         IMAGE_LOGE("Failed to call napi_unwrap for auxilianypictureinfo");
     }
+    return result;
+}
+
+static void ReadPixelsToBufferComplete(napi_env env, napi_status status, void *data)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+
+    if (context->status == SUCCESS &&
+        !ImageNapiUtils::CreateArrayBuffer(env, context->arrayBuffer, context->arrayBufferSize, &result)) {
+        context->status = ERROR;
+        IMAGE_LOGE("Fail to create napi arraybuffer!");
+        napi_get_undefined(env, &result);
+    }
+
+    delete[] static_cast<uint8_t*>(context->arrayBuffer);
+    context->arrayBuffer = nullptr;
+    context->arrayBufferSize = 0;
+    CommonCallbackRoutine(env, context, result);
+}
+
+napi_value AuxiliaryPictureNapi::ReadPixelsToBuffer(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = NUM_0;
+
+    IMG_JS_ARGS(env, info, status, argCount, nullptr, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to get argments from info"));
+
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext =
+        std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
+        nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    asyncContext->rAuxiliaryPicture = asyncContext->nConstructor->nativeAuxiliaryPicture_;
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rAuxiliaryPicture),
+        nullptr, IMAGE_LOGE("Empty native auxiliary picture"));
+
+    napi_create_promise(env, &(asyncContext->deferred), &result);
+    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "ReadPixelsToBuffer",
+        [](napi_env env, void *data) {
+            auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+            AuxiliaryPictureInfo info = context->rAuxiliaryPicture->GetAuxiliaryPictureInfo();
+            context->arrayBufferSize = info.size.width * info.size.height * ImageUtils::GetPixelBytes(info.pixelFormat);
+            context->arrayBuffer = new uint8_t[context->arrayBufferSize];
+            if (context->arrayBuffer != nullptr) {
+                context->status = context->rAuxiliaryPicture->ReadPixels(
+                    context->arrayBufferSize, static_cast<uint8_t*>(context->arrayBuffer));
+            } else {
+                context->status = ERR_MEDIA_MALLOC_FAILED;
+                IMAGE_LOGE("Fail to malloc memory for arraybuffer");
+            }
+        }, ReadPixelsToBufferComplete, asyncContext, asyncContext->work);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
+        nullptr, IMAGE_LOGE("Fail to create async work"));
+    return result;
+}
+
+static void EmptyResultComplete(napi_env env, napi_status status, void *data)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+    CommonCallbackRoutine(env, context, result);
+}
+
+napi_value AuxiliaryPictureNapi::WritePixelsFromBuffer(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_status status;
+    napi_value thisVar = nullptr;
+    size_t argCount = NUM_1;
+    napi_value argValue[NUM_1] = {0};
+
+    IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), nullptr, IMAGE_LOGE("Fail to get argments from info"));
+
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext =
+        std::make_unique<AuxiliaryPictureNapiAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->nConstructor));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->nConstructor),
+        nullptr, IMAGE_LOGE("Fail to unwrap context"));
+    asyncContext->rAuxiliaryPicture = asyncContext->nConstructor->nativeAuxiliaryPicture_;
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, asyncContext->rAuxiliaryPicture),
+        nullptr, IMAGE_LOGE("Empty native auxiliary picture"));
+    status = napi_get_arraybuffer_info(env, argValue[NUM_0],
+        &(asyncContext->arrayBuffer), &(asyncContext->arrayBufferSize));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
+        nullptr, IMAGE_LOGE("Fail to get buffer info"));
+
+    napi_create_promise(env, &(asyncContext->deferred), &result);
+    IMG_CREATE_CREATE_ASYNC_WORK(env, status, "WritePixelsFromBuffer",
+        [](napi_env env, void *data) {
+            auto context = static_cast<AuxiliaryPictureNapiAsyncContext*>(data);
+            context->status = context->rAuxiliaryPicture->WritePixels(
+                static_cast<uint8_t*>(context->arrayBuffer), context->arrayBufferSize);
+        }, EmptyResultComplete, asyncContext, asyncContext->work);
+
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status),
+        nullptr, IMAGE_LOGE("Fail to create async work"));
     return result;
 }
 

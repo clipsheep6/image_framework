@@ -1433,11 +1433,14 @@ bool ExifMetadatFormatter::IsKeySupported(const std::string &keyName)
     return (wit != READ_WRITE_KEYS.end() || rit != READ_ONLY_KEYS.end());
 }
 
-const std::set<std::string>& ExifMetadatFormatter::GetAllKeys()
+const std::set<std::string> &ExifMetadatFormatter::GetRWKeys()
 {
-    std::set<std::string> allKeys = READ_WRITE_KEYS;
-    allKeys.insert(READ_ONLY_KEYS.begin(), READ_ONLY_KEYS.end());
-    return allKeys;
+    return READ_WRITE_KEYS;
+}
+
+const std::set<std::string> &ExifMetadatFormatter::GetROKeys()
+{
+    return READ_ONLY_KEYS;
 }
 
 bool ExifMetadatFormatter::IsModifyAllowed(const std::string &keyName)
