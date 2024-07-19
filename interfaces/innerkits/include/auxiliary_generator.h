@@ -38,6 +38,8 @@ public:
 
 private:
     static ImageInfo MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs);
+    static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(
+        AuxiliaryPictureType type, Size size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
     static bool DecodeHeifMetaData(AbsImageDecoder* extDecoder, AuxiliaryPicture* auxPicture,
                                    AuxiliaryPictureType type, uint32_t &errorCode);
     static bool DecodeJpegMetaData(unique_ptr<InputDataStream> &auxStream, AuxiliaryPicture *auxPicture,

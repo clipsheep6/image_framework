@@ -74,6 +74,18 @@ ImageInfo AuxiliaryGenerator::MakeImageInfo(int width, int height, PixelFormat p
     return info;
 }
 
+AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
+    AuxiliaryPictureType type, Size size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace)
+{
+    AuxiliaryPictureInfo info;
+    info.auxiliaryPictureType = type;
+    info.size = size;
+    info.rowStride = rowStride;
+    info.pixelFormat = format;
+    info.colorSpace = colorSpace;
+    return info;
+}
+
 std::shared_ptr<ImageMetadata> AuxiliaryGenerator::CreateExifMetadata(
     uint8_t *buffer, const uint32_t size, uint32_t &errorCode)
 {
@@ -431,30 +443,48 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
         // auxPixelMap->SetPixelsAddr();
     }
     std::shared_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(auxPixelMap, type);
-    
+
+    // TODO: 完善AuxiliaryPictureInfo
+    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, {0, 0}, 0, PixelFormat::UNKNOWN, ColorSpace::UNKNOWN);
+    auxiliaryPicture->SetAuxiliaryPictureInfo(auxInfo);
+
     // TODO: Metadata 处理
-    // if (type == )
-    // if (!DecodeJpegMetaData(auxiliaryStream, auxiliaryPicture, type, errorCode)) {
-    //     IMAGE_LOGE("Jpeg Decode Meta Data failed! Auxiliary picture type: %{public}d", type);
-    //     return nullptr;
-    // }
+    if (!DecodeJpegMetaData(auxiliaryStream, auxiliaryPicture, errorCode)) {
+        IMAGE_LOGE("Jpeg Decode Meta Data failed! Auxiliary picture type: %{public}d", type);
+        return nullptr;
+    }
     
     return auxiliaryPicture;
 }
 
 bool AuxiliaryGenerator::DecodeJpegMetaData(std::unique_ptr<ImagePlugin::InputDataStream> &auxStream,
-    AuxiliaryPicture *auxPicture, AuxiliaryPictureType type, uint32_t &errorCode)
+    std::shared_ptr<OHOS::Media::AuxiliaryPicture> &auxPicture, uint32_t &errorCode)
 {
+    AuxiliaryPictureType type = auxPicture->GetType();
+    if (type != AuxiliaryPictureType::NONE) {
+        return false;
+    }
+
     // Decode EXIF Meta Data
     // TODO: 需要确认哪些类型的辅助图需要exif metadata
-    if (type != AuxiliaryPictureType::NONE) {
-        std::shared_ptr<ImageMetadata> exifMetadata = CreateExifMetadata(auxStream->GetDataPtr(),
-                                                                         auxStream->GetStreamSize(), errorCode);
-        if (exifMetadata == nullptr) {
-            IMAGE_LOGE("Jpeg Decode EXIF Meta Data failed! Auxiliary picture type: %{public}d", type);
+    std::shared_ptr<ImageMetadata> exifMetadata = CreateExifMetadata(auxStream->GetDataPtr(),
+                                                                     auxStream->GetStreamSize,
+                                                                     errorCode);
+    if (exifMetadata == nullptr) {
+        IMAGE_LOGE("Jpeg Decode EXIF Meta Data failed! Auxiliary picture type: %{public}d", type);
+        return false;
+    } else {
+        auxPicture->SetMetadata(MetadataType::EXIF, exifMetadata);
+    }
+
+    // Decode FRAGMENT Meta Data
+    if (type == AuxiliaryPictureType::FRAGMENT_MAP) {
+        std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;  // TODO: 1.不知道水印metadata如何解析；2.FragmentMetadata PR尚未合入
+        if (fragmentMetadata == nullptr) {
+            IMAGE_LOGE("Jpeg Decode FRAGMENT Meta Data failed! Auxiliary picture type: %{public}d", type);
             return false;
         } else {
-            auxPicture->SetMetadata(MetadataType::EXIF, exifMetadata);
+            auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
         }
     }
 
