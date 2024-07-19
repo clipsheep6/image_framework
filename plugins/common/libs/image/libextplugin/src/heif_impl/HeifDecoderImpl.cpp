@@ -198,7 +198,8 @@ static PixelFormat SkHeifColorFormat2PixelFormat(SkHeifColorFormat format)
 HeifDecoderImpl::HeifDecoderImpl()
     : outPixelFormat_(PixelFormat::RGBA_8888),
     dstMemory_(nullptr), dstRowStride_(0), dstHwBuffer_(nullptr),
-    gainmapDstMemory_(nullptr), gainmapDstRowStride_(0) {}
+    gainmapDstMemory_(nullptr), gainmapDstRowStride_(0),
+    auxiliaryDstMemory_(nullptr), auxiliaryDstRowStride_(0) {}
 
 HeifDecoderImpl::~HeifDecoderImpl()
 {
@@ -243,6 +244,52 @@ bool HeifDecoderImpl::init(HeifStream *stream, HeifFrameInfo *frameInfo)
         InitFrameInfo(&tmapInfo_, tmapImage);
     }
     return Reinit(frameInfo);
+}
+
+bool HeifDecoderImpl::checkAuxiliaryMap(AuxiliaryPictureType type)
+{
+    auxiliaryImage_ = nullptr;
+    switch (type) {
+        case AuxiliaryPictureType::GAINMAP:
+            auxiliaryImage_ = parser_->GetGainmapImage();
+            break;
+        case AuxiliaryPictureType::DEPTH_MAP:
+            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("depthmap"); // TODO:
+            break;
+        case AuxiliaryPictureType::UNREFOCUS_MAP:
+            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("unrefocusmap");
+            break;
+        case AuxiliaryPictureType::LINEAR_MAP:
+            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("linearmap");
+            break;
+        case AuxiliaryPictureType::FRAGMENT_MAP:
+            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("Fragmentmap");
+            break;
+        default:
+            return false;
+    }
+
+    if (auxiliaryImage_ == nullptr)
+    {
+        IMAGE_LOGE("Auxiliary map type that does not exist");
+        return false;
+    }
+
+    return true;
+}
+
+bool HeifDecoderImpl::setAuxiliaryMap(AuxiliaryPictureType type)
+{
+    if (parser_ == nullptr) {
+        IMAGE_LOGE("make heif parser failed");
+        return false;
+    }
+
+    if (auxiliaryImage_ != nullptr) {
+        InitFrameInfo(&auxiliaryImageInfo_, auxiliaryImage_);
+        InitGridInfo(auxiliaryImage_, auxiliaryGridInfo_);
+    }
+    return true;
 }
 
 bool HeifDecoderImpl::Reinit(HeifFrameInfo *frameInfo)
@@ -414,6 +461,23 @@ bool HeifDecoderImpl::decodeGainmap()
     return true;
 }
 
+bool HeifDecoderImpl::decodeAuxiliaryMap()
+{
+    ImageTrace trace("HeifDecoderImpl::decodeAuxiliaryMap");
+    sptr<SurfaceBuffer> hwBuffer;
+    bool decodeRes = DecodeImage(nullptr, auxiliaryImage_, auxiliaryGridInfo_, &hwBuffer, false);
+    if (!decodeRes) {
+        return false;
+    }
+
+    bool convertRes = IsDirectYUVDecode() ||
+            ConvertHwBufferPixelFormat(hwBuffer, auxiliaryGridInfo_, auxiliaryDstMemory_, auxiliaryDstRowStride_);
+    if (!convertRes) {
+        return false;
+    }
+    return true;
+}
+
 void HeifDecoderImpl::ReleaseHwDecoder(HeifHardwareDecoder *hwDecoder, bool isReuse)
 {
     if (isReuse || hwDecoder == nullptr) {
@@ -477,6 +541,10 @@ bool HeifDecoderImpl::DecodeImage(HeifHardwareDecoder *hwDecoder,
     } else if (imageType == "hvc1") {
         gridInfo.enableGrid = false;
         res = DecodeSingleImage(hwDecoder, image, gridInfo, hwBuffer);
+    } else if (imageType == "") { // TODO image don't need decode
+        std::vector<uint8_t> outputs;
+        parser_->GetItemData(image->GetItemId(), &outputs, heif_only_header);
+        res = memcpy_s(hwBuffer->GetVirAddr(), hwBuffer->GetSize(), outputs.data(), outputs.size());
     }
     if (!res) {
         ReleaseHwDecoder(hwDecoder, isReuseHwDecoder);
@@ -725,6 +793,14 @@ void HeifDecoderImpl::setGainmapDstBuffer(uint8_t* dstBuffer, size_t rowStride)
     }
 }
 
+void HeifDecoderImpl::setAuxiliaryDstBuffer(uint8_t* dstBuffer, size_t rowStride)
+{
+    if (auxiliaryDstMemory_ == nullptr) {
+        auxiliaryDstMemory_ = dstBuffer;
+        auxiliaryDstRowStride_ = rowStride;
+    }
+}
+
 bool HeifDecoderImpl::getScanline(uint8_t *dst)
 {
     // no need to implement
@@ -753,12 +829,38 @@ bool HeifDecoderImpl::getGainmapInfo(HeifFrameInfo* frameInfo)
     return true;
 }
 
+bool HeifDecoderImpl::getAuxiliaryMapInfo(HeifFrameInfo* frameInfo)
+{
+    if (frameInfo != nullptr) {
+        *frameInfo = auxiliaryImageInfo_;
+    }
+    return true;
+}
+
 bool HeifDecoderImpl::getTmapInfo(HeifFrameInfo* frameInfo)
 {
     if (frameInfo != nullptr) {
         *frameInfo = tmapInfo_;
     }
     return true;
+}
+
+bool HeifDecoderImpl::GetHeifMetadata(std::string itemType, std::shared_ptr<HeifMetadata> &heifMetadata)
+{
+    if (auxiliaryImage_ == nullptr) {
+        return false;
+    }
+    std::vector<std::shared_ptr<HeifMetadata>> metadata = auxiliaryImage_->GetAllMetadata();
+    for (auto meta: metadata) {
+        if (meta == nullptr) {
+            continue;
+        }
+        if (meta->itemType == itemType) {
+            heifMetadata = std::shared_ptr<HeifMetadata>(meta);
+            return true;
+        }
+    }
+    return false;
 }
 
 HeifImageHdrType HeifDecoderImpl::getHdrType()

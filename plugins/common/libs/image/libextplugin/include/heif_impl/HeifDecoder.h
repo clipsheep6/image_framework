@@ -19,6 +19,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include "image_type.h"
+#include "heif_type.h"
 
 enum SkHeifColorFormat {
     kHeifColorFormat_RGB565,
@@ -90,12 +92,18 @@ struct HeifDecoder {
     virtual bool decodeGainmap() = 0;
     virtual void setGainmapDstBuffer(uint8_t* dstBuffer, size_t rowStride) = 0;
     virtual bool getGainmapInfo(HeifFrameInfo* frameInfo) = 0;
+    virtual bool GetHeifMetadata(std::string metadataType, std::shared_ptr<OHOS::ImagePlugin::HeifMetadata> &heifMetadata) = 0;
     virtual bool getTmapInfo(HeifFrameInfo* frameInfo) = 0;
     virtual HeifImageHdrType getHdrType() = 0;
     virtual void getVividMetadata(std::vector<uint8_t>& uwaInfo, std::vector<uint8_t>& displayInfo,
         std::vector<uint8_t>& lightInfo) = 0;
     virtual void getISOMetadata(std::vector<uint8_t>& isoMetadata) = 0;
     virtual void getErrMsg(std::string& errMsg) = 0;
+    virtual bool checkAuxiliaryMap(OHOS::Media::AuxiliaryPictureType type) = 0;
+    virtual bool setAuxiliaryMap(OHOS::Media::AuxiliaryPictureType type) = 0;
+    virtual bool getAuxiliaryMapInfo(HeifFrameInfo* frameInfo) = 0;
+    virtual bool decodeAuxiliaryMap() = 0;
+    virtual void setAuxiliaryDstBuffer(uint8_t* dstBuffer, size_t rowStride) = 0;
 };
 
 #endif // PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_HEIF_DECODER_H

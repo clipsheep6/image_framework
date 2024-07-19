@@ -321,6 +321,12 @@ private:
                             ImagePlugin::DecodeContext &context, ImagePlugin::PlImageInfo &plInfo);
     ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
         ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
+    static void ContextToAddrInfos(ImagePlugin::DecodeContext &context, PixelMapAddrInfos &addrInfos);
+    static bool IsYuvFormat(PixelFormat format);
+    void DecodeHeifAuxiliaryPictures(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
+                                     uint32_t &errorCode);
+    void DecodeJpegAuxiliaryPicture(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
+                                    uint32_t &errorCode);
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";

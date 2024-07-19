@@ -66,9 +66,12 @@ public:
     Media::ImageHdrType CheckHdrType() override;
     uint32_t GetGainMapOffset() override;
     Media::HdrMetadata GetHdrMetadata(Media::ImageHdrType type) override;
+    std::vector<uint8_t> GetHeifMetadata(std::string metadataType) override;
     bool DecodeHeifGainMap(DecodeContext &context) override;
     bool GetHeifHdrColorSpace(ColorManager::ColorSpaceName &gainmap, ColorManager::ColorSpaceName &hdr) override;
     uint32_t GetHeifParseErr() override;
+    bool DecodeHeifAuxiliaryMap(DecodeContext& context, Media::AuxiliaryPictureType type) override;
+    bool checkAuxiliaryMap(Media::AuxiliaryPictureType type) override;
 #ifdef IMAGE_COLORSPACE_FLAG
     OHOS::ColorManager::ColorSpace getGrColorSpace() override;
     bool IsSupportICCProfile() override;

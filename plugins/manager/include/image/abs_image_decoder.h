@@ -34,6 +34,7 @@
 #include "pixel_map.h"
 #include "plugin_service.h"
 #include "hdr_type.h"
+#include "auxiliary_picture.h"
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -227,6 +228,11 @@ public:
         return {};
     }
 
+    virtual std::vector<uint8_t> GetHeifMetadata(std::string metadataType)
+    {
+        return {};
+    }
+
     virtual bool DecodeHeifGainMap(DecodeContext& context)
     {
         return false;
@@ -240,6 +246,16 @@ public:
     virtual uint32_t GetHeifParseErr()
     {
         return 0;
+    }
+
+    virtual bool DecodeHeifAuxiliaryMap(DecodeContext& context, Media::AuxiliaryPictureType type)
+    {
+        return false;
+    }
+
+    virtual bool checkAuxiliaryMap(Media::AuxiliaryPictureType type)
+    {
+        return false;
     }
 
     // define multiple subservices for this interface

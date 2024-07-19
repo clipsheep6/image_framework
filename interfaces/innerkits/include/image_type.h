@@ -279,7 +279,7 @@ enum class AuxiliaryPictureType {
     DEPTH_MAP = 2,
     UNREFOCUS_MAP = 3,
     LINEAR_MAP = 4,
-    MARK_CUT_MAP = 5,
+    FRAGMENT_MAP = 5,
 };
 
 struct AuxiliaryPictureInfo {
@@ -292,7 +292,7 @@ struct AuxiliaryPictureInfo {
 
 enum class MetadataType {
     EXIF = 1,
-    MARK_CUT = 2,
+    FRAGMENT = 2,
 };
 
 struct DecodingOptionsForPicture {

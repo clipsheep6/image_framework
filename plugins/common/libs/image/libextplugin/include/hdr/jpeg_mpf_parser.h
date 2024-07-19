@@ -17,12 +17,14 @@
 #define FRAMEWORKS_INNERKITSIMPL_HDR_INCLUDE_JPEG_MPF_PARSER_H
 
 #include <vector>
+#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
 struct SingleJpegImage {
     uint32_t offset;
     uint32_t size;
+    AuxiliaryPictureType auxType;
 };
 
 class JpegMpfParser {
