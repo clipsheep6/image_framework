@@ -348,14 +348,14 @@ bool ImageFormatConvertExtUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVD
     return result;
 }
 
-bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < 0 || rgbInfo.height < 0) {
         return false;
     }
-    size_t destPlaneSizeY = imageSize.width * imageSize.height;
-    size_t srcPlaneSizeUV = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
+    size_t destPlaneSizeY = rgbInfo.width * rgbInfo.height;
+    size_t srcPlaneSizeUV = ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + srcPlaneSizeUV * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
@@ -369,20 +369,20 @@ bool ImageFormatConvertExtUtils::BGRAToNV12(const uint8_t *srcBuffer, const Size
     uint8_t *nv12Y = *destBuffer;
     uint8_t *nv12UV = *destBuffer + destPlaneSizeY;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ARGBToNV12(srcBuffer, imageSize.width * NUM_4, nv12Y, imageSize.width, nv12UV,
-        (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
+    converter.ARGBToNV12(srcBuffer, rgbInfo.width * NUM_4, nv12Y, rgbInfo.width, nv12UV,
+        (rgbInfo.width + NUM_1) / NUM_2 * NUM_2, rgbInfo.width, rgbInfo.height);
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < 0 || rgbInfo.height < 0) {
         IMAGE_LOGE("Input parameters not compliant!");
         return false;
     }
-    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
+    destBufferSize = static_cast<size_t>(rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -392,8 +392,8 @@ bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Si
         IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
-    uint32_t yu12BufferSize = imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2;
+    uint32_t yu12BufferSize = rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2;
     if (yu12BufferSize <= 0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -404,32 +404,32 @@ bool ImageFormatConvertExtUtils::RGB565ToNV12(const uint8_t *srcBuffer, const Si
         return false;
     }
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.RGB565ToI420(srcBuffer, imageSize.width * NUM_2, yu12Buffer, imageSize.width,
-        yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + NUM_1) / NUM_2,
-        yu12Buffer + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
-        (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
+    converter.RGB565ToI420(srcBuffer, rgbInfo.width * NUM_2, yu12Buffer, rgbInfo.width,
+        yu12Buffer + rgbInfo.width * rgbInfo.height, (rgbInfo.width + NUM_1) / NUM_2,
+        yu12Buffer + rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2),
+        (rgbInfo.width + NUM_1) / NUM_2, rgbInfo.width, rgbInfo.height);
 
-    converter.I420ToNV12(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
-        (imageSize.width + NUM_1) / NUM_2,
-        yu12Buffer + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
-        (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width,
-        *destBuffer + imageSize.width * imageSize.height, ((imageSize.width + NUM_1) / NUM_2) * NUM_2, imageSize.width,
-        imageSize.height);
+    converter.I420ToNV12(yu12Buffer, rgbInfo.width, yu12Buffer + rgbInfo.width * rgbInfo.height,
+        (rgbInfo.width + NUM_1) / NUM_2,
+        yu12Buffer + rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2),
+        (rgbInfo.width + NUM_1) / NUM_2, *destBuffer, rgbInfo.width,
+        *destBuffer + rgbInfo.width * rgbInfo.height, ((rgbInfo.width + NUM_1) / NUM_2) * NUM_2, rgbInfo.width,
+        rgbInfo.height);
     delete[] yu12Buffer;
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < 0 || imageSize.height < 0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < 0 || rgbInfo.height < 0) {
         IMAGE_LOGE("Input parameters not compliant!");
         return false;
     }
-    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
+    destBufferSize = static_cast<size_t>(rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -439,34 +439,34 @@ bool ImageFormatConvertExtUtils::RGB565ToNV21(const uint8_t *srcBuffer, const Si
         IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
-    uint32_t yu12BufferSize = imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2;
+    uint32_t yu12BufferSize = rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2;
     std::vector<uint8_t> yu12Buffer(yu12BufferSize, 0);
 
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.RGB565ToI420(srcBuffer, imageSize.width * NUM_2, yu12Buffer.data(), imageSize.width,
-        yu12Buffer.data() + imageSize.width * imageSize.height, (imageSize.width + NUM_1) / NUM_2,
-        yu12Buffer.data() + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
-        (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
-    converter.I420ToNV21(yu12Buffer.data(), imageSize.width, yu12Buffer.data() + imageSize.width * imageSize.height,
-        (imageSize.width + NUM_1) / NUM_2,
-        yu12Buffer.data() + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2),
-        (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width,
-        *destBuffer + imageSize.width * imageSize.height, ((imageSize.width + NUM_1) / NUM_2) * NUM_2, imageSize.width,
-        imageSize.height);
+    converter.RGB565ToI420(srcBuffer, rgbInfo.width * NUM_2, yu12Buffer.data(), rgbInfo.width,
+        yu12Buffer.data() + rgbInfo.width * rgbInfo.height, (rgbInfo.width + NUM_1) / NUM_2,
+        yu12Buffer.data() + rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2),
+        (rgbInfo.width + NUM_1) / NUM_2, rgbInfo.width, rgbInfo.height);
+    converter.I420ToNV21(yu12Buffer.data(), rgbInfo.width, yu12Buffer.data() + rgbInfo.width * rgbInfo.height,
+        (rgbInfo.width + NUM_1) / NUM_2,
+        yu12Buffer.data() + rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2),
+        (rgbInfo.width + NUM_1) / NUM_2, *destBuffer, rgbInfo.width,
+        *destBuffer + rgbInfo.width * rgbInfo.height, ((rgbInfo.width + NUM_1) / NUM_2) * NUM_2, rgbInfo.width,
+        rgbInfo.height);
     return true;
 }
 
-bool ImageFormatConvertExtUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::BGRAToNV21(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < NUM_0 || rgbInfo.height < NUM_0) {
         return false;
     }
-    const int32_t destPlaneSizeY = imageSize.width * imageSize.height;
-    const int32_t destPlaneSizeVU = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
+    const int32_t destPlaneSizeY = rgbInfo.width * rgbInfo.height;
+    const int32_t destPlaneSizeVU = ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * NUM_2);
     if (destBufferSize == 0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
@@ -480,8 +480,8 @@ bool ImageFormatConvertExtUtils::BGRAToNV21(const uint8_t *srcBuffer, const Size
     uint8_t *nv21Y = *destBuffer;
     uint8_t *nv21VU = *destBuffer + destPlaneSizeY;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ARGBToNV21(srcBuffer, imageSize.width * NUM_4, nv21Y, imageSize.width, nv21VU,
-        (imageSize.width + NUM_1) / NUM_2 * NUM_2, imageSize.width, imageSize.height);
+    converter.ARGBToNV21(srcBuffer, rgbInfo.width * NUM_4, nv21Y, rgbInfo.width, nv21VU,
+        (rgbInfo.width + NUM_1) / NUM_2 * NUM_2, rgbInfo.width, rgbInfo.height);
     return true;
 }
 
@@ -542,14 +542,14 @@ bool ImageFormatConvertExtUtils::NV12ToBGRA(const uint8_t *data, const YUVDataIn
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < NUM_0 || rgbInfo.height < NUM_0) {
         return false;
     }
-    size_t destPlaneSizeY = imageSize.width * imageSize.height;
-    size_t destPlaneSizeUV = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
+    size_t destPlaneSizeY = rgbInfo.width * rgbInfo.height;
+    size_t destPlaneSizeUV = ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2);
     destBufferSize = destPlaneSizeY + destPlaneSizeUV * NUM_2;
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
@@ -560,8 +560,8 @@ bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size
         IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
-    const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
+    const uint32_t i420BufferSize = static_cast<size_t>(rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2);
     if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -572,29 +572,29 @@ bool ImageFormatConvertExtUtils::RGBAToNV12(const uint8_t *srcBuffer, const Size
         return false;
     }
     uint8_t *i420Y = i420Buffer;
-    uint8_t *i420U = i420Buffer + imageSize.width * imageSize.height;
-    uint8_t *i420V = i420Buffer + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
+    uint8_t *i420U = i420Buffer + rgbInfo.width * rgbInfo.height;
+    uint8_t *i420V = i420Buffer + rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2);
     uint8_t *nv12Y = *destBuffer;
-    uint8_t *nv12UV = *destBuffer + imageSize.width * imageSize.height;
+    uint8_t *nv12UV = *destBuffer + rgbInfo.width * rgbInfo.height;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ABGRToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
-        (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
-    converter.I420ToNV12(i420Y, imageSize.width, i420U, (imageSize.width + NUM_1) / NUM_2, i420V,
-        (imageSize.width + NUM_1) / NUM_2, nv12Y, imageSize.width, nv12UV, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
-        imageSize.width, imageSize.height);
+    converter.ABGRToI420(srcBuffer, rgbInfo.stride, i420Y, rgbInfo.width, i420U,
+        (rgbInfo.width + NUM_1) / NUM_2, i420V, (rgbInfo.width + NUM_1) / NUM_2, rgbInfo.width, rgbInfo.height);
+    converter.I420ToNV12(i420Y, rgbInfo.width, i420U, (rgbInfo.width + NUM_1) / NUM_2, i420V,
+        (rgbInfo.width + NUM_1) / NUM_2, nv12Y, rgbInfo.width, nv12UV, (rgbInfo.width + NUM_1) / NUM_2 * NUM_2,
+        rgbInfo.width, rgbInfo.height);
     delete[] i420Buffer;
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < NUM_0 || rgbInfo.height < NUM_0) {
         return false;
     }
-    size_t destPlaneSizeY = imageSize.width * imageSize.height;
-    size_t destPlaneSizeVU = ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
+    size_t destPlaneSizeY = rgbInfo.width * rgbInfo.height;
+    size_t destPlaneSizeVU = ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2);
     destBufferSize = static_cast<size_t>(destPlaneSizeY + destPlaneSizeVU * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
@@ -606,8 +606,8 @@ bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size
         return false;
     }
 
-    const uint32_t i420BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
+    const uint32_t i420BufferSize = static_cast<size_t>(rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2);
     if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -618,29 +618,29 @@ bool ImageFormatConvertExtUtils::RGBAToNV21(const uint8_t *srcBuffer, const Size
         return false;
     }
     uint8_t *i420Y = i420Buffer;
-    uint8_t *i420U = i420Buffer + imageSize.width * imageSize.height;
-    uint8_t *i420V = i420Buffer + imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
+    uint8_t *i420U = i420Buffer + rgbInfo.width * rgbInfo.height;
+    uint8_t *i420V = i420Buffer + rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2);
     uint8_t *nv21Y = *destBuffer;
-    uint8_t *nv21VU = *destBuffer + imageSize.width * imageSize.height;
+    uint8_t *nv21VU = *destBuffer + rgbInfo.width * rgbInfo.height;
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.ABGRToI420(srcBuffer, NUM_4 * imageSize.width, i420Y, imageSize.width, i420U,
-        (imageSize.width + NUM_1) / NUM_2, i420V, (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
-    converter.I420ToNV21(i420Y, imageSize.width, i420U, (imageSize.width + NUM_1) / NUM_2, i420V,
-        (imageSize.width + NUM_1) / NUM_2, nv21Y, imageSize.width, nv21VU, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
-        imageSize.width, imageSize.height);
+    converter.ABGRToI420(srcBuffer, rgbInfo.stride, i420Y, rgbInfo.width, i420U,
+        (rgbInfo.width + NUM_1) / NUM_2, i420V, (rgbInfo.width + NUM_1) / NUM_2, rgbInfo.width, rgbInfo.height);
+    converter.I420ToNV21(i420Y, rgbInfo.width, i420U, (rgbInfo.width + NUM_1) / NUM_2, i420V,
+        (rgbInfo.width + NUM_1) / NUM_2, nv21Y, rgbInfo.width, nv21VU, (rgbInfo.width + NUM_1) / NUM_2 * NUM_2,
+        rgbInfo.width, rgbInfo.height);
     delete[] i420Buffer;
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < NUM_0 || rgbInfo.height < NUM_0) {
         return false;
     }
-    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2 * ((imageSize.height + NUM_1) / NUM_2) * NUM_2));
+    destBufferSize = static_cast<size_t>(rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2 * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2));
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -650,8 +650,8 @@ bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const Size 
         IMAGE_LOGE("apply space for dest buffer failed!");
         return false;
     }
-    const uint32_t yu12BufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2) * NUM_2);
+    const uint32_t yu12BufferSize = static_cast<size_t>(rgbInfo.width * rgbInfo.height +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2) * NUM_2);
     if (yu12BufferSize <= NUM_0 || yu12BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -662,16 +662,16 @@ bool ImageFormatConvertExtUtils::RGBToNV21(const uint8_t *srcBuffer, const Size 
         return false;
     }
     uint8_t *I420Y = yu12Buffer;
-    uint8_t *I420U = yu12Buffer + imageSize.height * imageSize.width;
-    uint8_t *I420V = yu12Buffer + imageSize.height * imageSize.width +
-        ((imageSize.width + NUM_1) / NUM_2) * ((imageSize.height + NUM_1) / NUM_2);
+    uint8_t *I420U = yu12Buffer + rgbInfo.height * rgbInfo.width;
+    uint8_t *I420V = yu12Buffer + rgbInfo.height * rgbInfo.width +
+        ((rgbInfo.width + NUM_1) / NUM_2) * ((rgbInfo.height + NUM_1) / NUM_2);
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.RGB24ToI420(srcBuffer, imageSize.width * NUM_3, I420Y, imageSize.width, I420U,
-        (imageSize.width + NUM_1) / NUM_2, I420V, (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
-    converter.I420ToNV21(I420Y, imageSize.width, I420U, (imageSize.width + NUM_1) / NUM_2, I420V,
-        (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width,
-        *destBuffer + imageSize.width * imageSize.height + NUM_1, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
-        imageSize.width, imageSize.height);
+    converter.RGB24ToI420(srcBuffer, rgbInfo.width * NUM_3, I420Y, rgbInfo.width, I420U,
+        (rgbInfo.width + NUM_1) / NUM_2, I420V, (rgbInfo.width + NUM_1) / NUM_2, rgbInfo.width, rgbInfo.height);
+    converter.I420ToNV21(I420Y, rgbInfo.width, I420U, (rgbInfo.width + NUM_1) / NUM_2, I420V,
+        (rgbInfo.width + NUM_1) / NUM_2, *destBuffer, rgbInfo.width,
+        *destBuffer + rgbInfo.width * rgbInfo.height + NUM_1, (rgbInfo.width + NUM_1) / NUM_2 * NUM_2,
+        rgbInfo.width, rgbInfo.height);
     delete[] yu12Buffer;
     return true;
 }
@@ -829,14 +829,14 @@ bool ImageFormatConvertExtUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YU
     return true;
 }
 
-bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const Size &imageSize, uint8_t **destBuffer,
-    size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
+bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+    uint8_t **destBuffer, size_t &destBufferSize, [[maybe_unused]] ColorSpace colorSpace)
 {
-    if (srcBuffer == nullptr || destBuffer == nullptr || imageSize.width < NUM_0 || imageSize.height < NUM_0) {
+    if (srcBuffer == nullptr || destBuffer == nullptr || rgbInfo.width < NUM_0 || rgbInfo.height < NUM_0) {
         return false;
     }
-    destBufferSize = static_cast<size_t>(imageSize.width * imageSize.height +
-        (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2);
+    destBufferSize = static_cast<size_t>(rgbInfo.width * rgbInfo.height +
+        (rgbInfo.width + NUM_1) / NUM_2 * (rgbInfo.height + NUM_1) / NUM_2 * NUM_2);
     if (destBufferSize <= NUM_0 || destBufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
         IMAGE_LOGE("Invalid destination buffer size calculation!");
         return false;
@@ -847,25 +847,25 @@ bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const Size 
         return false;
     }
 
-    uint8_t *yu12Buffer(new (std::nothrow) uint8_t[imageSize.width * imageSize.height +
-        (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2 * NUM_2]());
+    uint8_t *yu12Buffer(new (std::nothrow) uint8_t[rgbInfo.width * rgbInfo.height +
+        (rgbInfo.width + NUM_1) / NUM_2 * (rgbInfo.height + NUM_1) / NUM_2 * NUM_2]());
     if (yu12Buffer == nullptr) {
         IMAGE_LOGE("apply space for I420 buffer failed!");
         return false;
     }
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.RGB24ToI420(srcBuffer, imageSize.width * NUM_3, yu12Buffer, imageSize.width,
-        yu12Buffer + imageSize.width * imageSize.height, (imageSize.width + NUM_1) / NUM_2,
-        yu12Buffer + imageSize.width * imageSize.height +
-        (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2,
-        (imageSize.width + NUM_1) / NUM_2, imageSize.width, imageSize.height);
-    converter.I420ToNV12(yu12Buffer, imageSize.width, yu12Buffer + imageSize.width * imageSize.height,
-        (imageSize.width + NUM_1) / NUM_2,
-        yu12Buffer + imageSize.width * imageSize.height +
-        (imageSize.width + NUM_1) / NUM_2 * (imageSize.height + NUM_1) / NUM_2,
-        (imageSize.width + NUM_1) / NUM_2, *destBuffer, imageSize.width,
-        *destBuffer + imageSize.width * imageSize.height + NUM_1, (imageSize.width + NUM_1) / NUM_2 * NUM_2,
-        imageSize.width, imageSize.height);
+    converter.RGB24ToI420(srcBuffer, rgbInfo.width * NUM_3, yu12Buffer, rgbInfo.width,
+        yu12Buffer + rgbInfo.width * rgbInfo.height, (rgbInfo.width + NUM_1) / NUM_2,
+        yu12Buffer + rgbInfo.width * rgbInfo.height +
+        (rgbInfo.width + NUM_1) / NUM_2 * (rgbInfo.height + NUM_1) / NUM_2,
+        (rgbInfo.width + NUM_1) / NUM_2, rgbInfo.width, rgbInfo.height);
+    converter.I420ToNV12(yu12Buffer, rgbInfo.width, yu12Buffer + rgbInfo.width * rgbInfo.height,
+        (rgbInfo.width + NUM_1) / NUM_2,
+        yu12Buffer + rgbInfo.width * rgbInfo.height +
+        (rgbInfo.width + NUM_1) / NUM_2 * (rgbInfo.height + NUM_1) / NUM_2,
+        (rgbInfo.width + NUM_1) / NUM_2, *destBuffer, rgbInfo.width,
+        *destBuffer + rgbInfo.width * rgbInfo.height + NUM_1, (rgbInfo.width + NUM_1) / NUM_2 * NUM_2,
+        rgbInfo.width, rgbInfo.height);
     return true;
 }
 } // namespace Media
