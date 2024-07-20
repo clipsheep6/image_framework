@@ -288,7 +288,7 @@ napi_value PictureNapi::CreatePicture(napi_env env, std::shared_ptr<Picture> pic
 static AuxiliaryPictureType ParseAuxiliaryPictureType(int32_t val)
 {
     if (val >= static_cast<int32_t>(AuxiliaryPictureType::GAINMAP)
-        && val<= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+        && val<= static_cast<int32_t>(AuxiliaryPictureType::FRAGMENT_MAP)) {
         return AuxiliaryPictureType(val);
     }
 
