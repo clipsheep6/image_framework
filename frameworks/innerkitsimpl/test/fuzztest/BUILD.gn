@@ -14,6 +14,7 @@
 group("fuzztest") {
   testonly = true
   deps = [
+    "heifimpl_fuzzer:HeifImplFuzzTest",
     "imagecreateimagesourcebydata_fuzzer:ImageCreateImageSourceByDataFuzzTest",
     "imagecreateimagesourcebyfd_fuzzer:ImageCreateImageSourceByFdFuzzTest",
     "imagecreateimagesourcebyfdex_fuzzer:ImageCreateImageSourceByFdExFuzzTest",
