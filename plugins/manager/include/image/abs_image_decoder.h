@@ -84,6 +84,8 @@ struct DecodeContext {
     bool isAisr = false;
     // Out: colorSpace
     ColorManager::ColorSpaceName grColorSpaceName = ColorManager::NONE;
+    void* dngExternalData = nullptr;
+    Media::FreeExtData releaseExtDataFunc = nullptr;
 };
 
 struct ProgDecodeContext {

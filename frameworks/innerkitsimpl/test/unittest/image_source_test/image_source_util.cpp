@@ -39,11 +39,12 @@ constexpr uint32_t NUM_1 = 1;
 constexpr uint32_t NUM_100 = 100;
 constexpr int64_t BUFFER_SIZE = 2 * 1024 * 1024;
 
-int64_t PackImage(const std::string &filePath, std::unique_ptr<PixelMap> pixelMap)
+int64_t PackImageByFormat(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap,
+    std::string format)
 {
     ImagePacker imagePacker;
     PackOption option;
-    option.format = "image/jpeg";
+    option.format = format;
     option.quality = NUM_100;
     option.numberHint = NUM_1;
     std::set<std::string> formats;
@@ -61,6 +62,11 @@ int64_t PackImage(const std::string &filePath, std::unique_ptr<PixelMap> pixelMa
     int64_t packedSize = 0;
     imagePacker.FinalizePacking(packedSize);
     return static_cast<int64_t>(packedSize);
+}
+
+int64_t PackImage(const std::string &filePath, std::unique_ptr<PixelMap> pixelMap)
+{
+    return  PackImageByFormat(filePath, pixelMap, "image/jpeg");
 }
 
 int64_t PackImage(std::unique_ptr<ImageSource> imageSource)
@@ -157,6 +163,23 @@ bool ReadFileToBuffer(const std::string &filePath, uint8_t *buffer, size_t buffe
         return true;
     }
     return true;
+}
+
+int64_t PackDNGImage(const std::string &filePath, std::unique_ptr<PixelMap>& pixelMap)
+{
+    return PackImageByFormat(filePath, pixelMap, "image/dng");
+}
+int64_t PackJPEGImage(const std::string &filePath, std::unique_ptr<PixelMap>& pixelMap)
+{
+    return PackImageByFormat(filePath, pixelMap, "image/jpeg");
+}
+int64_t PackWEBPImage(const std::string &filePath, std::unique_ptr<PixelMap>& pixelMap)
+{
+    return PackImageByFormat(filePath, pixelMap, "image/webp");
+}
+int64_t PackPNGImage(const std::string &filePath, std::unique_ptr<PixelMap>& pixelMap)
+{
+    return PackImageByFormat(filePath, pixelMap, "image/png");
 }
 } // namespace ImageSourceUtil
 } // namespace OHOS

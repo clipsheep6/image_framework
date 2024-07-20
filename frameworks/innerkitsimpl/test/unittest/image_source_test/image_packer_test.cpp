@@ -48,6 +48,8 @@ static const std::string IMAGE_JPG_SRC = "/data/local/tmp/image/test_packing_exi
 static const std::string IMAGE_JPG_DEST = "/data/local/tmp/image/test_jpg2jpg_out.jpg";
 static const std::string IMAGE_PNG_SRC = "/data/local/tmp/image/test.png";
 static const std::string IMAGE_PNG2JPG_DEST = "/data/local/tmp/image/test_png2jepg_out.jpg";
+static const std::string IMAGE_DNG_SRC = "/data/local/tmp/image/test_dng_hw.dng";
+static const std::string IMAGE_DNG_DEST = "/data/local/tmp/image/test_dng_out.dng";
 
 class ImagePackerTest : public testing::Test {
 public:
@@ -802,5 +804,84 @@ HWTEST_F(ImagePackerTest, PackYuv2Jpeg004, TestSize.Level3)
     close(fd);
     GTEST_LOG_(INFO) << "ImagePackerTest: PackYuv2Jpeg004 end";
 }
+
+static void TestHuaweiMakernote(std::unique_ptr<ImageSource> &imagesource)
+{
+    std::string value;
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteBurstNumber", value), OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "2");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteCaptureMode", value), OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "1");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceConf", value), OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "3");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceCount", value), OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "2");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceLeyeCenter", value), OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "1 2 3 4");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceMouthCenter", value), OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "1 2 3 4 5 6 7 8");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFacePointer", value), OHOS::Media::SUCCESS);
+    ASSERT_EQ(value, "166");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceRect", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceReyeCenter", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "5 6 7 8");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceSmileScore", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "1 2 3 4 5 6 7 8");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFaceVersion", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "1");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFocusMode", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "7");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteFrontCamera", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "3");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnotePhysicalAperture", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "6");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnotePitchAngle", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "5");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteRollAngle", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "4");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteSceneBeachConf", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "6");
+    ASSERT_EQ(imagesource->GetImagePropertyString(0, "HwMnoteSceneBlueSkyConf", value), OHOS::Media::SUCCESS);
+    EXPECT_EQ(value, "4");
+}
+
+/**
+ * @tc.name: StartPackingDNG
+ * @tc.desc: test StartPacking018 with const std::string &filePath png => jpeg
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPackingDNG, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPackingDNG start";
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/dng";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_DNG_SRC, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    TestHuaweiMakernote(imageSource);
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/dng";
+    uint32_t startpc = pack.StartPacking(IMAGE_DNG_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+
+    uint32_t retAddimgae = pack.AddImage(*imageSource);
+    ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_DNG_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    TestHuaweiMakernote(imageSourceDest);
+
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPackingDNG end";
+}
+
 } // namespace Multimedia
 } // namespace OHOS

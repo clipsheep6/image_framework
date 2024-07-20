@@ -79,7 +79,7 @@ static const std::map<SkEncodedImageFormat, std::string> FORMAT_NAME = {
     {SkEncodedImageFormat::kPKM, ""},
     {SkEncodedImageFormat::kKTX, ""},
     {SkEncodedImageFormat::kASTC, ""},
-    {SkEncodedImageFormat::kDNG, ""},
+    {SkEncodedImageFormat::kDNG, IMAGE_DNG_FORMAT},
     {SkEncodedImageFormat::kHEIF, IMAGE_HEIF_FORMAT},
 };
 
@@ -325,7 +325,9 @@ uint32_t ExtEncoder::DoEncode(SkWStream* skStream, const SkBitmap& src, const Sk
     if (IsHardwareEncodeSupported(opts_, pixelmap_)) {
         return DoHardWareEncode(skStream);
     }
-    if (!SkEncodeImage(skStream, src, skFormat, opts_.quality)) {
+
+    if (!SkEncodeImage(skStream, src, skFormat, opts_.quality,
+        reinterpret_cast<SkCodec::ExternalData*>(pixelmap_->GetDngExternalData()))) {
         IMAGE_LOGE("Failed to encode image without exif data");
         ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Failed to encode image");
         return ERR_IMAGE_ENCODE_FAILED;
@@ -337,7 +339,7 @@ uint32_t ExtEncoder::EncodeImageByBitmap(SkBitmap& bitmap, bool needExif, SkWStr
 {
     ImageInfo imageInfo;
     pixelmap_->GetImageInfo(imageInfo);
-    if (!needExif || pixelmap_->GetExifMetadata() == nullptr ||
+    if (encodeFormat_ == SkEncodedImageFormat::kDNG || !needExif || pixelmap_->GetExifMetadata() == nullptr ||
         pixelmap_->GetExifMetadata()->GetExifData() == nullptr) {
             return DoEncode(&outStream, bitmap, encodeFormat_);
     }

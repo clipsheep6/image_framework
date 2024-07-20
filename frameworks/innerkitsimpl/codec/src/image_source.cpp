@@ -812,6 +812,9 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMapExtended(uint32_t index, const D
     if (pixelMap == nullptr) {
         return nullptr;
     }
+    if (context.dngExternalData != nullptr && context.releaseExtDataFunc != nullptr) {
+        pixelMap->SetDngExternalData(context.dngExternalData, context.releaseExtDataFunc);
+    }
     if (!context.ifPartialOutput) {
         NotifyDecodeEvent(decodeListeners_, DecodeEvent::EVENT_COMPLETE_DECODE, nullptr);
     }
@@ -1172,9 +1175,12 @@ unique_ptr<PixelMap> ImageSource::CreatePixelMap(uint32_t index, const DecodeOpt
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 #endif
-
     pixelMap->SetPixelsAddr(context.pixelsBuffer.buffer, context.pixelsBuffer.context, context.pixelsBuffer.bufferSize,
         context.allocatorType, context.freeFunc);
+        
+    if (context.dngExternalData != nullptr && context.releaseExtDataFunc != nullptr) {
+        pixelMap->SetDngExternalData(context.dngExternalData, context.releaseExtDataFunc);
+    }
     DecodeOptions procOpts;
     CopyOptionsToProcOpts(opts_, procOpts, *(pixelMap.get()));
     PostProc postProc;

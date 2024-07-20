@@ -23,10 +23,18 @@
 namespace OHOS {
 namespace ImageSourceUtil {
 int64_t PackImage(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap> pixelMap);
+int64_t PackImageByFormat(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap,
+    std::string format);
 int64_t PackImage(std::unique_ptr<OHOS::Media::ImageSource> imageSource);
 int64_t PackImage(const std::string &filePath,
                   std::unique_ptr<std::vector<std::unique_ptr<OHOS::Media::PixelMap>>> pixelMaps);
 bool ReadFileToBuffer(const std::string &filePath, uint8_t *buffer, size_t bufferSize);
+
+int64_t PackDNGImage(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap);
+int64_t PackJPEGImage(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap);
+int64_t PackWEBPImage(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap);
+int64_t PackPNGImage(const std::string &filePath, std::unique_ptr<OHOS::Media::PixelMap>& pixelMap);
+
 }
 }
 #endif // FRAMEWORKS_INNERKITSIMPL_TEST_UNITTEST_IMAGE_SOURCE_UTIL_H
