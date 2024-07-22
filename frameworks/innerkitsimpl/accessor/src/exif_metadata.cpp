@@ -136,7 +136,7 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
 
 const ImageMetadata::PropertyMapPtr ExifMetadata::GetAllProperties()
 {
-    ImageMetadata::PropertyMapPtr result;
+    ImageMetadata::PropertyMapPtr result = std::make_shared<ImageMetadata::PropertyMap>();
     std::string value;
     for (const auto key : ExifMetadatFormatter::GetRWKeys()) {
         if (GetValue(key, value) == SUCCESS) {
