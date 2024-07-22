@@ -243,9 +243,9 @@ std::shared_ptr<AuxiliaryPicture> Picture::GetAuxiliaryPicture(AuxiliaryPictureT
     return iter->second;
 }
 
-void Picture::SetAuxiliaryPicture(AuxiliaryPictureType type, std::shared_ptr<AuxiliaryPicture> &picture)
+void Picture::SetAuxiliaryPicture(std::shared_ptr<AuxiliaryPicture> &picture)
 {
-    auxiliaryPictures_[type] = picture;
+    auxiliaryPictures_[picture->GetType()] = picture;
 }
 
 bool Picture::HasAuxiliaryPicture(AuxiliaryPictureType type)
@@ -317,7 +317,7 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
             IMAGE_LOGE("Failed to unmarshal auxiliary picture of type %d.", type);
             return nullptr;
         }
-        picture->SetAuxiliaryPicture(static_cast<AuxiliaryPictureType>(type), auxPtr);
+        picture->SetAuxiliaryPicture(auxPtr);
     }
     
     return picture.release();

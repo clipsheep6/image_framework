@@ -634,7 +634,9 @@ napi_value MetadataNapi::GetAllProperties(napi_env env, napi_callback_info info)
                 IMAGE_LOGE("Empty context");
                 return;
             }
-            context->KVSArray = context->rMetadata->GetAllProperties();
+            for (const auto &entry : *context->rMetadata->GetAllProperties()) {
+                context->KVSArray.emplace_back(std::make_pair(entry.first, entry.second));
+            }
             context->status = SUCCESS;
         }, reinterpret_cast<napi_async_complete_callback>(GetPropertiesComplete),
         asyncContext,

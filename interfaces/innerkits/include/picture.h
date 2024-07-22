@@ -40,7 +40,7 @@ public:
     NATIVEEXPORT std::unique_ptr<PixelMap> GetHdrComposedPixelMap();
     NATIVEEXPORT std::shared_ptr<PixelMap> GetGainmapPixelMap();
     NATIVEEXPORT std::shared_ptr<AuxiliaryPicture> GetAuxiliaryPicture(AuxiliaryPictureType type);
-    NATIVEEXPORT void SetAuxiliaryPicture(AuxiliaryPictureType type, std::shared_ptr<AuxiliaryPicture> &picture);
+    NATIVEEXPORT void SetAuxiliaryPicture(std::shared_ptr<AuxiliaryPicture> &picture);
     NATIVEEXPORT bool HasAuxiliaryPicture(AuxiliaryPictureType type);
     NATIVEEXPORT virtual bool Marshalling(Parcel &data) const override;
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data);

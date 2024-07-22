@@ -16,9 +16,9 @@
 #include "picture.h"
 #include "auxiliary_picture.h"
 #include "media_errors.h"
-#include "surface_buffer.h"
 #include "image_log.h"
 #include "exif_metadata.h"
+#include "fragment_metadata.h"
 
 namespace OHOS {
 namespace Media {
@@ -64,11 +64,7 @@ void AuxiliaryPicture::SetSize(Size size)
 
 std::shared_ptr<PixelMap> AuxiliaryPicture::GetContentPixel()
 {
-    if (auxiliaryPictureInfo_.auxiliaryPictureType == AuxiliaryPictureType::GAINMAP) {
-        return content_;
-    } else {
-        return nullptr;
-    }
+    return content_;
 }
 
 void AuxiliaryPicture::SetContentPixel(std::shared_ptr<PixelMap> content)
@@ -134,7 +130,7 @@ bool AuxiliaryPicture::Marshalling(Parcel &data) const
     }
 
     if (!data.WriteInt32(static_cast<int32_t>(auxiliaryPictureInfo_.pixelFormat))) {
-        IMAGE_LOGE("Failed to write format of auxiliary pictures.");
+        IMAGE_LOGE("Failed to write pixel format of auxiliary pictures.");
         return false;
     }
 
@@ -204,11 +200,15 @@ AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &parcel, PICTURE_ERR &e
             if (!imagedataPtr) {
                 return nullptr;
             }
+        } else if (type == MetadataType::MARK_CUT) {
+            imagedataPtr.reset(FragmentMetadata::Unmarshalling(parcel));
+            if (!imagedataPtr) {
+                return nullptr;
+            }
         } else {
             IMAGE_LOGE("Unsupported metadata type.");
             return nullptr;
         }
-
         auxPtr->SetMetadata(type, imagedataPtr);
     }
 

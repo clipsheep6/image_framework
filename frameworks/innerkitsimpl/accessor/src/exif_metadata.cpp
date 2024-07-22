@@ -134,9 +134,21 @@ int ExifMetadata::GetValue(const std::string &key, std::string &value) const
     return SUCCESS;
 }
 
-std::vector<std::pair<std::string, std::string>> ExifMetadata::GetAllProperties()
+const ImageMetadata::PropertyMapPtr ExifMetadata::GetAllProperties()
 {
-    std::vector<std::pair<std::string, std::string>> result;
+    ImageMetadata::PropertyMapPtr result;
+    std::string value;
+    for (const auto key : ExifMetadatFormatter::GetRWKeys()) {
+        if (GetValue(key, value) == SUCCESS) {
+            result->insert(std::make_pair(key, value));
+        }
+    }
+    for (const auto key : ExifMetadatFormatter::GetROKeys()) {
+        if (GetValue(key, value) == SUCCESS) {
+            result->insert(std::make_pair(key, value));
+        }
+    }
+    IMAGE_LOGD("Get record arguments success.");
     return result;
 }
 
