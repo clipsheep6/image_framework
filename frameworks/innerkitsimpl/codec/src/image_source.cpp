@@ -3851,6 +3851,8 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
         auto auxiliaryPicture = AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(mainDecoder_.get(), auxType, errorCode);
         if (auxiliaryPicture != nullptr) {
             picture->SetAuxiliaryPicture(auxType, auxiliaryPicture);
+        } else {
+            IMAGE_LOGE("Generate heif auxiliary picture failed! auxType: %{public}d, errorCode: %{public}d", auxType, errorCode);
         }
     }
 }

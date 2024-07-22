@@ -40,15 +40,18 @@ private:
     static ImageInfo MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs);
     static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(
         AuxiliaryPictureType type, Size size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
-    static bool DecodeHeifMetaData(AbsImageDecoder* extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture,
-                                   AuxiliaryPictureType type, uint32_t &errorCode);
-    static bool DecodeJpegMetaData(unique_ptr<InputDataStream> &auxStream, shared_ptr<AuxiliaryPicture> &auxPicture,
-                                   uint32_t &errorCode);
     static shared_ptr<ImageMetadata> CreateExifMetadata(uint8_t *buffer, const uint32_t size, uint32_t &errorCode);
     static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer);
     static AbsImageDecoder* DoCreateDecoder(string codecFormat, PluginServer &pluginServer, InputDataStream &sourceData,
                                             uint32_t &errorCode) __attribute__((no_sanitize("cfi")));
-    static bool SetHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
+    static bool DecodeJpegMetaData(unique_ptr<InputDataStream> &auxStream, shared_ptr<AuxiliaryPicture> &auxPicture,
+                                   uint32_t &errorCode);
+    static uint32_t DecodeHeifMetaData(AbsImageDecoder* extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture,
+                                       AuxiliaryPictureType type);
+    static uint32_t DecodeExifMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture,
+                                       AuxiliaryPictureType type);
+    static uint32_t DecodeHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
+    static uint32_t DecodeFragmentMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
 };
 } // namespace Media
 } // namespace OHOS
