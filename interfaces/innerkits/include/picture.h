@@ -45,10 +45,14 @@ public:
     NATIVEEXPORT virtual bool Marshalling(Parcel &data) const override;
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data);
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data, PICTURE_ERR &error);
+    NATIVEEXPORT int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer);
+    NATIVEEXPORT bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer);
+    NATIVEEXPORT std::shared_ptr<uint8_t[]> GetMaintenanceData() const;
 
 private:
     std::shared_ptr<PixelMap> mainPixelMap_;
     std::map<AuxiliaryPictureType, std::shared_ptr<AuxiliaryPicture>> auxiliaryPictures_;
+    std::shared_ptr<uint8_t[]> maintenanceData_;
 };
 }
 }

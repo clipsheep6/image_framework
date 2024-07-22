@@ -34,6 +34,7 @@ ImageFwkExtManager::ImageFwkExtManager()
 {
 #if !defined(_WIN32) && !defined(_APPLE)
     doHardWareEncodeFunc_ = nullptr;
+    doHardwareEncodePictureFunc_ = nullptr;
     isImageFwkExtNativeSoOpened_ = false;
     extNativeSoHandle_ = nullptr;
 #endif
@@ -67,6 +68,14 @@ bool ImageFwkExtManager::LoadImageFwkExtNativeSo()
         doHardWareEncodeFunc_ = reinterpret_cast<DoHardWareEncodeFunc>(dlsym(extNativeSoHandle_, "DoHardwareEncode"));
         if (doHardWareEncodeFunc_ == nullptr) {
             IMAGE_LOGE("DoHardwareEncode dlsym falied");
+            dlclose(extNativeSoHandle_);
+            extNativeSoHandle_ = nullptr;
+            return false;
+        }
+        doHardwareEncodePictureFunc_ = reinterpret_cast<DoHardwareEncodePictureFunc>(dlsym(extNativeSoHandle_,
+            "DoHardwareEncodePicture"));
+        if (doHardwareEncodePictureFunc_ == nullptr) {
+            IMAGE_LOGE("DoHardwareEncodePicture dlsym falied");
             dlclose(extNativeSoHandle_);
             extNativeSoHandle_ = nullptr;
             return false;

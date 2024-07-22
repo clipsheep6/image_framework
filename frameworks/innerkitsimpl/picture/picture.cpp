@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+#include "exif_metadata.h"
 #include "picture.h"
 #include "pixel_yuv.h"
 #include "pixel_yuv_ext.h"
@@ -23,6 +25,8 @@
 #include "color_space.h"
 #endif
 #include "surface_buffer.h"
+#include "securec.h"
+#include "tiff_parser.h"
 #include "image_source.h"
 #include "v1_0/cm_color_space.h"
 #include "vpe_utils.h"
@@ -357,7 +361,7 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
         return nullptr;
     }
     picture->SetMainPixel(pixelmapPtr);
-    int64_t numAuxiliaryPictures = parcel.ReadUint64();
+    uint64_t numAuxiliaryPictures = parcel.ReadUint64();
     
     for (size_t i = NUM_0; i < numAuxiliaryPictures; ++i) {
         int32_t type = parcel.ReadInt32();
@@ -370,6 +374,62 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
     }
     
     return picture.release();
+}
+
+int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
+{
+    if (surfaceBuffer == nullptr) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    auto size = surfaceBuffer->GetSize();
+    if (size <= 0) {
+        IMAGE_LOGE("Invalid buffer size: %d.", size);
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    ExifData *exifData;
+    TiffParser::Decode(static_cast<const unsigned char *>(surfaceBuffer->GetVirAddr()), size, &exifData);
+    if (exifData == nullptr) {
+        IMAGE_LOGE("Failed to decode EXIF data from image stream.");
+        return ERR_EXIF_DECODE_FAILED;
+    }
+
+    auto exifMetadata = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
+
+    mainPixelMap_->SetExifMetadata(exifMetadata);
+    return SUCCESS;
+}
+
+bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
+{
+    if (surfaceBuffer == nullptr) {
+        return false;
+    }
+
+    auto size = surfaceBuffer->GetSize();
+    if (size <= 0) {
+        IMAGE_LOGE("Invalid buffer size: %d.", size);
+        return false;
+    }
+
+    maintenanceData_ = std::shared_ptr<uint8_t[]>(new uint8_t(size));
+    if (!maintenanceData_) {
+        return false;
+    }
+
+    auto ret = memcpy_s(maintenanceData_.get(), size, surfaceBuffer->GetVirAddr(), size);
+    if (ret != EOK) {
+        IMAGE_LOGE("Memmoy copy failed, errono: %d.", ret);
+        return false;
+    }
+
+    return true;
+}
+
+std::shared_ptr<uint8_t[]> Picture::GetMaintenanceData() const
+{
+    return maintenanceData_;
 }
 
 } // namespace Media

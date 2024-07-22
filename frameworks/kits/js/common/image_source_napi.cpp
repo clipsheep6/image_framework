@@ -2786,7 +2786,7 @@ static bool ParseDecodingOptionsForPicture(napi_env env, napi_value root, Decodi
             IMAGE_LOGE("get type from element failed");
             return false;
         }
-        if (type <= static_cast<uint32_t>(AuxiliaryPictureType::MARK_CUT_MAP)) {
+        if (type <= static_cast<uint32_t>(AuxiliaryPictureType::FRAGMENT_MAP)) {
             opts->desireAuxiliaryPictures.insert(AuxiliaryPictureType(type));
             IMAGE_LOGD("desireAuxiliaryPictures[%{public}d]: %{public}d", i, type);
         } else {
@@ -2823,7 +2823,7 @@ napi_value ImageSourceNapi::CreatePicture(napi_env env, napi_callback_info info)
 
     if (argCount == NUM_0) {
         for (int32_t type = static_cast<int32_t>(AuxiliaryPictureType::GAINMAP);
-            type <= static_cast<int32_t>(AuxiliaryPictureType::MARK_CUT_MAP); type++) {
+            type <= static_cast<int32_t>(AuxiliaryPictureType::FRAGMENT_MAP); type++) {
                 asyncContext->decodingOptsForPicture.desireAuxiliaryPictures.insert(AuxiliaryPictureType(type));
         }
     } else if (argCount == NUM_1) {

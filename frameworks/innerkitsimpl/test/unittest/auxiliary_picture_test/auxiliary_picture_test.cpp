@@ -100,18 +100,18 @@ HWTEST_F(AuxiliaryPictureTest, GetTypeTest002, TestSize.Level1)
 
 /**
  * @tc.name: GetTypeTest003
- * @tc.desc: When the auxiliaryPicture type is MARK_CUT_MAP, obtain the type.
+ * @tc.desc: When the auxiliaryPicture type is FRAGMENT_MAP, obtain the type.
  * @tc.type: FUNC
  */
 HWTEST_F(AuxiliaryPictureTest, GetTypeTest003, TestSize.Level1)
 {
     std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    AuxiliaryPictureType type = AuxiliaryPictureType::MARK_CUT_MAP;
+    AuxiliaryPictureType type = AuxiliaryPictureType::FRAGMENT_MAP;
     Size size = { sizeWidth, sizeHeight };
     std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
     ASSERT_NE(auxPicture, nullptr);
     AuxiliaryPictureType auxType = auxPicture->GetType();
-    EXPECT_EQ(auxType, AuxiliaryPictureType::MARK_CUT_MAP);
+    EXPECT_EQ(auxType, AuxiliaryPictureType::FRAGMENT_MAP);
 }
 
 /**
