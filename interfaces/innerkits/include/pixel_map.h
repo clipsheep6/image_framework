@@ -24,7 +24,6 @@
 #include "color_space.h"
 #endif
 #include "image_type.h"
-// #include "hdr_type.h"
 #include "parcel.h"
 #ifdef IMAGE_PURGEABLE_PIXELMAP
 #include "purgeable_mem_base.h"
@@ -33,6 +32,7 @@
 
 namespace OHOS {
 namespace Media {
+struct HdrMetadata;
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
 
@@ -293,10 +293,10 @@ public:
     NATIVEEXPORT bool IsHdr();
     NATIVEEXPORT uint32_t ToSdr();
 
-    // NATIVEEXPORT HdrMetadata SetHdrMetadata(HdrMetadata metadata)
-    // {
-    //     return hdrMetadata_ = metadata;
-    // }
+    NATIVEEXPORT void SetHdrMetadata(std::shared_ptr<HdrMetadata> &metadata)
+    {
+        hdrMetadata_ = metadata;
+    }
 
     static int32_t GetRGBxRowDataSize(const ImageInfo& info);
     static int32_t GetRGBxByteCount(const ImageInfo& info);
@@ -423,7 +423,7 @@ protected:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
-    // HdrMetadata hdrMetadata_;
+    std::shared_ptr<HdrMetadata> hdrMetadata_;
 
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;

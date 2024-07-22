@@ -115,7 +115,19 @@ std::shared_ptr<ImageMetadata> AuxiliaryGenerator::CreateExifMetadata(
     return exifMetadata;
 }
 
-bool AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder* extDecoder, AuxiliaryPicture* auxPicture,
+bool AuxiliaryGenerator::SetHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
+{
+    ImageHdrType hdrType = extDecoder->CheckHdrType();
+    if (hdrType == ImageHdrType::UNKNOWN) {
+        return false;
+    }
+    std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
+    std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
+    pixelMap->SetHdrMetadata(hdrMetadata);
+    return true;
+}
+
+bool AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture,
                                             AuxiliaryPictureType type, uint32_t &errorCode)
 {
     for (const auto& metadataType : AuxMetadataTypeMap) {
@@ -123,11 +135,12 @@ bool AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder* extDecoder, Auxilia
             case AuxMetadataType::EXIF: {
                 std::vector<uint8_t> buffer = extDecoder->GetHeifMetadata(metadataType.second);
                 if (buffer.size() == 0) {
-                    IMAGE_LOGE("Get Metadata failed,Auxiliary picture type: %{public}d", type);
+                    IMAGE_LOGE("Get Metadata failed, auxiliary picture type: %{public}d", type);
                     continue;
                 }
                 std::shared_ptr<ImageMetadata> exifMetadata = CreateExifMetadata(buffer.data(), buffer.size(), errorCode);
                 if (exifMetadata == nullptr) {
+                    errorCode = ERR_IMAGE_DECODE_METADATA_FAILED;
                     IMAGE_LOGE("HEIF decode EXIF meta data failed! Auxiliary picture type: %{public}d", type);
                     continue;
                 } else {
@@ -139,10 +152,10 @@ bool AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder* extDecoder, Auxilia
                 if (type != AuxiliaryPictureType::NONE && type != AuxiliaryPictureType::GAINMAP) {
                     continue;
                 }
-                ImageHdrType hdrType = extDecoder->CheckHdrType();
-                HdrMetadata hdrMetadata = extDecoder->GetHdrMetadata(hdrType);
-                std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
-                // pixelMap->SetHdrMetadata(hdrMetadata);
+                if (!SetHdrMetadata(extDecoder, auxPicture)) {
+                    errorCode = ERR_IMAGE_DECODE_METADATA_FAILED;
+                    IMAGE_LOGE("Set HDR Metadata failed");
+                }
                 break;
             }
             case AuxMetadataType::FRAGMENT: {
@@ -153,6 +166,7 @@ bool AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder* extDecoder, Auxilia
                 break;
             }
             default: {
+                errorCode = ERR_MEDIA_DATA_UNSUPPORT;
                 IMAGE_LOGE("Get Metadata failed, AuxMetadataType is %{public}s", metadataType.second.c_str());
                 break;
             }
@@ -312,12 +326,12 @@ void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func
 // }
 
 shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
-    AbsImageDecoder* extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
+    AbsImageDecoder *extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
 {
 #ifdef HEIF_HW_DECODE_ENABLE
     if (extDecoder == nullptr || type == AuxiliaryPictureType::NONE) {
         IMAGE_LOGE("Invalid parameter");
-        errorCode = 211;    // TODO
+        errorCode = ERR_IMAGE_INVALID_PARAMETER;    // TODO
         return nullptr;
     }
 
@@ -325,7 +339,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     DecodeContext context;
     if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
         IMAGE_LOGE("Decode heif auxiliary map failure");
-        errorCode = 211;    // TODO
+        errorCode = ERR_IMAGE_DECODE_FAILED;    // TODO
         return nullptr;
     }
 
@@ -357,11 +371,11 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
         context.outInfo.pixelFormat, context.outInfo.colorSpace);
     auxPicture->SetAuxiliaryPictureInfo(auxInfo);
 
-    if (!DecodeHeifMetaData(extDecoder, auxPicture.get(), type, errorCode)) {
+    if (!DecodeHeifMetaData(extDecoder, auxPicture, type, errorCode)) {
         IMAGE_LOGE("Decode heif metadata failure");
         return nullptr;
     }
-    return auxPicture;
+    return std::make_shared<AuxiliaryPicture>(*auxPicture.release());
 #endif
     errorCode = 211;    // TODO:
     return nullptr;
