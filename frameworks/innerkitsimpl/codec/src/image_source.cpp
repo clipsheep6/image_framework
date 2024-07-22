@@ -54,6 +54,9 @@
 #include "securec.h"
 #include "source_stream.h"
 #include "image_dfx.h"
+#include "auxiliary_generator.h"
+#include "auxiliary_picture.h"
+#include "jpeg_mpf_parser.h"
 #if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -637,7 +640,7 @@ static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorTy
 #endif
 }
 
-static void ContextToAddrInfos(DecodeContext &context, PixelMapAddrInfos &addrInfos)
+void ImageSource::ContextToAddrInfos(DecodeContext &context, PixelMapAddrInfos &addrInfos)
 {
     addrInfos.addr = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
     addrInfos.context = static_cast<uint8_t *>(context.pixelsBuffer.context);
@@ -859,7 +862,7 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
     }
 }
 
-static bool IsYuvFormat(PixelFormat format)
+bool ImageSource::IsYuvFormat(PixelFormat format)
 {
     return format == PixelFormat::NV21 || format == PixelFormat::NV12;
 }
@@ -1689,14 +1692,17 @@ bool ImageSource::IsHdrImage()
     return sourceHdrType_ > ImageHdrType::SDR;
 }
 
-bool ImageSource::IsSingleHdrImage(ImageHdrType type)
+bool ImageSource::IsSingalHdrImage()
 {
-    return type == ImageHdrType::HDR_VIVID_SINGLE || type == ImageHdrType::HDR_ISO_SINGLE;
-}
+    if (sourceHdrType_ != ImageHdrType::UNKNOWN) {
+        return sourceHdrType_ == ImageHdrType::HDR_VIVID_SINGLE;
+    }
 
-bool ImageSource::IsDualHdrImage(ImageHdrType type)
-{
-    return type == ImageHdrType::HDR_VIVID_DUAL || type == ImageHdrType::HDR_ISO_DUAL || type == ImageHdrType::HDR_CUVA;
+    if (InitMainDecoder() != SUCCESS) {
+        return false;
+    }
+    sourceHdrType_ = mainDecoder_->CheckHdrType();
+    return sourceHdrType_ == ImageHdrType::HDR_VIVID_SINGLE;
 }
 
 NATIVEEXPORT std::shared_ptr<ExifMetadata> ImageSource::GetExifMetadata()
@@ -3934,5 +3940,113 @@ DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, Imag
     guard.unlock();
     return context;
 }
+
+std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture& opts, uint32_t& errorCode)
+{
+    DecodeOptions dopts;
+    dopts.desiredPixelFormat = PixelFormat::NV21;
+    dopts.desiredDynamicRange = IsSingalHdrImage() ? DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
+
+    string format = GetExtendedCodecMimeType(mainDecoder_.get());
+    if (format != IMAGE_HEIF_FORMAT || format != IMAGE_JPEG_FORMAT) {
+        IMAGE_LOGE("[ImageSource]CreatePicture failed, invalied format.");
+        return nullptr;
+    }
+
+    std::shared_ptr<PixelMap> pixelMap = CreatePixelMap(dopts, errorCode);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelMap);
+
+    string format = GetExtendedCodecMimeType(mainDecoder_.get());
+    if (format == IMAGE_HEIF_FORMAT) {
+        DecodeHeifAuxiliaryPictures(opts, picture, errorCode);
+    } else if (format == IMAGE_JPEG_FORMAT) {
+        DecodeJpegAuxiliaryPicture(opts, picture, errorCode);
+    }
+    return picture;
+}
+
+void ImageSource::DecodeHeifAuxiliaryPictures(
+    const DecodingOptionsForPicture& opts, std::unique_ptr<Picture>& picture, uint32_t& errorCode)
+{
+    if (picture == nullptr) {
+        IMAGE_LOGE("[ImageSource] picture is nullptr");
+        return nullptr;
+    }
+
+    auto auxTypes = opts.desireAuxiliaryPictures;
+    if (auxTypes.size() == 0) {
+        GetAllAuxiliaryPictureType(auxTypes);
+    }
+    if (format == IMAGE_HEIF_FORMAT) {
+        DecodeHeifAuxiliaryPictures(auxTypes, picture, errorCode);
+    } else if (format == IMAGE_JPEG_FORMAT) {
+        DecodeJpegAuxiliaryPicture(auxTypes, picture, errorCode);
+    }
+
+    return picture;
+}
+
+void ImageSource::DecodeHeifAuxiliaryPictures(
+    const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
+{
+    for (AuxiliaryPictureType auxType : auxTypes) {
+        if (!mainDecoder_->CheckAuxiliaryMap(auxType)) {
+            IMAGE_LOGE("The auxiliary picture type does not exist and is not decoded! auxType: %{public}d", auxType);
+            continue;
+        }
+        auto auxiliaryPicture = AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(mainDecoder_.get(), auxType, errorCode);
+        if (auxiliaryPicture != nullptr) {
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        } else {
+            IMAGE_LOGE("Generate heif auxiliary picture failed! auxType: %{public}d, errorCode: %{public}d", auxType, errorCode);
+        }
+    }
+}
+
+void ImageSource::DecodeJpegAuxiliaryPicture(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
+    uint32_t &errorCode)
+{
+    uint8_t *streamBuffer = sourceStreamPtr_->GetDataPtr();
+    uint32_t streamSize = sourceStreamPtr_->GetStreamSize();
+    uint32_t mpfOffset = 0;
+    auto jpegMpfParser = std::make_unique<JpegMpfParser>();
+    if (!jpegMpfParser->CheckMpfOffset(streamBuffer, streamSize, mpfOffset)) {
+        IMAGE_LOGE("Jpeg CheckMpfOffset failed!");
+        errorCode = ERR_IMAGE_DATA_ABNORMAL;
+        return;
+    }
+    streamBuffer += mpfOffset;
+    streamSize -= mpfOffset;
+    if (!jpegMpfParser->Parsing(streamBuffer, streamSize)) {
+        IMAGE_LOGE("Jpeg mpf parse failed!");
+        errorCode = ERR_IMAGE_DATA_ABNORMAL;
+        return;
+    }
+
+    for (auto &auxInfo : jpegMpfParser->images_) {
+        auto iter = auxTypes.find(auxInfo.auxType);
+        if (iter != auxTypes.end()) {
+            IMAGE_LOGI("Jpeg Desire Auxiliary Picture not found! Auxiliary type: %{public}d", auxInfo.auxType);
+            std::unique_ptr<InputDataStream> auxStream =
+                BufferSourceStream::CreateSourceStream((streamBuffer + auxInfo.offset), auxInfo.size);
+            if (auxStream == nullptr) {
+                IMAGE_LOGE("Create auxiliary stream fail, auxiliary offset is %{public}d", auxInfo.offset);
+                break;
+            }
+            auto auxPicture = AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxInfo.auxType, errorCode);
+            picture->SetAuxiliaryPicture(auxPicture);
+            IMAGE_LOGI("DecodeJpegAuxiliaryPicture::SetAuxiliaryPicture() SUCCESS!!!");
+        }
+    }
+}
+
+void ImageSource::GetAllAuxiliaryPictureType(std::set<AuxiliaryPictureType> &auxTypes) {
+    auxTypes.insert(AuxiliaryPictureType::GAINMAP);
+    auxTypes.insert(AuxiliaryPictureType::DEPTH_MAP);
+    auxTypes.insert(AuxiliaryPictureType::UNREFOCUS_MAP);
+    auxTypes.insert(AuxiliaryPictureType::LINEAR_MAP);
+    auxTypes.insert(AuxiliaryPictureType::FRAGMENT_MAP);
+}
+
 } // namespace Media
 } // namespace OHOS

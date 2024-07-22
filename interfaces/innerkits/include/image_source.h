@@ -29,6 +29,7 @@
 #include "incremental_pixel_map.h"
 #include "peer_listener.h"
 #include "pixel_map.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace MultimediaPlugin {
@@ -226,6 +227,8 @@ public:
 
     NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
     NATIVEEXPORT void SetExifMetadata(std::shared_ptr<ExifMetadata> &ptr);
+    static void ContextToAddrInfos(ImagePlugin::DecodeContext &context, PixelMapAddrInfos &addrInfos);
+    static bool IsYuvFormat(PixelFormat format);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -330,6 +333,13 @@ private:
         ImagePlugin::DecodeContext& context, ImagePlugin::PlImageInfo& plInfo);
     ImagePlugin::DecodeContext InitDecodeContext(const DecodeOptions &opts, const ImageInfo &info,
         const MemoryUsagePreference &preference, bool hasDesiredSizeOptions, ImagePlugin::PlImageInfo& plInfo);
+
+    void DecodeHeifAuxiliaryPictures(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
+                                     uint32_t &errorCode);
+    void DecodeJpegAuxiliaryPicture(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
+                                    uint32_t &errorCode);
+    bool IsSingalHdrImage();
+    void GetAllAuxiliaryPictureType(std::set<AuxiliaryPictureType> &auxTypes);
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
