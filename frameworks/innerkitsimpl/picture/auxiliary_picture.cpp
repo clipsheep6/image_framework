@@ -64,11 +64,7 @@ void AuxiliaryPicture::SetSize(Size size)
 
 std::shared_ptr<PixelMap> AuxiliaryPicture::GetContentPixel()
 {
-    if (auxiliaryPictureInfo_.auxiliaryPictureType == AuxiliaryPictureType::GAINMAP) {
-        return content_;
-    } else {
-        return nullptr;
-    }
+    return content_;
 }
 
 void AuxiliaryPicture::SetContentPixel(std::shared_ptr<PixelMap> content)
