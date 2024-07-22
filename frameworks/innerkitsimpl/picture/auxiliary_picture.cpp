@@ -200,7 +200,7 @@ AuxiliaryPicture *AuxiliaryPicture::Unmarshalling(Parcel &parcel, PICTURE_ERR &e
             if (!imagedataPtr) {
                 return nullptr;
             }
-        } else if (type == MetadataType::MARK_CUT) {
+        } else if (type == MetadataType::FRAGMENT) {
             imagedataPtr.reset(FragmentMetadata::Unmarshalling(parcel));
             if (!imagedataPtr) {
                 return nullptr;
