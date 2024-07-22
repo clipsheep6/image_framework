@@ -228,8 +228,8 @@ public:
 
     NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
     NATIVEEXPORT void SetExifMetadata(std::shared_ptr<ExifMetadata> &ptr);
-    static void ContextToAddrInfos(ImagePlugin::DecodeContext &context, PixelMapAddrInfos &addrInfos);
-    static bool IsYuvFormat(PixelFormat format);
+    NATIVEEXPORT static void ContextToAddrInfos(ImagePlugin::DecodeContext &context, PixelMapAddrInfos &addrInfos);
+    NATIVEEXPORT static bool IsYuvFormat(PixelFormat format);
 
 private:
     DISALLOW_COPY_AND_MOVE(ImageSource);
@@ -323,9 +323,9 @@ private:
                             ImagePlugin::DecodeContext &context, ImagePlugin::PlImageInfo &plInfo);
     ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
         ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
-    void DecodeHeifAuxiliaryPictures(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
+    void DecodeHeifAuxiliaryPictures(const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture,
                                      uint32_t &errorCode);
-    void DecodeJpegAuxiliaryPicture(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
+    void DecodeJpegAuxiliaryPicture(const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture,
                                     uint32_t &errorCode);
 
     const std::string NINE_PATCH = "ninepatch";

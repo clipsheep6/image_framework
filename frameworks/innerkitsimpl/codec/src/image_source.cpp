@@ -3812,29 +3812,16 @@ DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, Imag
     return context;
 }
 
-std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture& opts, uint32_t& errorCode)
+std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
 {
     DecodeOptions dopts;
     dopts.desiredDynamicRange = IsHdrImage() ? DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
 
     std::shared_ptr<PixelMap> pixelMap = CreatePixelMap(dopts, errorCode);
     std::unique_ptr<Picture> picture = Picture::Create(pixelMap);
-
-    string format = GetExtendedCodecMimeType(mainDecoder_.get());
-    if (format == IMAGE_HEIF_FORMAT) {
-        DecodeHeifAuxiliaryPictures(opts, picture, errorCode);
-    } else if (format == IMAGE_JPEG_FORMAT) {
-        DecodeJpegAuxiliaryPicture(opts, picture, errorCode);
-    }
-    return picture;
-}
-
-void ImageSource::DecodeHeifAuxiliaryPictures(
-    const DecodingOptionsForPicture& opts, std::unique_ptr<Picture>& picture, uint32_t& errorCode)
-{
     if (picture == nullptr) {
         IMAGE_LOGE("[ImageSource] picture is nullptr");
-        return;
+        return {};
     }
 
     auto auxTypes = opts.desireAuxiliaryPictures;
@@ -3845,6 +3832,18 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
         auxTypes.insert(AuxiliaryPictureType::LINEAR_MAP);
         auxTypes.insert(AuxiliaryPictureType::FRAGMENT_MAP);
     }
+    string format = GetExtendedCodecMimeType(mainDecoder_.get());
+    if (format == IMAGE_HEIF_FORMAT) {
+        DecodeHeifAuxiliaryPictures(auxTypes, picture, errorCode);
+    } else if (format == IMAGE_JPEG_FORMAT) {
+        DecodeJpegAuxiliaryPicture(auxTypes, picture, errorCode);
+    }
+    return picture;
+}
+
+void ImageSource::DecodeHeifAuxiliaryPictures(
+    const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
+{
     for (AuxiliaryPictureType auxType : auxTypes) {
         if (mainDecoder_->checkAuxiliaryMap(auxType)) {
             continue;
@@ -3856,8 +3855,8 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
     }
 }
 
-void ImageSource::DecodeJpegAuxiliaryPicture(const DecodingOptionsForPicture &opts, std::unique_ptr<Picture> &picture,
-    uint32_t &errorCode)
+void ImageSource::DecodeJpegAuxiliaryPicture(
+    const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
 {
     uint8_t* streamBuffer = sourceStreamPtr_->GetDataPtr();
     uint32_t streamSize = sourceStreamPtr_->GetStreamSize();
@@ -3867,10 +3866,10 @@ void ImageSource::DecodeJpegAuxiliaryPicture(const DecodingOptionsForPicture &op
         errorCode = 210; // TODO: 待修改，等待最后通统一商定errorcode
         return;
     }
-    for (AuxiliaryPictureType auxDesireType : opts.desireAuxiliaryPictures) {
+    for (AuxiliaryPictureType auxType : auxTypes) {
         bool isFound = false;
         for (auto &auxInfo : jpegMpfParser->images_) {
-            if (auxInfo.auxType == auxDesireType) {
+            if (auxInfo.auxType == auxType) {
                 isFound = true;
                 std::unique_ptr<InputDataStream> auxStream =
                     BufferSourceStream::CreateSourceStream((streamBuffer + auxInfo.offset), auxInfo.size);
@@ -3880,14 +3879,14 @@ void ImageSource::DecodeJpegAuxiliaryPicture(const DecodingOptionsForPicture &op
                     break;
                 }
                 auto auxiliaryPicture =
-                    AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxDesireType, errorCode);
-                picture->SetAuxiliaryPicture(auxDesireType, auxiliaryPicture);
+                    AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxType, errorCode);
+                picture->SetAuxiliaryPicture(auxType, auxiliaryPicture);
                 IMAGE_LOGI("[DEBUG-INFO]: DecodeJpegAuxiliaryPicture --- SetAuxiliaryPicture SUCCESS!!!");
                 break;
             }
         }
         if (!isFound) {
-            IMAGE_LOGI("Jpeg Desire Auxiliary Picture not found! Auxiliary type: %{public}d", auxDesireType);
+            IMAGE_LOGI("Jpeg Desire Auxiliary Picture not found! Auxiliary type: %{public}d", auxType);
         }
     }
 }

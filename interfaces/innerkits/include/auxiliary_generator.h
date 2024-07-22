@@ -40,7 +40,7 @@ private:
     static ImageInfo MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs);
     static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(
         AuxiliaryPictureType type, Size size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
-    static bool DecodeHeifMetaData(AbsImageDecoder* extDecoder, AuxiliaryPicture* auxPicture,
+    static bool DecodeHeifMetaData(AbsImageDecoder* extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture,
                                    AuxiliaryPictureType type, uint32_t &errorCode);
     static bool DecodeJpegMetaData(unique_ptr<InputDataStream> &auxStream, shared_ptr<AuxiliaryPicture> &auxPicture,
                                    uint32_t &errorCode);
@@ -48,6 +48,7 @@ private:
     static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer);
     static AbsImageDecoder* DoCreateDecoder(string codecFormat, PluginServer &pluginServer, InputDataStream &sourceData,
                                             uint32_t &errorCode) __attribute__((no_sanitize("cfi")));
+    static bool SetHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
 };
 } // namespace Media
 } // namespace OHOS
