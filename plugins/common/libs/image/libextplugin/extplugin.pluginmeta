@@ -34,7 +34,7 @@
         {
           "name":"encodeFormat",
           "type":"string",
-          "value": "image/extended"
+          "value": "image/extended,image/jpeg,image/png,image/webp"
         }
       ]
     }
