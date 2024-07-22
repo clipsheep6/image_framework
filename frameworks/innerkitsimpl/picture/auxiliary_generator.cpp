@@ -142,7 +142,7 @@ bool AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder* extDecoder, Auxilia
                 ImageHdrType hdrType = extDecoder->CheckHdrType();
                 HdrMetadata hdrMetadata = extDecoder->GetHdrMetadata(hdrType);
                 std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
-                pixelMap->SetHdrMetadata(hdrMetadata);
+                // pixelMap->SetHdrMetadata(hdrMetadata);
                 break;
             }
             case AuxMetadataType::FRAGMENT: {
@@ -355,7 +355,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(
         type, {context.outInfo.size.width, context.outInfo.size.height}, sbBuffer->GetStride(),
         context.outInfo.pixelFormat, context.outInfo.colorSpace);
-    auxiliaryPicture->SetAuxiliaryPictureInfo(auxInfo);
+    auxPicture->SetAuxiliaryPictureInfo(auxInfo);
 
     if (!DecodeHeifMetaData(extDecoder, auxPicture.get(), type, errorCode)) {
         IMAGE_LOGE("Decode heif metadata failure");
@@ -363,7 +363,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     }
     return auxPicture;
 #endif
-    errorCode = 211;    // TODO: 待修改，等待最后通统一商定errorcode
+    errorCode = 211;    // TODO:
     return nullptr;
 }
 
