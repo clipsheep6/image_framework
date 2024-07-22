@@ -360,7 +360,7 @@ bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
         return false;
     }
 
-    maintenanceData_ = std::shared_ptr<uint8_t[]>(new uint8_t(size));
+    maintenanceData_ = std::shared_ptr<uint8_t[]>(new uint8_t[size]);
     if (!maintenanceData_) {
         return false;
     }
