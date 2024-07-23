@@ -76,6 +76,7 @@ ohos_unittest("picturetest") {
   ]
   
   sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/picture_test/picture_test.cpp",
   ]
 
@@ -85,6 +86,9 @@ ohos_unittest("picturetest") {
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
+  if (enable_libexif) {
+    deps += [ "//third_party/libexif:libexif" ]
+  }
 
   external_deps = [
     "c_utils:utils",
@@ -102,6 +106,7 @@ ohos_unittest("auxiliarypicturetest") {
   ]
 
   sources = [
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/auxiliary_picture_test/auxiliary_picture_test.cpp",
   ]
 
@@ -111,6 +116,9 @@ ohos_unittest("auxiliarypicturetest") {
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
+  if (enable_libexif) {
+    deps += [ "//third_party/libexif:libexif" ]
+  }
 
   external_deps = [
     "c_utils:utils",
