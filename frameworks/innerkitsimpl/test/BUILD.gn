@@ -74,25 +74,22 @@ ohos_unittest("picturetest") {
     "-DIMAGE_DEBUG_FLAG",
     "-DIMAGE_COLORSPACE_FLAG",
   ]
-
-  include_dirs = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
-    "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-    "//foundation/multimedia/utils/include",
-    "//third_party/googletest/googletest/include",
-    "//commonlibrary/c_utils/base/include",
-    "//third_party/ffmpeg",
-  ]
+  
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/picture_test/picture_test.cpp",
   ]
 
   deps = [
-    "$graphic_subsystem/utils/color_manager:color_manager",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gtest",
+    "hilog:libhilog",
   ]
 }
 
@@ -104,24 +101,21 @@ ohos_unittest("auxiliarypicturetest") {
     "-DIMAGE_COLORSPACE_FLAG",
   ]
 
-  include_dirs = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
-    "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-    "//foundation/multimedia/utils/include",
-    "//third_party/googletest/googletest/include",
-    "//commonlibrary/c_utils/base/include",
-    "//third_party/ffmpeg",
-  ]
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/auxiliary_picture_test/auxiliary_picture_test.cpp",
   ]
 
   deps = [
-    "$graphic_subsystem/utils/color_manager:color_manager",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
     "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gtest",
+    "hilog:libhilog",
   ]
 }
 

@@ -15,6 +15,7 @@
 
 #define protected public
 #include <gtest/gtest.h>
+#include <surface.h>
 #include "picture.h"
 #include "image_type.h"
 #include "image_utils.h"
@@ -64,5 +65,28 @@ HWTEST_F(PictureTest, GetMainPixelTest001, TestSize.Level1)
     EXPECT_NE(picPixelMap, nullptr);
 }
 
+/**
+ * @tc.name: SurfaceBuffer2PixelMapTest001
+ * @tc.desc: Obtain pixelmap through an empty surfaceBuffer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureTest, SurfaceBuffer2PixelMapTest001, TestSize.Level3)
+{
+    OHOS::sptr<OHOS::SurfaceBuffer> buffer = nullptr;
+    std::shared_ptr<PixelMap> pixelmap = Picture::SurfaceBuffer2PixelMap(buffer);
+    EXPECT_EQ(nullptr, pixelmap);
+}
+
+/**
+ * @tc.name: SurfaceBuffer2PixelMapTest002
+ * @tc.desc: Obtain pixelmap through surfaceBuffer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureTest, SurfaceBuffer2PixelMapTest002, TestSize.Level1)
+{
+    OHOS::sptr<OHOS::SurfaceBuffer> buffer = SurfaceBuffer::Create();
+    std::shared_ptr<PixelMap> pixelmap = Picture::SurfaceBuffer2PixelMap(buffer);
+    EXPECT_NE(nullptr, pixelmap);
+}
 } // namespace Media
 } // namespace OHOS
