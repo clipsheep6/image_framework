@@ -27,7 +27,7 @@ namespace OHOS {
 namespace Media {
 using uint8_buffer_type = uint8_t *;
 using const_uint8_buffer_type = const uint8_t *;
-using ConvertFunction = bool(*)(const uint8_t*, const Size&, uint8_t**, size_t&, [[maybe_unused]]ColorSpace);
+using ConvertFunction = bool(*)(const uint8_t*, const RGBADataInfo&, uint8_t**, size_t&, [[maybe_unused]]ColorSpace);
 using YUVConvertFunction = bool(*)(const uint8_t*, const YUVDataInfo&, uint8_t**, size_t&,
     [[maybe_unused]]ColorSpace);
 
@@ -44,6 +44,8 @@ class ImageFormatConvert {
 public:
     static uint32_t ConvertImageFormat(const ConvertDataInfo &srcDataInfo, ConvertDataInfo &destDataInfo);
     static uint32_t ConvertImageFormat(std::shared_ptr<PixelMap> &srcPiexlMap, PixelFormat destFormat);
+    static uint8_t * YUVConvertToRGB(std::shared_ptr<PixelMap> &srcPiexlMap,
+                                        const PixelFormat &srcFormat, PixelFormat destFormat);
 private:
     static bool IsValidSize(const Size &size);
     static bool CheckConvertDataInfo(const ConvertDataInfo &convertDataInfo);
@@ -55,6 +57,7 @@ private:
     static bool MakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
                                  const size_t destBufferSize, ImageInfo &info, AllocatorType allcatorType);
     static bool IsSupport(PixelFormat format);
+
 };
 
 } //OHOS
