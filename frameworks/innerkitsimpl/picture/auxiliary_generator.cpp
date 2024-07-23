@@ -34,27 +34,8 @@ namespace OHOS {
 namespace Media {
 using namespace ImagePlugin;
 
-// class AuxiliaryPicture;
-// namespace InnerFormat {
-// static const std::string RAW_FORMAT = "image/x-raw";
-// static const std::string ASTC_FORMAT = "image/astc";
-// static const std::string EXTENDED_FORMAT = "image/x-skia";
 static const std::string IMAGE_EXTENDED_CODEC = "image/extended";
-// static const std::string SVG_FORMAT = "image/svg+xml";
-// static const std::string RAW_EXTENDED_FORMATS[] = {
-//     "image/x-sony-arw",
-//     "image/x-canon-cr2",
-//     "image/x-adobe-dng",
-//     "image/x-nikon-nef",
-//     "image/x-nikon-nrw",
-//     "image/x-olympus-orf",
-//     "image/x-fuji-raf",
-//     "image/x-panasonic-rw2",
-//     "image/x-pentax-pef",
-//     "image/x-samsung-srw",
-// };
 static const uint32_t FIRST_FRAME = 0;
-// static const int INT_ZERO = 0;
 
 ImageInfo AuxiliaryGenerator::MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs)
 {
@@ -77,35 +58,6 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     info.pixelFormat = format;
     info.colorSpace = colorSpace;
     return info;
-}
-
-std::shared_ptr<ImageMetadata> AuxiliaryGenerator::CreateExifMetadata(
-    uint8_t *buffer, const uint32_t size, uint32_t &errorCode)
-{
-    auto metadataAccessor = MetadataAccessorFactory::Create(buffer, size);
-    if (metadataAccessor == nullptr) {
-        IMAGE_LOGD("metadataAccessor nullptr return ERR");
-        errorCode = ERR_IMAGE_SOURCE_DATA;  // TODO
-        return nullptr;
-    }
-
-    uint32_t ret = metadataAccessor->Read();
-    if (ret != SUCCESS) {
-        IMAGE_LOGD("get metadataAccessor ret %{public}d", ret);
-        errorCode = ERR_IMAGE_DECODE_EXIF_UNSUPPORT;  // TODO
-        return nullptr;
-    }
-
-    if (metadataAccessor->Get() == nullptr) {
-        if (!metadataAccessor->Create()) {
-            IMAGE_LOGD("metadataAccessor create failed.");
-            errorCode = ERR_IMAGE_SOURCE_DATA;  // TODO
-            return nullptr;
-        }
-    }
-
-    std::shared_ptr<ExifMetadata> exifMetadata = metadataAccessor->Get();
-    return exifMetadata;
 }
 
 uint32_t AuxiliaryGenerator::DecodeExifMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture,
@@ -132,14 +84,15 @@ uint32_t AuxiliaryGenerator::DecodeExifMetadata(AbsImageDecoder *extDecoder, std
 uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     ImageHdrType hdrType = extDecoder->CheckHdrType();
-    if (hdrType == ImageHdrType::UNKNOWN) {
-        IMAGE_LOGE("Get hdr type failed!");
+    if (hdrType <= ImageHdrType::SDR) {
+        IMAGE_LOGE("Get hdr type failed! Current hdrType: %{public}d", hdrType);
         return ERR_IMAGE_DECODE_METADATA_FAILED;
     }
 
     std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
     std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
     pixelMap->SetHdrMetadata(hdrMetadata);
+    pixelMap->SetHdrType(hdrType);
     return SUCCESS;
 }
 
@@ -187,7 +140,7 @@ uint32_t AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder *extDecoder, std
 AbsImageDecoder* AuxiliaryGenerator::DoCreateDecoder(std::string codecFormat, PluginServer &pluginServer, InputDataStream &sourceData,
     uint32_t &errorCode) __attribute__((no_sanitize("cfi")))
 {
-    std::map<std::string, AttrData> capabilities = { { IMAGE_ENCODE_FORMAT, AttrData(codecFormat) } };
+    std::map<std::string, AttrData> capabilities = {{IMAGE_ENCODE_FORMAT, AttrData(codecFormat)}};
     for (const auto &capability : capabilities) {
         std::string x = "undefined";
         capability.second.GetValue(x);
@@ -239,100 +192,6 @@ void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func
     }
 #endif
 }
-
-// static bool IsSizeVailed(const Size &size)
-// {
-//     return (size.width != INT_ZERO && size.height != INT_ZERO);
-// }
-
-// static void CopySize(const Size &src, Size &dst)
-// {
-//     dst.width = src.width;
-//     dst.height = src.height;
-// }
-
-// static bool IsDensityChange(int32_t srcDensity, int32_t wantDensity)
-// {
-//     return (srcDensity != 0 && wantDensity != 0 && srcDensity != wantDensity);
-// }
-
-// static int32_t GetScalePropByDensity(int32_t prop, int32_t srcDensity, int32_t wantDensity)
-// {
-//     if (srcDensity != 0) {
-//         return (prop * wantDensity + (srcDensity >> 1)) / srcDensity;
-//     }
-//     return prop;
-// }
-
-// static void TransformSizeWithDensity(const Size &srcSize, int32_t srcDensity, const Size &wantSize,
-//     int32_t wantDensity, Size &dstSize)
-// {
-//     if (IsSizeVailed(wantSize)) {
-//         CopySize(wantSize, dstSize);
-//     } else {
-//         CopySize(srcSize, dstSize);
-//     }
-
-//     if (IsDensityChange(srcDensity, wantDensity)) {
-//         dstSize.width = GetScalePropByDensity(dstSize.width, srcDensity, wantDensity);
-//         dstSize.height = GetScalePropByDensity(dstSize.height, srcDensity, wantDensity);
-//     }
-// }
-
-// static void CopyOptionsToPlugin(const DecodeOptions &opts, PixelDecodeOptions &plOpts)
-// {
-//     plOpts.CropRect.left = opts.CropRect.left;
-//     plOpts.CropRect.top = opts.CropRect.top;
-//     plOpts.CropRect.width = opts.CropRect.width;
-//     plOpts.CropRect.height = opts.CropRect.height;
-//     plOpts.desiredSize.width = opts.desiredSize.width;
-//     plOpts.desiredSize.height = opts.desiredSize.height;
-//     plOpts.rotateDegrees = opts.rotateDegrees;
-//     plOpts.sampleSize = opts.sampleSize;
-//     plOpts.desiredPixelFormat = opts.desiredPixelFormat;
-//     plOpts.desiredColorSpace = opts.desiredColorSpace;
-//     plOpts.allowPartialImage = opts.allowPartialImage;
-//     plOpts.editable = opts.editable;
-//     if (opts.SVGOpts.fillColor.isValidColor) {
-//         plOpts.plFillColor.isValidColor = opts.SVGOpts.fillColor.isValidColor;
-//         plOpts.plFillColor.color = opts.SVGOpts.fillColor.color;
-//     }
-//     if (opts.SVGOpts.strokeColor.isValidColor) {
-//         plOpts.plStrokeColor.isValidColor = opts.SVGOpts.strokeColor.isValidColor;
-//         plOpts.plStrokeColor.color = opts.SVGOpts.strokeColor.color;
-//     }
-//     if (opts.SVGOpts.SVGResize.isValidPercentage) {
-//         plOpts.plSVGResize.isValidPercentage = opts.SVGOpts.SVGResize.isValidPercentage;
-//         plOpts.plSVGResize.resizePercentage = opts.SVGOpts.SVGResize.resizePercentage;
-//     }
-//     plOpts.plDesiredColorSpace = opts.desiredColorSpaceInfo;
-// }
-
-// static uint32_t SetAuxiliaryPictureDecodeOption(std::unique_ptr<AbsImageDecoder>& decoder,
-//                                                              PlImageInfo& plInfo, float scale)
-// {
-//     ImageInfo info;
-//     Size size;
-//     uint32_t errorCode = decoder->GetImageSize(FIRST_FRAME, size);
-//     info.size.width = size.width;
-//     info.size.height = size.height;
-//     if (errorCode != SUCCESS || !IsSizeVailed({size.width, size.height})) {
-//         errorCode = ERR_IMAGE_DATA_ABNORMAL;
-//         return errorCode;
-//     }
-//     Size wantSize = info.size;
-//     if (scale > 0 && scale < 1.0) {
-//         wantSize.width = info.size.width * scale;
-//         wantSize.height = info.size.height * scale;
-//     }
-//     DecodeOptions opts;
-//     // TransformSizeWithDensity(info.size, sourceInfo_.baseDensity, wantSize, opts_.fitDensity, opts.desiredSize);
-//     PixelDecodeOptions plOptions;
-//     CopyOptionsToPlugin(opts, plOptions);
-//     plOptions.desiredPixelFormat = PixelFormat::RGBA_8888;
-//     errorCode = decoder->SetDecodeOptions(FIRST_FRAME, plOptions, plInfo);
-//     return errorCode;
-// }
 
 shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     AbsImageDecoder *extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
@@ -392,18 +251,18 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
 }
 
 std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(
-    std::unique_ptr<InputDataStream> &auxiliaryStream, AuxiliaryPictureType type, uint32_t &errorCode)
+    std::unique_ptr<InputDataStream> &auxStream, AuxiliaryPictureType type, uint32_t &errorCode)
 {
+    IMAGE_LOGI("AuxiliaryPictureType: %{public}d", errotyperCode);
     auto supportStatus = SUPPORT_CODEC_AUXILIARY_MAP.find(type);
     if (supportStatus == SUPPORT_CODEC_AUXILIARY_MAP.end()) {
         return nullptr;
     }
 
     std::shared_ptr<PixelMap> auxPixelMap;
+    PluginServer &pluginServer = ImageUtils::GetPluginServer();
+    auto auxDecoder = DoCreateDecoder(IMAGE_EXTENDED_CODEC, pluginServer, *auxStream, errorCode);
     if (supportStatus->second == SupportCodec::SUPPORT) {
-        PluginServer &pluginServer = ImageUtils::GetPluginServer();
-        auto auxDecoder =
-            DoCreateDecoder(IMAGE_EXTENDED_CODEC, pluginServer, *auxiliaryStream, errorCode);
         if (auxDecoder == nullptr) {
             errorCode = 211;    // TODO: 待修改，等待最后通统一商定errorcode
             return nullptr;
@@ -418,7 +277,7 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
         // if (auxiliaryPictureInfo.size...)
 
         if (errorCode != SUCCESS) {
-            IMAGE_LOGE("Jpeg Decode auxiliary picture failed! Auxiliary picture type: %{public}d", type);
+            IMAGE_LOGE("Jpeg Decode auxiliary picture failed! errorCode: %{public}d", errorCode);
             FreeContextBuffer(auxCtx.freeFunc, auxCtx.allocatorType, auxCtx.pixelsBuffer);
             return nullptr;
         }
@@ -443,8 +302,6 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
         PixelMapAddrInfos addrInfos;
         ImageSource::ContextToAddrInfos(auxCtx, addrInfos);
         auxPixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
-        // auxPixelMap->SetPixelsAddr(auxCtx.pixelsBuffer.buffer, auxCtx.pixelsBuffer.context,
-        //                            auxCtx.pixelsBuffer.bufferSize, auxCtx.allocatorType, auxCtx.freeFunc);
 #ifdef IMAGE_COLORSPACE_FLAG
         bool isSupportICCProfile = auxDecoder->IsSupportICCProfile();
         if (isSupportICCProfile) {
@@ -452,64 +309,57 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
             auxPixelMap->InnerSetColorSpace(grColorSpace);
         }
 #endif
-        // std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(
-        //     reinterpret_cast<uint32_t*>(auxCtx.pixelsBuffer.buffer), auxCtx.pixelsBuffer.bufferSize, opts);
-        // auxPixelMap = std::move(pixelMap);
     } else {
         // TODO: 如果不解码，opts如何设置
         InitializationOptions opts;
         std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(
-            reinterpret_cast<uint32_t*>(auxiliaryStream->GetDataPtr()), auxiliaryStream->GetStreamSize(), opts);
+            reinterpret_cast<uint32_t*>(auxStream->GetDataPtr()), auxStream->GetStreamSize(), opts);
         auxPixelMap = std::move(pixelMap);
         // auxPixelMap->SetPixelsAddr();
     }
-    std::shared_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(auxPixelMap, type);
+    std::unique_ptr<AuxiliaryPicture>  = AuxiliaryPicture::Create(auxPixelMap, type);
 
     // TODO: 完善AuxiliaryPictureInfo
     AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, {0, 0}, 0, PixelFormat::UNKNOWN, ColorSpace::UNKNOWN);
-    auxiliaryPicture->SetAuxiliaryPictureInfo(auxInfo);
+    auxPicture->SetAuxiliaryPictureInfo(auxInfo);
 
-    // TODO: Metadata 处理
-    if (!DecodeJpegMetaData(auxiliaryStream, auxiliaryPicture, errorCode)) {
-        IMAGE_LOGE("Jpeg Decode Meta Data failed! Auxiliary picture type: %{public}d", type);
-        return nullptr;
-    }
-    
-    return auxiliaryPicture;
-}
-
-bool AuxiliaryGenerator::DecodeJpegMetaData(std::unique_ptr<ImagePlugin::InputDataStream> &auxStream,
-    std::shared_ptr<AuxiliaryPicture> &auxPicture, uint32_t &errorCode)
-{
-    AuxiliaryPictureType type = auxPicture->GetType();
-    if (type != AuxiliaryPictureType::NONE) {
-        return false;
-    }
-
-    // Decode EXIF Meta Data
-    // TODO: 需要确认哪些类型的辅助图需要exif metadata
-    std::shared_ptr<ImageMetadata> exifMetadata = CreateExifMetadata(auxStream->GetDataPtr(),
-                                                                     auxStream->GetStreamSize(),
-                                                                     errorCode);
-    if (exifMetadata == nullptr) {
-        IMAGE_LOGE("Jpeg Decode EXIF Meta Data failed! Auxiliary picture type: %{public}d", type);
-        return false;
-    } else {
-        auxPicture->SetMetadata(MetadataType::EXIF, exifMetadata);
-    }
-
-    // Decode FRAGMENT Meta Data
-    if (type == AuxiliaryPictureType::FRAGMENT_MAP) {
-        std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;  // TODO: 1.不知道水印metadata如何解析；2.FragmentMetadata PR尚未合入
-        if (fragmentMetadata == nullptr) {
-            IMAGE_LOGE("Jpeg Decode FRAGMENT Meta Data failed! Auxiliary picture type: %{public}d", type);
-            return false;
-        } else {
-            auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
+    if (type == AuxiliaryPictureType::GAINMAP) {
+        errorCode = DecodeHdrMetadata(auxDecoder, auxPicture);
+        if (errorCode != SUCCESS) {
+            IMAGE_LOGE("DecodeHdrMetadata() failed! errorCode: %{public}d", errorCode);
+            return nullptr;
         }
     }
 
-    return true;
+    if (type == AuxiliaryPictureType::FRAGMENT_MAP) {
+        errorCode = DecodeJpegFragmentMetaData(auxStream, auxPicture);
+        if (errorCode != SUCCESS) {
+            IMAGE_LOGE("DecodeJpegFragmentMetaData() failed! errorCode: %{public}d", errorCode);
+            return nullptr;
+        }
+    }
+
+    std::shared_ptr<AuxiliaryPicture> finalAuxPicture = std::move(auxPicture);
+    return finalAuxPicture;
+}
+
+uint32_t AuxiliaryGenerator::DecodeJpegFragmentMetaData(std::unique_ptr<ImagePlugin::InputDataStream> &auxStream,
+                                                        std::unique_ptr<AuxiliaryPicture> &auxPicture)
+{
+    AuxiliaryPictureType type = auxPicture->GetType();
+    if (type != AuxiliaryPictureType::FRAGMENT_MAP) {
+        return ERR_MEDIA_DATA_UNSUPPORT;
+    }
+
+    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;  // TODO: 1.不知道水印metadata如何解析；2.FragmentMetadata PR尚未合入
+    if (fragmentMetadata == nullptr) {
+        IMAGE_LOGE("Jpeg Decode FRAGMENT Meta Data failed! Auxiliary picture type: %{public}d", type);
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    } else {
+        auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
+    }
+
+    return SUCCESS;
 }
 
 } // Media

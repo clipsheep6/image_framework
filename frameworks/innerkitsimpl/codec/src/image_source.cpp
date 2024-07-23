@@ -3880,16 +3880,21 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
                         auxInfo.offset);
                     break;
                 }
-                auto auxiliaryPicture =
-                    AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxType, errorCode);
-                picture->SetAuxiliaryPicture(auxType, auxiliaryPicture);
-                IMAGE_LOGI("[DEBUG-INFO]: DecodeJpegAuxiliaryPicture --- SetAuxiliaryPicture SUCCESS!!!");
+                auto auxPicture = AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxType, errorCode);
+                picture->SetAuxiliaryPicture(auxType, auxPicture);
+                IMAGE_LOGI("DecodeJpegAuxiliaryPicture::SetAuxiliaryPicture( %{public}d ) SUCCESS!!!", auxType);
                 break;
             }
         }
         if (!isFound) {
             IMAGE_LOGI("Jpeg Desire Auxiliary Picture not found! Auxiliary type: %{public}d", auxType);
         }
+    }
+    if (picture->HasAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)) {
+        std::shared_ptr<PixelMap> gainmapPixel = picture->GetGainmapPixelMap();
+        std::shared_ptr<PixelMap> mainPixel = picture->GetMainPixel();
+        mainPixel->SetHdrMetadata(gainmapPixel->GetHdrMetadata());
+        mainPixel->SetHdrType(hdrType->GetHdrType());
     }
 }
 } // namespace Media

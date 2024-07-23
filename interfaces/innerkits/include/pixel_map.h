@@ -293,9 +293,24 @@ public:
     NATIVEEXPORT bool IsHdr();
     NATIVEEXPORT uint32_t ToSdr();
 
+    NATIVEEXPORT std::shared_ptr<HdrMetadata> GetHdrMetadata()
+    {
+        return hdrMetadata_;
+    }
+
     NATIVEEXPORT void SetHdrMetadata(std::shared_ptr<HdrMetadata> &metadata)
     {
         hdrMetadata_ = metadata;
+    }
+
+    NATIVEEXPORT ImageHdrType GetHdrType()
+    {
+        return hdrType_;
+    }
+
+    NATIVEEXPORT void SetHdrType(ImageHdrType hdrType)
+    {
+        hdrType_ = herType;
     }
 
     static int32_t GetRGBxRowDataSize(const ImageInfo& info);
@@ -424,6 +439,7 @@ protected:
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
     std::shared_ptr<HdrMetadata> hdrMetadata_;
+    ImageHdrType hdrType_;
 
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;
