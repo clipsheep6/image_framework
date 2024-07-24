@@ -393,8 +393,9 @@ napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info inf
     napi_get_undefined(env, &result);
     napi_status status;
     napi_value thisVar = nullptr;
-    napi_value argValue[NUM_1] = {0};
-    size_t argCount = NUM_1;
+    napi_value argValue[NUM_2] = {0};
+    size_t argCount = NUM_2;
+    uint32_t auxiType = 0;
 
     IMAGE_LOGD("SetAuxiliaryPictureSync IN");
     IMG_JS_ARGS(env, info, status, argCount, argValue, thisVar);
@@ -402,15 +403,24 @@ napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info inf
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&pictureNapi));
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pictureNapi), result, IMAGE_LOGE("fail to unwrap PictureNapi"));
 
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to arg info"));
+    status = napi_get_value_uint32(env, argValue[NUM_0], &auxiType);
+    IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to get auxiliary picture Type"));
+    AuxiliaryPictureType type = ParseAuxiliaryPictureType(auxiType);
+
     AuxiliaryPictureNapi* auxiliaryPictureNapi = nullptr;
-    status = napi_unwrap(env, argValue[NUM_0], reinterpret_cast<void**>(&auxiliaryPictureNapi));
+    status = napi_unwrap(env, argValue[NUM_1], reinterpret_cast<void**>(&auxiliaryPictureNapi));
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(status, pictureNapi), result,
                          IMAGE_LOGE("fail to unwrap AuxiliaryPictureNapi"));
 
     if (pictureNapi->nativePicture_ != nullptr) {
         auto auxiliaryPicturePtr = auxiliaryPictureNapi->GetNativeAuxiliaryPic();
         if (auxiliaryPicturePtr != nullptr) {
-            pictureNapi->nativePicture_->SetAuxiliaryPicture(auxiliaryPicturePtr);
+            if (type != auxiliaryPicturePtr->GetAuxiliaryPictureInfo().auxiliaryPictureType) {
+                IMAGE_LOGE("The type does not match the auxiliary picture type!");
+            } else {
+                pictureNapi->nativePicture_->SetAuxiliaryPicture(auxiliaryPicturePtr);
+            }
         } else {
             IMAGE_LOGE("native auxiliary picture is nullptr!");
         }

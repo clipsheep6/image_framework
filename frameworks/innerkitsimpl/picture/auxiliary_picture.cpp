@@ -139,7 +139,7 @@ bool AuxiliaryPicture::Marshalling(Parcel &data) const
         return false;
     }
 
-    if (!data.WriteInt32(auxiliaryPictureInfo_.size.height || !data.WriteInt32(auxiliaryPictureInfo_.size.width))) {
+    if (!data.WriteInt32(auxiliaryPictureInfo_.size.height) || !data.WriteInt32(auxiliaryPictureInfo_.size.width)) {
         IMAGE_LOGE("Failed to write size of auxiliary pictures.");
         return false;
     }

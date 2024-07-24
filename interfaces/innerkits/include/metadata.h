@@ -24,7 +24,8 @@ namespace OHOS {
 namespace Media {
 class ImageMetadata : public Parcelable {
 public:
-    using PropertyMapPtr = std::shared_ptr<std::map<std::string, std::string>>;
+    using PropertyMap = std::map<std::string, std::string>;
+    using PropertyMapPtr = std::shared_ptr<ImageMetadata::PropertyMap>;
     virtual int GetValue(const std::string &key, std::string &value) const = 0;
     virtual bool SetValue(const std::string &key, const std::string &value) = 0;
     virtual bool RemoveEntry(const std::string &key) = 0;

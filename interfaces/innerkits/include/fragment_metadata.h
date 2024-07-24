@@ -42,7 +42,7 @@ public:
     static FragmentMetadata *Unmarshalling(Parcel &parcel, PICTURE_ERR &error);
 
 protected:
-    ImageMetadata::PropertyMapPtr properties_;
+    ImageMetadata::PropertyMapPtr properties_ = std::make_shared<ImageMetadata::PropertyMap>();
 };
 } // namespace Media
 } // namespace OHOS

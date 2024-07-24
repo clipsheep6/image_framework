@@ -52,7 +52,7 @@ bool FragmentMetadata::SetValue(const std::string &key, const std::string &value
         IMAGE_LOGE("Key is not supported.");
         return false;
     }
-    properties_->insert(std::make_pair(key, value));
+    (*properties_)[key] = value;
     return true;
 }
 
