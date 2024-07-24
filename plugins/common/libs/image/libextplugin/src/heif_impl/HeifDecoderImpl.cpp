@@ -75,6 +75,14 @@ struct PixelFormatConvertParam {
     AVPixelFormat format;
 };
 
+const std::map<AuxiliaryPictureType, std::string> HEIF_AUXTTYPE_ID_MAP = {
+    {AuxiliaryPictureType::GAINMAP, "gainmap"},
+    {AuxiliaryPictureType::DEPTH_MAP, "depthmap"},
+    {AuxiliaryPictureType::UNREFOCUS_MAP, "unrefocusmap"},
+    {AuxiliaryPictureType::LINEAR_MAP, "linearmap"},
+    {AuxiliaryPictureType::FRAGMENT_MAP, "fragmentmap"}
+};
+
 static bool FillFrameInfoForPixelConvert(AVFrame *frame, PixelFormatConvertParam &param)
 {
     if (param.format == AV_PIX_FMT_NV12 || param.format == AV_PIX_FMT_NV21 || param.format == AV_PIX_FMT_P010) {
@@ -254,24 +262,19 @@ bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
     }
 
     auxiliaryImage_ = nullptr;
+    auto iter = HEIF_AUXTTYPE_ID_MAP.find(type);
     switch (type) {
         case AuxiliaryPictureType::GAINMAP:
             auxiliaryImage_ = parser_->GetGainmapImage();
             break;
         case AuxiliaryPictureType::DEPTH_MAP:
-            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("depthmap"); // TODO:
-            break;
         case AuxiliaryPictureType::UNREFOCUS_MAP:
-            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("unrefocusmap");
-            break;
         case AuxiliaryPictureType::LINEAR_MAP:
-            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("linearmap");
-            break;
         case AuxiliaryPictureType::FRAGMENT_MAP:
-            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("fragmentmap");
+            auxiliaryImage_ = parser_->GetAuxiliaryMapImage(iter->second);
             break;
         default:
-            return false;
+            break;
     }
 
     if (auxiliaryImage_ == nullptr) {
