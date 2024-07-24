@@ -48,7 +48,7 @@ private:
     static uint32_t DecodeHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeFragmentMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeJpegFragmentMetaData(std::unique_ptr<ImagePlugin::InputDataStream> &auxStream,
-                                               std::unique_ptr<AuxiliaryPicture> &auxPicture)
+                                               std::unique_ptr<AuxiliaryPicture> &auxPicture);
 };
 } // namespace Media
 } // namespace OHOS

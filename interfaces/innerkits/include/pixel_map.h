@@ -33,6 +33,7 @@
 namespace OHOS {
 namespace Media {
 struct HdrMetadata;
+enum class ImageHdrType : int32_t;
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
 
@@ -298,7 +299,7 @@ public:
         return hdrMetadata_;
     }
 
-    NATIVEEXPORT void SetHdrMetadata(std::shared_ptr<HdrMetadata> &metadata)
+    NATIVEEXPORT void SetHdrMetadata(const std::shared_ptr<HdrMetadata> &metadata)
     {
         hdrMetadata_ = metadata;
     }
@@ -310,7 +311,7 @@ public:
 
     NATIVEEXPORT void SetHdrType(ImageHdrType hdrType)
     {
-        hdrType_ = herType;
+        hdrType_ = hdrType;
     }
 
     static int32_t GetRGBxRowDataSize(const ImageInfo& info);
@@ -438,7 +439,7 @@ protected:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
-    std::shared_ptr<HdrMetadata> hdrMetadata_;
+    std::shared_ptr<HdrMetadata> hdrMetadata_ = nullptr;
     ImageHdrType hdrType_;
 
 #ifdef IMAGE_COLORSPACE_FLAG

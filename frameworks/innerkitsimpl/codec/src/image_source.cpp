@@ -3845,7 +3845,7 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
     const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
 {
     for (AuxiliaryPictureType auxType : auxTypes) {
-        if (mainDecoder_->checkAuxiliaryMap(auxType)) {
+        if (mainDecoder_->CheckAuxiliaryMap(auxType)) {
             continue;
         }
         auto auxiliaryPicture = AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(mainDecoder_.get(), auxType, errorCode);
@@ -3894,7 +3894,7 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
         std::shared_ptr<PixelMap> gainmapPixel = picture->GetGainmapPixelMap();
         std::shared_ptr<PixelMap> mainPixel = picture->GetMainPixel();
         mainPixel->SetHdrMetadata(gainmapPixel->GetHdrMetadata());
-        mainPixel->SetHdrType(hdrType->GetHdrType());
+        mainPixel->SetHdrType(gainmapPixel->GetHdrType());
     }
 }
 } // namespace Media
