@@ -56,7 +56,7 @@ public:
 private:
     std::shared_ptr<PixelMap> mainPixelMap_;
     std::map<AuxiliaryPictureType, std::shared_ptr<AuxiliaryPicture>> auxiliaryPictures_;
-    std::unique_ptr<MaintenanceData> maintenanceData_;
+    std::unique_ptr<MaintenanceData> maintenanceData_ = nullptr;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
 };
 }
