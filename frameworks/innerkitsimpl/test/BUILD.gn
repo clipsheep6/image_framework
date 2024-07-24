@@ -127,6 +127,51 @@ ohos_unittest("auxiliarypicturetest") {
   ]
 }
 
+ohos_unittest("metadatatest") {
+  module_out_path = module_output_path
+
+  sources = [
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_formatter.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/metadata_test/metadata_test.cpp",
+  ]
+
+  deps = [
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/interfaces/innerkits:image_native",
+  ]
+  if (enable_libexif) {
+    deps += [ "//third_party/libexif:libexif" ]
+  }
+
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gtest",
+    "hilog:libhilog",
+  ]
+}
+
+ohos_unittest("fragmentmetadatatest") {
+  module_out_path = module_output_path
+
+  sources = [
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/metadata_test/fragment_metadata_test.cpp",
+  ]
+
+  deps = [
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
+    "${image_subsystem}/interfaces/innerkits:image_native",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gtest",
+    "hilog:libhilog",
+  ]
+}
+
 ohos_unittest("imagepixelmaptest") {
   module_out_path = module_output_path
 
@@ -1895,6 +1940,8 @@ group("unittest") {
     ":imageeventtest",
     ":imageformatconverttest",
     ":imagepixelmapparceltest",
+    ":metadatatest",
+    ":fragmentmetadatatest",
     ":imagepixelmaptest",
     ":imagesourcetest",
     ":imagestreamtest",
