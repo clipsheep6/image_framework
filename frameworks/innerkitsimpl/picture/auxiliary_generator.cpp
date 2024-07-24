@@ -37,6 +37,15 @@ using namespace ImagePlugin;
 static const std::string IMAGE_EXTENDED_CODEC = "image/extended";
 static const uint32_t FIRST_FRAME = 0;
 
+// Define bytes per pixel
+constexpr int8_t ALPHA_8_BYTES = 1;
+constexpr int8_t RGB_565_BYTES = 2;
+constexpr int8_t RGB_888_BYTES = 3;
+constexpr int8_t ARGB_8888_BYTES = 4;
+constexpr int8_t BGRA_F16_BYTES = 8;
+constexpr int8_t YUV420_BYTES = 2;  // in fact NV21 one pixel used 1.5 bytes.
+constexpr int8_t ASTC_4x4_BYTES = 1;
+
 ImageInfo AuxiliaryGenerator::MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs)
 {
     ImageInfo info;
@@ -53,11 +62,58 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
 {
     AuxiliaryPictureInfo info;
     info.auxiliaryPictureType = type;
-    info.size = size;
+    info.size.width = size.width;
+    info.size.height = size.height;
     info.rowStride = rowStride;
     info.pixelFormat = format;
     info.colorSpace = colorSpace;
     return info;
+}
+
+bool AuxiliaryGenerator::GetPixelBytes(const PixelFormat format, int8_t &pixelBytes)
+{
+    switch (format) {
+        case PixelFormat::RGBA_8888:
+            pixelBytes = ARGB_8888_BYTES;
+            break;
+        case PixelFormat::RGBA_1010102:
+            pixelBytes = ARGB_8888_BYTES;
+            break;
+        case PixelFormat::BGRA_8888:
+            pixelBytes = ARGB_8888_BYTES;
+            break;
+        case PixelFormat::ARGB_8888:
+            pixelBytes = ARGB_8888_BYTES;
+            break;
+        case PixelFormat::ALPHA_8:
+            pixelBytes = ALPHA_8_BYTES;
+            break;
+        case PixelFormat::RGB_565:
+            pixelBytes = RGB_565_BYTES;
+            break;
+        case PixelFormat::RGB_888:
+            pixelBytes = RGB_888_BYTES;
+            break;
+        case PixelFormat::NV12:
+        case PixelFormat::NV21:
+            pixelBytes = YUV420_BYTES;
+            break;
+        case PixelFormat::CMYK:
+            pixelBytes = ARGB_8888_BYTES;
+            break;
+        case PixelFormat::RGBA_F16:
+            pixelBytes = BGRA_F16_BYTES;
+            break;
+        case PixelFormat::ASTC_4x4:
+        case PixelFormat::ASTC_6x6:
+        case PixelFormat::ASTC_8x8:
+            pixelBytes = ASTC_4x4_BYTES;
+            break;
+        default:
+            IMAGE_LOGE("pixel format:[%{public}d] not supported.", format);
+            return false;
+    }
+    return true;
 }
 
 uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
@@ -244,22 +300,18 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
     }
 
     std::shared_ptr<PixelMap> auxPixelMap;
+    std::unique_ptr<AuxiliaryPicture> auxPicture;
     PluginServer &pluginServer = ImageUtils::GetPluginServer();
     auto auxDecoder = DoCreateDecoder(IMAGE_EXTENDED_CODEC, pluginServer, *auxStream, errorCode);
     if (supportStatus->second == SupportCodec::SUPPORT) {
         if (auxDecoder == nullptr) {
-            errorCode = 211;    // TODO: 待修改，等待最后通统一商定errorcode
+            errorCode = IMAGE_RESULT_CREATE_DECODER_FAILED;
             return nullptr;
         }
-
-        // TODO: SetAuxiliaryPictureDecodeOption
 
         DecodeContext auxCtx;
         auxCtx.allocatorType = AllocatorType::DMA_ALLOC;
         errorCode = auxDecoder->Decode(FIRST_FRAME, auxCtx);
-
-        // if (auxiliaryPictureInfo.size...)
-
         if (errorCode != SUCCESS) {
             IMAGE_LOGE("Jpeg Decode auxiliary picture failed! errorCode: %{public}d", errorCode);
             FreeContextBuffer(auxCtx.freeFunc, auxCtx.allocatorType, auxCtx.pixelsBuffer);
@@ -293,19 +345,19 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
             auxPixelMap->InnerSetColorSpace(grColorSpace);
         }
 #endif
+        auxPicture = AuxiliaryPicture::Create(auxPixelMap, type, imageinfo.size);
+        int8_t pixelBytes = 0;
+        int32_t rowStride = GetPixelBytes(imageinfo.pixelFormat, pixelBytes) ? imageinfo.size.width * pixelBytes : 0;
+        AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, imageinfo.size, rowStride,
+                                                                imageinfo.pixelFormat, imageinfo.colorSpace);
+        auxPicture->SetAuxiliaryPictureInfo(auxInfo);
     } else {
-        // TODO: 如果不解码，opts如何设置
         InitializationOptions opts;
         std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(
             reinterpret_cast<uint32_t*>(auxStream->GetDataPtr()), auxStream->GetStreamSize(), opts);
         auxPixelMap = std::move(pixelMap);
-        // auxPixelMap->SetPixelsAddr();
+        auxPicture = AuxiliaryPicture::Create(auxPixelMap, type);
     }
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(auxPixelMap, type);
-
-    // TODO: 完善AuxiliaryPictureInfo
-    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, {0, 0}, 0, PixelFormat::UNKNOWN, ColorSpace::UNKNOWN);
-    auxPicture->SetAuxiliaryPictureInfo(auxInfo);
 
     if (type == AuxiliaryPictureType::GAINMAP) {
         errorCode = DecodeHdrMetadata(auxDecoder, auxPicture);

@@ -190,15 +190,11 @@ bool JpegMpfParser::ParsingMpEntry(uint8_t* data, uint32_t size, bool isBigEndia
 
 AuxiliaryPictureType JpegMpfParser::ParsingImageAttribute(uint32_t imageAttr, bool isBigEndian)
 {
-    if (bytes == nullptr) {
-        return AuxiliaryPictureType::NONE;
-    }
-
     vector<uint8_t> bytes;
     uint32_t offset = 0;
     ImageUtils::Uint32ToBytes(imageAttr, bytes, offset, isBigEndian);
     uint8_t mpType = isBigEndian ? bytes[1] : bytes[UINT16_BYTE_SIZE];
-    auto iter = MP_AUXILIARY_TYPE_MAP.find(mpType);
+    auto iter = MP_AUXILIARY_TYPE_MAP.find(static_cast<MPImageType>(mpType));
     if (iter == MP_AUXILIARY_TYPE_MAP.end()) {
         return AuxiliaryPictureType::NONE;
     }

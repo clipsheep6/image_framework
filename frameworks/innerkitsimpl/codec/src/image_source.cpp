@@ -3883,37 +3883,30 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
     auto jpegMpfParser = std::make_unique<JpegMpfParser>();
     if (!jpegMpfParser->CheckMpfOffset(streamBuffer, streamSize, mpfOffset)) {
         IMAGE_LOGE("Jpeg CheckMpfOffset failed!");
-        errorCode = 210; // TODO: 待修改，等待最后通统一商定errorcode
+        errorCode = ERR_IMAGE_DATA_ABNORMAL;
         return;
-    } else {
-        streamBuffer += mpfOffset;
-        streamSize -= mpfOffset;
     }
+    streamBuffer += mpfOffset;
+    streamSize -= mpfOffset;
     if (!jpegMpfParser->Parsing(streamBuffer, streamSize)) {
         IMAGE_LOGE("Jpeg mpf parse failed!");
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
         return;
     }
-    for (AuxiliaryPictureType auxType : auxTypes) {
-        bool isFound = false;
-        for (auto &auxInfo : jpegMpfParser->images_) {
-            if (auxInfo.auxType == auxType) {
-                isFound = true;
-                std::unique_ptr<InputDataStream> auxStream =
-                    BufferSourceStream::CreateSourceStream((streamBuffer + auxInfo.offset), auxInfo.size);
-                if (auxStream == nullptr) {
-                    IMAGE_LOGE("[ImageSource] create auxiliary stream fail, auxiliary offset is %{public}d",
-                        auxInfo.offset);
-                    break;
-                }
-                auto auxPicture = AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxType, errorCode);
-                picture->SetAuxiliaryPicture(auxPicture);
-                IMAGE_LOGI("DecodeJpegAuxiliaryPicture::SetAuxiliaryPicture( %{public}d ) SUCCESS!!!", auxType);
+
+    for (auto &auxInfo : jpegMpfParser->images_) {
+        auto iter = auxTypes.find(auxInfo.auxType);
+        if (iter != auxTypes.end()) {
+            IMAGE_LOGI("Jpeg Desire Auxiliary Picture not found! Auxiliary type: %{public}d", auxInfo.auxType);
+            std::unique_ptr<InputDataStream> auxStream =
+                BufferSourceStream::CreateSourceStream((streamBuffer + auxInfo.offset), auxInfo.size);
+            if (auxStream == nullptr) {
+                IMAGE_LOGE("Create auxiliary stream fail, auxiliary offset is %{public}d", auxInfo.offset);
                 break;
             }
-        }
-        if (!isFound) {
-            IMAGE_LOGI("Jpeg Desire Auxiliary Picture not found! Auxiliary type: %{public}d", auxType);
+            auto auxPicture = AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxInfo.auxType, errorCode);
+            picture->SetAuxiliaryPicture(auxPicture);
+            IMAGE_LOGI("DecodeJpegAuxiliaryPicture::SetAuxiliaryPicture() SUCCESS!!!");
         }
     }
 }
