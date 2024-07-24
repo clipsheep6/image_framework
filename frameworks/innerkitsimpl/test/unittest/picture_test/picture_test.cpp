@@ -552,5 +552,114 @@ HWTEST_F(PictureTest, MarshallingTest006, TestSize.Level1)
     EXPECT_EQ(dstFragmentMetadata->GetValue("WIDTH", dstValue), SUCCESS);
     EXPECT_EQ(dstValue, srcValue);
 }
+
+/**
+* @tc.name: CreateTest001
+* @tc.desc: Create a Picture using the correct PixelMap.
+* @tc.type: FUNC
+*/
+HWTEST_F(PictureTest, CreateTest001, TestSize.Level1)
+{
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    ASSERT_NE(pixelmap, nullptr);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    EXPECT_NE(picture, nullptr);
+}
+
+/**
+* @tc.name: CreateTest002
+* @tc.desc: Create a Picture using PixelMap with null ptr.
+* @tc.type: FUNC
+*/
+HWTEST_F(PictureTest, CreateTest002, TestSize.Level2)
+{
+    std::shared_ptr<PixelMap> pixelmap = nullptr;
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    EXPECT_EQ(picture, nullptr);
+}
+
+/**
+* @tc.name: CreateTest003
+* @tc.desc: Create a Picture using the correct SurfaceBuffer.
+* @tc.type: FUNC
+*/
+HWTEST_F(PictureTest, CreateTest003, TestSize.Level1)
+{
+    OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer = OHOS::SurfaceBuffer::Create();
+    ASSERT_NE(surfaceBuffer, nullptr);
+    std::unique_ptr<Picture> picture = Picture::Create(surfaceBuffer);
+    EXPECT_NE(picture, nullptr);
+}
+
+/**
+* @tc.name: CreateTest004
+* @tc.desc: Create a Picture using the SurfaceBuffer with null ptr.
+* @tc.type: FUNC
+*/
+HWTEST_F(PictureTest, CreateTest004, TestSize.Level2)
+{
+    OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer = nullptr;
+    std::unique_ptr<Picture> picture = Picture::Create(surfaceBuffer);
+    EXPECT_EQ(picture, nullptr);
+}
+
+/**
+* @tc.name: createPictureFromParcelTest001
+* @tc.desc: Create a Picture using the correct Parcel.
+* @tc.type: FUNC
+*/
+HWTEST_F(PictureTest, createPictureFromParcelTest001, TestSize.Level1)
+{
+    Parcel data;
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    ASSERT_NE(picture, nullptr);
+    auto ret = picture->Marshalling(data);
+    EXPECT_TRUE(ret);
+    Picture *newPicture = Picture::Unmarshalling(data);
+    EXPECT_EQ(newPicture->GetMainPixel()->GetHeight(), picture->GetMainPixel()->GetHeight());
+}
+
+/**
+* @tc.name: GetGainmapPixelmapTest001
+* @tc.desc: There is an auxiliary map of type GainMap, and the corresponding Pixelmap is obtained.
+* @tc.type: FUNC
+*/
+HWTEST_F(PictureTest, GetGainmapPixelmapTest001, TestSize.Level1)
+{
+    Size size;
+    size.width = sizeWidth;
+    size.height = sizeHeight;
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPic = AuxiliaryPicture::Create(pixelmap,
+        AuxiliaryPictureType::GAINMAP, size);
+    std::shared_ptr<AuxiliaryPicture> gainmapAuxiliaryPic = std::move(auxiliaryPic);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    picture->SetAuxiliaryPicture(gainmapAuxiliaryPic);
+    auto tempPixelMap = picture->GetGainmapPixelMap();
+
+    EXPECT_NE(tempPixelMap, nullptr);
+    EXPECT_EQ(tempPixelMap->GetHeight(), pixelmap->GetHeight());
+}
+
+/**
+* @tc.name: GetGainmapPixelmapTest002
+* @tc.desc: There is no auxiliary map of type gain map, obtain null ptr.
+* @tc.type: FUNC
+*/
+HWTEST_F(PictureTest, GetGainmapPixelmapTest002, TestSize.Level2)
+{
+    Size size;
+    size.width = sizeWidth;
+    size.height = sizeHeight;
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPic = AuxiliaryPicture::Create(pixelmap,
+        AuxiliaryPictureType::FRAGMENT_MAP, size);
+    std::shared_ptr<AuxiliaryPicture> gainmapAuxiliaryPic = std::move(auxiliaryPic);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    picture->SetAuxiliaryPicture(gainmapAuxiliaryPic);
+    std::shared_ptr<PixelMap> desPixelMap = picture->GetGainmapPixelMap();
+    EXPECT_EQ(desPixelMap, nullptr);
+}
 } // namespace Media
 } // namespace OHOS
