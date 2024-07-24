@@ -246,7 +246,7 @@ bool HeifDecoderImpl::init(HeifStream *stream, HeifFrameInfo *frameInfo)
     return Reinit(frameInfo);
 }
 
-bool HeifDecoderImpl::GetAuxiliaryMap(AuxiliaryPictureType type)
+bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
 {
     if (parser_ == nullptr) {
         IMAGE_LOGE("Heif parser is nullptr.");

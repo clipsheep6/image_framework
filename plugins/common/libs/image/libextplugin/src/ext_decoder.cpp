@@ -1865,7 +1865,7 @@ bool ExtDecoder::CheckAuxiliaryMap(Media::AuxiliaryPictureType type)
         IMAGE_LOGE("Get heif context failed! Type %{public}d.", type);
         return false;
     }
-    if (!decoder->GetAuxiliaryMap(type)) {
+    if (!decoder->CheckAuxiliaryMap(type)) {
         IMAGE_LOGE("Get heif auxiliaryMap %{public}d, decoder error", type);
         return false;
     }

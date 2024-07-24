@@ -59,7 +59,7 @@ public:
         std::vector<uint8_t>& lightInfo) override;
     void getISOMetadata(std::vector<uint8_t>& isoMetadata) override;
     void getErrMsg(std::string& errMsg) override;
-    bool GetAuxiliaryMap(Media::AuxiliaryPictureType type) override;
+    bool CheckAuxiliaryMap(Media::AuxiliaryPictureType type) override;
     bool setAuxiliaryMap(Media::AuxiliaryPictureType type) override;
     bool getAuxiliaryMapInfo(HeifFrameInfo* frameInfo) override;
     bool decodeAuxiliaryMap() override;
