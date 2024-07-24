@@ -93,6 +93,7 @@ HWTEST_F(PictureTest, SurfaceBuffer2PixelMapTest002, TestSize.Level1)
     std::shared_ptr<PixelMap> pixelmap = Picture::SurfaceBuffer2PixelMap(buffer);
     EXPECT_NE(nullptr, pixelmap);
 }
+
 /**
  * @tc.name: SetAuxiliaryPictureTest001
  * @tc.desc: Set gainmap to picture.

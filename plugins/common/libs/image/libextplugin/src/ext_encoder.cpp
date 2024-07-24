@@ -257,12 +257,10 @@ uint32_t ExtEncoder::FinalizeEncode()
         ReportEncodeFault(0, 0, opts_.format, "Unsupported format:" + opts_.format);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-
     if (picture_ != nullptr) {
         encodeFormat_ = iter->first;
         return EncodePicture();
     }
-
     ImageInfo imageInfo;
     pixelmap_->GetImageInfo(imageInfo);
     imageDataStatistics.AddTitle(", width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
