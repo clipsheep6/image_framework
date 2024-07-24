@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Huawei Device Co., Ltd.
+# Copyright (C) 2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -16,38 +16,8 @@ import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 
 SUBSYSTEM_DIR = "//foundation/multimedia/image_framework"
 
-ohos_shared_library("pixelmap_ndk") {
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    cfi_vcall_icall_only = true
-    debug = false
-  }
-  include_dirs = [
-    "${image_subsystem}/interfaces/innerkits/include/mdkKits",
-    "include",
-  ]
 
-  sources = [
-    "image_pixel_map_napi.cpp",
-    "image_pixel_map_ndk.cpp",
-  ]
-
-  public_configs =
-      [ "$SUBSYSTEM_DIR/interfaces/innerkits:image_external_config" ]
-
-  deps = [ "$SUBSYSTEM_DIR/interfaces/kits/js/common:image" ]
-  external_deps = [
-    "graphic_2d:color_manager",
-    "napi:ace_napi",
-  ]
-
-  innerapi_tags = [ "ndk" ]
-  subsystem_name = "multimedia"
-  part_name = "image_framework"
-}
-
-ohos_shared_library("pixelmap") {
+ohos_shared_library("image_common") {
   output_extension = "so"
   sanitize = {
     cfi = true
@@ -56,22 +26,66 @@ ohos_shared_library("pixelmap") {
     debug = false
   }
   include_dirs = [
-    "${image_subsystem}/frameworks/kits/js/common/ndk/include",
-    "${image_subsystem}/frameworks/innerkitsimpl/egl_image/include",
+    "include",
+    "$SUBSYSTEM_DIR/interfaces/innerkits/include",
     "$SUBSYSTEM_DIR/interfaces/kits/native/include/image",
+    "$SUBSYSTEM_DIR/frameworks/kits/js/common/picture_ndk/include",
   ]
 
   sources = [
-    "pixelmap_native.cpp",
-    "pixelmap_native_impl.cpp",
+    "image_common.cpp",
+    "image_common_impl.cpp",
   ]
 
   public_configs =
       [ "$SUBSYSTEM_DIR/interfaces/innerkits:image_external_config" ]
 
-  deps = [  #"$SUBSYSTEM_DIR/interfaces/kits/js/common:image",
+  deps = [
+    "$SUBSYSTEM_DIR/interfaces/innerkits:image_native",
+    "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+  ]
+
+  if (enable_libexif) {
+    external_deps = [ "libexif:libexif" ]
+  }
+
+  innerapi_tags = [ "ndk","platformsdk"]
+  subsystem_name = "multimedia"
+  part_name = "image_framework"
+}
+
+
+ohos_shared_library("picture") {
+  output_extension = "so"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  include_dirs = [
+    "include",
+    "${image_subsystem}/frameworks/kits/js/common/ndk/include",
+    "${image_subsystem}/frameworks/innerkitsimpl/egl_image/include",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
+    "$SUBSYSTEM_DIR/interfaces/kits/native/include/image",
+  ]
+
+  sources = [
+    "picture_native.cpp",
+    "picture_native_impl.cpp",
+
+  ]
+
+  public_configs =
+      [ "$SUBSYSTEM_DIR/interfaces/innerkits:image_external_config" ]
+
+  deps = [
     "$SUBSYSTEM_DIR/frameworks/innerkitsimpl/egl_image:egl_image",
     "$SUBSYSTEM_DIR/interfaces/innerkits:image_native",
+    "$SUBSYSTEM_DIR/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
+    "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+    "$SUBSYSTEM_DIR/frameworks/kits/js/common/picture_ndk:image_common",
   ]
 
   innerapi_tags = [ "ndk" ]
