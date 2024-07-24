@@ -335,7 +335,7 @@ napi_value AuxiliaryPictureNapi::Release(napi_env env, napi_callback_info info)
     napi_get_undefined(env, &nVal.result);
     nVal.argc = NUM_0;
     IMAGE_LOGD("Call Release");
-    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext = 
+    std::unique_ptr<AuxiliaryPictureNapiAsyncContext> asyncContext =
         std::make_unique<AuxiliaryPictureNapiAsyncContext>();
     IMG_JS_ARGS(env, info, nVal.status, nVal.argc, nullptr, nVal.thisVar);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(nVal.status), nVal.result, IMAGE_LOGE("Fail to call napi_get_cb_info"));
@@ -512,7 +512,7 @@ static napi_value GetAuxiliaryPictureInfoNapiValue(napi_env env, void* data, std
     auto auxiliaryPictureInfo = static_cast<AuxiliaryPictureInfo*>(data);
     napi_create_object(env, &result);
     napi_value auxiliaryPictureTypeValue = nullptr;
-    napi_create_int32(env, static_cast<int32_t>(auxiliaryPictureInfo->auxiliaryPictureType), 
+    napi_create_int32(env, static_cast<int32_t>(auxiliaryPictureInfo->auxiliaryPictureType),
         &auxiliaryPictureTypeValue);
     napi_set_named_property(env, result, "auxiliaryPictureType", auxiliaryPictureTypeValue);
 
@@ -569,9 +569,9 @@ napi_value AuxiliaryPictureNapi::GetAuxiliaryPictureInfo(napi_env env, napi_call
     IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, auxiliaryPictureNapi->nativeAuxiliaryPicture_),
         nullptr, IMAGE_LOGE("Empty native auxiliarypicture"));
     if (auxiliaryPictureNapi->nativeAuxiliaryPicture_ != nullptr) {
-        AuxiliaryPictureInfo auxiliaryPictureInfo;
-        auxiliaryPictureInfo = auxiliaryPictureNapi->nativeAuxiliaryPicture_->GetAuxiliaryPictureInfo();
-        nVal.result = GetAuxiliaryPictureInfoNapiValue(env, &auxiliaryPictureInfo, 
+        AuxiliaryPictureInfo auxiliaryPictureInfo =
+            auxiliaryPictureNapi->nativeAuxiliaryPicture_->GetAuxiliaryPictureInfo();
+        nVal.result = GetAuxiliaryPictureInfoNapiValue(env, &auxiliaryPictureInfo,
             auxiliaryPictureNapi->nativeAuxiliaryPicture_);
     } else {
         IMAGE_LOGE("Native auxiliarypicture is nullptr!");
@@ -603,7 +603,7 @@ static void ParseColorSpace(napi_env env, napi_value val, AuxiliaryPictureNapiAs
 #endif
 }
 
-static bool ParseAuxiliaryPictureInfo(napi_env env, napi_value result, napi_value root, 
+static bool ParseAuxiliaryPictureInfo(napi_env env, napi_value result, napi_value root,
     AuxiliaryPictureNapiAsyncContext* auxiliaryPictureNapiAsyncContext)
 {
     uint32_t tmpNumber = 0;
@@ -619,8 +619,8 @@ static bool ParseAuxiliaryPictureInfo(napi_env env, napi_value result, napi_valu
     if (!GET_NODE_BY_NAME(root, "size", tmpValue)) {
         return false;
     }
-    if (!ParseSize(env, tmpValue, context->auxiliaryPictureInfo.size.width, 
-        context->auxiliaryPictureInfo.size.height)) {
+    if (!ParseSize(env, tmpValue, context->auxiliaryPictureInfo.size.width,
+            context->auxiliaryPictureInfo.size.height)) {
         return false;
     }
 

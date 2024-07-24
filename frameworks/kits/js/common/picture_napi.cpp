@@ -684,7 +684,8 @@ napi_value PictureNapi::GetGainmapPixelmap(napi_env env, napi_callback_info info
 
     PictureNapi* pictureNapi = nullptr;
     nVal.status = napi_unwrap(env, nVal.thisVar, reinterpret_cast<void**>(&pictureNapi));
-    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, pictureNapi), nVal.result, IMAGE_LOGE("Failed to retrieve native pointer"));
+    IMG_NAPI_CHECK_RET_D(IMG_IS_READY(nVal.status, pictureNapi),
+        nVal.result, IMAGE_LOGE("Failed to retrieve native pointer"));
 
     if (pictureNapi->nativePicture_ != nullptr) {
         auto gainpixelmap = pictureNapi->nativePicture_->GetGainmapPixelMap();

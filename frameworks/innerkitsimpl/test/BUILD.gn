@@ -74,7 +74,7 @@ ohos_unittest("picturetest") {
     "-DIMAGE_DEBUG_FLAG",
     "-DIMAGE_COLORSPACE_FLAG",
   ]
-  
+
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/picture_test/picture_test.cpp",
@@ -1920,6 +1920,7 @@ group("unittest") {
   testonly = true
   deps = [
     ":attrdatatest",
+    ":auxiliarypicturetest",
     ":bmpplugintest",
     ":colorconvertertest",
     ":convertertest",
@@ -1954,11 +1955,10 @@ group("unittest") {
     ":jpgyuvtest",
     ":napitest",
     ":ndktest2",
+    ":picturetest",
     ":pixelastctest",
     ":pixelconvertadaptertest",
     ":pixelmaptest",
-    ":picturetest",
-    ":auxiliarypicturetest",
     ":pluginlibjpegtest",
     ":pluginsmanagersrcframeworktest",
     ":pngtest",
