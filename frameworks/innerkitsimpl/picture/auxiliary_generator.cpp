@@ -70,52 +70,6 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     return info;
 }
 
-bool AuxiliaryGenerator::GetPixelBytes(const PixelFormat format, int8_t &pixelBytes)
-{
-    switch (format) {
-        case PixelFormat::RGBA_8888:
-            pixelBytes = ARGB_8888_BYTES;
-            break;
-        case PixelFormat::RGBA_1010102:
-            pixelBytes = ARGB_8888_BYTES;
-            break;
-        case PixelFormat::BGRA_8888:
-            pixelBytes = ARGB_8888_BYTES;
-            break;
-        case PixelFormat::ARGB_8888:
-            pixelBytes = ARGB_8888_BYTES;
-            break;
-        case PixelFormat::ALPHA_8:
-            pixelBytes = ALPHA_8_BYTES;
-            break;
-        case PixelFormat::RGB_565:
-            pixelBytes = RGB_565_BYTES;
-            break;
-        case PixelFormat::RGB_888:
-            pixelBytes = RGB_888_BYTES;
-            break;
-        case PixelFormat::NV12:
-        case PixelFormat::NV21:
-            pixelBytes = YUV420_BYTES;
-            break;
-        case PixelFormat::CMYK:
-            pixelBytes = ARGB_8888_BYTES;
-            break;
-        case PixelFormat::RGBA_F16:
-            pixelBytes = BGRA_F16_BYTES;
-            break;
-        case PixelFormat::ASTC_4x4:
-        case PixelFormat::ASTC_6x6:
-        case PixelFormat::ASTC_8x8:
-            pixelBytes = ASTC_4x4_BYTES;
-            break;
-        default:
-            IMAGE_LOGE("pixel format:[%{public}d] not supported.", format);
-            return false;
-    }
-    return true;
-}
-
 uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     ImageHdrType hdrType = extDecoder->CheckHdrType();
@@ -265,17 +219,15 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     PixelMapAddrInfos addrInfos;
     ImageSource::ContextToAddrInfos(context, addrInfos);
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
-    ImageInfo info = MakeImageInfo(context.outInfo.size.width, context.outInfo.size.height, context.outInfo.pixelFormat,
-        context.outInfo.alphaType, context.outInfo.colorSpace);
+    ImageInfo info = MakeImageInfo(context.outInfo.size.width, context.outInfo.size.height,
+        context.outInfo.pixelFormat, context.outInfo.alphaType, context.outInfo.colorSpace);
     pixelMap->SetImageInfo(info, true);
     OHOS::ColorManager::ColorSpace grColorSpace = extDecoder->getGrColorSpace();
     pixelMap->InnerSetColorSpace(grColorSpace);
 
     // Create auxiliary picture object, and set auxiliary picture info.
     unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelMap, type);
-    auto* sbBuffer = reinterpret_cast<SurfaceBuffer*>(context.pixelsBuffer.context);
-    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(
-        type, {context.outInfo.size.width, context.outInfo.size.height}, sbBuffer->GetStride(),
+    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, context.outInfo.size, pixelMap->GetRowStride(),
         context.outInfo.pixelFormat, context.outInfo.colorSpace);
     auxPicture->SetAuxiliaryPictureInfo(auxInfo);
 
@@ -346,9 +298,7 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
         }
 #endif
         auxPicture = AuxiliaryPicture::Create(auxPixelMap, type, imageinfo.size);
-        int8_t pixelBytes = 0;
-        int32_t rowStride = GetPixelBytes(imageinfo.pixelFormat, pixelBytes) ? imageinfo.size.width * pixelBytes : 0;
-        AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, imageinfo.size, rowStride,
+        AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, imageinfo.size, auxPixelMap->GetRowStride(),
                                                                 imageinfo.pixelFormat, imageinfo.colorSpace);
         auxPicture->SetAuxiliaryPictureInfo(auxInfo);
     } else {
