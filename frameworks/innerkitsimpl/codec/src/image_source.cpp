@@ -1632,6 +1632,19 @@ bool ImageSource::IsHdrImage()
     return sourceHdrType_ > ImageHdrType::SDR;
 }
 
+bool ImageSource::IsSingalHdrImage()
+{
+    if (sourceHdrType_ != ImageHdrType::UNKNOWN) {
+        return sourceHdrType_ == ImageHdrType::HDR_VIVID_SINGLE;
+    }
+
+    if (InitMainDecoder() != SUCCESS) {
+        return false;
+    }
+    sourceHdrType_ = mainDecoder_->CheckHdrType();
+    return sourceHdrType_ == ImageHdrType::HDR_VIVID_SINGLE;
+}
+
 NATIVEEXPORT std::shared_ptr<ExifMetadata> ImageSource::GetExifMetadata()
 {
     if (exifMetadata_ != nullptr) {
@@ -3815,7 +3828,8 @@ DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, Imag
 std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
 {
     DecodeOptions dopts;
-    dopts.desiredDynamicRange = IsHdrImage() ? DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
+    dopts.desiredPixelFormat = PixelFormat::NV21;
+    dopts.desiredDynamicRange = IsSingalHdrImage() ? DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
 
     std::shared_ptr<PixelMap> pixelMap = CreatePixelMap(dopts, errorCode);
     std::unique_ptr<Picture> picture = Picture::Create(pixelMap);
