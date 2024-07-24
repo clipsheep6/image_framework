@@ -405,7 +405,7 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest001, TestSize.Level1)
     std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     ASSERT_NE(pixelmap, nullptr);
     Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = 
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
         AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
     ASSERT_NE(auxiliaryPicture, nullptr);
     uint64_t bufferSize = pixelmap->GetCapacity();
@@ -425,7 +425,7 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest002, TestSize.Level2)
     std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     ASSERT_NE(pixelmap, nullptr);
     Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = 
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
         AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
     ASSERT_NE(auxiliaryPicture, nullptr);
     uint64_t bufferSize = pixelmap->GetCapacity();
@@ -446,7 +446,7 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest003, TestSize.Level2)
     std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     ASSERT_NE(pixelmap, nullptr);
     Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = 
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
         AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
     ASSERT_NE(auxiliaryPicture, nullptr);
     uint64_t bufferSize = pixelmap->GetCapacity();
@@ -465,7 +465,7 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest004, TestSize.Level2)
     std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     ASSERT_NE(pixelmap, nullptr);
     Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = 
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
         AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
     ASSERT_NE(auxiliaryPicture, nullptr);
     uint64_t bufferSize = pixelmap->GetCapacity();

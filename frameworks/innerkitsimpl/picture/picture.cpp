@@ -396,13 +396,11 @@ bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
     }
 
     maintenanceData_ = std::make_unique<MaintenanceData>(std::make_unique<uint8_t[]>(size), size);
-
     if (!maintenanceData_) {
         return false;
     }
 
     auto ret = memcpy_s(maintenanceData_->data_.get(), size, surfaceBuffer->GetVirAddr(), size);
-
     if (ret != EOK) {
         IMAGE_LOGE("Memmoy copy failed, errono: %d.", ret);
         return false;

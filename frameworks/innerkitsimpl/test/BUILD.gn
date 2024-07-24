@@ -81,8 +81,8 @@ ohos_unittest("picturetest") {
   ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+    "$image_subsystem/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
@@ -111,8 +111,8 @@ ohos_unittest("auxiliarypicturetest") {
   ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+    "$image_subsystem/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
@@ -1931,6 +1931,7 @@ group("unittest") {
     ":exifmetadatatest",
     ":format_agent_plugin_src_test",
     ":formatagentplugintest",
+    ":fragmentmetadatatest",
     ":gifplugintest",
     ":gstpluginfwtest",
     ":heif_parser_test",
@@ -1941,8 +1942,6 @@ group("unittest") {
     ":imageeventtest",
     ":imageformatconverttest",
     ":imagepixelmapparceltest",
-    ":metadatatest",
-    ":fragmentmetadatatest",
     ":imagepixelmaptest",
     ":imagesourcetest",
     ":imagestreamtest",
@@ -1953,6 +1952,7 @@ group("unittest") {
     ":jpegdecoderextest",
     ":jpegutilstest",
     ":jpgyuvtest",
+    ":metadatatest",
     ":napitest",
     ":ndktest2",
     ":picturetest",
