@@ -3874,9 +3874,18 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
 void ImageSource::DecodeJpegAuxiliaryPicture(
     const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
 {
-    uint8_t* streamBuffer = sourceStreamPtr_->GetDataPtr();
+    uint8_t *streamBuffer = sourceStreamPtr_->GetDataPtr();
     uint32_t streamSize = sourceStreamPtr_->GetStreamSize();
+    uint32_t mpfOffset = 0;
     auto jpegMpfParser = std::make_unique<JpegMpfParser>();
+    if (!jpegMpfParser->CheckMpfOffset(streamBuffer, streamSize, mpfOffset)) {
+        IMAGE_LOGE("Jpeg CheckMpfOffset failed!");
+        errorCode = 210; // TODO: 待修改，等待最后通统一商定errorcode
+        return;
+    } else {
+        streamBuffer += mpfOffset;
+        streamSize -= mpfOffset;
+    }
     if (!jpegMpfParser->Parsing(streamBuffer, streamSize)) {
         IMAGE_LOGE("Jpeg mpf parse failed!");
         errorCode = ERR_IMAGE_DATA_ABNORMAL;
