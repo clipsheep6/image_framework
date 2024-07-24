@@ -268,7 +268,7 @@ bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
             auxiliaryImage_ = parser_->GetAuxiliaryMapImage("linearmap");
             break;
         case AuxiliaryPictureType::FRAGMENT_MAP:
-            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("Fragmentmap");
+            auxiliaryImage_ = parser_->GetAuxiliaryMapImage("fragmentmap");
             break;
         default:
             return false;
@@ -289,11 +289,12 @@ bool HeifDecoderImpl::setAuxiliaryMap(AuxiliaryPictureType type)
         return false;
     }
 
-    if (auxiliaryImage_ != nullptr) {
+    if (auxiliaryImage_ != nullptr && !auxiliaryImage_->GetAuxImageType().empty()) {
         InitFrameInfo(&auxiliaryImageInfo_, auxiliaryImage_);
         InitGridInfo(auxiliaryImage_, auxiliaryGridInfo_);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool HeifDecoderImpl::Reinit(HeifFrameInfo *frameInfo)

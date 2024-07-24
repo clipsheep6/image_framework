@@ -39,16 +39,14 @@ public:
 private:
     static ImageInfo MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs);
     static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(
-        AuxiliaryPictureType type, Size size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
+        AuxiliaryPictureType type, const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
     static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer);
     static AbsImageDecoder* DoCreateDecoder(string codecFormat, PluginServer &pluginServer, InputDataStream &sourceData,
                                             uint32_t &errorCode) __attribute__((no_sanitize("cfi")));
-    static uint32_t DecodeHeifMetaData(AbsImageDecoder* extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture,
-                                       AuxiliaryPictureType type);
+    static uint32_t DecodeHeifMetadata(AbsImageDecoder* extDecoder, AuxiliaryPictureType type,
+                                       unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeFragmentMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
-    static uint32_t DecodeJpegFragmentMetaData(std::unique_ptr<ImagePlugin::InputDataStream> &auxStream,
-                                               std::unique_ptr<AuxiliaryPicture> &auxPicture);
 };
 } // namespace Media
 } // namespace OHOS
