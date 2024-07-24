@@ -63,11 +63,6 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
 uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     ImageHdrType hdrType = extDecoder->CheckHdrType();
-    if (hdrType <= ImageHdrType::SDR) {
-        IMAGE_LOGE("Get hdr type failed! Current hdrType: %{public}d", hdrType);
-        return ERR_IMAGE_DECODE_METADATA_FAILED;
-    }
-
     std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
     std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
     pixelMap->SetHdrMetadata(hdrMetadata);
@@ -233,7 +228,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
         IMAGE_LOGE("Decode heif metadata failed.");
         return nullptr;
     }
-    return std::make_shared<AuxiliaryPicture>(*auxPicture.release());
+    return std::move(auxPicture);
 #endif
     errorCode = ERR_IMAGE_HW_DECODE_UNSUPPORT;
     return nullptr;
