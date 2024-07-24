@@ -64,7 +64,6 @@ public:
     bool getAuxiliaryMapInfo(HeifFrameInfo* frameInfo) override;
     bool decodeAuxiliaryMap() override;
     void setAuxiliaryDstBuffer(uint8_t* dstBuffer, size_t rowStride) override;
-    bool GetHeifMetadata(std::string metadataType, std::shared_ptr<HeifMetadata> &metadata) override;
 private:
     bool Reinit(HeifFrameInfo *frameInfo);
 

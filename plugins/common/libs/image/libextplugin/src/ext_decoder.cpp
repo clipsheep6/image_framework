@@ -1712,24 +1712,6 @@ HdrMetadata ExtDecoder::GetHdrMetadata(Media::ImageHdrType type)
 #endif
 }
 
-std::vector<uint8_t> ExtDecoder::GetHeifMetadata(std::string metadataType)
-{
-#ifdef HEIF_HW_DECODE_ENABLE
-    if (codec_ == nullptr || codec_->getEncodedFormat() != SkEncodedImageFormat::kHEIF) {
-        return {};
-    }
-
-    std::shared_ptr<HeifMetadata> heifMetadata = nullptr;
-    auto decoder = reinterpret_cast<HeifDecoder*>(codec_->getHeifContext());
-    if (decoder->GetHeifMetadata(metadataType, heifMetadata)) {
-        return heifMetadata->mData;
-    }
-    IMAGE_LOGD("get metadata failed, type is %{public}s", metadataType.c_str());
-    return {};
-#endif
-    return {};
-}
-
 bool ExtDecoder::DecodeHeifGainMap(DecodeContext& context)
 {
 #ifdef HEIF_HW_DECODE_ENABLE

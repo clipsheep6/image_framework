@@ -45,8 +45,6 @@ private:
                                             uint32_t &errorCode) __attribute__((no_sanitize("cfi")));
     static uint32_t DecodeHeifMetaData(AbsImageDecoder* extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture,
                                        AuxiliaryPictureType type);
-    static uint32_t DecodeExifMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture,
-                                       AuxiliaryPictureType type);
     static uint32_t DecodeHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeFragmentMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeJpegFragmentMetaData(std::unique_ptr<ImagePlugin::InputDataStream> &auxStream,

@@ -845,24 +845,6 @@ bool HeifDecoderImpl::getTmapInfo(HeifFrameInfo* frameInfo)
     return true;
 }
 
-bool HeifDecoderImpl::GetHeifMetadata(std::string itemType, std::shared_ptr<HeifMetadata> &heifMetadata)
-{
-    if (auxiliaryImage_ == nullptr) {
-        return false;
-    }
-    std::vector<std::shared_ptr<HeifMetadata>> metadata = auxiliaryImage_->GetAllMetadata();
-    for (auto meta: metadata) {
-        if (meta == nullptr) {
-            continue;
-        }
-        if (meta->itemType == itemType) {
-            heifMetadata = std::shared_ptr<HeifMetadata>(meta);
-            return true;
-        }
-    }
-    return false;
-}
-
 HeifImageHdrType HeifDecoderImpl::getHdrType()
 {
     std::vector<uint8_t> uwaInfo = primaryImage_->GetUWAInfo();

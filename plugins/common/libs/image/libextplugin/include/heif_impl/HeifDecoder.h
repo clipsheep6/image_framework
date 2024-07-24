@@ -92,7 +92,6 @@ struct HeifDecoder {
     virtual bool decodeGainmap() = 0;
     virtual void setGainmapDstBuffer(uint8_t* dstBuffer, size_t rowStride) = 0;
     virtual bool getGainmapInfo(HeifFrameInfo* frameInfo) = 0;
-    virtual bool GetHeifMetadata(std::string metadataType, std::shared_ptr<OHOS::ImagePlugin::HeifMetadata> &heifMetadata) = 0;
     virtual bool getTmapInfo(HeifFrameInfo* frameInfo) = 0;
     virtual HeifImageHdrType getHdrType() = 0;
     virtual void getVividMetadata(std::vector<uint8_t>& uwaInfo, std::vector<uint8_t>& displayInfo,

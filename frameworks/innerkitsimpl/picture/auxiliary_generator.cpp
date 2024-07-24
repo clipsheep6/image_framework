@@ -60,27 +60,6 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     return info;
 }
 
-uint32_t AuxiliaryGenerator::DecodeExifMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture,
-                                                AuxiliaryPictureType type)
-{
-    const std::string EXIF_ID = "Exif\0\0";
-    std::vector<uint8_t> buffer = extDecoder->GetHeifMetadata(EXIF_ID);
-    if (buffer.size() == 0) {
-        IMAGE_LOGE("Get metadata failed! Auxiliary picture type: %{public}d", type);
-        return ERR_IMAGE_DECODE_METADATA_FAILED;
-    }
-
-    uint32_t errorCode;
-    std::shared_ptr<ImageMetadata> exifMetadata = CreateExifMetadata(buffer.data(), buffer.size(), errorCode);
-    if (exifMetadata == nullptr) {
-        IMAGE_LOGE("HEIF decode EXIF meta data failed! Auxiliary picture type: %{public}d", type);
-        return errorCode;
-    }
-
-    auxPicture->SetMetadata(MetadataType::EXIF, exifMetadata);
-    return SUCCESS;
-}
-
 uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     ImageHdrType hdrType = extDecoder->CheckHdrType();
@@ -105,17 +84,11 @@ uint32_t AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder *extDecoder, std
                                                 AuxiliaryPictureType type)
 {
     uint32_t errorCode;
-    errorCode = DecodeExifMetadata(extDecoder, auxPicture, type);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("Decode exif metadata failed!");
-        return errorCode;
-    }
-
     switch (type) {
         case AuxiliaryPictureType::GAINMAP: {
             errorCode = DecodeHdrMetadata(extDecoder, auxPicture);
             if (errorCode != SUCCESS) {
-                IMAGE_LOGE("Decode hdr metadata failed!");
+                IMAGE_LOGE("DecodeHdrMetadata() failed! errorCode: %{public}d", errorCode);
                 return errorCode;
             }
             break;
@@ -123,14 +96,14 @@ uint32_t AuxiliaryGenerator::DecodeHeifMetaData(AbsImageDecoder *extDecoder, std
         case AuxiliaryPictureType::FRAGMENT_MAP: {
             errorCode = DecodeFragmentMetadata(extDecoder, auxPicture);
             if (errorCode != SUCCESS) {
-                IMAGE_LOGE("Decode fragment metadata failed!");
+                IMAGE_LOGE("DecodeFragmentMetadata() failed! errorCode: %{public}d", errorCode);
                 return errorCode;
             }
             break;
         }
         default: {
             errorCode = ERR_MEDIA_DATA_UNSUPPORT;
-            IMAGE_LOGE("Get metadata failed! AuxMetadataType is %{public}d", type);
+            IMAGE_LOGE("Get metadata failed! AuxiliaryPictureType is %{public}d", type);
             break;
         }
     }

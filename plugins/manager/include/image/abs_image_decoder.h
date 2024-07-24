@@ -228,11 +228,6 @@ public:
         return {};
     }
 
-    virtual std::vector<uint8_t> GetHeifMetadata(std::string metadataType)
-    {
-        return {};
-    }
-
     virtual bool DecodeHeifGainMap(DecodeContext& context)
     {
         return false;
