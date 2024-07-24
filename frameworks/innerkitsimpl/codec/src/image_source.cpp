@@ -3894,7 +3894,7 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
         std::shared_ptr<PixelMap> gainmapPixel = picture->GetGainmapPixelMap();
         std::shared_ptr<PixelMap> mainPixel = picture->GetMainPixel();
         mainPixel->SetHdrMetadata(gainmapPixel->GetHdrMetadata());
-        mainPixel->SetHdrType(hdrType->GetHdrType());
+        mainPixel->SetHdrType(gainmapPixel->GetHdrType());
     }
 }
 } // namespace Media

@@ -226,7 +226,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
 std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(
     std::unique_ptr<InputDataStream> &auxStream, AuxiliaryPictureType type, uint32_t &errorCode)
 {
-    IMAGE_LOGI("AuxiliaryPictureType: %{public}d", errotyperCode);
+    IMAGE_LOGI("AuxiliaryPictureType: %{public}d", errorCode);
     auto supportStatus = SUPPORT_CODEC_AUXILIARY_MAP.find(type);
     if (supportStatus == SUPPORT_CODEC_AUXILIARY_MAP.end()) {
         return nullptr;
@@ -290,7 +290,7 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
         auxPixelMap = std::move(pixelMap);
         // auxPixelMap->SetPixelsAddr();
     }
-    std::unique_ptr<AuxiliaryPicture>  = AuxiliaryPicture::Create(auxPixelMap, type);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(auxPixelMap, type);
 
     // TODO: 完善AuxiliaryPictureInfo
     AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, {0, 0}, 0, PixelFormat::UNKNOWN, ColorSpace::UNKNOWN);

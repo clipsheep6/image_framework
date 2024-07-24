@@ -1857,15 +1857,16 @@ bool ExtDecoder::CheckAuxiliaryMap(Media::AuxiliaryPictureType type)
 {
 #ifdef HEIF_HW_DECODE_ENABLE
     if (codec_ == nullptr || codec_->getEncodedFormat() != SkEncodedImageFormat::kHEIF) {
-        IMAGE_LOGE("decode heif auxiliaryMap type %{public}d, codec error", type);
+        IMAGE_LOGE("Check heif auxiliaryMap failed! Invalid parameter, type %{public}d.", type);
         return false;
     }
     auto decoder = reinterpret_cast<HeifDecoder*>(codec_->getHeifContext());
     if (decoder == nullptr) {
-        IMAGE_LOGE("decode heif auxiliaryMap %{public}d, decoder error", type);
+        IMAGE_LOGE("Get heif context failed! Type %{public}d.", type);
         return false;
     }
-    if (!decoder->CheckAuxiliaryMap(type)) {
+    if (!decoder->GetAuxiliaryMap(type)) {
+        IMAGE_LOGE("Get heif auxiliaryMap %{public}d, decoder error", type);
         return false;
     }
 #endif

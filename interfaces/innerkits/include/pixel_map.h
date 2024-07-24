@@ -299,7 +299,7 @@ public:
         return hdrMetadata_;
     }
 
-    NATIVEEXPORT void SetHdrMetadata(std::shared_ptr<HdrMetadata> &metadata)
+    NATIVEEXPORT void SetHdrMetadata(const std::shared_ptr<HdrMetadata> &metadata)
     {
         hdrMetadata_ = metadata;
     }
@@ -439,7 +439,7 @@ protected:
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
-    std::shared_ptr<HdrMetadata> hdrMetadata_;
+    std::shared_ptr<HdrMetadata> hdrMetadata_ = nullptr;
     ImageHdrType hdrType_;
 
 #ifdef IMAGE_COLORSPACE_FLAG

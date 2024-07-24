@@ -246,8 +246,13 @@ bool HeifDecoderImpl::init(HeifStream *stream, HeifFrameInfo *frameInfo)
     return Reinit(frameInfo);
 }
 
-bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
+bool HeifDecoderImpl::GetAuxiliaryMap(AuxiliaryPictureType type)
 {
+    if (parser_ == nullptr) {
+        IMAGE_LOGE("Heif parser is nullptr.");
+        return false;
+    }
+
     auxiliaryImage_ = nullptr;
     switch (type) {
         case AuxiliaryPictureType::GAINMAP:
@@ -269,8 +274,7 @@ bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
             return false;
     }
 
-    if (auxiliaryImage_ == nullptr)
-    {
+    if (auxiliaryImage_ == nullptr) {
         IMAGE_LOGE("Auxiliary map type that does not exist");
         return false;
     }
