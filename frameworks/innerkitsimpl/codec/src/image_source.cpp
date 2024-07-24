@@ -3860,11 +3860,13 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
 {
     for (AuxiliaryPictureType auxType : auxTypes) {
         if (mainDecoder_->CheckAuxiliaryMap(auxType)) {
+            IMAGE_LOGI("The auxiliary picture type does not exist and is not decoded! auxType: %{public}d", auxType);
             continue;
         }
         auto auxiliaryPicture = AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(mainDecoder_.get(), auxType, errorCode);
         if (auxiliaryPicture != nullptr) {
-            picture->SetAuxiliaryPicture(auxType, auxiliaryPicture);
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+            IMAGE_LOGI("DecodeHeifAuxiliaryPictures::SetAuxiliaryPicture( %{public}d ) SUCCESS!!!", auxType);
         } else {
             IMAGE_LOGE("Generate heif auxiliary picture failed! auxType: %{public}d, errorCode: %{public}d", auxType, errorCode);
         }
@@ -3895,7 +3897,7 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
                     break;
                 }
                 auto auxPicture = AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxType, errorCode);
-                picture->SetAuxiliaryPicture(auxType, auxPicture);
+                picture->SetAuxiliaryPicture(auxPicture);
                 IMAGE_LOGI("DecodeJpegAuxiliaryPicture::SetAuxiliaryPicture( %{public}d ) SUCCESS!!!", auxType);
                 break;
             }
