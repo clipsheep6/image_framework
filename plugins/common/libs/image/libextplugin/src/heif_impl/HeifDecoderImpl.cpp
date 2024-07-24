@@ -246,7 +246,7 @@ bool HeifDecoderImpl::init(HeifStream *stream, HeifFrameInfo *frameInfo)
     return Reinit(frameInfo);
 }
 
-bool HeifDecoderImpl::checkAuxiliaryMap(AuxiliaryPictureType type)
+bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
 {
     auxiliaryImage_ = nullptr;
     switch (type) {

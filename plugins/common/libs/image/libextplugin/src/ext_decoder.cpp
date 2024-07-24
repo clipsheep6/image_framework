@@ -1853,7 +1853,7 @@ void ExtDecoder::SetHeifParseError()
 }
 
 
-bool ExtDecoder::checkAuxiliaryMap(Media::AuxiliaryPictureType type)
+bool ExtDecoder::CheckAuxiliaryMap(Media::AuxiliaryPictureType type)
 {
 #ifdef HEIF_HW_DECODE_ENABLE
     if (codec_ == nullptr || codec_->getEncodedFormat() != SkEncodedImageFormat::kHEIF) {
@@ -1865,7 +1865,7 @@ bool ExtDecoder::checkAuxiliaryMap(Media::AuxiliaryPictureType type)
         IMAGE_LOGE("decode heif auxiliaryMap %{public}d, decoder error", type);
         return false;
     }
-    if (!decoder->checkAuxiliaryMap(type)) {
+    if (!decoder->CheckAuxiliaryMap(type)) {
         return false;
     }
 #endif

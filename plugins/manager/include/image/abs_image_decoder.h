@@ -248,7 +248,7 @@ public:
         return false;
     }
 
-    virtual bool checkAuxiliaryMap(Media::AuxiliaryPictureType type)
+    virtual bool CheckAuxiliaryMap(Media::AuxiliaryPictureType type)
     {
         return false;
     }

@@ -33,6 +33,7 @@
 namespace OHOS {
 namespace Media {
 struct HdrMetadata;
+enum class ImageHdrType : int32_t;
 using TransColorProc = bool (*)(const uint8_t *in, uint32_t inCount, uint32_t *out, uint32_t outCount);
 using CustomFreePixelMap = void (*)(void *addr, void *context, uint32_t size);
 
@@ -310,7 +311,7 @@ public:
 
     NATIVEEXPORT void SetHdrType(ImageHdrType hdrType)
     {
-        hdrType_ = herType;
+        hdrType_ = hdrType;
     }
 
     static int32_t GetRGBxRowDataSize(const ImageInfo& info);
