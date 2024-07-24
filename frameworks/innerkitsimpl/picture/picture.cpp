@@ -283,6 +283,23 @@ bool Picture::Marshalling(Parcel &data) const
             return false;
         }
     }
+
+    if (!data.WriteUint64(maintenanceData_->size_)) {
+        IMAGE_LOGE("Failed to write maintenance data size.");
+        return false;
+    }
+
+    if (maintenanceData_->size_ > 0) {
+        if (!data.WriteUnpadBuffer(maintenanceData_->data_.get(), maintenanceData_->size_)) {
+            IMAGE_LOGE("Failed to write maintenance data.");
+            return false;
+        }
+    }
+
+    if (!exifMetadata_->Marshalling(data)) {
+        IMAGE_LOGE("Failed to marshal exif metadata.");
+        return false;
+    }
     
     return true;
 }
@@ -319,6 +336,20 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
         }
         picture->SetAuxiliaryPicture(auxPtr);
     }
+
+    auto maintenanceDataSize = parcel.ReadUint64();
+    std::unique_ptr<uint8_t[]> maintenanceData;
+    if (maintenanceDataSize > 0) {
+        const uint8_t *tmpPtr = parcel.ReadUnpadBuffer(maintenanceDataSize);
+        maintenanceData = std::make_unique<uint8_t[]>(maintenanceDataSize);
+        if (EOK != memcpy_s(maintenanceData.get(), maintenanceDataSize, tmpPtr, maintenanceDataSize)) {
+            IMAGE_LOGE("Failed to unmarshal maintenance data.");
+            return nullptr;
+        }
+    }
+    picture->maintenanceData_ = std::make_unique<MaintenanceData>(std::move(maintenanceData), maintenanceDataSize);
+
+    picture->exifMetadata_ = std::shared_ptr<ExifMetadata>(ExifMetadata::Unmarshalling(parcel));
     
     return picture.release();
 }
@@ -342,10 +373,14 @@ int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
         return ERR_EXIF_DECODE_FAILED;
     }
 
-    auto exifMetadata = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
+    exifMetadata_ = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
 
-    mainPixelMap_->SetExifMetadata(exifMetadata);
     return SUCCESS;
+}
+
+std::shared_ptr<ExifMetadata> Picture::GetExifMetadata()
+{
+    return exifMetadata_;
 }
 
 bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
@@ -360,23 +395,27 @@ bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
         return false;
     }
 
-    maintenanceData_ = std::shared_ptr<uint8_t[]>(new uint8_t[size]);
+    maintenanceData_ = std::make_unique<MaintenanceData>(std::make_unique<uint8_t[]>(size), size);
+
     if (!maintenanceData_) {
         return false;
     }
 
-    auto ret = memcpy_s(maintenanceData_.get(), size, surfaceBuffer->GetVirAddr(), size);
+    auto ret = memcpy_s(maintenanceData_->data_.get(), size, surfaceBuffer->GetVirAddr(), size);
+
     if (ret != EOK) {
         IMAGE_LOGE("Memmoy copy failed, errono: %d.", ret);
         return false;
     }
 
+    maintenanceData_->size_ = size;
     return true;
 }
 
-std::shared_ptr<uint8_t[]> Picture::GetMaintenanceData() const
+std::shared_ptr<uint8_t[]> Picture::GetMaintenanceData(size_t &size) const
 {
-    return maintenanceData_;
+    size = maintenanceData_->size_;
+    return maintenanceData_->data_;
 }
 
 } // namespace Media

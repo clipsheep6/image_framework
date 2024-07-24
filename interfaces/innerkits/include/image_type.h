@@ -304,6 +304,12 @@ typedef struct PictureError {
     std::string errorInfo = "";
 } PICTURE_ERR;
 
+struct MaintenanceData {
+    std::shared_ptr<uint8_t[]> data_;
+    size_t size_ = 0;
+    MaintenanceData(std::shared_ptr<uint8_t[]> data, size_t size) : data_(data), size_(size) {}
+};
+
 } // namespace Media
 } // namespace OHOS
 
