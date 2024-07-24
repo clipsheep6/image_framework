@@ -12,3 +12,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+#include <gtest/gtest.h>
+
+using namespace testing::ext;
+// using namespace OHOS::Media;
+namespace OHOS {
+namespace Media {
+class ImageCommonNdkTest : public testing::Test {
+public:
+    ImageCommonNdkTest() {}
+    ~ImageCommonNdkTest() {}
+};
+
+
+} // namespace Media
+} // namespace OHOS
