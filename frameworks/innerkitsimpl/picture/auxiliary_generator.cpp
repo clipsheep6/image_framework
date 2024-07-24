@@ -70,7 +70,7 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     return info;
 }
 
-bool PixelMap::GetPixelBytes(const PixelFormat format, int8_t &pixelBytes)
+bool AuxiliaryGenerator::GetPixelBytes(const PixelFormat format, int8_t &pixelBytes)
 {
     switch (format) {
         case PixelFormat::RGBA_8888:
@@ -346,7 +346,7 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
         }
 #endif
         auxPicture = AuxiliaryPicture::Create(auxPixelMap, type, imageinfo.size);
-        int_8_t pixelBytes = 0;
+        int8_t pixelBytes = 0;
         int32_t rowStride = GetPixelBytes(imageinfo.pixelFormat, pixelBytes) ? imageinfo.size.width * pixelBytes : 0;
         AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, imageinfo.size, rowStride,
                                                                 imageinfo.pixelFormat, imageinfo.colorSpace);
