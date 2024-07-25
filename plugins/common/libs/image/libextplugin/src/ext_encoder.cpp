@@ -254,6 +254,7 @@ uint32_t ExtEncoder::DoHdrEncode(ExtWStream& wStream)
             return EncodeSingleVivid(wStream);
     }
     return ERR_IMAGE_ENCODE_FAILED;
+#endif
 }
 
 uint32_t ExtEncoder::FinalizeEncode()
@@ -289,7 +290,6 @@ uint32_t ExtEncoder::FinalizeEncode()
     encodeFormat_ = iter->first;
     ExtWStream wStream(output_);
     return DoHdrEncode(wStream);
-#endif
 }
 
 bool ExtEncoder::IsHardwareEncodeSupported(const PlEncodeOptions &opts, Media::PixelMap* pixelMap)
