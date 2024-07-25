@@ -169,7 +169,7 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor props[] = {
         DECLARE_NAPI_FUNCTION("getMainPixelmap", GetMainPixelmap),
-        DECLARE_NAPI_FUNCTION("getHDRComposedPixelmap", GetHDRComposedPixelMap),
+        DECLARE_NAPI_FUNCTION("getHdrComposedPixelmap", GetHdrComposedPixelMap),
         DECLARE_NAPI_FUNCTION("getGainmapPixelmap", GetGainmapPixelmap),
         DECLARE_NAPI_FUNCTION("getAuxiliaryPicture", GetAuxiliaryPicture),
         DECLARE_NAPI_FUNCTION("setAuxiliaryPicture", SetAuxiliaryPicture),
@@ -644,7 +644,7 @@ static void CreateHDRComposedPixelmapComplete(napi_env env, napi_status status, 
     CommonCallbackRoutine(env, context, result);
 }
 
-napi_value PictureNapi::GetHDRComposedPixelMap(napi_env env, napi_callback_info info)
+napi_value PictureNapi::GetHdrComposedPixelMap(napi_env env, napi_callback_info info)
 {
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
