@@ -37,15 +37,6 @@ using namespace ImagePlugin;
 static const std::string IMAGE_EXTENDED_CODEC = "image/extended";
 static const uint32_t FIRST_FRAME = 0;
 
-// Define bytes per pixel
-constexpr int8_t ALPHA_8_BYTES = 1;
-constexpr int8_t RGB_565_BYTES = 2;
-constexpr int8_t RGB_888_BYTES = 3;
-constexpr int8_t ARGB_8888_BYTES = 4;
-constexpr int8_t BGRA_F16_BYTES = 8;
-constexpr int8_t YUV420_BYTES = 2;  // in fact NV21 one pixel used 1.5 bytes.
-constexpr int8_t ASTC_4x4_BYTES = 1;
-
 ImageInfo AuxiliaryGenerator::MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs)
 {
     ImageInfo info;
