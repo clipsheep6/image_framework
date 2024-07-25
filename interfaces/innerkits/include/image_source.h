@@ -323,9 +323,9 @@ private:
                             ImagePlugin::DecodeContext &context, ImagePlugin::PlImageInfo &plInfo);
     ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
         ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
-    void DecodeHeifAuxiliaryPictures(const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture,
+    void DecodeHeifAuxiliaryPictures(const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture,
                                      uint32_t &errorCode);
-    void DecodeJpegAuxiliaryPicture(const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture,
+    void DecodeJpegAuxiliaryPicture(const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture,
                                     uint32_t &errorCode);
     bool IsSingalHdrImage();
     void GetAllAuxiliaryPictureType(std::set<AuxiliaryPictureType> &auxTypes);

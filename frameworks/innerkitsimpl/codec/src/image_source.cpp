@@ -3858,7 +3858,7 @@ std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPict
 }
 
 void ImageSource::DecodeHeifAuxiliaryPictures(
-    const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
+    const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
 {
     for (AuxiliaryPictureType auxType : auxTypes) {
         if (!mainDecoder_->CheckAuxiliaryMap(auxType)) {
@@ -3875,7 +3875,7 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
 }
 
 void ImageSource::DecodeJpegAuxiliaryPicture(
-    const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
+    const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
 {
     uint8_t *streamBuffer = sourceStreamPtr_->GetDataPtr();
     uint32_t streamSize = sourceStreamPtr_->GetStreamSize();

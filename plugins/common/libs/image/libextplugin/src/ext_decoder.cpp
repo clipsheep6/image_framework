@@ -1918,6 +1918,7 @@ bool ExtDecoder::DecodeHeifAuxiliaryMap(DecodeContext& context, AuxiliaryPicture
     }
     decoder->setAuxiliaryDstBuffer(dstBuffer, static_cast<size_t>(rowStride));
     if (!decoder->decodeAuxiliaryMap()) {
+        IMAGE_LOGE("Decoded auxiliary map type is not supported, or decoded failed. Type: %{public}d", type);
         return false;
     }
     return true;

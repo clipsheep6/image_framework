@@ -261,7 +261,6 @@ bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
         return false;
     }
 
-    auxiliaryImage_ = nullptr;
     auto iter = HEIF_AUXTTYPE_ID_MAP.find(type);
     switch (type) {
         case AuxiliaryPictureType::GAINMAP:
@@ -287,17 +286,14 @@ bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
 
 bool HeifDecoderImpl::setAuxiliaryMap(AuxiliaryPictureType type)
 {
-    if (parser_ == nullptr) {
+    if (auxiliaryImage_ == nullptr && !CheckAuxiliaryMap(type)) {
         IMAGE_LOGE("make heif parser failed");
         return false;
     }
 
-    if (auxiliaryImage_ != nullptr && !auxiliaryImage_->GetAuxImageType().empty()) {
-        InitFrameInfo(&auxiliaryImageInfo_, auxiliaryImage_);
-        InitGridInfo(auxiliaryImage_, auxiliaryGridInfo_);
-        return true;
-    }
-    return false;
+    InitFrameInfo(&auxiliaryImageInfo_, auxiliaryImage_);
+    InitGridInfo(auxiliaryImage_, auxiliaryGridInfo_);
+    return true;
 }
 
 bool HeifDecoderImpl::Reinit(HeifFrameInfo *frameInfo)
@@ -549,10 +545,6 @@ bool HeifDecoderImpl::DecodeImage(HeifHardwareDecoder *hwDecoder,
     } else if (imageType == "hvc1") {
         gridInfo.enableGrid = false;
         res = DecodeSingleImage(hwDecoder, image, gridInfo, hwBuffer);
-    } else if (imageType == "") { // TODO image don't need decode
-        std::vector<uint8_t> outputs;
-        parser_->GetItemData(image->GetItemId(), &outputs, heif_only_header);
-        res = memcpy_s(hwBuffer->GetVirAddr(), hwBuffer->GetSize(), outputs.data(), outputs.size());
     }
     if (!res) {
         ReleaseHwDecoder(hwDecoder, isReuseHwDecoder);

@@ -122,7 +122,7 @@ private:
     uint8_t* gainmapDstMemory_;
     size_t gainmapDstRowStride_;
 
-    std::shared_ptr<HeifImage> auxiliaryImage_;
+    std::shared_ptr<HeifImage> auxiliaryImage_ = nullptr;
     HeifFrameInfo auxiliaryImageInfo_{};
     GridInfo auxiliaryGridInfo_ = {0, 0, false, 0, 0, 0, 0};
     uint8_t* auxiliaryDstMemory_;
