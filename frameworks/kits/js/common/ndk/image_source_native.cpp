@@ -471,9 +471,10 @@ Image_ErrorCode OH_ImageSourceNative_CreatePixelmapList(OH_ImageSourceNative *so
 }
 
 MIDK_EXPORT
-Image_ErrorCode OH_ImageSourceNative_CreatePicture(OH_ImageSourceNative *source, OH_DecodingOptionsForPicture *options, OH_PictureNative **picture)
+Image_ErrorCode OH_ImageSourceNative_CreatePicture(OH_ImageSourceNative *source, OH_DecodingOptionsForPicture *options,
+    OH_PictureNative **picture)
 {
-    if (source == nullptr || !source->GetInnerImageSource() || options == nullptr 
+    if (source == nullptr || !source->GetInnerImageSource() || options == nullptr
         || picture == nullptr || !options->GetInnerDecodingOptionsForPicture()) {
         return IMAGE_BAD_PARAMETER;
     }
@@ -649,7 +650,7 @@ Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_Deco
         return IMAGE_BAD_PARAMETER;
     }
     auto innerDecodingSet = options->GetInnerDecodingOptionsForPicture()->desireAuxiliaryPictures;
-    if (innerDecodingSet.size() == 0) { 
+    if (innerDecodingSet.size() == 0) {
         return IMAGE_BAD_SOURCE;
     }
     auto lenTmp = innerDecodingSet.size();
@@ -667,7 +668,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
     ::AuxiliaryPictureType *desiredAuxiliaryPictures, size_t length)
 {
-    if (options == nullptr || !options->GetInnerDecodingOptionsForPicture() || 
+    if (options == nullptr || !options->GetInnerDecodingOptionsForPicture() ||
         desiredAuxiliaryPictures == nullptr || length <= 0) {
         return IMAGE_BAD_PARAMETER;
     }

@@ -47,7 +47,7 @@ OH_AuxiliaryPictureNative::OH_AuxiliaryPictureNative(std::shared_ptr<OHOS::Media
 }
 
 OH_AuxiliaryPictureNative::OH_AuxiliaryPictureNative(std::shared_ptr<OHOS::Media::PixelMap> &content,
-     OHOS::Media::AuxiliaryPictureType type, OHOS::Media::Size size)
+    OHOS::Media::AuxiliaryPictureType type, OHOS::Media::Size size)
 {
     auto auxiliaryPictureTmp = OHOS::Media::AuxiliaryPicture::Create(content, type, size);
     auxiliaryPicture_ = std::move(auxiliaryPictureTmp);

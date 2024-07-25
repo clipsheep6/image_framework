@@ -52,7 +52,10 @@ ohos_shared_library("image_common") {
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
   ]
-  innerapi_tags = [ "ndk","platformsdk"]
+  innerapi_tags = [
+    "ndk",
+    "platformsdk",
+  ]
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }
@@ -83,10 +86,10 @@ ohos_shared_library("picture") {
 
   deps = [
     "${image_subsystem}/frameworks/innerkitsimpl/egl_image:egl_image",
-    "${image_subsystem}/interfaces/innerkits:image_native",
-    "${image_subsystem}/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
-    "${image_subsystem}/mock/native:log_mock_static",
     "${image_subsystem}/frameworks/kits/js/common/picture_ndk:image_common",
+    "${image_subsystem}/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
+    "${image_subsystem}/interfaces/innerkits:image_native",
+    "${image_subsystem}/mock/native:log_mock_static",
   ]
 
   innerapi_tags = [ "ndk" ]
