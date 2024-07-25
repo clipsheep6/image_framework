@@ -328,7 +328,7 @@ private:
     void DecodeJpegAuxiliaryPicture(const std::set<AuxiliaryPictureType> auxTypes, std::unique_ptr<Picture> &picture,
                                     uint32_t &errorCode);
     bool IsSingalHdrImage();
-    void GetAllAuxiliaryPictureType(std::set<AuxiliaryPictureType> &auxTypes);
+    std::set<AuxiliaryPictureType> GetAllAuxiliaryPictureType();
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";

@@ -37,6 +37,7 @@ using namespace ImagePlugin;
 static const std::string IMAGE_EXTENDED_CODEC = "image/extended";
 static const uint32_t FIRST_FRAME = 0;
 
+// Interface for Jpeg/Heif
 ImageInfo AuxiliaryGenerator::MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs)
 {
     ImageInfo info;
@@ -48,6 +49,7 @@ ImageInfo AuxiliaryGenerator::MakeImageInfo(int width, int height, PixelFormat p
     return info;
 }
 
+// Interface for Jpeg/Heif
 AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     AuxiliaryPictureType type, const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace)
 {
@@ -61,6 +63,7 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     return info;
 }
 
+// Interface for Jpeg/Heif
 uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     ImageHdrType hdrType = extDecoder->CheckHdrType();
@@ -71,6 +74,7 @@ uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std:
     return SUCCESS;
 }
 
+// Interface for Jpeg/Heif
 uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     AuxiliaryPictureType type = auxPicture->GetType();
@@ -78,14 +82,12 @@ uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(AbsImageDecoder *extDecoder,
         return ERR_MEDIA_DATA_UNSUPPORT;
     }
 
-    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;  // TODO: 1.不知道水印metadata如何解析；2.FragmentMetadata PR尚未合入
+    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;  // TODO: 1.水印metadata的解析依赖实际数据格式（外部）；2.FragmentMetadata PR尚未合入（内部）
     if (fragmentMetadata == nullptr) {
-        IMAGE_LOGE("Decode FRAGMENT Meta Data failed! Auxiliary picture type: %{public}d", type);
+        IMAGE_LOGE("Decode fragment metadata failed! Auxiliary picture type: %{public}d", type);
         return ERR_IMAGE_DECODE_ABNORMAL;
-    } else {
-        auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
     }
-
+    auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
     return SUCCESS;
 }
 
@@ -212,7 +214,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     ImageInfo info = MakeImageInfo(context.outInfo.size.width, context.outInfo.size.height,
         context.outInfo.pixelFormat, context.outInfo.alphaType, context.outInfo.colorSpace);
-    pixelMap->SetImageInfo(info, true);
+    pixelMap->SetImageInfo(info);
     OHOS::ColorManager::ColorSpace grColorSpace = extDecoder->getGrColorSpace();
     pixelMap->InnerSetColorSpace(grColorSpace);
 
@@ -236,7 +238,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
 std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(
     std::unique_ptr<InputDataStream> &auxStream, AuxiliaryPictureType type, uint32_t &errorCode)
 {
-    IMAGE_LOGI("AuxiliaryPictureType: %{public}d", errorCode);
+    IMAGE_LOGI("AuxiliaryPictureType: %{public}d", type);
     auto supportStatus = SUPPORT_CODEC_AUXILIARY_MAP.find(type);
     if (supportStatus == SUPPORT_CODEC_AUXILIARY_MAP.end()) {
         return nullptr;
@@ -271,13 +273,14 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
             auxPixelMap = std::make_shared<PixelMap>();
         }
         if (auxPixelMap == nullptr) {
+            errorCode = ERR_IMAGE_ADD_PIXEL_MAP_FAILED;
             return nullptr;
         }
 
         ImageInfo imageinfo = MakeImageInfo(auxCtx.outInfo.size.width, auxCtx.outInfo.size.height,
                                             auxCtx.outInfo.pixelFormat, auxCtx.outInfo.alphaType,
                                             auxCtx.outInfo.colorSpace);
-        auxPixelMap->SetImageInfo(imageinfo, true);
+        auxPixelMap->SetImageInfo(imageinfo);
         PixelMapAddrInfos addrInfos;
         ImageSource::ContextToAddrInfos(auxCtx, addrInfos);
         auxPixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);

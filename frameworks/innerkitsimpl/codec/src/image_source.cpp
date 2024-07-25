@@ -3844,10 +3844,8 @@ std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPict
         return nullptr;
     }
 
-    auto auxTypes = opts.desireAuxiliaryPictures;
-    if (auxTypes.size() == 0) {
-        GetAllAuxiliaryPictureType(auxTypes);
-    }
+    std::set<AuxiliaryPictureType> auxTypes =
+        (opts.desireAuxiliaryPictures.size() > 0) ? opts.desireAuxiliaryPictures : GetAllAuxiliaryPictureType();
     if (format == IMAGE_HEIF_FORMAT) {
         DecodeHeifAuxiliaryPictures(auxTypes, picture, errorCode);
     } else if (format == IMAGE_JPEG_FORMAT) {
@@ -3883,21 +3881,21 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
     auto jpegMpfParser = std::make_unique<JpegMpfParser>();
     if (!jpegMpfParser->CheckMpfOffset(streamBuffer, streamSize, mpfOffset)) {
         IMAGE_LOGE("Jpeg CheckMpfOffset failed!");
-        errorCode = ERR_IMAGE_DATA_ABNORMAL;
+        errorCode = ERR_IMAGE_DECODE_HEAD_ABNORMAL;
         return;
     }
     streamBuffer += mpfOffset;
     streamSize -= mpfOffset;
     if (!jpegMpfParser->Parsing(streamBuffer, streamSize)) {
         IMAGE_LOGE("Jpeg mpf parse failed!");
-        errorCode = ERR_IMAGE_DATA_ABNORMAL;
+        errorCode = ERR_IMAGE_DECODE_HEAD_ABNORMAL;
         return;
     }
 
     for (auto &auxInfo : jpegMpfParser->images_) {
         auto iter = auxTypes.find(auxInfo.auxType);
         if (iter != auxTypes.end()) {
-            IMAGE_LOGI("Jpeg Desire Auxiliary Picture not found! Auxiliary type: %{public}d", auxInfo.auxType);
+            IMAGE_LOGI("Jpeg desire auxiliary picture has found type: %{public}d", auxInfo.auxType);
             std::unique_ptr<InputDataStream> auxStream =
                 BufferSourceStream::CreateSourceStream((streamBuffer + auxInfo.offset), auxInfo.size);
             if (auxStream == nullptr) {
@@ -3906,17 +3904,19 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
             }
             auto auxPicture = AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxInfo.auxType, errorCode);
             picture->SetAuxiliaryPicture(auxPicture);
-            IMAGE_LOGI("DecodeJpegAuxiliaryPicture::SetAuxiliaryPicture() SUCCESS!!!");
+            IMAGE_LOGI("DecodeJpegAuxiliaryPicture::SetAuxiliaryPicture() finished!");
         }
     }
 }
 
-void ImageSource::GetAllAuxiliaryPictureType(std::set<AuxiliaryPictureType> &auxTypes) {
+std::set<AuxiliaryPictureType> ImageSource::GetAllAuxiliaryPictureType() {
+    std::set<AuxiliaryPictureType> auxTypes;
     auxTypes.insert(AuxiliaryPictureType::GAINMAP);
     auxTypes.insert(AuxiliaryPictureType::DEPTH_MAP);
     auxTypes.insert(AuxiliaryPictureType::UNREFOCUS_MAP);
     auxTypes.insert(AuxiliaryPictureType::LINEAR_MAP);
     auxTypes.insert(AuxiliaryPictureType::FRAGMENT_MAP);
+    return auxTypes;
 }
 
 } // namespace Media
