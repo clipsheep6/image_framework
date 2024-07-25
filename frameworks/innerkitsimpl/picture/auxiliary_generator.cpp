@@ -276,21 +276,22 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
             errorCode = ERR_IMAGE_ADD_PIXEL_MAP_FAILED;
             return nullptr;
         }
-
-        ImageInfo imageinfo = MakeImageInfo(auxCtx.outInfo.size.width, auxCtx.outInfo.size.height,
-                                            auxCtx.outInfo.pixelFormat, auxCtx.outInfo.alphaType,
-                                            auxCtx.outInfo.colorSpace);
-        auxPixelMap->SetImageInfo(imageinfo);
         PixelMapAddrInfos addrInfos;
         ImageSource::ContextToAddrInfos(auxCtx, addrInfos);
         auxPixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
 #ifdef IMAGE_COLORSPACE_FLAG
-        bool isSupportICCProfile = auxDecoder->IsSupportICCProfile();
-        if (isSupportICCProfile) {
+        if (auxCtx.hdrType > ImageHdrType::SDR) {
+            auxPixelMap->InnerSetColorSpace(OHOS::ColorManager::ColorSpace(auxCtx.grColorSpaceName));
+        } else if (auxDecoder->IsSupportICCProfile()) {
             OHOS::ColorManager::ColorSpace grColorSpace = auxDecoder->getGrColorSpace();
             auxPixelMap->InnerSetColorSpace(grColorSpace);
         }
 #endif
+        ImageInfo imageinfo = MakeImageInfo(auxCtx.outInfo.size.width, auxCtx.outInfo.size.height,
+                                            auxCtx.outInfo.pixelFormat, auxCtx.outInfo.alphaType,
+                                            auxCtx.outInfo.colorSpace);
+        auxPixelMap->SetImageInfo(imageinfo, true);
+
         auxPicture = AuxiliaryPicture::Create(auxPixelMap, type, imageinfo.size);
         AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, imageinfo.size, auxPixelMap->GetRowStride(),
                                                                 imageinfo.pixelFormat, imageinfo.colorSpace);
