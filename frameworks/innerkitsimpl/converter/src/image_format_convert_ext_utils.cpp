@@ -903,15 +903,16 @@ static bool I420ToYuv(I420Info &i420, DstConvertParam &dstParam)
             converter.I420ToNV12(i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
                 dstParam.slice[0], dstParam.stride[0], dstParam.slice[1], dstParam.stride[1],
                 dstParam.width, dstParam.height);
+            break;
         case PixelFormat::NV21:
             converter.I420ToNV21(i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
                 dstParam.slice[0], dstParam.stride[0], dstParam.slice[1], dstParam.stride[1],
                 dstParam.width, dstParam.height);
             break;
-        }
         default:
             return false;
     }
+    return true;
 }
 
 static void RGBToYuvParam(const RGBDataInfo &rgbInfo, SrcConvertParam &srcParam, DstConvertParam &dstParam,
@@ -957,7 +958,7 @@ static bool RGBToI420ToYuvParam(const RGBDataInfo &rgbInfo, SrcConvertParam &src
     }
     i420Info.I420Y = i420Buffer;
     i420Info.I420U = i420Info.I420Y + rgbInfo.height * i420Info.yStride;
-    i420Info.I420V = i420Info.I420U + i420Info.uStride * ((rgbInfo.height + NUM_1) / NUM_2)};
+    i420Info.I420V = i420Info.I420U + i420Info.uStride * ((rgbInfo.height + NUM_1) / NUM_2);
     return true;
 }
 
@@ -973,7 +974,7 @@ static bool RGBToI420ToYuv(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
 
     I420Info i420Info = {rgbInfo.width, rgbInfo.width};
 
-    if (!RGBToI420ToYuvParam(rgbInfo, srcParam, dstParam, i420Info, dstInfo)) {
+    if (!RGBToI420ToYuvParam(rgbInfo, srcParam, i420Info, dstParam, dstInfo)) {
         IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
         return false;
     }
@@ -1008,6 +1009,7 @@ static bool RGBToYuvConverter(SrcConvertParam &srcParam, DstConvertParam &dstPar
         default:
             return false;
     }
+    return true;
 }
 
 static bool RGBToYuv(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, PixelFormat srcFormat,
@@ -1021,10 +1023,7 @@ static bool RGBToYuv(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, Pixel
     DstConvertParam dstParam = {rgbInfo.width, rgbInfo.width};
     dstParam.format = dstFormat;
 
-    if (!RGBToYuvParam(rgbInfo, srcParam, dstParam, dstInfo)) {
-        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
-        return false;
-    }
+    RGBToYuvParam(rgbInfo, srcParam, dstParam, dstInfo);
     return RGBToYuvConverter(srcParam, dstParam);
 }
 
@@ -1146,9 +1145,9 @@ static bool YuvToI420ToRGBParam(const YUVDataInfo &yuvInfo, SrcConvertParam &src
                                 DstConvertParam &dstParam, DstConvertDataInfo &dstInfo)
 {
     YuvToRGBParam(yuvInfo, srcParam, dstParam, dstInfo);
-    i420Info.yStride = rgbInfo.width;
-    i420Info.uStride = (rgbInfo.width + NUM_1) / NUM_2;
-    i420Info.vStride = (rgbInfo.width + NUM_1) / NUM_2;
+    i420Info.yStride = yuvInfo.yWidth;
+    i420Info.uStride = (yuvInfo.yWidth + NUM_1) / NUM_2;
+    i420Info.vStride = (yuvInfo.yWidth + NUM_1) / NUM_2;
     i420Info.uvHeight = ((i420Info.height + NUM_1) / NUM_2) * NUM_2;
     const uint32_t i420BufferSize = static_cast<size_t>(i420Info.yStride * i420Info.height +
         i420Info.uStride * i420Info.uvHeight * NUM_2);
@@ -1162,8 +1161,8 @@ static bool YuvToI420ToRGBParam(const YUVDataInfo &yuvInfo, SrcConvertParam &src
         return false;
     }
     i420Info.I420Y = i420Buffer;
-    i420Info.I420U = i420Info.I420Y + rgbInfo.height * i420Info.yStride;
-    i420Info.I420V = i420Info.I420U + i420Info.uStride * ((rgbInfo.height + NUM_1) / NUM_2)
+    i420Info.I420U = i420Info.I420Y + yuvInfo.yHeight * i420Info.yStride;
+    i420Info.I420V = i420Info.I420U + i420Info.uStride * ((yuvInfo.yHeight + NUM_1) / NUM_2);
     return true;
 }
 
@@ -1171,19 +1170,16 @@ static bool YuvTo420ToRGB(const uint8_t *srcBuffer, const YUVDataInfo &yuvInfo, 
                           DstConvertDataInfo &dstInfo, PixelFormat dstFormat,
                           [[maybe_unused]]ColorSpace colorSpace)
 {
-    SrcConvertParam srcParam = {rgbInfo.width, rgbInfo.width};
+    SrcConvertParam srcParam = {yuvInfo.yWidth, yuvInfo.yWidth};
     srcParam.buffer = srcBuffer;
     srcParam.format = srcFormat;
 
-    DstConvertParam dstParam = {rgbInfo.width, rgbInfo.width};
+    DstConvertParam dstParam = {yuvInfo.yWidth, yuvInfo.yWidth};
     dstParam.format = dstFormat;
 
-    I420Info i420Info = {rgbInfo.width, rgbInfo.width};
+    I420Info i420Info = {yuvInfo.yWidth, yuvInfo.yWidth};
 
-    if (!YuvToI420ToRGBParam(rgbInfo, srcParam, dstParam, i420Info, dstInfo)) {
-        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
-        return false;
-    }
+    YuvToI420ToRGBParam(yuvInfo, srcParam, i420Info, dstParam, dstInfo);
     auto bRet = YuvToI420(srcParam, i420Info);
     if (!bRet) {
         delete[] i420Info.I420Y;
@@ -1231,18 +1227,14 @@ static bool YuvToRGBConverter(SrcConvertParam &srcParam, DstConvertParam &dstPar
 static bool YuvToRGB(const uint8_t *srcBuffer, const YUVDataInfo &yuvInfo, PixelFormat srcFormat,
                      DstConvertDataInfo &dstInfo, PixelFormat dstFormat)
 {
-    SrcConvertParam srcParam = {yuvInfo.width, yuvInfo.width};
+    SrcConvertParam srcParam = {yuvInfo.yWidth, yuvInfo.yWidth};
     srcParam.buffer = srcBuffer;
     srcParam.format = srcFormat;
 
-    DstConvertParam dstParam = {yuvInfo.width, yuvInfo.width};
+    DstConvertParam dstParam = {yuvInfo.yWidth, yuvInfo.yWidth};
     dstParam.format = dstFormat;
 
-    if (!YuvToRGBParam(yuvInfo, srcParam, dstParam, dstInfo)) {
-        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
-        return false;
-    }
-
+    YuvToRGBParam(yuvInfo, srcParam, dstParam, dstInfo);
     return YuvToRGBConverter(srcParam, dstParam);
 }
 
@@ -1250,56 +1242,56 @@ bool ImageFormatConvertExtUtils::NV21ToRGBNew(const uint8_t *srcBuffer, const YU
                                               DstConvertDataInfo &dstInfo,
                                               [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGB_888);
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGB_888);
 }
 
 bool ImageFormatConvertExtUtils::NV12ToRGBNew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                               DstConvertDataInfo &dstInfo,
                                               [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGB_888);
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGB_888);
 }
 
 bool ImageFormatConvertExtUtils::NV21ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                                DstConvertDataInfo &dstInfo,
                                                [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGBA_8888);
+    return YuvTo420ToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGBA_8888, colorSpace);
 }
 
 bool ImageFormatConvertExtUtils::NV12ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                                DstConvertDataInfo &dstInfo,
                                                [[maybe_unused]]ColorSpace colorSpace)
 {                                               
-    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGBA_8888);
+    return YuvTo420ToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGBA_8888, colorSpace);
 }
 
 bool ImageFormatConvertExtUtils::NV21ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                                DstConvertDataInfo &dstInfo,
                                                [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::BGRA_8888);
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::BGRA_8888);
 }
 
 bool ImageFormatConvertExtUtils::NV12ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                                DstConvertDataInfo &dstInfo,
                                                [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::BGRA_8888);
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::BGRA_8888);
 } 
 
 bool ImageFormatConvertExtUtils::NV21ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                                  DstConvertDataInfo &dstInfo,
                                                  [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::BGRA_565);
+    return YuvTo420ToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGB_565, colorSpace);
 }
 
 bool ImageFormatConvertExtUtils::NV12ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                                  DstConvertDataInfo &dstInfo,
                                                  [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::BGRA_565);
+    return YuvTo420ToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGB_565, colorSpace);
 }
 
 static bool YuvToYuv(const uint8_t *srcBuffer, const YUVDataInfo &yuvInfo, PixelFormat srcFormat,
@@ -1311,15 +1303,14 @@ bool ImageFormatConvertExtUtils::NV21ToNV12New(const uint8_t *srcBuffer, const Y
                                                DstConvertDataInfo &dstInfo,
                                                [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvToYuv(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::NV12);
+    return YuvToYuv(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::NV12);
 }
 
 bool ImageFormatConvertExtUtils::NV12ToNV21New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
                                                DstConvertDataInfo &dstInfo,
                                                [[maybe_unused]]ColorSpace colorSpace)
 {
-    return YuvToYuv(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::NV21);
+    return YuvToYuv(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::NV21);
 }
-
 } // namespace Media
 } // namespace OHOS
