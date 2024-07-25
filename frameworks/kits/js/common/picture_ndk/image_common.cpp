@@ -16,7 +16,6 @@
 #include "image_common_impl.h"
 #include "exif_metadata.h"
 #include "fragment_metadata.h"
-#include "stdio.h"
 #include "securec.h"
 #include "common_utils.h"
 #ifdef __cplusplus

@@ -495,7 +495,7 @@ Image_ErrorCode OH_ImagePackerNative_PackToFileFromPicture(OH_ImagePackerNative 
     if (errorCode != IMAGE_SUCCESS) {
         return errorCode;
     }
-    return ToNewErrorCode(imagePacker->PackToFileFromPicture(&packOption, picture,fd));
+    return ToNewErrorCode(imagePacker->PackToFileFromPicture(&packOption, picture, fd));
 }
 
 MIDK_EXPORT
