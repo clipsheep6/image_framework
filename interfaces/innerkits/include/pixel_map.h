@@ -57,7 +57,8 @@ struct InitializationOptions {
     ScaleMode scaleMode = ScaleMode::FIT_TARGET_SIZE;
     bool editable = false;
     bool useSourceIfMatch = false;
-    int32_t rowStride = 0;
+    bool useDMA = false;
+    int32_t srcRowStride = 0;
 };
 struct TransInfos;
 
