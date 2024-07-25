@@ -171,7 +171,7 @@ uint32_t AuxiliaryGenerator::DecodeHeifMetadata(AbsImageDecoder *extDecoder, Aux
             break;
         }
     }
-    return true;
+    return errorCode;
 }
 
 // Interface for Jpeg
@@ -233,12 +233,12 @@ void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func
 }
 
 shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
-    AbsImageDecoder* extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
+    AbsImageDecoder *extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
 {
 #ifdef HEIF_HW_DECODE_ENABLE
     if (extDecoder == nullptr) {
         IMAGE_LOGE("Invalid parameter");
-        errorCode = 211;    // TODO
+        errorCode = ERR_IMAGE_INVALID_PARAMETER;
         return nullptr;
     }
 
@@ -247,7 +247,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     context.info.pixelFormat = PixelFormat::NV21;
     if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
         IMAGE_LOGE("Decode heif auxiliary map failure");
-        errorCode = 211;    // TODO
+        errorCode = ERR_IMAGE_DECODE_FAILED;
         return nullptr;
     }
 
@@ -286,7 +286,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     }
     return std::move(auxPicture);
 #endif
-    errorCode = 211;    // TODO:
+    errorCode = ERR_IMAGE_HW_DECODE_UNSUPPORT;
     return nullptr;
 }
 
