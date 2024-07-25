@@ -12,23 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "image_common_impl.h"
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include <string>
+OH_PictureMetadata::OH_PictureMetadata(std::shared_ptr<OHOS::Media::ImageMetadata> metadata)
+{
+    metadatas_ = metadata;
+}
 
-#include <libexif/exif-data.h>
+std::shared_ptr<OHOS::Media::ImageMetadata> OH_PictureMetadata::GetInnerAuxiliaryMetadata()
+{
+    return metadatas_;
+}
 
-namespace OHOS {
-namespace Media {
-class Metadata {
-public:
-    virtual int GetValue(const std::string &key, std::string &value) const = 0;
-    virtual bool SetValue(const std::string &key, const std::string &value) = 0;
-    virtual bool RemoveEntry(const std::string &key) = 0;
+OH_PictureMetadata::~OH_PictureMetadata() {}
+
+#ifdef __cplusplus
 };
-} // namespace Media
-} // namespace OHOS
-
-#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
+#endif
