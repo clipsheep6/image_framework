@@ -1203,8 +1203,10 @@ ohos_unittest("ndktest2") {
     "$resource_management_subsystem/interfaces/native/resource/include",
   ]
   sources = [
+    "unittest/image_common_ndk_test.cpp",
     "unittest/image_packer_native_ndk_test.cpp",
     "unittest/image_source_native_ndk_test.cpp",
+    "unittest/picture_native_ndk_test.cpp",
     "unittest/pixelmap_native_ndk_test.cpp",
   ]
 
@@ -1212,6 +1214,8 @@ ohos_unittest("ndktest2") {
     "$image_subsystem/frameworks/kits/js/common/ndk:image_ndk",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_packer",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_source",
+    "$image_subsystem/frameworks/kits/js/common/picture_ndk:image_common",
+    "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
