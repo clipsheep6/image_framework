@@ -16,6 +16,7 @@
 #ifndef INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H
 #define INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H
 
+#include <map>
 #include "metadata.h"
 #include "pixel_map.h"
 #include "image_type.h"
@@ -27,6 +28,20 @@ namespace OHOS {
 namespace OHOS {
 namespace Media {
 class ImageMetadata;
+
+enum class SupportCodec {
+    SUPPORT,
+    NONSUPPORT
+};
+
+static const std::map<AuxiliaryPictureType, SupportCodec> SUPPORT_CODEC_AUXILIARY_MAP = {
+    {AuxiliaryPictureType::GAINMAP, SupportCodec::SUPPORT},
+    {AuxiliaryPictureType::FRAGMENT_MAP, SupportCodec::SUPPORT},
+    {AuxiliaryPictureType::UNREFOCUS_MAP, SupportCodec::SUPPORT},
+    {AuxiliaryPictureType::LINEAR_MAP, SupportCodec::NONSUPPORT},
+    {AuxiliaryPictureType::DEPTH_MAP, SupportCodec::NONSUPPORT}
+};
+
 class AuxiliaryPicture : public Parcelable {
 public:
     AuxiliaryPicture() = default;
