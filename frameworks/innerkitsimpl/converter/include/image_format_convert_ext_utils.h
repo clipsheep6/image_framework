@@ -22,6 +22,18 @@
 namespace OHOS {
 namespace Media {
 
+struct I420Info {
+    uint32_t width;
+    uint32_t height;
+    uint8_t *I420Y;
+    uint32_t yStride;
+    uint8_t *I420U;
+    uint32_t uStride;
+    uint8_t *I420V;
+    uint32_t vStride;
+    uint32_t uvHeight;
+};
+
 class ImageFormatConvertExtUtils {
 public:
     static bool RGB565ToNV12(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, uint8_t **destBuffer,
@@ -61,6 +73,44 @@ public:
                            size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
     static bool NV12ToRGB(const uint8_t *data, const YUVDataInfo &yDInfo, uint8_t **destBuffer,
                           size_t &destBufferSize, [[maybe_unused]]ColorSpace colorSpace);
+
+    static bool RGB565ToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                                [[maybe_unused]]ColorSpace colorSpace);
+    static bool RGB565ToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                                [[maybe_unused]]ColorSpace colorSpace);
+    static bool BGRAToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool RGBAToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool RGBAToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool RGBToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                             [[maybe_unused]]ColorSpace colorSpace);
+    static bool RGBToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                             [[maybe_unused]]ColorSpace colorSpace);
+    static bool BGRAToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+
+    static bool NV21ToRGBNew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                             [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV21ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV21ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV21ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                                [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV12ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                                [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV21ToNV12New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV12ToNV21New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV12ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV12ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                              [[maybe_unused]]ColorSpace colorSpace);
+    static bool NV12ToRGBNew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, DstConvertDataInfo &dstInfo,
+                             [[maybe_unused]]ColorSpace colorSpace);
 };
 } // namespace Media
 } // namespace OHOS

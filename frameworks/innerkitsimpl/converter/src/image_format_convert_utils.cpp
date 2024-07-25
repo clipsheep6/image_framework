@@ -61,6 +61,384 @@ static AVPixelFormat findPixelFormat(PixelFormat format)
     }
 }
 
+static bool CalcRGBStride(PixelFormat format, uint32_t width, int &stride)
+{
+    auto avFormat = findPixelFormat(format);
+    switch (avFormat) {
+        case AV_PIX_FMT_RGB565:
+            stride = static_cast<int>(width * BYTES_PER_PIXEL_RGB565);
+            break;
+        case AV_PIX_FMT_RGBA:
+            IMAGE_LOGE("yyytest CalcRGBStride AV_PIX_FMT_RGBA");
+            stride = static_cast<int>(width * BYTES_PER_PIXEL_RGBA);
+            break;
+        case AV_PIX_FMT_RGBA64:
+            stride = static_cast<int>(width * STRIDES_PER_PLANE);
+            break;
+        case AV_PIX_FMT_BGRA:
+            stride = static_cast<int>(width * BYTES_PER_PIXEL_BGRA);
+            break;
+        case AV_PIX_FMT_RGB24:
+            stride = static_cast<int>(width * BYTES_PER_PIXEL_RGB);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+static bool YuvToRGBParam(const YUVDataInfo &yDInfo, SrcConvertParam &srcParam, DstConvertParam &dstParam,
+                          DstConvertDataInfo &dstInfo)
+{
+    srcParam.slice[0] = srcParam.buffer + yDInfo.yOffset;
+    srcParam.slice[1] = srcParam.buffer + yDInfo.uvOffset;
+    srcParam.stride[0] = static_cast<int>(yDInfo.yStride);
+    srcParam.stride[1] = static_cast<int>(yDInfo.uvStride);
+    IMAGE_LOGE("yyytest YuvToRGBParam yOffset=%{public}d, uvOffset=%{public}d",yDInfo.yOffset, yDInfo.uvOffset);
+    IMAGE_LOGE("yyytest YuvToRGBParam yStride=%{public}d, uvStride=%{public}d",yDInfo.yStride, yDInfo.uvStride);
+    int dstStride = 0;
+    if (dstInfo.allocType == AllocatorType::DMA_ALLOC) {
+        dstStride = dstInfo.yStride;
+        dstParam.slice[0] = dstInfo.buffer + dstInfo.yOffset;
+    } else {
+        IMAGE_LOGE("yyytest YuvToRGBParam CalcRGBStride start");
+        auto bRet = CalcRGBStride(dstParam.format, dstParam.width, dstStride);
+        if (!bRet) {
+            return false;
+        }
+        dstParam.slice[0] = dstInfo.buffer;
+    }
+    dstParam.stride[0] = dstStride;
+    IMAGE_LOGE("yyytest YuvToRGBParam dstStride=%{public}d", dstStride);
+    return true;
+}
+
+static bool YuvToYuvParam(const YUVDataInfo &yDInfo, SrcConvertParam &srcParam, DstConvertParam &dstParam,
+                          DstConvertDataInfo &dstInfo)
+{
+    srcParam.slice[0] = srcParam.buffer + yDInfo.yOffset;
+    srcParam.slice[1] = srcParam.buffer + yDInfo.uvOffset;
+
+    srcParam.stride[0] = static_cast<int>(yDInfo.yStride);
+    srcParam.stride[1] = static_cast<int>(yDInfo.uvStride);
+
+    int dstyStride = 0;
+    int dstuvStride = 0;
+    if (dstInfo.allocType == AllocatorType::DMA_ALLOC) {
+        dstyStride = dstInfo.yStride;
+        dstuvStride = dstInfo.uvStride;
+        dstParam.slice[0] = dstInfo.buffer + dstInfo.yOffset;
+        dstParam.slice[1] = dstInfo.buffer + dstInfo.uvOffset;
+    } else {
+        IMAGE_LOGE("yyytest YuvToRGBParam CalcRGBStride start");
+        dstyStride = static_cast<int>(dstParam.width);
+        dstuvStride = (dstParam.width % EVEN_ODD_DIVISOR == 0) ? (dstParam.width) : (dstParam.width + 1);
+        dstParam.slice[0] = dstInfo.buffer;
+        dstParam.slice[1] = dstInfo.buffer + dstyStride * dstParam.height;
+    }
+
+    dstParam.stride[0] = dstyStride;
+    dstParam.stride[1] = dstuvStride;
+    return true;
+}
+
+static bool RGBToYuvParam(const RGBDataInfo &rgbInfo, SrcConvertParam &srcParam, DstConvertParam &dstParam,
+                          DstConvertDataInfo &dstInfo)
+{
+    srcParam.slice[0] = srcParam.buffer;
+    srcParam.stride[0] = static_cast<int>(rgbInfo.stride);
+
+    if (dstInfo.allocType == AllocatorType::DMA_ALLOC) {
+        dstParam.stride[0] = static_cast<int>(dstInfo.yStride);
+        dstParam.stride[1] = static_cast<int>(dstInfo.uvStride);
+        dstParam.slice[0] = dstInfo.buffer + dstInfo.yOffset;
+        dstParam.slice[1] = dstInfo.buffer + dstInfo.uvOffset;
+    } else {
+        IMAGE_LOGE("yyytest YuvToRGBParam CalcRGBStride start");
+        int uvStride = (dstParam.width % EVEN_ODD_DIVISOR == 0) ? (dstParam.width) : (dstParam.width + 1);
+        dstParam.stride[0] = static_cast<int>(dstParam.width);
+        dstParam.stride[1] = static_cast<int>(uvStride);
+        dstParam.slice[0] = dstInfo.buffer;
+        dstParam.slice[1] = dstInfo.buffer + dstParam.width * dstParam.height;
+    }
+    return true;
+}
+
+static bool SoftDecode(const SrcConvertParam &srcParam, const DstConvertParam &dstParam)
+{
+    auto srcformat = findPixelFormat(srcParam.format);
+    auto dstformat = findPixelFormat(dstParam.format);
+    SwsContext *swsContext = sws_getContext(srcParam.width, srcParam.height, srcformat, dstParam.width,
+        dstParam.height, dstformat, SWS_BILINEAR, nullptr, nullptr, nullptr);
+    if (swsContext == nullptr) {
+        IMAGE_LOGE("yyytest Error to create SwsContext.");
+        return false;
+    }
+    int height = 0;
+    const uint8_t *srcSlice[] = {srcParam.slice[0], srcParam.slice[1]};
+    int srcStride[] = {static_cast<int>(srcParam.stride[0]), static_cast<int>(srcParam.stride[1])};
+    uint8_t *dstSlice[] = {dstParam.slice[0], dstParam.slice[1]};
+    int dstStride[] = {static_cast<int>(dstParam.stride[0]), static_cast<int>(dstParam.stride[1])};
+    height = sws_scale(swsContext, srcSlice, srcStride, SRCSLICEY, dstParam.height, dstSlice, dstStride);
+
+    sws_freeContext(swsContext);
+    if (height == 0) {
+        IMAGE_LOGE("yyytest Image pixel format conversion failed");
+        return false;
+    }
+    return true;
+}
+
+static bool YuvToYuv(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,PixelFormat srcFormat,
+    DstConvertDataInfo &dstInfo, PixelFormat dstFormat)
+{
+    IMAGE_LOGE("yyytest yuv conversion to yuv start!");
+    if (srcBuffer == nullptr || dstInfo.buffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
+        yDInfo.uvWidth == 0 || yDInfo.uvHeight == 0 || dstInfo.bufferSize == 0) {
+        return false;
+    }
+    SrcConvertParam srcParam;
+    srcParam.format = srcFormat;
+    srcParam.buffer = srcBuffer;
+
+    DstConvertParam dstParam;
+    dstParam.format = dstFormat;
+
+    if (!YuvToYuvParam(yDInfo, srcParam, dstParam, dstInfo)) {
+        IMAGE_LOGE("yuv conversion to yuv failed!");
+        return false;
+    }
+    if (!SoftDecode(srcParam, dstParam)) {
+        IMAGE_LOGE("yuv manual conversion to yuv failed!");
+        return false;
+    }
+    IMAGE_LOGE("yyytest YuvToYuv succ!");
+    return true;
+}
+
+static bool YuvToRGB(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, PixelFormat srcFormat,
+    DstConvertDataInfo &dstInfo, PixelFormat dstFormat)
+{
+    IMAGE_LOGE("yyytest yuv conversion to RGB start!");
+    if (srcBuffer == nullptr || dstInfo.buffer == nullptr || yDInfo.yWidth == 0 || yDInfo.yHeight == 0 ||
+        yDInfo.uvWidth == 0 || yDInfo.uvHeight == 0 || dstInfo.bufferSize == 0) {
+        return false;
+    }
+    SrcConvertParam srcParam = {yDInfo.yWidth, yDInfo.yHeight};
+    srcParam.format = srcFormat;
+    srcParam.buffer = srcBuffer;
+
+    DstConvertParam dstParam = {yDInfo.yWidth, yDInfo.yHeight};
+    dstParam.format = dstFormat;
+
+    if (!YuvToRGBParam(yDInfo, srcParam, dstParam, dstInfo)) {
+        IMAGE_LOGE("yyytest yuv conversion to RGB failed!");
+        return false;
+    }
+    if (!SoftDecode(srcParam, dstParam)) {
+        IMAGE_LOGE("yyytest yuv manual conversion to RGB failed!");
+        return false;
+    }
+    IMAGE_LOGE("yyytest YuvToRGB succ!");
+    return true;
+}
+
+static bool RGBToYuv(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, PixelFormat srcFormat,
+                     DstConvertDataInfo &dstInfo, PixelFormat dstFormat)
+{
+    IMAGE_LOGE("yyytest RGB conversion to YUV start!");
+    if (srcBuffer == nullptr || dstInfo.buffer == nullptr || rgbInfo.width == 0 || rgbInfo.height == 0 ||
+        dstInfo.bufferSize == 0) {
+        return false;
+    }
+    SrcConvertParam srcParam = {rgbInfo.width, rgbInfo.height};
+    srcParam.format = srcFormat;
+    srcParam.buffer = srcBuffer;
+
+    DstConvertParam dstParam = {rgbInfo.width, rgbInfo.height};
+    dstParam.format = dstFormat;
+
+    if (!RGBToYuvParam(rgbInfo, srcParam, dstParam, dstInfo)) {
+        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
+        return false;
+    }
+    if (!SoftDecode(srcParam, dstParam)) {
+        IMAGE_LOGE("yyytest RGB manual conversion to YUV failed!");
+        return false;
+    }
+    IMAGE_LOGE("yyytest RGBToYuv succ!");
+    return true;
+}
+
+bool ImageFormatConvertUtils::NV12ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]]ColorSpace colorSpace)
+{
+
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGB_565);
+}
+
+bool ImageFormatConvertUtils::NV21ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGB_565);
+}
+
+bool ImageFormatConvertUtils::NV21ToRGBNew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                           DstConvertDataInfo &dstInfo,
+                                           [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGB_888);
+}
+
+bool ImageFormatConvertUtils::NV12ToRGBNew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                           DstConvertDataInfo &dstInfo,
+                                           [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGB_888);
+}
+
+bool ImageFormatConvertUtils::NV21ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest NV21 conversion to RGBA_8888 start!");
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGBA_8888);
+}
+
+bool ImageFormatConvertUtils::NV12ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest NV12 conversion to RGBA_8888 start!");
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGBA_8888);
+}
+
+bool ImageFormatConvertUtils::NV21ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::BGRA_8888);
+}
+
+bool ImageFormatConvertUtils::NV12ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::BGRA_8888);
+}
+
+bool ImageFormatConvertUtils::NV21ToRGBAF16New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGBA_F16);
+}
+
+bool ImageFormatConvertUtils::NV12ToRGBAF16New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGBA_F16);
+}
+
+bool ImageFormatConvertUtils::NV12ToNV21New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest NV12 conversion to N21 start!");
+    return YuvToYuv(srcBuffer, yDInfo, PixelFormat::NV12, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertUtils::NV21ToNV12New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest NV21 conversion to N12 start!");
+    return YuvToYuv(srcBuffer, yDInfo, PixelFormat::NV21, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertUtils::RGBToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                           DstConvertDataInfo &dstInfo,
+                                           [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest RGB_888 conversion to N21 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_888, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertUtils::RGBToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                           DstConvertDataInfo &dstInfo,
+                                           [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest RGB_888 conversion to N12 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_888, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertUtils::RGB565ToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest RGB_565 conversion to N21 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_565, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertUtils::RGB565ToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest RGB_565 conversion to N12 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_565, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertUtils::RGBAToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest RGBA_8888 conversion to N21 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGBA_8888, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertUtils::RGBAToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest RGBA_8888 conversion to N12 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGBA_8888, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertUtils::BGRAToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest BGRA_8888 conversion to N21 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::BGRA_8888, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertUtils::BGRAToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                            DstConvertDataInfo &dstInfo,
+                                            [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest BGRA_8888 conversion to N12 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::BGRA_8888, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertUtils::RGBAF16ToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest BGRA_8888 conversion to N12 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGBA_F16, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertUtils::RGBAF16ToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    IMAGE_LOGE("yyytest BGRA_8888 conversion to N12 start!");
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::RGBA_F16, dstInfo, PixelFormat::NV12);
+}
+
 static bool NV12ToRGB565SoftDecode(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo, uint8_t **destBuffer)
 {
     AVPixelFormat srcFormat = findPixelFormat(PixelFormat::NV12);
@@ -536,6 +914,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, const RGBD
     if (swsContext == nullptr) {
         IMAGE_LOGE("Error to create SwsContext.");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return false;
     }
 
@@ -549,6 +928,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV21(const uint8_t *srcBuffer, const RGBD
     if (height == 0) {
         IMAGE_LOGE("RGBAF16ToNV21 format conversion failed");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return false;
     }
     return true;
@@ -640,6 +1020,7 @@ bool ImageFormatConvertUtils::NV12ToNV21(const uint8_t *srcBuffer, const YUVData
     bool result = NV12ToNV21SoftDecode(srcBuffer, yDInfo, destBuffer);
     if (!result) {
         delete[] (*destBuffer);
+        *destBuffer = nullptr;
         IMAGE_LOGE("NV12 conversion to NV21 failed!");
     }
     return result;
@@ -873,6 +1254,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV12(const uint8_t *srcBuffer, const RGBD
     if (swsContext == nullptr) {
         IMAGE_LOGE("Error to create SwsContext.");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return false;
     }
 
@@ -886,6 +1268,7 @@ bool ImageFormatConvertUtils::RGBAF16ToNV12(const uint8_t *srcBuffer, const RGBD
     if (height == 0) {
         IMAGE_LOGE("RGBAF16ToNV12 format conversion failed");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return false;
     }
     return true;
@@ -1057,6 +1440,7 @@ bool ImageFormatConvertUtils::NV21ToRGB(const uint8_t *data, const YUVDataInfo &
                                              yDInfo.yHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (swsContext == nullptr) {
         delete[] destBuffer;
+        *destBuffer = nullptr;
         IMAGE_LOGE("Error to create SwsContext.");
         return false;
     }
@@ -1070,6 +1454,7 @@ bool ImageFormatConvertUtils::NV21ToRGB(const uint8_t *data, const YUVDataInfo &
     if (height == 0) {
         IMAGE_LOGE("Image pixel format conversion failed");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return false;
     }
     return true;
@@ -1097,6 +1482,7 @@ bool ImageFormatConvertUtils::NV21ToRGBA(const uint8_t *srcBuffer, const YUVData
     if (!bRet) {
         IMAGE_LOGE("NV21ToRGBA failed!");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return bRet;
     }
     return true;
@@ -1125,6 +1511,7 @@ bool ImageFormatConvertUtils::NV21ToBGRA(const uint8_t *srcBuffer, const YUVData
     if (!bRet) {
         IMAGE_LOGE("NV21ToBGRA failed!");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return bRet;
     }
     return true;
@@ -1153,6 +1540,7 @@ bool ImageFormatConvertUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YUVDa
     if (!bRet) {
         IMAGE_LOGE("NV21ToRGB565 failed!");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return bRet;
     }
     return true;
@@ -1179,6 +1567,7 @@ bool ImageFormatConvertUtils::RGBToNV12(const uint8_t *srcBuffer, const RGBDataI
     if (!bRet) {
         IMAGE_LOGE("RGBToNV12 failed!");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return bRet;
     }
     return true;

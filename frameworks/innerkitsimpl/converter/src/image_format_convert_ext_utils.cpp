@@ -739,8 +739,9 @@ bool ImageFormatConvertExtUtils::NV21ToRGB(const uint8_t *data, const YUVDataInf
         return false;
     }
     auto &converter = ConverterHandle::GetInstance().GetHandle();
-    converter.NV21ToRAW(data + yDInfo.yOffset, yDInfo.yStride, data + yDInfo.uvOffset,
-        yDInfo.uvStride, *destBuffer, yDInfo.yWidth * BYTES_PER_PIXEL_RGB,
+    converter.NV21ToRAW(data + yDInfo.yOffset, yDInfo.yStride,
+        data + yDInfo.uvOffset, yDInfo.uvStride,
+        *destBuffer, yDInfo.yWidth * BYTES_PER_PIXEL_RGB,
         yDInfo.yWidth, yDInfo.yHeight);
     return true;
 }
@@ -768,6 +769,7 @@ bool ImageFormatConvertExtUtils::NV21ToRGBA(const uint8_t *srcBuffer, const YUVD
     if (!bRet) {
         IMAGE_LOGE("NV21ToRGBA failed!");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return bRet;
     }
     return true;
@@ -796,6 +798,7 @@ bool ImageFormatConvertExtUtils::NV21ToBGRA(const uint8_t *srcBuffer, const YUVD
     if (!bRet) {
         IMAGE_LOGE("NV21ToBGRA failed!");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return bRet;
     }
     return true;
@@ -824,6 +827,7 @@ bool ImageFormatConvertExtUtils::NV21ToRGB565(const uint8_t *srcBuffer, const YU
     if (!bRet) {
         IMAGE_LOGE("NV21ToRGB565 failed!");
         delete[] destBuffer;
+        *destBuffer = nullptr;
         return bRet;
     }
     return true;
@@ -868,5 +872,454 @@ bool ImageFormatConvertExtUtils::RGBToNV12(const uint8_t *srcBuffer, const RGBDa
         rgbInfo.width, rgbInfo.height);
     return true;
 }
+
+static bool RGBToI420(SrcConvertParam &srcParam, I420Info &i420)
+{
+    auto &converter = ConverterHandle::GetInstance().GetHandle();
+    switch (srcParam.format) {
+        case PixelFormat::RGB_888:
+            converter.RGB24ToI420(srcParam.slice[0], srcParam.stride[0], i420.I420Y, i420.yStride, i420.I420U,
+                i420.uStride, i420.I420V, i420.vStride, srcParam.width, srcParam.height);
+            break;
+        case PixelFormat::RGB_565:
+            converter.RGB565ToI420(srcParam.slice[0], srcParam.stride[0], i420.I420Y, i420.yStride, i420.I420U,
+                i420.uStride, i420.I420V, i420.vStride, srcParam.width, srcParam.height);
+            break;
+        case PixelFormat::RGBA_8888:
+            converter.ABGRToI420(srcParam.slice[0], srcParam.stride[0], i420.I420Y, i420.yStride, i420.I420U,
+                i420.uStride, i420.I420V, i420.vStride, srcParam.width, srcParam.height);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+static bool I420ToYuv(I420Info &i420, DstConvertParam &dstParam)
+{
+    auto &converter = ConverterHandle::GetInstance().GetHandle();
+    switch (dstParam.format) {
+        case PixelFormat::NV12:
+            converter.I420ToNV12(i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
+                dstParam.slice[0], dstParam.stride[0], dstParam.slice[1], dstParam.stride[1],
+                dstParam.width, dstParam.height);
+        case PixelFormat::NV21:
+            converter.I420ToNV21(i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
+                dstParam.slice[0], dstParam.stride[0], dstParam.slice[1], dstParam.stride[1],
+                dstParam.width, dstParam.height);
+            break;
+        }
+        default:
+            return false;
+    }
+}
+
+static void RGBToYuvParam(const RGBDataInfo &rgbInfo, SrcConvertParam &srcParam, DstConvertParam &dstParam,
+                          DstConvertDataInfo &dstInfo)
+{
+    srcParam.slice[0] = srcParam.buffer;
+    srcParam.stride[0] = static_cast<int>(rgbInfo.stride);
+    if (dstInfo.allocType == AllocatorType::DMA_ALLOC) {
+        dstParam.stride[0] = static_cast<int>(dstInfo.yStride);
+        dstParam.stride[1] = static_cast<int>(dstInfo.uvStride);
+        dstParam.slice[0] = dstInfo.buffer + dstInfo.yOffset;
+        dstParam.slice[1] = dstInfo.buffer + dstInfo.uvOffset;
+    } else {
+        IMAGE_LOGE("yyytest YuvToRGBParam CalcRGBStride start");
+        int uvStride = (dstParam.width % EVEN_ODD_DIVISOR == 0) ? (dstParam.width) : (dstParam.width + 1);
+        dstParam.stride[0] = static_cast<int>(dstParam.width);
+        dstParam.stride[1] = static_cast<int>(uvStride);
+        dstParam.slice[0] = dstInfo.buffer;
+        dstParam.slice[1] = dstInfo.buffer + dstParam.width * dstParam.height;
+    }
+}
+
+static bool RGBToI420ToYuvParam(const RGBDataInfo &rgbInfo, SrcConvertParam &srcParam, I420Info &i420Info,
+                                DstConvertParam &dstParam, DstConvertDataInfo &dstInfo)
+{
+
+    RGBToYuvParam(rgbInfo, srcParam, dstParam, dstInfo);
+
+    i420Info.yStride = rgbInfo.width;
+    i420Info.uStride = (rgbInfo.width + NUM_1) / NUM_2;
+    i420Info.vStride = (rgbInfo.width + NUM_1) / NUM_2;
+    i420Info.uvHeight = ((i420Info.height + NUM_1) / NUM_2) * NUM_2;
+    const uint32_t i420BufferSize = static_cast<size_t>(i420Info.yStride * i420Info.height +
+        i420Info.uStride * i420Info.uvHeight * NUM_2);
+    if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
+        return false;
+    }
+    uint8_t *i420Buffer = new (std::nothrow) uint8_t[i420BufferSize];
+    if (i420Buffer == nullptr) {
+        IMAGE_LOGE("apply space for I420 buffer failed!");
+        return false;
+    }
+    i420Info.I420Y = i420Buffer;
+    i420Info.I420U = i420Info.I420Y + rgbInfo.height * i420Info.yStride;
+    i420Info.I420V = i420Info.I420U + i420Info.uStride * ((rgbInfo.height + NUM_1) / NUM_2)};
+    return true;
+}
+
+static bool RGBToI420ToYuv(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, PixelFormat srcFormat,
+                           DstConvertDataInfo &dstInfo, PixelFormat dstFormat)
+{
+    SrcConvertParam srcParam = {rgbInfo.width, rgbInfo.width};
+    srcParam.buffer = srcBuffer;
+    srcParam.format = srcFormat;
+
+    DstConvertParam dstParam = {rgbInfo.width, rgbInfo.width};
+    dstParam.format = dstFormat;
+
+    I420Info i420Info = {rgbInfo.width, rgbInfo.width};
+
+    if (!RGBToI420ToYuvParam(rgbInfo, srcParam, dstParam, i420Info, dstInfo)) {
+        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
+        return false;
+    }
+    auto bRet = RGBToI420(srcParam, i420Info);
+    if (!bRet) {
+        delete[] i420Info.I420Y;
+        return false;
+    }
+    bRet = I420ToYuv(i420Info, dstParam);
+    delete[] i420Info.I420Y;
+    IMAGE_LOGE("yyytest RGBToI420ToYuv succ!");
+    return bRet;
+}
+
+static bool RGBToYuvConverter(SrcConvertParam &srcParam, DstConvertParam &dstParam)
+{
+    if (srcParam.format != PixelFormat::BGRA_8888) {
+        return false;
+    }
+    auto &converter = ConverterHandle::GetInstance().GetHandle();
+    switch (dstParam.format) {
+        case PixelFormat::NV12:
+            converter.ARGBToNV12(srcParam.slice[0], srcParam.stride[0],
+                dstParam.slice[0], dstParam.stride[0], dstParam.slice[0], dstParam.stride[0],
+                dstParam.width, dstParam.height);
+            break;
+        case PixelFormat::NV21:
+            converter.ARGBToNV21(srcParam.slice[0], srcParam.stride[0],
+                dstParam.slice[0], dstParam.stride[0], dstParam.slice[0], dstParam.stride[0],
+                dstParam.width, dstParam.height);
+            break;
+        default:
+            return false;
+    }
+}
+
+static bool RGBToYuv(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo, PixelFormat srcFormat,
+                     DstConvertDataInfo &dstInfo, PixelFormat dstFormat)
+{
+
+    SrcConvertParam srcParam = {rgbInfo.width, rgbInfo.width};
+    srcParam.buffer = srcBuffer;
+    srcParam.format = srcFormat;
+
+    DstConvertParam dstParam = {rgbInfo.width, rgbInfo.width};
+    dstParam.format = dstFormat;
+
+    if (!RGBToYuvParam(rgbInfo, srcParam, dstParam, dstInfo)) {
+        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
+        return false;
+    }
+    return RGBToYuvConverter(srcParam, dstParam);
+}
+
+bool ImageFormatConvertExtUtils::BGRAToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::BGRA_8888, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertExtUtils::BGRAToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToYuv(srcBuffer, rgbInfo, PixelFormat::BGRA_8888, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertExtUtils::RGB565ToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                                 DstConvertDataInfo &dstInfo,
+                                                 [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToI420ToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_565, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertExtUtils::RGB565ToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                                 DstConvertDataInfo &dstInfo,
+                                                 [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToI420ToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_565, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertExtUtils::RGBToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToI420ToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_888, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertExtUtils::RGBToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToI420ToYuv(srcBuffer, rgbInfo, PixelFormat::RGB_888, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertExtUtils::RGBAToNV21New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToI420ToYuv(srcBuffer, rgbInfo, PixelFormat::RGBA_8888, dstInfo, PixelFormat::NV21);
+}
+
+bool ImageFormatConvertExtUtils::RGBAToNV12New(const uint8_t *srcBuffer, const RGBDataInfo &rgbInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]] ColorSpace colorSpace)
+{
+    return RGBToI420ToYuv(srcBuffer, rgbInfo, PixelFormat::RGBA_8888, dstInfo, PixelFormat::NV12);
+}
+
+static bool YuvToI420(SrcConvertParam &srcParam, I420Info &i420)
+{
+    auto &converter = ConverterHandle::GetInstance().GetHandle();
+    switch (srcParam.format) {
+        case PixelFormat::NV12:
+            converter.NV21ToI420(srcParam.slice[0], srcParam.stride[0], srcParam.slice[1], srcParam.stride[1],
+                i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
+                i420.width, i420.height);
+             break;
+        case PixelFormat::NV21:
+            converter.NV12ToI420(srcParam.slice[0], srcParam.stride[0], srcParam.slice[1], srcParam.stride[1],
+                i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
+                i420.width, i420.height);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+static bool I420ToRGB(I420Info &i420, DstConvertParam &dstParam, [[maybe_unused]]ColorSpace colorSpace)
+{
+    auto &converter = ConverterHandle::GetInstance().GetHandle();
+    switch (dstParam.format) {
+        case PixelFormat::RGBA_8888:
+            converter.I420ToABGR(i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
+                dstParam.slice[0], dstParam.stride[0], dstParam.width, dstParam.height);
+            break;
+        case PixelFormat::RGB_565:
+            converter.I420ToRGB565Matrix(i420.I420Y, i420.yStride, i420.I420U, i420.uStride, i420.I420V, i420.vStride,
+                dstParam.slice[0], dstParam.stride[0], static_cast<OHOS::OpenSourceLibyuv::ColorSpace>(colorSpace),
+                dstParam.width, dstParam.height);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+static void YuvToRGBParam(const YUVDataInfo &yuvInfo, SrcConvertParam &srcParam,
+                          DstConvertParam &dstParam, DstConvertDataInfo &dstInfo)
+{
+
+    srcParam.slice[0] = srcParam.buffer + yuvInfo.yOffset;
+    srcParam.slice[1] = srcParam.buffer + yuvInfo.uvOffset;
+    srcParam.stride[0] = static_cast<int>(yuvInfo.yStride);
+    srcParam.stride[1] = static_cast<int>(yuvInfo.uvStride);
+
+    if (dstInfo.allocType == AllocatorType::DMA_ALLOC) {
+        dstParam.stride[0] = static_cast<int>(dstInfo.yStride);
+        dstParam.slice[0] = dstInfo.buffer + dstInfo.yOffset;
+    } else {
+        IMAGE_LOGE("yyytest YuvToRGBParam CalcRGBStride start");
+        dstParam.stride[0] = static_cast<int>(dstParam.width);
+        dstParam.slice[0] = dstInfo.buffer;
+    }
+}
+
+static bool YuvToI420ToRGBParam(const YUVDataInfo &yuvInfo, SrcConvertParam &srcParam, I420Info &i420Info,
+                                DstConvertParam &dstParam, DstConvertDataInfo &dstInfo)
+{
+    YuvToRGBParam(yuvInfo, srcParam, dstParam, dstInfo);
+    i420Info.yStride = rgbInfo.width;
+    i420Info.uStride = (rgbInfo.width + NUM_1) / NUM_2;
+    i420Info.vStride = (rgbInfo.width + NUM_1) / NUM_2;
+    i420Info.uvHeight = ((i420Info.height + NUM_1) / NUM_2) * NUM_2;
+    const uint32_t i420BufferSize = static_cast<size_t>(i420Info.yStride * i420Info.height +
+        i420Info.uStride * i420Info.uvHeight * NUM_2);
+    if (i420BufferSize <= NUM_0 || i420BufferSize > PIXEL_MAP_MAX_RAM_SIZE) {
+        IMAGE_LOGE("Invalid destination buffer size calculation!");
+        return false;
+    }
+    uint8_t *i420Buffer = new (std::nothrow) uint8_t[i420BufferSize];
+    if (i420Buffer == nullptr) {
+        IMAGE_LOGE("apply space for I420 buffer failed!");
+        return false;
+    }
+    i420Info.I420Y = i420Buffer;
+    i420Info.I420U = i420Info.I420Y + rgbInfo.height * i420Info.yStride;
+    i420Info.I420V = i420Info.I420U + i420Info.uStride * ((rgbInfo.height + NUM_1) / NUM_2)
+    return true;
+}
+
+static bool YuvTo420ToRGB(const uint8_t *srcBuffer, const YUVDataInfo &yuvInfo, PixelFormat srcFormat,
+                          DstConvertDataInfo &dstInfo, PixelFormat dstFormat,
+                          [[maybe_unused]]ColorSpace colorSpace)
+{
+    SrcConvertParam srcParam = {rgbInfo.width, rgbInfo.width};
+    srcParam.buffer = srcBuffer;
+    srcParam.format = srcFormat;
+
+    DstConvertParam dstParam = {rgbInfo.width, rgbInfo.width};
+    dstParam.format = dstFormat;
+
+    I420Info i420Info = {rgbInfo.width, rgbInfo.width};
+
+    if (!YuvToI420ToRGBParam(rgbInfo, srcParam, dstParam, i420Info, dstInfo)) {
+        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
+        return false;
+    }
+    auto bRet = YuvToI420(srcParam, i420Info);
+    if (!bRet) {
+        delete[] i420Info.I420Y;
+        return false;
+    }
+    bRet = I420ToRGB(i420Info, dstParam, colorSpace);
+    delete[] i420Info.I420Y;
+    IMAGE_LOGE("yyytest RGBToI420ToYuv succ!");
+    return bRet;
+}
+
+static bool YuvToRGBConverter(SrcConvertParam &srcParam, DstConvertParam &dstParam)
+{
+    auto &converter = ConverterHandle::GetInstance().GetHandle();
+    if (srcParam.format == PixelFormat::NV21) {
+        switch (dstParam.format) {
+            case PixelFormat::RGB_888:
+                converter.NV21ToRAW(srcParam.slice[0], srcParam.stride[0], srcParam.slice[1], srcParam.stride[1],
+                    dstParam.slice[0], dstParam.stride[0], dstParam.width, dstParam.height);
+                break;
+            case PixelFormat::BGRA_8888:
+                converter.NV21ToARGB(srcParam.slice[0], srcParam.stride[0], srcParam.slice[1], srcParam.stride[1],
+                    dstParam.slice[0], dstParam.stride[0], dstParam.width, dstParam.height);
+                break;
+            default:
+                return false;
+        }
+    } else if (srcParam.format == PixelFormat::NV12) {
+        switch (dstParam.format) {
+            case PixelFormat::RGB_888:
+                converter.NV12ToRAW(srcParam.slice[0], srcParam.stride[0], srcParam.slice[1], srcParam.stride[1],
+                    dstParam.slice[0], dstParam.stride[0], dstParam.width, dstParam.height);
+                break;
+            case PixelFormat::BGRA_8888:
+                converter.NV12ToARGB(srcParam.slice[0], srcParam.stride[0], srcParam.slice[1], srcParam.stride[1],
+                    dstParam.slice[0], dstParam.stride[0], dstParam.width, dstParam.height);
+                break;
+            default:
+                return false;
+        }
+    }
+    return true;
+}
+
+static bool YuvToRGB(const uint8_t *srcBuffer, const YUVDataInfo &yuvInfo, PixelFormat srcFormat,
+                     DstConvertDataInfo &dstInfo, PixelFormat dstFormat)
+{
+    SrcConvertParam srcParam = {yuvInfo.width, yuvInfo.width};
+    srcParam.buffer = srcBuffer;
+    srcParam.format = srcFormat;
+
+    DstConvertParam dstParam = {yuvInfo.width, yuvInfo.width};
+    dstParam.format = dstFormat;
+
+    if (!YuvToRGBParam(yuvInfo, srcParam, dstParam, dstInfo)) {
+        IMAGE_LOGE("yyytest RGB conversion to YUV failed!");
+        return false;
+    }
+
+    return YuvToRGBConverter(srcParam, dstParam);
+}
+
+bool ImageFormatConvertExtUtils::NV21ToRGBNew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGB_888);
+}
+
+bool ImageFormatConvertExtUtils::NV12ToRGBNew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                              DstConvertDataInfo &dstInfo,
+                                              [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGB_888);
+}
+
+bool ImageFormatConvertExtUtils::NV21ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::RGBA_8888);
+}
+
+bool ImageFormatConvertExtUtils::NV12ToRGBANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{                                               
+    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::RGBA_8888);
+}
+
+bool ImageFormatConvertExtUtils::NV21ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::BGRA_8888);
+}
+
+bool ImageFormatConvertExtUtils::NV12ToBGRANew(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::BGRA_8888);
+} 
+
+bool ImageFormatConvertExtUtils::NV21ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                                 DstConvertDataInfo &dstInfo,
+                                                 [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::BGRA_565);
+}
+
+bool ImageFormatConvertExtUtils::NV12ToRGB565New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                                 DstConvertDataInfo &dstInfo,
+                                                 [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvTo420ToRGB(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::BGRA_565);
+}
+
+static bool YuvToYuv(const uint8_t *srcBuffer, const YUVDataInfo &yuvInfo, PixelFormat srcFormat,
+                     DstConvertDataInfo &dstInfo, PixelFormat dstFormat) {
+    return false;
+}
+
+bool ImageFormatConvertExtUtils::NV21ToNV12New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToYuv(srcBuffer, yuvInfo, PixelFormat::NV21, dstInfo, PixelFormat::NV12);
+}
+
+bool ImageFormatConvertExtUtils::NV12ToNV21New(const uint8_t *srcBuffer, const YUVDataInfo &yDInfo,
+                                               DstConvertDataInfo &dstInfo,
+                                               [[maybe_unused]]ColorSpace colorSpace)
+{
+    return YuvToYuv(srcBuffer, yuvInfo, PixelFormat::NV12, dstInfo, PixelFormat::NV21);
+}
+
 } // namespace Media
 } // namespace OHOS

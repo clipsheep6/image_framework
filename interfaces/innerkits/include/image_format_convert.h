@@ -22,6 +22,7 @@
 #include "image_plugin_type.h"
 #include "image_type.h"
 #include "pixel_map.h"
+#include "memory_manager.h"
 
 namespace OHOS {
 namespace Media {
@@ -29,6 +30,11 @@ using uint8_buffer_type = uint8_t *;
 using const_uint8_buffer_type = const uint8_t *;
 using ConvertFunction = bool(*)(const uint8_t*, const RGBDataInfo&, uint8_t**, size_t&, [[maybe_unused]]ColorSpace);
 using YUVConvertFunction = bool(*)(const uint8_t*, const YUVDataInfo&, uint8_t**, size_t&,
+    [[maybe_unused]]ColorSpace);
+
+using ConvertFunctionNew = bool(*)(const uint8_t*, const RGBDataInfo&, DstConvertDataInfo &dstInfo,
+    [[maybe_unused]]ColorSpace);
+using YUVConvertFunctionNew = bool(*)(const uint8_t*, const YUVDataInfo&, DstConvertDataInfo &dstInfo,
     [[maybe_unused]]ColorSpace);
 
 struct ConvertDataInfo {
@@ -51,10 +57,16 @@ private:
                                                 PixelFormat destFormat);
     static size_t GetBufferSizeByFormat(PixelFormat format, const Size &size);
     static ConvertFunction GetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat);
+    static ConvertFunctionNew GetConvertFuncByFormatNew(PixelFormat srcFormat, PixelFormat destFormat);
     static YUVConvertFunction YUVGetConvertFuncByFormat(PixelFormat srcFormat, PixelFormat destFormat);
+    static YUVConvertFunctionNew YUVGetConvertFuncByFormatNew(PixelFormat srcFormat, PixelFormat destFormat);
     static bool MakeDestPixelMap(std::shared_ptr<PixelMap> &destPixelMap, uint8_buffer_type destBuffer,
-                                 const size_t destBufferSize, ImageInfo &info, AllocatorType allcatorType);
+                                 const size_t destBufferSize, ImageInfo &info, AllocatorType allcatorType,
+                                 void *context);
     static bool IsSupport(PixelFormat format);
+    static std::unique_ptr<AbsMemory> CreateMemory(PixelFormat pixelFormat, uint32_t pictureSize,
+                                                   AllocatorType allocatorType, int32_t width, int32_t height,
+                                                   YUVStrideInfo &strides);
 };
 } //OHOS
 } //Media

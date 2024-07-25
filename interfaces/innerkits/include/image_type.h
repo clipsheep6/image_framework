@@ -223,6 +223,38 @@ struct RGBDataInfo {
     uint32_t stride = 0;
 };
 
+struct DstConvertDataInfo {
+    AllocatorType allocType;
+    uint8_t *buffer = nullptr;
+    uint32_t bufferSize = 0;
+    uint32_t yStride = 0;
+    uint32_t uvStride = 0;
+    uint32_t yOffset = 0;
+    uint32_t uvOffset = 0;
+};
+
+struct SrcConvertParam {
+    uint32_t width;
+    uint32_t height;
+    AllocatorType allocType;
+    PixelFormat format;
+    const uint8_t *buffer;
+    uint32_t bufferSize;
+    int stride[2];
+    const uint8_t *slice[2];
+};
+
+struct DstConvertParam {
+    uint32_t width;
+    uint32_t height;
+    AllocatorType allocType;
+    PixelFormat format;
+    uint8_t *buffer;
+    uint32_t bufferSize;
+    int stride[2];
+    uint8_t *slice[2];
+};
+
 struct FillColor {
     bool isValidColor = false;
     uint32_t color = 0;
