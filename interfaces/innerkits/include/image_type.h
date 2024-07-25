@@ -283,6 +283,38 @@ enum class AntiAliasingOption : int32_t {
     LANCZOS = 8, // SWS_LANCZOS
     SPLINE = 9, // SWS_SPLINE
 };
+
+enum class AuxiliaryPictureType {
+    NONE = 0,
+    GAINMAP = 1,
+    DEPTH_MAP = 2,
+    UNREFOCUS_MAP = 3,
+    LINEAR_MAP = 4,
+    FRAGMENT_MAP = 5,
+};
+
+struct AuxiliaryPictureInfo {
+    AuxiliaryPictureType auxiliaryPictureType = AuxiliaryPictureType::NONE;
+    Size size;
+    int32_t rowStride = 0;
+    PixelFormat pixelFormat = PixelFormat::UNKNOWN;
+    ColorSpace colorSpace = ColorSpace::SRGB;
+};
+
+enum class MetadataType {
+    EXIF = 1,
+    FRAGMENT = 2,
+};
+
+struct DecodingOptionsForPicture {
+    std::set<AuxiliaryPictureType> desireAuxiliaryPictures;
+};
+
+typedef struct PictureError {
+    uint32_t errorCode = 0;
+    std::string errorInfo = "";
+} PICTURE_ERR;
+
 } // namespace Media
 } // namespace OHOS
 
