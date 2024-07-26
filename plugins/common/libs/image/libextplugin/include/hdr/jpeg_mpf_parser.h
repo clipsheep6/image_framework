@@ -21,6 +21,9 @@
 
 namespace OHOS {
 namespace Media {
+
+constexpr uint32_t JPEG_MPF_IDENTIFIER_SIZE = 4;
+
 struct SingleJpegImage {
     uint32_t offset;
     uint32_t size;
