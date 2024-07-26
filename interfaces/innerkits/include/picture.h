@@ -33,7 +33,7 @@ class ExifMetadata;
 class Picture : public Parcelable {
 public:
     Picture() = default;
-    virtual ~Picture() {}
+    virtual ~Picture();
 
     NATIVEEXPORT static std::unique_ptr<Picture> Create(std::shared_ptr<PixelMap> &PixelMap);
     NATIVEEXPORT static std::unique_ptr<Picture> Create(sptr<SurfaceBuffer> &surfaceBuffer);
@@ -49,14 +49,15 @@ public:
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data);
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data, PICTURE_ERR &error);
     NATIVEEXPORT int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer);
+    NATIVEEXPORT int32_t SetExifMetadata(std::shared_ptr<ExifMetadata> exifMetadata);
     NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
     NATIVEEXPORT bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer);
-    NATIVEEXPORT std::shared_ptr<uint8_t[]> GetMaintenanceData(size_t &size) const;
+    NATIVEEXPORT sptr<SurfaceBuffer> GetMaintenanceData() const;
 
 private:
     std::shared_ptr<PixelMap> mainPixelMap_;
     std::map<AuxiliaryPictureType, std::shared_ptr<AuxiliaryPicture>> auxiliaryPictures_;
-    std::unique_ptr<MaintenanceData> maintenanceData_ = nullptr;
+    sptr<SurfaceBuffer> maintenanceData_;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
 };
 }

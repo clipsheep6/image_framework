@@ -147,6 +147,8 @@ static void SetYuvDataInfo(std::shared_ptr<PixelMap> pixelMap, sptr<OHOS::Surfac
     pixelMap->SetImageYUVInfo(info);
 }
 
+Picture::~Picture() {}
+
 std::unique_ptr<Picture> Picture::Create(std::shared_ptr<PixelMap> &pixelMap)
 {
     if (pixelMap == nullptr) {
@@ -284,21 +286,14 @@ bool Picture::Marshalling(Parcel &data) const
         }
     }
 
-    if (maintenanceData_) {
-        if (!data.WriteUint64(maintenanceData_->size_)) {
-            IMAGE_LOGE("Failed to write maintenance data size.");
-            return false;
-        }
+    if (!data.WriteBool(maintenanceData_ != nullptr)) {
+        IMAGE_LOGE("Failed to write maintenance data existence value.");
+        return false;
+    }
 
-        if (maintenanceData_->size_ > 0) {
-            if (!data.WriteUnpadBuffer(maintenanceData_->data_.get(), maintenanceData_->size_)) {
-                IMAGE_LOGE("Failed to write maintenance data.");
-                return false;
-            }
-        }
-    } else {
-        if (!data.WriteUint64(0)) {
-            IMAGE_LOGE("Failed to write maintenance data size.");
+    if (maintenanceData_ != nullptr) {
+        if (maintenanceData_->WriteToMessageParcel(reinterpret_cast<MessageParcel&>(data)) != GSError::GSERROR_OK) {
+            IMAGE_LOGE("Failed to write maintenance data content.");
             return false;
         }
     }
@@ -346,20 +341,17 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
         picture->SetAuxiliaryPicture(auxPtr);
     }
 
-    auto maintenanceDataSize = parcel.ReadUint64();
-    std::unique_ptr<uint8_t[]> maintenanceData = nullptr;
-    if (maintenanceDataSize > 0) {
-        const uint8_t *tmpPtr = parcel.ReadUnpadBuffer(maintenanceDataSize);
-        maintenanceData = std::make_unique<uint8_t[]>(maintenanceDataSize);
-        if (EOK != memcpy_s(maintenanceData.get(), maintenanceDataSize, tmpPtr, maintenanceDataSize)) {
-            IMAGE_LOGE("Failed to unmarshal maintenance data.");
+    bool hasMaintenanceData = parcel.ReadBool();
+    if (hasMaintenanceData) {
+        sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
+        if (surfaceBuffer->ReadFromMessageParcel(reinterpret_cast<MessageParcel&>(parcel)) != GSError::GSERROR_OK) {
+            IMAGE_LOGE("Failed to unmarshal maintenance data");
             return nullptr;
         }
+        picture->maintenanceData_ = surfaceBuffer;
     }
-    picture->maintenanceData_ = std::make_unique<MaintenanceData>(std::move(maintenanceData), maintenanceDataSize);
-
     picture->exifMetadata_ = std::shared_ptr<ExifMetadata>(ExifMetadata::Unmarshalling(parcel));
-    
+
     return picture.release();
 }
 
@@ -387,6 +379,15 @@ int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
     return SUCCESS;
 }
 
+int32_t Picture::SetExifMetadata(std::shared_ptr<ExifMetadata> exifMetadata)
+{
+    if (exifMetadata == nullptr) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    exifMetadata_ = exifMetadata;
+    return SUCCESS;
+}
+
 std::shared_ptr<ExifMetadata> Picture::GetExifMetadata()
 {
     return exifMetadata_;
@@ -397,32 +398,13 @@ bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
     if (surfaceBuffer == nullptr) {
         return false;
     }
-
-    auto size = surfaceBuffer->GetSize();
-    if (size <= 0) {
-        IMAGE_LOGE("Invalid buffer size: %d.", size);
-        return false;
-    }
-
-    maintenanceData_ = std::make_unique<MaintenanceData>(std::make_unique<uint8_t[]>(size), size);
-    if (!maintenanceData_) {
-        return false;
-    }
-
-    auto ret = memcpy_s(maintenanceData_->data_.get(), size, surfaceBuffer->GetVirAddr(), size);
-    if (ret != EOK) {
-        IMAGE_LOGE("Memmoy copy failed, errono: %d.", ret);
-        return false;
-    }
-
-    maintenanceData_->size_ = size;
+    maintenanceData_ = surfaceBuffer;
     return true;
 }
 
-std::shared_ptr<uint8_t[]> Picture::GetMaintenanceData(size_t &size) const
+sptr<SurfaceBuffer> Picture::GetMaintenanceData() const
 {
-    size = maintenanceData_->size_;
-    return maintenanceData_->data_;
+    return maintenanceData_;
 }
 
 } // namespace Media
