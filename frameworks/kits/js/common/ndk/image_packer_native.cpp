@@ -421,7 +421,6 @@ Image_ErrorCode OH_ImagePackerNative_PackToDataFromPicture(OH_ImagePackerNative 
     }
     return ToNewErrorCode(imagePacker->PackToDataFromPicture(&packOption, picture, outData,
         reinterpret_cast<int64_t*>(size)));
-    return IMAGE_SUCCESS;
 }
 
 MIDK_EXPORT
@@ -496,7 +495,7 @@ Image_ErrorCode OH_ImagePackerNative_PackToFileFromPicture(OH_ImagePackerNative 
     if (errorCode != IMAGE_SUCCESS) {
         return errorCode;
     }
-    return ToNewErrorCode(imagePacker->PackToFileFromPicture(&packOption, picture,fd));
+    return ToNewErrorCode(imagePacker->PackToFileFromPicture(&packOption, picture, fd));
 }
 
 MIDK_EXPORT

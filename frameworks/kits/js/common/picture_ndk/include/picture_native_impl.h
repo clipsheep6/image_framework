@@ -24,7 +24,6 @@ extern "C" {
 struct OH_PictureNative {
 public:
     OH_PictureNative(std::shared_ptr<OHOS::Media::Picture> picture);
-    //OH_PictureNative(sptr<OHOS::SurfaceBuffer> &surfaceBuffer);
     OH_PictureNative(std::shared_ptr<OHOS::Media::PixelMap> pixelmap);
     ~OH_PictureNative();
     std::shared_ptr<OHOS::Media::Picture> GetInnerPicture();
@@ -55,7 +54,6 @@ public:
 private:
     std::shared_ptr<OHOS::Media::AuxiliaryPictureInfo> auxiliaryPictureInfo_;
 };
-
 
 #ifdef __cplusplus
 };

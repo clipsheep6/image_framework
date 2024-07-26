@@ -14,9 +14,6 @@
 import("//build/ohos.gni")
 import("//foundation/multimedia/image_framework/ide/image_decode_config.gni")
 
-SUBSYSTEM_DIR = "//foundation/multimedia/image_framework"
-
-
 ohos_shared_library("image_common") {
   output_extension = "so"
   sanitize = {
@@ -27,9 +24,10 @@ ohos_shared_library("image_common") {
   }
   include_dirs = [
     "include",
-    "$SUBSYSTEM_DIR/interfaces/innerkits/include",
-    "$SUBSYSTEM_DIR/interfaces/kits/native/include/image",
-    "$SUBSYSTEM_DIR/frameworks/kits/js/common/picture_ndk/include",
+    "${image_subsystem}/interfaces/innerkits/include",
+    "${image_subsystem}/interfaces/kits/native/include/image",
+    "${image_subsystem}/frameworks/kits/js/common/picture_ndk/include",
+    "${image_subsystem}/mock/native/include",
   ]
 
   sources = [
@@ -38,22 +36,29 @@ ohos_shared_library("image_common") {
   ]
 
   public_configs =
-      [ "$SUBSYSTEM_DIR/interfaces/innerkits:image_external_config" ]
+      [ "${image_subsystem}/interfaces/innerkits:image_external_config" ]
 
   deps = [
-    "$SUBSYSTEM_DIR/interfaces/innerkits:image_native",
-    "//foundation/multimedia/image_framework/mock/native:log_mock_static",
+    "${image_subsystem}/interfaces/innerkits:image_native",
+    "${image_subsystem}/mock/native:log_mock_static",
   ]
 
   if (enable_libexif) {
     external_deps = [ "libexif:libexif" ]
   }
-
-  innerapi_tags = [ "ndk","platformsdk"]
+  external_deps += [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+  ]
+  innerapi_tags = [
+    "ndk",
+    "platformsdk",
+  ]
   subsystem_name = "multimedia"
   part_name = "image_framework"
 }
-
 
 ohos_shared_library("picture") {
   output_extension = "so"
@@ -68,24 +73,23 @@ ohos_shared_library("picture") {
     "${image_subsystem}/frameworks/kits/js/common/ndk/include",
     "${image_subsystem}/frameworks/innerkitsimpl/egl_image/include",
     "${image_subsystem}/frameworks/innerkitsimpl/utils/include",
-    "$SUBSYSTEM_DIR/interfaces/kits/native/include/image",
+    "${image_subsystem}/interfaces/kits/native/include/image",
   ]
 
   sources = [
     "picture_native.cpp",
     "picture_native_impl.cpp",
-
   ]
 
   public_configs =
-      [ "$SUBSYSTEM_DIR/interfaces/innerkits:image_external_config" ]
+      [ "${image_subsystem}/interfaces/innerkits:image_external_config" ]
 
   deps = [
-    "$SUBSYSTEM_DIR/frameworks/innerkitsimpl/egl_image:egl_image",
-    "$SUBSYSTEM_DIR/interfaces/innerkits:image_native",
-    "$SUBSYSTEM_DIR/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
-    "//foundation/multimedia/image_framework/mock/native:log_mock_static",
-    "$SUBSYSTEM_DIR/frameworks/kits/js/common/picture_ndk:image_common",
+    "${image_subsystem}/frameworks/innerkitsimpl/egl_image:egl_image",
+    "${image_subsystem}/frameworks/kits/js/common/picture_ndk:image_common",
+    "${image_subsystem}/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
+    "${image_subsystem}/interfaces/innerkits:image_native",
+    "${image_subsystem}/mock/native:log_mock_static",
   ]
 
   innerapi_tags = [ "ndk" ]

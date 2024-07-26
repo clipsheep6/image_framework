@@ -81,8 +81,8 @@ ohos_unittest("picturetest") {
   ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+    "$image_subsystem/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
@@ -111,8 +111,8 @@ ohos_unittest("auxiliarypicturetest") {
   ]
 
   deps = [
-    "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils:image_utils",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
+    "$image_subsystem/frameworks/innerkitsimpl/utils:image_utils",
+    "$image_subsystem/interfaces/innerkits:image_native",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
@@ -1204,8 +1204,10 @@ ohos_unittest("ndktest2") {
     "$resource_management_subsystem/interfaces/native/resource/include",
   ]
   sources = [
+    "unittest/image_common_ndk_test.cpp",
     "unittest/image_packer_native_ndk_test.cpp",
     "unittest/image_source_native_ndk_test.cpp",
+    "unittest/picture_native_ndk_test.cpp",
     "unittest/pixelmap_native_ndk_test.cpp",
     "unittest/picture_native_ndk_test.cpp",
     "unittest/image_common_ndk_test.cpp",
@@ -1215,6 +1217,8 @@ ohos_unittest("ndktest2") {
     "$image_subsystem/frameworks/kits/js/common/ndk:image_ndk",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_packer",
     "$image_subsystem/frameworks/kits/js/common/ndk:image_source",
+    "$image_subsystem/frameworks/kits/js/common/picture_ndk:image_common",
+    "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
     "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/frameworks/kits/js/common/picture_ndk:image_common",
@@ -1936,6 +1940,7 @@ group("unittest") {
     ":exifmetadatatest",
     ":format_agent_plugin_src_test",
     ":formatagentplugintest",
+    ":fragmentmetadatatest",
     ":gifplugintest",
     ":gstpluginfwtest",
     ":heif_parser_test",
@@ -1946,8 +1951,6 @@ group("unittest") {
     ":imageeventtest",
     ":imageformatconverttest",
     ":imagepixelmapparceltest",
-    ":metadatatest",
-    ":fragmentmetadatatest",
     ":imagepixelmaptest",
     ":imagesourcetest",
     ":imagestreamtest",
@@ -1958,6 +1961,7 @@ group("unittest") {
     ":jpegdecoderextest",
     ":jpegutilstest",
     ":jpgyuvtest",
+    ":metadatatest",
     ":napitest",
     ":ndktest2",
     ":picturetest",

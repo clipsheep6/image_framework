@@ -14,7 +14,6 @@
  */
 #include "image_common_impl.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,12 +28,7 @@ std::shared_ptr<OHOS::Media::ImageMetadata> OH_PictureMetadata::GetInnerAuxiliar
     return metadatas_;
 }
 
-OH_PictureMetadata::~OH_PictureMetadata()
-{
-    if (metadatas_) {
-        metadatas_ = nullptr;
-    }
-}
+OH_PictureMetadata::~OH_PictureMetadata() {}
 
 #ifdef __cplusplus
 };

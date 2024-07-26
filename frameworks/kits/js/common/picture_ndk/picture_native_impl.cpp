@@ -39,9 +39,7 @@ std::shared_ptr<OHOS::Media::Picture> OH_PictureNative::GetInnerPicture()
     return picture_;
 }
 
-OH_PictureNative::~OH_PictureNative()
-{
-}
+OH_PictureNative::~OH_PictureNative() {}
 
 OH_AuxiliaryPictureNative::OH_AuxiliaryPictureNative(std::shared_ptr<OHOS::Media::AuxiliaryPicture> auxiliaryPicture)
 {
@@ -49,7 +47,7 @@ OH_AuxiliaryPictureNative::OH_AuxiliaryPictureNative(std::shared_ptr<OHOS::Media
 }
 
 OH_AuxiliaryPictureNative::OH_AuxiliaryPictureNative(std::shared_ptr<OHOS::Media::PixelMap> &content,
-     OHOS::Media::AuxiliaryPictureType type, OHOS::Media::Size size)
+    OHOS::Media::AuxiliaryPictureType type, OHOS::Media::Size size)
 {
     auto auxiliaryPictureTmp = OHOS::Media::AuxiliaryPicture::Create(content, type, size);
     auxiliaryPicture_ = std::move(auxiliaryPictureTmp);
@@ -60,12 +58,7 @@ std::shared_ptr<OHOS::Media::AuxiliaryPicture> OH_AuxiliaryPictureNative::GetInn
     return auxiliaryPicture_;
 }
 
-OH_AuxiliaryPictureNative::~OH_AuxiliaryPictureNative()
-{
-    if (auxiliaryPicture_) {
-        auxiliaryPicture_ = nullptr;
-    }
-}
+OH_AuxiliaryPictureNative::~OH_AuxiliaryPictureNative() {}
 
 OH_AuxiliaryPictureInfo::OH_AuxiliaryPictureInfo()
 {
@@ -82,14 +75,8 @@ std::shared_ptr<OHOS::Media::AuxiliaryPictureInfo> OH_AuxiliaryPictureInfo::GetI
     return auxiliaryPictureInfo_;
 }
 
-OH_AuxiliaryPictureInfo::~OH_AuxiliaryPictureInfo()
-{
-    if (auxiliaryPictureInfo_) {
-        auxiliaryPictureInfo_ = nullptr;
-    }
-}
+OH_AuxiliaryPictureInfo::~OH_AuxiliaryPictureInfo() {}
+
 #ifdef __cplusplus
 };
 #endif
-
-

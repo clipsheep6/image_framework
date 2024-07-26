@@ -22,6 +22,7 @@ using namespace Media;
 extern "C" {
 #endif
 
+constexpr int32_t defaultBufferSize = 25 * 1024 * 1024;
 
 OH_ImagePackerNative::OH_ImagePackerNative()
 {
@@ -144,8 +145,8 @@ int32_t OH_ImagePackerNative::PackToDataFromPicture(OHOS::Media::PackOption *opt
     OHOS::Media::Picture *picturePtr = picture->GetInnerPicture().get();
 
     int64_t packedSize = 0;
-    uint32_t ret = IMAGE_SUCCESS;
-    const int64_t DEFAULT_BUFFER_SIZE = 25 * 1024 * 1024;
+    uint32_t ret = IMAGE_ENCODE_FAILED;
+    const int64_t DEFAULT_BUFFER_SIZE = defaultBufferSize;
     int64_t bufferSize = (*size <= 0) ? DEFAULT_BUFFER_SIZE : (*size);
     ret = imagePacker->StartPacking(outData, bufferSize, *option);
     if (ret != IMAGE_SUCCESS) {
@@ -239,7 +240,7 @@ int32_t OH_ImagePackerNative::PackToFileFromPicture(OHOS::Media::PackOption *opt
     OHOS::Media::ImagePacker *imagePacker = imagePacker_.get();
     OHOS::Media::Picture *picturePtr = picture->GetInnerPicture().get();
     int64_t packedSize = 0;
-    uint32_t ret = IMAGE_SUCCESS;
+    uint32_t ret = IMAGE_ENCODE_FAILED;
     ret = imagePacker->StartPacking(fd, *option);
     if (ret != IMAGE_SUCCESS) {
         return ret;

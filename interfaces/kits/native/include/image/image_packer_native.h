@@ -348,7 +348,6 @@ Image_ErrorCode OH_ImagePacker_PackToFileMultiFrames(OH_ImagePackerNative *image
  */
 Image_ErrorCode OH_ImagePackerNative_Release(OH_ImagePackerNative *imagePacker);
 
-
 /**
  * @brief Encoding a <b>Picture</b> into the data with required format.
  *
@@ -367,7 +366,6 @@ Image_ErrorCode OH_ImagePackerNative_Release(OH_ImagePackerNative *imagePacker);
 Image_ErrorCode OH_ImagePackerNative_PackToDataFromPicture(OH_ImagePackerNative *imagePacker,
     OH_PackingOptions *options, OH_PictureNative *picture, uint8_t *outData, size_t *size);
 
-
 /**
  * @brief Encoding a <b>Picture</b> into the a file with fd with required format.
  *
@@ -383,7 +381,6 @@ Image_ErrorCode OH_ImagePackerNative_PackToDataFromPicture(OH_ImagePackerNative 
  */
 Image_ErrorCode OH_ImagePackerNative_PackToFileFromPicture(OH_ImagePackerNative *imagePacker,
     OH_PackingOptions *options, OH_PictureNative *picture, int32_t fd);
-
 
 #ifdef __cplusplus
 };

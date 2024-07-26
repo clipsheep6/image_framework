@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 
 using namespace testing::ext;
-// using namespace OHOS::Media;
 namespace OHOS {
 namespace Media {
 class ImageCommonNdkTest : public testing::Test {

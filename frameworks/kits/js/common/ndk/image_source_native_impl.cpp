@@ -92,14 +92,10 @@ OH_DecodingOptionsForPicture::OH_DecodingOptionsForPicture(
     decodingOptionsForPicture_ = decodingOptionsForPicture;
 }
 
-OH_DecodingOptionsForPicture::~OH_DecodingOptionsForPicture()
-{
-    if (decodingOptionsForPicture_) {
-        decodingOptionsForPicture_ = nullptr;
-    }
-}
+OH_DecodingOptionsForPicture::~OH_DecodingOptionsForPicture() {}
 
-std::shared_ptr<OHOS::Media::DecodingOptionsForPicture> OH_DecodingOptionsForPicture::GetInnerDecodingOptionsForPicture()
+std::shared_ptr<OHOS::Media::DecodingOptionsForPicture>
+    OH_DecodingOptionsForPicture::GetInnerDecodingOptionsForPicture()
 {
     return decodingOptionsForPicture_;
 }

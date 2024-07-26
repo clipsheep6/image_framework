@@ -620,7 +620,7 @@ static bool ParseAuxiliaryPictureInfo(napi_env env, napi_value result, napi_valu
         return false;
     }
     if (!ParseSize(env, tmpValue, context->auxiliaryPictureInfo.size.width,
-            context->auxiliaryPictureInfo.size.height)) {
+        context->auxiliaryPictureInfo.size.height)) {
         return false;
     }
 

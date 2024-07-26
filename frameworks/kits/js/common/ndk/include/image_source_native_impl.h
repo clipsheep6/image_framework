@@ -50,7 +50,6 @@ private:
     std::shared_ptr<OHOS::Media::DecodingOptionsForPicture> decodingOptionsForPicture_;
 };
 
-
 #ifdef __cplusplus
 };
 #endif

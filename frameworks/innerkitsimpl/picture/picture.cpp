@@ -284,21 +284,30 @@ bool Picture::Marshalling(Parcel &data) const
         }
     }
 
-    if (!data.WriteUint64(maintenanceData_->size_)) {
-        IMAGE_LOGE("Failed to write maintenance data size.");
-        return false;
-    }
+    if (maintenanceData_) {
+        if (!data.WriteUint64(maintenanceData_->size_)) {
+            IMAGE_LOGE("Failed to write maintenance data size.");
+            return false;
+        }
 
-    if (maintenanceData_->size_ > 0) {
-        if (!data.WriteUnpadBuffer(maintenanceData_->data_.get(), maintenanceData_->size_)) {
-            IMAGE_LOGE("Failed to write maintenance data.");
+        if (maintenanceData_->size_ > 0) {
+            if (!data.WriteUnpadBuffer(maintenanceData_->data_.get(), maintenanceData_->size_)) {
+                IMAGE_LOGE("Failed to write maintenance data.");
+                return false;
+            }
+        }
+    } else {
+        if (!data.WriteUint64(0)) {
+            IMAGE_LOGE("Failed to write maintenance data size.");
             return false;
         }
     }
 
-    if (!exifMetadata_->Marshalling(data)) {
-        IMAGE_LOGE("Failed to marshal exif metadata.");
-        return false;
+    if (exifMetadata_) {
+        if (!exifMetadata_->Marshalling(data)) {
+            IMAGE_LOGE("Failed to marshal exif metadata.");
+            return false;
+        }
     }
     
     return true;
@@ -338,7 +347,7 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
     }
 
     auto maintenanceDataSize = parcel.ReadUint64();
-    std::unique_ptr<uint8_t[]> maintenanceData;
+    std::unique_ptr<uint8_t[]> maintenanceData = nullptr;
     if (maintenanceDataSize > 0) {
         const uint8_t *tmpPtr = parcel.ReadUnpadBuffer(maintenanceDataSize);
         maintenanceData = std::make_unique<uint8_t[]>(maintenanceDataSize);
@@ -396,13 +405,11 @@ bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
     }
 
     maintenanceData_ = std::make_unique<MaintenanceData>(std::make_unique<uint8_t[]>(size), size);
-
     if (!maintenanceData_) {
         return false;
     }
 
     auto ret = memcpy_s(maintenanceData_->data_.get(), size, surfaceBuffer->GetVirAddr(), size);
-
     if (ret != EOK) {
         IMAGE_LOGE("Memmoy copy failed, errono: %d.", ret);
         return false;

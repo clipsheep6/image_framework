@@ -234,6 +234,29 @@ static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, PixelMap *pixelmap,
     return SUCCESS;
 }
 
+uint32_t ExtEncoder::DoHdrEncode(ExtWStream& wStream)
+{
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return EncodeImageByPixelMap(pixelmap_, opts_.needsPackProperties, wStream);
+#else
+    switch (opts_.desiredDynamicRange) {
+        case EncodeDynamicRange::AUTO:
+            if (pixelmap_->IsHdr() &&
+                (encodeFormat_ == SkEncodedImageFormat::kJPEG || encodeFormat_ == SkEncodedImageFormat::kHEIF)) {
+                return EncodeDualVivid(wStream);
+            }
+            return EncodeSdrImage(wStream);
+        case EncodeDynamicRange::SDR:
+            return EncodeSdrImage(wStream);
+        case EncodeDynamicRange::HDR_VIVID_DUAL:
+            return EncodeDualVivid(wStream);
+        case EncodeDynamicRange::HDR_VIVID_SINGLE:
+            return EncodeSingleVivid(wStream);
+    }
+    return ERR_IMAGE_ENCODE_FAILED;
+#endif
+}
+
 uint32_t ExtEncoder::FinalizeEncode()
 {
     if ((picture_ == nullptr && pixelmap_ == nullptr) || output_ == nullptr) {
@@ -266,25 +289,7 @@ uint32_t ExtEncoder::FinalizeEncode()
     imageDataStatistics.AddTitle(", width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
     encodeFormat_ = iter->first;
     ExtWStream wStream(output_);
-#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
-    return EncodeImageByPixelMap(pixelmap_, opts_.needsPackProperties, wStream);
-#else
-    switch (opts_.desiredDynamicRange) {
-        case EncodeDynamicRange::AUTO:
-            if (pixelmap_->IsHdr() &&
-                (encodeFormat_ == SkEncodedImageFormat::kJPEG || encodeFormat_ == SkEncodedImageFormat::kHEIF)) {
-                return EncodeDualVivid(wStream);
-            }
-            return EncodeSdrImage(wStream);
-        case EncodeDynamicRange::SDR:
-            return EncodeSdrImage(wStream);
-        case EncodeDynamicRange::HDR_VIVID_DUAL:
-            return EncodeDualVivid(wStream);
-        case EncodeDynamicRange::HDR_VIVID_SINGLE:
-            return EncodeSingleVivid(wStream);
-    }
-    return ERR_IMAGE_ENCODE_FAILED;
-#endif
+    return DoHdrEncode(wStream);
 }
 
 bool ExtEncoder::IsHardwareEncodeSupported(const PlEncodeOptions &opts, Media::PixelMap* pixelMap)

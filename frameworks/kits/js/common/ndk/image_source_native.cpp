@@ -20,7 +20,7 @@
 #include "image_source_native_impl.h"
 #include "pixelmap_native_impl.h"
 #include "picture_native.h"
-
+#include "media_errors.h"
 
 #ifndef _WIN32
 #include "securec.h"
@@ -66,6 +66,16 @@ struct OH_ImageSource_Info {
     /** Image dynamicRange*/
     bool isHdr;
 };
+
+static ::AuxiliaryPictureType AuxTypeInnerToNative(OHOS::Media::AuxiliaryPictureType type)
+{
+    return static_cast<::AuxiliaryPictureType>(static_cast<int>(type));
+}
+
+static OHOS::Media::AuxiliaryPictureType AuxTypeNativeToInner(::AuxiliaryPictureType type)
+{
+    return static_cast<OHOS::Media::AuxiliaryPictureType>(static_cast<int>(type));
+}
 
 static DecodeDynamicRange ParseImageDynamicRange(int32_t val)
 {
@@ -461,21 +471,25 @@ Image_ErrorCode OH_ImageSourceNative_CreatePixelmapList(OH_ImageSourceNative *so
 }
 
 MIDK_EXPORT
-Image_ErrorCode OH_ImageSourceNative_CreatePicture(OH_ImageSourceNative *source, OH_DecodingOptionsForPicture *options, OH_PictureNative **picture)
+Image_ErrorCode OH_ImageSourceNative_CreatePicture(OH_ImageSourceNative *source, OH_DecodingOptionsForPicture *options,
+    OH_PictureNative **picture)
 {
-    if (source == nullptr || source->GetInnerImageSource() == nullptr || options == nullptr 
-        || picture == nullptr || options->GetInnerDecodingOptionsForPicture() == nullptr) {
+    if (source == nullptr || !source->GetInnerImageSource() || options == nullptr
+        || picture == nullptr || !options->GetInnerDecodingOptionsForPicture()) {
         return IMAGE_BAD_PARAMETER;
     }
 
     auto innerDecodingOptionsForPicture = options->GetInnerDecodingOptionsForPicture().get();
     uint32_t errorCode;
-    auto pictureTemp = source->GetInnerImageSource()->CreatePicture( *innerDecodingOptionsForPicture , errorCode);
+    auto pictureTemp = source->GetInnerImageSource()->CreatePicture(*innerDecodingOptionsForPicture, errorCode);
+    if (errorCode != SUCCESS) {
+        return IMAGE_ALLOC_FAILED;
+    }
+    
     auto pictureNative  = new OH_PictureNative(std::move(pictureTemp));
     *picture = pictureNative;
     return IMAGE_SUCCESS;
 }
-
 
 MIDK_EXPORT
 Image_ErrorCode OH_ImageSourceNative_GetDelayTimeList(OH_ImageSourceNative *source, int32_t *delayTimeList, size_t size)
@@ -631,26 +645,21 @@ MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
     ::AuxiliaryPictureType **desiredAuxiliaryPictures, size_t *length)
 {
-    if (options == nullptr || options->GetInnerDecodingOptionsForPicture()==nullptr ||
+    if (options == nullptr || !options->GetInnerDecodingOptionsForPicture() ||
         desiredAuxiliaryPictures == nullptr || length == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
     auto innerDecodingSet = options->GetInnerDecodingOptionsForPicture()->desireAuxiliaryPictures;
-    if (innerDecodingSet.size() == 0) { 
+    if (innerDecodingSet.size() == 0) {
         return IMAGE_BAD_SOURCE;
     }
     auto lenTmp = innerDecodingSet.size();
-    auto auxTypeArrayPtr = static_cast<::AuxiliaryPictureType*>(malloc(lenTmp * sizeof(::AuxiliaryPictureType)));
-    size_t i = 0;
-    for (auto it = innerDecodingSet.begin();it != innerDecodingSet.end();++it) {
-        if (i >= lenTmp) {
-            free(auxTypeArrayPtr);
-            return IMAGE_UNKNOWN_ERROR;
-        }
-        auxTypeArrayPtr[i] = static_cast<::AuxiliaryPictureType>(static_cast<int>(*it));
-        i++;
+    auto auxTypeArrayUniptr = std::make_unique<::AuxiliaryPictureType[]>(lenTmp);
+    int index = 0;
+    for (auto innerDecoding : innerDecodingSet) {
+        auxTypeArrayUniptr[index++] = AuxTypeInnerToNative(innerDecoding);
     }
-    *desiredAuxiliaryPictures = auxTypeArrayPtr;
+    *desiredAuxiliaryPictures = auxTypeArrayUniptr.release();
     *length = lenTmp;
     return IMAGE_SUCCESS;
 }
@@ -659,13 +668,13 @@ MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
     ::AuxiliaryPictureType *desiredAuxiliaryPictures, size_t length)
 {
-    if (options == nullptr || options->GetInnerDecodingOptionsForPicture() == nullptr || 
+    if (options == nullptr || !options->GetInnerDecodingOptionsForPicture() ||
         desiredAuxiliaryPictures == nullptr || length <= 0) {
         return IMAGE_BAD_PARAMETER;
     }
     auto innerDecodingOptionsForPicture = options->GetInnerDecodingOptionsForPicture().get();
-    for (size_t loop = 0; loop < length; loop++) {
-        auto auxTypeTmp = static_cast<OHOS::Media::AuxiliaryPictureType>(static_cast<uint32_t>(desiredAuxiliaryPictures[loop]));
+    for (size_t index = 0; index < length; index++) {
+        auto auxTypeTmp = AuxTypeNativeToInner(desiredAuxiliaryPictures[index]);
         innerDecodingOptionsForPicture->desireAuxiliaryPictures.insert(auxTypeTmp);
     }
     return IMAGE_SUCCESS;
