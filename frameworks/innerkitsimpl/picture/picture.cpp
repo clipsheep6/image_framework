@@ -73,6 +73,7 @@ namespace {
 static const uint8_t NUM_0 = 0;
 static const uint8_t NUM_1 = 1;
 static const uint8_t NUM_2 = 2;
+static const std::string EXIF_DATA_SIZE_TAG = "exifDataSize";
 
 static bool IsYuvFormat(PixelFormat format)
 {
@@ -361,7 +362,8 @@ int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
-    auto size = surfaceBuffer->GetSize();
+    int32_t size = NUM_0;
+    surfaceBuffer->GetExtraData()->ExtraGet(EXIF_DATA_SIZE_TAG, size);
     if (size <= 0) {
         IMAGE_LOGE("Invalid buffer size: %d.", size);
         return ERR_IMAGE_INVALID_PARAMETER;
