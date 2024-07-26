@@ -41,21 +41,21 @@ static OHOS::Media::MetadataType MetaDataTypeNativeToInner(MetadataType metadata
 
 static bool IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType auxiliaryPictureType)
 {
-    if (auxiliaryPictureType != GAINMAP || auxiliaryPictureType != DEPTH_MAP ||
-        auxiliaryPictureType != UNREFOCUS_MAP || auxiliaryPictureType != LINEAR_MAP ||
-        auxiliaryPictureType != FRAGMENT_MAP) {
-        return false;
-    } else {
+    if (auxiliaryPictureType == GAINMAP || auxiliaryPictureType == DEPTH_MAP ||
+        auxiliaryPictureType == UNREFOCUS_MAP || auxiliaryPictureType == LINEAR_MAP ||
+        auxiliaryPictureType == FRAGMENT_MAP) {
         return true;
+    } else {
+        return false;
     }
 }
 
 static bool IsMetadataTypeSupported(MetadataType metadataType)
 {
-    if (metadataType != EXIF_METADATA || metadataType != FRAGMENT_METADATA) {
-        return false;
-    } else {
+    if (metadataType == EXIF_METADATA || metadataType == FRAGMENT_METADATA) {
         return true;
+    } else {
+        return false;
     }
 }
 

@@ -94,8 +94,7 @@ OH_DecodingOptionsForPicture::OH_DecodingOptionsForPicture(
 
 OH_DecodingOptionsForPicture::~OH_DecodingOptionsForPicture() {}
 
-std::shared_ptr<OHOS::Media::DecodingOptionsForPicture>
-    OH_DecodingOptionsForPicture::GetInnerDecodingOptionsForPicture()
+std::shared_ptr<OHOS::Media::DecodingOptionsForPicture> OH_DecodingOptionsForPicture::GetInnerDecodingOptForPicture()
 {
     return decodingOptionsForPicture_;
 }

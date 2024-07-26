@@ -44,7 +44,7 @@ struct OH_DecodingOptionsForPicture {
 public:
     OH_DecodingOptionsForPicture(std::shared_ptr<OHOS::Media::DecodingOptionsForPicture> decodingOptionsForPicture);
     ~OH_DecodingOptionsForPicture();
-    std::shared_ptr<OHOS::Media::DecodingOptionsForPicture> GetInnerDecodingOptionsForPicture();
+    std::shared_ptr<OHOS::Media::DecodingOptionsForPicture> GetInnerDecodingOptForPicture();
 
 private:
     std::shared_ptr<OHOS::Media::DecodingOptionsForPicture> decodingOptionsForPicture_;
