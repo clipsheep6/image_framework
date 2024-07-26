@@ -1209,8 +1209,6 @@ ohos_unittest("ndktest2") {
     "unittest/image_source_native_ndk_test.cpp",
     "unittest/picture_native_ndk_test.cpp",
     "unittest/pixelmap_native_ndk_test.cpp",
-    "unittest/picture_native_ndk_test.cpp",
-    "unittest/image_common_ndk_test.cpp",
   ]
 
   deps = [
@@ -1220,8 +1218,6 @@ ohos_unittest("ndktest2") {
     "$image_subsystem/frameworks/kits/js/common/picture_ndk:image_common",
     "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
-    "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
-    "$image_subsystem/frameworks/kits/js/common/picture_ndk:image_common",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]

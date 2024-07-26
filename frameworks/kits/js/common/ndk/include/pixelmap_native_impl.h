@@ -28,7 +28,7 @@ public:
     OH_PixelmapNative(const OHOS::Media::InitializationOptions &opts);
     OH_PixelmapNative(OH_PixelmapNative *OH_PixelmapNative, const OHOS::Media::InitializationOptions &opts);
     ~OH_PixelmapNative();
-    
+
     std::shared_ptr<OHOS::Media::PixelMap> GetInnerPixelmap();
 
 private:

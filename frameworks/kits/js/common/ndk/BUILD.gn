@@ -139,7 +139,6 @@ ohos_shared_library("image_source") {
   deps = [
     "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
-    "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/interfaces/innerkits:image_native",
     "$image_subsystem/interfaces/kits/js/common:image",
   ]
@@ -181,7 +180,6 @@ ohos_shared_library("image_packer") {
     "$image_subsystem/frameworks/kits/js/common/ndk:image_source",
     "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
-    "$image_subsystem/frameworks/kits/js/common/picture_ndk:picture",
     "$image_subsystem/interfaces/innerkits:image_native",
     "$image_subsystem/interfaces/kits/js/common:image",
   ]
