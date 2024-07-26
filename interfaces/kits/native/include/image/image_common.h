@@ -232,6 +232,20 @@ Image_ErrorCode OH_PictureMetadata_SetProperty(OH_PictureMetadata *metadata, Ima
 Image_ErrorCode OH_PictureMetadata_Release(OH_PictureMetadata *metadata);
 
 /**
+ * @brief Obtains a clone of metadata.
+ *
+ * @param oldMetadata The PictureMetadata pointer will be operated.
+ * @param newMetadata The PictureMetadata pointer will be cloned.
+ * @return Image functions result code.
+ *         {@link IMAGE_SUCCESS} if the execution is successful.
+ *         {@link IMAGE_BAD_PARAMETER} metadata is nullptr.
+ *         {@link IMAGE_ALLOC_FAILED} memory alloc failed.
+ *         {@link IMAGE_COPY_FAILED} memory copy failed.
+ * @since 12
+ */
+Image_ErrorCode OH_PictureMetadata_Clone(OH_PictureMetadata *oldMetadata, OH_PictureMetadata **newMetadata);
+
+/**
  * @brief Defines the bmp mime type.
  *
  * @since 12

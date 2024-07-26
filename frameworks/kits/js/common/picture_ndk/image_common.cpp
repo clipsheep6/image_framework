@@ -102,6 +102,24 @@ Image_ErrorCode OH_PictureMetadata_Release(OH_PictureMetadata *metadata)
     metadata = nullptr;
     return IMAGE_SUCCESS;
 }
+
+Image_ErrorCode OH_PictureMetadata_Clone(OH_PictureMetadata *oldMetadata, OH_PictureMetadata **newMetadata)
+{
+    if (oldMetadata == nullptr || newMetadata == nullptr || !oldMetadata->GetInnerAuxiliaryMetadata()) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    auto cloneMetadataInner = oldMetadata->GetInnerAuxiliaryMetadata()->CloneMetadata();
+    if (!cloneMetadataInner) {
+        return IMAGE_COPY_FAILED;
+    }
+    auto cloneMetadataNative = std::make_unique<OH_PictureMetadata>(cloneMetadataInner);
+    if (!cloneMetadataNative) {
+        return IMAGE_ALLOC_FAILED;
+    }
+    *newMetadata = cloneMetadataNative.release();
+    return IMAGE_SUCCESS;
+}
+
 #ifdef __cplusplus
 };
 #endif
