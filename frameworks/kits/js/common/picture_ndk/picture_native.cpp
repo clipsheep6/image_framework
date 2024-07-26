@@ -39,6 +39,26 @@ static OHOS::Media::MetadataType MetaDataTypeNativeToInner(MetadataType metadata
     return static_cast<OHOS::Media::MetadataType>(static_cast<int>(metadataType));
 }
 
+static bool IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType auxiliaryPictureType)
+{
+    if (auxiliaryPictureType != GAINMAP || auxiliaryPictureType != DEPTH_MAP ||
+        auxiliaryPictureType != UNREFOCUS_MAP || auxiliaryPictureType != LINEAR_MAP ||
+        auxiliaryPictureType != FRAGMENT_MAP) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+static bool IsMetadataTypeSupported(MetadataType metadataType)
+{
+    if (metadataType != EXIF_METADATA || metadataType != FRAGMENT_METADATA) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
 MIDK_EXPORT
 Image_ErrorCode OH_PictureNative_CreatePicture(OH_PixelmapNative *mainPixelmap, OH_PictureNative **picture)
 {
@@ -105,7 +125,7 @@ Image_ErrorCode OH_PictureNative_SetAuxiliaryPicture(OH_PictureNative *picture, 
     OH_AuxiliaryPictureNative *auxiliaryPicture)
 {
     if (picture == nullptr || auxiliaryPicture == nullptr || !picture->GetInnerPicture() ||
-        !auxiliaryPicture->GetInnerAuxiliaryPicture()) {
+        !auxiliaryPicture->GetInnerAuxiliaryPicture() || !IsAuxiliaryPictureTypeSupported(type)) {
         return IMAGE_BAD_PARAMETER;
     }
     auto innerAuxiliaryPicture = auxiliaryPicture->GetInnerAuxiliaryPicture();
@@ -122,7 +142,8 @@ MIDK_EXPORT
 Image_ErrorCode OH_PictureNative_GetAuxiliaryPicture(OH_PictureNative *picture, AuxiliaryPictureType type,
     OH_AuxiliaryPictureNative **auxiliaryPicture)
 {
-    if (picture == nullptr || auxiliaryPicture == nullptr || !picture->GetInnerPicture()) {
+    if (picture == nullptr || auxiliaryPicture == nullptr || !picture->GetInnerPicture() ||
+        !IsAuxiliaryPictureTypeSupported(type)) {
         return IMAGE_BAD_PARAMETER;
     }
 
@@ -154,7 +175,8 @@ MIDK_EXPORT
 Image_ErrorCode OH_AuxiliaryPictureNative_Create(uint8_t *data, size_t dataLength, Image_Size *size,
     AuxiliaryPictureType type, OH_AuxiliaryPictureNative **auxiliaryPicture)
 {
-    if (data == nullptr || dataLength <= 0 || auxiliaryPicture == nullptr || size == nullptr) {
+    if (data == nullptr || dataLength <= 0 || auxiliaryPicture == nullptr || size == nullptr ||
+        !IsAuxiliaryPictureTypeSupported(type)) {
         return IMAGE_BAD_PARAMETER;
     }
     OHOS::Media::InitializationOptions initializationOptions;
@@ -216,7 +238,7 @@ MIDK_EXPORT
 Image_ErrorCode OH_AuxiliaryPictureNative_GetType(OH_AuxiliaryPictureNative *auxiliaryPicture,
     AuxiliaryPictureType *type)
 {
-    if (auxiliaryPicture == nullptr  || type == nullptr || !auxiliaryPicture->GetInnerAuxiliaryPicture()) {
+    if (auxiliaryPicture == nullptr || type == nullptr || !auxiliaryPicture->GetInnerAuxiliaryPicture()) {
         return IMAGE_BAD_PARAMETER;
     }
 
@@ -254,7 +276,8 @@ MIDK_EXPORT
 Image_ErrorCode OH_AuxiliaryPictureNative_GetMetadata(OH_AuxiliaryPictureNative *auxiliaryPicture, MetadataType
     metadataType, OH_PictureMetadata **metadata)
 {
-    if (auxiliaryPicture == nullptr || metadata == nullptr || !auxiliaryPicture->GetInnerAuxiliaryPicture()) {
+    if (auxiliaryPicture == nullptr || metadata == nullptr || !auxiliaryPicture->GetInnerAuxiliaryPicture() ||
+        !IsMetadataTypeSupported(metadataType)) {
         return IMAGE_BAD_PARAMETER;
     }
     auto metadataTypeTmp = MetaDataTypeNativeToInner(metadataType);
@@ -268,8 +291,8 @@ MIDK_EXPORT
 Image_ErrorCode OH_AuxiliaryPictureNative_SetMetadata(OH_AuxiliaryPictureNative *auxiliaryPicture,
     MetadataType metadataType,  OH_PictureMetadata *metadata)
 {
-    if (auxiliaryPicture == nullptr || !auxiliaryPicture->GetInnerAuxiliaryPicture() ||
-        metadata == nullptr) {
+    if (auxiliaryPicture == nullptr || !auxiliaryPicture->GetInnerAuxiliaryPicture() || metadata == nullptr ||
+        !IsMetadataTypeSupported(metadataType)) {
         return IMAGE_BAD_PARAMETER;
     }
     auto metadataTypeTmp = MetaDataTypeNativeToInner(metadataType);
@@ -317,7 +340,7 @@ Image_ErrorCode OH_AuxiliaryPictureInfo_GetType(OH_AuxiliaryPictureInfo *info, A
 MIDK_EXPORT
 Image_ErrorCode OH_AuxiliaryPictureInfo_SetType(OH_AuxiliaryPictureInfo *info, AuxiliaryPictureType type)
 {
-    if (info == nullptr || !info->GetInnerAuxiliaryPictureInfo()) {
+    if (info == nullptr || !info->GetInnerAuxiliaryPictureInfo() || !IsAuxiliaryPictureTypeSupported(type)) {
         return IMAGE_BAD_PARAMETER;
     }
     auto typeTmp = AuxTypeNativeToInner(type);
