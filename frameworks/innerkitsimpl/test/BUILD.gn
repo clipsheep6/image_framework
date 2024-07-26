@@ -77,6 +77,7 @@ ohos_unittest("picturetest") {
 
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/picture_test/picture_test.cpp",
   ]
 
