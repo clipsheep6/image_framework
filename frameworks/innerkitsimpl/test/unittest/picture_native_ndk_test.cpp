@@ -35,10 +35,11 @@ constexpr int32_t bufferLengthTrue = 255900;
 constexpr int32_t sizeWidthFalse = 20;
 constexpr int32_t sizeHeightFalse = 50;
 constexpr int32_t bufferLengthFalse = 8;
+constexpr int32_t bufferTrue = 2017220;
 constexpr int8_t NUM_0 = 0;
 constexpr int8_t NUM_2 = 2;
 
-Image_ErrorCode CreateAuxiliaryPictureNative(OH_AuxiliaryPictureNative **picture)
+void CreateAuxiliaryPictureNative(OH_AuxiliaryPictureNative **picture)
 {
     uint32_t color[bufferLengthTrue] = {0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08};
     size_t dataLength = bufferLengthTrue;
@@ -47,12 +48,12 @@ Image_ErrorCode CreateAuxiliaryPictureNative(OH_AuxiliaryPictureNative **picture
     size.height = sizeHeightTrue;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
         ::AuxiliaryPictureType::GAINMAP, picture);
-    return ret;
+    ASSERT_EQ(ret, IMAGE_SUCCESS);
 }
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_CreateTest001
- * @tc.desc: 
+ * @tc.desc: Creating OH_AuxiliaPictureNative with all normal parameters.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest001, TestSize.Level1)
@@ -82,7 +83,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest001, TestSize.Level
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_CreateTest002
- * @tc.desc: 
+ * @tc.desc: Create OH_AuxiliaryPictureNative, pass null parameter, return IMAGE_BAD_PARAMETER.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest002, TestSize.Level2)
@@ -100,7 +101,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest002, TestSize.Level
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_CreateTest003
- * @tc.desc: 
+ * @tc.desc: Create OH_AuxiliaryPictureNative, pass in error parameters, return IMAGE_ALLOC_FAILED.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest003, TestSize.Level2)
@@ -116,43 +117,42 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest003, TestSize.Level
     EXPECT_EQ(ret, IMAGE_ALLOC_FAILED);
 }
 
-// /**
-//  * @tc.name: OH_AuxiliaryPictureNative_CreateTest004
-//  * @tc.desc: 
-//  * @tc.type: FUNC
-//  */
-// HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest004, TestSize.Level2)
-// {
-//     uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-//     size_t dataLength = bufferLengthTrue;
-//     Image_Size size;
-//     size.width = sizeWidthTrue;
-//     size.height = sizeHeightTrue;
-//     OH_AuxiliaryPictureNative *picture = nullptr;
-//     // ::AuxiliaryPictureType type = static_cast<::AuxiliaryPictureType>(8);
-//     Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size, 8, &picture);
-//     EXPECT_EQ(ret, IMAGE_ALLOC_FAILED);
-// }
+/**
+ * @tc.name: OH_AuxiliaryPictureNative_CreateTest004
+ * @tc.desc: Pass in a non-existent AuxiliaryPictureType and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest004, TestSize.Level2)
+{
+    uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
+    size_t dataLength = bufferLengthTrue;
+    Image_Size size;
+    size.width = sizeWidthTrue;
+    size.height = sizeHeightTrue;
+    OH_AuxiliaryPictureNative *picture = nullptr;
+    ::AuxiliaryPictureType type = static_cast<::AuxiliaryPictureType>(-1);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size, type, &picture);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_WritePixelsTest001
- * @tc.desc: 
+ * @tc.desc: Pass in the correct parameters to WritePixels and return success.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest001, TestSize.Level1)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
-    Image_ErrorCode ret = CreateAuxiliaryPictureNative(&picture);
-    ASSERT_EQ(ret, IMAGE_SUCCESS);
+    CreateAuxiliaryPictureNative(&picture);
     uint8_t source[NUM_2] = {};
     size_t bufferSize = NUM_2;
-    ret = OH_AuxiliaryPictureNative_WritePixels(picture, source, bufferSize);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_WritePixels(picture, source, bufferSize);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 }
 
 /**
- * @tc.name: OH_AuxiliaryPictureNative_WritePixelsTest001
- * @tc.desc: 
+ * @tc.name: OH_AuxiliaryPictureNative_WritePixelsTest002
+ * @tc.desc: Passing an empty parameter to WritePixels and returning an exception.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest002, TestSize.Level2)
@@ -166,46 +166,44 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest002, TestSize.
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_ReadPixelsTest001
- * @tc.desc: 
+ * @tc.desc: Passing a normal buff to ReadPixels returns success.
  * @tc.type: FUNC
  */
-// HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest001, TestSize.Level1)
-// {
-//     uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-//     size_t dataLength = bufferLengthTrue;
-//     Image_Size size;
-//     size.width = sizeWidthTrue;
-//     size.height = sizeHeightTrue;
-//     // OHOS::Media::InitializationOptions options;
-//     // options.size.height = sizeHeightTrue;
-//     // options.size.width = sizeWidthTrue;
-//     // auto dataLengthTmp = static_cast<uint32_t>(dataLength);
-//     // auto pixelmap = OHOS::Media::PixelMap::Create(color, dataLengthTmp, options);
-//     OHOS::Media::InitializationOptions initializationOptions;
-//     initializationOptions.size.width = sizeWidthTrue;
-//     initializationOptions.size.height = sizeHeightTrue;
-//     auto dataTmp = reinterpret_cast<uint32_t*>(color);
-//     auto dataLengthTmp = static_cast<uint32_t>(dataLength);
-
-//     auto pixelMap = OHOS::Media::PixelMap::Create(dataTmp, dataLengthTmp, initializationOptions);
-//     OH_AuxiliaryPictureNative *picture = nullptr;
-//     Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
-//         ::AuxiliaryPictureType::GAINMAP, &picture);
-//     ASSERT_EQ(ret, IMAGE_SUCCESS);
-//     size_t buff = pixelMap->GetCapacity();
-//     uint8_t *destination = new uint8_t[buff];
-//     size_t *bufferSize = &buff;
-//     ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination, bufferSize);
-//     EXPECT_EQ(ret, IMAGE_SUCCESS);
-//     delete []destination;
-// }
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureNative *picture = nullptr;
+    CreateAuxiliaryPictureNative(&picture);
+    size_t buff = bufferTrue;
+    uint8_t *destination = new uint8_t[buff];
+    size_t *bufferSize = &buff;
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination, bufferSize);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    delete []destination;
+}
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_ReadPixelsTest002
- * @tc.desc: 
+ * @tc.desc: Passing an exception buff to ReadPixels returns an exception.
  * @tc.type: FUNC
  */
-HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest002, TestSize.Level3)
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest002, TestSize.Level2)
+{
+    OH_AuxiliaryPictureNative *picture = nullptr;
+    CreateAuxiliaryPictureNative(&picture);
+    size_t buff = bufferLengthFalse;
+    uint8_t *destination = new uint8_t[buff];
+    size_t *bufferSize = &buff;
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination, bufferSize);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+    delete []destination;
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureNative_ReadPixelsTest003
+ * @tc.desc: Pass an empty parameter to ReadPixels and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest003, TestSize.Level3)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
     uint8_t *destination = nullptr;
@@ -216,184 +214,168 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest002, TestSize.L
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_GetTypeTest001
- * @tc.desc: 
+ * @tc.desc: The input auxiliary image is GAINMAP, and the returned type is GAINMAP.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetTypeTest001, TestSize.Level1)
 {
-    uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-    size_t dataLength = bufferLengthTrue;
-    Image_Size size;
-    size.width = sizeWidthTrue;
-    size.height = sizeHeightTrue;
     OH_AuxiliaryPictureNative *picture = nullptr;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
-        ::AuxiliaryPictureType::GAINMAP, &picture);
-    ASSERT_EQ(ret, IMAGE_SUCCESS);
-    ::AuxiliaryPictureType type = ::AuxiliaryPictureType::GAINMAP;
-    ::AuxiliaryPictureType* typeptr = &type;
-    ret = OH_AuxiliaryPictureNative_GetType(picture, typeptr);
+    CreateAuxiliaryPictureNative(&picture);
+    ::AuxiliaryPictureType type;
+    ::AuxiliaryPictureType *typeptr = &type;
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetType(picture, typeptr);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_EQ(*typeptr, ::AuxiliaryPictureType::GAINMAP);
 }
 
 /**
- * @tc.name: OH_AuxiliaryPictureNative_GetTypeTest001
- * @tc.desc: 
+ * @tc.name: OH_AuxiliaryPictureNative_GetTypeTest002
+ * @tc.desc: Pass in an empty parameter and return an empty type.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetTypeTest002, TestSize.Level2)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
-    ::AuxiliaryPictureType* typeptr = nullptr;
+    ::AuxiliaryPictureType *typeptr = nullptr;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetType(picture, typeptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+    EXPECT_EQ(typeptr, nullptr);
 }
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_GetInfoTest001
- * @tc.desc: 
+ * @tc.desc: Pass in the correct parameters and compare the type of info with the original type of AuxiliaryPicture.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetInfoTest001, TestSize.Level1)
 {
-    uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-    size_t dataLength = bufferLengthTrue;
-    Image_Size size;
-    size.width = sizeWidthTrue;
-    size.height = sizeHeightTrue;
     OH_AuxiliaryPictureNative *picture = nullptr;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
-        ::AuxiliaryPictureType::GAINMAP, &picture);
-    ASSERT_EQ(ret, IMAGE_SUCCESS);
-    OH_AuxiliaryPictureInfo* infoptr = nullptr;
-    ret = OH_AuxiliaryPictureNative_GetInfo(picture, &infoptr);
+    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureInfo *infoptr = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetInfo(picture, &infoptr);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
-    //delete infoptr;
+    ::AuxiliaryPictureType type;
+    ::AuxiliaryPictureType *typeptr = &type;
+    ret = OH_AuxiliaryPictureInfo_GetType(infoptr, typeptr);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_EQ(*typeptr, ::AuxiliaryPictureType::GAINMAP);
+    OH_AuxiliaryPictureInfo_Release(infoptr);
 }
 
 /**
- * @tc.name: OH_AuxiliaryPictureNative_GetInfoTest001
- * @tc.desc: 
+ * @tc.name: OH_AuxiliaryPictureNative_GetInfoTest002
+ * @tc.desc: Pass in incorrect parameter, get empty.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetInfoTest002, TestSize.Level2)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
-    OH_AuxiliaryPictureInfo* infoptr = nullptr;
+    OH_AuxiliaryPictureInfo *infoptr = nullptr;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetInfo(picture, &infoptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
-    //delete infoptr;
+    EXPECT_EQ(infoptr, nullptr);
 }
 
-// /**
-//  * @tc.name: OH_AuxiliaryPictureNative_SetInfoTest001
-//  * @tc.desc: 
-//  * @tc.type: FUNC
-//  */
-// HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetInfoTest001, TestSize.Level1)
-// {
-//     uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-//     size_t dataLength = bufferLengthTrue;
-//     Image_Size size;
-//     size.width = sizeWidthTrue;
-//     size.height = sizeHeightTrue;
-//     OH_AuxiliaryPictureNative *picture = nullptr;
-//     Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
-//         ::AuxiliaryPictureType::GAINMAP, &picture);
-//     ASSERT_EQ(ret, IMAGE_SUCCESS);
-//     auto p = picture->GetInnerAuxiliaryPicture()->GetAuxiliaryPictureInfo();
-//     OH_AuxiliaryPictureInfo info(p);
-//     OH_AuxiliaryPictureInfo* infoptr = &info;
-//     ret = OH_AuxiliaryPictureNative_SetInfo(picture, info);
-//     EXPECT_EQ(ret, IMAGE_SUCCESS);
-// }
+/**
+ * @tc.name: OH_AuxiliaryPictureNative_SetInfoTest001
+ * @tc.desc: Passing in the correct parameter settings info returned a success message.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetInfoTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureNative *picture = nullptr;
+    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureInfo *infoptr = nullptr;
+    OH_AuxiliaryPictureInfo_Create(&infoptr);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetInfo(picture, infoptr);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+}
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_SetInfoTest002
- * @tc.desc: 
+ * @tc.desc: Passing empty parameter setting info returns an exception.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetInfoTest002, TestSize.Level3)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
-    OH_AuxiliaryPictureInfo *info = nullptr;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetInfo(picture, info);
+    OH_AuxiliaryPictureInfo *infoptr = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetInfo(picture, infoptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_GetMetadataTest001
- * @tc.desc: 
+ * @tc.desc: Pass in normal parameters to obtain Metadata.
  * @tc.type: FUNC
  */
-HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest001, TestSize.Level3)
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest001, TestSize.Level1)
 {
-    uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-    size_t dataLength = bufferLengthTrue;
-    Image_Size size;
-    size.width = sizeWidthTrue;
-    size.height = sizeHeightTrue;
     OH_AuxiliaryPictureNative *picture = nullptr;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
-        ::AuxiliaryPictureType::GAINMAP, &picture);
-    ASSERT_EQ(ret, IMAGE_SUCCESS);
+    CreateAuxiliaryPictureNative(&picture);
     OH_PictureMetadata *metadataptr = nullptr;
     ::MetadataType type = ::MetadataType::EXIF_METADATA;
-    ret = OH_AuxiliaryPictureNative_GetMetadata(picture, type, &metadataptr);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetMetadata(picture, type, &metadataptr);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
-    //delete metadataptr;
+    OH_PictureMetadata_Release(metadataptr);
 }
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_GetMetadataTest002
- * @tc.desc: 
+ * @tc.desc: Pass in a non-existent Metadata Type and return an exception.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest002, TestSize.Level2)
+{
+    OH_AuxiliaryPictureNative *picture = nullptr;
+    CreateAuxiliaryPictureNative(&picture);
+    OH_PictureMetadata *metadataptr = nullptr;
+    ::MetadataType type = static_cast<::MetadataType>(9);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetMetadata(picture, type, &metadataptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+    EXPECT_EQ(metadataptr, nullptr);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureNative_GetMetadataTest003
+ * @tc.desc: Pass in an empty parameter and return a null pointer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest003, TestSize.Level2)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
     OH_PictureMetadata *metadataptr = nullptr;
     ::MetadataType type = ::MetadataType::EXIF_METADATA;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetMetadata(picture, type, &metadataptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
-    //delete metadataptr;
+    EXPECT_EQ(metadataptr, nullptr);
 }
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_SetMetadataTest001
- * @tc.desc: 
+ * @tc.desc: Pass in the normal parameter SetMetadata and return success.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetMetadataTest001, TestSize.Level1)
 {
-    uint32_t color[bufferLengthTrue] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-    size_t dataLength = bufferLengthTrue;
-    Image_Size size;
-    size.width = sizeWidthTrue;
-    size.height = sizeHeightTrue;
     OH_AuxiliaryPictureNative *picture = nullptr;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
-        ::AuxiliaryPictureType::GAINMAP, &picture);
-    ASSERT_EQ(ret, IMAGE_SUCCESS);
+    CreateAuxiliaryPictureNative(&picture);
     OH_PictureMetadata *metadataptr = nullptr;
-    ::MetadataType type = ::MetadataType::EXIF_METADATA;
-    auto metadataPtr = picture->GetInnerAuxiliaryPicture()->GetMetadata(type);
-    // ret = OH_AuxiliaryPictureNative_GetMetadata(picture, type, &metadataptr);
-    // EXPECT_EQ(ret, IMAGE_SUCCESS);
-    ret = OH_AuxiliaryPictureNative_SetMetadata(picture, ::MetadataType::EXIF_METADATA, metadataptr);
+    OH_PictureMetadata_Create(::MetadataType::EXIF_METADATA, &metadataptr);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetMetadata(picture, ::MetadataType::EXIF_METADATA, metadataptr);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 }
 
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_SetMetadataTest002
- * @tc.desc: 
+ * @tc.desc: Pass in empty parameter SetMetadata, return exception.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetMetadataTest002, TestSize.Level2)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
-    OH_PictureMetadata* metadata = nullptr;
+    OH_PictureMetadata *metadata = nullptr;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetMetadata(picture, ::MetadataType::FRAGMENT_METADATA, metadata);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
