@@ -47,7 +47,6 @@ private:
                                        unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeFragmentMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
-    static bool GetPixelBytes(const PixelFormat format, int8_t &pixelBytes);
 };
 } // namespace Media
 } // namespace OHOS

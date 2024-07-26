@@ -273,6 +273,8 @@ bool HeifDecoderImpl::CheckAuxiliaryMap(AuxiliaryPictureType type)
             auxiliaryImage_ = parser_->GetAuxiliaryMapImage(iter->second);
             break;
         default:
+            auxiliaryImage_ = nullptr;
+            IMAGE_LOGE("Invalid AuxiliaryPictureType: %{public}d", type);
             break;
     }
 
@@ -545,6 +547,10 @@ bool HeifDecoderImpl::DecodeImage(HeifHardwareDecoder *hwDecoder,
     } else if (imageType == "hvc1") {
         gridInfo.enableGrid = false;
         res = DecodeSingleImage(hwDecoder, image, gridInfo, hwBuffer);
+    } else if (imageType == "") { // TODO image don't need decode
+        std::vector<uint8_t> outputs;
+        parser_->GetItemData(image->GetItemId(), &outputs, heif_only_header);
+        res = memcpy_s(hwBuffer->GetVirAddr(), hwBuffer->GetSize(), outputs.data(), outputs.size());
     }
     if (!res) {
         ReleaseHwDecoder(hwDecoder, isReuseHwDecoder);
