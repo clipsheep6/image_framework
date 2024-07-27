@@ -47,17 +47,23 @@ constexpr int32_t bufferLength = 8;
 static std::shared_ptr<PixelMap> CreatePixelMap()
 {
     const uint32_t color[bufferLength] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
-    uint32_t colorlength = sizeof(color) / sizeof(color[0]);
-    EXPECT_TRUE(colorlength == bufferLength);
     InitializationOptions options;
     options.size.width = sizeWidth;
     options.size.height = sizeHeight;
     options.srcPixelFormat = PixelFormat::UNKNOWN;
     options.pixelFormat = PixelFormat::UNKNOWN;
     options.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
-    std::unique_ptr<PixelMap> tmpPixelMap = PixelMap::Create(color, colorlength, options);
+    std::unique_ptr<PixelMap> tmpPixelMap = PixelMap::Create(color, bufferLength, options);
     std::shared_ptr<PixelMap> pixelmap = std::move(tmpPixelMap);
     return pixelmap;
+}
+
+static std::unique_ptr<AuxiliaryPicture> CreateAuxiliaryPicture(AuxiliaryPictureType type)
+{
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    EXPECT_NE(pixelmap, nullptr);
+    Size size = {sizeWidth, sizeHeight};
+    return AuxiliaryPicture::Create(pixelmap, type, size);
 }
 
 /**
@@ -277,10 +283,8 @@ HWTEST_F(AuxiliaryPictureTest, CreateTest015, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, GetAuxiliaryPictureInfoTest001, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     AuxiliaryPictureType type = AuxiliaryPictureType::DEPTH_MAP;
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = CreateAuxiliaryPicture(type);
     ASSERT_NE(auxPicture, nullptr);
     EXPECT_EQ(AuxiliaryPictureType::DEPTH_MAP, auxPicture->GetAuxiliaryPictureInfo().auxiliaryPictureType);
     EXPECT_EQ(sizeWidth, auxPicture->GetAuxiliaryPictureInfo().size.width);
@@ -294,10 +298,8 @@ HWTEST_F(AuxiliaryPictureTest, GetAuxiliaryPictureInfoTest001, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, SetAuxiliaryPictureInfoTest001, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     AuxiliaryPictureType type = AuxiliaryPictureType::DEPTH_MAP;
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = CreateAuxiliaryPicture(type);
     ASSERT_NE(auxPicture, nullptr);
     AuxiliaryPictureInfo auxiliaryPictureInfo;
     auxiliaryPictureInfo.auxiliaryPictureType = AuxiliaryPictureType::GAINMAP;
@@ -322,10 +324,8 @@ HWTEST_F(AuxiliaryPictureTest, SetAuxiliaryPictureInfoTest001, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, GetTypeTest001, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     AuxiliaryPictureType type = AuxiliaryPictureType::GAINMAP;
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = CreateAuxiliaryPicture(type);
     ASSERT_NE(auxPicture, nullptr);
     AuxiliaryPictureType auxType = auxPicture->GetType();
     EXPECT_EQ(auxType, AuxiliaryPictureType::GAINMAP);
@@ -338,10 +338,8 @@ HWTEST_F(AuxiliaryPictureTest, GetTypeTest001, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, GetTypeTest002, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     AuxiliaryPictureType type = AuxiliaryPictureType::LINEAR_MAP;
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = CreateAuxiliaryPicture(type);
     ASSERT_NE(auxPicture, nullptr);
     AuxiliaryPictureType auxType = auxPicture->GetType();
     EXPECT_EQ(auxType, AuxiliaryPictureType::LINEAR_MAP);
@@ -354,10 +352,8 @@ HWTEST_F(AuxiliaryPictureTest, GetTypeTest002, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, GetTypeTest003, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     AuxiliaryPictureType type = AuxiliaryPictureType::FRAGMENT_MAP;
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = CreateAuxiliaryPicture(type);
     ASSERT_NE(auxPicture, nullptr);
     AuxiliaryPictureType auxType = auxPicture->GetType();
     EXPECT_EQ(auxType, AuxiliaryPictureType::FRAGMENT_MAP);
@@ -370,10 +366,8 @@ HWTEST_F(AuxiliaryPictureTest, GetTypeTest003, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, GetTypeTest004, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     AuxiliaryPictureType type = AuxiliaryPictureType::UNREFOCUS_MAP;
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = CreateAuxiliaryPicture(type);
     ASSERT_NE(auxPicture, nullptr);
     AuxiliaryPictureType auxType = auxPicture->GetType();
     EXPECT_EQ(auxType, AuxiliaryPictureType::UNREFOCUS_MAP);
@@ -386,10 +380,8 @@ HWTEST_F(AuxiliaryPictureTest, GetTypeTest004, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, GetTypeTest005, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
     AuxiliaryPictureType type = AuxiliaryPictureType::DEPTH_MAP;
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelmap, type, size);
+    std::unique_ptr<AuxiliaryPicture> auxPicture = CreateAuxiliaryPicture(type);
     ASSERT_NE(auxPicture, nullptr);
     AuxiliaryPictureType auxType = auxPicture->GetType();
     EXPECT_EQ(auxType, AuxiliaryPictureType::DEPTH_MAP);
@@ -402,13 +394,9 @@ HWTEST_F(AuxiliaryPictureTest, GetTypeTest005, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest001, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
-        AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     auto dst = new uint8_t[bufferSize];
     ASSERT_NE(dst, nullptr);
     uint32_t ret = auxiliaryPicture->ReadPixels(bufferSize, dst);
@@ -422,13 +410,9 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest001, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest002, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
-        AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     auto dst = new uint8_t[bufferSize];
     ASSERT_NE(dst, nullptr);
     bufferSize = 0;
@@ -443,13 +427,9 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest002, TestSize.Level2)
  */
 HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest003, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
-        AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     uint8_t *dst = nullptr;
     uint32_t ret = auxiliaryPicture->ReadPixels(bufferSize, dst);
     EXPECT_EQ(ret, ERR_IMAGE_READ_PIXELMAP_FAILED);
@@ -462,13 +442,9 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest003, TestSize.Level2)
  */
 HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest004, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture =
-        AuxiliaryPicture::Create(pixelmap, AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     auto dst = new uint8_t[bufferSize];
     ASSERT_NE(dst, nullptr);
     std::shared_ptr<PixelMap> emptyPixelmap = nullptr;
@@ -484,14 +460,10 @@ HWTEST_F(AuxiliaryPictureTest, ReadPixelsTest004, TestSize.Level2)
  */
 HWTEST_F(AuxiliaryPictureTest, WritePixelsTest001, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    pixelmap->SetEditable(true);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    auxiliaryPicture->GetContentPixel()->SetEditable(true);
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     auto buffer = new uint8_t[bufferSize];
     ASSERT_NE(buffer, nullptr);
     uint32_t ret = auxiliaryPicture->WritePixels(buffer, bufferSize);
@@ -505,14 +477,10 @@ HWTEST_F(AuxiliaryPictureTest, WritePixelsTest001, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, WritePixelsTest002, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    pixelmap->SetEditable(true);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    auxiliaryPicture->GetContentPixel()->SetEditable(true);
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     uint8_t* buffer = nullptr;
     uint32_t ret = auxiliaryPicture->WritePixels(buffer, bufferSize);
     EXPECT_EQ(ret, ERR_IMAGE_INVALID_PARAMETER);
@@ -525,14 +493,10 @@ HWTEST_F(AuxiliaryPictureTest, WritePixelsTest002, TestSize.Level2)
  */
 HWTEST_F(AuxiliaryPictureTest, WritePixelsTest003, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    pixelmap->SetEditable(true);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    auxiliaryPicture->GetContentPixel()->SetEditable(true);
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     auto buffer = new uint8_t[bufferSize];
     ASSERT_NE(buffer, nullptr);
     bufferSize = 0;
@@ -547,14 +511,10 @@ HWTEST_F(AuxiliaryPictureTest, WritePixelsTest003, TestSize.Level2)
  */
 HWTEST_F(AuxiliaryPictureTest, WritePixelsTest004, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    pixelmap->SetEditable(true);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    auxiliaryPicture->GetContentPixel()->SetEditable(true);
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     auto buffer = new uint8_t[bufferSize];
     ASSERT_NE(buffer, nullptr);
     std::shared_ptr<PixelMap> emptyPixelmap = nullptr;
@@ -570,14 +530,10 @@ HWTEST_F(AuxiliaryPictureTest, WritePixelsTest004, TestSize.Level2)
  */
 HWTEST_F(AuxiliaryPictureTest, WritePixelsTest005, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    pixelmap->SetEditable(false);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
-    uint64_t bufferSize = pixelmap->GetCapacity();
+    auxiliaryPicture->GetContentPixel()->SetEditable(false);
+    uint64_t bufferSize = auxiliaryPicture->GetContentPixel()->GetCapacity();
     auto buffer = new uint8_t[bufferSize];
     ASSERT_NE(buffer, nullptr);
     uint32_t ret = auxiliaryPicture->WritePixels(buffer, bufferSize);
@@ -591,18 +547,16 @@ HWTEST_F(AuxiliaryPictureTest, WritePixelsTest005, TestSize.Level2)
  */
 HWTEST_F(AuxiliaryPictureTest, WritePixelsTest006, TestSize.Level2)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
+    ASSERT_NE(auxiliaryPicture, nullptr);
+    std::shared_ptr<PixelMap> pixelmap = auxiliaryPicture->GetContentPixel();
     ASSERT_NE(pixelmap, nullptr);
-    pixelmap->SetEditable(true);
     ImageInfo info;
     pixelmap->GetImageInfo(info);
     info.alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     ASSERT_EQ(pixelmap->SetImageInfo(info), SUCCESS);
     pixelmap->SetImageInfo(info);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
-    ASSERT_NE(auxiliaryPicture, nullptr);
+    pixelmap->SetEditable(true);
     uint64_t bufferSize = pixelmap->GetCapacity();
     auto buffer = new uint8_t[bufferSize];
     ASSERT_NE(buffer, nullptr);
@@ -623,11 +577,7 @@ HWTEST_F(AuxiliaryPictureTest, SetMetadata001, TestSize.Level1)
     std::shared_ptr<ExifMetadata> srcExifMetadata = std::make_shared<ExifMetadata>(exifData);
     ASSERT_NE(srcExifMetadata, nullptr);
     ASSERT_TRUE(srcExifMetadata->SetValue("BitsPerSample", srcValue));
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
     auxiliaryPicture->SetMetadata(MetadataType::EXIF, srcExifMetadata);
     std::shared_ptr<ImageMetadata> dstExifMetadata = auxiliaryPicture->GetMetadata(MetadataType::EXIF);
@@ -648,11 +598,7 @@ HWTEST_F(AuxiliaryPictureTest, SetMetadata002, TestSize.Level1)
     std::shared_ptr<FragmentMetadata> srcFragmentMetadata = std::make_shared<FragmentMetadata>();
     ASSERT_NE(srcFragmentMetadata, nullptr);
     ASSERT_TRUE(srcFragmentMetadata->SetValue("WIDTH", srcValue));
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
     auxiliaryPicture->SetMetadata(MetadataType::FRAGMENT, srcFragmentMetadata);
     std::shared_ptr<ImageMetadata> dstFragmentMetadata = auxiliaryPicture->GetMetadata(MetadataType::FRAGMENT);
@@ -671,11 +617,7 @@ HWTEST_F(AuxiliaryPictureTest, SetMetadata003, TestSize.Level1)
 {
     std::shared_ptr<ExifMetadata> srcExifMetadata = nullptr;
     std::shared_ptr<FragmentMetadata> srcFragmentMetadata = nullptr;
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
     auxiliaryPicture->SetMetadata(MetadataType::EXIF, srcExifMetadata);
     auxiliaryPicture->SetMetadata(MetadataType::FRAGMENT, srcFragmentMetadata);
@@ -700,11 +642,7 @@ HWTEST_F(AuxiliaryPictureTest, GetMetadata001, TestSize.Level1)
     std::shared_ptr<ExifMetadata> srcExifMetadata = std::make_shared<ExifMetadata>(exifData);
     ASSERT_NE(srcExifMetadata, nullptr);
     ASSERT_TRUE(srcExifMetadata->SetValue("BitsPerSample", srcValue));
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
     auxiliaryPicture->SetMetadata(MetadataType::EXIF, srcExifMetadata);
     std::shared_ptr<ImageMetadata> dstExifMetadata = auxiliaryPicture->GetMetadata(MetadataType::EXIF);
@@ -725,11 +663,7 @@ HWTEST_F(AuxiliaryPictureTest, GetMetadata002, TestSize.Level1)
     std::shared_ptr<FragmentMetadata> srcFragmentMetadata = std::make_shared<FragmentMetadata>();
     ASSERT_NE(srcFragmentMetadata, nullptr);
     ASSERT_TRUE(srcFragmentMetadata->SetValue("WIDTH", srcValue));
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
     auxiliaryPicture->SetMetadata(MetadataType::FRAGMENT, srcFragmentMetadata);
     std::shared_ptr<ImageMetadata> dstFragmentMetadata = auxiliaryPicture->GetMetadata(MetadataType::FRAGMENT);
@@ -746,11 +680,7 @@ HWTEST_F(AuxiliaryPictureTest, GetMetadata002, TestSize.Level1)
  */
 HWTEST_F(AuxiliaryPictureTest, GetMetadata003, TestSize.Level1)
 {
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
     EXPECT_FALSE(auxiliaryPicture->HasMetadata(MetadataType::EXIF));
     EXPECT_FALSE(auxiliaryPicture->HasMetadata(MetadataType::FRAGMENT));
@@ -773,11 +703,7 @@ HWTEST_F(AuxiliaryPictureTest, GetMetadata004, TestSize.Level1)
     std::shared_ptr<ExifMetadata> srcExifMetadata = std::make_shared<ExifMetadata>(exifData);
     ASSERT_NE(srcExifMetadata, nullptr);
     ASSERT_TRUE(srcExifMetadata->SetValue("BitsPerSample", "9,9,8"));
-    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
-    ASSERT_NE(pixelmap, nullptr);
-    Size size = {sizeWidth, sizeHeight};
-    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(pixelmap,
-        AuxiliaryPictureType::GAINMAP, size);
+    std::unique_ptr<AuxiliaryPicture> auxiliaryPicture = CreateAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     ASSERT_NE(auxiliaryPicture, nullptr);
     auxiliaryPicture->SetMetadata(MetadataType::EXIF, srcExifMetadata);
     std::shared_ptr<ImageMetadata> dstExifMetadata = auxiliaryPicture->GetMetadata(MetadataType::EXIF);
