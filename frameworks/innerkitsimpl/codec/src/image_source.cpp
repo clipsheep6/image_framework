@@ -347,7 +347,7 @@ uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
     }
 
     static bool isSupportHeif = IsSupportHeif();
-    IMAGE_LOGE("[ImageSource]isSupportHeif=%u.", isSupportHeif);
+    IMAGE_LOGE("[lzw]isSupportHeif=%{public}u.", isSupportHeif);
     if (isSupportHeif) {
         formats.insert(IMAGE_HEIF_FORMAT);
     }
@@ -1374,6 +1374,8 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
     if (iter == imageStatusMap_.end()) {
         guard.unlock();
         IMAGE_LOGE("[ImageSource]get valid image status fail on get image info, ret:%{public}u.", ret);
+        IMAGE_LOGE("[lzw]index=%{public}u, pixelFormat=%{public}u, encodeFormat=%{public}s",
+            index, imageInfo.pixelFormat, imageInfo.encodedFormat);
         return ret;
     }
     ImageInfo &info = (iter->second).imageInfo;
