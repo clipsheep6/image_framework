@@ -98,11 +98,6 @@ struct HeifDecoder {
         std::vector<uint8_t>& lightInfo) = 0;
     virtual void getISOMetadata(std::vector<uint8_t>& isoMetadata) = 0;
     virtual void getErrMsg(std::string& errMsg) = 0;
-    virtual bool CheckAuxiliaryMap(OHOS::Media::AuxiliaryPictureType type) = 0;
-    virtual bool setAuxiliaryMap(OHOS::Media::AuxiliaryPictureType type) = 0;
-    virtual bool getAuxiliaryMapInfo(HeifFrameInfo* frameInfo) = 0;
-    virtual bool decodeAuxiliaryMap() = 0;
-    virtual void setAuxiliaryDstBuffer(uint8_t* dstBuffer, size_t rowStride) = 0;
 };
 
 #endif // PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_HEIF_DECODER_H

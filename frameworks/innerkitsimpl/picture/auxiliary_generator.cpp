@@ -75,6 +75,10 @@ uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> 
     ImageHdrType hdrType = extDecoder->CheckHdrType();
     std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
     std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
+    if (pixelMap == nullptr) {
+        IMAGE_LOGE("Get invalid content pixel map.");
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
     pixelMap->SetHdrMetadata(hdrMetadata);
     pixelMap->SetHdrType(hdrType);
     return SUCCESS;
@@ -214,7 +218,6 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPictu
 
     // Decode heif auxiliary map.
     DecodeContext context;
-    context.info.pixelFormat = PixelFormat::NV21;
     if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
         IMAGE_LOGE("Decode heif auxiliary map failure");
         errorCode = ERR_IMAGE_DECODE_FAILED;
@@ -236,8 +239,8 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPictu
     ImageSource::ContextToAddrInfos(context, addrInfos);
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
     ImageInfo info = MakeImageInfo(context.outInfo.size.width, context.outInfo.size.height,
-        context.outInfo.pixelFormat, context.outInfo.alphaType, context.outInfo.colorSpace);
-    pixelMap->SetImageInfo(info);
+        context.pixelFormat, context.alphaType, context.colorSpace);
+    pixelMap->SetImageInfo(info, true);
     OHOS::ColorManager::ColorSpace grColorSpace = extDecoder->getGrColorSpace();
     pixelMap->InnerSetColorSpace(grColorSpace);
 

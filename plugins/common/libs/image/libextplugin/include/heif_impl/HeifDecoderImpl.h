@@ -59,11 +59,11 @@ public:
         std::vector<uint8_t>& lightInfo) override;
     void getISOMetadata(std::vector<uint8_t>& isoMetadata) override;
     void getErrMsg(std::string& errMsg) override;
-    bool CheckAuxiliaryMap(Media::AuxiliaryPictureType type) override;
-    bool setAuxiliaryMap(Media::AuxiliaryPictureType type) override;
-    bool getAuxiliaryMapInfo(HeifFrameInfo* frameInfo) override;
-    bool decodeAuxiliaryMap() override;
-    void setAuxiliaryDstBuffer(uint8_t* dstBuffer, size_t rowStride) override;
+    bool CheckAuxiliaryMap(Media::AuxiliaryPictureType type);
+    bool setAuxiliaryMap(Media::AuxiliaryPictureType type);
+    bool getAuxiliaryMapInfo(HeifFrameInfo* frameInfo);
+    bool decodeAuxiliaryMap();
+    void setAuxiliaryDstBuffer(uint8_t* dstBuffer, size_t rowStride);
 private:
     bool Reinit(HeifFrameInfo *frameInfo);
 

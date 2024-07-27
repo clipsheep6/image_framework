@@ -39,6 +39,7 @@
 #endif
 #ifdef HEIF_HW_DECODE_ENABLE
 #include "heif_impl/HeifDecoder.h"
+#include "heif_impl/HeifDecoderImpl.h"
 #include "hardware/heif_hw_decoder.h"
 #endif
 #include "color_utils.h"
@@ -1861,7 +1862,7 @@ bool ExtDecoder::CheckAuxiliaryMap(AuxiliaryPictureType type)
         return false;
     }
 
-    auto decoder = reinterpret_cast<HeifDecoder*>(codec_->getHeifContext());
+    auto decoder = reinterpret_cast<HeifDecoderImpl*>(codec_->getHeifContext());
     if (decoder == nullptr) {
         IMAGE_LOGE("Get heif context failed! Type %{public}d.", type);
         return false;
@@ -1884,7 +1885,7 @@ bool ExtDecoder::DecodeHeifAuxiliaryMap(DecodeContext& context, AuxiliaryPicture
         return false;
     }
 
-    auto decoder = reinterpret_cast<HeifDecoder*>(codec_->getHeifContext());
+    auto decoder = reinterpret_cast<HeifDecoderImpl*>(codec_->getHeifContext());
     if (decoder == nullptr) {
         IMAGE_LOGE("decode heif auxiliaryMap %{public}d, decoder error", type);
         return false;
@@ -1908,6 +1909,7 @@ bool ExtDecoder::DecodeHeifAuxiliaryMap(DecodeContext& context, AuxiliaryPicture
     context.info.size.width = width;
     context.info.size.height = height;
     if (DmaMemAlloc(context, byteCount, dstInfo) != SUCCESS) {
+        IMAGE_LOGI("DmaMemAlloc execution failed.");
         return false;
     }
     auto* dstBuffer = static_cast<uint8_t*>(context.pixelsBuffer.buffer);
@@ -1921,6 +1923,8 @@ bool ExtDecoder::DecodeHeifAuxiliaryMap(DecodeContext& context, AuxiliaryPicture
         IMAGE_LOGE("Decoded auxiliary map type is not supported, or decoded failed. Type: %{public}d", type);
         return false;
     }
+    context.outInfo.size.width = width;
+    context.outInfo.size.height = height;
     return true;
 #endif
     return false;
