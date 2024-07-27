@@ -34,6 +34,7 @@
 #include <sys/mman.h>
 #include "ashmem.h"
 #include "surface_buffer.h"
+#include "vpe_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,7 +60,7 @@ constexpr uint8_t HALF = 2;
 constexpr float HALF_F = 2;
 constexpr int FFMPEG_NUM = 8;
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 static const map<PixelFormat, AVPixelFormat> PIXEL_FORMAT_MAP = {
     { PixelFormat::ALPHA_8, AVPixelFormat::AV_PIX_FMT_GRAY8 },
     { PixelFormat::RGB_565, AVPixelFormat::AV_PIX_FMT_RGB565BE },
@@ -243,17 +244,13 @@ bool PostProc::CenterDisplay(PixelMap &pixelMap, int32_t srcWidth, int32_t srcHe
             return false;
         }
     } else if (pixelMap.GetAllocatorType() == AllocatorType::DMA_ALLOC) {
-        dstPixels = AllocDmaMemory(dstImageInfo.size, bufferSize, &nativeBuffer, targetRowStride);
-        if (dstPixels == nullptr) {
-            IMAGE_LOGE("[PostProc]CenterDisplay AllocDmaMemory failed");
-            return false;
-        }
+        dstPixels = AllocDmaMemory(dstImageInfo, bufferSize, &nativeBuffer, targetRowStride);
     } else {
         dstPixels = AllocSharedMemory(dstImageInfo.size, bufferSize, fd, pixelMap.GetUniqueId());
-        if (dstPixels == nullptr) {
-            IMAGE_LOGE("[PostProc]CenterDisplay AllocSharedMemory failed");
-            return false;
-        }
+    }
+    if (dstPixels == nullptr) {
+        IMAGE_LOGE("[PostProc]CenterDisplay AllocMemory[%{public}d] failed", pixelMap.GetAllocatorType());
+        return false;
     }
     if (!CopyPixels(pixelMap, dstPixels, dstImageInfo.size, srcWidth, srcHeight, srcRowStride, targetRowStride)) {
         IMAGE_LOGE("[PostProc]CopyPixels failed");
@@ -264,6 +261,11 @@ bool PostProc::CenterDisplay(PixelMap &pixelMap, int32_t srcWidth, int32_t srcHe
     if (pixelMap.GetAllocatorType() == AllocatorType::HEAP_ALLOC) {
         pixelMap.SetPixelsAddr(dstPixels, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
     } else if (pixelMap.GetAllocatorType() == AllocatorType::DMA_ALLOC) {
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+        sptr<SurfaceBuffer> sourceSurfaceBuffer(reinterpret_cast<SurfaceBuffer*> (pixelMap.GetFd()));
+        sptr<SurfaceBuffer> dstSurfaceBuffer(reinterpret_cast<SurfaceBuffer*> (nativeBuffer));
+        VpeUtils::CopySurfaceBufferInfo(sourceSurfaceBuffer, dstSurfaceBuffer);
+#endif
         pixelMap.SetPixelsAddr(dstPixels, nativeBuffer, bufferSize, AllocatorType::DMA_ALLOC, nullptr);
     } else {
         fdBuffer = new int32_t();
@@ -500,13 +502,14 @@ uint8_t *PostProc::AllocSharedMemory(const Size &size, const uint64_t bufferSize
 #endif
 }
 
-uint8_t *PostProc::AllocDmaMemory(const Size &size, const uint64_t bufferSize,
+uint8_t *PostProc::AllocDmaMemory(ImageInfo info, const uint64_t bufferSize,
                                   void **nativeBuffer, int &targetRowStride)
 {
 #if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
     return nullptr;
 #else
-    MemoryData memoryData = {nullptr, (uint32_t)bufferSize, "PostProc", {size.width, size.height}};
+    MemoryData memoryData = {nullptr, (uint32_t)bufferSize, "PostProc", {info.size.width, info.size.height}};
+    memoryData.format = info.pixelFormat;
     auto dstMemory = MemoryManager::CreateMemory(AllocatorType::DMA_ALLOC, memoryData);
     if (dstMemory == nullptr) {
         return nullptr;
@@ -706,7 +709,7 @@ void PostProc::SetScanlineCropAndConvert(const Rect &cropRect, ImageInfo &dstIma
     scanlineFilter.SetSrcRegion(srcRect);
 }
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 bool GetScaleFormat(const PixelFormat &format, AVPixelFormat &pixelFormat)
 {
     if (format != PixelFormat::UNKNOWN) {
@@ -747,6 +750,15 @@ int GetInterpolation(const AntiAliasingOption &option)
     }
 }
 
+void ReleaseTempBuffer(void *&buffer, const uint8_t *ref[])
+{
+    if (buffer != nullptr) {
+        free(buffer);
+        buffer = nullptr;
+        ref[0] = nullptr;
+    }
+}
+
 bool PostProc::ScalePixelMapEx(const Size &desiredSize, PixelMap &pixelMap, const AntiAliasingOption &option)
 {
     ImageTrace imageTrace("PixelMap ScalePixelMapEx");
@@ -769,7 +781,7 @@ bool PostProc::ScalePixelMapEx(const Size &desiredSize, PixelMap &pixelMap, cons
         return false;
     }
     uint64_t dstBufferSizeOverflow =
-        static_cast<uint64_t>(desiredSize.width) * desiredSize.height * ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
+        static_cast<uint64_t>(desiredSize.width * desiredSize.height * ImageUtils::GetPixelBytes(imgInfo.pixelFormat));
     if (dstBufferSizeOverflow > UINT_MAX) {
         IMAGE_LOGE("ScalePixelMapEx target size too large");
         return false;
@@ -794,11 +806,35 @@ bool PostProc::ScalePixelMapEx(const Size &desiredSize, PixelMap &pixelMap, cons
     dstRowStride[0] = (mem->GetType() == AllocatorType::DMA_ALLOC) ?
         reinterpret_cast<SurfaceBuffer*>(mem->extend.data)->GetStride() :
         desiredSize.width * ImageUtils::GetPixelBytes(imgInfo.pixelFormat);
+
+    void *inBuf = nullptr;
+    if (srcWidth % HALF != 0 && pixelMap.GetAllocatorType() == AllocatorType::SHARE_MEM_ALLOC) {
+        // Workaround for crash on odd number width, caused by FFmpeg 5.0 upgrade
+        uint32_t byteCount = srcRowStride[0] * srcHeight;
+        inBuf = malloc(byteCount);
+        srcPixels[0] = reinterpret_cast<uint8_t*>(inBuf);
+        errno_t errRet = memcpy_s(inBuf, byteCount, pixelMap.GetWritablePixels(), byteCount);
+        if (errRet != EOK) {
+            ReleaseTempBuffer(inBuf, srcPixels);
+            mem->Release();
+            IMAGE_LOGE("ScalePixelMapEx memcpy_s failed with error code: %{public}d", errRet);
+            return false;
+        }
+    }
+
     SwsContext *swsContext = sws_getContext(srcWidth, srcHeight, pixelFormat, desiredSize.width, desiredSize.height,
         pixelFormat, GetInterpolation(option), nullptr, nullptr, nullptr);
+    if (swsContext == nullptr) {
+        ReleaseTempBuffer(inBuf, srcPixels);
+        mem->Release();
+        IMAGE_LOGE("sws_getContext failed");
+        return false;
+    }
     auto res = sws_scale(swsContext, srcPixels, srcRowStride, 0, srcHeight, dstPixels, dstRowStride);
+
+    sws_freeContext(swsContext);
+    ReleaseTempBuffer(inBuf, srcPixels);
     if (!res) {
-        sws_freeContext(swsContext);
         mem->Release();
         IMAGE_LOGE("sws_scale failed");
         return false;
@@ -806,7 +842,6 @@ bool PostProc::ScalePixelMapEx(const Size &desiredSize, PixelMap &pixelMap, cons
     pixelMap.SetPixelsAddr(mem->data.data, mem->extend.data, dstBufferSize, mem->GetType(), nullptr);
     imgInfo.size = desiredSize;
     pixelMap.SetImageInfo(imgInfo, true);
-    sws_freeContext(swsContext);
     return true;
 }
 #endif

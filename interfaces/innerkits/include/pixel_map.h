@@ -55,8 +55,10 @@ struct InitializationOptions {
     PixelFormat pixelFormat = PixelFormat::UNKNOWN;
     AlphaType alphaType = AlphaType::IMAGE_ALPHA_TYPE_UNKNOWN;
     ScaleMode scaleMode = ScaleMode::FIT_TARGET_SIZE;
+    int32_t srcRowStride = 0;
     bool editable = false;
     bool useSourceIfMatch = false;
+    bool useDMA = false;
 };
 struct TransInfos;
 
@@ -322,7 +324,7 @@ protected:
     static bool CheckParams(const uint32_t *colors, uint32_t colorLength, int32_t offset, int32_t stride,
         const InitializationOptions &opts);
     static void UpdatePixelsAlpha(const AlphaType &alphaType, const PixelFormat &pixelFormat, uint8_t *dstPixels,
-                                  PixelMap dstPixelMap);
+                                  PixelMap &dstPixelMap);
     static void InitDstImageInfo(const InitializationOptions &opts, const ImageInfo &srcImageInfo,
                                  ImageInfo &dstImageInfo);
     static bool CopyPixMapToDst(PixelMap &source, void* &dstPixels, int &fd, uint32_t bufferSize);
@@ -432,6 +434,7 @@ protected:
     YUVDataInfo yuvDataInfo_;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     std::shared_ptr<std::mutex> metadataMutex_ = std::make_shared<std::mutex>();
+    std::shared_ptr<std::mutex> translationMutex_ = std::make_shared<std::mutex>();
 };
 } // namespace Media
 } // namespace OHOS

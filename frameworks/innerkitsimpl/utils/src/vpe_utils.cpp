@@ -466,6 +466,31 @@ void VpeUtils::SetSurfaceBufferInfo(sptr<SurfaceBuffer>& buffer, CM_ColorSpaceTy
 {
     VpeUtils::SetSbColorSpaceType(buffer, color);
 }
+
+void VpeUtils::CopySurfaceBufferInfo(sptr<SurfaceBuffer>& source, sptr<SurfaceBuffer>& dst)
+{
+    if (source == nullptr || dst == nullptr) {
+        IMAGE_LOGI("VpeUtils CopySurfaceBufferInfo failed, source or dst is nullptr");
+        return;
+    }
+    std::vector<uint8_t> hdrMetadataTypeVec;
+    std::vector<uint8_t> colorSpaceInfoVec;
+    std::vector<uint8_t> staticData;
+    std::vector<uint8_t> dynamicData;
+
+    if (source->GetMetadata(ATTRKEY_HDR_METADATA_TYPE, hdrMetadataTypeVec) == GSERROR_OK) {
+        dst->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, hdrMetadataTypeVec);
+    }
+    if (source->GetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec) == GSERROR_OK) {
+        dst->SetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec);
+    }
+    if (GetSbStaticMetadata(source, staticData) && (staticData.size() > 0)) {
+        SetSbStaticMetadata(dst, staticData);
+    }
+    if (GetSbDynamicMetadata(source, dynamicData) && (dynamicData.size()) > 0) {
+        SetSbDynamicMetadata(dst, dynamicData);
+    }
+}
 #endif
 }
 }

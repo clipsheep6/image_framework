@@ -23,6 +23,7 @@
 #include "src/codec/SkJpegDecoderMgr.h"
 #include "ext_pixel_convert.h"
 #include "image_log.h"
+#include "image_format_convert.h"
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "ffrt.h"
 #include "hisysevent.h"
@@ -53,6 +54,7 @@
 
 namespace {
     constexpr static int32_t ZERO = 0;
+    constexpr static int32_t NUM_2 = 2;
     constexpr static int32_t NUM_3 = 3;
     constexpr static int32_t NUM_4 = 4;
     constexpr static int32_t OFFSET = 1;
@@ -122,6 +124,7 @@ const static std::string HW_MNOTE_TAG_FOCUS_MODE = "HwMnoteFocusMode";
 const static std::string DEFAULT_PACKAGE_NAME = "entry";
 const static std::string DEFAULT_VERSION_ID = "1";
 const static std::string UNKNOWN_IMAGE = "unknown";
+constexpr static int NUM_ONE = 1;
 #ifdef JPEG_HW_DECODE_ENABLE
 const static uint32_t PLANE_COUNT_TWO = 2;
 #endif
@@ -161,10 +164,19 @@ static const map<SkEncodedImageFormat, string> FORMAT_NAME = {
     { SkEncodedImageFormat::kHEIF, "image/heif" },
 };
 
+#ifdef HEIF_HW_DECODE_ENABLE
+static const map<PixelFormat, SkHeifColorFormat> HEIF_FORMAT_MAP = {
+    { PixelFormat::RGBA_1010102, kHeifColorFormat_RGBA_1010102 },
+    { PixelFormat::YCBCR_P010, kHeifColorFormat_P010_NV12 },
+    { PixelFormat::YCRCB_P010, kHeifColorFormat_P010_NV21 },
+};
+#endif
+
 static const map<PixelFormat, JpegYuvFmt> PLPIXEL_FORMAT_YUV_JPG_MAP = {
     { PixelFormat::NV21, JpegYuvFmt::OutFmt_NV21 }, { PixelFormat::NV12, JpegYuvFmt::OutFmt_NV12 }
 };
 
+// LCOV_EXCL_START
 static void SetDecodeContextBuffer(DecodeContext &context,
     AllocatorType type, uint8_t* ptr, uint64_t count, void* fd)
 {
@@ -222,7 +234,13 @@ uint32_t ExtDecoder::DmaMemAlloc(DecodeContext &context, uint64_t count, SkImage
         .colorGamut = GraphicColorGamut::GRAPHIC_COLOR_GAMUT_SRGB,
         .transform = GraphicTransformType::GRAPHIC_ROTATE_NONE,
     };
-    if (outputColorFmt_ == PIXEL_FMT_YCRCB_420_SP) {
+    if (context.info.pixelFormat == PixelFormat::RGBA_1010102) {
+        requestConfig.format = GRAPHIC_PIXEL_FMT_RGBA_1010102;
+    } else if (context.info.pixelFormat == PixelFormat::YCRCB_P010) {
+        requestConfig.format = GRAPHIC_PIXEL_FMT_YCRCB_P010;
+    } else if (context.info.pixelFormat == PixelFormat::YCBCR_P010) {
+        requestConfig.format = GRAPHIC_PIXEL_FMT_YCBCR_P010;
+    } else if (outputColorFmt_ == PIXEL_FMT_YCRCB_420_SP) {
         requestConfig.format = GRAPHIC_PIXEL_FMT_YCRCB_420_SP;
         requestConfig.usage |= BUFFER_USAGE_VENDOR_PRI16; // height is 64-bytes aligned
         IMAGE_LOGD("ExtDecoder::DmaMemAlloc desiredFormat is NV21");
@@ -271,8 +289,14 @@ uint32_t ExtDecoder::HeifYUVMemAlloc(OHOS::ImagePlugin::DecodeContext &context)
 {
 #ifdef HEIF_HW_DECODE_ENABLE
     HeifHardwareDecoder decoder;
-    GraphicPixelFormat graphicPixelFormat = context.info.pixelFormat
-            == PixelFormat::NV12 ? GRAPHIC_PIXEL_FMT_YCBCR_420_SP : GRAPHIC_PIXEL_FMT_YCRCB_420_SP;
+    GraphicPixelFormat graphicPixelFormat = GRAPHIC_PIXEL_FMT_YCRCB_420_SP;
+    if (context.info.pixelFormat == PixelFormat::NV12) {
+        graphicPixelFormat = GRAPHIC_PIXEL_FMT_YCBCR_420_SP;
+    } else if (context.info.pixelFormat == PixelFormat::YCRCB_P010) {
+        graphicPixelFormat = GRAPHIC_PIXEL_FMT_YCRCB_P010;
+    } else if (context.info.pixelFormat == PixelFormat::YCBCR_P010) {
+        graphicPixelFormat = GRAPHIC_PIXEL_FMT_YCBCR_P010;
+    }
     sptr<SurfaceBuffer> hwBuffer
             = decoder.AllocateOutputBuffer(info_.width(), info_.height(), graphicPixelFormat);
     if (hwBuffer == nullptr) {
@@ -297,6 +321,7 @@ uint32_t ExtDecoder::HeifYUVMemAlloc(OHOS::ImagePlugin::DecodeContext &context)
     return ERR_IMAGE_DATA_UNSUPPORT;
 #endif
 }
+// LCOV_EXCL_STOP
 
 ExtDecoder::ExtDecoder() : codec_(nullptr), frameCount_(ZERO)
 {
@@ -333,6 +358,7 @@ static inline float Max(float a, float b)
     return (a > b) ? a : b;
 }
 
+// LCOV_EXCL_START
 bool ExtDecoder::GetScaledSize(int &dWidth, int &dHeight, float &scale)
 {
     if (info_.isEmpty() && !DecodeHeader()) {
@@ -378,21 +404,15 @@ bool ExtDecoder::GetHardwareScaledSize(int &dWidth, int &dHeight, float &scale) 
     // calculate sample size and dst size for hardware decode
     if (finalScale > HALF) {
         sampleSize_ = 1;
-        dWidth = oriWidth;
-        dHeight = oriHeight;
     } else if (finalScale > QUARTER) {
         sampleSize_ = 2;
-        dWidth = oriWidth * HALF;
-        dHeight = oriHeight * HALF;
     } else if (finalScale > ONE_EIGHTH) {
         sampleSize_ = 4;
-        dWidth = oriWidth * QUARTER;
-        dHeight = oriHeight * QUARTER;
     } else {
         sampleSize_ = 8;
-        dWidth = oriWidth * ONE_EIGHTH;
-        dHeight = oriHeight * ONE_EIGHTH;
     }
+    dWidth = (oriWidth + sampleSize_ - NUM_ONE) / sampleSize_;
+    dHeight = (oriHeight + sampleSize_ - NUM_ONE) / sampleSize_;
     return true;
 }
 #endif
@@ -405,6 +425,7 @@ bool ExtDecoder::IsSupportScaleOnDecode()
     float scale = HALF_SCALE;
     return GetScaledSize(w, h, scale);
 }
+// LCOV_EXCL_STOP
 
 bool ExtDecoder::IsSupportCropOnDecode()
 {
@@ -428,6 +449,7 @@ bool ExtDecoder::IsSupportCropOnDecode(SkIRect &target)
     return false;
 }
 
+// LCOV_EXCL_START
 bool ExtDecoder::HasProperty(string key)
 {
     if (CODEC_INITED_KEY.compare(key) == ZERO) {
@@ -459,6 +481,7 @@ uint32_t ExtDecoder::GetImageSize(uint32_t index, Size &size)
     size.height = static_cast<uint32_t>(info_.height());
     return SUCCESS;
 }
+// LCOV_EXCL_STOP
 
 static inline bool IsLowDownScale(const Size &size, SkImageInfo &info)
 {
@@ -466,6 +489,7 @@ static inline bool IsLowDownScale(const Size &size, SkImageInfo &info)
         size.height < info.height();
 }
 
+// LCOV_EXCL_START
 static inline bool IsValidCrop(const OHOS::Media::Rect &crop, SkImageInfo &info, SkIRect &out)
 {
     out = SkIRect::MakeXYWH(crop.left, crop.top, crop.width, crop.height);
@@ -480,6 +504,7 @@ static inline bool IsValidCrop(const OHOS::Media::Rect &crop, SkImageInfo &info,
     }
     return true;
 }
+// LCOV_EXCL_STOP
 
 static sk_sp<SkColorSpace> getDesiredColorSpace(SkImageInfo &srcInfo, const PixelDecodeOptions &opts)
 {
@@ -489,6 +514,7 @@ static sk_sp<SkColorSpace> getDesiredColorSpace(SkImageInfo &srcInfo, const Pixe
     return opts.plDesiredColorSpace->ToSkColorSpace();
 }
 
+// LCOV_EXCL_START
 uint32_t ExtDecoder::CheckDecodeOptions(uint32_t index, const PixelDecodeOptions &opts)
 {
     if (ImageUtils::CheckMulOverflow(dstInfo_.width(), dstInfo_.height(), dstInfo_.bytesPerPixel())) {
@@ -521,7 +547,9 @@ uint32_t ExtDecoder::SetDecodeOptions(uint32_t index, const PixelDecodeOptions &
     }
     auto desireColor = ConvertToColorType(opts.desiredPixelFormat, info.pixelFormat);
     auto desireAlpha = ConvertToAlphaType(opts.desireAlphaType, info.alphaType);
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     outputColorFmt_ = (opts.desiredPixelFormat == PixelFormat::NV21 ? PIXEL_FMT_YCRCB_420_SP : PIXEL_FMT_RGBA_8888);
+#endif
 
     if (codec_) {
         SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
@@ -595,6 +623,56 @@ static void DebugInfo(SkImageInfo &info, SkImageInfo &dstInfo, SkCodec::Options 
             opts.fSubset->width(), opts.fSubset->height());
     }
 }
+// LCOV_EXCL_STOP
+
+static uint64_t GetByteSize(int32_t width, int32_t height)
+{
+    return static_cast<uint64_t>(width * height + ((width + 1) / NUM_2) * ((height + 1) / NUM_2) * NUM_2);
+}
+
+static void UpdateContextYuvInfo(DecodeContext &context, ConvertDataInfo &dstDataInfo)
+{
+    context.yuvInfo.yWidth = static_cast<uint32_t>(dstDataInfo.imageSize.width);
+    context.yuvInfo.yHeight = static_cast<uint32_t>(dstDataInfo.imageSize.height);
+    context.yuvInfo.yStride = static_cast<uint32_t>(dstDataInfo.imageSize.width);
+    context.yuvInfo.uvWidth = static_cast<uint32_t>((dstDataInfo.imageSize.width + 1) / NUM_2);
+    context.yuvInfo.uvHeight = static_cast<uint32_t>((dstDataInfo.imageSize.height + 1) / NUM_2);
+    context.yuvInfo.uvStride = static_cast<uint32_t>((dstDataInfo.imageSize.width + 1) / NUM_2 * NUM_2);
+    context.yuvInfo.yOffset = 0;
+    context.yuvInfo.uvOffset = static_cast<uint32_t>(context.yuvInfo.yHeight * context.yuvInfo.yStride);
+}
+
+uint32_t ExtDecoder::ConvertFormatToYUV(DecodeContext &context, SkImageInfo &dstInfo,
+    uint64_t byteCount, PixelFormat format)
+{
+    ConvertDataInfo srcDataInfo;
+    DecodeContext dstContext;
+    dstContext.allocatorType = context.allocatorType;
+    uint64_t dstCount = GetByteSize(dstInfo.width(), dstInfo.height());
+    uint32_t ret = SetContextPixelsBuffer(dstCount, dstContext);
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("ConvertFormatToYUV SetContextPixelsBuffer failed");
+        return ret;
+    }
+    ConvertDataInfo dstDataInfo;
+    srcDataInfo.buffer = static_cast<uint8_buffer_type>(context.pixelsBuffer.buffer);
+    srcDataInfo.bufferSize = byteCount;
+    srcDataInfo.imageSize = {dstInfo.width(), dstInfo.height()};
+    srcDataInfo.pixelFormat = context.pixelFormat;
+    srcDataInfo.colorSpace = static_cast<ColorSpace>(context.colorSpace);
+    dstDataInfo.buffer = static_cast<uint8_buffer_type>(dstContext.pixelsBuffer.buffer);
+    dstDataInfo.pixelFormat = format;
+    ret = Media::ImageFormatConvert::ConvertImageFormat(srcDataInfo, dstDataInfo);
+    if (ret != SUCCESS) {
+        IMAGE_LOGE("Decode convert failed , ret=%{public}d", ret);
+        return ret;
+    }
+    SetDecodeContextBuffer(context, dstContext.allocatorType, static_cast<uint8_t *>(dstDataInfo.buffer),
+        dstCount, context.pixelsBuffer.context);
+    context.info.pixelFormat = format;
+    UpdateContextYuvInfo(context, dstDataInfo);
+    return SUCCESS;
+}
 
 static uint32_t RGBxToRGB(uint8_t* srcBuffer, size_t srsSize,
     uint8_t* dstBuffer, size_t dstSize, size_t pixelCount)
@@ -608,6 +686,7 @@ static uint32_t RGBxToRGB(uint8_t* srcBuffer, size_t srsSize,
     return res;
 }
 
+// LCOV_EXCL_START
 uint32_t ExtDecoder::PreDecodeCheck(uint32_t index)
 {
     if (!CheckIndexValied(index)) {
@@ -624,6 +703,7 @@ uint32_t ExtDecoder::PreDecodeCheck(uint32_t index)
     }
         return SUCCESS;
 }
+// LCOV_EXCL_STOP
 
 static bool IsColorSpaceSupport(SkJpegCodec* codec)
 {
@@ -639,6 +719,7 @@ static bool IsColorSpaceSupport(SkJpegCodec* codec)
     return false;
 }
 
+// LCOV_EXCL_START
 uint32_t ExtDecoder::PreDecodeCheckYuv(uint32_t index, PixelFormat desiredFormat)
 {
     uint32_t ret = PreDecodeCheck(index);
@@ -668,6 +749,7 @@ uint32_t ExtDecoder::PreDecodeCheckYuv(uint32_t index, PixelFormat desiredFormat
     }
     return SUCCESS;
 }
+// LCOV_EXCL_STOP
 
 bool ExtDecoder::ResetCodec()
 {
@@ -700,17 +782,28 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         context.isHardDecode = true;
         return DoHeifToYuvDecode(context);
     }
+    if (IsHeifToSingleHdrDecode(context)) {
+        context.isHardDecode = true;
+        return DoHeifToSingleHdrDecode(context);
+    }
     uint32_t res = PreDecodeCheck(index);
     if (res != SUCCESS) {
         return res;
     }
     SkEncodedImageFormat skEncodeFormat = codec_->getEncodedFormat();
+    PixelFormat format = context.info.pixelFormat;
     bool isOutputYuv420Format = IsYuv420Format(context.info.pixelFormat);
+    uint32_t result = 0;
     if (isOutputYuv420Format && skEncodeFormat == SkEncodedImageFormat::kJPEG) {
 #if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
-    return 0;
+        return 0;
 #else
-    return DecodeToYuv420(index, context);
+        result = DecodeToYuv420(index, context);
+        if (result != JpegYuvDecodeError_SubSampleNotSupport) {
+            return result;
+        }
+        IMAGE_LOGI("Decode sample not support, apply rgb decode");
+        context.pixelsBuffer.buffer = nullptr;
 #endif
     }
     if (skEncodeFormat == SkEncodedImageFormat::kHEIF) {
@@ -759,8 +852,19 @@ uint32_t ExtDecoder::Decode(uint32_t index, DecodeContext &context)
         return ERR_IMAGE_DECODE_ABNORMAL;
     }
     if (dstInfo_.colorType() == SkColorType::kRGB_888x_SkColorType) {
-        return RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), static_cast<uint8_t*>(context.pixelsBuffer.buffer),
+        res = RGBxToRGB(dstBuffer, dstInfo_.computeMinByteSize(), static_cast<uint8_t*>(context.pixelsBuffer.buffer),
             byteCount, dstInfo_.width() * dstInfo_.height());
+        if (res != SUCCESS) {
+            IMAGE_LOGE("Decode failed, RGBxToRGB failed, res=%{public}d", res);
+            return res;
+        }
+    }
+    if (result == JpegYuvDecodeError_SubSampleNotSupport) {
+        res = ConvertFormatToYUV(context, dstInfo_, byteCount, format);
+        if (res != SUCCESS) {
+            IMAGE_LOGE("Decode failed, ConvertFormatToYUV failed, res=%{public}d", res);
+            return res;
+        }
     }
     return SUCCESS;
 }
@@ -792,6 +896,7 @@ uint32_t ExtDecoder::ReadJpegData(uint8_t* jpegBuffer, uint32_t jpegBufferSize)
     return SUCCESS;
 }
 
+// LCOV_EXCL_START
 JpegYuvFmt ExtDecoder::GetJpegYuvOutFmt(PixelFormat desiredFormat)
 {
     auto iter = PLPIXEL_FORMAT_YUV_JPG_MAP.find(desiredFormat);
@@ -801,9 +906,13 @@ JpegYuvFmt ExtDecoder::GetJpegYuvOutFmt(PixelFormat desiredFormat)
         return iter->second;
     }
 }
+// LCOV_EXCL_STOP
 
 uint32_t ExtDecoder::DecodeToYuv420(uint32_t index, DecodeContext &context)
 {
+#if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
+    return 0;
+#endif
     uint32_t res = PreDecodeCheckYuv(index, context.info.pixelFormat);
     if (res != SUCCESS) {
         return res;
@@ -851,9 +960,10 @@ uint32_t ExtDecoder::DecodeToYuv420(uint32_t index, DecodeContext &context)
         // update yuv outInfo if decode success, same as jpeg hardware decode
         context.outInfo.size = desiredSize;
     }
-    return retDecode == JpegYuvDecodeError_Success ? SUCCESS : ERR_IMAGE_DECODE_FAILED;
+    return retDecode;
 }
 
+// LCOV_EXCL_START
 static std::string GetFormatStr(SkEncodedImageFormat format)
 {
     switch (format) {
@@ -945,6 +1055,7 @@ bool ExtDecoder::CheckContext(const DecodeContext &context)
     }
     return true;
 }
+// LCOV_EXCL_STOP
 
 void ExtDecoder::ReleaseOutputBuffer(DecodeContext &context, Media::AllocatorType allocatorType)
 {
@@ -1075,6 +1186,7 @@ uint32_t ExtDecoder::PromoteIncrementalDecode(uint32_t index, ProgDecodeContext 
     return ERR_IMAGE_DATA_UNSUPPORT;
 }
 
+// LCOV_EXCL_START
 bool ExtDecoder::CheckCodec()
 {
     if (codec_ != nullptr) {
@@ -1096,6 +1208,7 @@ bool ExtDecoder::CheckCodec()
     }
     return codec_ != nullptr;
 }
+// LCOV_EXCL_STOP
 
 bool ExtDecoder::DecodeHeader()
 {
@@ -1130,6 +1243,7 @@ static uint32_t GetFormatName(SkEncodedImageFormat format, std::string &name)
     return ERR_IMAGE_DATA_UNSUPPORT;
 }
 
+// LCOV_EXCL_START
 bool ExtDecoder::ConvertInfoToAlphaType(SkAlphaType &alphaType, AlphaType &outputType)
 {
     if (info_.isEmpty()) {
@@ -1205,6 +1319,7 @@ SkColorType ExtDecoder::ConvertToColorType(PixelFormat format, PixelFormat &outp
     outputFormat = PixelFormat::RGBA_8888;
     return kRGBA_8888_SkColorType;
 }
+// LCOV_EXCL_STOP
 
 #ifdef IMAGE_COLORSPACE_FLAG
 static uint32_t u8ToU32(const uint8_t* p)
@@ -1258,7 +1373,7 @@ static bool MatchColorSpaceName(const uint8_t* buf, uint32_t size, OHOS::ColorMa
         name = nameEnum.name;
         return true;
     }
-    IMAGE_LOGE("Failed to match desc [%{public}s]", descText.c_str());
+    IMAGE_LOGE("Failed to match desc");
     return false;
 }
 
@@ -1412,6 +1527,7 @@ bool ExtDecoder::GetPropertyCheck(uint32_t index, const std::string &key, uint32
     return result;
 }
 
+// LCOV_EXCL_START
 static uint32_t GetDelayTime(SkCodec * codec, uint32_t index, int32_t &value)
 {
     if (codec->getEncodedFormat() != SkEncodedImageFormat::kGIF &&
@@ -1444,6 +1560,7 @@ static uint32_t GetDisposalType(SkCodec * codec, uint32_t index, int32_t &value)
     IMAGE_LOGD("[GetDisposalType] index[%{public}d]:%{public}d", index, value);
     return SUCCESS;
 }
+// LCOV_EXCL_STOP
 
 static uint32_t GetLoopCount(SkCodec *codec, int32_t &value)
 {
@@ -1463,6 +1580,7 @@ static uint32_t GetLoopCount(SkCodec *codec, int32_t &value)
     return SUCCESS;
 }
 
+// LCOV_EXCL_START
 uint32_t ExtDecoder::GetImagePropertyInt(uint32_t index, const std::string &key, int32_t &value)
 {
     IMAGE_LOGD("[GetImagePropertyInt] enter ExtDecoder plugin, key:%{public}s", key.c_str());
@@ -1540,6 +1658,7 @@ uint32_t ExtDecoder::GetImagePropertyString(uint32_t index, const std::string &k
     IMAGE_LOGD("[GetImagePropertyString] enter jpeg plugin, value:%{public}s", value.c_str());
     return res;
 }
+// LCOV_EXCL_STOP
 
 uint32_t ExtDecoder::GetMakerImagePropertyString(const std::string &key, std::string &value)
 {
@@ -1609,6 +1728,7 @@ uint32_t ExtDecoder::GetTopLevelImageNum(uint32_t &num)
     return SUCCESS;
 }
 
+// LCOV_EXCL_START
 bool ExtDecoder::IsSupportHardwareDecode() {
     if (info_.isEmpty() && !DecodeHeader()) {
         return false;
@@ -1622,6 +1742,7 @@ bool ExtDecoder::IsSupportHardwareDecode() {
     return width >= HARDWARE_MIN_DIM && width <= HARDWARE_MAX_DIM
         && height >= HARDWARE_MIN_DIM && height <= HARDWARE_MAX_DIM;
 }
+// LCOV_EXCL_STOP
 
 bool ExtDecoder::IsYuv420Format(PixelFormat format) const
 {
@@ -1653,6 +1774,52 @@ uint32_t ExtDecoder::DoHeifToYuvDecode(OHOS::ImagePlugin::DecodeContext &context
         == PixelFormat::NV12 ? kHeifColorFormat_NV12 : kHeifColorFormat_NV21);
     decoder->setDstBuffer(reinterpret_cast<uint8_t *>(context.pixelsBuffer.buffer),
                           dstBuffer->GetStride(), context.pixelsBuffer.context);
+    bool decodeRet = decoder->decode(nullptr);
+    if (!decodeRet) {
+        decoder->getErrMsg(context.hardDecodeError);
+    }
+    return decodeRet ? SUCCESS : ERR_IMAGE_DATA_UNSUPPORT;
+#else
+    return ERR_IMAGE_DATA_UNSUPPORT;
+#endif
+}
+
+bool ExtDecoder::IsHeifToSingleHdrDecode(const DecodeContext& context) const
+{
+    return codec_->getEncodedFormat() == SkEncodedImageFormat::kHEIF &&
+        (context.info.pixelFormat == PixelFormat::RGBA_1010102 ||
+         context.info.pixelFormat == PixelFormat::YCBCR_P010 ||
+         context.info.pixelFormat == PixelFormat::YCRCB_P010);
+}
+
+uint32_t ExtDecoder::DoHeifToSingleHdrDecode(DecodeContext &context)
+{
+#ifdef HEIF_HW_DECODE_ENABLE
+    auto decoder = reinterpret_cast<HeifDecoder*>(codec_->getHeifContext());
+    if (decoder == nullptr) {
+        IMAGE_LOGE("SingleHdrDecode, HeifDecoder is nullptr");
+        return ERR_IMAGE_DATA_UNSUPPORT;
+    }
+
+    uint64_t byteCount = static_cast<uint64_t>(info_.computeMinByteSize());
+    if (context.info.pixelFormat == PixelFormat::YCBCR_P010 || context.info.pixelFormat == PixelFormat::YCRCB_P010) {
+        uint32_t allocRet = HeifYUVMemAlloc(context);
+        if (allocRet != SUCCESS) {
+            return allocRet;
+        }
+    } else {
+        if (DmaMemAlloc(context, byteCount, info_) != SUCCESS) {
+            return ERR_IMAGE_DATA_UNSUPPORT;
+        }
+    }
+
+    auto dstBuffer = reinterpret_cast<SurfaceBuffer*>(context.pixelsBuffer.context);
+    SkHeifColorFormat heifFormat = kHeifColorFormat_RGBA_1010102;
+    auto formatSearch = HEIF_FORMAT_MAP.find(context.info.pixelFormat);
+    heifFormat = (formatSearch != HEIF_FORMAT_MAP.end()) ? formatSearch->second : kHeifColorFormat_RGBA_1010102;
+    decoder->setOutputColor(heifFormat);
+    decoder->setDstBuffer(reinterpret_cast<uint8_t*>(context.pixelsBuffer.buffer),
+        dstBuffer->GetStride(), context.pixelsBuffer.context);
     bool decodeRet = decoder->decode(nullptr);
     if (!decodeRet) {
         decoder->getErrMsg(context.hardDecodeError);
