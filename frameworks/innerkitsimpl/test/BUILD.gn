@@ -77,6 +77,7 @@ ohos_unittest("picturetest") {
 
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/accessor/src/tiff_parser.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/picture_test/picture_test.cpp",
   ]
 
@@ -469,16 +470,19 @@ ohos_unittest("imageutilstest") {
   include_dirs = [
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/include",
+    "$image_subsystem/frameworks/innerkitsimpl/common/include",
     "//foundation/multimedia/utils/include",
     "//foundation/multimedia/image_framework/plugins/manager/include",
     "//foundation/multimedia/image_framework/interfaces/innerkits/include",
     "//commonlibrary/c_utils/base/include",
     "//foundation/multimedia/media_utils_lite/interfaces/kits",
     "//foundation/communication/ipc/utils/include",
+    "//third_party/ffmpeg",
   ]
   sources = [
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/color_utils_test.cpp",
     "$image_subsystem/frameworks/innerkitsimpl/test/unittest/image_utils_test.cpp",
+    "$image_subsystem/frameworks/innerkitsimpl/test/unittest/pixel_yuv_ext_utils_test.cpp",
   ]
 
   deps = [
@@ -494,6 +498,11 @@ ohos_unittest("imageutilstest") {
     "hitrace:hitrace_meter",
   ]
 
+  defines = []
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.open_source_libyuv)) {
+    defines += [ "EXT_PIXEL" ]
+  }
   resource_config_file = "$image_subsystem/test/resource/image/ohos_test.xml"
 }
 
@@ -1188,6 +1197,12 @@ ohos_unittest("ndktest") {
     "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk:pixelmap_ndk",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
+  ]
+
+  external_deps = [
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_2d:color_manager",
+    "graphic_surface:surface",
   ]
 }
 
@@ -1919,6 +1934,28 @@ ohos_unittest("imageformatconverttest") {
   resource_config_file = "${image_subsystem}/test/resource/image/ohos_test.xml"
 }
 
+ohos_unittest("image_cj_test") {
+  module_out_path = module_output_path
+
+  sources = [
+    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/cj/image_ffi_test.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/cj/image_impl_test.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/cj/image_receiver_impl_test.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/test/unittest/cj/image_source_impl_test.cpp",
+  ]
+
+  deps = [
+    "${image_subsystem}/frameworks/kits/cj:cj_image_ffi",
+    "${image_subsystem}/interfaces/innerkits:image_native",
+  ]
+
+  external_deps = [
+    "napi:cj_bind_ffi",
+    "napi:cj_bind_native",
+  ]
+  resource_config_file = "${image_subsystem}/test/resource/image/ohos_test.xml"
+}
+
 ################################################
 group("unittest") {
   testonly = true
@@ -1939,6 +1976,7 @@ group("unittest") {
     ":gifplugintest",
     ":gstpluginfwtest",
     ":heif_parser_test",
+    ":image_cj_test",
     ":image_native_test",
     ":image_receiver_native_test",
     ":imageaccessortest",

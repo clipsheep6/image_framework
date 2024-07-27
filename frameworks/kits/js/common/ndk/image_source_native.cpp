@@ -51,7 +51,7 @@ static constexpr int32_t FORMAT_9 = 9;
 struct OH_DecodingOptions {
     int32_t pixelFormat;
     uint32_t index;
-    uint32_t sampleSize;
+    uint32_t sampleSize = INVALID_SAMPLE_SIZE;
     uint32_t rotate;
     struct Image_Size desiredSize;
     struct Image_Region desiredRegion;
@@ -424,14 +424,19 @@ MIDK_EXPORT
 Image_ErrorCode OH_ImageSourceNative_CreatePixelmap(OH_ImageSourceNative *source, OH_DecodingOptions *ops,
     OH_PixelmapNative **pixelmap)
 {
-    if (source == nullptr || ops == nullptr) {
+    if (source == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
-
     DecodeOptions decOps;
+    uint32_t index = DEFAULT_INDEX;
     uint32_t errorCode = IMAGE_BAD_PARAMETER;
-    ParseDecodingOps(decOps, ops);
-    uint32_t index = ops->index;
+    if (ops != nullptr) {
+        ParseDecodingOps(decOps, ops);
+        index = ops->index;
+    } else {
+        OH_DecodingOptions localOps{};
+        ParseDecodingOps(decOps, &localOps);
+    }
     std::unique_ptr<PixelMap> tmpPixelmap = source->GetInnerImageSource()->CreatePixelMapEx(index, decOps, errorCode);
     if (tmpPixelmap == nullptr || errorCode != IMAGE_SUCCESS) {
         return IMAGE_UNSUPPORTED_OPERATION;

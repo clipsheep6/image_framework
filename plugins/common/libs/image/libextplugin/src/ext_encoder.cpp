@@ -160,8 +160,8 @@ static uint32_t pixelToSkInfo(ImageData &image, SkImageInfo &skInfo, Media::Pixe
     TmpBufferHolder &holder, SkEncodedImageFormat format)
 {
     uint32_t res = SUCCESS;
-    uint32_t width  = image.info.size.width;
-    uint32_t height = image.info.size.height;
+    uint32_t width  = static_cast<uint32_t>(image.info.size.width);
+    uint32_t height = static_cast<uint32_t>(image.info.size.height);
     uint8_t *srcData = static_cast<uint8_t*>(pixelMap->GetWritablePixels());
 
     if (IsYuvImage(image.info.pixelFormat)) {
@@ -339,6 +339,8 @@ uint32_t ExtEncoder::DoEncode(SkWStream* skStream, const SkBitmap& src, const Sk
     if (IsHardwareEncodeSupported(opts_, pixelmap_)) {
         return DoHardWareEncode(skStream);
     }
+    IMAGE_LOGD("ExtEncoder::DoEncode format: %{public}d, quality: %{public}d", static_cast<int>(skFormat),
+        opts_.quality);
     if (!SkEncodeImage(skStream, src, skFormat, opts_.quality)) {
         IMAGE_LOGE("Failed to encode image without exif data");
         ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Failed to encode image");
@@ -371,8 +373,8 @@ uint32_t ExtEncoder::EncodeImageByPixelMap(PixelMap* pixelMap, bool needExif, Sk
     SkImageInfo skInfo;
     ImageData imageData;
     pixelMap->GetImageInfo(imageData.info);
-    uint32_t width  = imageData.info.size.width;
-    uint32_t height = imageData.info.size.height;
+    uint32_t width  = static_cast<uint32_t>(imageData.info.size.width);
+    uint32_t height = static_cast<uint32_t>(imageData.info.size.height);
     std::unique_ptr<uint8_t[]> dstData = std::make_unique<uint8_t[]>(width * height * NUM_3);
     imageData.dst = dstData.get();
     if (pixelToSkInfo(imageData, skInfo, pixelMap, holder, encodeFormat_) != SUCCESS) {
@@ -494,8 +496,6 @@ static uint32_t DecomposeImage(PixelMap* pixelMap, sptr<SurfaceBuffer>& base, sp
     }
     sptr<SurfaceBuffer> hdrSurfaceBuffer(reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd()));
     VpeUtils::SetSbMetadataType(hdrSurfaceBuffer, CM_IMAGE_HDR_VIVID_SINGLE);
-    VpeUtils::SetSbDynamicMetadata(hdrSurfaceBuffer, std::vector<uint8_t>(0));
-    VpeUtils::SetSbStaticMetadata(hdrSurfaceBuffer, std::vector<uint8_t>(0));
     VpeSurfaceBuffers buffers = {
         .sdr = base,
         .gainmap = gainmap,

@@ -321,6 +321,19 @@ private:
                             ImagePlugin::DecodeContext &context, ImagePlugin::PlImageInfo &plInfo);
     ImagePlugin::DecodeContext DecodeImageDataToContextExtended(uint32_t index, ImageInfo &info,
         ImagePlugin::PlImageInfo &plInfo, ImageEvent &imageEvent, uint32_t &errorCode);
+    void SetDngImageSize(uint32_t index, ImageInfo &imageInfo);
+    void SetPixelMapColorSpace(ImagePlugin::DecodeContext& context, std::unique_ptr<PixelMap>& pixelMap,
+        std::unique_ptr<ImagePlugin::AbsImageDecoder>& decoder);
+    bool IsSingleHdrImage(ImageHdrType type);
+    bool IsDualHdrImage(ImageHdrType type);
+    ImagePlugin::DecodeContext HandleSingleHdrImage(ImageHdrType decodedHdrType,
+        ImagePlugin::DecodeContext& context, ImagePlugin::PlImageInfo& plInfo);
+    ImagePlugin::DecodeContext HandleDualHdrImage(ImageHdrType decodedHdrType, ImageInfo info,
+        ImagePlugin::DecodeContext& context, ImagePlugin::PlImageInfo& plInfo);
+    ImagePlugin::DecodeContext InitDecodeContext(const DecodeOptions &opts, const ImageInfo &info,
+        const MemoryUsagePreference &preference, bool hasDesiredSizeOptions, ImagePlugin::PlImageInfo& plInfo);
+    bool ParseHdrType();
+    bool PrereadSourceStream();
 
     const std::string NINE_PATCH = "ninepatch";
     const std::string SKIA_DECODER = "SKIA_DECODER";
@@ -353,7 +366,8 @@ private:
     ImageHdrType sourceHdrType_; // source image hdr type;
     std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
     std::string source_; // Image source fd buffer etc
-    bool isExifReadFailed = false;
+    bool isExifReadFailed_ = false;
+    uint32_t exifReadStatus_ = 0;
     uint32_t heifParseErr_ = 0;
 };
 } // namespace Media

@@ -22,7 +22,8 @@
 
 #include "hardware/jpeg_marker_define.h"
 #include "hdf_base.h"
-#include "iservmgr_hdi.h"
+#include "iremote_object.h"
+#include "iproxy_broker.h"
 #include "media_errors.h"
 #include "src/codec/SkJpegUtility.h"
 #include "src/codec/SkJpegDecoderMgr.h"
@@ -31,20 +32,17 @@
 namespace OHOS::ImagePlugin {
 using namespace OHOS::HDI::Codec::Image::V1_0;
 using namespace OHOS::HDI::Display::Buffer::V1_0;
-using namespace OHOS::HDI::ServiceManager::V1_0;
 
 static std::mutex g_codecMtx;
 static sptr<ICodecImage> g_codecMgr;
 
-class Listener : public ServStatListenerStub {
+class CodecJpegDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
-    void OnReceive(const ServiceStatus &status) override
+    void OnRemoteDied(const wptr<IRemoteObject> &object) override
     {
-        if (status.serviceName == "codec_image_service" && status.status == SERVIE_STATUS_STOP) {
-            JPEG_HW_LOGW("codec_image_service died");
-            std::lock_guard<std::mutex> lk(g_codecMtx);
-            g_codecMgr = nullptr;
-        }
+        JPEG_HW_LOGW("codec_image_service died");
+        std::lock_guard<std::mutex> lk(g_codecMtx);
+        g_codecMgr = nullptr;
     }
 };
 
@@ -55,11 +53,19 @@ static sptr<ICodecImage> GetCodecManager()
         return g_codecMgr;
     }
     JPEG_HW_LOGI("need to get ICodecImage");
-    sptr<IServiceManager> serviceMng = IServiceManager::Get();
-    if (serviceMng) {
-        serviceMng->RegisterServiceStatusListener(new Listener(), DEVICE_CLASS_DEFAULT);
-    }
     g_codecMgr = ICodecImage::Get();
+    if (g_codecMgr == nullptr) {
+        return nullptr;
+    }
+    bool isDeathRecipientAdded = false;
+    const sptr<OHOS::IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICodecImage>(g_codecMgr);
+    if (remote) {
+        sptr<CodecJpegDeathRecipient> deathCallBack(new CodecJpegDeathRecipient());
+        isDeathRecipientAdded = remote->AddDeathRecipient(deathCallBack);
+    }
+    if (!isDeathRecipientAdded) {
+        JPEG_HW_LOGE("failed to add deathRecipient for ICodecImage!");
+    }
     return g_codecMgr;
 }
 
@@ -95,6 +101,7 @@ JpegHardwareDecoder::~JpegHardwareDecoder()
     bufferMgr_ = nullptr;
 }
 
+// LCOV_EXCL_START
 bool JpegHardwareDecoder::IsHardwareDecodeSupported(const std::string& srcImgFormat, OHOS::Media::Size srcImgSize)
 {
     if (hwDecoder_ == nullptr) {
@@ -127,6 +134,7 @@ bool JpegHardwareDecoder::IsHardwareDecodeSupported(const std::string& srcImgFor
     JPEG_HW_LOGE("no available hardware decoder, img=[%{public}ux%{public}u]", srcImgSize.width, srcImgSize.height);
     return false;
 }
+// LCOV_EXCL_STOP
 
 static jpeg_decompress_struct* GetJpegCompressInfo(SkCodec *codec)
 {
@@ -290,6 +298,7 @@ bool JpegHardwareDecoder::AssembleJpegImgHeader(jpeg_decompress_struct* jpegComp
     return true;
 }
 
+// LCOV_EXCL_START
 bool JpegHardwareDecoder::CopySrcImgToDecodeInputBuffer(ImagePlugin::InputDataStream *srcStream)
 {
     size_t fileSize = srcStream->GetStreamSize();
@@ -323,6 +332,7 @@ bool JpegHardwareDecoder::CopySrcImgToDecodeInputBuffer(ImagePlugin::InputDataSt
     }
     return true;
 }
+// LCOV_EXCL_STOP
 
 bool JpegHardwareDecoder::IsStandAloneJpegMarker(uint16_t marker)
 {

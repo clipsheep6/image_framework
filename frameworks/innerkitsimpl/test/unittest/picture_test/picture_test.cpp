@@ -24,6 +24,10 @@
 #include "exif_metadata.h"
 #include "fragment_metadata.h"
 #include "media_errors.h"
+#include "surface_buffer.h"
+#include "surface_buffer_impl.h"
+#include "tiff_parser.h"
+#include "securec.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -37,9 +41,11 @@ public:
 };
 
 static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test_metadata.jpg";
+static const std::string IMAGE_INPUT_EXIF_JPEG_PATH = "/data/local/tmp/image/test_exif.jpg";
 constexpr int32_t sizeWidth = 2;
 constexpr int32_t sizeHeight = 3;
 constexpr int32_t bufferLength = 8;
+constexpr int32_t strideAlignment = 8;
 
 static std::shared_ptr<PixelMap> CreatePixelMap()
 {
@@ -661,6 +667,160 @@ HWTEST_F(PictureTest, GetGainmapPixelmapTest002, TestSize.Level2)
     picture->SetAuxiliaryPicture(gainmapAuxiliaryPic);
     std::shared_ptr<PixelMap> desPixelMap = picture->GetGainmapPixelMap();
     EXPECT_EQ(desPixelMap, nullptr);
+}
+
+/**
+ * @tc.name: SetExifMetadataTest001
+ * @tc.desc: Set exif metadata successfully
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureTest, SetExifMetadataTest001, TestSize.Level1)
+{
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_EXIF_JPEG_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+    std::string imageLength, iamgeWith;
+    std::shared_ptr<ExifMetadata> exifMetadata = std::make_shared<ExifMetadata>(exifData);
+    ASSERT_EQ(exifMetadata->GetValue("ImageLength", imageLength), SUCCESS);
+    ASSERT_EQ(exifMetadata->GetValue("ImageWidth", iamgeWith), SUCCESS);
+    unsigned char *dataBlob = nullptr;
+    uint32_t size = 0;
+    TiffParser::Encode(&dataBlob, size, exifData);
+    ASSERT_NE(dataBlob, nullptr);
+    ASSERT_NE(size, 0);
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    ASSERT_NE(pixelmap, nullptr);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    sptr<SurfaceBuffer> exifbuffer = SurfaceBuffer::Create();
+    ASSERT_NE(exifbuffer, nullptr);
+    BufferRequestConfig requestConfig = {
+        .width = std::stoi(imageLength),
+        .height = std::stoi(iamgeWith),
+        .strideAlignment = strideAlignment,
+        .format = GraphicPixelFormat::GRAPHIC_PIXEL_FMT_BGRA_8888,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+        .timeout = 0,
+    };
+    GSError ret = exifbuffer->Alloc(requestConfig);
+    ASSERT_EQ(ret, GSERROR_OK);
+    ret = exifbuffer->GetExtraData()->ExtraSet("exifDataSize", static_cast<int32_t>(size));
+    ASSERT_EQ(ret, GSERROR_OK);
+    bool result = memcpy_s(exifbuffer->GetVirAddr(), size, dataBlob, size);
+    EXPECT_EQ(result, EOK);
+    result = picture->SetExifMetadata(exifbuffer);
+    EXPECT_EQ(result, SUCCESS);
+}
+
+/**
+ * @tc.name: GetExifMetadataTest001
+ * @tc.desc: Get exif metadata successfully
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureTest, GetExifMetadataTest001, TestSize.Level1)
+{
+    auto exifData = exif_data_new_from_file(IMAGE_INPUT_EXIF_JPEG_PATH.c_str());
+    ASSERT_NE(exifData, nullptr);
+    std::string imageLength, iamgeWith;
+    std::shared_ptr<ExifMetadata> exifMetadata = std::make_shared<ExifMetadata>(exifData);
+    ASSERT_EQ(exifMetadata->GetValue("ImageLength", imageLength), SUCCESS);
+    ASSERT_EQ(exifMetadata->GetValue("ImageWidth", iamgeWith), SUCCESS);
+    unsigned char *dataBlob = nullptr;
+    uint32_t size = 0;
+    TiffParser::Encode(&dataBlob, size, exifData);
+    ASSERT_NE(dataBlob, nullptr);
+    ASSERT_NE(size, 0);
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    ASSERT_NE(pixelmap, nullptr);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    sptr<SurfaceBuffer> exifbuffer = SurfaceBuffer::Create();
+    ASSERT_NE(exifbuffer, nullptr);
+    BufferRequestConfig requestConfig = {
+        .width = std::stoi(imageLength),
+        .height = std::stoi(iamgeWith),
+        .strideAlignment = strideAlignment,
+        .format = GraphicPixelFormat::GRAPHIC_PIXEL_FMT_BGRA_8888,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+        .timeout = 0,
+    };
+    GSError ret = exifbuffer->Alloc(requestConfig);
+    ASSERT_EQ(ret, GSERROR_OK);
+    ret = exifbuffer->GetExtraData()->ExtraSet("exifDataSize", static_cast<int32_t>(size));
+    ASSERT_EQ(ret, GSERROR_OK);
+    bool result = memcpy_s(exifbuffer->GetVirAddr(), size, dataBlob, size);
+    EXPECT_EQ(result, EOK);
+    result = picture->SetExifMetadata(exifbuffer);
+    EXPECT_EQ(result, SUCCESS);
+    std::shared_ptr<ExifMetadata> newExifMetadata = picture->GetExifMetadata();
+    EXPECT_NE(newExifMetadata, nullptr);
+}
+
+/**
+ * @tc.name: SetMaintenanceDataTest001
+ * @tc.desc: Set maintenance data successfully
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureTest, SetMaintenanceDataTest001, TestSize.Level1)
+{
+    uint8_t dataBlob[] = "Test set maintenance data";
+    uint32_t size = sizeof(dataBlob) / sizeof(dataBlob[0]);
+    ASSERT_NE(dataBlob, nullptr);
+    ASSERT_NE(size, 0);
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    ASSERT_NE(pixelmap, nullptr);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    sptr<SurfaceBuffer> maintenanceBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(maintenanceBuffer, nullptr);
+    BufferRequestConfig requestConfig = {
+        .width = sizeWidth,
+        .height = sizeHeight,
+        .strideAlignment = strideAlignment,
+        .format = GraphicPixelFormat::GRAPHIC_PIXEL_FMT_BGRA_8888,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+        .timeout = 0,
+    };
+    GSError ret = maintenanceBuffer->Alloc(requestConfig);
+    ASSERT_EQ(ret, GSERROR_OK);
+    bool result = memcpy_s(maintenanceBuffer->GetVirAddr(), size, dataBlob, size);
+    EXPECT_EQ(result, EOK);
+    result = picture->SetMaintenanceData(maintenanceBuffer);
+    EXPECT_EQ(result, true);
+}
+
+/**
+ * @tc.name: GetMaintenanceDataTest001
+ * @tc.desc: Get maintenance data successfully
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureTest, GetMaintenanceDataTest001, TestSize.Level1)
+{
+    uint8_t dataBlob[] = "Test get maintenance data";
+    uint32_t size = sizeof(dataBlob) / sizeof(dataBlob[0]);
+    ASSERT_NE(dataBlob, nullptr);
+    ASSERT_NE(size, 0);
+    std::shared_ptr<PixelMap> pixelmap = CreatePixelMap();
+    ASSERT_NE(pixelmap, nullptr);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelmap);
+    sptr<SurfaceBuffer> maintenanceBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(maintenanceBuffer, nullptr);
+    BufferRequestConfig requestConfig = {
+        .width = sizeWidth,
+        .height = sizeHeight,
+        .strideAlignment = strideAlignment,
+        .format = GraphicPixelFormat::GRAPHIC_PIXEL_FMT_BGRA_8888,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+        .timeout = 0,
+    };
+    GSError ret = maintenanceBuffer->Alloc(requestConfig);
+    ASSERT_EQ(ret, GSERROR_OK);
+    bool result = memcpy_s(maintenanceBuffer->GetVirAddr(), size, dataBlob, size);
+    EXPECT_EQ(result, EOK);
+    auto handle = maintenanceBuffer->GetBufferHandle();
+    ASSERT_NE(handle, nullptr);
+    handle->size = size;
+    result = picture->SetMaintenanceData(maintenanceBuffer);
+    ASSERT_EQ(result, true);
+    sptr<SurfaceBuffer> newMaintenanceData = picture->GetMaintenanceData();
+    EXPECT_NE(newMaintenanceData, nullptr);
+    EXPECT_EQ(newMaintenanceData->GetSize(), size);
 }
 } // namespace Media
 } // namespace OHOS
