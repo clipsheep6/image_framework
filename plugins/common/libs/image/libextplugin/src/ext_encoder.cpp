@@ -107,6 +107,12 @@ uint32_t ExtEncoder::AddImage(PixelMap &pixelMap)
     return SUCCESS;
 }
 
+uint32_t ExtEncoder::AddPicture(Media::Picture &picture)
+{
+    picture_ = &picture;
+    return SUCCESS;
+}
+
 struct TmpBufferHolder {
     std::unique_ptr<uint8_t[]> buf = nullptr;
 };
@@ -228,9 +234,32 @@ static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, PixelMap *pixelmap,
     return SUCCESS;
 }
 
+uint32_t ExtEncoder::DoHdrEncode(ExtWStream& wStream)
+{
+#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+    return EncodeImageByPixelMap(pixelmap_, opts_.needsPackProperties, wStream);
+#else
+    switch (opts_.desiredDynamicRange) {
+        case EncodeDynamicRange::AUTO:
+            if (pixelmap_->IsHdr() &&
+                (encodeFormat_ == SkEncodedImageFormat::kJPEG || encodeFormat_ == SkEncodedImageFormat::kHEIF)) {
+                return EncodeDualVivid(wStream);
+            }
+            return EncodeSdrImage(wStream);
+        case EncodeDynamicRange::SDR:
+            return EncodeSdrImage(wStream);
+        case EncodeDynamicRange::HDR_VIVID_DUAL:
+            return EncodeDualVivid(wStream);
+        case EncodeDynamicRange::HDR_VIVID_SINGLE:
+            return EncodeSingleVivid(wStream);
+    }
+    return ERR_IMAGE_ENCODE_FAILED;
+#endif
+}
+
 uint32_t ExtEncoder::FinalizeEncode()
 {
-    if (pixelmap_ == nullptr || output_ == nullptr) {
+    if ((picture_ == nullptr && pixelmap_ == nullptr) || output_ == nullptr) {
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
@@ -251,31 +280,16 @@ uint32_t ExtEncoder::FinalizeEncode()
         ReportEncodeFault(0, 0, opts_.format, "Unsupported format:" + opts_.format);
         return ERR_IMAGE_INVALID_PARAMETER;
     }
-
+    if (picture_ != nullptr) {
+        encodeFormat_ = iter->first;
+        return EncodePicture();
+    }
     ImageInfo imageInfo;
     pixelmap_->GetImageInfo(imageInfo);
     imageDataStatistics.AddTitle(", width = %d, height =%d", imageInfo.size.width, imageInfo.size.height);
     encodeFormat_ = iter->first;
     ExtWStream wStream(output_);
-#if defined(_WIN32) || defined(_APPLE) || defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
-    return EncodeImageByPixelMap(pixelmap_, opts_.needsPackProperties, wStream);
-#else
-    switch (opts_.desiredDynamicRange) {
-        case EncodeDynamicRange::AUTO:
-            if (pixelmap_->IsHdr() &&
-                (encodeFormat_ == SkEncodedImageFormat::kJPEG || encodeFormat_ == SkEncodedImageFormat::kHEIF)) {
-                return EncodeDualVivid(wStream);
-            }
-            return EncodeSdrImage(wStream);
-        case EncodeDynamicRange::SDR:
-            return EncodeSdrImage(wStream);
-        case EncodeDynamicRange::HDR_VIVID_DUAL:
-            return EncodeDualVivid(wStream);
-        case EncodeDynamicRange::HDR_VIVID_SINGLE:
-            return EncodeSingleVivid(wStream);
-    }
-    return ERR_IMAGE_ENCODE_FAILED;
-#endif
+    return DoHdrEncode(wStream);
 }
 
 bool ExtEncoder::IsHardwareEncodeSupported(const PlEncodeOptions &opts, Media::PixelMap* pixelMap)
@@ -583,6 +597,43 @@ uint32_t ExtEncoder::EncodeSdrImage(ExtWStream& outputStream)
     error = EncodeImageBySurfaceBuffer(baseSptr, baseInfo, opts_.needsPackProperties, outputStream);
     FreeBaseAndGainMapSurfaceBuffer(baseSptr, gainMapSptr);
     return error;
+}
+
+uint32_t ExtEncoder::EncodePicture()
+{
+    ExtWStream wStream(output_);
+    if (opts_.isEditScene) {
+        return EncodeEditSencePicture(wStream);
+    }
+    return EncodeCameraSencePicture(wStream);
+}
+
+uint32_t ExtEncoder::EncodeCameraSencePicture(SkWStream& skStream)
+{
+    uint32_t retCode = ERR_IMAGE_ENCODE_FAILED;
+    static ImageFwkExtManager imageFwkExtManager;
+    if (imageFwkExtManager.doHardwareEncodePictureFunc_ != nullptr || imageFwkExtManager.LoadImageFwkExtNativeSo()) {
+        retCode = imageFwkExtManager.doHardwareEncodePictureFunc_(&skStream, opts_, picture_);
+        if (retCode == SUCCESS) {
+            return retCode;
+        }
+        IMAGE_LOGE("Hardware encode failed, retCode is: %{public}d", retCode);
+        ImageInfo imageInfo;
+        picture_->GetMainPixel()->GetImageInfo(imageInfo);
+        ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Hardware encode failed");
+    } else {
+        IMAGE_LOGE("Hardware encode failed because of load native library failed");
+    }
+    return retCode;
+}
+
+uint32_t ExtEncoder::EncodeEditSencePicture(ExtWStream& outputStream)
+{
+    if (encodeFormat_ != SkEncodedImageFormat::kHEIF) {
+        IMAGE_LOGE("Edit sence encode only apply heif picture");
+        return ERROR;
+    }
+    return SUCCESS;
 }
 #endif
 } // namespace ImagePlugin
