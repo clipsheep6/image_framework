@@ -12,16 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "picture_native_impl.h"
-#include "pixelmap_native_impl.h"
-#include "picture_native.h"
 #include "common_utils.h"
-#include "image_log.h"
-#include "image_type.h"
+#include "exif_metadata.h"
 #include "image_common.h"
 #include "image_common_impl.h"
+#include "image_log.h"
+#include "image_type.h"
 #include "media_errors.h"
-#include "exif_metadata.h"
+#include "picture_native.h"
+#include "picture_native_impl.h"
+#include "pixelmap_native_impl.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -176,8 +176,7 @@ Image_ErrorCode OH_PictureNative_SetMetadata(OH_PictureNative *picture, Metadata
         if (errorCode != OHOS::Media::SUCCESS) {
             return IMAGE_UNSUPPORTED_METADATA;
         }
-    }
-    else {
+    } else {
         return IMAGE_UNSUPPORTED_METADATA;
     }
     return IMAGE_SUCCESS;
