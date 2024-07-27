@@ -1374,8 +1374,6 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
     if (iter == imageStatusMap_.end()) {
         guard.unlock();
         IMAGE_LOGE("[ImageSource]get valid image status fail on get image info, ret:%{public}u.", ret);
-        IMAGE_LOGE("[lzw]index=%{public}u, pixelFormat=%{public}u, encodeFormat=%{public}s",
-            index, imageInfo.pixelFormat, imageInfo.encodedFormat);
         return ret;
     }
     ImageInfo &info = (iter->second).imageInfo;
@@ -1926,7 +1924,8 @@ AbsImageDecoder *DoCreateDecoder(std::string codecFormat, PluginServer &pluginSe
     }
     auto decoder = pluginServer.CreateObject<AbsImageDecoder>(AbsImageDecoder::SERVICE_DEFAULT, capabilities);
     if (decoder == nullptr) {
-        IMAGE_LOGE("[ImageSource]failed to create decoder object.");
+        IMAGE_LOGE("[lzw]failed to create decoder object. %{public}s",
+            codecFormat.c_str());
         errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
         return nullptr;
     }
