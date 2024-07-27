@@ -45,6 +45,8 @@ private:
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value GetAuxiliaryPicture(napi_env env, napi_callback_info info);
     static napi_value SetAuxiliaryPicture(napi_env env, napi_callback_info info);
+    static napi_value GetMetadata(napi_env env, napi_callback_info info);
+    static napi_value SetMetadata(napi_env env, napi_callback_info info);
 
     /* static method */
     static napi_value CreatePicture(napi_env env, napi_callback_info info);
