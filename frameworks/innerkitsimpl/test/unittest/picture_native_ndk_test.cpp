@@ -22,7 +22,6 @@
 #include "pixel_map.h"
 
 using namespace testing::ext;
-// using namespace OHOS::Media;
 namespace OHOS {
 namespace Media {
 class PictureNdkTest : public testing::Test {
