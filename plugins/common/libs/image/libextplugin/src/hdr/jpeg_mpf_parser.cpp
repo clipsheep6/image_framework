@@ -84,7 +84,7 @@ bool JpegMpfParser::CheckMpfOffset(uint8_t* data, uint32_t size, uint32_t& offse
         return false;
     }
     for (offset = 0; offset < size; offset++) {
-        if (data[offset] == JPEG_MARKER_PREFIX && (data[offset + 1] == JPEG_MARKER_APP2) {
+        if (data[offset] == JPEG_MARKER_PREFIX && (data[offset + 1] == JPEG_MARKER_APP2)) {
             offset += UINT32_BYTE_SIZE;
             return true;
         }
