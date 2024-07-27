@@ -347,6 +347,7 @@ uint32_t ImageSource::GetSupportedFormats(set<string> &formats)
     }
 
     static bool isSupportHeif = IsSupportHeif();
+    IMAGE_LOGE("[ImageSource]isSupportHeif=%u.", isSupportHeif);
     if (isSupportHeif) {
         formats.insert(IMAGE_HEIF_FORMAT);
     }
