@@ -37,6 +37,11 @@ using namespace ImagePlugin;
 static const std::string IMAGE_EXTENDED_CODEC = "image/extended";
 static const uint32_t FIRST_FRAME = 0;
 
+static inline bool IsSizeVailed(const Size &size)
+{
+    return (size.width != INT_ZERO && size.height != INT_ZERO);
+}
+
 // Interface for Jpeg/Heif
 ImageInfo AuxiliaryGenerator::MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs)
 {
@@ -64,7 +69,8 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
 }
 
 // Interface for Jpeg/Heif
-uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
+uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+    std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     ImageHdrType hdrType = extDecoder->CheckHdrType();
     std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
@@ -75,14 +81,16 @@ uint32_t AuxiliaryGenerator::DecodeHdrMetadata(AbsImageDecoder *extDecoder, std:
 }
 
 // Interface for Jpeg/Heif
-uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(AbsImageDecoder *extDecoder, std::unique_ptr<AuxiliaryPicture> &auxPicture)
+uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+    std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     AuxiliaryPictureType type = auxPicture->GetType();
     if (type != AuxiliaryPictureType::FRAGMENT_MAP) {
         return ERR_MEDIA_DATA_UNSUPPORT;
     }
 
-    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;  // TODO: 1.水印metadata的解析依赖实际数据格式（外部）；2.FragmentMetadata PR尚未合入（内部）
+    // TODO: 1.水印metadata的解析依赖实际数据格式（外部）；2.FragmentMetadata PR尚未合入（内部）
+    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;
     if (fragmentMetadata == nullptr) {
         IMAGE_LOGE("Decode fragment metadata failed! Auxiliary picture type: %{public}d", type);
         return ERR_IMAGE_DECODE_ABNORMAL;
@@ -91,8 +99,8 @@ uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(AbsImageDecoder *extDecoder,
     return SUCCESS;
 }
 
-uint32_t AuxiliaryGenerator::DecodeHeifMetadata(AbsImageDecoder *extDecoder, AuxiliaryPictureType type,
-                                                std::unique_ptr<AuxiliaryPicture> &auxPicture)
+uint32_t AuxiliaryGenerator::DecodeHeifMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+    AuxiliaryPictureType type, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     uint32_t errorCode;
     switch (type) {
@@ -100,7 +108,6 @@ uint32_t AuxiliaryGenerator::DecodeHeifMetadata(AbsImageDecoder *extDecoder, Aux
             errorCode = DecodeHdrMetadata(extDecoder, auxPicture);
             if (errorCode != SUCCESS) {
                 IMAGE_LOGE("DecodeHdrMetadata() failed! errorCode: %{public}d", errorCode);
-                return errorCode;
             }
             break;
         }
@@ -108,7 +115,6 @@ uint32_t AuxiliaryGenerator::DecodeHeifMetadata(AbsImageDecoder *extDecoder, Aux
             errorCode = DecodeFragmentMetadata(extDecoder, auxPicture);
             if (errorCode != SUCCESS) {
                 IMAGE_LOGE("DecodeFragmentMetadata() failed! errorCode: %{public}d", errorCode);
-                return errorCode;
             }
             break;
         }
@@ -122,18 +128,18 @@ uint32_t AuxiliaryGenerator::DecodeHeifMetadata(AbsImageDecoder *extDecoder, Aux
 }
 
 // Interface for Jpeg
-AbsImageDecoder* AuxiliaryGenerator::DoCreateDecoder(std::string codecFormat, PluginServer &pluginServer, InputDataStream &sourceData,
-    uint32_t &errorCode) __attribute__((no_sanitize("cfi")))
+AbsImageDecoder* AuxiliaryGenerator::DoCreateDecoder(std::string codecFormat, PluginServer &pluginServer,
+    InputDataStream &sourceData, uint32_t &errorCode) __attribute__((no_sanitize("cfi")))
 {
     std::map<std::string, AttrData> capabilities = {{IMAGE_ENCODE_FORMAT, AttrData(codecFormat)}};
     for (const auto &capability : capabilities) {
         std::string x = "undefined";
         capability.second.GetValue(x);
-        IMAGE_LOGD("[AuxiliaryGenerator] capabilities [%{public}s],[%{public}s]", capability.first.c_str(), x.c_str());
+        IMAGE_LOGD("Capabilities [%{public}s],[%{public}s]", capability.first.c_str(), x.c_str());
     }
     auto decoder = pluginServer.CreateObject<AbsImageDecoder>(AbsImageDecoder::SERVICE_DEFAULT, capabilities);
     if (decoder == nullptr) {
-        IMAGE_LOGE("[AuxiliaryGenerator] failed to create decoder object!");
+        IMAGE_LOGE("Failed to create decoder object!");
         errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
         return nullptr;
     }
@@ -143,7 +149,24 @@ AbsImageDecoder* AuxiliaryGenerator::DoCreateDecoder(std::string codecFormat, Pl
 }
 
 // Interface for Jpeg
-void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer)
+uint32_t AuxiliaryGenerator::SetJpegAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder,
+    PlImageInfo &plInfo)
+{
+    Size size;
+    uint32_t errorCode = decoder->GetImageSize(FIRST_FRAME, size);
+    if (errorCode != SUCCESS || !IsSizeVailed(size)) {
+        return ERR_IMAGE_DATA_ABNORMAL;
+    }
+    PixelDecodeOptions plOptions;
+    plOptions.desiredSize = size;
+    plOptions.desiredPixelFormat = PixelFormat::RGBA_8888;
+    errorCode = decoder->SetDecodeOptions(FIRST_FRAME, plOptions, plInfo);
+    return errorCode;
+}
+
+// Interface for Jpeg
+void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
+    PlImageBuffer &buffer)
 {
     if (func != nullptr) {
         func(buffer.buffer, buffer.context, buffer.bufferSize);
@@ -179,8 +202,8 @@ void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func
 #endif
 }
 
-shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
-    AbsImageDecoder *extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
+std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
+    std::unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
 {
 #ifdef HEIF_HW_DECODE_ENABLE
     if (extDecoder == nullptr) {
@@ -199,7 +222,7 @@ shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
     }
 
     // Create pixelMap and set image information.
-    shared_ptr<PixelMap> pixelMap;
+    std::shared_ptr<PixelMap> pixelMap;
     if (ImageSource::IsYuvFormat(context.outInfo.pixelFormat)) {
 #ifdef EXT_PIXEL
         pixelMap = make_unique<PixelYuvExt>();
@@ -247,7 +270,8 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
     std::shared_ptr<PixelMap> auxPixelMap;
     std::unique_ptr<AuxiliaryPicture> auxPicture;
     PluginServer &pluginServer = ImageUtils::GetPluginServer();
-    auto auxDecoder = DoCreateDecoder(IMAGE_EXTENDED_CODEC, pluginServer, *auxStream, errorCode);
+    auto auxDecoder = std::unique_ptr<AbsImageDecoder>(
+        DoCreateDecoder(IMAGE_EXTENDED_CODEC, pluginServer, *auxStream, errorCode));
     if (supportStatus->second == SupportCodec::SUPPORT) {
         if (auxDecoder == nullptr) {
             errorCode = IMAGE_RESULT_CREATE_DECODER_FAILED;
@@ -255,15 +279,18 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPictu
         }
 
         DecodeContext auxCtx;
+        if (SetJpegAuxiliaryDecodeOption(auxDecoder, auxCtx.info) != SUCCESS) {
+            errorCode = ERR_IMAGE_DATA_ABNORMAL;
+            return nullptr;
+        }
         auxCtx.allocatorType = AllocatorType::DMA_ALLOC;
-        errorCode = auxDecoder->Decode(FIRST_FRAME, auxCtx);
-        if (errorCode != SUCCESS) {
-            IMAGE_LOGE("Jpeg Decode auxiliary picture failed! errorCode: %{public}d", errorCode);
+        if (auxDecoder->Decode(FIRST_FRAME, auxCtx) != SUCCESS) {
+            errorCode = ERR_IMAGE_DECODE_ABNORMAL;
             FreeContextBuffer(auxCtx.freeFunc, auxCtx.allocatorType, auxCtx.pixelsBuffer);
             return nullptr;
         }
 
-        if (ImageSource::IsYuvFormat(auxCtx.outInfo.pixelFormat)) {
+        if (ImageSource::IsYuvFormat(auxCtx.pixelFormat)) {
 #ifdef EXT_PIXEL
             auxPixelMap = std::make_shared<PixelYuvExt>();
 #else

@@ -32,21 +32,24 @@ using namespace MultimediaPlugin;
 class AuxiliaryGenerator {
 public:
     static shared_ptr<AuxiliaryPicture> GenerateHeifAuxiliaryPicture(
-        AbsImageDecoder* extDecoder, AuxiliaryPictureType type, uint32_t &errorCode);
+        unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type, uint32_t &errorCode);
     static shared_ptr<AuxiliaryPicture> GenerateJpegAuxiliaryPicture(
-        unique_ptr<InputDataStream>& auxiliaryStream, AuxiliaryPictureType type, uint32_t &errorCode);
+        unique_ptr<InputDataStream> &auxiliaryStream, AuxiliaryPictureType type, uint32_t &errorCode);
 
 private:
     static ImageInfo MakeImageInfo(int width, int height, PixelFormat pf, AlphaType at, ColorSpace cs);
-    static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(
-        AuxiliaryPictureType type, const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
-    static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer);
-    static AbsImageDecoder* DoCreateDecoder(string codecFormat, PluginServer &pluginServer, InputDataStream &sourceData,
-                                            uint32_t &errorCode) __attribute__((no_sanitize("cfi")));
-    static uint32_t DecodeHeifMetadata(AbsImageDecoder* extDecoder, AuxiliaryPictureType type,
-                                       unique_ptr<AuxiliaryPicture> &auxPicture);
-    static uint32_t DecodeHdrMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
+    static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(AuxiliaryPictureType type,
+        const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
+    static uint32_t DecodeHdrMetadata(unique_ptr<AbsImageDecoder> &extDecoder,
+                                      unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeFragmentMetadata(AbsImageDecoder *extDecoder, unique_ptr<AuxiliaryPicture> &auxPicture);
+    static uint32_t DecodeHeifMetadata(unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type,
+                                       unique_ptr<AuxiliaryPicture> &auxPicture);
+    static AbsImageDecoder* DoCreateDecoder(string codecFormat, PluginServer &pluginServer,
+        InputDataStream &sourceData, uint32_t &errorCode) __attribute__((no_sanitize("cfi")));
+    static uint32_t SetJpegAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder, PlImageInfo &plInfo);
+    static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
+                                  PlImageBuffer &buffer);
 };
 } // namespace Media
 } // namespace OHOS

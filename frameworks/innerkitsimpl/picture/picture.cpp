@@ -242,7 +242,7 @@ std::shared_ptr<AuxiliaryPicture> Picture::GetAuxiliaryPicture(AuxiliaryPictureT
 void Picture::SetAuxiliaryPicture(std::shared_ptr<AuxiliaryPicture> &picture)
 {
     auxiliaryPictures_[picture->GetType()] = picture;
-    if (picture->GetType() == AuxiliaryPictureType::GAINMAP) {
+    if (picture != nullptr && picture->GetType() == AuxiliaryPictureType::GAINMAP) {
         std::shared_ptr<PixelMap> gainmapPixel = GetGainmapPixelMap();
         mainPixelMap_->SetHdrMetadata(gainmapPixel->GetHdrMetadata());
         mainPixelMap_->SetHdrType(gainmapPixel->GetHdrType());
