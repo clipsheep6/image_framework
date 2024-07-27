@@ -1196,7 +1196,6 @@ ohos_unittest("ndktest2") {
 
   include_dirs = [
     "$image_subsystem/frameworks/kits/js/common/ndk/include",
-    "$image_subsystem/frameworks/kits/js/common/pixelmap_ndk/include",
     "/utils/include",
     "/interfaces/innerkits/include",
     "//third_party/googletest/googletest/include",
