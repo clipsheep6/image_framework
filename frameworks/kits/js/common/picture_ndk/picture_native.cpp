@@ -18,12 +18,11 @@
 #include "image_common_impl.h"
 #include "image_log.h"
 #include "image_type.h"
+#include "image_utils.h"
 #include "media_errors.h"
 #include "picture_native.h"
 #include "picture_native_impl.h"
 #include "pixelmap_native_impl.h"
-#include "image_utils.h"
-#include "media_errors.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
