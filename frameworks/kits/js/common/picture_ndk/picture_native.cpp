@@ -12,14 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "picture_native_impl.h"
-#include "pixelmap_native_impl.h"
-#include "picture_native.h"
 #include "common_utils.h"
-#include "image_log.h"
-#include "image_type.h"
+#include "exif_metadata.h"
 #include "image_common.h"
 #include "image_common_impl.h"
+#include "image_log.h"
+#include "image_type.h"
+#include "media_errors.h"
+#include "picture_native.h"
+#include "picture_native_impl.h"
+#include "pixelmap_native_impl.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -136,6 +138,47 @@ Image_ErrorCode OH_PictureNative_GetAuxiliaryPicture(OH_PictureNative *picture, 
         return IMAGE_ALLOC_FAILED;
     }
     *auxiliaryPicture = auxNativeTmp.release();
+    return IMAGE_SUCCESS;
+}
+
+Image_ErrorCode OH_PictureNative_GetMetadata(OH_PictureNative *picture, MetadataType metadataType,
+    OH_PictureMetadata **metadata)
+{
+    if (picture == nullptr || metadata == nullptr || !picture->GetInnerPicture()) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    std::shared_ptr<OHOS::Media::ImageMetadata> metadataTmp = nullptr;
+    if (metadataType == EXIF_METADATA) {
+        metadataTmp = picture->GetInnerPicture()->GetExifMetadata();
+    }
+    if (metadataTmp == nullptr) {
+        return IMAGE_UNSUPPORTED_METADATA;
+    }
+    auto matadataNativeTmp = std::make_unique<OH_PictureMetadata>(metadataTmp);
+    if (!matadataNativeTmp || !matadataNativeTmp->GetInnerAuxiliaryMetadata()) {
+        return IMAGE_UNSUPPORTED_METADATA;
+    }
+    *metadata = matadataNativeTmp.release();
+    return IMAGE_SUCCESS;
+}
+
+Image_ErrorCode OH_PictureNative_SetMetadata(OH_PictureNative *picture, MetadataType metadataType,
+    OH_PictureMetadata *metadata)
+{
+    if (picture == nullptr || metadata == nullptr || !picture->GetInnerPicture() ||
+        !metadata->GetInnerAuxiliaryMetadata()) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    if (metadataType == EXIF_METADATA) {
+        auto metadataInner = metadata->GetInnerAuxiliaryMetadata();
+        auto exifMetadata = std::static_pointer_cast<OHOS::Media::ExifMetadata>(metadataInner);
+        auto errorCode = picture->GetInnerPicture()->SetExifMetadata(exifMetadata);
+        if (errorCode != OHOS::Media::SUCCESS) {
+            return IMAGE_UNSUPPORTED_METADATA;
+        }
+    } else {
+        return IMAGE_UNSUPPORTED_METADATA;
+    }
     return IMAGE_SUCCESS;
 }
 

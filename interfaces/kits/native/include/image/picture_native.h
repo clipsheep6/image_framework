@@ -173,6 +173,36 @@ Image_ErrorCode OH_PictureNative_GetAuxiliaryPicture(OH_PictureNative *picture, 
     OH_AuxiliaryPictureNative **auxiliaryPicture);
 
 /**
+ * @brief Obtains the metadata of main picture.
+ *
+ * @param picture The Picture pointer will be operated.
+ * @param metadataType The type of metadata.
+ * @param metadata The metadata of main picture.
+ * @return Image functions result code.
+ *         {@link IMAGE_SUCCESS} if the execution is successful.
+ *         {@link IMAGE_BAD_PARAMETER} picture is nullptr, or metadata is nullptr.
+ *         {@link IMAGE_UNSUPPORTED_METADATA} unsupported metadata type.
+ * @since 12
+ */
+Image_ErrorCode OH_PictureNative_GetMetadata(OH_PictureNative *picture, MetadataType metadataType,
+    OH_PictureMetadata **metadata);
+
+/**
+ * @brief Set main picture metadata.
+ *
+ * @param picture The Picture pointer will be operated.
+ * @param metadataType The type of metadata.
+ * @param metadata The metadata will be set.
+ * @return Image functions result code.
+ *         {@link IMAGE_SUCCESS} if the execution is successful.
+ *         {@link IMAGE_BAD_PARAMETER} picture is nullptr, or metadata is nullptr.
+ *         {@link IMAGE_UNSUPPORTED_METADATA} unsupported metadata type.
+ * @since 12
+ */
+Image_ErrorCode OH_PictureNative_SetMetadata(OH_PictureNative *picture, MetadataType metadataType,
+    OH_PictureMetadata *metadata);
+
+/**
  * @brief Releases this Picture object.
  *
  * @param picture The Picture pointer will be operated.
