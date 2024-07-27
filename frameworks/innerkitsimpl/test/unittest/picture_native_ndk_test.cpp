@@ -13,10 +13,12 @@
 * limitations under the License.
 */
 
+#include "exif_metadata.h"
 #include <gtest/gtest.h>
+#include "image_common_impl.h"
+#include "metadata.h"
 #include "picture_native.h"
 #include "pixelmap_native_impl.h"
-#include "image_type.h"
 #include "pixel_map.h"
 
 using namespace testing::ext;
@@ -37,18 +39,19 @@ constexpr int32_t sizeHeightFalse = 50;
 constexpr int32_t bufferLengthFalse = 8;
 constexpr int32_t bufferTrue = 2017220;
 constexpr int8_t NUM_0 = 0;
-constexpr int8_t NUM_2 = 2;
 
-void CreateAuxiliaryPictureNative(OH_AuxiliaryPictureNative **picture)
+OH_AuxiliaryPictureNative *CreateAuxiliaryPictureNative()
 {
     uint32_t color[bufferLengthTrue] = {0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08};
     size_t dataLength = bufferLengthTrue;
     Image_Size size;
     size.width = sizeWidthTrue;
     size.height = sizeHeightTrue;
+    OH_AuxiliaryPictureNative *picture = nullptr;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
-        ::AuxiliaryPictureType::GAINMAP, picture);
-    ASSERT_EQ(ret, IMAGE_SUCCESS);
+        ::AuxiliaryPictureType::GAINMAP, &picture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    return picture;
 }
 
 /**
@@ -67,18 +70,23 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest001, TestSize.Level
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
         ::AuxiliaryPictureType::GAINMAP, &picture);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
     ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
         ::AuxiliaryPictureType::DEPTH_MAP, &picture);
     EXPECT_EQ(ret, ::IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
     ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
         ::AuxiliaryPictureType::FRAGMENT_MAP, &picture);
     EXPECT_EQ(ret, ::IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
     ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
         ::AuxiliaryPictureType::LINEAR_MAP, &picture);
     EXPECT_EQ(ret, ::IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
     ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size,
         ::AuxiliaryPictureType::UNREFOCUS_MAP, &picture);
     EXPECT_EQ(ret, ::IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -114,7 +122,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest003, TestSize.Level
     OH_AuxiliaryPictureNative *picture = nullptr;
     ::AuxiliaryPictureType type = ::AuxiliaryPictureType::GAINMAP;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size, type, &picture);
-    EXPECT_EQ(ret, IMAGE_ALLOC_FAILED);
+    EXPECT_EQ(ret, IMAGE_UNKNOWN_ERROR);
 }
 
 /**
@@ -142,20 +150,35 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest004, TestSize.Level
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest001, TestSize.Level1)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
-    uint8_t source[NUM_2] = {};
-    size_t bufferSize = NUM_2;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_WritePixels(picture, source, bufferSize);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
+    size_t buff = bufferTrue;
+    std::shared_ptr<uint8_t[]> source(new uint8_t[buff]);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_WritePixels(picture, source.get(), buff);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_WritePixelsTest002
+ * @tc.desc: Passing an exception buff to WritePixels returns an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest002, TestSize.Level1)
+{
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
+    size_t buff = bufferLengthFalse;
+    std::shared_ptr<uint8_t[]> source(new uint8_t[buff]);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_WritePixels(picture, source.get(), buff);
+    EXPECT_EQ(ret, IMAGE_UNKNOWN_ERROR);
+    OH_AuxiliaryPictureNative_Release(picture);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureNative_WritePixelsTest003
  * @tc.desc: Passing an empty parameter to WritePixels and returning an exception.
  * @tc.type: FUNC
  */
-HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest002, TestSize.Level2)
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest003, TestSize.Level2)
 {
     OH_AuxiliaryPictureNative *picture = nullptr;
     uint8_t *source = nullptr;
@@ -171,14 +194,13 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest002, TestSize.
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest001, TestSize.Level1)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     size_t buff = bufferTrue;
-    uint8_t *destination = new uint8_t[buff];
+    std::shared_ptr<uint8_t[]> destination(new uint8_t[buff]);
     size_t *bufferSize = &buff;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination, bufferSize);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination.get(), bufferSize);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
-    delete []destination;
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -188,14 +210,13 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest001, TestSize.L
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest002, TestSize.Level2)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     size_t buff = bufferLengthFalse;
-    uint8_t *destination = new uint8_t[buff];
+    std::shared_ptr<uint8_t[]> destination(new uint8_t[buff]);
     size_t *bufferSize = &buff;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination, bufferSize);
-    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
-    delete []destination;
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination.get(), bufferSize);
+    EXPECT_EQ(ret, IMAGE_UNKNOWN_ERROR);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -219,13 +240,12 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest003, TestSize.L
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetTypeTest001, TestSize.Level1)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     ::AuxiliaryPictureType type;
-    ::AuxiliaryPictureType *typeptr = &type;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetType(picture, typeptr);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetType(picture, &type);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
-    EXPECT_EQ(*typeptr, ::AuxiliaryPictureType::GAINMAP);
+    EXPECT_EQ(type, ::AuxiliaryPictureType::GAINMAP);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -249,17 +269,16 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetTypeTest002, TestSize.Leve
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetInfoTest001, TestSize.Level1)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     OH_AuxiliaryPictureInfo *infoptr = nullptr;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetInfo(picture, &infoptr);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     ::AuxiliaryPictureType type;
-    ::AuxiliaryPictureType *typeptr = &type;
-    ret = OH_AuxiliaryPictureInfo_GetType(infoptr, typeptr);
+    ret = OH_AuxiliaryPictureInfo_GetType(infoptr, &type);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
-    EXPECT_EQ(*typeptr, ::AuxiliaryPictureType::GAINMAP);
+    EXPECT_EQ(type, ::AuxiliaryPictureType::GAINMAP);
     OH_AuxiliaryPictureInfo_Release(infoptr);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -283,12 +302,12 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetInfoTest002, TestSize.Leve
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetInfoTest001, TestSize.Level1)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     OH_AuxiliaryPictureInfo *infoptr = nullptr;
     OH_AuxiliaryPictureInfo_Create(&infoptr);
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetInfo(picture, infoptr);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -311,13 +330,13 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetInfoTest002, TestSize.Leve
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest001, TestSize.Level1)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     OH_PictureMetadata *metadataptr = nullptr;
     ::MetadataType type = ::MetadataType::EXIF_METADATA;
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetMetadata(picture, type, &metadataptr);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     OH_PictureMetadata_Release(metadataptr);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -327,13 +346,13 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest001, TestSize.
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest002, TestSize.Level2)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     OH_PictureMetadata *metadataptr = nullptr;
     ::MetadataType type = static_cast<::MetadataType>(9);
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_GetMetadata(picture, type, &metadataptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
     EXPECT_EQ(metadataptr, nullptr);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
 
 /**
@@ -358,14 +377,17 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_GetMetadataTest003, TestSize.
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetMetadataTest001, TestSize.Level1)
 {
-    OH_AuxiliaryPictureNative *picture = nullptr;
-    CreateAuxiliaryPictureNative(&picture);
-    OH_PictureMetadata *metadataptr = nullptr;
-    OH_PictureMetadata_Create(::MetadataType::EXIF_METADATA, &metadataptr);
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetMetadata(picture, ::MetadataType::EXIF_METADATA, metadataptr);
+    OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
+    std::shared_ptr<OHOS::Media::ImageMetadata> metadata = std::make_shared<OHOS::Media::ExifMetadata>();
+    auto exifMetadata = static_cast<OHOS::Media::ExifMetadata *>(metadata.get());
+    exifMetadata->CreateExifdata();
+    std::shared_ptr<OH_PictureMetadata> metadataptr(new OH_PictureMetadata(metadata));
+    //OH_PictureMetadata *metadataptr = new OH_PictureMetadata(metadata);
+    //OH_PictureMetadata_Create(::MetadataType::EXIF_METADATA, &metadataptr);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetMetadata(picture, ::MetadataType::EXIF_METADATA, metadataptr.get());
     EXPECT_EQ(ret, IMAGE_SUCCESS);
+    OH_AuxiliaryPictureNative_Release(picture);
 }
-
 
 /**
  * @tc.name: OH_AuxiliaryPictureNative_SetMetadataTest002
