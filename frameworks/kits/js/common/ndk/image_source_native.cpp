@@ -480,11 +480,11 @@ Image_ErrorCode OH_ImageSourceNative_CreatePicture(OH_ImageSourceNative *source,
     OH_PictureNative **picture)
 {
     if (source == nullptr || !source->GetInnerImageSource() || options == nullptr
-        || picture == nullptr || !options->GetInnerDecodingOptionsForPicture()) {
+        || picture == nullptr || !options->GetInnerDecodingOptForPicture()) {
         return IMAGE_BAD_PARAMETER;
     }
 
-    auto innerDecodingOptionsForPicture = options->GetInnerDecodingOptionsForPicture().get();
+    auto innerDecodingOptionsForPicture = options->GetInnerDecodingOptForPicture().get();
     uint32_t errorCode;
     auto pictureTemp = source->GetInnerImageSource()->CreatePicture(*innerDecodingOptionsForPicture, errorCode);
     if (errorCode != SUCCESS) {
@@ -650,11 +650,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
     ::AuxiliaryPictureType **desiredAuxiliaryPictures, size_t *length)
 {
-    if (options == nullptr || !options->GetInnerDecodingOptionsForPicture() ||
+    if (options == nullptr || !options->GetInnerDecodingOptForPicture() ||
         desiredAuxiliaryPictures == nullptr || length == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
-    auto innerDecodingSet = options->GetInnerDecodingOptionsForPicture()->desireAuxiliaryPictures;
+    auto innerDecodingSet = options->GetInnerDecodingOptForPicture()->desireAuxiliaryPictures;
     if (innerDecodingSet.size() == 0) {
         return IMAGE_BAD_SOURCE;
     }
@@ -673,11 +673,11 @@ MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
     ::AuxiliaryPictureType *desiredAuxiliaryPictures, size_t length)
 {
-    if (options == nullptr || !options->GetInnerDecodingOptionsForPicture() ||
+    if (options == nullptr || !options->GetInnerDecodingOptForPicture() ||
         desiredAuxiliaryPictures == nullptr || length <= 0) {
         return IMAGE_BAD_PARAMETER;
     }
-    auto innerDecodingOptionsForPicture = options->GetInnerDecodingOptionsForPicture().get();
+    auto innerDecodingOptionsForPicture = options->GetInnerDecodingOptForPicture().get();
     for (size_t index = 0; index < length; index++) {
         auto auxTypeTmp = AuxTypeNativeToInner(desiredAuxiliaryPictures[index]);
         innerDecodingOptionsForPicture->desireAuxiliaryPictures.insert(auxTypeTmp);

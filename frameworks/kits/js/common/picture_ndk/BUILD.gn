@@ -86,6 +86,7 @@ ohos_shared_library("picture") {
 
   deps = [
     "${image_subsystem}/frameworks/innerkitsimpl/egl_image:egl_image",
+    "${image_subsystem}/frameworks/innerkitsimpl/utils:image_utils",
     "${image_subsystem}/frameworks/kits/js/common/picture_ndk:image_common",
     "${image_subsystem}/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
     "${image_subsystem}/interfaces/innerkits:image_native",
