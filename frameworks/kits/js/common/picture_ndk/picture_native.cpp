@@ -248,7 +248,7 @@ Image_ErrorCode OH_AuxiliaryPictureNative_WritePixels(OH_AuxiliaryPictureNative 
     if (!innerAuxiliaryPicture) {
         return IMAGE_BAD_PARAMETER;
     }
-    int32_t ret = innerAuxiliaryPicture->WritePixels(source, static_cast<uint64_t>(bufferSize));
+    uint32_t ret = innerAuxiliaryPicture->WritePixels(source, static_cast<uint64_t>(bufferSize));
     if (ret != OHOS::Media::SUCCESS) {
         return IMAGE_UNKNOWN_ERROR;
     }
