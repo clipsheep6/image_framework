@@ -4049,8 +4049,8 @@ std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPict
         return nullptr;
     }
 
-    std::set<AuxiliaryPictureType> auxTypes =
-        (opts.desireAuxiliaryPictures.size() > 0) ? opts.desireAuxiliaryPictures : GetAllAuxiliaryPictureType();
+    std::set<AuxiliaryPictureType> auxTypes = (opts.desireAuxiliaryPictures.size() > 0) ?
+            opts.desireAuxiliaryPictures : ImageUtils::GetAllAuxiliaryPictureType();
     if (format == IMAGE_HEIF_FORMAT) {
         DecodeHeifAuxiliaryPictures(auxTypes, picture, errorCode);
     } else if (format == IMAGE_JPEG_FORMAT) {
@@ -4118,16 +4118,6 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
             }
         }
     }
-}
-
-std::set<AuxiliaryPictureType> ImageSource::GetAllAuxiliaryPictureType() {
-    std::set<AuxiliaryPictureType> auxTypes;
-    auxTypes.insert(AuxiliaryPictureType::GAINMAP);
-    auxTypes.insert(AuxiliaryPictureType::DEPTH_MAP);
-    auxTypes.insert(AuxiliaryPictureType::UNREFOCUS_MAP);
-    auxTypes.insert(AuxiliaryPictureType::LINEAR_MAP);
-    auxTypes.insert(AuxiliaryPictureType::FRAGMENT_MAP);
-    return auxTypes;
 }
 
 } // namespace Media
