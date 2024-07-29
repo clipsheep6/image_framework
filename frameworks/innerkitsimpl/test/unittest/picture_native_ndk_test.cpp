@@ -129,7 +129,8 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest003, TestSize.Level
     OH_AuxiliaryPictureNative *picture = nullptr;
     ::AuxiliaryPictureType type = ::AuxiliaryPictureType::GAINMAP;
 
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size, type, &picture);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color),
+        dataLength, &size, type, &picture);
     EXPECT_EQ(ret, IMAGE_UNKNOWN_ERROR);
 }
 
@@ -148,7 +149,8 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_CreateTest004, TestSize.Level
     OH_AuxiliaryPictureNative *picture = nullptr;
     ::AuxiliaryPictureType type = static_cast<::AuxiliaryPictureType>(-1);
 
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color), dataLength, &size, type, &picture);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t*>(color),
+        dataLength, &size, type, &picture);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
@@ -409,7 +411,8 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetMetadataTest001, TestSize.
     exifMetadata->CreateExifdata();
     std::unique_ptr<OH_PictureMetadata> metadataptr = std::make_unique<OH_PictureMetadata>(metadata);
 
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetMetadata(picture, ::MetadataType::EXIF_METADATA, metadataptr.get());
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetMetadata(picture,
+        ::MetadataType::EXIF_METADATA, metadataptr.get());
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     OH_AuxiliaryPictureNative_Release(picture);
 }
