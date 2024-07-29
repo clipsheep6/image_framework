@@ -2020,7 +2020,6 @@ void ExtDecoder::SetHeifParseError()
     free(fileMem);
 }
 
-
 bool ExtDecoder::CheckAuxiliaryMap(AuxiliaryPictureType type)
 {
 #ifdef HEIF_HW_DECODE_ENABLE
