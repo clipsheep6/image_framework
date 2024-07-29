@@ -18,8 +18,8 @@
 
 #include "abs_image_decoder.h"
 #include "auxiliary_picture.h"
-#include "image_type.h"
 #include "auxiliary_picture.h"
+#include "image_type.h"
 #include "image/input_data_stream.h"
 #include "plugin_server.h"
 

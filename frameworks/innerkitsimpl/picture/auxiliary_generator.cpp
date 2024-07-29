@@ -15,19 +15,19 @@
 
 #include "auxiliary_generator.h"
 #include "abs_image_decoder.h"
+#include "hdr_type.h"
 #include "image_log.h"
 #include "image_utils.h"
-#include "securec.h"
-#include "surface_buffer.h"
+#include "image_mime_type.h"
+#include "image_source.h"
+#include "metadata.h"
+#include "pixel_map.h"
+#include "pixel_yuv.h"
 #ifdef EXT_PIXEL
 #include "pixel_yuv_ext.h"
 #endif
-#include "pixel_map.h"
-#include "pixel_yuv.h"
-#include "hdr_type.h"
-#include "image_mime_type.h"
-#include "metadata.h"
-#include "image_source.h"
+#include "securec.h"
+#include "surface_buffer.h"
 
 namespace OHOS {
 namespace Media {
@@ -133,12 +133,15 @@ std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(DecodeCont
         errorCode = ERR_IMAGE_ADD_PIXEL_MAP_FAILED;
         return nullptr;
     }
+
     ImageInfo imageinfo = MakeImageInfo(context.outInfo.size.width, context.outInfo.size.height,
                                         context.pixelFormat, context.outInfo.alphaType, context.colorSpace);
     pixelMap->SetImageInfo(imageinfo, true);
+
     PixelMapAddrInfos addrInfos;
     ImageSource::ContextToAddrInfos(context, addrInfos);
     pixelMap->SetPixelsAddr(addrInfos.addr, addrInfos.context, addrInfos.size, addrInfos.type, addrInfos.func);
+
 #ifdef IMAGE_COLORSPACE_FLAG
     if (context.hdrType > ImageHdrType::SDR) {
         pixelMap->InnerSetColorSpace(ColorManager::ColorSpace(context.grColorSpaceName));
