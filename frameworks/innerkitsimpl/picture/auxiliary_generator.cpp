@@ -40,8 +40,7 @@ static inline bool IsSizeVailed(const Size &size)
     return (size.width != 0 && size.height != 0);
 }
 
-static uint32_t AuxiliaryGenerator::SetAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder,
-    PlImageInfo &plInfo)
+static uint32_t SetAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder, PlImageInfo &plInfo)
 {
     Size size;
     uint32_t errorCode = decoder->GetImageSize(FIRST_FRAME, size);
@@ -55,8 +54,7 @@ static uint32_t AuxiliaryGenerator::SetAuxiliaryDecodeOption(std::unique_ptr<Abs
     return errorCode;
 }
 
-static void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
-    PlImageBuffer &buffer)
+static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType, PlImageBuffer &buffer)
 {
     if (func != nullptr) {
         func(buffer.buffer, buffer.context, buffer.bufferSize);
@@ -91,8 +89,8 @@ static void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMa
     }
 #endif
 }
-static ImageInfo AuxiliaryGenerator::MakeImageInfo(
-    int width, int height, PixelFormat format, AlphaType alphaType, ColorSpace colorSpace)
+
+static ImageInfo MakeImageInfo(int width, int height, PixelFormat format, AlphaType alphaType, ColorSpace colorSpace)
 {
     ImageInfo info;
     info.size.width = width;
@@ -103,8 +101,8 @@ static ImageInfo AuxiliaryGenerator::MakeImageInfo(
     return info;
 }
 
-static AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
-    AuxiliaryPictureType type, const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace)
+static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(AuxiliaryPictureType type,
+    const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace)
 {
     AuxiliaryPictureInfo info;
     info.auxiliaryPictureType = type;
@@ -116,7 +114,7 @@ static AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     return info;
 }
 
-static std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(DecodeContext &context,
+static std::shared_ptr<PixelMap> CreatePixelMapByContext(DecodeContext &context,
     std::unique_ptr<AbsImageDecoder> &decoder, uint32_t &errorCode)
 {
     std::shared_ptr<PixelMap> pixelMap;
@@ -152,7 +150,7 @@ static std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(Dec
     return pixelMap;
 }
 
-static uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+static uint32_t DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     ImageHdrType hdrType = extDecoder->CheckHdrType();
@@ -167,7 +165,7 @@ static uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDe
     return SUCCESS;
 }
 
-static uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+static uint32_t DecodeFragmentMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     // TODO: 水印metadata的解析依赖实际数据格式（外部）
@@ -180,7 +178,7 @@ static uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(std::unique_ptr<AbsIm
     return SUCCESS;
 }
 
-static uint32_t AuxiliaryGenerator::DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+static uint32_t DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     AuxiliaryPictureType type, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     IMAGE_LOGD("Decode metadata entry, auxiliary picture type: %{public}d", type);

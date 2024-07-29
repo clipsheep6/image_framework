@@ -689,14 +689,10 @@ void ImageUtils::FlushSurfaceBuffer(PixelMap* pixelMap)
 #endif
 }
 
-bool ImageUtils::IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType auxiliaryPictureType)
+bool ImageUtils::IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType type)
 {
-    for (auto& type : GetAllAuxiliaryPictureType()) {
-        if (auxiliaryPictureType == type) {
-            return true;
-        }
-    }
-    return false;
+    auto auxTypes = GetAllAuxiliaryPictureType();
+    return (auxTypes.find(type) != auxTypes.end());
 }
 
 bool ImageUtils::IsMetadataTypeSupported(MetadataType metadataType)
@@ -708,13 +704,13 @@ bool ImageUtils::IsMetadataTypeSupported(MetadataType metadataType)
     }
 }
 
-std::set<AuxiliaryPictureType> ImageUtils::GetAllAuxiliaryPictureType() {
-    std::set<AuxiliaryPictureType> auxTypes;
-    auxTypes.insert(AuxiliaryPictureType::GAINMAP);
-    auxTypes.insert(AuxiliaryPictureType::DEPTH_MAP);
-    auxTypes.insert(AuxiliaryPictureType::UNREFOCUS_MAP);
-    auxTypes.insert(AuxiliaryPictureType::LINEAR_MAP);
-    auxTypes.insert(AuxiliaryPictureType::FRAGMENT_MAP);
+const std::set<AuxiliaryPictureType> ImageUtils::GetAllAuxiliaryPictureType() {
+    static const std::set<AuxiliaryPictureType> auxTypes = {
+        AuxiliaryPictureType::GAINMAP,
+        AuxiliaryPictureType::DEPTH_MAP,
+        AuxiliaryPictureType::UNREFOCUS_MAP,
+        AuxiliaryPictureType::LINEAR_MAP,
+        AuxiliaryPictureType::FRAGMENT_MAP};
     return auxTypes;
 }
 

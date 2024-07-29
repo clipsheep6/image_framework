@@ -4029,11 +4029,25 @@ DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, Imag
     return context;
 }
 
+bool ImageSource::CheckHdrType()
+{
+    if (sourceHdrType_ != ImageHdrType::UNKNOWN) {
+        return true;
+    }
+
+    if (InitMainDecoder() != SUCCESS) {
+        return false;
+    }
+    sourceHdrType_ = mainDecoder_->CheckHdrType();
+    return true;
+}
+
 std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
 {
     DecodeOptions dopts;
     dopts.desiredPixelFormat = PixelFormat::RGBA_8888;
-    dopts.desiredDynamicRange = IsSingalHdrImage() ? DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
+    dopts.desiredDynamicRange = (CheckHdrType() && IsSingleHdrImage(sourceHdrType_)) ?
+        DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
     std::shared_ptr<PixelMap> pixelMap = CreatePixelMap(dopts, errorCode);
     std::unique_ptr<Picture> picture = Picture::Create(pixelMap);
     if (picture == nullptr) {

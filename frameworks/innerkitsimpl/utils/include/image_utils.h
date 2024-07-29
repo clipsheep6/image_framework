@@ -68,7 +68,7 @@ public:
     static void FlushSurfaceBuffer(PixelMap* pixelMap);
     static bool IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType auxiliaryPictureType);
     static bool IsMetadataTypeSupported(MetadataType metadataType);
-    static std::set<AuxiliaryPictureType> GetAllAuxiliaryPictureType();
+    static const std::set<AuxiliaryPictureType> GetAllAuxiliaryPictureType();
 private:
     static uint32_t RegisterPluginServer();
     static uint32_t SaveDataToFile(const std::string& fileName, const char* data, const size_t& totalSize);
