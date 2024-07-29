@@ -54,6 +54,9 @@
 #include "securec.h"
 #include "source_stream.h"
 #include "image_dfx.h"
+#include "auxiliary_generator.h"
+#include "auxiliary_picture.h"
+#include "jpeg_mpf_parser.h"
 #if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -644,7 +647,7 @@ static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorTy
 }
 // LCOV_EXCL_STOP
 
-static void ContextToAddrInfos(DecodeContext &context, PixelMapAddrInfos &addrInfos)
+void ImageSource::ContextToAddrInfos(DecodeContext &context, PixelMapAddrInfos &addrInfos)
 {
     addrInfos.addr = static_cast<uint8_t *>(context.pixelsBuffer.buffer);
     addrInfos.context = static_cast<uint8_t *>(context.pixelsBuffer.context);
@@ -871,7 +874,7 @@ static void ResizeCropPixelmap(PixelMap &pixelmap, int32_t srcDensity, int32_t w
 }
 // LCOV_EXCL_STOP
 
-static bool IsYuvFormat(PixelFormat format)
+bool ImageSource::IsYuvFormat(PixelFormat format)
 {
     return format == PixelFormat::NV21 || format == PixelFormat::NV12;
 }
@@ -1326,11 +1329,6 @@ void ImageSource::DetachIncrementalDecoding(PixelMap &pixelMap)
         iter->second.decoder = nullptr;
     }
     incDecodingMap_.erase(iter);
-}
-
-std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
-{
-    return 0;
 }
 
 uint32_t ImageSource::UpdateData(const uint8_t *data, uint32_t size, bool isCompleted)
@@ -4030,5 +4028,108 @@ DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, Imag
     guard.unlock();
     return context;
 }
+
+std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
+{
+    DecodeOptions dopts;
+    dopts.desiredPixelFormat = PixelFormat::RGBA_8888;
+    dopts.desiredDynamicRange = IsSingalHdrImage() ? DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
+    std::shared_ptr<PixelMap> pixelMap = CreatePixelMap(dopts, errorCode);
+    std::unique_ptr<Picture> picture = Picture::Create(pixelMap);
+    if (picture == nullptr) {
+        IMAGE_LOGE("Picture is nullptr");
+        errorCode = ERR_IMAGE_PIXELMAP_CREATE_FAILED;
+        return nullptr;
+    }
+
+    string format = GetExtendedCodecMimeType(mainDecoder_.get());
+    if (format != IMAGE_HEIF_FORMAT && format != IMAGE_JPEG_FORMAT) {
+        IMAGE_LOGE("CreatePicture failed, unsupport format: %{public}s", format.c_str());
+        errorCode = ERR_IMAGE_MISMATCHED_FORMAT;
+        return nullptr;
+    }
+
+    std::set<AuxiliaryPictureType> auxTypes =
+        (opts.desireAuxiliaryPictures.size() > 0) ? opts.desireAuxiliaryPictures : GetAllAuxiliaryPictureType();
+    if (format == IMAGE_HEIF_FORMAT) {
+        DecodeHeifAuxiliaryPictures(auxTypes, picture, errorCode);
+    } else if (format == IMAGE_JPEG_FORMAT) {
+        DecodeJpegAuxiliaryPicture(auxTypes, picture, errorCode);
+    }
+
+    return picture;
+}
+
+void ImageSource::DecodeHeifAuxiliaryPictures(
+    const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
+{
+    for (AuxiliaryPictureType auxType : auxTypes) {
+        if (!mainDecoder_->CheckAuxiliaryMap(auxType)) {
+            IMAGE_LOGE("The auxiliary picture type does not exist! Type: %{public}d", auxType);
+            continue;
+        }
+        auto auxiliaryPicture = AuxiliaryGenerator::GenerateAuxiliaryPicture(
+            auxType, IMAGE_HEIF_FORMAT, mainDecoder_, errorCode);
+        if (auxiliaryPicture == nullptr) {
+            IMAGE_LOGE("Generate heif auxiliary picture failed! Type: %{public}d, errorCode: %{public}d",
+                auxType, errorCode);
+        } else {
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        }
+    }
+}
+
+void ImageSource::DecodeJpegAuxiliaryPicture(
+    const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
+{
+    uint8_t *streamBuffer = sourceStreamPtr_->GetDataPtr();
+    uint32_t streamSize = sourceStreamPtr_->GetStreamSize();
+    uint32_t mpfOffset = 0;
+    auto jpegMpfParser = std::make_unique<JpegMpfParser>();
+    if (!jpegMpfParser->CheckMpfOffset(streamBuffer, streamSize, mpfOffset)) {
+        IMAGE_LOGE("Jpeg calculate mpf offset failed! mpfOffset: %{public}u", mpfOffset);
+        errorCode = ERR_IMAGE_DECODE_HEAD_ABNORMAL;
+        return;
+    }
+    if (!jpegMpfParser->Parsing(streamBuffer + mpfOffset, streamSize - mpfOffset)) {
+        IMAGE_LOGE("Jpeg parse mpf data failed!");
+        errorCode = ERR_IMAGE_DECODE_HEAD_ABNORMAL;
+        return;
+    }
+
+    uint32_t preOffset = mpfOffset + JPEG_MPF_IDENTIFIER_SIZE;
+    for (auto &auxInfo : jpegMpfParser->images_) {
+        auto iter = auxTypes.find(auxInfo.auxType);
+        if (iter != auxTypes.end()) {
+            IMAGE_LOGI("Jpeg auxiliary picture has found. Type: %{public}d", auxInfo.auxType);
+            std::unique_ptr<InputDataStream> auxStream =
+                BufferSourceStream::CreateSourceStream((streamBuffer + preOffset + auxInfo.offset), auxInfo.size);
+            if (auxStream == nullptr) {
+                IMAGE_LOGE("Create auxiliary stream fail, auxiliary offset is %{public}u", auxInfo.offset);
+                break;
+            }
+            auto auxDecoder = std::unique_ptr<AbsImageDecoder>(
+                DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *auxStream, errorCode));
+            auto auxPicture = AuxiliaryGenerator::GenerateAuxiliaryPicture(
+                auxInfo.auxType, IMAGE_JPEG_FORMAT, auxDecoder, errorCode);
+            if (auxPicture == nullptr) {
+                IMAGE_LOGE("Generate jepg auxiliary picture failed!, errorCode: %{public}d", errorCode);
+            } else {
+                picture->SetAuxiliaryPicture(auxPicture);
+            }
+        }
+    }
+}
+
+std::set<AuxiliaryPictureType> ImageSource::GetAllAuxiliaryPictureType() {
+    std::set<AuxiliaryPictureType> auxTypes;
+    auxTypes.insert(AuxiliaryPictureType::GAINMAP);
+    auxTypes.insert(AuxiliaryPictureType::DEPTH_MAP);
+    auxTypes.insert(AuxiliaryPictureType::UNREFOCUS_MAP);
+    auxTypes.insert(AuxiliaryPictureType::LINEAR_MAP);
+    auxTypes.insert(AuxiliaryPictureType::FRAGMENT_MAP);
+    return auxTypes;
+}
+
 } // namespace Media
 } // namespace OHOS

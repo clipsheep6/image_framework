@@ -19,6 +19,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include "image_type.h"
+#include "heif_type.h"
 
 enum SkHeifColorFormat {
     kHeifColorFormat_RGB565,
