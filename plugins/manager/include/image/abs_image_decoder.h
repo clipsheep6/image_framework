@@ -24,6 +24,7 @@
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include <sys/mman.h>
 #include "ashmem.h"
+#include "auxiliary_picture.h"
 #endif
 #ifdef IMAGE_COLORSPACE_FLAG
 #include "color_space.h"
@@ -34,7 +35,6 @@
 #include "pixel_map.h"
 #include "plugin_service.h"
 #include "hdr_type.h"
-#include "auxiliary_picture.h"
 
 namespace OHOS {
 namespace ImagePlugin {
