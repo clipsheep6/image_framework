@@ -33,23 +33,6 @@ class AuxiliaryGenerator {
 public:
     static shared_ptr<AuxiliaryPicture> GenerateAuxiliaryPicture(AuxiliaryPictureType type,
         const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode);
-
-private:
-    static ImageInfo MakeImageInfo(
-        int width, int height, PixelFormat format, AlphaType alphaType, ColorSpace colorSpace);
-    static AuxiliaryPictureInfo MakeAuxiliaryPictureInfo(AuxiliaryPictureType type,
-        const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
-    static shared_ptr<PixelMap> CreatePixelMapByContext(DecodeContext &context,
-        unique_ptr<AbsImageDecoder> &decoder, uint32_t &errorCode);
-    static uint32_t DecodeMetadata(unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type,
-                                       unique_ptr<AuxiliaryPicture> &auxPicture);
-    static uint32_t DecodeHdrMetadata(unique_ptr<AbsImageDecoder> &extDecoder,
-                                      unique_ptr<AuxiliaryPicture> &auxPicture);
-    static uint32_t DecodeFragmentMetadata(unique_ptr<AbsImageDecoder> &extDecoder,
-                                           unique_ptr<AuxiliaryPicture> &auxPicture);
-    static uint32_t SetAuxiliaryDecodeOption(unique_ptr<AbsImageDecoder> &decoder, PlImageInfo &plInfo);
-    static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
-                                  PlImageBuffer &buffer);
 };
 } // namespace Media
 } // namespace OHOS

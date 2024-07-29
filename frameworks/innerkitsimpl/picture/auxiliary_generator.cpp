@@ -40,58 +40,58 @@ static inline bool IsSizeVailed(const Size &size)
     return (size.width != 0 && size.height != 0);
 }
 
-std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(AuxiliaryPictureType type,
-    const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode)
+static uint32_t AuxiliaryGenerator::SetAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder,
+    PlImageInfo &plInfo)
 {
-    IMAGE_LOGI("AuxiliaryPictureType: %{public}d, format: %{public}s", static_cast<int>(type), format.c_str());
-    auto supportStatus = SUPPORT_CODEC_AUXILIARY_MAP.find(type);
-    if (supportStatus == SUPPORT_CODEC_AUXILIARY_MAP.end() || extDecoder == nullptr) {
-        errorCode = ERR_IMAGE_INVALID_PARAMETER;
-        return nullptr;
+    Size size;
+    uint32_t errorCode = decoder->GetImageSize(FIRST_FRAME, size);
+    if (errorCode != SUCCESS || !IsSizeVailed(size)) {
+        return ERR_IMAGE_DATA_ABNORMAL;
     }
-
-    DecodeContext context;
-    context.allocatorType = AllocatorType::DMA_ALLOC;
-    errorCode = SetAuxiliaryDecodeOption(extDecoder, context.info);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("Set auxiliary decode option failed! errorCode: %{public}d", errorCode);
-        return nullptr;
-    }
-    if (format == IMAGE_HEIF_FORMAT) {
-#ifdef HEIF_HW_DECODE_ENABLE
-        if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
-            errorCode = ERR_IMAGE_DECODE_FAILED;
-        }
-#else
-        errorCode = ERR_IMAGE_HW_DECODE_UNSUPPORT;
-#endif
-    } else if (format == IMAGE_JPEG_FORMAT) {
-        errorCode = extDecoder->Decode(FIRST_FRAME, context);
-        if (errorCode != SUCCESS) {
-            FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        }
-    } else {
-        errorCode = ERR_MEDIA_DATA_UNSUPPORT;
-    }
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("Decode failed! Format: %{public}s, errorCode: %{public}d", format.c_str(), errorCode);
-        return nullptr;
-    }
-
-    std::shared_ptr<PixelMap> pixelMap = CreatePixelMapByContext(context, extDecoder, errorCode);
-    auto auxPicture = AuxiliaryPicture::Create(pixelMap, type, context.outInfo.size);
-    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, context.outInfo.size,
-        pixelMap->GetRowStride(), context.pixelFormat, context.outInfo.colorSpace);
-    auxPicture->SetAuxiliaryPictureInfo(auxInfo);
-    errorCode = DecodeMetadata(extDecoder, type, auxPicture);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("Decode metadata failed! errorCode: %{public}d", errorCode);
-        return nullptr;
-    }
-    return std::move(auxPicture);
+    PixelDecodeOptions plOptions;
+    plOptions.desiredSize = size;
+    plOptions.desiredPixelFormat = PixelFormat::RGBA_8888;
+    errorCode = decoder->SetDecodeOptions(FIRST_FRAME, plOptions, plInfo);
+    return errorCode;
 }
 
-ImageInfo AuxiliaryGenerator::MakeImageInfo(
+static void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
+    PlImageBuffer &buffer)
+{
+    if (func != nullptr) {
+        func(buffer.buffer, buffer.context, buffer.bufferSize);
+        return;
+    }
+
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
+        int *fd = static_cast<int *>(buffer.context);
+        if (buffer.buffer != nullptr) {
+            ::munmap(buffer.buffer, buffer.bufferSize);
+        }
+        if (fd != nullptr) {
+            ::close(*fd);
+        }
+        return;
+    } else if (allocType == AllocatorType::DMA_ALLOC) {
+        if (buffer.buffer != nullptr) {
+            ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer *>(buffer.context));
+            buffer.context = nullptr;
+        }
+    } else if (allocType == AllocatorType::HEAP_ALLOC) {
+        if (buffer.buffer != nullptr) {
+            free(buffer.buffer);
+            buffer.buffer = nullptr;
+        }
+    }
+#else
+    if (buffer.buffer != nullptr) {
+        free(buffer.buffer);
+        buffer.buffer = nullptr;
+    }
+#endif
+}
+static ImageInfo AuxiliaryGenerator::MakeImageInfo(
     int width, int height, PixelFormat format, AlphaType alphaType, ColorSpace colorSpace)
 {
     ImageInfo info;
@@ -103,7 +103,7 @@ ImageInfo AuxiliaryGenerator::MakeImageInfo(
     return info;
 }
 
-AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
+static AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     AuxiliaryPictureType type, const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace)
 {
     AuxiliaryPictureInfo info;
@@ -116,7 +116,7 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     return info;
 }
 
-std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(DecodeContext &context,
+static std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(DecodeContext &context,
     std::unique_ptr<AbsImageDecoder> &decoder, uint32_t &errorCode)
 {
     std::shared_ptr<PixelMap> pixelMap;
@@ -152,7 +152,35 @@ std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(DecodeCont
     return pixelMap;
 }
 
-uint32_t AuxiliaryGenerator::DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+static uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+    std::unique_ptr<AuxiliaryPicture> &auxPicture)
+{
+    ImageHdrType hdrType = extDecoder->CheckHdrType();
+    std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
+    std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
+    if (pixelMap == nullptr) {
+        IMAGE_LOGE("Get invalid content pixel map for hdr metadata");
+        return ERR_IMAGE_GET_DATA_ABNORMAL;
+    }
+    pixelMap->SetHdrMetadata(hdrMetadata);
+    pixelMap->SetHdrType(hdrType);
+    return SUCCESS;
+}
+
+static uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+    std::unique_ptr<AuxiliaryPicture> &auxPicture)
+{
+    // TODO: 水印metadata的解析依赖实际数据格式（外部）
+    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;
+    if (fragmentMetadata == nullptr) {
+        IMAGE_LOGE("Decode fragment metadata failed!");
+        return ERR_IMAGE_DECODE_ABNORMAL;
+    }
+    auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
+    return SUCCESS;
+}
+
+static uint32_t AuxiliaryGenerator::DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     AuxiliaryPictureType type, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     IMAGE_LOGD("Decode metadata entry, auxiliary picture type: %{public}d", type);
@@ -178,84 +206,54 @@ uint32_t AuxiliaryGenerator::DecodeMetadata(std::unique_ptr<AbsImageDecoder> &ex
     return errorCode;
 }
 
-uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
-    std::unique_ptr<AuxiliaryPicture> &auxPicture)
+std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(AuxiliaryPictureType type,
+    const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode)
 {
-    ImageHdrType hdrType = extDecoder->CheckHdrType();
-    std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
-    std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
-    if (pixelMap == nullptr) {
-        IMAGE_LOGE("Get invalid content pixel map for hdr metadata");
-        return ERR_IMAGE_GET_DATA_ABNORMAL;
-    }
-    pixelMap->SetHdrMetadata(hdrMetadata);
-    pixelMap->SetHdrType(hdrType);
-    return SUCCESS;
-}
-
-uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
-    std::unique_ptr<AuxiliaryPicture> &auxPicture)
-{
-    // TODO: 水印metadata的解析依赖实际数据格式（外部）
-    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;
-    if (fragmentMetadata == nullptr) {
-        IMAGE_LOGE("Decode fragment metadata failed!");
-        return ERR_IMAGE_DECODE_ABNORMAL;
-    }
-    auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
-    return SUCCESS;
-}
-
-uint32_t AuxiliaryGenerator::SetAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder,
-    PlImageInfo &plInfo)
-{
-    Size size;
-    uint32_t errorCode = decoder->GetImageSize(FIRST_FRAME, size);
-    if (errorCode != SUCCESS || !IsSizeVailed(size)) {
-        return ERR_IMAGE_DATA_ABNORMAL;
-    }
-    PixelDecodeOptions plOptions;
-    plOptions.desiredSize = size;
-    plOptions.desiredPixelFormat = PixelFormat::RGBA_8888;
-    errorCode = decoder->SetDecodeOptions(FIRST_FRAME, plOptions, plInfo);
-    return errorCode;
-}
-
-void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
-    PlImageBuffer &buffer)
-{
-    if (func != nullptr) {
-        func(buffer.buffer, buffer.context, buffer.bufferSize);
-        return;
+    IMAGE_LOGI("AuxiliaryPictureType: %{public}d, format: %{public}s", static_cast<int>(type), format.c_str());
+    if (!ImageUtils::IsAuxiliaryPictureTypeSupported(type) || extDecoder == nullptr) {
+        errorCode = ERR_IMAGE_INVALID_PARAMETER;
+        return nullptr;
     }
 
-#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-    if (allocType == AllocatorType::SHARE_MEM_ALLOC) {
-        int *fd = static_cast<int *>(buffer.context);
-        if (buffer.buffer != nullptr) {
-            ::munmap(buffer.buffer, buffer.bufferSize);
-        }
-        if (fd != nullptr) {
-            ::close(*fd);
-        }
-        return;
-    } else if (allocType == AllocatorType::DMA_ALLOC) {
-        if (buffer.buffer != nullptr) {
-            ImageUtils::SurfaceBuffer_Unreference(static_cast<SurfaceBuffer *>(buffer.context));
-            buffer.context = nullptr;
-        }
-    } else if (allocType == AllocatorType::HEAP_ALLOC) {
-        if (buffer.buffer != nullptr) {
-            free(buffer.buffer);
-            buffer.buffer = nullptr;
-        }
+    DecodeContext context;
+    context.allocatorType = AllocatorType::DMA_ALLOC;
+    errorCode = SetAuxiliaryDecodeOption(extDecoder, context.info);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Set auxiliary decode option failed! errorCode: %{public}d", errorCode);
+        return nullptr;
     }
+    if (format == IMAGE_HEIF_FORMAT) {
+#ifdef HEIF_HW_DECODE_ENABLE
+        if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
+            errorCode = ERR_IMAGE_DECODE_FAILED;
+        }
 #else
-    if (buffer.buffer != nullptr) {
-        free(buffer.buffer);
-        buffer.buffer = nullptr;
-    }
+        errorCode = ERR_IMAGE_HW_DECODE_UNSUPPORT;
 #endif
+    } else if (format == IMAGE_JPEG_FORMAT) {
+        errorCode = extDecoder->Decode(FIRST_FRAME, context);
+        if (errorCode != SUCCESS) {
+            FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
+        }
+    } else {
+        errorCode = ERR_MEDIA_DATA_UNSUPPORT;
+    }
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Decode failed! Format: %{public}s, errorCode: %{public}d", format.c_str(), errorCode);
+        return nullptr;
+    }
+
+    std::shared_ptr<PixelMap> pixelMap = CreatePixelMapByContext(context, extDecoder, errorCode);
+    auto auxPicture = AuxiliaryPicture::Create(pixelMap, type, context.outInfo.size);
+    auxPicture->SetAuxiliaryPictureInfo(
+        MakeAuxiliaryPictureInfo(type, context.outInfo.size, pixelMap->GetRowStride(),
+                                 context.pixelFormat, context.outInfo.colorSpace));
+    errorCode = DecodeMetadata(extDecoder, type, auxPicture);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Decode metadata failed! errorCode: %{public}d", errorCode);
+        return nullptr;
+    }
+    return std::move(auxPicture);
 }
 
 } // Media

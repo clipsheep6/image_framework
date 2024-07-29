@@ -4038,7 +4038,7 @@ std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPict
     std::unique_ptr<Picture> picture = Picture::Create(pixelMap);
     if (picture == nullptr) {
         IMAGE_LOGE("Picture is nullptr");
-        errorCode = ERR_IMAGE_PIXELMAP_CREATE_FAILED;
+        errorCode = ERR_IMAGE_PICTURE_CREATE_FAILED;
         return nullptr;
     }
 
@@ -4099,14 +4099,13 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
 
     uint32_t preOffset = mpfOffset + JPEG_MPF_IDENTIFIER_SIZE;
     for (auto &auxInfo : jpegMpfParser->images_) {
-        auto iter = auxTypes.find(auxInfo.auxType);
-        if (iter != auxTypes.end()) {
+        if (auxTypes.find(auxInfo.auxType) != auxTypes.end()) {
             IMAGE_LOGI("Jpeg auxiliary picture has found. Type: %{public}d", auxInfo.auxType);
             std::unique_ptr<InputDataStream> auxStream =
                 BufferSourceStream::CreateSourceStream((streamBuffer + preOffset + auxInfo.offset), auxInfo.size);
             if (auxStream == nullptr) {
                 IMAGE_LOGE("Create auxiliary stream fail, auxiliary offset is %{public}u", auxInfo.offset);
-                break;
+                continue;
             }
             auto auxDecoder = std::unique_ptr<AbsImageDecoder>(
                 DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *auxStream, errorCode));
