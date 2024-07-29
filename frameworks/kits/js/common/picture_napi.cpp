@@ -413,6 +413,7 @@ napi_value PictureNapi::SetAuxiliaryPicture(napi_env env, napi_callback_info inf
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to arg info"));
     status = napi_get_value_uint32(env, argValue[NUM_0], &auxiType);
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(status), result, IMAGE_LOGE("fail to get auxiliary picture Type"));
+    AuxiliaryPictureType type = ParseAuxiliaryPictureType(auxiType);
 
     AuxiliaryPictureNapi* auxiliaryPictureNapi = nullptr;
     status = napi_unwrap(env, argValue[NUM_1], reinterpret_cast<void**>(&auxiliaryPictureNapi));

@@ -26,6 +26,8 @@
 #include <filesystem>
 #include <vector>
 
+#include "auxiliary_generator.h"
+#include "auxiliary_picture.h"
 #include "buffer_source_stream.h"
 #if !defined(_WIN32) && !defined(_APPLE)
 #include "hitrace_meter.h"
@@ -42,6 +44,7 @@
 #include "image_utils.h"
 #include "incremental_source_stream.h"
 #include "istream_source_stream.h"
+#include "jpeg_mpf_parser.h"
 #include "media_errors.h"
 #include "memory_manager.h"
 #include "metadata_accessor.h"
@@ -54,9 +57,6 @@
 #include "securec.h"
 #include "source_stream.h"
 #include "image_dfx.h"
-#include "auxiliary_generator.h"
-#include "auxiliary_picture.h"
-#include "jpeg_mpf_parser.h"
 #if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
 #include "include/jpeg_decoder.h"
 #else
@@ -4063,7 +4063,7 @@ std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPict
 void ImageSource::DecodeHeifAuxiliaryPictures(
     const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
 {
-    for (AuxiliaryPictureType auxType : auxTypes) {
+    for (auto& auxType : auxTypes) {
         if (!mainDecoder_->CheckAuxiliaryMap(auxType)) {
             IMAGE_LOGE("The auxiliary picture type does not exist! Type: %{public}d", auxType);
             continue;
