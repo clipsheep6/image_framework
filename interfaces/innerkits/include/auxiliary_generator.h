@@ -31,10 +31,8 @@ using namespace MultimediaPlugin;
 
 class AuxiliaryGenerator {
 public:
-    static shared_ptr<AuxiliaryPicture> GenerateHeifAuxiliaryPicture(
-        unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type, uint32_t &errorCode);
-    static shared_ptr<AuxiliaryPicture> GenerateJpegAuxiliaryPicture(
-        unique_ptr<InputDataStream> &auxiliaryStream, AuxiliaryPictureType type, uint32_t &errorCode);
+    static shared_ptr<AuxiliaryPicture> GenerateAuxiliaryPicture(AuxiliaryPictureType type,
+        const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode);
 
 private:
     static ImageInfo MakeImageInfo(
@@ -43,16 +41,13 @@ private:
         const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace);
     static shared_ptr<PixelMap> CreatePixelMapByContext(DecodeContext &context,
         unique_ptr<AbsImageDecoder> &decoder, uint32_t &errorCode);
+    static uint32_t DecodeMetadata(unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type,
+                                       unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeHdrMetadata(unique_ptr<AbsImageDecoder> &extDecoder,
                                       unique_ptr<AuxiliaryPicture> &auxPicture);
     static uint32_t DecodeFragmentMetadata(unique_ptr<AbsImageDecoder> &extDecoder,
                                            unique_ptr<AuxiliaryPicture> &auxPicture);
-    static uint32_t DecodeHeifMetadata(unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type,
-                                       unique_ptr<AuxiliaryPicture> &auxPicture);
-    static AbsImageDecoder* DoCreateDecoder(string codecFormat, PluginServer &pluginServer,
-        InputDataStream &sourceData, uint32_t &errorCode) __attribute__((no_sanitize("cfi")));
-    static uint32_t SetJpegAuxiliaryDecodeOption(unique_ptr<AbsImageDecoder> &decoder, PlImageInfo &plInfo);
-    static uint32_t DoJpegDecode(unique_ptr<AbsImageDecoder> &decoder, DecodeContext &auxCtx);
+    static uint32_t SetAuxiliaryDecodeOption(unique_ptr<AbsImageDecoder> &decoder, PlImageInfo &plInfo);
     static void FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
                                   PlImageBuffer &buffer);
 };

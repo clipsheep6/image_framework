@@ -4045,7 +4045,7 @@ DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, Imag
 std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
 {
     DecodeOptions dopts;
-    dopts.desiredPixelFormat = PixelFormat::NV21;
+    dopts.desiredPixelFormat = PixelFormat::RGBA_8888;
     dopts.desiredDynamicRange = (CheckHdrType() && IsSingleHdrImage(sourceHdrType_)) ?
         DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
     std::shared_ptr<PixelMap> pixelMap = CreatePixelMap(dopts, errorCode);
@@ -4082,12 +4082,14 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
             IMAGE_LOGE("The auxiliary picture type does not exist! Type: %{public}d", auxType);
             continue;
         }
-        auto auxiliaryPicture = AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(mainDecoder_, auxType, errorCode);
+        auto auxiliaryPicture = AuxiliaryGenerator::GenerateAuxiliaryPicture(
+            auxType, IMAGE_HEIF_FORMAT, mainDecoder_, errorCode);
         if (auxiliaryPicture == nullptr) {
             IMAGE_LOGE("Generate heif auxiliary picture failed! Type: %{public}d, errorCode: %{public}d",
                 auxType, errorCode);
+        } else {
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
         }
-        picture->SetAuxiliaryPicture(auxiliaryPicture);
     }
 }
 
@@ -4103,31 +4105,32 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
         errorCode = ERR_IMAGE_DECODE_HEAD_ABNORMAL;
         return;
     }
-    streamBuffer += mpfOffset;
-    streamSize -= mpfOffset;
-    if (!jpegMpfParser->Parsing(streamBuffer, streamSize)) {
+    if (!jpegMpfParser->Parsing(streamBuffer + mpfOffset, streamSize - mpfOffset)) {
         IMAGE_LOGE("Jpeg parse mpf data failed!");
         errorCode = ERR_IMAGE_DECODE_HEAD_ABNORMAL;
         return;
     }
-    streamBuffer += JPEG_MPF_IDENTIFIER_SIZE;
 
+    uint32_t preOffset = mpfOffset + JPEG_MPF_IDENTIFIER_SIZE;
     for (auto &auxInfo : jpegMpfParser->images_) {
         auto iter = auxTypes.find(auxInfo.auxType);
         if (iter != auxTypes.end()) {
-            IMAGE_LOGI("Jpeg auxiliary picture has found. Type: %{public}d", static_cast<int32_t>(auxInfo.auxType));
+            IMAGE_LOGI("Jpeg auxiliary picture has found. Type: %{public}d", auxInfo.auxType);
             std::unique_ptr<InputDataStream> auxStream =
-                BufferSourceStream::CreateSourceStream((streamBuffer + auxInfo.offset), auxInfo.size);
+                BufferSourceStream::CreateSourceStream((streamBuffer + preOffset + auxInfo.offset), auxInfo.size);
             if (auxStream == nullptr) {
                 IMAGE_LOGE("Create auxiliary stream fail, auxiliary offset is %{public}u", auxInfo.offset);
                 break;
             }
-            auto auxPicture = AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(auxStream, auxInfo.auxType, errorCode);
+            auto auxDecoder = std::unique_ptr<AbsImageDecoder>(
+                DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *auxStream, errorCode));
+            auto auxPicture = AuxiliaryGenerator::GenerateAuxiliaryPicture(
+                auxInfo.auxType, IMAGE_JPEG_FORMAT, auxDecoder, errorCode);
             if (auxPicture == nullptr) {
-                IMAGE_LOGE("Generate jepg auxiliary picture failed! Type: %{public}d, errorCode: %{public}d",
-                    auxInfo.auxType, errorCode);
+                IMAGE_LOGE("Generate jepg auxiliary picture failed!, errorCode: %{public}d", errorCode);
+            } else {
+                picture->SetAuxiliaryPicture(auxPicture);
             }
-            picture->SetAuxiliaryPicture(auxPicture);
         }
     }
 }

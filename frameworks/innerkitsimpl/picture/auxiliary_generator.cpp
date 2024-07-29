@@ -25,17 +25,14 @@
 #include "pixel_map.h"
 #include "pixel_yuv.h"
 #include "hdr_type.h"
+#include "image_mime_type.h"
 #include "metadata.h"
-#include "metadata_accessor.h"
-#include "metadata_accessor_factory.h"
 #include "image_source.h"
 
 namespace OHOS {
 namespace Media {
 using namespace ImagePlugin;
 
-static const std::string IMAGE_ENCODE_FORMAT_UNDEFINED = "undefined";
-static const std::string IMAGE_EXTENDED_CODEC = "image/extended";
 static const uint32_t FIRST_FRAME = 0;
 
 static inline bool IsSizeVailed(const Size &size)
@@ -43,7 +40,57 @@ static inline bool IsSizeVailed(const Size &size)
     return (size.width != 0 && size.height != 0);
 }
 
-// Interface for Jpeg/Heif
+std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(AuxiliaryPictureType type,
+    const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode)
+{
+    IMAGE_LOGI("AuxiliaryPictureType: %{public}d, format: %{public}s", static_cast<int>(type), format.c_str());
+    auto supportStatus = SUPPORT_CODEC_AUXILIARY_MAP.find(type);
+    if (supportStatus == SUPPORT_CODEC_AUXILIARY_MAP.end() || extDecoder == nullptr) {
+        errorCode = ERR_IMAGE_INVALID_PARAMETER;
+        return nullptr;
+    }
+
+    DecodeContext context;
+    context.allocatorType = AllocatorType::DMA_ALLOC;
+    errorCode = SetAuxiliaryDecodeOption(extDecoder, context.info);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Set auxiliary decode option failed! errorCode: %{public}d", errorCode);
+        return nullptr;
+    }
+    if (format == IMAGE_HEIF_FORMAT) {
+#ifdef HEIF_HW_DECODE_ENABLE
+        if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
+            errorCode = ERR_IMAGE_DECODE_FAILED;
+        }
+#else
+        errorCode = ERR_IMAGE_HW_DECODE_UNSUPPORT;
+#endif
+    } else if (format == IMAGE_JPEG_FORMAT) {
+        errorCode = extDecoder->Decode(FIRST_FRAME, context);
+        if (errorCode != SUCCESS) {
+            FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
+        }
+    } else {
+        errorCode = ERR_MEDIA_DATA_UNSUPPORT;
+    }
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Decode failed! Format: %{public}s, errorCode: %{public}d", format.c_str(), errorCode);
+        return nullptr;
+    }
+
+    std::shared_ptr<PixelMap> pixelMap = CreatePixelMapByContext(context, extDecoder, errorCode);
+    auto auxPicture = AuxiliaryPicture::Create(pixelMap, type, context.outInfo.size);
+    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, context.outInfo.size,
+        pixelMap->GetRowStride(), context.pixelFormat, context.outInfo.colorSpace);
+    auxPicture->SetAuxiliaryPictureInfo(auxInfo);
+    errorCode = DecodeMetadata(extDecoder, type, auxPicture);
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Decode metadata failed! errorCode: %{public}d", errorCode);
+        return nullptr;
+    }
+    return std::move(auxPicture);
+}
+
 ImageInfo AuxiliaryGenerator::MakeImageInfo(
     int width, int height, PixelFormat format, AlphaType alphaType, ColorSpace colorSpace)
 {
@@ -56,7 +103,6 @@ ImageInfo AuxiliaryGenerator::MakeImageInfo(
     return info;
 }
 
-// Interface for Jpeg/Heif
 AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     AuxiliaryPictureType type, const Size &size, int32_t rowStride, PixelFormat format, ColorSpace colorSpace)
 {
@@ -70,7 +116,6 @@ AuxiliaryPictureInfo AuxiliaryGenerator::MakeAuxiliaryPictureInfo(
     return info;
 }
 
-// Interface for Jpeg/Heif
 std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(DecodeContext &context,
     std::unique_ptr<AbsImageDecoder> &decoder, uint32_t &errorCode)
 {
@@ -104,7 +149,32 @@ std::shared_ptr<PixelMap> AuxiliaryGenerator::CreatePixelMapByContext(DecodeCont
     return pixelMap;
 }
 
-// Interface for Jpeg/Heif
+uint32_t AuxiliaryGenerator::DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+    AuxiliaryPictureType type, std::unique_ptr<AuxiliaryPicture> &auxPicture)
+{
+    IMAGE_LOGD("Decode metadata entry, auxiliary picture type: %{public}d", type);
+    uint32_t errorCode = ERROR;
+    switch (type) {
+        case AuxiliaryPictureType::GAINMAP:
+            errorCode = DecodeHdrMetadata(extDecoder, auxPicture);
+            break;
+        case AuxiliaryPictureType::DEPTH_MAP:
+        case AuxiliaryPictureType::UNREFOCUS_MAP:
+        case AuxiliaryPictureType::LINEAR_MAP:
+            break;
+        case AuxiliaryPictureType::FRAGMENT_MAP:
+            errorCode = DecodeFragmentMetadata(extDecoder, auxPicture);
+            break;
+        default:
+            errorCode = ERR_MEDIA_DATA_UNSUPPORT;
+            break;
+    }
+    if (errorCode != SUCCESS) {
+        IMAGE_LOGE("Decode hdr metadata failed! errorCode: %{public}u", errorCode);
+    }
+    return errorCode;
+}
+
 uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
@@ -120,11 +190,10 @@ uint32_t AuxiliaryGenerator::DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> 
     return SUCCESS;
 }
 
-// Interface for Jpeg/Heif
 uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
-    // TODO: 1.水印metadata的解析依赖实际数据格式（外部）；2.FragmentMetadata PR尚未合入（内部）
+    // TODO: 水印metadata的解析依赖实际数据格式（外部）
     std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;
     if (fragmentMetadata == nullptr) {
         IMAGE_LOGE("Decode fragment metadata failed!");
@@ -134,56 +203,7 @@ uint32_t AuxiliaryGenerator::DecodeFragmentMetadata(std::unique_ptr<AbsImageDeco
     return SUCCESS;
 }
 
-uint32_t AuxiliaryGenerator::DecodeHeifMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
-    AuxiliaryPictureType type, std::unique_ptr<AuxiliaryPicture> &auxPicture)
-{
-    uint32_t errorCode;
-    switch (type) {
-        case AuxiliaryPictureType::GAINMAP: {
-            errorCode = DecodeHdrMetadata(extDecoder, auxPicture);
-            if (errorCode != SUCCESS) {
-                IMAGE_LOGE("Decode heif hdr metadata failed! errorCode: %{public}d", errorCode);
-            }
-            break;
-        }
-        case AuxiliaryPictureType::FRAGMENT_MAP: {
-            errorCode = DecodeFragmentMetadata(extDecoder, auxPicture);
-            if (errorCode != SUCCESS) {
-                IMAGE_LOGE("Decode heif fragment metadata failed! errorCode: %{public}d", errorCode);
-            }
-            break;
-        }
-        default: {
-            errorCode = ERR_MEDIA_DATA_UNSUPPORT;
-            IMAGE_LOGE("Unsupport heif auxiliary picture type is %{public}d", type);
-            break;
-        }
-    }
-    return errorCode;
-}
-
-// Interface for Jpeg
-AbsImageDecoder* AuxiliaryGenerator::DoCreateDecoder(std::string codecFormat, PluginServer &pluginServer,
-    InputDataStream &sourceData, uint32_t &errorCode) __attribute__((no_sanitize("cfi")))
-{
-    std::map<std::string, AttrData> capabilities = {{IMAGE_ENCODE_FORMAT, AttrData(codecFormat)}};
-    for (const auto &capability : capabilities) {
-        std::string x(IMAGE_ENCODE_FORMAT_UNDEFINED);
-        capability.second.GetValue(x);
-        IMAGE_LOGD("Capabilities [%{public}s],[%{public}s]", capability.first.c_str(), x.c_str());
-    }
-    auto decoder = pluginServer.CreateObject<AbsImageDecoder>(AbsImageDecoder::SERVICE_DEFAULT, capabilities);
-    if (decoder == nullptr) {
-        IMAGE_LOGE("Failed to create decoder object!");
-        errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
-        return nullptr;
-    }
-    errorCode = SUCCESS;
-    decoder->SetSource(sourceData);
-    return decoder;
-}
-
-uint32_t AuxiliaryGenerator::SetJpegAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder,
+uint32_t AuxiliaryGenerator::SetAuxiliaryDecodeOption(std::unique_ptr<AbsImageDecoder> &decoder,
     PlImageInfo &plInfo)
 {
     Size size;
@@ -198,23 +218,6 @@ uint32_t AuxiliaryGenerator::SetJpegAuxiliaryDecodeOption(std::unique_ptr<AbsIma
     return errorCode;
 }
 
-uint32_t AuxiliaryGenerator::DoJpegDecode(std::unique_ptr<AbsImageDecoder> &decoder, DecodeContext &context)
-{
-    if (decoder == nullptr) {
-        return IMAGE_RESULT_CREATE_DECODER_FAILED;
-    }
-    if (SetJpegAuxiliaryDecodeOption(decoder, context.info) != SUCCESS) {
-        return ERR_IMAGE_DATA_ABNORMAL;
-    }
-    context.allocatorType = AllocatorType::DMA_ALLOC;
-    if (decoder->Decode(FIRST_FRAME, context) != SUCCESS) {
-        FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
-        return ERR_IMAGE_DECODE_ABNORMAL;
-    }
-    return SUCCESS;
-}
-
-// Interface for Jpeg
 void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func, AllocatorType allocType,
     PlImageBuffer &buffer)
 {
@@ -250,89 +253,6 @@ void AuxiliaryGenerator::FreeContextBuffer(const Media::CustomFreePixelMap &func
         buffer.buffer = nullptr;
     }
 #endif
-}
-
-std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateHeifAuxiliaryPicture(
-    std::unique_ptr<AbsImageDecoder> &extDecoder, AuxiliaryPictureType type, uint32_t &errorCode)
-{
-#ifdef HEIF_HW_DECODE_ENABLE
-    if (extDecoder == nullptr) {
-        IMAGE_LOGE("Invalid parameter");
-        errorCode = ERR_IMAGE_INVALID_PARAMETER;
-        return nullptr;
-    }
-
-    DecodeContext context;
-    context.allocatorType = AllocatorType::DMA_ALLOC;
-    if (!extDecoder->DecodeHeifAuxiliaryMap(context, type)) {
-        IMAGE_LOGE("Decode heif auxiliary map failure");
-        errorCode = ERR_IMAGE_DECODE_FAILED;
-        return nullptr;
-    }
-
-    std::shared_ptr<PixelMap> pixelMap = CreatePixelMapByContext(context, extDecoder, errorCode);
-    unique_ptr<AuxiliaryPicture> auxPicture = AuxiliaryPicture::Create(pixelMap, type, context.outInfo.size);
-    AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, context.outInfo.size, pixelMap->GetRowStride(),
-        context.outInfo.pixelFormat, context.outInfo.colorSpace);
-    auxPicture->SetAuxiliaryPictureInfo(auxInfo);
-
-    errorCode = DecodeHeifMetadata(extDecoder, type, auxPicture);
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("Decode heif metadata failed.");
-        return nullptr;
-    }
-    return std::move(auxPicture);
-#else
-    errorCode = ERR_IMAGE_HW_DECODE_UNSUPPORT;
-    return nullptr;
-#endif
-}
-
-std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateJpegAuxiliaryPicture(
-    std::unique_ptr<InputDataStream> &auxStream, AuxiliaryPictureType type, uint32_t &errorCode)
-{
-    IMAGE_LOGI("AuxiliaryPictureType: %{public}d", type);
-    auto supportStatus = SUPPORT_CODEC_AUXILIARY_MAP.find(type);
-    if (supportStatus == SUPPORT_CODEC_AUXILIARY_MAP.end()) {
-        return nullptr;
-    }
-
-    std::shared_ptr<PixelMap> auxPixelMap;
-    std::unique_ptr<AuxiliaryPicture> auxPicture;
-    auto auxDecoder = std::unique_ptr<AbsImageDecoder>(
-        DoCreateDecoder(IMAGE_EXTENDED_CODEC, ImageUtils::GetPluginServer(), *auxStream, errorCode));
-    if (supportStatus->second == SupportCodec::SUPPORT) {
-        DecodeContext auxCtx;
-        errorCode = DoJpegDecode(auxDecoder, auxCtx);
-        if (errorCode != SUCCESS) {
-            IMAGE_LOGE("DoJpegDecode() failed! errorCode: %{public}d", errorCode);
-            return nullptr;
-        }
-        auxPixelMap = CreatePixelMapByContext(auxCtx, auxDecoder, errorCode);
-        auxPicture = AuxiliaryPicture::Create(auxPixelMap, type, auxCtx.outInfo.size);
-        AuxiliaryPictureInfo auxInfo = MakeAuxiliaryPictureInfo(type, auxCtx.outInfo.size,
-            auxPixelMap->GetRowStride(), auxCtx.pixelFormat, auxCtx.outInfo.colorSpace);
-        auxPicture->SetAuxiliaryPictureInfo(auxInfo);
-    } else {
-        InitializationOptions opts;
-        std::unique_ptr<PixelMap> pixelMap = PixelMap::Create(
-            reinterpret_cast<uint32_t*>(auxStream->GetDataPtr()), auxStream->GetStreamSize(), opts);
-        auxPixelMap = std::move(pixelMap);
-        auxPicture = AuxiliaryPicture::Create(auxPixelMap, type);
-    }
-
-    if (type == AuxiliaryPictureType::GAINMAP) {
-        errorCode = DecodeHdrMetadata(auxDecoder, auxPicture);
-    } else if (type == AuxiliaryPictureType::FRAGMENT_MAP) {
-        errorCode = DecodeFragmentMetadata(auxDecoder, auxPicture);
-    }
-    if (errorCode != SUCCESS) {
-        IMAGE_LOGE("Ipeg decode metadata failed! errorCode: %{public}d", errorCode);
-        return nullptr;
-    }
-
-    std::shared_ptr<AuxiliaryPicture> finalAuxPicture = std::move(auxPicture);
-    return finalAuxPicture;
 }
 
 } // Media

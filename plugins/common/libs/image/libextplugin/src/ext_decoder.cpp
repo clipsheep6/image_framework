@@ -2031,15 +2031,15 @@ bool ExtDecoder::CheckAuxiliaryMap(AuxiliaryPictureType type)
 
     auto decoder = reinterpret_cast<HeifDecoderImpl*>(codec_->getHeifContext());
     if (decoder == nullptr) {
-        IMAGE_LOGE("Get heif context failed! Type %{public}d.", type);
+        IMAGE_LOGE("Get heif context failed, type %{public}d.", type);
         return false;
     }
 
-    if (decoder->CheckAuxiliaryMap(type)) {
-        return true;
+    if (!decoder->CheckAuxiliaryMap(type)) {
+        IMAGE_LOGE("Get heif auxiliary type %{public}d, decoder error", type);
+        return false;
     }
-    IMAGE_LOGE("Get heif auxiliaryMap %{public}d, decoder error", type);
-    return false;
+    return true;
 #endif
     return false;
 }
