@@ -15,6 +15,7 @@
 
 #include "buffer_source_stream.h"
 
+#include <shared_mutex>
 #include <string>
 #ifndef _WIN32
 #include "securec.h"
@@ -35,6 +36,8 @@ namespace Media {
 using namespace std;
 using namespace ImagePlugin;
 
+static std::mutex bufferSourceStreamMutex_;
+
 BufferSourceStream::BufferSourceStream(uint8_t *data, uint32_t size, uint32_t offset)
     : inputBuffer_(data), dataSize_(size), dataOffset_(offset)
 {}
@@ -49,6 +52,7 @@ BufferSourceStream::~BufferSourceStream()
 
 std::unique_ptr<BufferSourceStream> BufferSourceStream::CreateSourceStream(const uint8_t *data, uint32_t size)
 {
+    std::lock_guard<std::mutex> lock(bufferSourceStreamMutex_);
     if ((data == nullptr) || (size == 0)) {
         IMAGE_LOGE("[BufferSourceStream]input the parameter exception.");
         return nullptr;
