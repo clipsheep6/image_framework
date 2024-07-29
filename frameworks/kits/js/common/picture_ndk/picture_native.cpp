@@ -219,6 +219,7 @@ Image_ErrorCode OH_AuxiliaryPictureNative_Create(uint8_t *data, size_t dataLengt
     OHOS::Media::InitializationOptions initializationOptions;
     initializationOptions.size.width = size->width;
     initializationOptions.size.height = size->height;
+    initializationOptions.editable = true;
     auto dataTmp = reinterpret_cast<uint32_t*>(data);
     auto dataLengthTmp = static_cast<uint32_t>(dataLength);
 
@@ -247,7 +248,7 @@ Image_ErrorCode OH_AuxiliaryPictureNative_WritePixels(OH_AuxiliaryPictureNative 
     if (!innerAuxiliaryPicture) {
         return IMAGE_BAD_PARAMETER;
     }
-    int32_t ret = innerAuxiliaryPicture->WritePixels(source, static_cast<uint64_t>(bufferSize));
+    uint32_t ret = innerAuxiliaryPicture->WritePixels(source, static_cast<uint64_t>(bufferSize));
     if (ret != OHOS::Media::SUCCESS) {
         return IMAGE_UNKNOWN_ERROR;
     }
