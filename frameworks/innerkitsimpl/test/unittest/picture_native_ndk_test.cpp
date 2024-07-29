@@ -13,8 +13,8 @@
 * limitations under the License.
 */
 
-#include "exif_metadata.h"
 #include <gtest/gtest.h>
+#include "exif_metadata.h"
 #include "image_common_impl.h"
 #include "metadata.h"
 #include "picture_native.h"
@@ -151,7 +151,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest001, TestSize.
 {
     OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     size_t buff = bufferTrue;
-    std::shared_ptr<uint8_t[]> source(new uint8_t[buff]);
+    std::unique_ptr<uint8_t[]> source = std::make_unique<uint8_t[]>(buff);
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_WritePixels(picture, source.get(), buff);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     OH_AuxiliaryPictureNative_Release(picture);
@@ -166,7 +166,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_WritePixelsTest002, TestSize.
 {
     OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     size_t buff = bufferLengthFalse;
-    std::shared_ptr<uint8_t[]> source(new uint8_t[buff]);
+    std::unique_ptr<uint8_t[]> source = std::make_unique<uint8_t[]>(buff);
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_WritePixels(picture, source.get(), buff);
     EXPECT_EQ(ret, IMAGE_UNKNOWN_ERROR);
     OH_AuxiliaryPictureNative_Release(picture);
@@ -195,9 +195,8 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest001, TestSize.L
 {
     OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     size_t buff = bufferTrue;
-    std::shared_ptr<uint8_t[]> destination(new uint8_t[buff]);
-    size_t *bufferSize = &buff;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination.get(), bufferSize);
+    std::unique_ptr<uint8_t[]> destination = std::make_unique<uint8_t[]>(buff);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination.get(), &buff);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     OH_AuxiliaryPictureNative_Release(picture);
 }
@@ -211,9 +210,8 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReadPixelsTest002, TestSize.L
 {
     OH_AuxiliaryPictureNative *picture = CreateAuxiliaryPictureNative();
     size_t buff = bufferLengthFalse;
-    std::shared_ptr<uint8_t[]> destination(new uint8_t[buff]);
-    size_t *bufferSize = &buff;
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination.get(), bufferSize);
+    std::unique_ptr<uint8_t[]> destination = std::make_unique<uint8_t[]>(buff);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_ReadPixels(picture, destination.get(), &buff);
     EXPECT_EQ(ret, IMAGE_UNKNOWN_ERROR);
     OH_AuxiliaryPictureNative_Release(picture);
 }
@@ -380,9 +378,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetMetadataTest001, TestSize.
     std::shared_ptr<OHOS::Media::ImageMetadata> metadata = std::make_shared<OHOS::Media::ExifMetadata>();
     auto exifMetadata = static_cast<OHOS::Media::ExifMetadata *>(metadata.get());
     exifMetadata->CreateExifdata();
-    std::shared_ptr<OH_PictureMetadata> metadataptr(new OH_PictureMetadata(metadata));
-    //OH_PictureMetadata *metadataptr = new OH_PictureMetadata(metadata);
-    //OH_PictureMetadata_Create(::MetadataType::EXIF_METADATA, &metadataptr);
+    std::unique_ptr<OH_PictureMetadata> metadataptr = std::make_unique<OH_PictureMetadata>(metadata);
     Image_ErrorCode ret = OH_AuxiliaryPictureNative_SetMetadata(picture, ::MetadataType::EXIF_METADATA, metadataptr.get());
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     OH_AuxiliaryPictureNative_Release(picture);
