@@ -31,20 +31,22 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
     static std::shared_ptr<Picture> GetPicture(napi_env env, napi_value picture);
     static napi_value CreatePicture(napi_env env, std::shared_ptr<Picture> picture);
-
+    static int32_t CreatePictureNapi(napi_env env, napi_value* result);
+    void SetNativePicture(std::shared_ptr<Picture> picture);
+    
 private:
     static napi_value Constructor(napi_env env, napi_callback_info info);
     static void Destructor(napi_env env, void *nativeObject, void *finalize);
     // methods
     static napi_value GetMainPixelmap(napi_env env, napi_callback_info info);
-    static napi_value GetHDRComposedPixelMap(napi_env env, napi_callback_info info);
+    static napi_value GetHdrComposedPixelMap(napi_env env, napi_callback_info info);
     static napi_value GetGainmapPixelmap(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value Marshalling(napi_env env, napi_callback_info info);
     static napi_value GetAuxiliaryPicture(napi_env env, napi_callback_info info);
     static napi_value SetAuxiliaryPicture(napi_env env, napi_callback_info info);
-    static int32_t CreatePictureNapi(napi_env env, napi_value* result);
-    void SetNativePicture(std::shared_ptr<Picture> picture);
+    static napi_value GetMetadata(napi_env env, napi_callback_info info);
+    static napi_value SetMetadata(napi_env env, napi_callback_info info);
 
     /* static method */
     static napi_value CreatePicture(napi_env env, napi_callback_info info);

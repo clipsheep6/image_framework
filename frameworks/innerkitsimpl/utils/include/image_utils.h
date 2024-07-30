@@ -39,6 +39,7 @@ public:
     static bool FloatCompareZero(float src);
     static AlphaType GetValidAlphaTypeByFormat(const AlphaType &dstType, const PixelFormat &format);
     static bool IsValidImageInfo(const ImageInfo &info);
+    static bool IsSupportDMA(const Size &size, const PixelFormat &format);
     static MultimediaPlugin::PluginServer& GetPluginServer();
     static bool CheckMulOverflow(int32_t width, int32_t bytesPerPixel);
     static bool CheckMulOverflow(int32_t width, int32_t height, int32_t bytesPerPixel);
@@ -65,6 +66,8 @@ public:
     static void Int32ToBytes(int32_t data, std::vector<uint8_t>& bytes, uint32_t& offset, bool isBigEndian = true);
     static void ArrayToBytes(const uint8_t* data, uint32_t length, std::vector<uint8_t>& bytes, uint32_t& offset);
     static void FlushSurfaceBuffer(PixelMap* pixelMap);
+    static bool IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType auxiliaryPictureType);
+    static bool IsMetadataTypeSupported(MetadataType metadataType);
 private:
     static uint32_t RegisterPluginServer();
     static uint32_t SaveDataToFile(const std::string& fileName, const char* data, const size_t& totalSize);

@@ -70,9 +70,11 @@ constexpr int32_t NV21_BYTES = 2;  // Each pixel is sorted on 3/2 bytes.
 constexpr uint8_t MOVE_BITS_8 = 8;
 constexpr uint8_t MOVE_BITS_16 = 16;
 constexpr uint8_t MOVE_BITS_24 = 24;
+constexpr int32_t NV21P010_BYTES = 3;
 constexpr int32_t ASTC_4X4_BYTES = 1;
 constexpr float EPSILON = 1e-6;
 constexpr int MAX_DIMENSION = INT32_MAX >> 2;
+constexpr uint32_t DMA_SIZE = 512 * 512;
 static bool g_pluginRegistered = false;
 static const uint8_t NUM_0 = 0;
 static const uint8_t NUM_1 = 1;
@@ -148,6 +150,7 @@ int32_t ImageUtils::GetPixelBytes(const PixelFormat &pixelFormat)
             pixelBytes = RGB565_BYTES;
             break;
         case PixelFormat::RGBA_F16:
+        case PixelFormat::RGBA_U16:
             pixelBytes = RGBA_F16_BYTES;
             break;
         case PixelFormat::NV21:
@@ -158,6 +161,10 @@ int32_t ImageUtils::GetPixelBytes(const PixelFormat &pixelFormat)
         case PixelFormat::ASTC_6x6:
         case PixelFormat::ASTC_8x8:
             pixelBytes = ASTC_4X4_BYTES;
+            break;
+        case PixelFormat::YCBCR_P010:
+        case PixelFormat::YCRCB_P010:
+            pixelBytes = NV21P010_BYTES;
             break;
         default:
             IMAGE_LOGE("[ImageUtil]get pixel bytes failed, pixelFormat:%{public}d.",
@@ -259,6 +266,8 @@ AlphaType ImageUtils::GetValidAlphaTypeByFormat(const AlphaType &dstType, const 
         }
         case PixelFormat::NV21:
         case PixelFormat::NV12:
+        case PixelFormat::YCBCR_P010:
+        case PixelFormat::YCRCB_P010:
         case PixelFormat::CMYK:
         default: {
             IMAGE_LOGE("GetValidAlphaTypeByFormat unsupport the format(%{public}d).", format);
@@ -280,6 +289,11 @@ bool ImageUtils::IsValidImageInfo(const ImageInfo &info)
         return false;
     }
     return true;
+}
+
+bool ImageUtils::IsSupportDMA(const Size &size, const PixelFormat &format)
+{
+    return format == PixelFormat::RGBA_8888 && size.width * size.height >= DMA_SIZE;
 }
 
 bool ImageUtils::CheckMulOverflow(int32_t width, int32_t bytesPerPixel)
@@ -374,13 +388,17 @@ void ImageUtils::DumpPixelMap(PixelMap* pixelMap, std::string customFileName, ui
         GetPixelMapName(pixelMap) + ".dat";
     int32_t totalSize = pixelMap->GetRowStride() * pixelMap->GetHeight();
     if (pixelMap->GetPixelFormat() == PixelFormat::NV12 || pixelMap->GetPixelFormat() == PixelFormat::NV21) {
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
         if (pixelMap->GetAllocatorType() == AllocatorType::DMA_ALLOC) {
             auto sbBuffer = reinterpret_cast<SurfaceBuffer*>(pixelMap->GetFd());
             totalSize = static_cast<int32_t>(sbBuffer->GetSize());
         } else {
             totalSize = static_cast<int32_t>(pixelMap->GetCapacity());
         }
-        IMAGE_LOGI("ImageUtils::DumpPixelMap YUV420 totalSize is %{public}d", totalSize);
+#else
+        totalSize = static_cast<int32_t>(pixelMap->GetCapacity());
+#endif
+        IMAGE_LOGI("ImageUtils::DumpPixelMapIfDumpEnabled YUV420 totalSize is %{public}d", totalSize);
     }
     if (SUCCESS != SaveDataToFile(fileName, reinterpret_cast<const char*>(pixelMap->GetPixels()), totalSize)) {
         IMAGE_LOGI("ImageUtils::DumpPixelMap failed");
@@ -460,6 +478,10 @@ uint32_t ImageUtils::SaveDataToFile(const std::string& fileName, const char* dat
     std::ofstream outFile(fileName, std::ofstream::out);
     if (!outFile.is_open()) {
         IMAGE_LOGI("ImageUtils::SaveDataToFile write error, path=%{public}s", fileName.c_str());
+        return IMAGE_RESULT_SAVE_DATA_TO_FILE_FAILED;
+    }
+    if (data == nullptr) {
+        IMAGE_LOGE("ImageUtils::SaveDataToFile data is nullptr");
         return IMAGE_RESULT_SAVE_DATA_TO_FILE_FAILED;
     }
     outFile.write(data, totalSize);
@@ -665,6 +687,29 @@ void ImageUtils::FlushSurfaceBuffer(PixelMap* pixelMap)
 #else
     return;
 #endif
+}
+
+bool ImageUtils::IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType auxiliaryPictureType)
+{
+    if (auxiliaryPictureType == AuxiliaryPictureType::NONE ||
+        auxiliaryPictureType == AuxiliaryPictureType::GAINMAP ||
+        auxiliaryPictureType == AuxiliaryPictureType::DEPTH_MAP ||
+        auxiliaryPictureType == AuxiliaryPictureType::UNREFOCUS_MAP ||
+        auxiliaryPictureType == AuxiliaryPictureType::LINEAR_MAP ||
+        auxiliaryPictureType == AuxiliaryPictureType::FRAGMENT_MAP) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool ImageUtils::IsMetadataTypeSupported(MetadataType metadataType)
+{
+    if (metadataType == MetadataType::EXIF || metadataType == MetadataType::FRAGMENT) {
+        return true;
+    } else {
+        return false;
+    }
 }
 } // namespace Media
 } // namespace OHOS

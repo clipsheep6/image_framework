@@ -27,13 +27,14 @@
 #include "surface_buffer.h"
 #include "securec.h"
 #include "tiff_parser.h"
+#include "metadata_helper.h"
 #include "image_source.h"
 #include "v1_0/cm_color_space.h"
 #include "vpe_utils.h"
 
 namespace OHOS {
 namespace Media {
-using namespace HDI::Display::Graphic::Common::V1_0;
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 namespace {
     static const std::map<int32_t, PixelFormat> PIXEL_FORMAT_MAP = {
         { GRAPHIC_PIXEL_FMT_RGBA_8888, PixelFormat::RGBA_8888 },
@@ -45,31 +46,71 @@ namespace {
         { GRAPHIC_PIXEL_FMT_RGB_565, PixelFormat::RGB_565 },
     };
 
-    static const std::map<int32_t, ColorSpace> COLORSPACE_MAP = {
-        { GRAPHIC_COLOR_GAMUT_INVALID, ColorSpace::UNKNOWN },
-        { GRAPHIC_COLOR_GAMUT_NATIVE, ColorSpace::SRGB },
-        { GRAPHIC_COLOR_GAMUT_STANDARD_BT709, ColorSpace::ITU_709 },
-        { GRAPHIC_COLOR_GAMUT_DCI_P3, ColorSpace::DCI_P3 },
-        { GRAPHIC_COLOR_GAMUT_SRGB, ColorSpace::SRGB },
-        { GRAPHIC_COLOR_GAMUT_ADOBE_RGB, ColorSpace::ADOBE_RGB_1998 },
-        { GRAPHIC_COLOR_GAMUT_DISPLAY_P3, ColorSpace::DISPLAY_P3 },
-        { GRAPHIC_COLOR_GAMUT_BT2020, ColorSpace::ITU_2020 },
+    static const std::map<CM_ColorSpaceType, ColorSpace> CM_COLORSPACE_MAP = {
+        { CM_COLORSPACE_NONE, ColorSpace::UNKNOWN },
+        { CM_BT709_FULL, ColorSpace::ITU_709 },
+        { CM_BT2020_HLG_FULL, ColorSpace::ITU_2020 },
+        { CM_BT2020_PQ_FULL, ColorSpace::ITU_2020 },
+        { CM_BT709_LIMIT, ColorSpace::ITU_709 },
+        { CM_BT2020_HLG_LIMIT, ColorSpace::ITU_2020 },
+        { CM_BT2020_PQ_LIMIT, ColorSpace::ITU_2020 },
+        { CM_SRGB_FULL, ColorSpace::SRGB },
+        { CM_P3_FULL, ColorSpace::DCI_P3 },
+        { CM_P3_HLG_FULL, ColorSpace::DCI_P3 },
+        { CM_P3_PQ_FULL, ColorSpace::DCI_P3 },
+        { CM_ADOBERGB_FULL, ColorSpace::ADOBE_RGB_1998 },
+        { CM_SRGB_LIMIT, ColorSpace::SRGB },
+        { CM_P3_LIMIT, ColorSpace::DCI_P3 },
+        { CM_P3_HLG_LIMIT, ColorSpace::DCI_P3 },
+        { CM_P3_PQ_LIMIT, ColorSpace::DCI_P3 },
+        { CM_ADOBERGB_LIMIT, ColorSpace::ADOBE_RGB_1998 },
+        { CM_LINEAR_SRGB, ColorSpace::LINEAR_SRGB },
+        { CM_LINEAR_BT709, ColorSpace::ITU_709 },
+        { CM_LINEAR_P3, ColorSpace::DISPLAY_P3 },
+        { CM_LINEAR_BT2020, ColorSpace::ITU_2020 },
+        { CM_DISPLAY_SRGB, ColorSpace::SRGB },
+        { CM_DISPLAY_P3_SRGB, ColorSpace::DISPLAY_P3 },
+        { CM_DISPLAY_P3_HLG, ColorSpace::DISPLAY_P3 },
+        { CM_DISPLAY_P3_PQ, ColorSpace::DISPLAY_P3 },
+        { CM_DISPLAY_BT2020_SRGB, ColorSpace::ITU_2020 },
+        { CM_DISPLAY_BT2020_HLG, ColorSpace::ITU_2020 },
+        { CM_DISPLAY_BT2020_PQ, ColorSpace::ITU_2020 },
     };
 
 #ifdef IMAGE_COLORSPACE_FLAG
-    static const std::map<int32_t, ColorManager::ColorSpaceName> COLORSPACE_NAME_MAP = {
-        { GRAPHIC_COLOR_GAMUT_INVALID, ColorManager::NONE },
-        { GRAPHIC_COLOR_GAMUT_NATIVE, ColorManager::SRGB },
-        { GRAPHIC_COLOR_GAMUT_STANDARD_BT601, ColorManager::BT601_EBU },
-        { GRAPHIC_COLOR_GAMUT_STANDARD_BT709, ColorManager::BT709 },
-        { GRAPHIC_COLOR_GAMUT_DCI_P3, ColorManager::DCI_P3 },
-        { GRAPHIC_COLOR_GAMUT_SRGB, ColorManager::SRGB },
-        { GRAPHIC_COLOR_GAMUT_ADOBE_RGB, ColorManager::ADOBE_RGB },
-        { GRAPHIC_COLOR_GAMUT_DISPLAY_P3, ColorManager::DISPLAY_P3 },
-        { GRAPHIC_COLOR_GAMUT_BT2020, ColorManager::BT2020 },
-        { GRAPHIC_COLOR_GAMUT_BT2100_PQ, ColorManager::BT2020_PQ},
-        { GRAPHIC_COLOR_GAMUT_BT2100_HLG, ColorManager::BT2020_HLG},
-        { GRAPHIC_COLOR_GAMUT_DISPLAY_BT2020, ColorManager::BT2020},
+    static const std::map<CM_ColorSpaceType, ColorManager::ColorSpaceName> CM_COLORSPACE_NAME_MAP = {
+        { CM_COLORSPACE_NONE, ColorManager::NONE },
+        { CM_BT601_EBU_FULL, ColorManager::BT601_EBU },
+        { CM_BT601_SMPTE_C_FULL, ColorManager::BT601_SMPTE_C },
+        { CM_BT709_FULL, ColorManager::BT709 },
+        { CM_BT2020_HLG_FULL, ColorManager::BT2020_HLG },
+        { CM_BT2020_PQ_FULL, ColorManager::BT2020_PQ },
+        { CM_BT601_EBU_LIMIT, ColorManager::BT601_EBU_LIMIT },
+        { CM_BT601_SMPTE_C_LIMIT, ColorManager::BT601_SMPTE_C_LIMIT },
+        { CM_BT709_LIMIT, ColorManager::BT709_LIMIT },
+        { CM_BT2020_HLG_LIMIT, ColorManager::BT2020_HLG_LIMIT },
+        { CM_BT2020_PQ_LIMIT, ColorManager::BT2020_PQ_LIMIT },
+        { CM_SRGB_FULL, ColorManager::SRGB },
+        { CM_P3_FULL, ColorManager::DCI_P3 },
+        { CM_P3_HLG_FULL, ColorManager::P3_HLG },
+        { CM_P3_PQ_FULL, ColorManager::P3_PQ },
+        { CM_ADOBERGB_FULL, ColorManager::ADOBE_RGB },
+        { CM_SRGB_LIMIT, ColorManager::SRGB_LIMIT },
+        { CM_P3_LIMIT, ColorManager::DISPLAY_P3_LIMIT },
+        { CM_P3_HLG_LIMIT, ColorManager::P3_HLG_LIMIT },
+        { CM_P3_PQ_LIMIT, ColorManager::P3_PQ_LIMIT },
+        { CM_ADOBERGB_LIMIT, ColorManager::ADOBE_RGB_LIMIT },
+        { CM_LINEAR_SRGB, ColorManager::LINEAR_SRGB },
+        { CM_LINEAR_BT709, ColorManager::LINEAR_BT709 },
+        { CM_LINEAR_P3, ColorManager::LINEAR_P3 },
+        { CM_LINEAR_BT2020, ColorManager::LINEAR_BT2020 },
+        { CM_DISPLAY_SRGB, ColorManager::DISPLAY_SRGB },
+        { CM_DISPLAY_P3_SRGB, ColorManager::DISPLAY_P3_SRGB },
+        { CM_DISPLAY_P3_HLG, ColorManager::DISPLAY_P3_HLG },
+        { CM_DISPLAY_P3_PQ, ColorManager::DISPLAY_P3_PQ },
+        { CM_DISPLAY_BT2020_SRGB, ColorManager::DISPLAY_BT2020_SRGB },
+        { CM_DISPLAY_BT2020_HLG, ColorManager::DISPLAY_BT2020_HLG },
+        { CM_DISPLAY_BT2020_PQ, ColorManager::DISPLAY_BT2020_PQ },
     };
 #endif
 }
@@ -77,6 +118,7 @@ namespace {
 static const uint8_t NUM_0 = 0;
 static const uint8_t NUM_1 = 1;
 static const uint8_t NUM_2 = 2;
+static const std::string EXIF_DATA_SIZE_TAG = "exifDataSize";
 
 static bool IsYuvFormat(PixelFormat format)
 {
@@ -97,20 +139,31 @@ static PixelFormat SbFormat2PixelFormat(int32_t sbFormat)
     return iter->second;
 }
 
-static ColorSpace SbGamut2ColorSpace(OHOS::GraphicColorGamut sbGamut)
+static CM_ColorSpaceType GetCMColorSpaceType(sptr<SurfaceBuffer> buffer)
 {
-    auto iter = COLORSPACE_MAP.find(sbGamut);
-    if (iter == COLORSPACE_MAP.end()) {
+    if (buffer == nullptr) {
+        return CM_ColorSpaceType::CM_COLORSPACE_NONE;
+    }
+    CM_ColorSpaceType type;
+    MetadataHelper::GetColorSpaceType(buffer, type);
+    return type;
+}
+
+static ColorSpace CMColorSpaceType2ColorSpace(CM_ColorSpaceType type) {
+    IMAGE_LOGI("CMColorSpaceType2ColorSpace: %{public}d", type);
+    auto iter = CM_COLORSPACE_MAP.find(type);
+    if (iter == CM_COLORSPACE_MAP.end()) {
         return ColorSpace::UNKNOWN;
     }
     return iter->second;
 }
 
 #ifdef IMAGE_COLORSPACE_FLAG
-static ColorManager::ColorSpaceName SbGamut2ColorSpaceName(OHOS::GraphicColorGamut sbGamut)
+static ColorManager::ColorSpaceName CMColorSpaceType2ColorSpaceName(CM_ColorSpaceType type)
 {
-    auto iter = COLORSPACE_NAME_MAP.find(sbGamut);
-    if (iter == COLORSPACE_NAME_MAP.end()) {
+    IMAGE_LOGI("CMColorSpaceType2ColorSpaceName: %{public}d", type);
+    auto iter = CM_COLORSPACE_NAME_MAP.find(type);
+    if (iter == CM_COLORSPACE_NAME_MAP.end()) {
         return ColorManager::NONE;
     }
     return iter->second;
@@ -151,6 +204,8 @@ static void SetYuvDataInfo(std::unique_ptr<PixelMap> &pixelMap, sptr<OHOS::Surfa
     pixelMap->SetImageYUVInfo(info);
 }
 
+Picture::~Picture() {}
+
 std::unique_ptr<Picture> Picture::Create(std::shared_ptr<PixelMap> &pixelMap)
 {
     if (pixelMap == nullptr) {
@@ -173,7 +228,7 @@ std::unique_ptr<PixelMap> Picture::SurfaceBuffer2PixelMap(sptr<OHOS::SurfaceBuff
         return nullptr;
     }
     PixelFormat pixelFormat = SbFormat2PixelFormat(surfaceBuffer->GetFormat());
-    ColorSpace colorSpace = SbGamut2ColorSpace(surfaceBuffer->GetSurfaceBufferColorGamut());
+    ColorSpace colorSpace = CMColorSpaceType2ColorSpace(GetCMColorSpaceType(surfaceBuffer));
     AlphaType alphaType = IsAlphaFormat(pixelFormat) ?
              AlphaType::IMAGE_ALPHA_TYPE_PREMUL : AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
     void* nativeBuffer = surfaceBuffer.GetRefPtr();
@@ -204,7 +259,8 @@ std::unique_ptr<PixelMap> Picture::SurfaceBuffer2PixelMap(sptr<OHOS::SurfaceBuff
                             nativeBuffer, pixelMap->GetRowBytes() * pixelMap->GetHeight(),
                             AllocatorType::DMA_ALLOC, nullptr);
 #ifdef IMAGE_COLORSPACE_FLAG
-    ColorManager::ColorSpaceName colorSpaceName = SbGamut2ColorSpaceName(surfaceBuffer->GetSurfaceBufferColorGamut());
+    ColorManager::ColorSpaceName colorSpaceName =
+        CMColorSpaceType2ColorSpaceName(GetCMColorSpaceType(surfaceBuffer));
     pixelMap->InnerSetColorSpace(ColorManager::ColorSpace(colorSpaceName));
 #endif
     if (IsYuvFormat(pixelFormat)) {
@@ -296,9 +352,9 @@ std::shared_ptr<AuxiliaryPicture> Picture::GetAuxiliaryPicture(AuxiliaryPictureT
     return iter->second;
 }
 
-void Picture::SetAuxiliaryPicture(AuxiliaryPictureType type, std::shared_ptr<AuxiliaryPicture> &picture)
+void Picture::SetAuxiliaryPicture(std::shared_ptr<AuxiliaryPicture> &picture)
 {
-    auxiliaryPictures_[type] = picture;
+    auxiliaryPictures_[picture->GetType()] = picture;
 }
 
 bool Picture::HasAuxiliaryPicture(AuxiliaryPictureType type)
@@ -336,6 +392,25 @@ bool Picture::Marshalling(Parcel &data) const
             return false;
         }
     }
+
+    if (!data.WriteBool(maintenanceData_ != nullptr)) {
+        IMAGE_LOGE("Failed to write maintenance data existence value.");
+        return false;
+    }
+
+    if (maintenanceData_ != nullptr) {
+        if (maintenanceData_->WriteToMessageParcel(reinterpret_cast<MessageParcel&>(data)) != GSError::GSERROR_OK) {
+            IMAGE_LOGE("Failed to write maintenance data content.");
+            return false;
+        }
+    }
+
+    if (exifMetadata_) {
+        if (!exifMetadata_->Marshalling(data)) {
+            IMAGE_LOGE("Failed to marshal exif metadata.");
+            return false;
+        }
+    }
     
     return true;
 }
@@ -370,9 +445,20 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
             IMAGE_LOGE("Failed to unmarshal auxiliary picture of type %d.", type);
             return nullptr;
         }
-        picture->SetAuxiliaryPicture(static_cast<AuxiliaryPictureType>(type), auxPtr);
+        picture->SetAuxiliaryPicture(auxPtr);
     }
-    
+
+    bool hasMaintenanceData = parcel.ReadBool();
+    if (hasMaintenanceData) {
+        sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
+        if (surfaceBuffer->ReadFromMessageParcel(reinterpret_cast<MessageParcel&>(parcel)) != GSError::GSERROR_OK) {
+            IMAGE_LOGE("Failed to unmarshal maintenance data");
+            return nullptr;
+        }
+        picture->maintenanceData_ = surfaceBuffer;
+    }
+    picture->exifMetadata_ = std::shared_ptr<ExifMetadata>(ExifMetadata::Unmarshalling(parcel));
+
     return picture.release();
 }
 
@@ -382,7 +468,13 @@ int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
-    auto size = surfaceBuffer->GetSize();
+    auto extraData = surfaceBuffer->GetExtraData();
+    if (extraData == nullptr) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    int32_t size = NUM_0;
+    extraData->ExtraGet(EXIF_DATA_SIZE_TAG, size);
     if (size <= 0) {
         IMAGE_LOGE("Invalid buffer size: %d.", size);
         return ERR_IMAGE_INVALID_PARAMETER;
@@ -395,10 +487,23 @@ int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
         return ERR_EXIF_DECODE_FAILED;
     }
 
-    auto exifMetadata = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
+    exifMetadata_ = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
 
-    mainPixelMap_->SetExifMetadata(exifMetadata);
     return SUCCESS;
+}
+
+int32_t Picture::SetExifMetadata(std::shared_ptr<ExifMetadata> exifMetadata)
+{
+    if (exifMetadata == nullptr) {
+        return ERR_IMAGE_INVALID_PARAMETER;
+    }
+    exifMetadata_ = exifMetadata;
+    return SUCCESS;
+}
+
+std::shared_ptr<ExifMetadata> Picture::GetExifMetadata()
+{
+    return exifMetadata_;
 }
 
 bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
@@ -406,28 +511,11 @@ bool Picture::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
     if (surfaceBuffer == nullptr) {
         return false;
     }
-
-    auto size = surfaceBuffer->GetSize();
-    if (size <= 0) {
-        IMAGE_LOGE("Invalid buffer size: %d.", size);
-        return false;
-    }
-
-    maintenanceData_ = std::shared_ptr<uint8_t[]>(new uint8_t(size));
-    if (!maintenanceData_) {
-        return false;
-    }
-
-    auto ret = memcpy_s(maintenanceData_.get(), size, surfaceBuffer->GetVirAddr(), size);
-    if (ret != EOK) {
-        IMAGE_LOGE("Memmoy copy failed, errono: %d.", ret);
-        return false;
-    }
-
+    maintenanceData_ = surfaceBuffer;
     return true;
 }
 
-std::shared_ptr<uint8_t[]> Picture::GetMaintenanceData() const
+sptr<SurfaceBuffer> Picture::GetMaintenanceData() const
 {
     return maintenanceData_;
 }

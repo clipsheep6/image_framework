@@ -112,11 +112,16 @@ enum class PixelFormat : int32_t {
     RGBA_F16 = 7,
     NV21 = 8,  // Each pixel is sorted on 3/2 bytes.
     NV12 = 9,
-    CMYK = 10,
-    ASTC_4x4 = 11,
-    ASTC_6x6 = 12,
-    ASTC_8x8 = 13,
-    RGBA_1010102 = 14,
+    RGBA_1010102 = 10,
+    YCBCR_P010 = 11, // NV12_P010
+    YCRCB_P010 = 12, // NV21_P010
+    RGBA_U16 = 13, // Interim format for ffmpeg and skia conversion
+    EXTERNAL_MAX,
+    INTERNAL_START = 100,
+    CMYK = INTERNAL_START + 1,
+    ASTC_4x4,
+    ASTC_6x6,
+    ASTC_8x8,
 };
 
 enum class DecodeDynamicRange : int32_t {
@@ -205,6 +210,13 @@ struct YUVDataInfo {
     uint32_t uOffset = 0;
     uint32_t vOffset = 0;
     uint32_t uvOffset = 0;
+};
+
+struct Convert10bitInfo {
+    PixelFormat srcPixelFormat = PixelFormat::UNKNOWN;
+    uint32_t srcBytes = 0;
+    PixelFormat dstPixelFormat = PixelFormat::UNKNOWN;
+    uint32_t dstBytes = 0;
 };
 
 struct FillColor {
@@ -303,6 +315,12 @@ typedef struct PictureError {
     uint32_t errorCode = 0;
     std::string errorInfo = "";
 } PICTURE_ERR;
+
+struct MaintenanceData {
+    std::shared_ptr<uint8_t[]> data_;
+    size_t size_ = 0;
+    MaintenanceData(std::shared_ptr<uint8_t[]> data, size_t size) : data_(data), size_(size) {}
+};
 
 } // namespace Media
 } // namespace OHOS

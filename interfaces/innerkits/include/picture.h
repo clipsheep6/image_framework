@@ -27,10 +27,13 @@ namespace OHOS {
 
 namespace OHOS {
 namespace Media {
+
+class ExifMetadata;
+
 class Picture : public Parcelable {
 public:
     Picture() = default;
-    virtual ~Picture() {}
+    virtual ~Picture();
 
     NATIVEEXPORT static std::unique_ptr<Picture> Create(std::shared_ptr<PixelMap> &PixelMap);
     NATIVEEXPORT static std::unique_ptr<Picture> Create(sptr<SurfaceBuffer> &surfaceBuffer);
@@ -40,19 +43,22 @@ public:
     NATIVEEXPORT std::unique_ptr<PixelMap> GetHdrComposedPixelMap();
     NATIVEEXPORT std::shared_ptr<PixelMap> GetGainmapPixelMap();
     NATIVEEXPORT std::shared_ptr<AuxiliaryPicture> GetAuxiliaryPicture(AuxiliaryPictureType type);
-    NATIVEEXPORT void SetAuxiliaryPicture(AuxiliaryPictureType type, std::shared_ptr<AuxiliaryPicture> &picture);
+    NATIVEEXPORT void SetAuxiliaryPicture(std::shared_ptr<AuxiliaryPicture> &picture);
     NATIVEEXPORT bool HasAuxiliaryPicture(AuxiliaryPictureType type);
     NATIVEEXPORT virtual bool Marshalling(Parcel &data) const override;
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data);
     NATIVEEXPORT static Picture *Unmarshalling(Parcel &data, PICTURE_ERR &error);
     NATIVEEXPORT int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer);
+    NATIVEEXPORT int32_t SetExifMetadata(std::shared_ptr<ExifMetadata> exifMetadata);
+    NATIVEEXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
     NATIVEEXPORT bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer);
-    NATIVEEXPORT std::shared_ptr<uint8_t[]> GetMaintenanceData() const;
+    NATIVEEXPORT sptr<SurfaceBuffer> GetMaintenanceData() const;
 
 private:
     std::shared_ptr<PixelMap> mainPixelMap_;
     std::map<AuxiliaryPictureType, std::shared_ptr<AuxiliaryPicture>> auxiliaryPictures_;
-    std::shared_ptr<uint8_t[]> maintenanceData_;
+    sptr<SurfaceBuffer> maintenanceData_;
+    std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
 };
 }
 }

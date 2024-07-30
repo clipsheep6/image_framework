@@ -139,6 +139,16 @@
           },
           {
             "header": {
+              "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/image/",
+              "header_files": [
+                "image_common.h",
+                "picture_native.h"
+              ]
+            },
+            "name": "//foundation/multimedia/image_framework/frameworks/kits/js/common/picture_ndk:picture"
+          },
+          {
+            "header": {
               "header_base": "//foundation/multimedia/image_framework/interfaces/kits/native/include/",
               "header_files": [
                 "image_pixel_map_napi.h",

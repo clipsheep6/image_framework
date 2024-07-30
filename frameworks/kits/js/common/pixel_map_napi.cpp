@@ -121,7 +121,7 @@ public:
 
 static PixelFormat ParsePixlForamt(int32_t val)
 {
-    if (val <= static_cast<int32_t>(PixelFormat::CMYK)) {
+    if (val < static_cast<int32_t>(PixelFormat::EXTERNAL_MAX)) {
         return PixelFormat(val);
     }
 
@@ -1073,7 +1073,7 @@ napi_value PixelMapNapi::CreatePixelMapSync(napi_env env, napi_callback_info inf
     return result;
 }
 
-#if !defined(IOS_PLATFORM) && !defined(A_PLATFORM)
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 STATIC_EXEC_FUNC(CreatePixelMapFromSurface)
 {
     auto context = static_cast<PixelMapAsyncContext*>(data);
@@ -3303,6 +3303,9 @@ napi_value PixelMapNapi::Marshalling(napi_env env, napi_callback_info info)
             env, ERR_IMAGE_INVALID_PARAMETER, "Fail to unwrap context");
     }
     nVal.context->rPixelMap = nVal.context->nConstructor->nativePixelMap_;
+    if (nVal.context->rPixelMap == nullptr) {
+        return ImageNapiUtils::ThrowExceptionError(env, ERR_IPC, "marshalling pixel map to parcel failed.");
+    }
     if (nVal.argc != NUM_0 && nVal.argc != NUM_1) {
         return ImageNapiUtils::ThrowExceptionError(
             env, ERR_IMAGE_INVALID_PARAMETER, "Invalid args count");
@@ -3413,7 +3416,9 @@ static bool IsMatchFormatType(FormatType type, PixelFormat format)
     if (type == FormatType::YUV) {
         switch (format) {
             case PixelFormat::NV21:
-            case PixelFormat::NV12:{
+            case PixelFormat::NV12:
+            case PixelFormat::YCBCR_P010:
+            case PixelFormat::YCRCB_P010:{
                 return true;
             }
             default:{
@@ -3427,7 +3432,8 @@ static bool IsMatchFormatType(FormatType type, PixelFormat format)
             case PixelFormat::RGBA_8888:
             case PixelFormat::BGRA_8888:
             case PixelFormat::RGB_888:
-            case PixelFormat::RGBA_F16:{
+            case PixelFormat::RGBA_F16:
+            case PixelFormat::RGBA_1010102:{
                 return true;
             }
             default:{
@@ -3453,11 +3459,14 @@ static FormatType TypeFormat(PixelFormat &pixelForamt)
         case PixelFormat::RGBA_8888:
         case PixelFormat::BGRA_8888:
         case PixelFormat::RGB_888:
-        case PixelFormat::RGBA_F16:{
+        case PixelFormat::RGBA_F16:
+        case PixelFormat::RGBA_1010102:{
             return FormatType::RGB;
         }
         case PixelFormat::NV21:
-        case PixelFormat::NV12:{
+        case PixelFormat::NV12:
+        case PixelFormat::YCBCR_P010:
+        case PixelFormat::YCRCB_P010:{
             return FormatType::YUV;
         }
         default:
@@ -3611,6 +3620,15 @@ napi_value PixelMapNapi::ConvertPixelMapFormat(napi_env env, napi_callback_info 
     int32_t pixelFormatInt;
     napi_get_value_int32(env, jsArg, &pixelFormatInt);
     nVal.context->destFormat = static_cast<PixelFormat>(pixelFormatInt);
+
+    if (TypeFormat(nVal.context->destFormat) == FormatType::UNKNOWN) {
+        napi_value errCode = nullptr;
+        napi_create_int32(env, ERR_IMAGE_INVALID_PARAMETER, &errCode);
+        napi_reject_deferred(env, nVal.context->deferred, errCode);
+        IMAGE_LOGE("dstFormat is not support or invalid");
+        return nVal.result;
+    }
+
     nVal.result = PixelFormatConvert(env, info, nVal.context.get());
     nVal.context->nConstructor->nativePixelMap_ = nVal.context->rPixelMap;
     if (nVal.result == nullptr) {

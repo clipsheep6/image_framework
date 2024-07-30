@@ -38,6 +38,7 @@
     *PixelYuv*;
     *Picture*;
     *AuxiliaryPicture*;
+    *FragmentMetadata*;
   local:
     *;
 };

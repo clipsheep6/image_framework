@@ -131,6 +131,7 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_formatter.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/file_metadata_stream.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/heif_exif_metadata_accessor.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/jpeg_exif_metadata_accessor.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/metadata_accessor_factory.cpp",
@@ -144,6 +145,8 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/picture/auxiliary_picture.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/picture/picture.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer_ex.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_source.cpp",
@@ -166,8 +169,6 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/picture/auxiliary_picture.cpp",
-      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/picture/picture.cpp",
     ]
 
     if (use_mingw_win) {
@@ -301,6 +302,7 @@ ohos_static_library("image_static") {
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/exif_metadata_formatter.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/file_metadata_stream.cpp",
+    "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/fragment_metadata.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/heif_exif_metadata_accessor.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/jpeg_exif_metadata_accessor.cpp",
     "${image_subsystem}/frameworks/innerkitsimpl/accessor/src/metadata_accessor_factory.cpp",
