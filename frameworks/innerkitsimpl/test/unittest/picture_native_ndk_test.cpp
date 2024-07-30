@@ -16,10 +16,12 @@
 #include <gtest/gtest.h>
 #include "exif_metadata.h"
 #include "image_common_impl.h"
+#include "image_source_native.h"
 #include "metadata.h"
 #include "picture_native.h"
 #include "pixelmap_native_impl.h"
 #include "pixel_map.h"
+#include "pixelmap_native.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -37,7 +39,34 @@ constexpr int32_t sizeWidthExceed = 20;
 constexpr int32_t sizeHeightExceed = 50;
 constexpr int32_t bufferLengthExceed = 8;
 constexpr int32_t sizeBuffer = 2017220;
+constexpr int32_t bufferSize = 256;
+static const std::string IMAGE_JPEG_PATH = "/data/local/tmp/image/test.jpg";
 constexpr int8_t NUM_0 = 0;
+
+OH_PictureNative *CreateNativePicture()
+{
+    size_t length = IMAGE_JPEG_PATH.size();
+    char filePath[bufferSize];
+    strcpy(filePath, IMAGE_JPEG_PATH.c_str());
+    OH_ImageSourceNative *source = nullptr;
+
+    Image_ErrorCode ret = OH_ImageSourceNative_CreateFromUri(filePath, length, &source);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_DecodingOptions *opts = nullptr;
+    OH_PixelmapNative *pixelmap = nullptr;
+    OH_DecodingOptions_Create(&opts);
+
+    ret = OH_ImageSourceNative_CreatePixelmap(source, opts, &pixelmap);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    OH_DecodingOptions_Release(opts);
+
+    OH_PictureNative *picture = nullptr;
+    ret = OH_PictureNative_CreatePicture(pixelmap, &picture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    return picture;
+}
 
 OH_AuxiliaryPictureNative *CreateAuxiliaryPictureNative()
 {
@@ -431,5 +460,285 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_SetMetadataTest002, TestSize.
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
+/**
+ * @tc.name: OH_PictureNative_CreatePicture001
+ * @tc.desc: Verify that a native picture can be successfully created.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_CreatePicture001, TestSize.Level1)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    EXPECT_NE(picture, nullptr);
+    OH_PictureNative_Release(picture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_CreatePicture002
+ * @tc.desc: Verify error handling when creating a native picture with a null pixelmap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_CreatePicture002, TestSize.Level3)
+{
+    OH_PictureNative *picture = nullptr;
+    Image_ErrorCode ret = OH_PictureNative_CreatePicture(nullptr, &picture);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetMainPixelmap001
+ * @tc.desc: Verify retrieval of the main pixelmap from a native picture.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetMainPixelmap001, TestSize.Level1)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_PixelmapNative *mainPixelmap = nullptr;
+
+    Image_ErrorCode ret = OH_PictureNative_GetMainPixelmap(picture, &mainPixelmap);
+    EXPECT_NE(mainPixelmap, nullptr);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    OH_PictureNative_Release(picture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetMainPixelmap002
+ * @tc.desc: Verify error handling when attempting to retrieve the main pixelmap from a null picture object.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetMainPixelmap002, TestSize.Level3)
+{
+    OH_PixelmapNative *mainPixelmap = nullptr;
+    Image_ErrorCode ret = OH_PictureNative_GetMainPixelmap(nullptr, &mainPixelmap);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetGainmapPixelmap001
+ * @tc.desc: Verify retrieval of the gainmap pixelmap from a native picture with an auxiliary gainmap set.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetGainmapPixelmap001, TestSize.Level1)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, ::AuxiliaryPictureType::GAINMAP, auxiliaryPicture);
+    ASSERT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_PixelmapNative *gainmapPixelmap = nullptr;
+    ret = OH_PictureNative_GetGainmapPixelmap(picture, &gainmapPixelmap);
+    EXPECT_NE(gainmapPixelmap, nullptr);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetGainmapPixelmap002
+ * @tc.desc: Verify that the auxiliary gain map cannot retrieve the gain map pixel map from the local
+ *           image using the auxiliary gain map set.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetGainmapPixelmap002, TestSize.Level3)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, ::AuxiliaryPictureType::FRAGMENT_MAP, auxiliaryPicture);
+    ASSERT_EQ(ret, IMAGE_BAD_PARAMETER);
+
+    OH_PixelmapNative *gainmapPixelmap = nullptr;
+    ret = OH_PictureNative_GetGainmapPixelmap(picture, &gainmapPixelmap);
+    EXPECT_EQ(gainmapPixelmap, nullptr);
+    EXPECT_EQ(ret, IMAGE_ALLOC_FAILED);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetGainmapPixelmap003
+ * @tc.desc: Verify error handling when attempting to retrieve a gainmap pixelmap from a null picture pointer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetGainmapPixelmap003, TestSize.Level3)
+{
+    OH_PixelmapNative *gainmapPixelmap = nullptr;
+    Image_ErrorCode ret = OH_PictureNative_GetGainmapPixelmap(nullptr, &gainmapPixelmap);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetAuxiliaryPicture001
+ * @tc.desc: Verify the functionality of retrieving an auxiliary picture of type gainmap 
+ *           that has been previously set on a native picture.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetAuxiliaryPicture001, TestSize.Level1)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    ::AuxiliaryPictureType type = ::AuxiliaryPictureType::GAINMAP;
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, type, auxiliaryPicture);
+    ASSERT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureNative *auxPicture = nullptr;
+    ret = OH_PictureNative_GetAuxiliaryPicture(picture, type, &auxPicture);
+    EXPECT_NE(auxPicture, nullptr);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetAuxiliaryPicture002
+ * @tc.desc: The passed AuxiliaryFigureType does not exist, return exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetAuxiliaryPicture002, TestSize.Level3)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, ::AuxiliaryPictureType::GAINMAP, auxiliaryPicture);
+    ASSERT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureNative *auxPicture = nullptr;
+    ::AuxiliaryPictureType type = static_cast<::AuxiliaryPictureType>(-1);
+    ret = OH_PictureNative_GetAuxiliaryPicture(picture, type, &auxPicture);
+    EXPECT_EQ(auxPicture, nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetAuxiliaryPicture003
+ * @tc.desc: Get the desired AuxiliaryFigureType is not set and returns an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetAuxiliaryPicture003, TestSize.Level3)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, ::AuxiliaryPictureType::GAINMAP, auxiliaryPicture);
+    ASSERT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureNative *auxPicture = nullptr;
+    ret = OH_PictureNative_GetAuxiliaryPicture(picture, ::AuxiliaryPictureType::FRAGMENT_MAP, &auxPicture);
+    EXPECT_EQ(auxPicture, nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetAuxiliaryPicture004
+ * @tc.desc: Verify the behavior of OH_PictureNative_GetAuxiliaryPicture when attempting
+ *           to retrieve an auxiliary picture of type GAINMAP from a null picture pointer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetAuxiliaryPicture004, TestSize.Level3)
+{
+    OH_AuxiliaryPictureNative *auxiliaryPicture = nullptr;
+    Image_ErrorCode ret = OH_PictureNative_GetAuxiliaryPicture(nullptr, ::AuxiliaryPictureType::GAINMAP, &auxiliaryPicture);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_SetAuxiliaryPicture001
+ * @tc.desc: Verify the functionality of OH_PictureNative_SetAuxiliaryPicture by creating
+ *           a native picture and setting an auxiliary picture of type gainmap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_SetAuxiliaryPicture001, TestSize.Level1)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, ::AuxiliaryPictureType::GAINMAP, auxiliaryPicture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_SetAuxiliaryPicture002
+ * @tc.desc: Pass in a non-existent AuxiliaryFigureType and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_SetAuxiliaryPicture002, TestSize.Level3)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    ::AuxiliaryPictureType type = static_cast<::AuxiliaryPictureType>(-1);
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, type, auxiliaryPicture);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_SetAuxiliaryPicture003
+ * @tc.desc: Passing in different AuxiliaryPicture Types when creating AuxiliaryPicture, returns an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_SetAuxiliaryPicture003, TestSize.Level3)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_AuxiliaryPictureNative *auxiliaryPicture = CreateAuxiliaryPictureNative();
+
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(picture, ::AuxiliaryPictureType::FRAGMENT_MAP, auxiliaryPicture);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+
+    OH_PictureNative_Release(picture);
+    OH_AuxiliaryPictureNative_Release(auxiliaryPicture);
+}
+
+/**
+ * @tc.name: OH_PictureNative_SetAuxiliaryPicture004
+ * @tc.desc: Verify the behavior of OH_PictureNative_SetAuxiliaryPicture when attempting
+ *           to set an auxiliary picture of type gainmap on a null picture pointer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_SetAuxiliaryPicture004, TestSize.Level3)
+{
+    Image_ErrorCode ret = OH_PictureNative_SetAuxiliaryPicture(nullptr, ::AuxiliaryPictureType::GAINMAP, nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_Release001
+ * @tc.desc: Verify the functionality of OH_PictureNative_Release by creating a native picture
+ *           and releasing it successfully using OH_PictureNative_Release.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_Release001, TestSize.Level1)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    Image_ErrorCode ret = OH_PictureNative_Release(picture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+}
+
+/**
+ * @tc.name: OH_PictureNative_Release002
+ * @tc.desc: Verify the behavior of OH_PictureNative_Release when attempting to release
+ *           a null pointer to a native picture.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_Release002, TestSize.Level3)
+{
+    Image_ErrorCode ret = OH_PictureNative_Release(nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
 } // namespace Media
 } // namespace OHOS
