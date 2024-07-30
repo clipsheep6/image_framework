@@ -1240,7 +1240,7 @@ ohos_unittest("ndktest2") {
     "//third_party/googletest:gtest_main",
   ]
 
-   if (enable_libexif) {
+  if (enable_libexif) {
     deps += [ "//third_party/libexif:libexif" ]
   }
 
