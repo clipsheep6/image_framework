@@ -28,6 +28,7 @@
 #include "surface_buffer_impl.h"
 #include "tiff_parser.h"
 #include "securec.h"
+#include "image_source.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -771,6 +772,44 @@ HWTEST_F(PictureTest, SetExifMetadataByExifMetadataTest002, TestSize.Level2)
     ASSERT_NE(picture, nullptr);
     int32_t result = picture->SetExifMetadata(exifMetadata);
     EXPECT_EQ(result, ERR_IMAGE_INVALID_PARAMETER);
+}
+
+HWTEST_F(PictureTest, getHDRComposedPixelmapTest001, TestSize.Level1)
+{
+    uint32_t res = 0;
+    SourceOptions sourceOpts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PATH, sourceOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+    DecodingOptionsForPicture opts;
+    opts.desireAuxiliaryPictures.insert(AuxiliaryPictureType::GAINMAP);
+    uint32_t error_code;
+    std::unique_ptr<Picture> picture = imageSource->CreatePicture(opts, error_code);
+    ASSERT_NE(picture, nullptr);
+
+    std::unique_ptr<PixelMap> newpixelmap = picture->GetHdrComposedPixelMap();
+    EXPECT_NE(newpixelmap, nullptr);
+}
+
+/**
+ * @tc.name: SetExifMetadataByExifMetadataTest002
+ * @tc.desc: Set nullptr to picture exifMetadata_.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureTest, getHDRComposedPixelmapTest002, TestSize.Level2)
+{
+    uint32_t res = 0;
+    SourceOptions sourceOpts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_HDR_PATH, sourceOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+
+     DecodingOptionsForPicture opts;
+    opts.desireAuxiliaryPictures.insert(AuxiliaryPictureType::FRAGMENT_MAP);
+    uint32_t error_code;
+    std::unique_ptr<Picture> picture = imageSource->CreatePicture(opts, error_code);
+    ASSERT_NE(picture, nullptr);
+
+    std::unique_ptr<PixelMap> newpixelmap = picture->GetHdrComposedPixelMap();
+    EXPECT_EQ(newpixelmap, nullptr);
 }
 } // namespace Media
 } // namespace OHOS
