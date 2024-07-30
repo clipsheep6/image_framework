@@ -317,16 +317,24 @@ std::unique_ptr<PixelMap> Picture::GetHdrComposedPixelMap()
         IMAGE_LOGE("HDR SurfaceBuffer Alloc failed, %{public}d", ERR_DMA_NOT_EXIST);
         return nullptr;
     }
+    CM_HDR_Metadata_Type type;
+    if (hdrType == ImageHdrType::HDR_VIVID_DUAL || hdrType == ImageHdrType::HDR_CUVA) {
+        type = CM_IMAGE_HDR_VIVID_SINGLE;
+    } else if (hdrType == ImageHdrType::HDR_ISO_DUAL) {
+        type = CM_IMAGE_HDR_ISO_SINGLE;
+    }
+    VpeUtils::SetSbMetadataType(hdrSptr, type);
+    VpeUtils::SetSbColorSpaceType(hdrSptr, hdrCmColor);
     VpeSurfaceBuffers buffers = {
         .sdr = baseSptr,
         .gainmap = gainmapSptr,
         .hdr = hdrSptr,
     };
-    std::unique_ptr<VpeUtils> utils;
+    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     bool legacy = hdrType == ImageHdrType::HDR_CUVA;
     int32_t res = utils->ColorSpaceConverterComposeImage(buffers, legacy);
     if (res != VPE_ERROR_OK) {
-        IMAGE_LOGI("[ImageSource] composeImage failed");
+        IMAGE_LOGE("Compose HDR image failed");
         return nullptr;
     } else {
         return SurfaceBuffer2PixelMap(hdrSptr);
@@ -355,6 +363,11 @@ std::shared_ptr<AuxiliaryPicture> Picture::GetAuxiliaryPicture(AuxiliaryPictureT
 void Picture::SetAuxiliaryPicture(std::shared_ptr<AuxiliaryPicture> &picture)
 {
     auxiliaryPictures_[picture->GetType()] = picture;
+    if (picture != nullptr && picture->GetType() == AuxiliaryPictureType::GAINMAP) {
+        std::shared_ptr<PixelMap> gainmapPixel = GetGainmapPixelMap();
+        mainPixelMap_->SetHdrMetadata(gainmapPixel->GetHdrMetadata());
+        mainPixelMap_->SetHdrType(gainmapPixel->GetHdrType());
+    }
 }
 
 bool Picture::HasAuxiliaryPicture(AuxiliaryPictureType type)

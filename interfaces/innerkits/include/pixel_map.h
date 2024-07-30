@@ -289,9 +289,21 @@ public:
         exifMetadata_ = ptr;
     }
 
+    NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
+    NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
+    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
+
+    NATIVEEXPORT bool IsHdr();
+    NATIVEEXPORT uint32_t ToSdr();
+
     NATIVEEXPORT std::shared_ptr<HdrMetadata> GetHdrMetadata()
     {
         return hdrMetadata_;
+    }
+
+    NATIVEEXPORT void SetHdrMetadata(const std::shared_ptr<HdrMetadata> &metadata)
+    {
+        hdrMetadata_ = metadata;
     }
 
     NATIVEEXPORT ImageHdrType GetHdrType()
@@ -299,12 +311,10 @@ public:
         return hdrType_;
     }
 
-    NATIVEEXPORT uint32_t GetImagePropertyInt(const std::string &key, int32_t &value);
-    NATIVEEXPORT uint32_t GetImagePropertyString(const std::string &key, std::string &value);
-    NATIVEEXPORT uint32_t ModifyImageProperty(const std::string &key, const std::string &value);
-
-    NATIVEEXPORT bool IsHdr();
-    NATIVEEXPORT uint32_t ToSdr();
+    NATIVEEXPORT void SetHdrType(ImageHdrType hdrType)
+    {
+        hdrType_ = hdrType;
+    }
 
     static int32_t GetRGBxRowDataSize(const ImageInfo& info);
     static int32_t GetRGBxByteCount(const ImageInfo& info);
@@ -425,14 +435,14 @@ protected:
     bool useSourceAsResponse_ = false;
     bool isTransformered_ = false;
     std::shared_ptr<std::mutex> transformMutex_ = std::make_shared<std::mutex>();
-    std::shared_ptr<HdrMetadata> hdrMetadata_;
-    ImageHdrType hdrType_;
 
     // only used by rosen backend
     uint32_t uniqueId_ = 0;
     bool isAstc_ = false;
     TransformData transformData_ = {1, 1, 0, 0, 0, 0, 0, 0, 0, false, false};
     Size astcrealSize_;
+    std::shared_ptr<HdrMetadata> hdrMetadata_ = nullptr;
+    ImageHdrType hdrType_;
 
 #ifdef IMAGE_COLORSPACE_FLAG
     std::shared_ptr<OHOS::ColorManager::ColorSpace> grColorSpace_ = nullptr;

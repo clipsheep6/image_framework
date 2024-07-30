@@ -16,6 +16,7 @@
 #ifndef INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H
 #define INTERFACE_INNERKITS_INCLUDE_AUXILIARY_PICTURE_H
 
+#include <map>
 #include "metadata.h"
 #include "pixel_map.h"
 #include "image_type.h"
@@ -27,6 +28,7 @@ namespace OHOS {
 namespace OHOS {
 namespace Media {
 class ImageMetadata;
+
 class AuxiliaryPicture : public Parcelable {
 public:
     AuxiliaryPicture() = default;

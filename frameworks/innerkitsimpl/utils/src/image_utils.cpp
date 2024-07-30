@@ -689,18 +689,10 @@ void ImageUtils::FlushSurfaceBuffer(PixelMap* pixelMap)
 #endif
 }
 
-bool ImageUtils::IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType auxiliaryPictureType)
+bool ImageUtils::IsAuxiliaryPictureTypeSupported(AuxiliaryPictureType type)
 {
-    if (auxiliaryPictureType == AuxiliaryPictureType::NONE ||
-        auxiliaryPictureType == AuxiliaryPictureType::GAINMAP ||
-        auxiliaryPictureType == AuxiliaryPictureType::DEPTH_MAP ||
-        auxiliaryPictureType == AuxiliaryPictureType::UNREFOCUS_MAP ||
-        auxiliaryPictureType == AuxiliaryPictureType::LINEAR_MAP ||
-        auxiliaryPictureType == AuxiliaryPictureType::FRAGMENT_MAP) {
-        return true;
-    } else {
-        return false;
-    }
+    auto auxTypes = GetAllAuxiliaryPictureType();
+    return (auxTypes.find(type) != auxTypes.end());
 }
 
 bool ImageUtils::IsMetadataTypeSupported(MetadataType metadataType)
@@ -711,5 +703,16 @@ bool ImageUtils::IsMetadataTypeSupported(MetadataType metadataType)
         return false;
     }
 }
+
+const std::set<AuxiliaryPictureType> ImageUtils::GetAllAuxiliaryPictureType() {
+    static const std::set<AuxiliaryPictureType> auxTypes = {
+        AuxiliaryPictureType::GAINMAP,
+        AuxiliaryPictureType::DEPTH_MAP,
+        AuxiliaryPictureType::UNREFOCUS_MAP,
+        AuxiliaryPictureType::LINEAR_MAP,
+        AuxiliaryPictureType::FRAGMENT_MAP};
+    return auxTypes;
+}
+
 } // namespace Media
 } // namespace OHOS

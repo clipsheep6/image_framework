@@ -48,6 +48,7 @@ config("image_external_config") {
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
     "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/converter/include",
     "${image_subsystem}/plugins/common/libs/image/libextplugin/include/heif_impl/heif_parser",
+    "${image_subsystem}/plugins/common/libs/image/libextplugin/include/hdr",
   ]
 
   if (use_mingw_win) {
@@ -145,6 +146,7 @@ if (use_clang_android) {
       "${image_subsystem}/frameworks/innerkitsimpl/common/src/pixel_yuv.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/converter/src/image_format_convert_utils.cpp",
+      "${image_subsystem}/frameworks/innerkitsimpl/picture/auxiliary_generator.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/picture/auxiliary_picture.cpp",
       "${image_subsystem}/frameworks/innerkitsimpl/picture/picture.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/codec/src/image_packer.cpp",
@@ -169,6 +171,7 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+      "${image_subsystem}/plugins/common/libs/image/libextplugin/src/hdr/jpeg_mpf_parser.cpp",
     ]
 
     if (use_mingw_win) {
