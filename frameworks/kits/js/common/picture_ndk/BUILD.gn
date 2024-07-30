@@ -27,7 +27,6 @@ ohos_shared_library("image_common") {
     "${image_subsystem}/interfaces/innerkits/include",
     "${image_subsystem}/interfaces/kits/native/include/image",
     "${image_subsystem}/frameworks/kits/js/common/picture_ndk/include",
-    "${image_subsystem}/mock/native/include",
   ]
 
   sources = [
@@ -38,10 +37,7 @@ ohos_shared_library("image_common") {
   public_configs =
       [ "${image_subsystem}/interfaces/innerkits:image_external_config" ]
 
-  deps = [
-    "${image_subsystem}/interfaces/innerkits:image_native",
-    "${image_subsystem}/mock/native:log_mock_static",
-  ]
+  deps = [ "${image_subsystem}/interfaces/innerkits:image_native" ]
 
   if (enable_libexif) {
     external_deps = [ "libexif:libexif" ]
@@ -90,7 +86,6 @@ ohos_shared_library("picture") {
     "${image_subsystem}/frameworks/kits/js/common/picture_ndk:image_common",
     "${image_subsystem}/frameworks/kits/js/common/pixelmap_ndk:pixelmap",
     "${image_subsystem}/interfaces/innerkits:image_native",
-    "${image_subsystem}/mock/native:log_mock_static",
   ]
 
   if (enable_libexif) {
