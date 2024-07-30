@@ -165,19 +165,6 @@ static uint32_t DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     return SUCCESS;
 }
 
-static uint32_t DecodeFragmentMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
-    std::unique_ptr<AuxiliaryPicture> &auxPicture)
-{
-    // TODO: 水印metadata的解析依赖实际数据格式（外部）
-    std::shared_ptr<ImageMetadata> fragmentMetadata = nullptr;
-    if (fragmentMetadata == nullptr) {
-        IMAGE_LOGE("Decode fragment metadata failed!");
-        return ERR_IMAGE_DECODE_ABNORMAL;
-    }
-    auxPicture->SetMetadata(MetadataType::FRAGMENT, fragmentMetadata);
-    return SUCCESS;
-}
-
 static uint32_t DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     AuxiliaryPictureType type, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
@@ -190,9 +177,7 @@ static uint32_t DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
         case AuxiliaryPictureType::DEPTH_MAP:
         case AuxiliaryPictureType::UNREFOCUS_MAP:
         case AuxiliaryPictureType::LINEAR_MAP:
-            break;
         case AuxiliaryPictureType::FRAGMENT_MAP:
-            errorCode = DecodeFragmentMetadata(extDecoder, auxPicture);
             break;
         default:
             errorCode = ERR_MEDIA_DATA_UNSUPPORT;

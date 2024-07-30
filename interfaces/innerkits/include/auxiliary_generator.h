@@ -25,13 +25,12 @@
 
 namespace OHOS {
 namespace Media {
-using namespace std;
 using namespace ImagePlugin;
 using namespace MultimediaPlugin;
 
 class AuxiliaryGenerator {
 public:
-    static shared_ptr<AuxiliaryPicture> GenerateAuxiliaryPicture(AuxiliaryPictureType type,
+    static std::shared_ptr<AuxiliaryPicture> GenerateAuxiliaryPicture(AuxiliaryPictureType type,
         const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode);
 };
 } // namespace Media
