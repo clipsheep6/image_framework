@@ -32,7 +32,6 @@ class ExifMetadata;
 
 class Picture : public Parcelable {
 public:
-    Picture() = default;
     virtual ~Picture();
 
     NATIVEEXPORT static std::unique_ptr<Picture> Create(std::shared_ptr<PixelMap> &PixelMap);

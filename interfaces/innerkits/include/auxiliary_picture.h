@@ -31,8 +31,7 @@ class ImageMetadata;
 
 class AuxiliaryPicture : public Parcelable {
 public:
-    AuxiliaryPicture() = default;
-    virtual ~AuxiliaryPicture() {}
+    virtual ~AuxiliaryPicture();
 
     NATIVEEXPORT static std::unique_ptr<AuxiliaryPicture> Create(std::shared_ptr<PixelMap> &content,
                                                                  AuxiliaryPictureType type, Size size = {0, 0});

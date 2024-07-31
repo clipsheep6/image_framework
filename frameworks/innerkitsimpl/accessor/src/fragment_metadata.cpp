@@ -26,6 +26,13 @@
 
 namespace OHOS {
 namespace Media {
+FragmentMetadata::FragmentMetadata() {}
+
+FragmentMetadata::FragmentMetadata(const FragmentMetadata& fragmentMetadata)
+    : properties_(std::make_shared<ImageMetadata::PropertyMap>(*fragmentMetadata.properties_)) {}
+
+FragmentMetadata::~FragmentMetadata() {}
+
 static bool IsValidKey(const std::string &key)
 {
     return FRAGMENT_METADATA_KEYS.find(key) != FRAGMENT_METADATA_KEYS.end();
@@ -80,9 +87,7 @@ const ImageMetadata::PropertyMapPtr FragmentMetadata::GetAllProperties()
 
 std::shared_ptr<ImageMetadata> FragmentMetadata::CloneMetadata()
 {
-    std::shared_ptr<FragmentMetadata> newFragmentMetadata = std::make_shared<FragmentMetadata>();
-    newFragmentMetadata->properties_ = this->properties_;
-    return newFragmentMetadata;
+    return std::make_shared<FragmentMetadata>(*this);
 }
 
 bool FragmentMetadata::Marshalling(Parcel &parcel) const

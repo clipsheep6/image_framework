@@ -762,15 +762,22 @@ bool ExifMetadata::Marshalling(Parcel &parcel) const
     unsigned int size = 0;
     exif_data_save_data(exifData_, &data, &size);
 
-    if (!parcel.WriteUint32(static_cast<int32_t>(size))) {
+    if (!parcel.WriteBool(data != nullptr && size != 0)) {
+        IMAGE_LOGE("Failed to write exif data buffer existence value.");
         return false;
     }
 
-    if (size != 0 && !parcel.WriteUnpadBuffer(data, size)) {
-        return false;
+    if (data != nullptr && size != 0) {
+        std::unique_ptr<unsigned char[]> exifData(data);
+        if (!parcel.WriteUint32(static_cast<uint32_t>(size))) {
+            return false;
+        }
+        if (!parcel.WriteUnpadBuffer(exifData.get(), size)) {
+            return false;
+        }
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel)
@@ -785,12 +792,14 @@ ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel)
 }
 
 ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
-{
-    uint32_t size = 0;
-    if (!parcel.ReadUint32(size)) {
-        return nullptr;
-    }
-    if (size != 0) {
+{   
+    bool hasExifDataBuffer = parcel.ReadBool();
+    if (hasExifDataBuffer) {
+        uint32_t size = 0;
+        if (!parcel.ReadUint32(size)) {
+            return nullptr;
+        }
+        
         const uint8_t *data = parcel.ReadUnpadBuffer(static_cast<size_t>(size));
         if (!data) {
             return nullptr;
@@ -798,9 +807,8 @@ ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
         ExifData *ptrData = exif_data_new_from_data(data, static_cast<unsigned int>(size));
         ExifMetadata *exifMetadata = new(std::nothrow) ExifMetadata(ptrData);
         return exifMetadata;
-    } else {
-        return nullptr;
     }
+    return nullptr;
 }
 } // namespace Media
 } // namespace OHOS
