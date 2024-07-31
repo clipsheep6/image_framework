@@ -146,8 +146,8 @@ static CM_ColorSpaceType GetCMColorSpaceType(sptr<SurfaceBuffer> buffer)
     return type;
 }
 
-static ColorSpace CMColorSpaceType2ColorSpace(CM_ColorSpaceType type) {
-    IMAGE_LOGI("CMColorSpaceType2ColorSpace: %{public}d", type);
+static ColorSpace CMColorSpaceType2ColorSpace(CM_ColorSpaceType type)
+{
     auto iter = CM_COLORSPACE_MAP.find(type);
     if (iter == CM_COLORSPACE_MAP.end()) {
         return ColorSpace::UNKNOWN;
@@ -158,7 +158,6 @@ static ColorSpace CMColorSpaceType2ColorSpace(CM_ColorSpaceType type) {
 #ifdef IMAGE_COLORSPACE_FLAG
 static ColorManager::ColorSpaceName CMColorSpaceType2ColorSpaceName(CM_ColorSpaceType type)
 {
-    IMAGE_LOGI("CMColorSpaceType2ColorSpaceName: %{public}d", type);
     auto iter = CM_COLORSPACE_NAME_MAP.find(type);
     if (iter == CM_COLORSPACE_NAME_MAP.end()) {
         return ColorManager::NONE;
@@ -358,7 +357,12 @@ bool Picture::Marshalling(Parcel &data) const
         }
     }
 
-    if (exifMetadata_) {
+    if (!data.WriteBool(exifMetadata_ != nullptr)) {
+        IMAGE_LOGE("Failed to write exif data existence value.");
+        return false;
+    }
+
+    if (exifMetadata_ != nullptr) {
         if (!exifMetadata_->Marshalling(data)) {
             IMAGE_LOGE("Failed to marshal exif metadata.");
             return false;
@@ -410,8 +414,12 @@ Picture *Picture::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
         }
         picture->maintenanceData_ = surfaceBuffer;
     }
-    picture->exifMetadata_ = std::shared_ptr<ExifMetadata>(ExifMetadata::Unmarshalling(parcel));
 
+    bool hasExifData = parcel.ReadBool();
+    if (hasExifData) {
+        picture->exifMetadata_ = std::shared_ptr<ExifMetadata>(ExifMetadata::Unmarshalling(parcel));
+    }
+    
     return picture.release();
 }
 
@@ -433,15 +441,20 @@ int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
         return ERR_IMAGE_INVALID_PARAMETER;
     }
 
+    size_t tiffHeaderPos = TiffParser::FindTiffPos(reinterpret_cast<const byte *>(surfaceBuffer->GetVirAddr()), size);
+    if (tiffHeaderPos == std::numeric_limits<size_t>::max()) {
+        IMAGE_LOGE("Input image stream is not tiff type.");
+        return ERR_IMAGE_SOURCE_DATA;
+    }
+
     ExifData *exifData;
-    TiffParser::Decode(static_cast<const unsigned char *>(surfaceBuffer->GetVirAddr()), size, &exifData);
+    TiffParser::Decode(static_cast<const unsigned char *>(surfaceBuffer->GetVirAddr()) + tiffHeaderPos, size - tiffHeaderPos, &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Failed to decode EXIF data from image stream.");
         return ERR_EXIF_DECODE_FAILED;
     }
 
     exifMetadata_ = std::make_shared<OHOS::Media::ExifMetadata>(exifData);
-
     return SUCCESS;
 }
 

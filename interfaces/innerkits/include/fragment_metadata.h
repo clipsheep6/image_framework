@@ -30,8 +30,9 @@ const static std::set<std::string> FRAGMENT_METADATA_KEYS = {
 };
 class FragmentMetadata : public ImageMetadata {
 public:
-    virtual ~FragmentMetadata() {}
-    
+    FragmentMetadata();
+    FragmentMetadata(const FragmentMetadata& fragmentMetadata);
+    virtual ~FragmentMetadata();
     virtual int GetValue(const std::string &key, std::string &value) const override;
     virtual bool SetValue(const std::string &key, const std::string &value) override;
     virtual bool RemoveEntry(const std::string &key) override;
