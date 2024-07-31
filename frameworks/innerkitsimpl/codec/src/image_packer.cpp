@@ -238,7 +238,6 @@ uint32_t ImagePacker::AddImage(ImageSource &source, uint32_t index)
 
 uint32_t ImagePacker::AddPicture(Picture &picture)
 {
-    ImageTrace imageTrace("ImagePacker::AddPicture by picture");
     return DoEncodingFunc([this, &picture](ImagePlugin::AbsImageEncoder* encoder) {
         return encoder->AddPicture(picture);
     });
