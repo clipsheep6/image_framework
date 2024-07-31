@@ -239,5 +239,5 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(A
     return std::move(auxPicture);
 }
 
-} // Media
-} // OHOS
+} // namespace Media
+} // namespace OHOS

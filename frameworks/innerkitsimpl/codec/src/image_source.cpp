@@ -4029,27 +4029,14 @@ DecodeContext ImageSource::DecodeImageDataToContextExtended(uint32_t index, Imag
     return context;
 }
 
-bool ImageSource::CheckHdrType()
-{
-    if (sourceHdrType_ != ImageHdrType::UNKNOWN) {
-        return true;
-    }
-
-    if (InitMainDecoder() != SUCCESS) {
-        return false;
-    }
-    sourceHdrType_ = mainDecoder_->CheckHdrType();
-    return true;
-}
-
 std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode)
 {
     DecodeOptions dopts;
     dopts.desiredPixelFormat = PixelFormat::RGBA_8888;
-    dopts.desiredDynamicRange = (CheckHdrType() && IsSingleHdrImage(sourceHdrType_)) ?
+    dopts.desiredDynamicRange = (ParseHdrType() && IsSingleHdrImage(sourceHdrType_)) ?
         DecodeDynamicRange::HDR : DecodeDynamicRange::SDR;
-    std::shared_ptr<PixelMap> pixelMap = CreatePixelMap(dopts, errorCode);
-    std::unique_ptr<Picture> picture = Picture::Create(pixelMap);
+    std::shared_ptr<PixelMap> mainPixelMap = CreatePixelMap(dopts, errorCode);
+    std::unique_ptr<Picture> picture = Picture::Create(mainPixelMap);
     if (picture == nullptr) {
         IMAGE_LOGE("Picture is nullptr");
         errorCode = ERR_IMAGE_PICTURE_CREATE_FAILED;
@@ -4077,6 +4064,11 @@ std::unique_ptr<Picture> ImageSource::CreatePicture(const DecodingOptionsForPict
 void ImageSource::DecodeHeifAuxiliaryPictures(
     const std::set<AuxiliaryPictureType> &auxTypes, std::unique_ptr<Picture> &picture, uint32_t &errorCode)
 {
+    if (mainDecoder_ == nullptr) {
+        IMAGE_LOGE("mainDecoder_ is nullptr");
+        errorCode = ERR_IMAGE_PLUGIN_CREATE_FAILED;
+        return;
+    }
     for (auto& auxType : auxTypes) {
         if (!mainDecoder_->CheckAuxiliaryMap(auxType)) {
             IMAGE_LOGE("The auxiliary picture type does not exist! Type: %{public}d", auxType);
