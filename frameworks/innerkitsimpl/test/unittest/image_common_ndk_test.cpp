@@ -27,7 +27,7 @@ public:
     ImageCommonNdkTest() {}
     ~ImageCommonNdkTest() {}
 };
-
+static constexpr ::MetadataType INVALID_METADATA = static_cast<::MetadataType>(3);
 /**
  * @tc.name: OH_PictureMetadata_CreateTest001
  * @tc.desc: Tests the creation and release of picture metadata for EXIF_METADATA.
@@ -83,7 +83,7 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest003, TestSize.Level3)
 HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest004, TestSize.Level3)
 {
     OH_PictureMetadata *metadataPtr = nullptr;
-    Image_ErrorCode res = OH_PictureMetadata_Create(static_cast<::MetadataType>(3), &metadataPtr);
+    Image_ErrorCode res = OH_PictureMetadata_Create(INVALID_METADATA, &metadataPtr);
     EXPECT_EQ(res, IMAGE_BAD_PARAMETER);
 }
 
