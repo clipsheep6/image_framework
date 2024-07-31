@@ -246,7 +246,6 @@ uint32_t ImagePacker::AddPicture(Picture &picture)
 
 uint32_t ImagePacker::FinalizePacking()
 {
-    ImageTrace imageTrace("ImagePacker::FinalizePacking");
     return DoEncodingFunc([](ImagePlugin::AbsImageEncoder* encoder) {
         auto res = encoder->FinalizeEncode();
         if (res != SUCCESS) {
