@@ -417,14 +417,14 @@ Image_ErrorCode OH_AuxiliaryPictureInfo_GetSize(OH_AuxiliaryPictureInfo *info, I
 MIDK_EXPORT
 Image_ErrorCode OH_AuxiliaryPictureInfo_SetSize(OH_AuxiliaryPictureInfo *info, Image_Size *size)
 {
-    if (info == nullptr || !info->GetInnerAuxiliaryPictureInfo()) {
+    if (info == nullptr || !info->GetInnerAuxiliaryPictureInfo() || size == nullptr) {
         return IMAGE_BAD_PARAMETER;
     }
     OHOS::Media::Size sizeTmp = OHOS::Media::Size();
     sizeTmp.height = size->height;
     sizeTmp.width = size->width;
     info->GetInnerAuxiliaryPictureInfo()->size = sizeTmp;
-    return  IMAGE_SUCCESS;
+    return IMAGE_SUCCESS;
 }
 
 MIDK_EXPORT
