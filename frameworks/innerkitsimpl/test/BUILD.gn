@@ -1249,6 +1249,7 @@ ohos_unittest("ndktest2") {
     "graphic_2d:color_manager",
     "graphic_surface:surface",
     "hilog:libhilog",
+    "napi:ace_napi",
   ]
 }
 
