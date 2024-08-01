@@ -656,6 +656,91 @@ HWTEST_F(ImagePackerTest, StartPacking020, TestSize.Level3)
 }
 
 /**
+ * @tc.name: StartPacking021
+ * @tc.desc: test StartPacking021 with const std::string &filePath jpeg => jpeg
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking021, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking021 start";
+
+    remove(IMAGE_JPG_DEST.c_str());
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    DecodeOptions decOpts;
+    decOpts.desiredPixelFormat = PixelFormat::NV12;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decOpts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(IMAGE_JPG_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+
+    uint32_t retAddimgae = pack.AddImage(*pixelMap);
+    ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
+
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_JPG_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking021 end";
+}
+
+/**
+ * @tc.name: StartPacking022
+ * @tc.desc: test StartPacking022 with const std::string &filePath jpeg => jpeg
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking022, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking022 start";
+
+    remove(IMAGE_JPG_DEST.c_str());
+
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSource.get(), nullptr);
+
+    DecodeOptions decOpts;
+    decOpts.desiredPixelFormat = PixelFormat::NV21;
+    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(decOpts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(pixelMap.get(), nullptr);
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(IMAGE_JPG_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+
+    uint32_t retAddimgae = pack.AddImage(*pixelMap);
+    ASSERT_EQ(retAddimgae, OHOS::Media::SUCCESS);
+
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_JPG_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking022 end";
+}
+
  * @tc.name: PackYuv2Jpeg001
  * @tc.desc: test PackYuv2Jpeg
  * @tc.type: FUNC

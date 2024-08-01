@@ -54,6 +54,7 @@
 #include "tiff_parser.h"
 #include "image_mime_type.h"
 #include "securec.h"
+#include "jpeg_encoder_yuv.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -632,11 +633,32 @@ uint32_t ExtEncoder::EncodeDualVivid(ExtWStream& outputStream)
 
 uint32_t ExtEncoder::EncodeSdrImage(ExtWStream& outputStream)
 {
-    if (pixelmap_->GetPixelFormat() != PixelFormat::RGBA_1010102) {
-        return EncodeImageByPixelMap(pixelmap_, opts_.needsPackProperties, outputStream);
-    }
     ImageInfo info;
     pixelmap_->GetImageInfo(info);
+
+    if (info.pixelFormat != PixelFormat::RGBA_1010102) {
+        if ((info.pixelFormat == PixelFormat::NV12 ||
+            info.pixelFormat == PixelFormat::NV21) &&
+            IsSameTextStr(opts_.format, IMAGE_JPEG_FORMAT)) {
+            uint8_t* jpegBuffer = nullptr;
+            unsigned long jpegBufSize = 0;
+            JpegYuvEncodeError errEnc = JpegYuvEncodeError_Success;
+            JpegEncoderYuv encYUV(
+                pixelmap_->GetWidth(),
+                pixelmap_->GetHeight(),
+                pixelmap_->GetPixelFormat(),
+                pixelmap_->GetPixels(),
+                pixelmap_->GetByteCount(),
+                &jpegBuffer, &jpegBufSize, errEnc);
+            if (errEnc == JpegYuvEncodeError_Success) {
+                outputStream.write(jpegBuffer, jpegBufSize);
+            }
+            return (uint32_t)errEnc;
+        } else {
+            return EncodeImageByPixelMap(pixelmap_, opts_.needsPackProperties, outputStream);
+        }
+    }
+
     SkImageInfo baseInfo = GetSkInfo(pixelmap_, false);
     SkImageInfo gainmapInfo = GetSkInfo(pixelmap_, true);
     sptr<SurfaceBuffer> baseSptr = AllocSurfaceBuffer(baseInfo, CM_IMAGE_HDR_VIVID_DUAL, CM_SRGB_FULL);
