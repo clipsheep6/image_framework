@@ -1516,7 +1516,7 @@ uint32_t ImageSource::CreatExifMetadataByImageSource(bool addFlag)
         IMAGE_LOGE("Invalid buffer size. It's zero. Please check the buffer size.");
         return ERR_IMAGE_SOURCE_DATA;
     }
-    
+
     if (bufferSize > MAX_BUFFER_SIZE) {
         IMAGE_LOGE("Invalid buffer size. It's too big. Please check the buffer size.");
         return ERR_IMAGE_SOURCE_DATA;
@@ -4075,7 +4075,7 @@ void ImageSource::DecodeHeifAuxiliaryPictures(
             continue;
         }
         auto auxiliaryPicture = AuxiliaryGenerator::GenerateAuxiliaryPicture(
-            auxType, IMAGE_HEIF_FORMAT, mainDecoder_, errorCode);
+            sourceHdrType_, auxType, IMAGE_HEIF_FORMAT, mainDecoder_, errorCode);
         if (auxiliaryPicture == nullptr) {
             IMAGE_LOGE("Generate heif auxiliary picture failed! Type: %{public}d, errorCode: %{public}d",
                 auxType, errorCode);
@@ -4116,7 +4116,7 @@ void ImageSource::DecodeJpegAuxiliaryPicture(
             auto auxDecoder = std::unique_ptr<AbsImageDecoder>(
                 DoCreateDecoder(InnerFormat::IMAGE_EXTENDED_CODEC, pluginServer_, *auxStream, errorCode));
             auto auxPicture = AuxiliaryGenerator::GenerateAuxiliaryPicture(
-                auxInfo.auxType, IMAGE_JPEG_FORMAT, auxDecoder, errorCode);
+                sourceHdrType_, auxInfo.auxType, IMAGE_JPEG_FORMAT, auxDecoder, errorCode);
             if (auxPicture == nullptr) {
                 IMAGE_LOGE("Generate jepg auxiliary picture failed!, errorCode: %{public}d", errorCode);
             } else {
