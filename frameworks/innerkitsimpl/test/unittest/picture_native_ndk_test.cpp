@@ -764,7 +764,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReleaseTest001, TestSize.Leve
 
     ret = OH_AuxiliaryPictureNative_Release(auxiliaryPictureNative);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
-    auxiliaryPictureNative = nullptr;
 }
 
 /**
@@ -774,10 +773,8 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReleaseTest001, TestSize.Leve
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReleaseTest002, TestSize.Level3)
 {
-    OH_AuxiliaryPictureNative *auxiliaryPictureNative = nullptr;
-
-    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Release(auxiliaryPictureNative);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Release(nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -793,21 +790,17 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_CreateTest001, TestSize.Level1)
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
  * @tc.name: OH_AuxiliaryPictureInfo_CreateTest002
- * @tc.desc: Pass in an empty double pointer and return exception.
+ * @tc.desc: Pass in null pointer and return exception.
  * @tc.type: FUNC
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_CreateTest002, TestSize.Level3)
 {
-    OH_AuxiliaryPictureInfo **auxiliaryPictureInfo = nullptr;
-    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(auxiliaryPictureInfo);
-
-    EXPECT_EQ(auxiliaryPictureInfo, nullptr);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -827,7 +820,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetTypeTest001, TestSize.Level1
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -844,10 +836,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetTypeTest002, TestSize.Level3
 
     ::AuxiliaryPictureType type = (::AuxiliaryPictureType)errorAuxiliaryPictureType;
     ret = OH_AuxiliaryPictureInfo_SetType(auxiliaryPictureInfo, type);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -878,7 +867,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetTypeTest001, TestSize.Level1
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -891,10 +879,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetTypeTest002, TestSize.Level3
     OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
     ::AuxiliaryPictureType type;
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetType(auxiliaryPictureInfo, &type);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -916,7 +901,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetSizeTest001, TestSize.Level1
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -930,10 +914,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetSizeTest002, TestSize.Level3
     Image_Size *size = nullptr;
 
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_SetSize(auxiliaryPictureInfo, size);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -960,7 +941,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetSizeTest001, TestSize.Level1
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -974,10 +954,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetSizeTest002, TestSize.Level3
     Image_Size retSize;
 
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetSize(auxiliaryPictureInfo, &retSize);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -996,7 +973,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetRowStrideTest001, TestSize.L
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -1009,10 +985,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetRowStrideTest002, TestSize.L
     OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
 
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_SetRowStride(auxiliaryPictureInfo, rowStride);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -1036,7 +1009,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetRowStrideTest001, TestSize.L
     EXPECT_EQ(retRowStride, rowStride);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -1050,10 +1022,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetRowStrideTest002, TestSize.L
     uint32_t retRowStride;
 
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetRowStride(auxiliaryPictureInfo, &retRowStride);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -1073,7 +1042,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetPixelFormatTest001, TestSize
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -1087,10 +1055,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetPixelFormatTest002, TestSize
     PIXEL_FORMAT pixelFormat = PIXEL_FORMAT_NV21;
 
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_SetPixelFormat(auxiliaryPictureInfo, pixelFormat);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -1115,7 +1080,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetPixelFormatTest001, TestSize
     EXPECT_EQ(retPixelFormat, pixelFormat);
 
     OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -1129,10 +1093,7 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetPixelFormatTest002, TestSize
     PIXEL_FORMAT retPixelFormat;
 
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetPixelFormat(auxiliaryPictureInfo, &retPixelFormat);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
-
-    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    auxiliaryPictureInfo = nullptr;
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 /**
@@ -1149,7 +1110,6 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_ReleaseTest001, TestSize.Level1
 
     ret = OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
-    auxiliaryPictureInfo = nullptr;
 }
 
 /**
@@ -1159,10 +1119,8 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_ReleaseTest001, TestSize.Level1
  */
 HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_ReleaseTest002, TestSize.Level3)
 {
-    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
-
-    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
-    EXPECT_NE(ret, IMAGE_SUCCESS);
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Release(nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
 } // namespace Media
