@@ -55,7 +55,6 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest002, TestSize.Level1)
     ::MetadataType metadataType = FRAGMENT_METADATA;
     OH_PictureMetadata *metadataPtr = nullptr;
     Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
-
     EXPECT_EQ(res, IMAGE_SUCCESS);
     OH_PictureMetadata_Release(metadataPtr);
     EXPECT_EQ(res, IMAGE_SUCCESS);

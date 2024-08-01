@@ -404,6 +404,8 @@ HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_CreateTest001, TestSiz
     Image_ErrorCode ret;
     ret = OH_DecodingOptionsForPicture_Create(&options);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
+    ret = OH_DecodingOptionsForPicture_Release(options);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
 }
 
 /**
@@ -413,9 +415,7 @@ HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_CreateTest001, TestSiz
  */
 HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_ReleaseTest001, TestSize.Level3)
 {
-    OH_DecodingOptionsForPicture *options = nullptr;
-    Image_ErrorCode ret;
-    ret = OH_DecodingOptionsForPicture_Release(options);
+    Image_ErrorCode ret = OH_DecodingOptionsForPicture_Release(nullptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
@@ -428,8 +428,7 @@ HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_ReleaseTest001, TestSi
 HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPicturesTest001, TestSize.Level1)
 {
     OH_DecodingOptionsForPicture *options = nullptr;
-    Image_ErrorCode ret;
-    ret = OH_DecodingOptionsForPicture_Create(&options);
+    Image_ErrorCode ret = OH_DecodingOptionsForPicture_Create(&options);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     ASSERT_NE(options, nullptr);
     size_t srcLength = TestLength;
@@ -442,11 +441,13 @@ HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPic
     ret = OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(options, &dstAuxTypeList, &dstLength);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
     ASSERT_NE(dstAuxTypeList, nullptr);
-    ASSERT_EQ(srcLength, dstLength);
+    EXPECT_EQ(srcLength, dstLength);
     for (size_t index = 0; index < srcLength; index++) {
-        ASSERT_EQ(srcAuxTypeList[index], dstAuxTypeList[index]);
+        EXPECT_EQ(srcAuxTypeList[index], dstAuxTypeList[index]);
     }
     delete[] dstAuxTypeList;
+    ret = OH_DecodingOptionsForPicture_Release(options);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
 }
 
 /**
@@ -456,11 +457,7 @@ HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPic
  */
 HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPicturesTest002, TestSize.Level3)
 {
-    OH_DecodingOptionsForPicture *options = nullptr;
-    ::AuxiliaryPictureType **ptrAuxTypeList = nullptr;
-    size_t *ptrLength = nullptr;
-    Image_ErrorCode ret;
-    ret = OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(options, ptrAuxTypeList, ptrLength);
+    Image_ErrorCode ret = OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(nullptr, nullptr, nullptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 
@@ -471,11 +468,7 @@ HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPic
  */
 HWTEST_F(ImagSourceNdk2Test, OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPicturesTest001, TestSize.Level3)
 {
-    OH_DecodingOptionsForPicture *options = nullptr;
-    ::AuxiliaryPictureType *dstAuxTypeList = nullptr;
-    size_t dstLength = 0;
-    Image_ErrorCode ret;
-    ret = OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPictures(options, dstAuxTypeList, dstLength);
+    Image_ErrorCode ret = OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPictures(nullptr, nullptr, 0);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
 }
