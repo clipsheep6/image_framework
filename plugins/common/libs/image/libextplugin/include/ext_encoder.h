@@ -27,6 +27,9 @@
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #endif
+#ifdef HEIF_HW_ENCODE_ENABLE
+#include "v1_0/icodec_image.h"
+#endif
 
 namespace OHOS {
 namespace ImagePlugin {
@@ -36,6 +39,7 @@ public:
     ~ExtEncoder() override;
     uint32_t StartEncode(OutputDataStream &outputStream, PlEncodeOptions &option) override;
     uint32_t AddImage(Media::PixelMap &pixelMap) override;
+    uint32_t AddPicture(Media::Picture &picture) override;
     uint32_t FinalizeEncode() override;
 
 private:
@@ -48,6 +52,9 @@ private:
     uint32_t EncodeSdrImage(ExtWStream& outputStream);
     uint32_t EncodeDualVivid(ExtWStream& outputStream);
     uint32_t EncodeSingleVivid(ExtWStream& outputStream);
+    uint32_t EncodePicture();
+    uint32_t EncodeJpegPicture(ExtWStream& outputStream);
+    uint32_t EncodeHeifPicture(ExtWStream& outputStream);
     sk_sp<SkData> GetImageEncodeData(sptr<SurfaceBuffer>& surfaceBuffer, SkImageInfo info, bool needExif);
     uint32_t EncodeImageBySurfaceBuffer(sptr<SurfaceBuffer>& surfaceBuffer, SkImageInfo info,
         bool needExif, SkWStream& outputStream);
@@ -58,6 +65,10 @@ private:
     OutputDataStream* output_ = nullptr;
     PlEncodeOptions opts_;
     Media::PixelMap* pixelmap_ = nullptr;
+#ifdef HEIF_HW_ENCODE_ENABLE
+    Media::Picture* picture_ = nullptr;
+    OHOS::sptr<OHOS::HDI::Codec::Image::V1_0::ICodecImage> hwEncoder_;
+#endif
 };
 } // namespace ImagePlugin
 } // namespace OHOS
