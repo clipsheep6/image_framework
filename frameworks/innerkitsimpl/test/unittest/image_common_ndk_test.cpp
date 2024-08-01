@@ -28,6 +28,33 @@ public:
     ~ImageCommonNdkTest() {}
 };
 static constexpr ::MetadataType INVALID_METADATA = static_cast<::MetadataType>(3);
+
+static void TestPictureMetadataGetSetProperty(::MetadataType metadataType,const std::string &keyString)
+{
+    OH_PictureMetadata *metadataPtr = nullptr;
+    Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
+    ASSERT_NE(metadataPtr, nullptr);
+    Image_String key;
+    key.data = strdup(keyString.c_str());
+    key.size = strlen(key.data);
+    Image_String srcValue;
+    char bufferValue[] = "666";
+    srcValue.data = bufferValue;
+    srcValue.size = strlen(bufferValue);
+    res = OH_PictureMetadata_SetProperty(metadataPtr, &key, &srcValue);
+    EXPECT_EQ(res, IMAGE_SUCCESS);
+    Image_String dstValue;
+    res = OH_PictureMetadata_GetProperty(metadataPtr, &key, &dstValue);
+    EXPECT_EQ(res, IMAGE_SUCCESS);
+    ASSERT_NE(dstValue.data, nullptr);
+    EXPECT_EQ(srcValue.size, dstValue.size);
+    EXPECT_EQ(strncmp(srcValue.data, dstValue.data, srcValue.size), 0);
+    res = OH_PictureMetadata_Release(metadataPtr);
+    EXPECT_EQ(res, IMAGE_SUCCESS);
+    free(key.data);
+    delete[] dstValue.data;
+}
+
 /**
  * @tc.name: OH_PictureMetadata_CreateTest001
  * @tc.desc: Tests the creation and release of picture metadata for EXIF_METADATA.
@@ -116,27 +143,7 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_SetPropertyTest001, TestSize.Lev
  */
 HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_GetSetPropertyTest1, TestSize.Level1)
 {
-    ::MetadataType metadataType = EXIF_METADATA;
-    OH_PictureMetadata *metadataPtr = nullptr;
-    Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
-    ASSERT_NE(metadataPtr, nullptr);
-    Image_String key;
-    char buffer[] = "ImageWidth";
-    key.data = buffer;
-    key.size = strlen(key.data);
-    Image_String srcValue;
-    char bufferValue[] = "666";
-    srcValue.data = bufferValue;
-    srcValue.size = strlen(bufferValue);
-    res = OH_PictureMetadata_SetProperty(metadataPtr, &key, &srcValue);
-    EXPECT_EQ(res, IMAGE_SUCCESS);
-    Image_String dstValue;
-    res = OH_PictureMetadata_GetProperty(metadataPtr, &key, &dstValue);
-    EXPECT_EQ(res, IMAGE_SUCCESS);
-    ASSERT_NE(dstValue.data, nullptr);
-    EXPECT_EQ(srcValue.size, dstValue.size);
-    EXPECT_EQ(strncmp(srcValue.data, dstValue.data, srcValue.size), 0);
-    OH_PictureMetadata_Release(metadataPtr);
+    TestPictureMetadataGetSetProperty(EXIF_METADATA, "ImageWidth");
 }
 
 /**
@@ -147,27 +154,7 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_GetSetPropertyTest1, TestSize.Le
  */
 HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_GetSetPropertyTest2, TestSize.Level1)
 {
-    ::MetadataType metadataType = FRAGMENT_METADATA;
-    OH_PictureMetadata *metadataPtr = nullptr;
-    Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
-    ASSERT_NE(metadataPtr, nullptr);
-    Image_String key;
-    char buffer[] = "WIDTH";
-    key.data = buffer;
-    key.size = strlen(key.data);
-    Image_String srcValue;
-    char bufferValue[] = "666";
-    srcValue.data = bufferValue;
-    srcValue.size = strlen(bufferValue);
-    res = OH_PictureMetadata_SetProperty(metadataPtr, &key, &srcValue);
-    EXPECT_EQ(res, IMAGE_SUCCESS);
-    Image_String dstValue;
-    res = OH_PictureMetadata_GetProperty(metadataPtr, &key, &dstValue);
-    EXPECT_EQ(res, IMAGE_SUCCESS);
-    ASSERT_NE(dstValue.data, nullptr);
-    EXPECT_EQ(srcValue.size, dstValue.size);
-    EXPECT_EQ(strncmp(srcValue.data, dstValue.data, srcValue.size), 0);
-    OH_PictureMetadata_Release(metadataPtr);
+    TestPictureMetadataGetSetProperty(FRAGMENT_METADATA, "WIDTH");
 }
 /**
  * @tc.name: OH_PictureMetadata_ReleaseTest001
