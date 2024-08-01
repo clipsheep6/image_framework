@@ -30,7 +30,7 @@ using namespace MultimediaPlugin;
 
 class AuxiliaryGenerator {
 public:
-    static std::shared_ptr<AuxiliaryPicture> GenerateAuxiliaryPicture(AuxiliaryPictureType type,
+    static std::shared_ptr<AuxiliaryPicture> GenerateAuxiliaryPicture(ImageHdrType hdrType, AuxiliaryPictureType type,
         const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode);
 };
 } // namespace Media

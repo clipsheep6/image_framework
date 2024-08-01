@@ -150,10 +150,9 @@ static std::shared_ptr<PixelMap> CreatePixelMapByContext(DecodeContext &context,
     return pixelMap;
 }
 
-static uint32_t DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+static uint32_t DecodeHdrMetadata(ImageHdrType hdrType, std::unique_ptr<AbsImageDecoder> &extDecoder,
     std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
-    ImageHdrType hdrType = extDecoder->CheckHdrType();
     std::shared_ptr<HdrMetadata> hdrMetadata = std::make_shared<HdrMetadata>(extDecoder->GetHdrMetadata(hdrType));
     std::shared_ptr<PixelMap> pixelMap = auxPicture->GetContentPixel();
     if (pixelMap == nullptr) {
@@ -165,14 +164,14 @@ static uint32_t DecodeHdrMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     return SUCCESS;
 }
 
-static uint32_t DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
+static uint32_t DecodeMetadata(ImageHdrType hdrType, std::unique_ptr<AbsImageDecoder> &extDecoder,
     AuxiliaryPictureType type, std::unique_ptr<AuxiliaryPicture> &auxPicture)
 {
     IMAGE_LOGD("Decode metadata entry, auxiliary picture type: %{public}d", type);
     uint32_t errorCode = ERROR;
     switch (type) {
         case AuxiliaryPictureType::GAINMAP:
-            errorCode = DecodeHdrMetadata(extDecoder, auxPicture);
+            errorCode = DecodeHdrMetadata(hdrType, extDecoder, auxPicture);
             break;
         case AuxiliaryPictureType::DEPTH_MAP:
         case AuxiliaryPictureType::UNREFOCUS_MAP:
@@ -189,8 +188,9 @@ static uint32_t DecodeMetadata(std::unique_ptr<AbsImageDecoder> &extDecoder,
     return errorCode;
 }
 
-std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(AuxiliaryPictureType type,
-    const std::string &format, std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode)
+std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(
+    ImageHdrType hdrType, AuxiliaryPictureType type, const std::string &format,
+    std::unique_ptr<AbsImageDecoder> &extDecoder, uint32_t &errorCode)
 {
     IMAGE_LOGI("AuxiliaryPictureType: %{public}d, format: %{public}s", static_cast<int>(type), format.c_str());
     if (!ImageUtils::IsAuxiliaryPictureTypeSupported(type) || extDecoder == nullptr) {
@@ -218,6 +218,7 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(A
         if (errorCode != SUCCESS) {
             FreeContextBuffer(context.freeFunc, context.allocatorType, context.pixelsBuffer);
         }
+        context.hdrType = hdrType;
     } else {
         errorCode = ERR_MEDIA_DATA_UNSUPPORT;
     }
@@ -231,7 +232,7 @@ std::shared_ptr<AuxiliaryPicture> AuxiliaryGenerator::GenerateAuxiliaryPicture(A
     auxPicture->SetAuxiliaryPictureInfo(
         MakeAuxiliaryPictureInfo(type, context.outInfo.size, pixelMap->GetRowStride(),
                                  context.pixelFormat, context.outInfo.colorSpace));
-    errorCode = DecodeMetadata(extDecoder, type, auxPicture);
+    errorCode = DecodeMetadata(hdrType, extDecoder, type, auxPicture);
     if (errorCode != SUCCESS) {
         IMAGE_LOGE("Decode metadata failed! errorCode: %{public}d", errorCode);
         return nullptr;
