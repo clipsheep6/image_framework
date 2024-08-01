@@ -704,7 +704,8 @@ bool ImageUtils::IsMetadataTypeSupported(MetadataType metadataType)
     }
 }
 
-const std::set<AuxiliaryPictureType> ImageUtils::GetAllAuxiliaryPictureType() {
+const std::set<AuxiliaryPictureType> ImageUtils::GetAllAuxiliaryPictureType()
+{
     static const std::set<AuxiliaryPictureType> auxTypes = {
         AuxiliaryPictureType::GAINMAP,
         AuxiliaryPictureType::DEPTH_MAP,

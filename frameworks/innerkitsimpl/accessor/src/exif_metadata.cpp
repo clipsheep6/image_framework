@@ -792,7 +792,7 @@ ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel)
 }
 
 ExifMetadata *ExifMetadata::Unmarshalling(Parcel &parcel, PICTURE_ERR &error)
-{   
+{
     bool hasExifDataBuffer = parcel.ReadBool();
     if (hasExifDataBuffer) {
         uint32_t size = 0;
