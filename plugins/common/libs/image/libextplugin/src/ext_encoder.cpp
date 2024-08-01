@@ -54,6 +54,7 @@
 #include "tiff_parser.h"
 #include "image_mime_type.h"
 #include "securec.h"
+#include "hardware/heif_hw_encoder.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN LOG_TAG_DOMAIN_ID_PLUGIN
@@ -104,6 +105,12 @@ uint32_t ExtEncoder::StartEncode(OutputDataStream &outputStream, PlEncodeOptions
 uint32_t ExtEncoder::AddImage(PixelMap &pixelMap)
 {
     pixelmap_ = &pixelMap;
+    return SUCCESS;
+}
+
+uint32_t ExtEncoder::AddPicture(Media::Picture &picture)
+{
+    picture_ = &picture;
     return SUCCESS;
 }
 
@@ -233,7 +240,7 @@ static uint32_t CreateAndWriteBlob(MetadataWStream &tStream, PixelMap *pixelmap,
 
 uint32_t ExtEncoder::FinalizeEncode()
 {
-    if (pixelmap_ == nullptr || output_ == nullptr) {
+    if ((picture_ == nullptr && pixelmap_ == nullptr) || output_ == nullptr) {
         return ERR_IMAGE_INVALID_PARAMETER;
     }
     ImageDataStatistics imageDataStatistics("[ExtEncoder]FinalizeEncode imageFormat = %s, quality = %d",
@@ -253,6 +260,11 @@ uint32_t ExtEncoder::FinalizeEncode()
         IMAGE_LOGE("ExtEncoder::FinalizeEncode unsupported format %{public}s", opts_.format.c_str());
         ReportEncodeFault(0, 0, opts_.format, "Unsupported format:" + opts_.format);
         return ERR_IMAGE_INVALID_PARAMETER;
+    }
+
+    if (picture_ != nullptr) {
+        encodeFormat_ = iter->first;
+        return EncodePicture();
     }
 
     ImageInfo imageInfo;
@@ -653,6 +665,48 @@ uint32_t ExtEncoder::EncodeSdrImage(ExtWStream& outputStream)
     error = EncodeImageBySurfaceBuffer(baseSptr, baseInfo, opts_.needsPackProperties, outputStream);
     FreeBaseAndGainMapSurfaceBuffer(baseSptr, gainMapSptr);
     return error;
+}
+
+uint32_t ExtEncoder::EncodePicture()
+{
+    uint32_t ret = 0;
+    ExtWStream wStream(output_);
+    if (encodeFormat_ == SkEncodedImageFormat::kJPEG) {
+        return EncodeJpegPicture(wStream);
+    } else if (encodeFormat_ == SkEncodedImageFormat::kHEIF) {
+        return EncodeHeifPicture(wStream);
+    }
+    return ret;
+}
+
+uint32_t ExtEncoder::EncodeJpegPicture(ExtWStream& outputStream)
+{
+    uint32_t retCode = SUCCESS;
+    static ImageFwkExtManager imageFwkExtManager;
+    if (imageFwkExtManager.doHardwareEncodePictureFunc_ != nullptr || imageFwkExtManager.LoadImageFwkExtNativeSo()) {
+        retCode = imageFwkExtManager.doHardwareEncodePictureFunc_(skStream, opts_, picture_);
+        if (retCode == SUCCESS) {
+            return retCode;
+        }
+        IMAGE_LOGE("hardware encode failed, retCode is %{public}d", retCode);
+        ImageInfo imageInfo;
+        picture_->GetMainPixel()->GetImageInfo(imageInfo);
+        ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "hardware encode failed");
+    } else {
+        IMAGE_LOGE("hardware encode failed because of load native so failed");
+    }
+    retCode = ERR_IMAGE_ENCODE_FAILED;
+    return retCode;
+}
+
+uint32_t ExtEncoder::EncodeHeifPicture(ExtWStream& outputStream)
+{
+    uint32_t ret = 0;
+    HeifHardwareEncoder hwEncoder;
+    OHOS::HDI::Codec::Image::V1_0::SharedBuffer outputBuffer;
+    // AllocOutputBuffer
+    ret = hwEncoder.Encode(picture_, opts_, outputBuffer);
+    return ret;
 }
 #endif
 } // namespace ImagePlugin

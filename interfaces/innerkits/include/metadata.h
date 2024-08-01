@@ -13,22 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
-#define FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
+#ifndef INTERFACES_INNERKITS_INCLUDE_METADATA_H
+#define INTERFACES_INNERKITS_INCLUDE_METADATA_H
 
 #include <string>
-
-#include <libexif/exif-data.h>
+#include "parcel.h"
+#include "image_type.h"
 
 namespace OHOS {
 namespace Media {
-class Metadata {
+class ImageMetadata : public Parcelable {
 public:
     virtual int GetValue(const std::string &key, std::string &value) const = 0;
     virtual bool SetValue(const std::string &key, const std::string &value) = 0;
     virtual bool RemoveEntry(const std::string &key) = 0;
+    virtual bool Marshalling(Parcel &parcel) const = 0;
+    virtual std::vector<std::pair<std::string, std::string>> GetAllProperties() = 0;
+    virtual std::shared_ptr<ImageMetadata> CloneMetadata() = 0;
 };
 } // namespace Media
 } // namespace OHOS
 
-#endif // FRAMEWORKS_INNERKITSIMPL_ACCESSOR_INCLUDE_METADATA_H
+#endif // INTERFACES_INNERKITS_INCLUDE_METADATA_H

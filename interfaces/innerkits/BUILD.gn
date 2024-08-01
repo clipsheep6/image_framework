@@ -171,6 +171,8 @@ if (use_clang_android) {
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/incremental_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/istream_source_stream.cpp",
       "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/stream/src/ostream_packer_stream.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/picture/auxiliary_picture.cpp",
+      "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/picture/picture.cpp",
     ]
 
     if (use_mingw_win) {

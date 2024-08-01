@@ -29,6 +29,7 @@
 #include "incremental_pixel_map.h"
 #include "peer_listener.h"
 #include "pixel_map.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace MultimediaPlugin {
@@ -178,6 +179,7 @@ public:
     NATIVEEXPORT std::unique_ptr<IncrementalPixelMap> CreateIncrementalPixelMap(uint32_t index,
                                                                                 const DecodeOptions &opts,
                                                                                 uint32_t &errorCode);
+    NATIVEEXPORT std::unique_ptr<Picture> CreatePicture(const DecodingOptionsForPicture &opts, uint32_t &errorCode);
     // for incremental source.
     NATIVEEXPORT uint32_t UpdateData(const uint8_t *data, uint32_t size, bool isCompleted);
     // for obtaining basic image information without decoding image data.

@@ -17,6 +17,7 @@
 #define INTERFACES_INNERKITS_INCLUDE_IMAGE_TYPE_H_
 
 #include <cinttypes>
+#include <set>
 #include <string>
 #include "color_space.h"
 
@@ -331,6 +332,30 @@ enum class AntiAliasingOption : int32_t {
     LANCZOS = 8, // SWS_LANCZOS
     SPLINE = 9, // SWS_SPLINE
 };
+
+enum class AuxiliaryPictureType {
+    NONE = 0,
+    GAIN_MAP = 1,
+    DEPTH_MAP = 2,
+    UNREFOCUS_MAP = 3,
+    LINEAR_MAP = 4,
+    MARK_CUT_MAP = 5,
+};
+
+enum class MetadataType {
+    EXIF = 1,
+    MARK_CUT = 2,
+};
+
+struct DecodingOptionsForPicture {
+    std::set<AuxiliaryPictureType> desireAuxiliaryPictures;
+};
+
+typedef struct PictureError {
+    uint32_t errorCode = 0;
+    std::string errorInfo = "";
+} PICTURE_ERR;
+
 } // namespace Media
 } // namespace OHOS
 
