@@ -521,7 +521,7 @@ bool HeifDecoderImpl::decodeAuxiliaryMap()
 {
     ImageTrace trace("HeifDecoderImpl::decodeAuxiliaryMap");
     sptr<SurfaceBuffer> hwBuffer;
-    bool decodeRes = DecodeImage(nullptr, auxiliaryImage_, auxiliaryGridInfo_, &hwBuffer, false);
+    bool decodeRes = HwDecodeImage(nullptr, auxiliaryImage_, auxiliaryGridInfo_, &hwBuffer, false);
     if (!decodeRes) {
         return false;
     }

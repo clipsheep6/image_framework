@@ -49,7 +49,9 @@ OH_PictureNative *CreateNativePicture()
 {
     size_t length = IMAGE_JPEG_PATH.size();
     char filePath[bufferSize];
-    strcpy_s(filePath, sizeof(filePath), IMAGE_JPEG_PATH.c_str());
+    if (strcpy_s(filePath, sizeof(filePath), IMAGE_JPEG_PATH.c_str()) != EOK) {
+        return nullptr;
+    }
     OH_ImageSourceNative *source = nullptr;
 
     Image_ErrorCode ret = OH_ImageSourceNative_CreateFromUri(filePath, length, &source);
