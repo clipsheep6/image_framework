@@ -249,8 +249,10 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createPicture", CreatePicture),
         DECLARE_NAPI_STATIC_FUNCTION("createPictureFromParcel", CreatePictureFromParcel),
-        DECLARE_NAPI_PROPERTY("AuxiliaryPictureType", CreateEnumTypeObject(env, napi_number, &auxiliaryPictureTypeRef_, auxiliaryPictureTypeMap)),
-        DECLARE_NAPI_PROPERTY("MetadataType", CreateEnumTypeObject(env, napi_number, &metadataTypeRef_, metadataTypeMap)),
+        DECLARE_NAPI_PROPERTY("AuxiliaryPictureType", CreateEnumTypeObject(env, napi_number,
+            &auxiliaryPictureTypeRef_, auxiliaryPictureTypeMap)),
+        DECLARE_NAPI_PROPERTY("MetadataType", CreateEnumTypeObject(env, napi_number,
+            &metadataTypeRef_, metadataTypeMap)),
     };
 
     napi_value constructor = nullptr;

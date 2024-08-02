@@ -201,7 +201,7 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest001, TestSize.Level3)
  *           The test checks if the metadata is cloned successfully.
  * @tc.type: FUNC
  */
-HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest002, TestSize.Level1) 
+HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest002, TestSize.Level1)
 {
     TestMetaDataClone(EXIF_METADATA);
 }
@@ -212,7 +212,7 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest002, TestSize.Level1)
  *           The test checks if the metadata is cloned successfully.
  * @tc.type: FUNC
  */
-HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest003, TestSize.Level1) 
+HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest003, TestSize.Level1)
 {
     TestMetaDataClone(FRAGMENT_METADATA);
 }
