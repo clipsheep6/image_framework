@@ -78,16 +78,16 @@ struct PictureEnum {
 };
 
 static std::vector<struct PictureEnum> auxiliaryPictureTypeMap = {
-    {"GAINMAP", 1, ""},
-    {"DEPTH_MAP", 2, ""},
-    {"UNREFOCUS_MAP", 3, ""},
-    {"LINEAR_MAP", 4, ""},
-    {"FRAGMENT_MAP", 5, ""},
+    {"GAINMAP", static_cast<uint32_t>(AuxiliaryPictureType::GAINMAP), ""},
+    {"DEPTH_MAP", static_cast<uint32_t>(AuxiliaryPictureType::DEPTH_MAP), ""},
+    {"UNREFOCUS_MAP", static_cast<uint32_t>(AuxiliaryPictureType::UNREFOCUS_MAP), ""},
+    {"LINEAR_MAP", static_cast<uint32_t>(AuxiliaryPictureType::LINEAR_MAP), ""},
+    {"FRAGMENT_MAP", static_cast<uint32_t>(AuxiliaryPictureType::FRAGMENT_MAP), ""},
 };
 
 static std::vector<struct PictureEnum> metadataTypeMap = {
-    {"EXIF", 1, ""},
-    {"FRAGMENT", 2, ""},
+    {"EXIF", static_cast<uint32_t>(MetadataType::EXIF), ""},
+    {"FRAGMENT", static_cast<uint32_t>(MetadataType::FRAGMENT), ""},
 };
 
 struct NapiValues {
@@ -105,7 +105,6 @@ static napi_value CreateEnumTypeObject(napi_env env,
 {
     napi_value result = nullptr;
     napi_status status;
-    int32_t refCount = 1;
     std::string propName;
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
@@ -118,6 +117,7 @@ static napi_value CreateEnumTypeObject(napi_env env,
                 status = napi_create_int32(env, imgEnum.numVal, &enumNapiValue);
             } else {
                 IMAGE_LOGE("Unsupported type %{public}d!", type);
+                break;
             }
             if (status == napi_ok && enumNapiValue != nullptr) {
                 status = napi_set_named_property(env, result, imgEnum.name.c_str(), enumNapiValue);
@@ -129,6 +129,7 @@ static napi_value CreateEnumTypeObject(napi_env env,
         }
 
         if (status == napi_ok) {
+            int32_t refCount = 1;
             status = napi_create_reference(env, result, refCount, ref);
             if (status == napi_ok) {
                 return result;
