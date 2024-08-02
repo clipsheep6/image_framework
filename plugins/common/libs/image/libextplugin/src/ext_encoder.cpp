@@ -352,6 +352,43 @@ uint32_t ExtEncoder::PixelmapEncode(ExtWStream& wStream)
     return error;
 }
 
+uint32_t ExtEncoder::EncodeCameraSencePicture(SkWStream& skStream)
+{
+    uint32_t retCode = ERR_IMAGE_ENCODE_FAILED;
+    static ImageFwkExtManager imageFwkExtManager;
+    if (imageFwkExtManager.doHardwareEncodePictureFunc_ != nullptr || imageFwkExtManager.LoadImageFwkExtNativeSo()) {
+        retCode = imageFwkExtManager.doHardwareEncodePictureFunc_(&skStream, opts_, picture_);
+        if (retCode == SUCCESS) {
+            return retCode;
+        }
+        IMAGE_LOGE("Hardware encode failed, retCode is: %{public}d", retCode);
+        ImageInfo imageInfo;
+        picture_->GetMainPixel()->GetImageInfo(imageInfo);
+        ReportEncodeFault(imageInfo.size.width, imageInfo.size.height, opts_.format, "Hardware encode failed");
+    } else {
+        IMAGE_LOGE("Hardware encode failed because of load native library failed");
+    }
+    return retCode;
+}
+
+uint32_t ExtEncoder::EncodeEditSencePicture(ExtWStream& outputStream)
+{
+    if (encodeFormat_ != SkEncodedImageFormat::kHEIF) {
+        IMAGE_LOGE("Edit sence encode only apply heif picture");
+        return ERROR;
+    }
+    return SUCCESS;
+}
+
+uint32_t ExtEncoder::EncodePicture()
+{
+    ExtWStream wStream(output_);
+    if (opts_.isEditScene) {
+        return EncodeEditSencePicture(wStream);
+    }
+    return EncodeCameraSencePicture(wStream);
+}
+
 uint32_t ExtEncoder::FinalizeEncode()
 {
     if ((picture_ == nullptr && pixelmap_ == nullptr) || output_ == nullptr) {
