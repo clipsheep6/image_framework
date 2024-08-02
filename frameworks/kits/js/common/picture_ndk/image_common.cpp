@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 MIDK_EXPORT
-Image_ErrorCode OH_PictureMetadata_Create(MetadataType metadataType, OH_PictureMetadata **metadata)
+Image_ErrorCode OH_PictureMetadata_Create(Image_MetadataType metadataType, OH_PictureMetadata **metadata)
 {
     if (metadata == nullptr) {
         return IMAGE_BAD_PARAMETER;

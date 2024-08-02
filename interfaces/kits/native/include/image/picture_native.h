@@ -47,6 +47,12 @@ extern "C" {
  * @since 12
  */
 struct OH_PictureNative;
+
+/**
+ * @brief Define a Picture struct type, used for picture pointer controls.
+ *
+ * @since 12
+ */
 typedef struct OH_PictureNative OH_PictureNative;
  
 /**
@@ -56,6 +62,13 @@ typedef struct OH_PictureNative OH_PictureNative;
  * @since 12
  */
 struct OH_AuxiliaryPictureNative;
+
+/**
+ * @brief Define a AuxiliaryPicture struct type, used for auxiliary
+ * picture pointer controls.
+ *
+ * @since 12
+ */
 typedef struct OH_AuxiliaryPictureNative OH_AuxiliaryPictureNative;
 
 /**
@@ -65,6 +78,13 @@ typedef struct OH_AuxiliaryPictureNative OH_AuxiliaryPictureNative;
  * @since 12
  */
 struct OH_AuxiliaryPictureInfo;
+
+/**
+ * @brief Define a AuxiliaryPictureInfo struct type, used for auxiliary
+ * picture info controls.
+ *
+ * @since 12
+ */
 typedef struct OH_AuxiliaryPictureInfo OH_AuxiliaryPictureInfo;
 
 /**
@@ -93,7 +113,7 @@ typedef enum {
     * Fragment map
     */
     FRAGMENT_MAP = 5,
-} AuxiliaryPictureType;
+} Image_AuxiliaryPictureType;
 
 /**
  * @brief Create a <b>Picture</b> object.
@@ -127,7 +147,7 @@ Image_ErrorCode OH_PictureNative_GetMainPixelmap(OH_PictureNative *picture, OH_P
  * @return Image functions result code.
  *         {@link IMAGE_SUCCESS} if the execution is successful.
  *         {@link IMAGE_BAD_PARAMETER} picture is nullptr, or hdrPixelmap is nullptr.
- *         {@link IMAGE_UNSUPPORTED_OPERATION} Unsupported operation.
+ *         {@link IMAGE_UNSUPPORTED_OPERATION} Unsupported operation, e.g. the picture does not has a gainmap
  * @since 12
  */
 Image_ErrorCode OH_PictureNative_GetHdrComposedPixelmap(OH_PictureNative *picture, OH_PixelmapNative **hdrPixelmap);
@@ -155,7 +175,7 @@ Image_ErrorCode OH_PictureNative_GetGainmapPixelmap(OH_PictureNative *picture, O
  *         {@link IMAGE_BAD_PARAMETER} picture is nullptr, or auxiliaryPicture is nullptr, or the type is invalid.
  * @since 12
  */
-Image_ErrorCode OH_PictureNative_SetAuxiliaryPicture(OH_PictureNative *picture, AuxiliaryPictureType type,
+Image_ErrorCode OH_PictureNative_SetAuxiliaryPicture(OH_PictureNative *picture, Image_AuxiliaryPictureType type,
     OH_AuxiliaryPictureNative *auxiliaryPicture);
 
 /**
@@ -169,7 +189,7 @@ Image_ErrorCode OH_PictureNative_SetAuxiliaryPicture(OH_PictureNative *picture, 
  *         {@link IMAGE_BAD_PARAMETER} picture is nullptr, or auxiliaryPicture is nullptr, or the type is invalid.
  * @since 12
  */
-Image_ErrorCode OH_PictureNative_GetAuxiliaryPicture(OH_PictureNative *picture, AuxiliaryPictureType type,
+Image_ErrorCode OH_PictureNative_GetAuxiliaryPicture(OH_PictureNative *picture, Image_AuxiliaryPictureType type,
     OH_AuxiliaryPictureNative **auxiliaryPicture);
 
 /**
@@ -184,7 +204,7 @@ Image_ErrorCode OH_PictureNative_GetAuxiliaryPicture(OH_PictureNative *picture, 
  *         {@link IMAGE_UNSUPPORTED_METADATA} unsupported metadata type.
  * @since 12
  */
-Image_ErrorCode OH_PictureNative_GetMetadata(OH_PictureNative *picture, MetadataType metadataType,
+Image_ErrorCode OH_PictureNative_GetMetadata(OH_PictureNative *picture, Image_MetadataType metadataType,
     OH_PictureMetadata **metadata);
 
 /**
@@ -199,7 +219,7 @@ Image_ErrorCode OH_PictureNative_GetMetadata(OH_PictureNative *picture, Metadata
  *         {@link IMAGE_UNSUPPORTED_METADATA} unsupported metadata type.
  * @since 12
  */
-Image_ErrorCode OH_PictureNative_SetMetadata(OH_PictureNative *picture, MetadataType metadataType,
+Image_ErrorCode OH_PictureNative_SetMetadata(OH_PictureNative *picture, Image_MetadataType metadataType,
     OH_PictureMetadata *metadata);
 
 /**
@@ -228,7 +248,7 @@ Image_ErrorCode OH_PictureNative_Release(OH_PictureNative *picture);
  * @since 12
  */
 Image_ErrorCode OH_AuxiliaryPictureNative_Create(uint8_t *data, size_t dataLength, Image_Size *size,
-    AuxiliaryPictureType type, OH_AuxiliaryPictureNative **auxiliaryPicture);
+    Image_AuxiliaryPictureType type, OH_AuxiliaryPictureNative **auxiliaryPicture);
 
 /**
  * @brief Write pixels to auxiliary picture.
@@ -274,7 +294,7 @@ Image_ErrorCode OH_AuxiliaryPictureNative_ReadPixels(OH_AuxiliaryPictureNative *
  * @since 12
  */
 Image_ErrorCode OH_AuxiliaryPictureNative_GetType(OH_AuxiliaryPictureNative *auxiliaryPicture,
-    AuxiliaryPictureType *type);
+    Image_AuxiliaryPictureType *type);
 
 /**
  * @brief Obtains the info of auxiliary picture.
@@ -316,7 +336,7 @@ Image_ErrorCode OH_AuxiliaryPictureNative_SetInfo(OH_AuxiliaryPictureNative *aux
  * @since 12
  */
 Image_ErrorCode OH_AuxiliaryPictureNative_GetMetadata(OH_AuxiliaryPictureNative *auxiliaryPicture,
-    MetadataType metadataType, OH_PictureMetadata **metadata);
+    Image_MetadataType metadataType, OH_PictureMetadata **metadata);
 
 /**
  * @brief Set auxiliary picture metadata.
@@ -332,7 +352,7 @@ Image_ErrorCode OH_AuxiliaryPictureNative_GetMetadata(OH_AuxiliaryPictureNative 
  * @since 12
  */
 Image_ErrorCode OH_AuxiliaryPictureNative_SetMetadata(OH_AuxiliaryPictureNative *auxiliaryPicture,
-    MetadataType metadataType, OH_PictureMetadata *metadata);
+    Image_MetadataType metadataType, OH_PictureMetadata *metadata);
 
 /**
  * @brief Releases this AuxiliaryPicture object.
@@ -366,7 +386,7 @@ Image_ErrorCode OH_AuxiliaryPictureInfo_Create(OH_AuxiliaryPictureInfo **info);
  *         {@link IMAGE_BAD_PARAMETER} info is nullptr, or type is nullptr.
  * @since 12
  */
-Image_ErrorCode OH_AuxiliaryPictureInfo_GetType(OH_AuxiliaryPictureInfo *info, AuxiliaryPictureType *type);
+Image_ErrorCode OH_AuxiliaryPictureInfo_GetType(OH_AuxiliaryPictureInfo *info, Image_AuxiliaryPictureType *type);
 
 /**
  * @brief Set auxiliary picture info type.
@@ -378,7 +398,7 @@ Image_ErrorCode OH_AuxiliaryPictureInfo_GetType(OH_AuxiliaryPictureInfo *info, A
  *         {@link IMAGE_BAD_PARAMETER} info is nullptr, or type is invalid.
  * @since 12
  */
-Image_ErrorCode OH_AuxiliaryPictureInfo_SetType(OH_AuxiliaryPictureInfo *info, AuxiliaryPictureType type);
+Image_ErrorCode OH_AuxiliaryPictureInfo_SetType(OH_AuxiliaryPictureInfo *info, Image_AuxiliaryPictureType type);
 
 /**
  * @brief Obtains the size of auxiliary picture info.
@@ -447,7 +467,7 @@ Image_ErrorCode OH_AuxiliaryPictureInfo_GetPixelFormat(OH_AuxiliaryPictureInfo *
  * @param pixelFormat The pixelFormat will be set.
  * @return Image functions result code.
  *         {@link IMAGE_SUCCESS} if the execution is successful.
- *         {@link IMAGE_BAD_PARAMETER} info is nullptr, or pixelFormat is nullptr.
+ *         {@link IMAGE_BAD_PARAMETER} info is nullptr.
  * @since 12
  */
 Image_ErrorCode OH_AuxiliaryPictureInfo_SetPixelFormat(OH_AuxiliaryPictureInfo *info, PIXEL_FORMAT pixelFormat);

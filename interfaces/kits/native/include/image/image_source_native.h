@@ -68,6 +68,13 @@ typedef struct OH_ImageSource_Info OH_ImageSource_Info;
  * @since 12
  */
 struct OH_DecodingOptionsForPicture;
+
+/**
+ * @brief Defines decoding options for picture
+ * {@link OH_DecodingOptionsForPicture_Create}.
+ *
+ * @since 12
+ */
 typedef struct OH_DecodingOptionsForPicture OH_DecodingOptionsForPicture;
 
 /**
@@ -477,7 +484,7 @@ Image_ErrorCode OH_DecodingOptionsForPicture_Create(OH_DecodingOptionsForPicture
  * @since 12
  */
 Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
-    AuxiliaryPictureType **desiredAuxiliaryPictures, size_t *length);
+    Image_AuxiliaryPictureType **desiredAuxiliaryPictures, size_t *length);
 
 /**
  * @brief Set decoding options desired auxiliary pictures.
@@ -492,7 +499,7 @@ Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_Deco
  * @since 12
  */
 Image_ErrorCode OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
-    AuxiliaryPictureType *desiredAuxiliaryPictures, size_t length);
+    Image_AuxiliaryPictureType *desiredAuxiliaryPictures, size_t length);
 
 /**
  * @brief Releases an <b>DecodingOptionsForPicture</b> object.

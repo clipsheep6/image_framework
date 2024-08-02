@@ -27,6 +27,7 @@
  *
  * @brief Declares the common enums and structs used by the image interface.
  *
+ * @kit ImageKit
  * @syscap SystemCapability.Multimedia.Image.Core
  * @since 12
  */
@@ -102,7 +103,7 @@ struct Image_String {
 struct OH_PictureMetadata;
 
 /**
- * @brief Declaration the picture metadata.
+ * @brief Define a PictureMetadata struct type, used for picture metadata.
  *
  * @since 12
  */
@@ -174,7 +175,7 @@ typedef enum {
     * Fragment metadata.
     */
     FRAGMENT_METADATA = 2,
-} MetadataType;
+} Image_MetadataType;
 
 /**
  * @brief Creates a <b>PictureMetadata</b> object.
@@ -184,11 +185,9 @@ typedef enum {
  * @return Image functions result code.
  *         {@link IMAGE_SUCCESS} if the execution is successful.
  *         {@link IMAGE_BAD_PARAMETER} metadata is nullptr.
- *         {@link IMAGE_UNSUPPORTED_METADATA} unsupported metadata type, or the metadata type does not match the
- *         auxiliary picture type.
  * @since 12
  */
-Image_ErrorCode OH_PictureMetadata_Create(MetadataType metadataType, OH_PictureMetadata **metadata);
+Image_ErrorCode OH_PictureMetadata_Create(Image_MetadataType metadataType, OH_PictureMetadata **metadata);
 
 /**
  * @brief Obtains the property of picture metadata.
@@ -223,7 +222,7 @@ Image_ErrorCode OH_PictureMetadata_SetProperty(OH_PictureMetadata *metadata, Ima
 /**
  * @brief Releases this PictureMetadata object.
  *
- * @param info The PictureMetadata pointer will be operated.
+ * @param metadata The PictureMetadata pointer will be operated.
  * @return Image functions result code.
  *         {@link IMAGE_SUCCESS} if the execution is successful.
  *         {@link IMAGE_BAD_PARAMETER} metadata is nullptr.
