@@ -15,6 +15,7 @@
 
 #include <gtest/gtest.h>
 #include "exif_metadata.h"
+#include "image_common.h"
 #include "image_common_impl.h"
 #include "image_source_native.h"
 #include "metadata.h"
@@ -44,6 +45,7 @@ static const std::string IMAGE_JPEG_PATH = "/data/local/tmp/image/test.jpg";
 constexpr int8_t NUM_0 = 0;
 constexpr int32_t errorAuxiliaryPictureType = 20;
 constexpr uint32_t rowStride = 10;
+static constexpr Image_MetadataType INVALID_METADATA = static_cast<Image_MetadataType>(-1);
 
 OH_PictureNative *CreateNativePicture()
 {
@@ -1129,6 +1131,86 @@ HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_ReleaseTest002, TestSize.Level3
 {
     Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Release(nullptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_SetMetadataTest001
+ * @tc.desc: test OH_PictureNative_SetMetadata with null pointers.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_SetMetadataTest001, TestSize.Level3)
+{
+    Image_ErrorCode ret = OH_PictureNative_SetMetadata(nullptr, EXIF_METADATA, nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_SetMetadataTest002
+ * @tc.desc: test OH_PictureNative_SetMetadata with a invalid metadataType.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_SetMetadataTest002, TestSize.Level3)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_PictureMetadata *metadata = nullptr;
+    Image_ErrorCode ret = OH_PictureMetadata_Create(FRAGMENT_METADATA, &metadata);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    ret = OH_PictureNative_SetMetadata(picture, INVALID_METADATA, metadata);
+    EXPECT_EQ(ret, IMAGE_UNSUPPORTED_METADATA);
+    ret = OH_PictureNative_Release(picture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+}
+/**
+ * @tc.name: OH_PictureNative_GetMetadataTest001
+ * @tc.desc: test OH_PictureNative_GetMetadata with null pointers.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetMetadataTest001, TestSize.Level3)
+{
+    Image_ErrorCode ret = OH_PictureNative_GetMetadata(nullptr, EXIF_METADATA, nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureNative_GetMetadataTest002
+ * @tc.desc: test OH_PictureNative_GetMetadata with a invalid metadataType.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_GetMetadataTest002, TestSize.Level3)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    OH_PictureMetadata *metadata = nullptr;
+    Image_ErrorCode ret = OH_PictureNative_GetMetadata(picture, INVALID_METADATA, &metadata);
+    EXPECT_EQ(ret, IMAGE_UNSUPPORTED_METADATA);
+    ret = OH_PictureNative_Release(picture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+}
+
+/**
+ * @tc.name: OH_PictureNative_SetAndGetMetadataTest001
+ * @tc.desc: Tests setting and getting metadata on a native picture.
+ *           The test checks if the metadata is set and get successfully on the picture.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_PictureNative_SetAndGetMetadataTest001, TestSize.Level1)
+{
+    OH_PictureNative *picture = CreateNativePicture();
+    Image_MetadataType metadataType = EXIF_METADATA;
+    OH_PictureMetadata *metadata = nullptr;
+    Image_ErrorCode ret = OH_PictureMetadata_Create(metadataType, &metadata);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    Image_ErrorCode ret = OH_PictureNative_SetMetadata(picture, metadataType, metadata);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_PictureMetadata *metadataGet = nullptr;
+    ret = OH_PictureNative_GetMetadata(picture, metadataType, &metadataGet);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    ret = OH_PictureNative_Release(picture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    ret = OH_PictureMetadata_Release(metadata);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
 }
 
 } // namespace Media

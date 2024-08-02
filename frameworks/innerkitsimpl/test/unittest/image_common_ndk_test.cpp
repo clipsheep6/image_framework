@@ -29,6 +29,20 @@ public:
 };
 static constexpr Image_MetadataType INVALID_METADATA = static_cast<Image_MetadataType>(3);
 
+static void TestMetaDataClone(Image_MetadataType metadataType)
+{
+    OH_PictureMetadata *oldMetadata = nullptr;
+    Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &oldMetadata);
+    EXPECT_EQ(res, IMAGE_SUCCESS);
+    OH_PictureMetadata *newMetadata = nullptr;
+    res = OH_PictureMetadata_Clone(oldMetadata, &newMetadata);
+    EXPECT_EQ(res, IMAGE_SUCCESS);
+    res = OH_PictureMetadata_Release(oldMetadata);
+    EXPECT_EQ(res, IMAGE_SUCCESS);
+    res = OH_PictureMetadata_Release(newMetadata);
+    EXPECT_EQ(res, IMAGE_SUCCESS);
+}
+
 static void TestPictureMetadataGetSetProperty(Image_MetadataType metadataType, const std::string &keyString)
 {
     OH_PictureMetadata *metadataPtr = nullptr;
@@ -168,6 +182,39 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_ReleaseTest001, TestSize.Level3)
 {
     Image_ErrorCode res = OH_PictureMetadata_Release(nullptr);
     EXPECT_EQ(res, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureMetadata_CloneTest001
+ * @tc.desc: test OH_PictureMetadata_Clone with null pointers.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest001, TestSize.Level3)
+{
+    Image_ErrorCode res = OH_PictureMetadata_Clone(nullptr, nullptr);
+    EXPECT_EQ(res, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_PictureMetadata_CloneTest002
+ * @tc.desc: Tests cloning picture metadata for EXIF_METADATA.
+ *           The test checks if the metadata is cloned successfully.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest002, TestSize.Level1) 
+{
+    TestMetaDataClone(EXIF_METADATA);
+}
+
+/**
+ * @tc.name: OH_PictureMetadata_CloneTest003
+ * @tc.desc: Tests cloning picture metadata for FRAGMENT_METADATA.
+ *           The test checks if the metadata is cloned successfully.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CloneTest003, TestSize.Level1) 
+{
+    TestMetaDataClone(FRAGMENT_METADATA);
 }
 
 } // namespace Media
