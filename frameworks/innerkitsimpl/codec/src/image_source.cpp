@@ -686,6 +686,12 @@ bool IsPhotosLcd()
     return isPhotos;
 }
 
+bool IsCameraProcess()
+{
+    static bool isCamera = ImageSystemProperties::IsCamera();
+    return isCamera;
+}
+
 // LCOV_EXCL_START
 bool IsSupportDma(const DecodeOptions &opts, const ImageInfo &info, bool hasDesiredSizeOptions)
 {
@@ -702,8 +708,7 @@ bool IsSupportDma(const DecodeOptions &opts, const ImageInfo &info, bool hasDesi
     if (ImageSystemProperties::GetDmaEnabled() && IsSupportFormat(opts.desiredPixelFormat)) {
         return IsSupportSize(hasDesiredSizeOptions ? opts.desiredSize : info.size) &&
             (IsWidthAligned(opts.desiredSize.width)
-            || opts.preferDma
-            || IsPhotosLcd());
+            || opts.preferDma || IsPhotosLcd() || IsCameraProcess());
     }
     return false;
 #endif
@@ -1386,12 +1391,35 @@ uint32_t ImageSource::GetImageInfo(uint32_t index, ImageInfo &imageInfo)
         return ERR_IMAGE_DECODE_FAILED;
     }
     imageInfo = info;
+    return SUCCESS;
+}
+// LCOV_EXCL_STOP
+
+uint32_t ImageSource::GetImageInfoFromExif(uint32_t index, ImageInfo &imageInfo)
+{
+    ImageTrace imageTrace("GetImageInfoFromExif by index");
+    uint32_t ret = SUCCESS;
+    std::unique_lock<std::mutex> guard(decodingMutex_);
+    auto iter = GetValidImageStatus(index, ret);
+    if (iter == imageStatusMap_.end()) {
+        guard.unlock();
+        IMAGE_LOGE("[ImageSource]get valid image status fail on get image info from exif, ret:%{public}u.", ret);
+        return ret;
+    }
+    ImageInfo &info = (iter->second).imageInfo;
+    if (info.size.width == 0 || info.size.height == 0) {
+        IMAGE_LOGE("[ImageSource]get the image size fail on get image info from exif, width:%{public}d,"
+                   "height:%{public}d.",
+                   info.size.width, info.size.height);
+        return ERR_IMAGE_DECODE_FAILED;
+    }
+    imageInfo = info;
     guard.unlock();
 
     SetDngImageSize(index, imageInfo);
     return SUCCESS;
 }
-// LCOV_EXCL_STOP
+
 
 uint32_t ImageSource::ModifyImageProperty(const std::string &key, const std::string &value)
 {
@@ -1473,6 +1501,9 @@ uint32_t ImageSource::ModifyImageProperty(uint32_t index, const std::string &key
 bool ImageSource::PrereadSourceStream()
 {
     uint8_t* prereadBuffer = new (std::nothrow) uint8_t[IMAGE_HEADER_SIZE];
+    if (prereadBuffer == nullptr) {
+        return false;
+    }
     uint32_t prereadSize = 0;
     uint32_t savedPosition = sourceStreamPtr_->Tell();
     sourceStreamPtr_->Seek(0);
@@ -3671,8 +3702,8 @@ static bool CopyRGBAToSurfaceBuffer(const DecodeContext& context, sptr<SurfaceBu
         return false;
     }
     uint64_t dstStride = sb->GetStride();
-    uint64_t srcStride = plInfo.size.width * NUM_4;
-    uint32_t dstHeight = plInfo.size.height;
+    uint64_t srcStride = static_cast<uint64_t>(plInfo.size.width * NUM_4);
+    uint32_t dstHeight = static_cast<uint32_t>(plInfo.size.height);
     for (uint32_t i = 0; i < dstHeight; i++) {
         errno_t err = memcpy_s(dstRow, dstStride, srcRow, srcStride);
         if (err != EOK) {
@@ -3819,8 +3850,8 @@ static uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &aisrCtx)
         IMAGE_LOGE("[ImageSource]AiSrProcess DetailEnhancerImage Processed failed");
         FreeContextBuffer(aisrCtx.freeFunc, aisrCtx.allocatorType, aisrCtx.pixelsBuffer);
     } else {
-        aisrCtx.outInfo.size.width = static_cast<uint32_t>(output->GetSurfaceBufferWidth());
-        aisrCtx.outInfo.size.height = static_cast<uint32_t>(output->GetSurfaceBufferHeight());
+        aisrCtx.outInfo.size.width = output->GetSurfaceBufferWidth();
+        aisrCtx.outInfo.size.height = output->GetSurfaceBufferHeight();
         aisrCtx.yuvInfo.imageSize.width = aisrCtx.outInfo.size.width;
         aisrCtx.yuvInfo.imageSize.height = aisrCtx.outInfo.size.height;
         aisrCtx.hdrType = Media::ImageHdrType::SDR;

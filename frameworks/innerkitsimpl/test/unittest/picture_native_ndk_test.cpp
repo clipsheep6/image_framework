@@ -42,6 +42,8 @@ constexpr int32_t sizeBuffer = 2017220;
 constexpr int32_t bufferSize = 256;
 static const std::string IMAGE_JPEG_PATH = "/data/local/tmp/image/test.jpg";
 constexpr int8_t NUM_0 = 0;
+constexpr int32_t errorAuxiliaryPictureType = 20;
+constexpr uint32_t rowStride = 10;
 
 OH_PictureNative *CreateNativePicture()
 {
@@ -747,5 +749,386 @@ HWTEST_F(PictureNdkTest, OH_PictureNative_Release002, TestSize.Level3)
     Image_ErrorCode ret = OH_PictureNative_Release(nullptr);
     EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
 }
+
+/**
+ * @tc.name: OH_AuxiliaryPictureNative_ReleaseTest001
+ * @tc.desc: Release a valid object and return success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReleaseTest001, TestSize.Level1)
+{
+    uint32_t color[bufferLength] = {0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08};
+    size_t dataLength = bufferLength;
+    Image_Size size;
+    size.width = sizeWidth;
+    size.height = sizeHeight;
+    OH_AuxiliaryPictureNative *auxiliaryPictureNative = nullptr;
+
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Create(reinterpret_cast<uint8_t *>(color), dataLength, &size,
+                                                           ::AuxiliaryPictureType::GAINMAP, &auxiliaryPictureNative);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureNative, nullptr);
+
+    ret = OH_AuxiliaryPictureNative_Release(auxiliaryPictureNative);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureNative_ReleaseTest002
+ * @tc.desc: Pass in an empty object and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureNative_ReleaseTest002, TestSize.Level3)
+{
+    Image_ErrorCode ret = OH_AuxiliaryPictureNative_Release(nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_CreateTest001
+ * @tc.desc: Create an OH_AuxiliaryPictureInfo object using valid parameters.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_CreateTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_CreateTest002
+ * @tc.desc: Pass in null pointer and return exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_CreateTest002, TestSize.Level3)
+{
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetTypeTest001
+ * @tc.desc: Pass in valid OH_AuxiliaryPictureInfo object and type, and then return success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetTypeTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    ::AuxiliaryPictureType type = GAINMAP;
+    ret = OH_AuxiliaryPictureInfo_SetType(auxiliaryPictureInfo, type);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetTypeTest002
+ * @tc.desc: Passing in invalid AuxiliaryPictureType, returning exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetTypeTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    ::AuxiliaryPictureType type = (::AuxiliaryPictureType)errorAuxiliaryPictureType;
+    ret = OH_AuxiliaryPictureInfo_SetType(auxiliaryPictureInfo, type);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetTypeTest001
+ * @tc.desc: Set the type and then get the type. Compare the parameters before and after.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetTypeTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    ::AuxiliaryPictureType type = GAINMAP;
+    ::AuxiliaryPictureType retType;
+    ret = OH_AuxiliaryPictureInfo_SetType(auxiliaryPictureInfo, type);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    ret = OH_AuxiliaryPictureInfo_GetType(auxiliaryPictureInfo, &retType);
+    EXPECT_EQ(retType, type);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    type = FRAGMENT_MAP;
+    ret = OH_AuxiliaryPictureInfo_SetType(auxiliaryPictureInfo, type);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    ret = OH_AuxiliaryPictureInfo_GetType(auxiliaryPictureInfo, &retType);
+    EXPECT_EQ(retType, type);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetTypeTest002
+ * @tc.desc: Pass in an empty object and return exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetTypeTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    ::AuxiliaryPictureType type;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetType(auxiliaryPictureInfo, &type);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetSizeTest001
+ * @tc.desc: Pass in valid OH_AuxiliaryPictureInfo object and size, and then return success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetSizeTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    Image_Size size;
+    size.height = sizeHeight;
+    size.width = sizeWidth;
+    ret = OH_AuxiliaryPictureInfo_SetSize(auxiliaryPictureInfo, &size);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetSizeTest002
+ * @tc.desc: Pass in an empty object and return exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetSizeTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_Size *size = nullptr;
+
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_SetSize(auxiliaryPictureInfo, size);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetSizeTest001
+ * @tc.desc: Set the size and then get the size. Compare the parameters before and after.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetSizeTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    Image_Size size;
+    size.height = sizeHeight;
+    size.width = sizeWidth;
+    ret = OH_AuxiliaryPictureInfo_SetSize(auxiliaryPictureInfo, &size);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    Image_Size retSize;
+    ret = OH_AuxiliaryPictureInfo_GetSize(auxiliaryPictureInfo, &retSize);
+    EXPECT_EQ(retSize.height, sizeHeight);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetSizeTest002
+ * @tc.desc: Pass in an empty object and return exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetSizeTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_Size retSize;
+
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetSize(auxiliaryPictureInfo, &retSize);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetRowStrideTest001
+ * @tc.desc: Pass in valid OH_AuxiliaryPictureInfo object and RowStride, and then return success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetRowStrideTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    ret = OH_AuxiliaryPictureInfo_SetRowStride(auxiliaryPictureInfo, rowStride);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetRowStrideTest002
+ * @tc.desc: Pass in an empty object and return exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetRowStrideTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_SetRowStride(auxiliaryPictureInfo, rowStride);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetRowStrideTest001
+ * @tc.desc: Set the RowStride and then get the RowStride. Compare the parameters before and after.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetRowStrideTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    ret = OH_AuxiliaryPictureInfo_SetRowStride(auxiliaryPictureInfo, rowStride);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    uint32_t retRowStride;
+    ret = OH_AuxiliaryPictureInfo_GetRowStride(auxiliaryPictureInfo, &retRowStride);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_EQ(retRowStride, rowStride);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetRowStrideTest002
+ * @tc.desc: Pass in an empty object and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetRowStrideTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    uint32_t retRowStride;
+
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetRowStride(auxiliaryPictureInfo, &retRowStride);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetPixelFormatTest001
+ * @tc.desc: Pass in valid OH_AuxiliaryPictureInfo object and PixelFormat, and then return success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetPixelFormatTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    PIXEL_FORMAT pixelFormat = PIXEL_FORMAT_NV21;
+    ret = OH_AuxiliaryPictureInfo_SetPixelFormat(auxiliaryPictureInfo, pixelFormat);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_SetPixelFormatTest002
+ * @tc.desc: Pass in an empty object and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_SetPixelFormatTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    PIXEL_FORMAT pixelFormat = PIXEL_FORMAT_NV21;
+
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_SetPixelFormat(auxiliaryPictureInfo, pixelFormat);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetPixelFormatTest001
+ * @tc.desc: Set the PixelFormat and then get the PixelFormat. Compare the parameters before and after.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetPixelFormatTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    PIXEL_FORMAT pixelFormat = PIXEL_FORMAT_NV21;
+    ret = OH_AuxiliaryPictureInfo_SetPixelFormat(auxiliaryPictureInfo, pixelFormat);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+
+    PIXEL_FORMAT retPixelFormat;
+    ret = OH_AuxiliaryPictureInfo_GetPixelFormat(auxiliaryPictureInfo, &retPixelFormat);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_EQ(retPixelFormat, pixelFormat);
+
+    OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_GetPixelFormatTest002
+ * @tc.desc: Pass in an empty object and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_GetPixelFormatTest002, TestSize.Level3)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    PIXEL_FORMAT retPixelFormat;
+
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_GetPixelFormat(auxiliaryPictureInfo, &retPixelFormat);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_ReleaseTest001
+ * @tc.desc: Release a valid object and return success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_ReleaseTest001, TestSize.Level1)
+{
+    OH_AuxiliaryPictureInfo *auxiliaryPictureInfo = nullptr;
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Create(&auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    EXPECT_NE(auxiliaryPictureInfo, nullptr);
+
+    ret = OH_AuxiliaryPictureInfo_Release(auxiliaryPictureInfo);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+}
+
+/**
+ * @tc.name: OH_AuxiliaryPictureInfo_ReleaseTest002
+ * @tc.desc: Pass in an empty object and return an exception.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PictureNdkTest, OH_AuxiliaryPictureInfo_ReleaseTest002, TestSize.Level3)
+{
+    Image_ErrorCode ret = OH_AuxiliaryPictureInfo_Release(nullptr);
+    EXPECT_EQ(ret, IMAGE_BAD_PARAMETER);
+}
+
 } // namespace Media
 } // namespace OHOS

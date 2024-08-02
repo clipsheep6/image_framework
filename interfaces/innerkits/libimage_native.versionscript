@@ -39,6 +39,8 @@
     *Picture*;
     *AuxiliaryPicture*;
     *FragmentMetadata*;
+    *MemoryManager*;
+    *FilePackerStream*;
   local:
     *;
 };
