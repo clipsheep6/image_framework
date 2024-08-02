@@ -101,6 +101,46 @@ struct NapiValues {
     std::unique_ptr<PictureAsyncContext> context;
 };
 
+static napi_value CreateEnumTypeObject(napi_env env,
+    napi_valuetype type, napi_ref* ref, std::vector<struct PictureEnum> pictureEnumMap)
+{
+    napi_value result = nullptr;
+    napi_status status;
+    int32_t refCount = 1;
+    std::string propName;
+    status = napi_create_object(env, &result);
+    if (status == napi_ok) {
+        for (auto imgEnum : pictureEnumMap) {
+            napi_value enumNapiValue = nullptr;
+            if (type == napi_string) {
+                status = napi_create_string_utf8(env, imgEnum.strVal.c_str(),
+                    NAPI_AUTO_LENGTH, &enumNapiValue);
+            } else if (type == napi_number) {
+                status = napi_create_int32(env, imgEnum.numVal, &enumNapiValue);
+            } else {
+                IMAGE_LOGE("Unsupported type %{public}d!", type);
+            }
+            if (status == napi_ok && enumNapiValue != nullptr) {
+                status = napi_set_named_property(env, result, imgEnum.name.c_str(), enumNapiValue);
+            }
+            if (status != napi_ok) {
+                IMAGE_LOGE("Failed to add named prop!");
+                break;
+            }
+        }
+
+        if (status == napi_ok) {
+            status = napi_create_reference(env, result, refCount, ref);
+            if (status == napi_ok) {
+                return result;
+            }
+        }
+    }
+    IMAGE_LOGE("CreateEnumTypeObject is Failed!");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 static void CommonCallbackRoutine(napi_env env, PictureAsyncContext* &asyncContext, const napi_value &valueParam)
 {
     napi_value result[NUM_2] = {0};
