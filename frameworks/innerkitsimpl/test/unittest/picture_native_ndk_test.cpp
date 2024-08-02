@@ -1202,7 +1202,7 @@ HWTEST_F(PictureNdkTest, OH_PictureNative_SetAndGetMetadataTest001, TestSize.Lev
     Image_ErrorCode ret = OH_PictureMetadata_Create(metadataType, &metadata);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
-    Image_ErrorCode ret = OH_PictureNative_SetMetadata(picture, metadataType, metadata);
+    ret = OH_PictureNative_SetMetadata(picture, metadataType, metadata);
     EXPECT_EQ(ret, IMAGE_SUCCESS);
 
     OH_PictureMetadata *metadataGet = nullptr;
