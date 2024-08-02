@@ -29,11 +29,12 @@ public:
 };
 static constexpr ::MetadataType INVALID_METADATA = static_cast<::MetadataType>(3);
 
-static void TestPictureMetadataGetSetProperty(::MetadataType metadataType,const std::string &keyString)
+static void TestPictureMetadataGetSetProperty(::MetadataType metadataType, const std::string &keyString)
 {
     OH_PictureMetadata *metadataPtr = nullptr;
     Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
     ASSERT_NE(metadataPtr, nullptr);
+
     Image_String key;
     key.data = strdup(keyString.c_str());
     key.size = strlen(key.data);
@@ -43,12 +44,14 @@ static void TestPictureMetadataGetSetProperty(::MetadataType metadataType,const 
     srcValue.size = strlen(bufferValue);
     res = OH_PictureMetadata_SetProperty(metadataPtr, &key, &srcValue);
     EXPECT_EQ(res, IMAGE_SUCCESS);
+
     Image_String dstValue;
     res = OH_PictureMetadata_GetProperty(metadataPtr, &key, &dstValue);
     EXPECT_EQ(res, IMAGE_SUCCESS);
     ASSERT_NE(dstValue.data, nullptr);
     EXPECT_EQ(srcValue.size, dstValue.size);
     EXPECT_EQ(strncmp(srcValue.data, dstValue.data, srcValue.size), 0);
+    
     res = OH_PictureMetadata_Release(metadataPtr);
     EXPECT_EQ(res, IMAGE_SUCCESS);
     free(key.data);
