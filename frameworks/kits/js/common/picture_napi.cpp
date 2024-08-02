@@ -68,6 +68,28 @@ struct PictureAsyncContext {
 
 using PictureAsyncContextPtr = std::unique_ptr<PictureAsyncContext>;
 
+napi_ref PictureNapi::auxiliaryPictureTypeRef_ = nullptr;
+napi_ref PictureNapi::metadataTypeRef_ = nullptr;
+
+struct PictureEnum {
+    std::string name;
+    int32_t numVal;
+    std::string strVal;
+};
+
+static std::vector<struct PictureEnum> auxiliaryPictureTypeMap = {
+    {"GAINMAP", static_cast<uint32_t>(AuxiliaryPictureType::GAINMAP), ""},
+    {"DEPTH_MAP", static_cast<uint32_t>(AuxiliaryPictureType::DEPTH_MAP), ""},
+    {"UNREFOCUS_MAP", static_cast<uint32_t>(AuxiliaryPictureType::UNREFOCUS_MAP), ""},
+    {"LINEAR_MAP", static_cast<uint32_t>(AuxiliaryPictureType::LINEAR_MAP), ""},
+    {"FRAGMENT_MAP", static_cast<uint32_t>(AuxiliaryPictureType::FRAGMENT_MAP), ""},
+};
+
+static std::vector<struct PictureEnum> metadataTypeMap = {
+    {"EXIF", static_cast<uint32_t>(MetadataType::EXIF), ""},
+    {"FRAGMENT", static_cast<uint32_t>(MetadataType::FRAGMENT), ""},
+};
+
 struct NapiValues {
     napi_status status;
     napi_value thisVar = nullptr;
@@ -77,6 +99,47 @@ struct NapiValues {
     int32_t refCount = 1;
     std::unique_ptr<PictureAsyncContext> context;
 };
+
+static napi_value CreateEnumTypeObject(napi_env env,
+    napi_valuetype type, napi_ref* ref, std::vector<struct PictureEnum> pictureEnumMap)
+{
+    napi_value result = nullptr;
+    napi_status status;
+    std::string propName;
+    status = napi_create_object(env, &result);
+    if (status == napi_ok) {
+        for (auto imgEnum : pictureEnumMap) {
+            napi_value enumNapiValue = nullptr;
+            if (type == napi_string) {
+                status = napi_create_string_utf8(env, imgEnum.strVal.c_str(),
+                    NAPI_AUTO_LENGTH, &enumNapiValue);
+            } else if (type == napi_number) {
+                status = napi_create_int32(env, imgEnum.numVal, &enumNapiValue);
+            } else {
+                IMAGE_LOGE("Unsupported type %{public}d!", type);
+                break;
+            }
+            if (status == napi_ok && enumNapiValue != nullptr) {
+                status = napi_set_named_property(env, result, imgEnum.name.c_str(), enumNapiValue);
+            }
+            if (status != napi_ok) {
+                IMAGE_LOGE("Failed to add named prop!");
+                break;
+            }
+        }
+
+        if (status == napi_ok) {
+            int32_t refCount = 1;
+            status = napi_create_reference(env, result, refCount, ref);
+            if (status == napi_ok) {
+                return result;
+            }
+        }
+    }
+    IMAGE_LOGE("CreateEnumTypeObject is Failed!");
+    napi_get_undefined(env, &result);
+    return result;
+}
 
 static void CommonCallbackRoutine(napi_env env, PictureAsyncContext* &asyncContext, const napi_value &valueParam)
 {
@@ -186,6 +249,8 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createPicture", CreatePicture),
         DECLARE_NAPI_STATIC_FUNCTION("createPictureFromParcel", CreatePictureFromParcel),
+        DECLARE_NAPI_PROPERTY("AuxiliaryPictureType", CreateEnumTypeObject(env, napi_number, &auxiliaryPictureTypeRef_, auxiliaryPictureTypeMap)),
+        DECLARE_NAPI_PROPERTY("MetadataType", CreateEnumTypeObject(env, napi_number, &metadataTypeRef_, metadataTypeMap)),
     };
 
     napi_value constructor = nullptr;
