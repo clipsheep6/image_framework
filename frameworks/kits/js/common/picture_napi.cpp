@@ -68,6 +68,29 @@ struct PictureAsyncContext {
 
 using PictureAsyncContextPtr = std::unique_ptr<PictureAsyncContext>;
 
+napi_ref PictureNapi::auxiliaryPictureTypeRef_ = nullptr;
+napi_ref PictureNapi::metadataTypeRef_ = nullptr;
+
+struct PictureEnum {
+    std::string name;
+    int32_t numVal;
+    std::string strVal;
+};
+
+static std::vector<struct PictureEnum> auxiliaryPictureTypeMap = {
+    {"NONE", 0, ""},
+    {"GAINMAP", 1, ""},
+    {"DEPTH_MAP", 2, ""},
+    {"UNREFOCUS_MAP", 3, ""},
+    {"LINEAR_MAP", 4, ""},
+    {"FRAGMENT_MAP", 5, ""},
+};
+
+static std::vector<struct PictureEnum> metadataTypeMap = {
+    {"EXIF", 1, ""},
+    {"FRAGMENT", 2, ""},
+};
+
 struct NapiValues {
     napi_status status;
     napi_value thisVar = nullptr;
@@ -186,6 +209,8 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("createPicture", CreatePicture),
         DECLARE_NAPI_STATIC_FUNCTION("createPictureFromParcel", CreatePictureFromParcel),
+        DECLARE_NAPI_PROPERTY("AuxiliaryPictureType", CreateEnumTypeObject(env, napi_number, &auxiliaryPictureTypeRef_, auxiliaryPictureTypeMap)),
+        DECLARE_NAPI_PROPERTY("MetadataType", CreateEnumTypeObject(env, napi_number, &metadataTypeRef_, metadataTypeMap)),
     };
 
     napi_value constructor = nullptr;
