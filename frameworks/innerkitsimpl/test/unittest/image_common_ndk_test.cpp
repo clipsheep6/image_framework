@@ -27,9 +27,9 @@ public:
     ImageCommonNdkTest() {}
     ~ImageCommonNdkTest() {}
 };
-static constexpr ::MetadataType INVALID_METADATA = static_cast<::MetadataType>(3);
+static constexpr Image_MetadataType INVALID_METADATA = static_cast<Image_MetadataType>(3);
 
-static void TestPictureMetadataGetSetProperty(::MetadataType metadataType, const std::string &keyString)
+static void TestPictureMetadataGetSetProperty(Image_MetadataType metadataType, const std::string &keyString)
 {
     OH_PictureMetadata *metadataPtr = nullptr;
     Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
@@ -66,7 +66,7 @@ static void TestPictureMetadataGetSetProperty(::MetadataType metadataType, const
  */
 HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest001, TestSize.Level3)
 {
-    ::MetadataType metadataType = EXIF_METADATA;
+    Image_MetadataType metadataType = EXIF_METADATA;
     OH_PictureMetadata *metadataPtr = nullptr;
     Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
     EXPECT_EQ(res, IMAGE_SUCCESS);
@@ -82,7 +82,7 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest001, TestSize.Level3)
  */
 HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest002, TestSize.Level1)
 {
-    ::MetadataType metadataType = FRAGMENT_METADATA;
+    Image_MetadataType metadataType = FRAGMENT_METADATA;
     OH_PictureMetadata *metadataPtr = nullptr;
     Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, &metadataPtr);
     EXPECT_EQ(res, IMAGE_SUCCESS);
@@ -98,7 +98,7 @@ HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest002, TestSize.Level1)
  */
 HWTEST_F(ImageCommonNdkTest, OH_PictureMetadata_CreateTest003, TestSize.Level3)
 {
-    ::MetadataType metadataType = EXIF_METADATA;
+    Image_MetadataType metadataType = EXIF_METADATA;
     Image_ErrorCode res = OH_PictureMetadata_Create(metadataType, nullptr);
     EXPECT_EQ(res, IMAGE_BAD_PARAMETER);
 }

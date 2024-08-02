@@ -67,12 +67,12 @@ struct OH_ImageSource_Info {
     bool isHdr;
 };
 
-static ::AuxiliaryPictureType AuxTypeInnerToNative(OHOS::Media::AuxiliaryPictureType type)
+static Image_AuxiliaryPictureType AuxTypeInnerToNative(OHOS::Media::AuxiliaryPictureType type)
 {
-    return static_cast<::AuxiliaryPictureType>(static_cast<int>(type));
+    return static_cast<Image_AuxiliaryPictureType>(static_cast<int>(type));
 }
 
-static OHOS::Media::AuxiliaryPictureType AuxTypeNativeToInner(::AuxiliaryPictureType type)
+static OHOS::Media::AuxiliaryPictureType AuxTypeNativeToInner(Image_AuxiliaryPictureType type)
 {
     return static_cast<OHOS::Media::AuxiliaryPictureType>(static_cast<int>(type));
 }
@@ -648,7 +648,7 @@ Image_ErrorCode OH_DecodingOptionsForPicture_Create(OH_DecodingOptionsForPicture
 
 MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
-    ::AuxiliaryPictureType **desiredAuxiliaryPictures, size_t *length)
+    Image_AuxiliaryPictureType **desiredAuxiliaryPictures, size_t *length)
 {
     if (options == nullptr || !options->GetInnerDecodingOptForPicture() ||
         desiredAuxiliaryPictures == nullptr || length == nullptr) {
@@ -659,7 +659,7 @@ Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_Deco
         return IMAGE_BAD_SOURCE;
     }
     auto lenTmp = innerDecodingSet.size();
-    auto auxTypeArrayUniptr = std::make_unique<::AuxiliaryPictureType[]>(lenTmp);
+    auto auxTypeArrayUniptr = std::make_unique<Image_AuxiliaryPictureType[]>(lenTmp);
     int index = 0;
     for (auto innerDecoding : innerDecodingSet) {
         auxTypeArrayUniptr[index++] = AuxTypeInnerToNative(innerDecoding);
@@ -671,7 +671,7 @@ Image_ErrorCode OH_DecodingOptionsForPicture_GetDesiredAuxiliaryPictures(OH_Deco
 
 MIDK_EXPORT
 Image_ErrorCode OH_DecodingOptionsForPicture_SetDesiredAuxiliaryPictures(OH_DecodingOptionsForPicture *options,
-    ::AuxiliaryPictureType *desiredAuxiliaryPictures, size_t length)
+    Image_AuxiliaryPictureType *desiredAuxiliaryPictures, size_t length)
 {
     if (options == nullptr || !options->GetInnerDecodingOptForPicture() ||
         desiredAuxiliaryPictures == nullptr || length <= 0) {
