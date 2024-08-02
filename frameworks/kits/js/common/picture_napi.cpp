@@ -78,7 +78,6 @@ struct PictureEnum {
 };
 
 static std::vector<struct PictureEnum> auxiliaryPictureTypeMap = {
-    {"NONE", 0, ""},
     {"GAINMAP", 1, ""},
     {"DEPTH_MAP", 2, ""},
     {"UNREFOCUS_MAP", 3, ""},
