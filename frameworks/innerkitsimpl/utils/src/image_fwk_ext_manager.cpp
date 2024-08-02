@@ -26,7 +26,7 @@
 #undef LOG_TAG
 #define LOG_TAG "ImageFwkExtManager"
 
-static const std::string IMAGE_FWK_EXT_NATIVE_SO = "/system/lib64/platformsdk/libimage_codec_ext_native.so";
+static const std::string IMAGE_FWK_EXT_NATIVE_SO = "libimage_codec_ext_native.so";
 
 namespace OHOS {
 namespace Media {
@@ -34,7 +34,7 @@ ImageFwkExtManager::ImageFwkExtManager()
 {
 #if !defined(_WIN32) && !defined(_APPLE)
     doHardWareEncodeFunc_ = nullptr;
-    doHardwareEncodePictureFunc_ = nullptr;
+    hevcSoftwareDecodeFunc_ = nullptr;
     isImageFwkExtNativeSoOpened_ = false;
     extNativeSoHandle_ = nullptr;
 #endif
@@ -66,7 +66,9 @@ bool ImageFwkExtManager::LoadImageFwkExtNativeSo()
             return false;
         }
         doHardWareEncodeFunc_ = reinterpret_cast<DoHardWareEncodeFunc>(dlsym(extNativeSoHandle_, "DoHardwareEncode"));
-        if (doHardWareEncodeFunc_ == nullptr) {
+        hevcSoftwareDecodeFunc_ =
+            reinterpret_cast<HevcSoftwareDecodeFunc>(dlsym(extNativeSoHandle_, "HevcSoftwareDecode"));
+        if (doHardWareEncodeFunc_ == nullptr || hevcSoftwareDecodeFunc_ == nullptr) {
             IMAGE_LOGE("DoHardwareEncode dlsym falied");
             dlclose(extNativeSoHandle_);
             extNativeSoHandle_ = nullptr;

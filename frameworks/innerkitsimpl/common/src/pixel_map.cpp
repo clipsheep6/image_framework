@@ -322,13 +322,13 @@ int32_t PixelMap::GetAllocatedByteCount(const ImageInfo& info)
 
 void UpdateYUVDataInfo(int32_t width, int32_t height, YUVDataInfo &yuvInfo)
 {
-    yuvInfo.yWidth = width;
-    yuvInfo.yHeight = height;
-    yuvInfo.uvWidth = (width + 1) / NUM_2;
-    yuvInfo.uvHeight = (height + 1) / NUM_2;
-    yuvInfo.yStride = width;
-    yuvInfo.uvStride = width + 1;
-    yuvInfo.uvOffset = width * height;
+    yuvInfo.yWidth = static_cast<uint32_t>(width);
+    yuvInfo.yHeight = static_cast<uint32_t>(height);
+    yuvInfo.uvWidth = static_cast<uint32_t>((width + 1) / NUM_2);
+    yuvInfo.uvHeight = static_cast<uint32_t>((height + 1) / NUM_2);
+    yuvInfo.yStride = static_cast<uint32_t>(width);
+    yuvInfo.uvStride = static_cast<uint32_t>(width + 1);
+    yuvInfo.uvOffset = static_cast<uint32_t>(width * height);
 }
 
 static bool ChoosePixelmap(unique_ptr<PixelMap> &dstPixelMap, PixelFormat pixelFormat, int &errorCode)
@@ -562,12 +562,12 @@ unique_ptr<PixelMap> PixelMap::Create(const InitializationOptions &opts)
     // update alpha opaque
     UpdatePixelsAlpha(dstImageInfo.alphaType, dstImageInfo.pixelFormat,
                       static_cast<uint8_t *>(dstPixels), *dstPixelMap.get());
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     void *fdBuffer = new int32_t();
     *static_cast<int32_t *>(fdBuffer) = fd;
-#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     dstPixelMap->SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::SHARE_MEM_ALLOC, nullptr);
 #else
-    dstPixelMap->SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
+    dstPixelMap->SetPixelsAddr(dstPixels, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
 #endif
     dstPixelMap->SetEditable(opts.editable);
     return dstPixelMap;
@@ -714,12 +714,12 @@ bool PixelMap::SourceCropAndConvert(PixelMap &source, const ImageInfo &srcImageI
         dstPixelMap.SetPixelsAddr(dstPixels, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
         return true;
     }
+#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     void *fdBuffer = new int32_t();
     *static_cast<int32_t *>(fdBuffer) = fd;
-#if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
     dstPixelMap.SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::SHARE_MEM_ALLOC, nullptr);
 #else
-    dstPixelMap.SetPixelsAddr(dstPixels, fdBuffer, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
+    dstPixelMap.SetPixelsAddr(dstPixels, nullptr, bufferSize, AllocatorType::HEAP_ALLOC, nullptr);
 #endif
     return true;
 }
@@ -2553,6 +2553,49 @@ PixelMap *PixelMap::DecodeTlv(std::vector<uint8_t> &buff)
     }
     pixelMap->SetPixelsAddr(data, nullptr, dataSize, static_cast<AllocatorType>(allocType), nullptr);
     return pixelMap;
+}
+
+bool PixelMap::IsYuvFormat(PixelFormat format)
+{
+    return format == PixelFormat::NV21 || format == PixelFormat::NV12 ||
+        format == PixelFormat::YCBCR_P010 || format == PixelFormat::YCRCB_P010;
+}
+
+bool PixelMap::IsYuvFormat()
+{
+    return IsYuvFormat(imageInfo_.pixelFormat);
+}
+
+void PixelMap::AssignYuvDataOnType(PixelFormat format, int32_t width, int32_t height)
+{
+    if (PixelMap::IsYuvFormat(format)) {
+        yuvDataInfo_.yWidth = static_cast<uint32_t>(width);
+        yuvDataInfo_.yHeight = static_cast<uint32_t>(height);
+        yuvDataInfo_.yStride = static_cast<uint32_t>(width);
+        yuvDataInfo_.uvWidth = (width % NUM_2 == 0) ? static_cast<uint32_t>(width) : static_cast<uint32_t>(width + 1);
+        yuvDataInfo_.uvHeight = static_cast<uint32_t>((height + 1) / NUM_2);
+        yuvDataInfo_.yOffset = 0;
+        yuvDataInfo_.uvOffset =  yuvDataInfo_.yHeight * yuvDataInfo_.yStride;
+        if (GetAllocatorType() == AllocatorType::DMA_ALLOC) {
+            yuvDataInfo_.uvStride = yuvDataInfo_.yStride;
+        } else {
+            yuvDataInfo_.uvStride = static_cast<uint32_t>((width + 1) / NUM_2 * NUM_2);
+        }
+    }
+}
+
+void PixelMap::UpdateYUVDataInfo(PixelFormat format, int32_t width, int32_t height, YUVStrideInfo &strides)
+{
+    if (PixelMap::IsYuvFormat(format)) {
+        yuvDataInfo_.yWidth = static_cast<uint32_t>(width);
+        yuvDataInfo_.yHeight = static_cast<uint32_t>(height);
+        yuvDataInfo_.yStride = static_cast<uint32_t>(strides.yStride);
+        yuvDataInfo_.yOffset = strides.yOffset;
+        yuvDataInfo_.uvStride = strides.uvStride;
+        yuvDataInfo_.uvOffset = strides.uvOffset;
+        yuvDataInfo_.uvWidth = (width + 1) / NUM_2 * NUM_2;
+        yuvDataInfo_.uvHeight = static_cast<uint32_t>((height + 1) / NUM_2);
+    }
 }
 
 static const string GetNamedAlphaType(const AlphaType alphaType)

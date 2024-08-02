@@ -13,32 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef MOCK_SKW_STREAM_H
-#define MOCK_SKW_STREAM_H
+#ifndef PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_HEVC_SW_DECODE_PARAM_H
+#define PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_HEVC_SW_DECODE_PARAM_H
 
-#include "include/core/SkStream.h"
+#include "hardware/imagecodec/grid_info.h"
+#include "image_type.h"
 
 namespace OHOS {
-namespace Media {
-class MockSkWStream : public SkWStream {
-public:
-    MockSkWStream() = default;
-    ~MockSkWStream() {}
-
-    bool write(const void* buffer, size_t size)
-    {
-        return returnValue_;
-    }
-
-    size_t bytesWritten() const
-    {
-        return bytesWritten_;
-    }
-    private:
-    bool returnValue_ = false;
-    size_t bytesWritten_ = 0;
+namespace ImagePlugin {
+struct HevcSoftDecodeParam {
+    GridInfo gridInfo {};
+    Media::PixelFormat dstPixFmt = Media::PixelFormat::UNKNOWN;
+    uint8_t *dstBuffer = nullptr;
+    uint32_t bufferSize = 0;
+    uint32_t dstStride = 0;
+    void *hwBuffer = nullptr;
 };
-} // namespace Media
+} // namespace ImagePlugin
 } // namespace OHOS
 
-#endif // MOCK_SKW_STREAM_H
+#endif //PLUGINS_COMMON_LIBS_IMAGE_LIBEXTPLUGIN_INCLUDE_HEVC_SW_DECODE_PARAM_H
