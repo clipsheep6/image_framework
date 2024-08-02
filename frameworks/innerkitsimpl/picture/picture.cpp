@@ -332,7 +332,8 @@ std::unique_ptr<PixelMap> Picture::GetHdrComposedPixelMap()
     ImageHdrType hdrType = gainmap->GetHdrType();
     std::shared_ptr<HdrMetadata> metadata = gainmap->GetHdrMetadata();
 
-    CM_ColorSpaceType baseCmColor = ImageSource::ConvertColorSpaceType(mainPixelMap_->InnerGetGrColorSpace().GetColorSpaceName(), true);
+    CM_ColorSpaceType baseCmColor =
+        ImageSource::ConvertColorSpaceType(mainPixelMap_->InnerGetGrColorSpace().GetColorSpaceName(), true);
     sptr<SurfaceBuffer> baseSptr(reinterpret_cast<SurfaceBuffer*>(mainPixelMap_->GetFd()));
     VpeUtils::SetSurfaceBufferInfo(baseSptr, false, hdrType, baseCmColor, *metadata);
 
@@ -515,7 +516,8 @@ int32_t Picture::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
     }
 
     ExifData *exifData;
-    TiffParser::Decode(static_cast<const unsigned char *>(surfaceBuffer->GetVirAddr()) + tiffHeaderPos, size - tiffHeaderPos, &exifData);
+    TiffParser::Decode(static_cast<const unsigned char *>(surfaceBuffer->GetVirAddr()) + tiffHeaderPos,
+        size - tiffHeaderPos, &exifData);
     if (exifData == nullptr) {
         IMAGE_LOGE("Failed to decode EXIF data from image stream.");
         return ERR_EXIF_DECODE_FAILED;
