@@ -373,7 +373,7 @@ Image_ErrorCode OH_AuxiliaryPictureInfo_Create(OH_AuxiliaryPictureInfo **info)
 }
 
 MIDK_EXPORT
-Image_ErrorCode OH_AuxiliaryPictureInfo_GetType(OH_AuxiliaryPictureInfo *info,Image_AuxiliaryPictureType *type)
+Image_ErrorCode OH_AuxiliaryPictureInfo_GetType(OH_AuxiliaryPictureInfo *info, Image_AuxiliaryPictureType *type)
 {
     if (info == nullptr || type == nullptr || !info->GetInnerAuxiliaryPictureInfo()) {
         return IMAGE_BAD_PARAMETER;
