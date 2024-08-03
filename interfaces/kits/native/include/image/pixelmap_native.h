@@ -396,6 +396,17 @@ Image_ErrorCode OH_PixelmapImageInfo_GetAlphaType(OH_Pixelmap_ImageInfo *info, i
 Image_ErrorCode OH_PixelmapImageInfo_GetDynamicRange(OH_Pixelmap_ImageInfo *info, bool *isHdr);
 
 /**
+ * @brief Get mime type for imageinfo struct.
+ *
+ * @param info The imageinfo pointer will be operated.
+ * @param format the number of image format.The user can pass in a null pointer and zero size, we will allocate memory,
+ * but user must free memory after use.
+ * @return Returns {@link Image_ErrorCode}
+ * @since 12
+ */
+Image_ErrorCode OH_PixelmapImageInfo_GetMimeType(OH_Pixelmap_ImageInfo *info, Image_MimeType *format);
+
+/**
  * @brief Delete imageinfo struct pointer.
  *
  * @param info The imageinfo pointer will be operated.

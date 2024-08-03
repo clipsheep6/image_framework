@@ -120,6 +120,17 @@ Image_ErrorCode OH_ImageSourceInfo_GetHeight(OH_ImageSource_Info *info, uint32_t
 Image_ErrorCode OH_ImageSourceInfo_GetDynamicRange(OH_ImageSource_Info *info, bool *isHdr);
 
 /**
+ * @brief Get mime type for OH_ImageSource_Info struct.
+ *
+ * @param info The OH_ImageSource_Info pointer will be operated.
+ * @param format the number of image format.The user can pass in a null pointer and zero size, we will allocate memory,
+ * but user must free memory after use.
+ * @return Returns {@link Image_ErrorCode}
+ * @since 12
+ */
+Image_ErrorCode OH_ImageSourceInfo_GetMimeType(OH_ImageSource_Info *info, Image_MimeType *format);
+
+/**
  * @brief delete OH_ImageSource_Info pointer.
  *
  * @param info The OH_ImageSource_Info pointer will be operated.

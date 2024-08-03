@@ -62,6 +62,8 @@ struct OH_ImageSource_Info {
     int32_t height;
     /** Image dynamicRange*/
     bool isHdr;
+    /** Image mime type. */
+    Image_MimeType mimeType;
 };
 
 static DecodeDynamicRange ParseImageDynamicRange(int32_t val)
@@ -270,10 +272,38 @@ Image_ErrorCode OH_ImageSourceInfo_GetDynamicRange(OH_ImageSource_Info *info, bo
 }
 
 MIDK_EXPORT
+Image_ErrorCode OH_ImageSourceInfo_GetMimeType(OH_ImageSource_Info *info, Image_MimeType *format)
+{
+    if (info == nullptr || format == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    if (format->size != SIZE_ZERO && format->size < info->mimeType.size) {
+        return IMAGE_BAD_PARAMETER;
+    }
+    format->size = (format->size == SIZE_ZERO) ? info->mimeType.size : format->size;
+    format->data = static_cast<char *>(malloc(format->size));
+    if (format->data == nullptr) {
+        return IMAGE_ALLOC_FAILED;
+    }
+    if (info->mimeType.data == nullptr ||
+        memcpy_s(format->data, format->size, info->mimeType.data, info->mimeType.size) != 0) {
+        free(format->data);
+        format->data = nullptr;
+        format->size = 0;
+        return IMAGE_COPY_FAILED;
+    }
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
 Image_ErrorCode OH_ImageSourceInfo_Release(OH_ImageSource_Info *info)
 {
     if (info == nullptr) {
         return IMAGE_BAD_PARAMETER;
+    }
+    if (info->mimeType.data != nullptr) {
+        free(info->mimeType.data);
+        info->mimeType.data = nullptr;
     }
     delete info;
     return IMAGE_SUCCESS;
@@ -324,6 +354,24 @@ static void ParseImageSourceInfo(struct OH_ImageSource_Info *source, const Image
 {
     source->width = info.size.width;
     source->height = info.size.height;
+
+    if (source->mimeType.data != nullptr) {
+        free(source->mimeType.data);
+        source->mimeType.data = nullptr;
+    }
+    if (info.encodedFormat.size() != 0) {
+        source->mimeType.size = info.encodedFormat.size();
+        source->mimeType.data = static_cast<char *>(malloc(source->mimeType.size));
+        if (source->mimeType.data == nullptr) {
+            return;
+        }
+        if (memcpy_s(source->mimeType.data, source->mimeType.size, info.encodedFormat.c_str(),
+            info.encodedFormat.size()) != 0) {
+            free(source->mimeType.data);
+            source->mimeType.data = nullptr;
+            source->mimeType.size = 0;
+        }
+    }
 }
 
 MIDK_EXPORT

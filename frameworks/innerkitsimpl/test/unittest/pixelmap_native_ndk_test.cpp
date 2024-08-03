@@ -443,6 +443,21 @@ HWTEST_F(PixelMapNdk2Test, OH_PixelmapNative_Release, TestSize.Level3)
 }
 
 /**
+ * @tc.name: OH_PixelmapImageInfo_GetMimeType
+ * @tc.desc: OH_PixelmapImageInfo_GetMimeType
+ * @tc.type: FUNC
+ */
+HWTEST_F(PixelMapNdk2Test, OH_PixelmapImageInfo_GetMimeType, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_PixelmapImageInfo_GetMimeType start";
+    OH_Pixelmap_ImageInfo *info = nullptr;
+    Image_MimeType *format = nullptr;
+    Image_ErrorCode ret = OH_PixelmapImageInfo_GetMimeType(info, format);
+    ASSERT_EQ(ret, IMAGE_BAD_PARAMETER);
+    GTEST_LOG_(INFO) << "PixelMapNdk2Test: OH_PixelmapImageInfo_GetMimeType end";
+}
+
+/**
  * @tc.name: OH_PixelmapInitializationOptions_SetGetSrcPixelFormat
  * @tc.desc: OH_PixelmapInitializationOptions_SetGetSrcPixelFormat
  * @tc.type: FUNC

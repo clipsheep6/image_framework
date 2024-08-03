@@ -21,6 +21,11 @@
 #include "pixel_map_napi.h"
 #include "pixelmap_native_impl.h"
 #include "image_format_convert.h"
+#ifndef _WIN32
+#include "securec.h"
+#else
+#include "memory.h"
+#endif
 
 using namespace OHOS::Media;
 #ifdef __cplusplus
@@ -62,6 +67,7 @@ struct OH_Pixelmap_ImageInfo {
     int32_t pixelFormat = PIXEL_FORMAT::PIXEL_FORMAT_UNKNOWN;
     PIXELMAP_ALPHA_TYPE alphaType = PIXELMAP_ALPHA_TYPE::PIXELMAP_ALPHA_TYPE_UNKNOWN;
     bool isHdr = false;
+    Image_MimeType mimeType;
 };
 
 static PIXEL_FORMAT ParsePixelForamt(int32_t val)
@@ -378,10 +384,41 @@ Image_ErrorCode OH_PixelmapImageInfo_GetDynamicRange(OH_Pixelmap_ImageInfo *info
 }
 
 MIDK_EXPORT
+Image_ErrorCode OH_PixelmapImageInfo_GetMimeType(OH_Pixelmap_ImageInfo *info, Image_MimeType *format)
+{
+    if (info == nullptr || format == nullptr) {
+        return IMAGE_BAD_PARAMETER;
+    }
+
+    if (format->size != 0 && format->size < info->mimeType.size) {
+        return IMAGE_BAD_PARAMETER;
+    }
+
+    format->size = (format->size == 0) ? info->mimeType.size : format->size;
+    format->data = static_cast<char *>(malloc(format->size));
+    if (format->data == nullptr) {
+        return IMAGE_ALLOC_FAILED;
+    }
+
+    if (info->mimeType.data == nullptr ||
+        memcpy_s(format->data, format->size, info->mimeType.data, info->mimeType.size) != 0) {
+        free(format->data);
+        format->data = nullptr;
+        format->size = 0;
+        return IMAGE_COPY_FAILED;
+    }
+    return IMAGE_SUCCESS;
+}
+
+MIDK_EXPORT
 Image_ErrorCode OH_PixelmapImageInfo_Release(OH_Pixelmap_ImageInfo *info)
 {
     if (info == nullptr) {
         return IMAGE_BAD_PARAMETER;
+    }
+    if (info->mimeType.data != nullptr) {
+        free(info->mimeType.data);
+        info->mimeType.data = nullptr;
     }
     delete  info;
     return IMAGE_SUCCESS;
@@ -516,6 +553,26 @@ Image_ErrorCode OH_PixelmapNative_GetImageInfo(OH_PixelmapNative *pixelmap, OH_P
     imageInfo->rowStride = static_cast<uint32_t>(pixelmap->GetInnerPixelmap()->GetRowStride());
     imageInfo->pixelFormat = static_cast<int32_t>(srcInfo.pixelFormat);
     imageInfo->isHdr = pixelmap->GetInnerPixelmap()->IsHdr();
+
+    if (imageInfo->mimeType.data != nullptr) {
+        free(imageInfo->mimeType.data);
+        imageInfo->mimeType.data = nullptr;
+        imageInfo->mimeType.size = 0;
+    }
+    if (srcInfo.encodedFormat.size() != 0) {
+        imageInfo->mimeType.size = srcInfo.encodedFormat.size();
+        imageInfo->mimeType.data = static_cast<char *>(malloc(imageInfo->mimeType.size));
+        if (imageInfo->mimeType.data == nullptr) {
+            return IMAGE_ALLOC_FAILED;
+        }
+        if (memcpy_s(imageInfo->mimeType.data, imageInfo->mimeType.size, srcInfo.encodedFormat.c_str(),
+            srcInfo.encodedFormat.size()) != 0) {
+            free(imageInfo->mimeType.data);
+            imageInfo->mimeType.data = nullptr;
+            imageInfo->mimeType.size = 0;
+            return IMAGE_COPY_FAILED;
+        }
+    }
     return IMAGE_SUCCESS;
 }
 
