@@ -313,7 +313,7 @@ static std::unique_ptr<PixelMap> ComposeHdrPixelMap(
         .gainmap = gainmapSptr,
         .hdr = hdrSptr,
     };
-    auto res = VpeUtils().ColorSpaceConverterComposeImage(buffers, (hdrType == ImageHdrType::HDR_CUVA));
+    auto res = VpeUtils::ColorSpaceConverterComposeImage(buffers, (hdrType == ImageHdrType::HDR_CUVA));
     if (res != VPE_ERROR_OK) {
         IMAGE_LOGE("Compose HDR image failed");
         return nullptr;

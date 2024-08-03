@@ -804,8 +804,7 @@ static uint32_t DecomposeImage(PixelMap* pixelMap, sptr<SurfaceBuffer>& base, sp
         .gainmap = gainmap,
         .hdr = hdrSurfaceBuffer,
     };
-    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
-    int32_t res = utils->ColorSpaceConverterDecomposeImage(buffers);
+    int32_t res = VpeUtils::ColorSpaceConverterDecomposeImage(buffers);
     if (res != VPE_ERROR_OK || base == nullptr || gainmap == nullptr) {
         return IMAGE_RESULT_CREATE_SURFAC_FAILED;
     }
@@ -817,17 +816,16 @@ static bool DecomposeImage(VpeSurfaceBuffers& buffers, HdrMetadata& metadata, bo
 {
     VpeUtils::SetSbMetadataType(buffers.sdr, CM_IMAGE_HDR_VIVID_DUAL);
     VpeUtils::SetSbColorSpaceType(buffers.sdr, CM_SRGB_FULL);
-    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     int32_t res;
     if (onlySdr) {
         if (buffers.hdr == nullptr || buffers.sdr == nullptr) {
             return false;
         }
-        res = utils->ColorSpaceConverterImageProcess(buffers.hdr, buffers.sdr);
+        res = VpeUtils::ColorSpaceConverterImageProcess(buffers.hdr, buffers.sdr);
     } else {
         VpeUtils::SetSbMetadataType(buffers.gainmap, CM_METADATA_NONE);
         VpeUtils::SetSbColorSpaceType(buffers.gainmap, CM_SRGB_FULL);
-        res = utils->ColorSpaceConverterDecomposeImage(buffers);
+        res = VpeUtils::ColorSpaceConverterDecomposeImage(buffers);
     }
     if (res != VPE_ERROR_OK) {
         IMAGE_LOGE("DecomposeImage [%{public}d] failed, res = %{public}d", onlySdr, res);

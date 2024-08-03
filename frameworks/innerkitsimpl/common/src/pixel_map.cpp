@@ -3279,8 +3279,7 @@ static bool DecomposeImage(sptr<SurfaceBuffer>& hdr, sptr<SurfaceBuffer>& sdr)
     VpeUtils::SetSbMetadataType(hdr, HDI::Display::Graphic::Common::V1_0::CM_IMAGE_HDR_VIVID_SINGLE);
     VpeUtils::SetSbMetadataType(sdr, HDI::Display::Graphic::Common::V1_0::CM_IMAGE_HDR_VIVID_DUAL);
     VpeUtils::SetSbColorSpaceType(sdr, HDI::Display::Graphic::Common::V1_0::CM_SRGB_FULL);
-    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
-    int32_t res = utils->ColorSpaceConverterImageProcess(hdr, sdr);
+    int32_t res = VpeUtils::ColorSpaceConverterImageProcess(hdr, sdr);
     if (res != VPE_ERROR_OK || sdr == nullptr) {
         return false;
     }
