@@ -259,7 +259,7 @@ napi_value PictureNapi::Init(napi_env env, napi_value exports)
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(
         napi_define_class(env, CLASS_NAME.c_str(), NAPI_AUTO_LENGTH, Constructor, nullptr, IMG_ARRAY_SIZE(props),
-                          props, &constructor)), nullptr, IMAGE_LOGE("define class fail")
+        props, &constructor)), nullptr, IMAGE_LOGE("define class fail")
     );
 
     IMG_NAPI_CHECK_RET_D(IMG_IS_OK(napi_create_reference(env, constructor, 1, &sConstructor_)),
