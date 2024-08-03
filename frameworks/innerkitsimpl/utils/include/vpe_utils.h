@@ -41,13 +41,11 @@ struct VpeSurfaceBuffers {
 
 class VpeUtils {
 public:
-    VpeUtils();
-    ~VpeUtils();
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
-    int32_t ColorSpaceConverterComposeImage(VpeSurfaceBuffers& sb, bool legacy);
-    int32_t ColorSpaceConverterDecomposeImage(VpeSurfaceBuffers& sb);
-    int32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer>& input, sptr<SurfaceBuffer>& output);
-    int32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer>& input, sptr<SurfaceBuffer>& output, int32_t level);
+    static int32_t ColorSpaceConverterComposeImage(VpeSurfaceBuffers& sb, bool legacy);
+    static int32_t ColorSpaceConverterDecomposeImage(VpeSurfaceBuffers& sb);
+    static int32_t ColorSpaceConverterImageProcess(sptr<SurfaceBuffer>& input, sptr<SurfaceBuffer>& output);
+    static int32_t DetailEnhancerImageProcess(sptr<SurfaceBuffer>& input, sptr<SurfaceBuffer>& output, int32_t level);
     static bool SetSbColorSpaceType(sptr<SurfaceBuffer>& buffer,
         const HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType& colorSpaceType);
     static bool GetSbColorSpaceType(const sptr<SurfaceBuffer>& buffer,
@@ -67,15 +65,19 @@ public:
     static bool SetSbColorSpaceDefault(sptr<SurfaceBuffer>& buffer);
     static void CopySurfaceBufferInfo(sptr<SurfaceBuffer>& source, sptr<SurfaceBuffer>& dst);
 #endif
-    static bool LoadLibVpe();
-    static void UnloadLibVpe();
 
 private:
-    int32_t ColorSpaceConverterCreate(void* handle, int32_t* instanceId);
-    int32_t ColorSpaceConverterDestory(void* handle, int32_t* instanceId);
-    int32_t DetailEnhancerCreate(void* handle, int32_t* instanceId);
-    int32_t DetailEnhancerDestory(void* handle, int32_t* instanceId);
-    std::mutex vpeMtx_;
+    VpeUtils();
+    ~VpeUtils();
+    static VpeUtils &GetInstance();
+    bool LoadLibVpe();
+    void UnloadLibVpe();
+    static int32_t ColorSpaceConverterCreate(int32_t* instanceId);
+    static int32_t ColorSpaceConverterDestory(int32_t* instanceId);
+    static int32_t DetailEnhancerCreate(int32_t* instanceId);
+    static int32_t DetailEnhancerDestory(int32_t* instanceId);
+    class Impl;
+    std::shared_ptr<Impl> impl_;
     static void* dlHandler_;
 };
 } // namespace Media

@@ -3270,8 +3270,7 @@ static bool DecomposeImage(sptr<SurfaceBuffer>& hdr, sptr<SurfaceBuffer>& sdr)
     VpeUtils::SetSbMetadataType(hdr, HDI::Display::Graphic::Common::V1_0::CM_IMAGE_HDR_VIVID_SINGLE);
     VpeUtils::SetSbMetadataType(sdr, HDI::Display::Graphic::Common::V1_0::CM_IMAGE_HDR_VIVID_DUAL);
     VpeUtils::SetSbColorSpaceType(sdr, HDI::Display::Graphic::Common::V1_0::CM_SRGB_FULL);
-    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
-    int32_t res = utils->ColorSpaceConverterImageProcess(hdr, sdr);
+    int32_t res = VpeUtils::ColorSpaceConverterImageProcess(hdr, sdr);
     if (res != VPE_ERROR_OK || sdr == nullptr) {
         return false;
     }
@@ -3735,9 +3734,8 @@ bool ImageSource::ComposeHdrImage(ImageHdrType hdrType, DecodeContext& baseCtx, 
         .gainmap = gainmapSptr,
         .hdr = hdrSptr,
     };
-    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
     bool legacy = hdrType == ImageHdrType::HDR_CUVA;
-    int32_t res = utils->ColorSpaceConverterComposeImage(buffers, legacy);
+    int32_t res = VpeUtils::ColorSpaceConverterComposeImage(buffers, legacy);
     if (res != VPE_ERROR_OK) {
         IMAGE_LOGI("[ImageSource] composeImage failed");
         FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
@@ -3909,8 +3907,7 @@ static uint32_t DoAiHdrProcess(sptr<SurfaceBuffer> &input, DecodeContext &hdrCtx
     VpeUtils::SetSbMetadataType(output, CM_IMAGE_HDR_VIVID_SINGLE);
     VpeUtils::SetSbColorSpaceDefault(output);
 
-    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
-    res = utils->ColorSpaceConverterImageProcess(input, output);
+    res = VpeUtils::ColorSpaceConverterImageProcess(input, output);
     if (res != VPE_ERROR_OK) {
         IMAGE_LOGE("[ImageSource]DoAiHdrProcess ColorSpaceConverterImageProcess failed! %{public}d", res);
         FreeContextBuffer(hdrCtx.freeFunc, hdrCtx.allocatorType, hdrCtx.pixelsBuffer);
@@ -3934,8 +3931,7 @@ static uint32_t AiSrProcess(sptr<SurfaceBuffer> &input, DecodeContext &aisrCtx)
         return res;
     }
     sptr<SurfaceBuffer> output = reinterpret_cast<SurfaceBuffer*>(aisrCtx.pixelsBuffer.context);
-    std::unique_ptr<VpeUtils> utils = std::make_unique<VpeUtils>();
-    res = utils->DetailEnhancerImageProcess(input, output, static_cast<int32_t>(aisrCtx.resolutionQuality));
+    res = VpeUtils::DetailEnhancerImageProcess(input, output, static_cast<int32_t>(aisrCtx.resolutionQuality));
     if (res != VPE_ERROR_OK) {
         IMAGE_LOGE("[ImageSource]AiSrProcess DetailEnhancerImage Processed failed");
         FreeContextBuffer(aisrCtx.freeFunc, aisrCtx.allocatorType, aisrCtx.pixelsBuffer);
