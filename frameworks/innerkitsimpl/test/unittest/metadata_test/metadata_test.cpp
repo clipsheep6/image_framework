@@ -39,7 +39,7 @@ public:
 * @tc.desc: Obtain all keys and values by setting unsupported keys.
 * @tc.type: FUNC
 */
-HWTEST_F(MetadataTest, GetAllPropertiesTest002, TestSize.Level2)
+HWTEST_F(MetadataTest, GetAllPropertiesTest001, TestSize.Level2)
 {
     ImageMetadata::PropertyMapPtr KValueStr;
     auto exifData = exif_data_new_from_file(IMAGE_INPUT_JPEG_PATH.c_str());
@@ -56,7 +56,7 @@ HWTEST_F(MetadataTest, GetAllPropertiesTest002, TestSize.Level2)
 * @tc.desc: Set empty exifdata to obtain clones.
 * @tc.type: FUN
 */
-HWTEST_F(MetadataTest, CloneMetadataTest003, TestSize.Level2)
+HWTEST_F(MetadataTest, CloneMetadataTest002, TestSize.Level2)
 {
     auto exifData = exif_data_new_from_file(nullptr);
     ExifMetadata metadata(exifData);
