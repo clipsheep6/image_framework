@@ -352,6 +352,8 @@ int JpegDecoderYuv::DoDecode(DecodeContext &context, JpegDecoderYuvParameter &de
         } else {
             JpegDecoderYuv::InitYuvDataOutInfoTo420NV(outwidth, outheight, context.yuvInfo);
         }
+        context.outInfo.size.width = outwidth;
+        context.outInfo.size.height = outheight;
     }
     return ret;
 }
