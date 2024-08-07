@@ -461,6 +461,7 @@ std::unique_ptr<AbsMemory> ImageFormatConvert::CreateMemory(PixelFormat pixelFor
                                                             int32_t width, int32_t height, YUVStrideInfo &strides)
 {
     if (width == 0 || height == 0) {
+        IMAGE_LOGE("CreateMemory err width or height!");
         return nullptr;
     }
     uint32_t pictureSize = GetBufferSizeByFormat(pixelFormat, {width, height});
@@ -473,11 +474,12 @@ std::unique_ptr<AbsMemory> ImageFormatConvert::CreateMemory(PixelFormat pixelFor
     }
     MemoryData memoryData = {nullptr, pictureSize, "PixelConvert", {width, height}, pixelFormat};
     auto m = MemoryManager::CreateMemory(allocatorType, memoryData);
-    if (m == nullptr || allocatorType != AllocatorType::DMA_ALLOC) {
+    if (m == nullptr) {
         IMAGE_LOGE("CreateMemory failed");
         return m;
     }
-    if (m->extend.data == nullptr) {
+#if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
+    if (allocatorType != AllocatorType::DMA_ALLOC || m->extend.data == nullptr) {
         IMAGE_LOGE("CreateMemory get surfacebuffer failed");
         return m;
     }
@@ -490,22 +492,16 @@ std::unique_ptr<AbsMemory> ImageFormatConvert::CreateMemory(PixelFormat pixelFor
         IMAGE_LOGE("CreateMemory Get planesInfo failed, retVal:%{public}d", retVal);
     } else if (planes->planeCount >= NUM_2) {
         if (pixelFormat == PixelFormat::NV12 || pixelFormat == PixelFormat::YCBCR_P010) {
-            auto yStride = planes->planes[PLANE_Y].columnStride;
-            auto uvStride = planes->planes[PLANE_U].columnStride;
-            auto yOffset = planes->planes[PLANE_Y].offset;
-            auto uvOffset = planes->planes[PLANE_U].offset;
-            strides = {yStride, uvStride, yOffset, uvOffset};
+            strides = {planes->planes[PLANE_Y].columnStride, planes->planes[PLANE_U].columnStride,
+                planes->planes[PLANE_Y].offset, planes->planes[PLANE_U].offset};
         } else if (pixelFormat == PixelFormat::NV21 || pixelFormat == PixelFormat::YCRCB_P010) {
-            auto yStride = planes->planes[PLANE_Y].columnStride;
-            auto uvStride = planes->planes[PLANE_V].columnStride;
-            auto yOffset = planes->planes[PLANE_Y].offset;
-            auto uvOffset = planes->planes[PLANE_V].offset;
-            strides = {yStride, uvStride, yOffset, uvOffset};
+            strides = {planes->planes[PLANE_Y].columnStride, planes->planes[PLANE_V].columnStride,
+                planes->planes[PLANE_Y].offset, planes->planes[PLANE_V].offset};
         } else {
-            auto yOffset = planes->planes[0].offset;
-            strides = {stride, 0, yOffset, 0};
+            strides = {stride, 0, planes->planes[0].offset, 0};
         }
     }
+#endif
     return m;
 }
 
