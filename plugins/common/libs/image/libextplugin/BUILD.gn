@@ -75,10 +75,6 @@ config("win_config") {
     include_dirs += [
       "${image_subsystem}/mock/native/include",
       "${image_subsystem}/mock/native/include/secure",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/codec",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config/win",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/core",
     ]
   }
 }
@@ -87,10 +83,6 @@ config("mac_config") {
     defines = image_decode_mac_defines
     include_dirs += [
       "${image_subsystem}/mock/native/include",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/codec",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/core",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config/mac",
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}/include/external/skia/include/config",
       "${third_party_root}/bounds_checking_function/include",
     ]
   }

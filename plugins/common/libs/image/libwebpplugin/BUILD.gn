@@ -44,7 +44,6 @@ ohos_shared_library("webpplugin") {
         [ "//foundation/multimedia/image_framework/mock/native/include" ]
 
     deps = [
-      "${asdk_dir}/static_library/${target_os}_${target_cpu}:libwebp-image_static",
       "//foundation/multimedia/image_framework/mock/native:log_mock_static",
     ]
   } else {
