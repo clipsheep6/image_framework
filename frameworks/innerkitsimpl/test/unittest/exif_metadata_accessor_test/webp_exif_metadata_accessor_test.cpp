@@ -1767,5 +1767,66 @@ HWTEST_F(WebpExifMetadataAccessorTest, ConvertAsciiToInt, TestSize.Level3)
     int ret = png->ConvertAsciiToInt(&sourcePtr, exifInfoLength, &destPtr);
     ASSERT_EQ(ret, ERR_IMAGE_SOURCE_DATA_INCOMPLETE);
 }
+
+/**
+ * @tc.name: GetRawTextFromChunk001
+ * @tc.desc: Testing GetRawTextFromChunk
+ * @tc.type: FUNC
+ */
+HWTEST_F(WebpExifMetadataAccessorTest, GetRawTextFromChunk001, TestSize.Level3)
+{
+    std::shared_ptr<PngImageChunkUtils> png = std::make_shared<PngImageChunkUtils>();
+    
+    const DataBuf chunkData;
+    size_t keySize = 1;
+    int chunkType = 4;
+    DataBuf ret = png->GetRawTextFromChunk(chunkData, keySize,
+        static_cast<Media::PngImageChunkUtils::TextChunkType>(chunkType));
+    ASSERT_EQ(ret.Size(), 0);
+}
+
+/**
+ * @tc.name: FindExifKeyword001
+ * @tc.desc: Testing FindExifKeyword
+ * @tc.type: FUNC
+ */
+HWTEST_F(WebpExifMetadataAccessorTest, FindExifKeyword001, TestSize.Level3)
+{
+    std::shared_ptr<PngImageChunkUtils> png = std::make_shared<PngImageChunkUtils>();
+    
+    byte keyword = 'a';
+    size_t size = 22;
+    bool ret = png->FindExifKeyword(nullptr, size);
+    ASSERT_EQ(ret, false);
+    size = 10;
+    ret = png->FindExifKeyword(&keyword, size);
+    ASSERT_EQ(ret, false);
+}
+
+/**
+ * @tc.name: StepOverNewLine001
+ * @tc.desc: Testing StepOverNewLine
+ * @tc.type: FUNC
+ */
+HWTEST_F(WebpExifMetadataAccessorTest, StepOverNewLine001, TestSize.Level3)
+{
+    std::shared_ptr<PngImageChunkUtils> png = std::make_shared<PngImageChunkUtils>();
+    const char* sourcePtr = "hello";
+    const char* ret = png->StepOverNewLine(sourcePtr, sourcePtr + 1);
+    ASSERT_EQ(ret, NULL);
+}
+
+/**
+ * @tc.name: ConvertRawTextToExifInfo001
+ * @tc.desc: Testing ConvertRawTextToExifInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(WebpExifMetadataAccessorTest, ConvertRawTextToExifInfo001, TestSize.Level3)
+{
+    std::shared_ptr<PngImageChunkUtils> png = std::make_shared<PngImageChunkUtils>();
+    const DataBuf rawText(1);
+    png->ConvertRawTextToExifInfo(rawText);
+    ASSERT_EQ(rawText.Size() <= 1, true);
+}
 } // namespace Multimedia
 } // namespace OHOS
