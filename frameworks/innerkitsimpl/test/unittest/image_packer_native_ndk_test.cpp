@@ -17,6 +17,7 @@
 #include "image_packer_native.h"
 #include "image_packer_native_impl.h"
 #include "file_packer_stream.h"
+#include <fcntl.h>
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -28,6 +29,25 @@ public:
     ImagePackerNdk2Test() {}
     ~ImagePackerNdk2Test() {}
 };
+
+static const std::string IMAGE_FD_PATH = "/data/local/tmp/image/test";
+static constexpr int32_t BUFFER_LENGTH = 8;
+static OH_PictureNative* CreatePictureNative()
+{
+    uint8_t color[BUFFER_LENGTH] = {0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08};
+    size_t dataLength = BUFFER_LENGTH;
+    OH_ImageSourceNative *source = nullptr;
+    OH_DecodingOptionsForPicture *options = nullptr;
+    OH_PictureNative *picture = nullptr;
+    Image_ErrorCode ret;
+    ret = OH_ImageSourceNative_CreateFromData(color, dataLength, &source);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    ret = OH_DecodingOptionsForPicture_Create(&options);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    ret = OH_ImageSourceNative_CreatePicture(source, options, &picture);
+    EXPECT_EQ(ret, IMAGE_SUCCESS);
+    return picture;
+}
 
 /**
  * @tc.name: OH_ImageSourceInfo_Create
@@ -221,5 +241,109 @@ HWTEST_F(ImagePackerNdk2Test, OH_ImagePackerNative_Release, TestSize.Level3)
     GTEST_LOG_(INFO) << "ImagePackerNdk2Test: OH_ImagePackerNative_Release end";
 }
 
+/**
+ * @tc.name: OH_ImagePackerNative_PackToDataFromPictureTest001
+ * @tc.desc: Test OH_ImagePackerNative_PackToDataFromPicture with null pointers.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerNdk2Test, OH_ImagePackerNative_PackToDataFromPictureTest001, TestSize.Level3)
+{
+    Image_ErrorCode res = OH_ImagePackerNative_PackToDataFromPicture(nullptr, nullptr, nullptr, nullptr, nullptr);
+    EXPECT_EQ(res, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_ImagePackerNative_PackToDataFromPictureTest002
+ * @tc.desc: Tests packing a picture into data using OH_ImagePackerNative.
+ *           The test checks if the packer and options are created, and if the picture is packed successfully.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerNdk2Test, OH_ImagePackerNative_PackToDataFromPictureTest002, TestSize.Level1)
+{
+    OH_ImagePackerNative *imagePacker = nullptr;
+    OH_PackingOptions *options = nullptr;
+    OH_PictureNative *picture = nullptr;
+    uint8_t outData[BUFFER_LENGTH] = {0};
+    size_t size = BUFFER_LENGTH;
+    Image_ErrorCode errCode = OH_PackingOptions_Create(&options);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    ASSERT_NE(options, nullptr);
+
+    errCode = OH_ImagePackerNative_Create(&imagePacker);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    ASSERT_NE(imagePacker, nullptr);
+
+    Image_MimeType format;
+    char formatStr[] = "image/jpeg";
+    format.size = strlen(formatStr) + 1;
+    format.data = formatStr;
+    errCode = OH_PackingOptions_SetMimeType(options, &format);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+
+    picture = CreatePictureNative();
+    EXPECT_NE(picture, nullptr);
+    errCode = OH_ImagePackerNative_PackToDataFromPicture(imagePacker, options, picture, outData, &size);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+
+    errCode = OH_PackingOptions_Release(options);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    errCode = OH_ImagePackerNative_Release(imagePacker);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    errCode = OH_PictureNative_Release(picture);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+}
+
+/**
+ * @tc.name: OH_ImagePackerNative_PackToFileFromPictureTest001
+ * @tc.desc: test OH_ImagePackerNative_PackToDataFromPicture with null pointers.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerNdk2Test, OH_ImagePackerNative_PackToFileFromPictureTest001, TestSize.Level3)
+{
+    int32_t fd = 0;
+    Image_ErrorCode res = OH_ImagePackerNative_PackToFileFromPicture(nullptr, nullptr, nullptr, fd);
+    EXPECT_EQ(res, IMAGE_BAD_PARAMETER);
+}
+
+/**
+ * @tc.name: OH_ImagePackerNative_PackToFileFromPictureTest002
+ * @tc.desc: Tests packing a picture into file using OH_ImagePackerNative.
+ *           The test checks if the packer and options are created, and if the picture is packed successfully.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerNdk2Test, OH_ImagePackerNative_PackToFileFromPictureTest002, TestSize.Level1)
+{
+    OH_ImagePackerNative *imagePacker = nullptr;
+    OH_PackingOptions *options = nullptr;
+    OH_PictureNative *picture = nullptr;
+    int32_t fd = 0;
+    fd = open(IMAGE_FD_PATH.c_str(), O_WRONLY|O_CREAT);
+    Image_ErrorCode errCode = OH_PackingOptions_Create(&options);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    ASSERT_NE(options, nullptr);
+
+    errCode = OH_ImagePackerNative_Create(&imagePacker);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    ASSERT_NE(imagePacker, nullptr);
+
+    Image_MimeType format;
+    char formatStr[] = "image/jpeg";
+    format.size = strlen(formatStr) + 1;
+    format.data = formatStr;
+    errCode = OH_PackingOptions_SetMimeType(options, &format);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+
+    picture = CreatePictureNative();
+    EXPECT_NE(picture, nullptr);
+    errCode = OH_ImagePackerNative_PackToFileFromPicture(imagePacker, options, picture, fd);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+
+    errCode = OH_PackingOptions_Release(options);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    errCode = OH_ImagePackerNative_Release(imagePacker);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+    errCode = OH_PictureNative_Release(picture);
+    EXPECT_EQ(errCode, IMAGE_SUCCESS);
+}
 }
 }

@@ -49,6 +49,7 @@ static const std::string IMAGE_INPUT_JPEG_PATH = "/data/local/tmp/image/test.jpg
 static const std::string IMAGE_INPUT_EXIF_JPEG_PATH = "/data/local/tmp/image/test_exif.jpg";
 static const std::string IMAGE_OUTPUT_JPEG_PATH = "/data/local/tmp/image/test_out.jpg";
 static const std::string IMAGE_INPUT_ICO_PATH = "/data/local/tmp/image/test.ico";
+static const std::string IMAGE_INPUT_HEIF_PATH = "/data/local/tmp/image/test.heic";
 
 class ImageSourceTest : public testing::Test {
 public:
@@ -2112,6 +2113,53 @@ HWTEST_F(ImageSourceTest, ApplyGainMap001, TestSize.Level3)
     baseCtx.allocatorType = AllocatorType::DEFAULT;
     ret = imageSource->ComposeHdrImage(hdrType, baseCtx, gainMapCtx, hdrCtx, metadata);
     ASSERT_EQ(ret, false);
+}
+
+/**
+ * @tc.name: CreatePicture001
+ * @tc.desc: test CreatePicture with invalid iamgeSource.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreatePicture001, TestSize.Level3)
+{
+    uint32_t errorCode = -1;
+    const IncrementalSourceOptions opts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateIncrementalImageSource(opts, errorCode);
+    const DecodingOptionsForPicture opts;
+    std::unique_ptr<Picture> picture = imageSource->CreatePicture(opts, errorCode);
+    ASSERT_EQ(picture, nullptr);
+}
+
+/**
+ * @tc.name: CreatePicture002
+ * @tc.desc: test CreatePicture with jepg
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreatePicture002, TestSize.Level3)
+{
+    uint32_t errorCode = -1;
+    SourceOptions opts;
+    opts.formatHint = "image/jpeg";
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    const DecodingOptionsForPicture opts;
+    std::unique_ptr<Picture> picture = imageSource->CreatePicture(opts, errorCode);
+    ASSERT_NE(picture, nullptr);
+}
+
+/**
+ * @tc.name: CreatePicture003
+ * @tc.desc: test CreatePicture with heif
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImageSourceTest, CreatePicture003, TestSize.Level3)
+{
+    uint32_t res = 0;
+    SourceOptions sourceOpts;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_HEIF_PATH, sourceOpts, res);
+    ASSERT_NE(imageSource, nullptr);
+    const DecodingOptionsForPicture opts;
+    std::unique_ptr<Picture> picture = imageSource->CreatePicture(opts, errorCode);
+    ASSERT_NE(picture, nullptr);
 }
 } // namespace Multimedia
 } // namespace OHOS
