@@ -26,6 +26,10 @@ namespace Media {
 const std::string DATA_SIZE_TAG = "dataSize";
 static constexpr int32_t NUMI_0 = 0;
 static constexpr uint32_t NUM_0 = 0;
+static const uint8_t NUM_3 = 3;
+static const uint8_t NUM_5 = 5;
+static const uint8_t NUM_6 = 6;
+static const uint8_t NUM_7 = 7;
 static constexpr int32_t RECEIVER_TEST_WIDTH = 8192;
 static constexpr int32_t RECEIVER_TEST_HEIGHT = 8;
 static constexpr int32_t RECEIVER_TEST_CAPACITY = 8;
@@ -517,6 +521,127 @@ HWTEST_F(NativeImageTest, ScalePixelMapTest001, TestSize.Level3)
     ret = pixelmap.ScalePixelMap(targetSize, dstSize, scaleMode, dstPixelMap);
     ASSERT_EQ(ret, false);
     GTEST_LOG_(INFO) << "NativeImageTest: ScalePixelMapTest001 end";
+}
+
+/**
+ * @tc.name: CheckParams002
+ * @tc.desc: CheckParams
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeImageTest, CheckParams002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NativeImageTest: CheckParams002 start";
+    PixelMap pixelmap;
+    const uint32_t colors = 1;
+    uint32_t colorLength = 1;
+    int32_t offset = 0;
+    int32_t width = 100;
+    InitializationOptions opts;
+    opts.size.width = -1;
+    opts.size.height = 100;
+    bool ret = pixelmap.CheckParams(&colors, colorLength, offset, width, opts);
+    ASSERT_EQ(ret, false);
+    opts.size.width = 100;
+    opts.size.height = -1;
+    ret = pixelmap.CheckParams(&colors, colorLength, offset, width, opts);
+    ASSERT_EQ(ret, false);
+    opts.size.width = 100;
+    opts.size.height = 100;
+    offset = -1;
+    ret = pixelmap.CheckParams(&colors, colorLength, offset, width, opts);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "NativeImageTest: CheckParams002 end";
+}
+
+/**
+ * @tc.name: SetRowDataSizeForImageInfo001
+ * @tc.desc: SetRowDataSizeForImageInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeImageTest, SetRowDataSizeForImageInfo001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NativeImageTest: SetRowDataSizeForImageInfo001 start";
+    PixelMap pixelmap;
+    ImageInfo info;
+    info.pixelFormat = PixelFormat::ASTC_6x6;
+    info.size.width = 1;
+    pixelmap.pixelBytes_ = 1;
+    pixelmap.SetRowDataSizeForImageInfo(info);
+    ASSERT_EQ(pixelmap.rowDataSize_, pixelmap.pixelBytes_ * (((info.size.width + NUM_5) / NUM_6) * NUM_6));
+    info.pixelFormat = PixelFormat::ASTC_8x8;
+    pixelmap.SetRowDataSizeForImageInfo(info);
+    ASSERT_EQ(pixelmap.rowDataSize_, pixelmap.pixelBytes_ * (((info.size.width + NUM_7) >> NUM_3) << NUM_3));
+    GTEST_LOG_(INFO) << "NativeImageTest: SetRowDataSizeForImageInfo001 end";
+}
+
+/**
+ * @tc.name: GetARGB32Color001
+ * @tc.desc: GetARGB32Color
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeImageTest, GetARGB32Color001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NativeImageTest: GetARGB32Color001 start";
+    PixelMap pixelmap;
+    int32_t x = 1;
+    int32_t y = 1;
+    uint32_t color = 1;
+    pixelmap.colorProc_ = nullptr;
+    bool ret = pixelmap.GetARGB32Color(x, y, color);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "NativeImageTest: GetARGB32Color001 end";
+}
+
+/**
+ * @tc.name: ModifyImageProperty001
+ * @tc.desc: ModifyImageProperty
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeImageTest, ModifyImageProperty001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NativeImageTest: ModifyImageProperty001 start";
+    PixelMap pixelmap;
+    const std::string key = "test";
+    const std::string value = "test";
+    pixelmap.exifMetadata_ = nullptr;
+    uint32_t ret = pixelmap.ModifyImageProperty(key, value);
+    ASSERT_EQ(ret, ERR_IMAGE_DECODE_EXIF_UNSUPPORT);
+    GTEST_LOG_(INFO) << "NativeImageTest: ModifyImageProperty001 end";
+}
+
+/**
+ * @tc.name: GetPixel001
+ * @tc.desc: GetPixel
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeImageTest, GetPixel001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NativeImageTest: GetPixel001 start";
+    PixelMap pixelmap;
+    int32_t x = 1;
+    int32_t y = 1;
+    pixelmap.data_ = nullptr;
+    const uint8_t *ret = pixelmap.GetPixel(x, y);
+    ASSERT_EQ(ret, nullptr);
+    GTEST_LOG_(INFO) << "NativeImageTest: GetPixel001 end";
+}
+
+/**
+ * @tc.name: ALPHA8ToARGB001
+ * @tc.desc: ALPHA8ToARGB
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeImageTest, ALPHA8ToARGB001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "NativeImageTest: ALPHA8ToARGB001 start";
+    PixelMap pixelmap;
+    const uint8_t in = 'a';
+    uint32_t inCount = 1;
+    uint32_t out = 'a';
+    uint32_t outCount = 2;
+    bool ret = pixelmap.ALPHA8ToARGB(&in, inCount, &out, outCount);
+    ASSERT_EQ(ret, false);
+    GTEST_LOG_(INFO) << "NativeImageTest: ALPHA8ToARGB001 end";
 }
 }
 }
