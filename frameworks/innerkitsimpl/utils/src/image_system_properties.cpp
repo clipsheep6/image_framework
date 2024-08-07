@@ -25,9 +25,6 @@
 #include <parameters.h>
 #endif
 
-extern "C" {
-extern char* __progname;
-}
 namespace OHOS {
 namespace Media {
 #if !defined(_WIN32) && !defined(_APPLE) && !defined(IOS_PLATFORM) &&!defined(ANDROID_PLATFORM)
