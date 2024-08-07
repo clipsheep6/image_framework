@@ -2026,6 +2026,10 @@ bool PixelMap::WriteMemInfoToParcel(Parcel &parcel, const int32_t &bufferSize) c
             return false;
         }
         SurfaceBuffer* sbBuffer = reinterpret_cast<SurfaceBuffer*> (context_);
+        if (sbBuffer == nullptr) {
+            IMAGE_LOGE("surface buffer is nullptr.");
+            return false;
+        }
         sbBuffer->WriteToMessageParcel(static_cast<MessageParcel&>(parcel));
     } else {
         if (!WriteImageData(parcel, bufferSize)) {
