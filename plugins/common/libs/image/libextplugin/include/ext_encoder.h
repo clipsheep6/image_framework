@@ -27,7 +27,6 @@
 #if !defined(IOS_PLATFORM) && !defined(ANDROID_PLATFORM)
 #include "surface_buffer.h"
 #endif
-#include "v1_0/icodec_image.h"
 #include "hdr_type.h"
 
 #ifdef HEIF_HW_ENCODE_ENABLE
@@ -126,7 +125,6 @@ private:
     PlEncodeOptions opts_;
     Media::PixelMap* pixelmap_ = nullptr;
     Media::Picture* picture_ = nullptr;
-    sptr<HDI::Codec::Image::V1_0::ICodecImage> hwEncoder_;
     std::vector<std::shared_ptr<Media::AbsMemory>> tmpMemoryList_;
 };
 } // namespace ImagePlugin
