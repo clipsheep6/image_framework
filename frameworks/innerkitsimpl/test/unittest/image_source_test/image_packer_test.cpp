@@ -48,12 +48,51 @@ static const std::string IMAGE_JPG_SRC = "/data/local/tmp/image/test_packing_exi
 static const std::string IMAGE_JPG_DEST = "/data/local/tmp/image/test_jpg2jpg_out.jpg";
 static const std::string IMAGE_PNG_SRC = "/data/local/tmp/image/test.png";
 static const std::string IMAGE_PNG2JPG_DEST = "/data/local/tmp/image/test_png2jepg_out.jpg";
+static const std::string IMAGE_HEIF_SRC = "/data/local/tmp/image/test.heic";
+static const std::string IMAGE_HEIF_DEST = "/data/local/tmp/image/test_heif2heif_out.heic";
 
 class ImagePackerTest : public testing::Test {
 public:
     ImagePackerTest() {}
     ~ImagePackerTest() {}
 };
+
+constexpr int32_t sizeWidth = 2;
+constexpr int32_t sizeHeight = 3;
+constexpr int32_t bufferLength = 8;
+
+static std::shared_ptr<Picture> CreatePicture()
+{
+    const uint32_t color[bufferLength] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
+    uint32_t colorlength = sizeof(color) / sizeof(color[0]);
+    EXPECT_TRUE(colorlength == bufferLength);
+    InitializationOptions options;
+    options.size.width = sizeWidth;
+    options.size.height = sizeHeight;
+    options.srcPixelFormat = PixelFormat::UNKNOWN;
+    options.pixelFormat = PixelFormat::UNKNOWN;
+    options.alphaType = AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
+    std::unique_ptr<PixelMap> tmpPixelMap = PixelMap::Create(color, colorlength, options);
+    std::shared_ptr<PixelMap> pixelMap = std::move(tmpPixelMap);
+    std::unique_ptr<Picture> tmpPicture = Picture::Create(pixelMap);
+    std::shared_ptr<Picture> picture = std::move(tmpPicture);
+    return picture;
+}
+
+static std::shared_ptr<Picture> ImageSourceCreatePicture(std::string srcFormat, std::string srcPathName)
+{
+    uint32_t errorCode = -1;
+    SourceOptions opts;
+    opts.formatHint = srcFormat;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(srcPathName, opts, errorCode);
+    EXPECT_EQ(errorCode, OHOS::Media::SUCCESS);
+    EXPECT_NE(imageSource.get(), nullptr);
+    DecodingOptionsForPicture decodeOptions;
+    std::unique_ptr<Picture> tmpPicture = imageSource->CreatePicture(decodeOptions, errorCode);
+    std::shared_ptr<Picture> picture = std::move(tmpPicture);
+    EXPECT_NE(picture, nullptr);
+    return picture;
+}
 
 /**
  * @tc.name: StartPacking001
@@ -319,6 +358,23 @@ HWTEST_F(ImagePackerTest, AddImage003, TestSize.Level3)
     uint32_t ret = pack.AddImage(*imageSource, index);
     ASSERT_NE(ret, OHOS::Media::SUCCESS);
     GTEST_LOG_(INFO) << "ImagePackerTest: AddImage003 end";
+}
+
+/**
+ * @tc.name: AddPicture001
+ * @tc.desc: test AddPicture
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, AddPicture001, TestSize.Level3)
+{
+    ImagePacker pack;
+    Picture picture;
+    uint32_t ret = pack.AddPicture(picture);
+    // uint32_t errorCode = 0;
+    // SourceOptions opts;
+    // std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(IMAGE_INPUT_JPEG_PATH, opts, errorCode);
+    // uint32_t ret = pack.AddImage(*imageSource);
+    ASSERT_NE(ret, OHOS::Media::SUCCESS);
 }
 
 /**
@@ -653,6 +709,523 @@ HWTEST_F(ImagePackerTest, StartPacking020, TestSize.Level3)
     close(fdDest);
 
     GTEST_LOG_(INFO) << "ImagePackerTest: StartPacking020 end";
+}
+
+/**
+ * @tc.name: StartPacking021
+ * @tc.desc: Test packaging a jpeg image source data and writing the data to a jpeg file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking021, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/jpeg", IMAGE_JPG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    const int fileSize = 1024 * 1024 * 10;
+    ImagePacker pack;
+    std::vector<uint8_t> outputData(fileSize);
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(outputData.data(), fileSize, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    std::ofstream fileDestJpg(IMAGE_JPG_DEST, std::ios::binary);
+    ASSERT_TRUE(fileDestJpg.is_open());
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    fileDestJpg.write(reinterpret_cast<char *>(outputData.data()), fileSize);
+    ASSERT_FALSE(fileDestJpg.bad());
+    fileDestJpg.close();
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest =
+        ImageSource::CreateImageSource(outputData.data(), fileSize, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking022
+ * @tc.desc: Test packaging a jpeg image source data into a jpeg file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking022, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/jpeg", IMAGE_JPG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(IMAGE_JPG_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_JPG_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking023
+ * @tc.desc: Test packing a jpeg image source data and writing it to a jpeg file through an output stream.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking023, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/jpeg", IMAGE_JPG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/jpeg";
+    std::ofstream stream(IMAGE_JPG_DEST, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    uint32_t startpc = pack.StartPacking(stream, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    std::unique_ptr<std::ifstream> istreamDest = std::make_unique<std::ifstream>(IMAGE_JPG_DEST, std::ios::binary);
+    ASSERT_TRUE(istreamDest->is_open());
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> ImageSourceDest = 
+        ImageSource::CreateImageSource(std::move(istreamDest), opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(ImageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking024
+ * @tc.desc: Test packaging a jpeg image source data into a file descriptor.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking024, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/jpeg", IMAGE_JPG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    const int fd = open(IMAGE_JPG_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    ASSERT_NE(fd, -1);
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(fd, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    auto start = std::chrono::high_resolution_clock::now();
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "Time taken by FinalizePacking: " << diff.count() << " s\n";
+
+    const int fdDest = open(IMAGE_JPG_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(fdDest, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking025
+ * @tc.desc: Test packaging a png image source data into a jpeg file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking025, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    uint32_t errorCode = -1;
+    ASSERT_NE(picture, nullptr);
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(IMAGE_PNG2JPG_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_PNG2JPG_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking026
+ * @tc.desc: Test packaging a png image source data and writing the data to a jpeg file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking026, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    uint32_t errorCode = -1;
+    ASSERT_NE(picture, nullptr);
+
+    ImagePacker pack;
+    std::vector<uint8_t> outputData(MAX_IMAGE_SIZE);
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(outputData.data(), MAX_IMAGE_SIZE, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    std::ofstream fileDestJpg(IMAGE_PNG2JPG_DEST, std::ios::binary);
+    ASSERT_TRUE(fileDestJpg.is_open());
+    uint32_t retAddimage = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddimage, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    fileDestJpg.write(reinterpret_cast<char *>(outputData.data()), MAX_IMAGE_SIZE);
+    ASSERT_FALSE(fileDestJpg.bad());
+    fileDestJpg.close();
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest =
+        ImageSource::CreateImageSource(outputData.data(), MAX_IMAGE_SIZE, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking027
+ * @tc.desc: Test packing a png image source data and writing it to a jpeg file through an output stream.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking027, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    uint32_t errorCode = -1;
+    ASSERT_NE(picture, nullptr);
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/jpeg";
+    std::ofstream stream(IMAGE_PNG2JPG_DEST, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    uint32_t startpc = pack.StartPacking(stream, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+
+    std::unique_ptr<std::ifstream> istreamDest = std::make_unique<std::ifstream>(IMAGE_PNG2JPG_DEST, std::ios::binary);
+    ASSERT_NE(istreamDest, nullptr);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest =
+        ImageSource::CreateImageSource(std::move(istreamDest), opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking028
+ * @tc.desc: Test packaging a png image source data into a file descriptor.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking028, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    uint32_t errorCode = -1;
+    ASSERT_NE(picture, nullptr);
+    
+    
+    ImagePacker pack;
+    const int fd = open(IMAGE_PNG2JPG_DEST.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    ASSERT_NE(fd, -1);
+    PackOption option;
+    option.format = "image/jpeg";
+    uint32_t startpc = pack.StartPacking(fd, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    const int fdDest = open(IMAGE_PNG2JPG_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(fdDest, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+
+    close(fd);
+    close(fdDest);
+}
+
+/**
+ * @tc.name: StartPacking029
+ * @tc.desc: Test packaging a heif image source data and writing the data to a heif file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking029, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/heif", IMAGE_HEIF_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    const int fileSize = 1024 * 1024 * 10;
+    ImagePacker pack;
+    std::vector<uint8_t> outputData(fileSize);
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(outputData.data(), fileSize, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    std::ofstream fileDestHeif(IMAGE_HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(fileDestHeif.is_open());
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    fileDestHeif.write(reinterpret_cast<char *>(outputData.data()), fileSize);
+    ASSERT_FALSE(fileDestHeif.bad());
+    fileDestHeif.close();
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest =
+        ImageSource::CreateImageSource(outputData.data(), fileSize, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking030
+ * @tc.desc: Test packaging a heif image source data into a heif file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking030, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/heif", IMAGE_HEIF_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(IMAGE_HEIF_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_HEIF_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking031
+ * @tc.desc: Test packing a heif image source data and writing it to a heif file through an output stream.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking031, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/heif", IMAGE_HEIF_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/heif";
+    std::ofstream stream(IMAGE_HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    uint32_t startpc = pack.StartPacking(stream, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    std::unique_ptr<std::ifstream> istreamDest = std::make_unique<std::ifstream>(IMAGE_HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(istreamDest->is_open());
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> ImageSourceDest = 
+        ImageSource::CreateImageSource(std::move(istreamDest), opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(ImageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking032
+ * @tc.desc: Test packaging a heif image source data into a file descriptor.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking032, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/heif", IMAGE_HEIF_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    const int fd = open(IMAGE_HEIF_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    ASSERT_NE(fd, -1);
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(fd, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    auto start = std::chrono::high_resolution_clock::now();
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "Time taken by FinalizePacking: " << diff.count() << " s\n";
+
+    const int fdDest = open(IMAGE_HEIF_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(fdDest, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking033
+ * @tc.desc: Test packaging a png image source data into a heif file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking033, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    const int fileSize = 1024 * 1024 * 10;
+    ImagePacker pack;
+    std::vector<uint8_t> outputData(fileSize);
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(outputData.data(), fileSize, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    std::ofstream fileDestHeif(IMAGE_HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(fileDestHeif.is_open());
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    fileDestHeif.write(reinterpret_cast<char *>(outputData.data()), fileSize);
+    ASSERT_FALSE(fileDestHeif.bad());
+    fileDestHeif.close();
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest =
+        ImageSource::CreateImageSource(outputData.data(), fileSize, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking034
+ * @tc.desc: Test packaging a png image source data and writing the data to a heif file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking034, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(IMAGE_HEIF_DEST, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(IMAGE_HEIF_DEST, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking027
+ * @tc.desc: Test packing a png image source data and writing it to a heif file through an output stream.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking035, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    PackOption option;
+    option.format = "image/heif";
+    std::ofstream stream(IMAGE_HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    uint32_t startpc = pack.StartPacking(stream, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    std::unique_ptr<std::ifstream> istreamDest = std::make_unique<std::ifstream>(IMAGE_HEIF_DEST, std::ios::binary);
+    ASSERT_TRUE(istreamDest->is_open());
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> ImageSourceDest = 
+        ImageSource::CreateImageSource(std::move(istreamDest), opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(ImageSourceDest, nullptr);
+}
+
+/**
+ * @tc.name: StartPacking036
+ * @tc.desc: Test packaging a png image source data into a file descriptor.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ImagePackerTest, StartPacking036, TestSize.Level3)
+{
+    auto picture = ImageSourceCreatePicture("image/png", IMAGE_PNG_SRC);
+    // auto picture = CreatePicture();
+    ASSERT_NE(picture, nullptr);
+    uint32_t errorCode = -1;
+
+    ImagePacker pack;
+    const int fd = open(IMAGE_HEIF_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    ASSERT_NE(fd, -1);
+    PackOption option;
+    option.format = "image/heif";
+    uint32_t startpc = pack.StartPacking(fd, option);
+    ASSERT_EQ(startpc, OHOS::Media::SUCCESS);
+    uint32_t retAddPicture = pack.AddPicture(*picture);
+    auto start = std::chrono::high_resolution_clock::now();
+    ASSERT_EQ(retAddPicture, OHOS::Media::SUCCESS);
+    uint32_t retFinalizePacking = pack.FinalizePacking();
+    ASSERT_EQ(retFinalizePacking, OHOS::Media::SUCCESS);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "Time taken by FinalizePacking: " << diff.count() << " s\n";
+
+    const int fdDest = open(IMAGE_HEIF_DEST.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    SourceOptions opts;
+    std::unique_ptr<ImageSource> imageSourceDest = ImageSource::CreateImageSource(fdDest, opts, errorCode);
+    ASSERT_EQ(errorCode, OHOS::Media::SUCCESS);
+    ASSERT_NE(imageSourceDest, nullptr);
 }
 
 /**
