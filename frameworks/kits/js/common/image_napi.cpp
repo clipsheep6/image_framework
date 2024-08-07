@@ -32,6 +32,8 @@ namespace {
     constexpr int NUM1 = 1;
     constexpr int NUM2 = 2;
     const std::string MY_NAME = "ImageNapi";
+    const std::string REQUIRE_NAPI = "requireNapi";
+    const std::string MODULE_NAME = "multimedia.image";
 }
 
 namespace OHOS {
@@ -200,7 +202,25 @@ napi_value ImageNapi::Create(napi_env env, std::shared_ptr<NativeImage> nativeIm
         IMAGE_ERR("Input args is invalid %{public}p vs %{public}p", env, nativeImage.get());
         return nullptr;
     }
-    if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok && constructor != nullptr) {
+
+    if (sConstructor_ != nullptr) {
+        napi_get_reference_value(env, sConstructor_, &constructor);
+    } else {
+        napi_value global;
+        napi_get_global(env, &global);
+
+        napi_value requireNapiFunc;
+        napi_get_named_property(env, global, REQUIRE_NAPI.c_str(), &requireNapiFunc);
+        napi_value nModuleName;
+        napi_create_string_utf8(env, MODULE_NAME.c_str(), NAPI_AUTO_LENGTH, &nModuleName);
+        napi_value funcArgv[NUM1] = { nModuleName };
+        napi_value nModuleEntry;
+        napi_call_function(env, global, requireNapiFunc, NUM1, funcArgv, &nModuleEntry);
+
+        napi_get_named_property(env, nModuleEntry, MY_NAME.c_str(), &constructor);
+    }
+
+    if (constructor != nullptr) {
         auto id = sNativeImageHolder_.save(nativeImage);
         nativeImage->SetId(id);
         if (napi_create_string_utf8(env, id.c_str(), NAPI_AUTO_LENGTH, &(argv[NUM0])) != napi_ok) {
@@ -209,7 +229,10 @@ napi_value ImageNapi::Create(napi_env env, std::shared_ptr<NativeImage> nativeIm
         if (napi_new_instance(env, constructor, NUM1, argv, &result) != napi_ok) {
             IMAGE_ERR("New instance could not be obtained");
         }
+    } else {
+        IMAGE_ERR("Constructor get failed");
     }
+
     IMAGE_FUNCTION_OUT();
     return result;
 }
